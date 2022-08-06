@@ -22,6 +22,7 @@ class Path
     public function addOperation(Operation $operationBuilder)
     {
         $this->operations[$operationBuilder->method] = $operationBuilder;
+
         return $this;
     }
 

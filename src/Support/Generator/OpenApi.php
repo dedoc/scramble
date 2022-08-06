@@ -24,12 +24,14 @@ class OpenApi
     public function addInfo(InfoObject $info)
     {
         $this->info = $info;
+
         return $this;
     }
 
     public function addPath(Path $buildPath)
     {
         $this->paths[] = $buildPath;
+
         return $this;
     }
 

@@ -2,9 +2,9 @@
 
 namespace Dedoc\Documentor;
 
+use Dedoc\Documentor\Commands\DocumentorCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Dedoc\Documentor\Commands\DocumentorCommand;
 
 class DocumentorServiceProvider extends PackageServiceProvider
 {

@@ -22,6 +22,7 @@ class Response
     public function setContent(string $type, Schema $schema)
     {
         $this->content[$type] = $schema;
+
         return $this;
     }
 

@@ -9,6 +9,7 @@ class Operation
     public ?string $operationId = null;
 
     public array $tags = [];
+
     /** @var string[] */
     public array $parameters = [];
 
@@ -30,37 +31,42 @@ class Operation
     public function addRequestBodyObject(RequestBodyObject $requestBodyObject)
     {
         $this->requestBodyObject = $requestBodyObject;
+
         return $this;
     }
 
     public function addResponse(Response $response)
     {
         $this->responses[] = $response;
+
         return $this;
     }
 
     public function setOperationId(?string $operationId)
     {
         $this->operationId = $operationId;
+
         return $this;
     }
 
     public function setTags(array $tags)
     {
         $this->tags = $tags;
+
         return $this;
     }
 
     public function setParameters(array $parameters)
     {
         $this->parameters = $parameters;
+
         return $this;
     }
 
     public function toArray()
     {
         $result = [
-//            'tags' => ['Shit I know', 'Wow'], 'summary' => 'List Todo Item', 'description' => 'Wow, this is very interesting'
+            //            'tags' => ['Shit I know', 'Wow'], 'summary' => 'List Todo Item', 'description' => 'Wow, this is very interesting'
         ];
 
         if ($this->operationId) {
