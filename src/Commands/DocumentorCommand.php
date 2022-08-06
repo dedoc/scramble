@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace Dedoc\Documentor\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class DocumentorCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'documentor';
 
     public $description = 'My command';
 

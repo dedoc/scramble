@@ -1,0 +1,61 @@
+<?php
+
+namespace Dedoc\Documentor\Support\Generator;
+
+class Parameter
+{
+    public string $name;
+
+    /**
+     * Possible values are "query", "header", "path" or "cookie".
+     */
+    public string $in;
+
+    public bool $required = false;
+
+    public string $description = '';
+
+    public bool $deprecated = false;
+
+    public bool $allowEmptyValue = false;
+
+    public ?Schema $schema = null;
+
+    public function __construct(string $name, string $in)
+    {
+        $this->name = $name;
+        $this->in = $in;
+
+        if ($this->in === 'path') {
+            $this->required = true;
+        }
+    }
+
+    public static function make(string $name, string $in)
+    {
+        return new static($name, $in);
+    }
+
+    public function toArray(): array
+    {
+        $result = array_filter([
+            'name' => $this->name,
+            'in' => $this->in,
+            'required' => $this->required,
+            'deprecated' => $this->deprecated,
+            'allowEmptyValue' => $this->allowEmptyValue,
+        ]);
+
+        if ($this->schema) {
+            $result['schema'] = $this->schema->toArray();
+        }
+
+        return $result;
+    }
+
+    public function setSchema(?Schema $schema): self
+    {
+        $this->schema = $schema;
+        return $this;
+    }
+}
