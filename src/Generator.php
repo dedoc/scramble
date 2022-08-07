@@ -182,6 +182,7 @@ class Generator
                         return false;
                     }
                 }
+
                 return true;
             })
             ->values()
