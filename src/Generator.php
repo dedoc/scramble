@@ -27,7 +27,14 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\FirstFindingVisitor;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTextNode;
+use PHPStan\PhpDocParser\Lexer\Lexer;
+use PHPStan\PhpDocParser\Parser\ConstExprParser;
+use PHPStan\PhpDocParser\Parser\PhpDocParser;
+use PHPStan\PhpDocParser\Parser\TokenIterator;
+use PHPStan\PhpDocParser\Parser\TypeParser;
 use ReflectionClass;
+use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 
 class Generator
 {
@@ -66,6 +73,7 @@ class Generator
 
                 return ! Str::startsWith($name, 'documentor');
             })
+//            ->filter(fn (Route $route) => Str::contains($route->uri, 'impersonate'))
 //            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}'&& $route->methods()[0] === 'PUT')
             ->filter(fn (Route $route) => in_array('api', $route->gatherMiddleware()))
 //            ->filter(fn (Route $route) => Str::contains($route->getAction('as'), 'api.creators.update'))
@@ -74,6 +82,44 @@ class Generator
 
     private function routeToOperation(Route $route)
     {
+        $summary = Str::of('');
+        $description = Str::of('');
+
+        if ($route->getAction('uses')) {
+            [$className, $method] = explode('@', $route->getAction('uses'));
+
+            if (method_exists($className, $method)) {
+                $reflection = new ReflectionClass($className);
+                $method = $reflection->getMethod($method);
+
+                if ($docComment = $method->getDocComment()) {
+                    $lexer = new Lexer();
+                    $constExprParser = new ConstExprParser();
+                    $typeParser = new TypeParser($constExprParser);
+                    $phpDocParser = new PhpDocParser($typeParser, $constExprParser);
+
+                    $tokens = new TokenIterator($lexer->tokenize($docComment));
+                    $actualPhpDocNode = $phpDocParser->parse($tokens);
+
+                    $text = collect($actualPhpDocNode->children)
+                        ->filter(fn ($v) => $v instanceof PhpDocTextNode)
+                        ->map(fn (PhpDocTextNode $n) => $n->text)
+                        ->implode("\n");
+
+                    $text = Str::of($text)
+                        ->trim()
+                        ->explode("\n\n", 2);
+
+                    if (count($text) === 2) {
+                        $summary = Str::of($text[0]);
+                        $description = Str::of($text[1]);
+                    } elseif (count($text) === 1) {
+                        $description = Str::of($text[0]);
+                    }
+                }
+            }
+        }
+
         $operation = Operation::make($method = strtolower($route->methods()[0]))
             // @todo: Not always correct/expected in real projects.
 //            ->setOperationId(Str::camel($route->getAction('as')))
@@ -111,7 +157,7 @@ class Generator
 //                );
             }
         } catch (\Throwable $exception) {
-            $operation->description('⚠️Cannot generate request documentation: '.$exception->getMessage());
+            $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
         }
 
         $operation
@@ -123,7 +169,9 @@ class Generator
                     )
             );
 
-        return $operation;
+        return $operation
+            ->summary($summary)
+            ->description($description);
     }
 
     private function extractParamsFromRequestValidationRules(Route $route)

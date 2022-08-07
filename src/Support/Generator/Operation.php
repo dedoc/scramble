@@ -10,6 +10,8 @@ class Operation
 
     public string $description = '';
 
+    public string $summary = '';
+
     public array $tags = [];
 
     /** @var Parameter[] */
@@ -51,6 +53,13 @@ class Operation
         return $this;
     }
 
+    public function summary(string $summary)
+    {
+        $this->summary = $summary;
+
+        return $this;
+    }
+
     public function description(string $description)
     {
         $this->description = $description;
@@ -84,6 +93,10 @@ class Operation
 
         if ($this->description) {
             $result['description'] = $this->description;
+        }
+
+        if ($this->summary) {
+            $result['summary'] = $this->summary;
         }
 
         if (count($this->tags)) {
