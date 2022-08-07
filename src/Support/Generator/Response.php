@@ -29,7 +29,7 @@ class Response
     public function toArray()
     {
         $result = [
-//            'description' => '',
+            //            'description' => '',
         ];
 
         $content = [];
