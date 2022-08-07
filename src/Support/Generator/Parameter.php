@@ -53,6 +53,12 @@ class Parameter
         return $result;
     }
 
+    public function required(bool $required)
+    {
+        $this->required = $required;
+        return $this;
+    }
+
     public function setSchema(?Schema $schema): self
     {
         $this->schema = $schema;

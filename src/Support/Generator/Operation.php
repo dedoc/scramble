@@ -9,7 +9,8 @@ class Operation
     public ?string $operationId = null;
 
     public array $tags = [];
-    /** @var string[] */
+
+    /** @var Parameter[] */
     public array $parameters = [];
 
     private ?RequestBodyObject $requestBodyObject = null;
@@ -51,9 +52,9 @@ class Operation
         return $this;
     }
 
-    public function setParameters(array $parameters)
+    public function addParameters(array $parameters)
     {
-        $this->parameters = $parameters;
+        $this->parameters = array_merge($this->parameters, $parameters);
         return $this;
     }
 

@@ -6,6 +6,7 @@ use Dedoc\Documentor\Support\Generator\Types\BooleanType;
 use Dedoc\Documentor\Support\Generator\Types\ObjectType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
 use Dedoc\Documentor\Support\Generator\Types\Type;
+use Illuminate\Support\Collection;
 
 class Schema
 {
@@ -52,5 +53,20 @@ class Schema
     public function toArray()
     {
         return $this->type->toArray();
+    }
+
+    public static function createFromParameters(array $parameters)
+    {
+        $schema = (new static())->setType($type = new ObjectType);
+
+        collect($parameters)
+            ->each(function (Parameter $parameter) use ($type) {
+                $type->addProperty($parameter->name, $parameter->schema->type ?? new StringType);
+            })
+            ->tap(fn (Collection $params) => $type->setRequired(
+                $params->where('required', true)->map->name->values()->all()
+            ));
+
+        return $schema;
     }
 }
