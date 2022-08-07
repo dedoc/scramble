@@ -66,7 +66,7 @@ class Generator
 
                 return ! Str::startsWith($name, 'documentor');
             })
-//            ->filter(fn (Route $route) => $route->uri === 'api/integrations'&& $route->methods()[0] === 'POST')
+//            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}'&& $route->methods()[0] === 'PUT')
             ->filter(fn (Route $route) => in_array('api', $route->gatherMiddleware()))
 //            ->filter(fn (Route $route) => Str::contains($route->getAction('as'), 'api.creators.update'))
             ->values();
@@ -154,7 +154,7 @@ class Generator
                     $type = new IntegerType;
                 }
 
-                if (collect($rules)->contains(fn ($v) => Str::is('exists:*,id', $v))) {
+                if (collect($rules)->contains(fn ($v) => Str::is('exists:*,id*', $v))) {
                     $type = new IntegerType;
                 }
 
@@ -167,6 +167,10 @@ class Generator
                             ->trim('"')
                             ->replace('""', '"')
                         )->values()->all();
+                }
+
+                if (in_array('nullable', $rules)) {
+                    $type->nullable(true);
                 }
 
                 if ($type instanceof NumberType) {
