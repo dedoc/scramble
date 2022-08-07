@@ -5,6 +5,7 @@ namespace Dedoc\Documentor\Support\Generator\Types;
 class NumberType extends Type
 {
     private $min = null;
+
     private $max = null;
 
     public function __construct($type = 'number')
@@ -15,12 +16,14 @@ class NumberType extends Type
     public function setMin($min)
     {
         $this->min = $min;
+
         return $this;
     }
 
     public function setMax($max)
     {
         $this->max = $max;
+
         return $this;
     }
 

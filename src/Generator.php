@@ -62,7 +62,8 @@ class Generator
                 if (! $name) {
                     return true;
                 }
-                return !Str::startsWith($name, 'documentor');
+
+                return ! Str::startsWith($name, 'documentor');
             })
             ->filter(fn (Route $route) => in_array('api', $route->gatherMiddleware()))
 //            ->filter(fn (Route $route) => Str::contains($route->getAction('as'), 'api.creators.update'))
@@ -191,8 +192,7 @@ class Generator
         /** @var Node\Expr\MethodCall $callToValidate */
         $callToValidate = (new NodeFinder())->findFirst(
             $methodNode,
-            fn (Node $node) =>
-                $node instanceof Node\Expr\MethodCall
+            fn (Node $node) => $node instanceof Node\Expr\MethodCall
                 && $node->var instanceof Node\Expr\Variable
                 && Str::contains($this->getPossibleParamType($methodNode, $node->var), 'Request')// === Request::class
                 && $node->name->name === 'validate'
@@ -203,8 +203,7 @@ class Generator
             // $this->validate($request, $rules), rules are second param. First should be $request, but no way to check type. So relying on convention.
             $callToValidate = (new NodeFinder())->findFirst(
                 $methodNode,
-                fn (Node $node) =>
-                    $node instanceof Node\Expr\MethodCall
+                fn (Node $node) => $node instanceof Node\Expr\MethodCall
                     && count($node->args) === 2
                     && $node->var instanceof Node\Expr\Variable && $node->var->name === 'this'
                     && $node->name instanceof Node\Identifier && $node->name->name === 'validate'
@@ -236,7 +235,6 @@ class Generator
         $paramsMap = collect($methodNode->getParams())
             ->mapWithKeys(function (Node\Param $param) {
                 try {
-
                     return [
                         $param->var->name => implode('\\', $param->type->parts ?? []),
                     ];

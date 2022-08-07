@@ -57,6 +57,7 @@ class Parameter
     public function required(bool $required)
     {
         $this->required = $required;
+
         return $this;
     }
 
@@ -70,6 +71,7 @@ class Parameter
     public function description(string $description)
     {
         $this->description = $description;
+
         return $this;
     }
 }
