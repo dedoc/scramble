@@ -35,7 +35,6 @@ use PHPStan\PhpDocParser\Parser\PhpDocParser;
 use PHPStan\PhpDocParser\Parser\TokenIterator;
 use PHPStan\PhpDocParser\Parser\TypeParser;
 use ReflectionClass;
-use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 
 class Generator
 {
