@@ -8,6 +8,8 @@ class Operation
 
     public ?string $operationId = null;
 
+    public string $description = '';
+
     public array $tags = [];
 
     /** @var Parameter[] */
@@ -49,6 +51,13 @@ class Operation
         return $this;
     }
 
+    public function description(string $description)
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
     public function setTags(array $tags)
     {
         $this->tags = $tags;
@@ -71,6 +80,11 @@ class Operation
 
         if ($this->operationId) {
             $result['operationId'] = $this->operationId;
+        }
+
+
+        if ($this->description) {
+            $result['description'] = $this->description;
         }
 
         if (count($this->tags)) {

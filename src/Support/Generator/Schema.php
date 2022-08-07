@@ -12,6 +12,8 @@ class Schema
 {
     private Type $type;
 
+    private array $enum = [];
+
     public static function createFromArray(array $request)
     {
         $schema = new static();
@@ -54,7 +56,11 @@ class Schema
 
     public function toArray()
     {
-        return $this->type->toArray();
+        $enum = count($this->enum) ? $this->enum : null;
+
+        return array_merge($this->type->toArray(), array_filter([
+            'enum' => $enum,
+        ]));
     }
 
     public static function createFromParameters(array $parameters)
@@ -63,12 +69,19 @@ class Schema
 
         collect($parameters)
             ->each(function (Parameter $parameter) use ($type) {
-                $type->addProperty($parameter->name, $parameter->schema->type ?? new StringType);
+                $type->addProperty($parameter->name, $parameter->schema ?? new StringType);
             })
             ->tap(fn (Collection $params) => $type->setRequired(
                 $params->where('required', true)->map->name->values()->all()
             ));
 
         return $schema;
+    }
+
+    public function enum(array $enum): Schema
+    {
+        $this->enum = $enum;
+
+        return $this;
     }
 }

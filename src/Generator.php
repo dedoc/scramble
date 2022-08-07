@@ -16,6 +16,7 @@ use Dedoc\Documentor\Support\Generator\Types\NumberType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
@@ -65,6 +66,7 @@ class Generator
 
                 return ! Str::startsWith($name, 'documentor');
             })
+//            ->filter(fn (Route $route) => $route->uri === 'api/integrations'&& $route->methods()[0] === 'POST')
             ->filter(fn (Route $route) => in_array('api', $route->gatherMiddleware()))
 //            ->filter(fn (Route $route) => Str::contains($route->getAction('as'), 'api.creators.update'))
             ->values();
@@ -74,7 +76,7 @@ class Generator
     {
         $operation = Operation::make($method = strtolower($route->methods()[0]))
             // @todo: Not always correct/expected in real projects.
-            ->setOperationId(Str::camel($route->getAction('as')))
+//            ->setOperationId(Str::camel($route->getAction('as')))
             ->setTags(
                 // @todo: Fix real mess in the real projects
                 $route->getAction('controller')
@@ -89,23 +91,27 @@ class Generator
             ));
 
         /** @var Parameter[] $bodyParams */
-        if (count($bodyParams = $this->extractParamsFromRequestValidationRules($route))) {
-            if ($method !== 'get') {
-                $operation->addRequestBodyObject(
-                    RequestBodyObject::make()->setContent('application/json', Schema::createFromParameters($bodyParams))
-                );
+        try {
+            if (count($bodyParams = $this->extractParamsFromRequestValidationRules($route))) {
+                if ($method !== 'get') {
+                    $operation->addRequestBodyObject(
+                        RequestBodyObject::make()->setContent('application/json', Schema::createFromParameters($bodyParams))
+                    );
+                } else {
+                    $operation->addParameters($bodyParams);
+                }
             } else {
-                $operation->addParameters($bodyParams);
-            }
-        } else {
 //            $operation
-//                ->addRequestBodyObject(
+//                ->addRequesBodyObject(
 //                    RequestBodyObject::make()
 //                        ->setContent(
 //                            'application/json',
 //                            Schema::createFromArray([])
 //                        )
 //                );
+            }
+        } catch (\Throwable $exception) {
+            $operation->description('⚠️Cannot generate request documentation: '.$exception->getMessage());
         }
 
         $operation
@@ -128,12 +134,17 @@ class Generator
             return [];
         }
 
-        return collect($rules)
+        return collect($rules)//->dd()
             ->map(function ($rules, $name) {
-                $rules = is_string($rules) ? explode('|', $rules) : $rules;
+                $rules = Arr::wrap(is_string($rules) ? explode('|', $rules) : $rules);
+                $rules = array_map(
+                    fn ($v) => method_exists($v, '__toString') ? $v->__toString() : $v,
+                    $rules,
+                );
 
                 $type = new StringType;
                 $description = '';
+                $enum = [];
 
                 if (in_array('bool', $rules) || in_array('boolean', $rules)) {
                     $type = new BooleanType;
@@ -147,6 +158,17 @@ class Generator
                     $type = new IntegerType;
                 }
 
+                if ($inRule = collect($rules)->first(fn ($v) => Str::is('in:*', $v))) {
+                    $enum = Str::of($inRule)
+                        ->replaceFirst('in:', '')
+                        ->explode(',')
+                        ->mapInto(Stringable::class)
+                        ->map(fn (Stringable $v) => (string) $v
+                            ->trim('"')
+                            ->replace('""', '"')
+                        )->values()->all();
+                }
+
                 if ($type instanceof NumberType) {
                     if ($min = Str::replace('min:', '', collect($rules)->first(fn ($v) => Str::startsWith($v, 'min:'), ''))) {
                         $type->setMin((float) $min);
@@ -157,7 +179,7 @@ class Generator
                 }
 
                 return Parameter::make($name, 'query')
-                    ->setSchema(Schema::fromType($type))
+                    ->setSchema(Schema::fromType($type)->enum($enum))
                     ->required(in_array('required', $rules))
                     ->description($description);
             })
@@ -183,10 +205,12 @@ class Generator
 
         /** @var Node\Stmt\ClassMethod $methodNode */
         /** @var NameResolver $nameResolver */
-        [$methodNode, $nameResolver] = $this->findFirstNode(
+        [$methodNode, $aliases] = $this->findFirstNode(
             $classAst,
             fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $method
         );
+
+//        dd($methodNode);
 
         // $request->validate, when $request is a Request instance
         /** @var Node\Expr\MethodCall $callToValidate */
@@ -218,12 +242,18 @@ class Generator
             $printer = new \PhpParser\PrettyPrinter\Standard();
             $validationRulesCode = $printer->prettyPrint([$validationRules]);
 
+            $validationRulesCode = Str::replace(
+                [...array_map(fn ($c) => "$c::", array_keys($aliases)), ...array_map(fn ($c) => "$c(", array_keys($aliases))],
+                [...array_map(fn ($c) => "$c::", array_values($aliases)), ...array_map(fn ($c) => "$c(", array_values($aliases))],
+                $validationRulesCode,
+            );
+
             try {
-                $rules = eval("return $validationRulesCode;");
+                $rules = eval("\$request = request(); return $validationRulesCode;");
             } catch (\Throwable $exception) {
-//                throw $exception;
+                throw $exception;
 //                dump(['err validation eval' => $validationRulesCode]);
-                return null;
+//                return null;
             }
         }
 
@@ -260,7 +290,16 @@ class Generator
 
         /** @var Node\Stmt\ClassMethod $methodNode */
         $methodNode = $visitor->getFoundNode();
+        $nameContext = $nameResolver->getNameContext();
 
-        return [$methodNode, $nameResolver];
+        // @todo Fix dirty way of getting the map of aliases
+        $context = $nameResolver->getNameContext();
+        $reflection = new ReflectionClass($context);
+        $property = $reflection->getProperty('origAliases');
+        $property->setAccessible(true);
+        $value = $property->getValue($context);
+        $aliases = array_map(fn (Node\Name $n) => $n->toCodeString(), $value[1]);
+
+        return [$methodNode, $aliases];
     }
 }
