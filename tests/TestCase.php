@@ -2,9 +2,9 @@
 
 namespace Dedoc\Documentor\Tests;
 
+use Dedoc\Documentor\DocumentorServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Dedoc\Documentor\DocumentorServiceProvider;
 
 class TestCase extends Orchestra
 {

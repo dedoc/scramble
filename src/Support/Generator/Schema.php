@@ -41,12 +41,14 @@ class Schema
     {
         $schema = new static();
         $schema->setType($type);
+
         return $schema;
     }
 
     private function setType(Type $type)
     {
         $this->type = $type;
+
         return $this;
     }
 

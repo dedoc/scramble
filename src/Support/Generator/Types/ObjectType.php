@@ -18,12 +18,14 @@ class ObjectType extends Type
     public function addProperty(string $name, $propertyType)
     {
         $this->properties[$name] = $propertyType;
+
         return $this;
     }
 
     public function setRequired(array $keys)
     {
         $this->required = $keys;
+
         return $this;
     }
 
