@@ -27,6 +27,7 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\FirstFindingVisitor;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTextNode;
 use PHPStan\PhpDocParser\Lexer\Lexer;
 use PHPStan\PhpDocParser\Parser\ConstExprParser;
@@ -73,7 +74,7 @@ class Generator
 
                 return ! Str::startsWith($name, 'documentor');
             })
-//            ->filter(fn (Route $route) => Str::contains($route->uri, 'impersonate'))
+            ->filter(fn (Route $route) => Str::contains($route->uri, 'impersonate'))
 //            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}'&& $route->methods()[0] === 'PUT')
             ->filter(fn (Route $route) => in_array('api', $route->gatherMiddleware()))
 //            ->filter(fn (Route $route) => Str::contains($route->getAction('as'), 'api.creators.update'))
@@ -85,6 +86,7 @@ class Generator
         $summary = Str::of('');
         $description = Str::of('');
 
+        $methodPhpDocNode = null;
         if ($route->getAction('uses')) {
             [$className, $method] = explode('@', $route->getAction('uses'));
 
@@ -99,9 +101,9 @@ class Generator
                     $phpDocParser = new PhpDocParser($typeParser, $constExprParser);
 
                     $tokens = new TokenIterator($lexer->tokenize($docComment));
-                    $actualPhpDocNode = $phpDocParser->parse($tokens);
+                    $methodPhpDocNode = $phpDocParser->parse($tokens);
 
-                    $text = collect($actualPhpDocNode->children)
+                    $text = collect($methodPhpDocNode->children)
                         ->filter(fn ($v) => $v instanceof PhpDocTextNode)
                         ->map(fn (PhpDocTextNode $n) => $n->text)
                         ->implode("\n");
@@ -131,10 +133,7 @@ class Generator
             )
             // @todo: Figure out when params are for the implicit/explicit model binding and type them appropriately
             // @todo: Use route function typehints to get the primitive types
-            ->addParameters(array_map(
-                fn (string $paramName) => Parameter::make($paramName, 'path')->setSchema(Schema::fromType(new StringType)),
-                $route->parameterNames()
-            ));
+            ->addParameters($this->getRoutePathParameters($route, $methodPhpDocNode));
 
         /** @var Parameter[] $bodyParams */
         try {
@@ -172,6 +171,39 @@ class Generator
         return $operation
             ->summary($summary)
             ->description($description);
+    }
+
+    private function getRoutePathParameters(Route $route, PhpDocNode $methodPhpDocNode)
+    {
+        $paramNames = $route->parameterNames();
+        $paramsWithRealNames = collect($route->signatureParameters())
+            ->filter(function (\ReflectionParameter $v) {
+                if (($type = $v->getType()) && $typeName = $type->getName()) {
+                    if (is_a($typeName, Request::class, true)) {
+                        return false;
+                    }
+                }
+                return true;
+            })
+            ->values()
+            ->map(fn (\ReflectionParameter $v) => $v->name)
+            ->all();
+
+        if (count($paramNames) !== count($paramsWithRealNames)) {
+            $paramsWithRealNames = $paramNames;
+        }
+
+        $aliases = collect($paramNames)->mapWithKeys(fn ($name, $i) => [$name => $paramsWithRealNames[$i]])->all();
+
+//        dd(
+//            $aliases,
+//            $methodPhpDocNode,
+//        );
+
+        return array_map(
+            fn (string $paramName) => Parameter::make($paramName, 'path')->setSchema(Schema::fromType(new StringType)),
+            $route->parameterNames()
+        );
     }
 
     private function extractParamsFromRequestValidationRules(Route $route)
