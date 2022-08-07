@@ -82,7 +82,6 @@ class Operation
             $result['operationId'] = $this->operationId;
         }
 
-
         if ($this->description) {
             $result['description'] = $this->description;
         }
