@@ -42,6 +42,7 @@ class Parameter
             'name' => $this->name,
             'in' => $this->in,
             'required' => $this->required,
+            'description' => $this->description,
             'deprecated' => $this->deprecated,
             'allowEmptyValue' => $this->allowEmptyValue,
         ]);
@@ -62,6 +63,12 @@ class Parameter
     public function setSchema(?Schema $schema): self
     {
         $this->schema = $schema;
+        return $this;
+    }
+
+    public function description(string $description)
+    {
+        $this->description = $description;
         return $this;
     }
 }

@@ -11,6 +11,8 @@ use Dedoc\Documentor\Support\Generator\RequestBodyObject;
 use Dedoc\Documentor\Support\Generator\Response;
 use Dedoc\Documentor\Support\Generator\Schema;
 use Dedoc\Documentor\Support\Generator\Types\BooleanType;
+use Dedoc\Documentor\Support\Generator\Types\IntegerType;
+use Dedoc\Documentor\Support\Generator\Types\NumberType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
@@ -130,14 +132,33 @@ class Generator
                 $rules = is_string($rules) ? explode('|', $rules) : $rules;
 
                 $type = new StringType;
+                $description = '';
 
                 if (in_array('bool', $rules) || in_array('boolean', $rules)) {
                     $type = new BooleanType;
+                } elseif (in_array('numeric', $rules)) {
+                    $type = new NumberType;
+                } elseif (in_array('integer', $rules)) {
+                    $type = new IntegerType;
+                }
+
+                if (collect($rules)->contains(fn ($v) => Str::is('exists:*,id', $v))) {
+                    $type = new IntegerType;
+                }
+
+                if ($type instanceof NumberType) {
+                    if ($min = Str::replace('min:', '', collect($rules)->first(fn ($v) => Str::startsWith($v, 'min:'), ''))) {
+                        $type->setMin((float) $min);
+                    }
+                    if ($max = Str::replace('max:', '', collect($rules)->first(fn ($v) => Str::startsWith($v, 'max:'), ''))) {
+                        $type->setMax((float) $max);
+                    }
                 }
 
                 return Parameter::make($name, 'query')
                     ->setSchema(Schema::fromType($type))
-                    ->required(in_array('required', $rules));
+                    ->required(in_array('required', $rules))
+                    ->description($description);
             })
             ->values()
             ->all();
