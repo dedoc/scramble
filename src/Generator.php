@@ -24,7 +24,6 @@ use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 use PhpParser\Node;
-use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\FirstFindingVisitor;
 use PhpParser\NodeVisitor\NameResolver;
@@ -251,7 +250,7 @@ class Generator
             ];
             $schemaType = $type ? ($schemaTypesMap[$type] ?? new IntegerType) : new StringType;
 
-            if ($type && !isset($schemaTypesMap[$type]) && $description === '') {
+            if ($type && ! isset($schemaTypesMap[$type]) && $description === '') {
                 $description = 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' ID';
             }
 

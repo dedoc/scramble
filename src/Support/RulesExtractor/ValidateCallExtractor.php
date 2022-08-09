@@ -11,6 +11,7 @@ use PhpParser\NodeFinder;
 class ValidateCallExtractor
 {
     private ?Node\FunctionLike $handle;
+
     private array $aliases;
 
     public function __construct(?Node\FunctionLike $handle, array $aliases)
@@ -21,7 +22,7 @@ class ValidateCallExtractor
 
     public function shouldHandle()
     {
-        return !! $this->handle;
+        return (bool) $this->handle;
     }
 
     public function extract(Route $route)
@@ -77,6 +78,7 @@ class ValidateCallExtractor
                             'float' => 1,
                         ];
                         $value = $primitives[$type] ?? app($type);
+
                         return [
                             $param->var->name => $value,
                         ];
