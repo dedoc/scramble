@@ -14,6 +14,7 @@ use Dedoc\Documentor\Support\Generator\Types\BooleanType;
 use Dedoc\Documentor\Support\Generator\Types\IntegerType;
 use Dedoc\Documentor\Support\Generator\Types\NumberType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
+use Dedoc\Documentor\Support\RulesExtractor\FormRequestRulesExtractor;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
@@ -27,6 +28,7 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\FirstFindingVisitor;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
+use PHPStan\PhpDocParser\Ast\PhpDoc\ParamTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTextNode;
 use PHPStan\PhpDocParser\Lexer\Lexer;
@@ -46,7 +48,7 @@ class Generator
         $openApi = $this->makeOpenApi();
 
         $routes//->dd()
-            ->map(fn (Route $route) => [$route->uri, $this->routeToOperation($route)])
+            ->map(fn (Route $route) => $this->routeToOperation($route))
             ->eachSpread(fn (string $path, Operation $operation) => $openApi->addPath(
                 Path::make(str_replace('api/', '', $path))->addOperation($operation)
             ))
@@ -73,8 +75,9 @@ class Generator
 
                 return ! Str::startsWith($name, 'documentor');
             })
-            ->filter(fn (Route $route) => Str::contains($route->uri, 'impersonate'))
-//            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}'&& $route->methods()[0] === 'PUT')
+//            ->filter(fn (Route $route) => Str::contains($route->uri, 'impersonate'))
+//            ->filter(fn (Route $route) => $route->uri === 'api/brand/{brand}/creators-import/claim'&& $route->methods()[0] === 'PUT')
+//            ->filter(fn (Route $route) => $route->uri === 'api/thread/{thread}/subscriptions'&& $route->methods()[0] === 'POST')
             ->filter(fn (Route $route) => in_array('api', $route->gatherMiddleware()))
 //            ->filter(fn (Route $route) => Str::contains($route->getAction('as'), 'api.creators.update'))
             ->values();
@@ -86,8 +89,8 @@ class Generator
         $description = Str::of('');
 
         $methodPhpDocNode = null;
-        if ($route->getAction('uses')) {
-            [$className, $method] = explode('@', $route->getAction('uses'));
+        if (($uses = $route->getAction('uses')) && is_string($uses)) {
+            [$className, $method] = explode('@', $uses);
 
             if (method_exists($className, $method)) {
                 $reflection = new ReflectionClass($className);
@@ -121,6 +124,8 @@ class Generator
             }
         }
 
+        [$pathParams, $pathAliases] = $this->getRoutePathParameters($route, $methodPhpDocNode);
+
         $operation = Operation::make($method = strtolower($route->methods()[0]))
             // @todo: Not always correct/expected in real projects.
 //            ->setOperationId(Str::camel($route->getAction('as')))
@@ -132,7 +137,7 @@ class Generator
             )
             // @todo: Figure out when params are for the implicit/explicit model binding and type them appropriately
             // @todo: Use route function typehints to get the primitive types
-            ->addParameters($this->getRoutePathParameters($route, $methodPhpDocNode));
+            ->addParameters($pathParams);
 
         /** @var Parameter[] $bodyParams */
         try {
@@ -167,15 +172,20 @@ class Generator
                     )
             );
 
-        return $operation
-            ->summary($summary)
+        $operation
+            ->summary($summary->rtrim('.'))
             ->description($description);
+
+        return [
+            Str::replace(array_keys($pathAliases), array_values($pathAliases), $route->uri),
+            $operation,
+        ];
     }
 
-    private function getRoutePathParameters(Route $route, PhpDocNode $methodPhpDocNode)
+    private function getRoutePathParameters(Route $route, ?PhpDocNode $methodPhpDocNode)
     {
         $paramNames = $route->parameterNames();
-        $paramsWithRealNames = collect($route->signatureParameters())
+        $paramsWithRealNames = ($reflectionParams = collect($route->signatureParameters())
             ->filter(function (\ReflectionParameter $v) {
                 if (($type = $v->getType()) && $typeName = $type->getName()) {
                     if (is_a($typeName, Request::class, true)) {
@@ -184,7 +194,7 @@ class Generator
                 }
                 return true;
             })
-            ->values()
+            ->values())
             ->map(fn (\ReflectionParameter $v) => $v->name)
             ->all();
 
@@ -194,15 +204,61 @@ class Generator
 
         $aliases = collect($paramNames)->mapWithKeys(fn ($name, $i) => [$name => $paramsWithRealNames[$i]])->all();
 
-//        dd(
-//            $aliases,
-//            $methodPhpDocNode,
-//        );
+        $reflectionParamsByKeys = $reflectionParams->keyBy->name;
+        $phpDocTypehintParam = $methodPhpDocNode
+            ? collect($methodPhpDocNode->getParamTagValues())->keyBy(fn (ParamTagValueNode $n) => Str::replace('$', '', $n->parameterName))
+            : collect();
 
-        return array_map(
-            fn (string $paramName) => Parameter::make($paramName, 'path')->setSchema(Schema::fromType(new StringType)),
-            $route->parameterNames()
-        );
+        /*
+         * Figure out param type based on importance priority:
+         * 1. Typehint (reflection)
+         * 2. PhpDoc Typehint
+         * 3. String (?)
+         */
+        $params = array_map(function (string $paramName) use ($aliases, $reflectionParamsByKeys, $phpDocTypehintParam) {
+            $paramName = $aliases[$paramName];
+
+            $description = '';
+            $type = null;
+
+            if (isset($reflectionParamsByKeys[$paramName]) || isset($phpDocTypehintParam[$paramName])) {
+                /** @var ParamTagValueNode $docParam */
+                if ($docParam = $phpDocTypehintParam[$paramName] ?? null) {
+                    if ($docType = $docParam->type) {
+                        $type = (string) $docType;
+                    }
+                    if ($docParam->description) {
+                        $description = $docParam->description;
+                    }
+                }
+
+                if (
+                    ($reflectionParam = $reflectionParamsByKeys[$paramName] ?? null)
+                    && ($reflectionParam->hasType())
+                ) {
+                    /** @var \ReflectionParameter $reflectionParam */
+                    $type = $reflectionParam->getType()->getName();
+                }
+            }
+
+            $schemaTypesMap = [
+                'int' => new IntegerType(),
+                'float' => new NumberType(),
+                'string' => new StringType(),
+                'bool' => new BooleanType(),
+            ];
+            $schemaType = $type ? ($schemaTypesMap[$type] ?? new IntegerType) : new StringType;
+
+            if ($type && !isset($schemaTypesMap[$type]) && $description === '') {
+                $description = 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' ID';
+            }
+
+            return Parameter::make($paramName, 'path')
+                ->description($description)
+                ->setSchema(Schema::fromType($schemaType));
+        }, $route->parameterNames());
+
+        return [$params, $aliases];
     }
 
     private function extractParamsFromRequestValidationRules(Route $route)
@@ -229,15 +285,15 @@ class Generator
                     $type = new BooleanType;
                 } elseif (in_array('numeric', $rules)) {
                     $type = new NumberType;
-                } elseif (in_array('integer', $rules)) {
+                } elseif (in_array('integer', $rules) || in_array('int', $rules)) {
                     $type = new IntegerType;
                 }
 
-                if (collect($rules)->contains(fn ($v) => Str::is('exists:*,id*', $v))) {
+                if (collect($rules)->contains(fn ($v) => is_string($v) && Str::is('exists:*,id*', $v))) {
                     $type = new IntegerType;
                 }
 
-                if ($inRule = collect($rules)->first(fn ($v) => Str::is('in:*', $v))) {
+                if ($inRule = collect($rules)->first(fn ($v) => is_string($v) && Str::is('in:*', $v))) {
                     $enum = Str::of($inRule)
                         ->replaceFirst('in:', '')
                         ->explode(',')
@@ -253,10 +309,10 @@ class Generator
                 }
 
                 if ($type instanceof NumberType) {
-                    if ($min = Str::replace('min:', '', collect($rules)->first(fn ($v) => Str::startsWith($v, 'min:'), ''))) {
+                    if ($min = Str::replace('min:', '', collect($rules)->first(fn ($v) => is_string($v) && Str::startsWith($v, 'min:'), ''))) {
                         $type->setMin((float) $min);
                     }
-                    if ($max = Str::replace('max:', '', collect($rules)->first(fn ($v) => Str::startsWith($v, 'max:'), ''))) {
+                    if ($max = Str::replace('max:', '', collect($rules)->first(fn ($v) => is_string($v) && Str::startsWith($v, 'max:'), ''))) {
                         $type->setMax((float) $max);
                     }
                 }
@@ -293,7 +349,10 @@ class Generator
             fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $method
         );
 
-//        dd($methodNode);
+        // Custom form request's class `validate` method
+        if (($formRequestRulesExtractor = new FormRequestRulesExtractor($methodNode))->shouldHandle()) {
+            return $formRequestRulesExtractor->extract($route);
+        }
 
         // $request->validate, when $request is a Request instance
         /** @var Node\Expr\MethodCall $callToValidate */
@@ -331,7 +390,30 @@ class Generator
                 $validationRulesCode,
             );
 
+            $injectableParams = collect($methodNode->getParams())
+                ->filter(fn (Node\Param $param) => ! class_exists($className = (string) $param->type) || ! is_a($className, Request::class, true))
+                ->filter(fn (Node\Param $param) => isset($param->var->name) && is_string($param->var->name))
+                ->mapWithKeys(function (Node\Param $param) {
+                    try {
+                        $type = (string) $param->type;
+                        $primitives = [
+                            'int' => 1,
+                            'bool' => true,
+                            'string' => '',
+                            'float' => 1,
+                        ];
+                        $value = $primitives[$type] ?? app($type);
+                        return [
+                            $param->var->name => $value,
+                        ];
+                    } catch (\Throwable $e) {
+                        return [];
+                    }
+                })
+                ->all();
+
             try {
+                extract($injectableParams);
                 $rules = eval("\$request = request(); return $validationRulesCode;");
             } catch (\Throwable $exception) {
                 throw $exception;
