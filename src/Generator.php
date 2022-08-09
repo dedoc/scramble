@@ -15,6 +15,7 @@ use Dedoc\Documentor\Support\Generator\Types\IntegerType;
 use Dedoc\Documentor\Support\Generator\Types\NumberType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
 use Dedoc\Documentor\Support\RulesExtractor\FormRequestRulesExtractor;
+use Dedoc\Documentor\Support\RulesExtractor\ValidateCallExtractor;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
@@ -344,7 +345,6 @@ class Generator
         $classAst = $parser->parse($classSourceCode);
 
         /** @var Node\Stmt\ClassMethod $methodNode */
-        /** @var NameResolver $nameResolver */
         [$methodNode, $aliases] = $this->findFirstNode(
             $classAst,
             fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $method
@@ -355,93 +355,11 @@ class Generator
             return $formRequestRulesExtractor->extract($route);
         }
 
-        // $request->validate, when $request is a Request instance
-        /** @var Node\Expr\MethodCall $callToValidate */
-        $callToValidate = (new NodeFinder())->findFirst(
-            $methodNode,
-            fn (Node $node) => $node instanceof Node\Expr\MethodCall
-                && $node->var instanceof Node\Expr\Variable
-                && Str::contains($this->getPossibleParamType($methodNode, $node->var), 'Request')// === Request::class
-                && $node->name->name === 'validate'
-        );
-        $validationRules = $callToValidate->args[0] ?? null;
-
-        if (! $validationRules) {
-            // $this->validate($request, $rules), rules are second param. First should be $request, but no way to check type. So relying on convention.
-            $callToValidate = (new NodeFinder())->findFirst(
-                $methodNode,
-                fn (Node $node) => $node instanceof Node\Expr\MethodCall
-                    && count($node->args) === 2
-                    && $node->var instanceof Node\Expr\Variable && $node->var->name === 'this'
-                    && $node->name instanceof Node\Identifier && $node->name->name === 'validate'
-                    && $node->args[0]->value instanceof Node\Expr\Variable
-                    && Str::contains($this->getPossibleParamType($methodNode, $node->args[0]->value), 'Request')// === Request::class
-                    && $node->name->name === 'validate'
-            );
-            $validationRules = $callToValidate->args[1] ?? null;
+        if (($validateCallExtractor = new ValidateCallExtractor($methodNode, $aliases))->shouldHandle()) {
+            return $validateCallExtractor->extract($route);
         }
 
-        if ($validationRules) {
-            $printer = new \PhpParser\PrettyPrinter\Standard();
-            $validationRulesCode = $printer->prettyPrint([$validationRules]);
-
-            $validationRulesCode = Str::replace(
-                [...array_map(fn ($c) => "$c::", array_keys($aliases)), ...array_map(fn ($c) => "$c(", array_keys($aliases))],
-                [...array_map(fn ($c) => "$c::", array_values($aliases)), ...array_map(fn ($c) => "$c(", array_values($aliases))],
-                $validationRulesCode,
-            );
-
-            $injectableParams = collect($methodNode->getParams())
-                ->filter(fn (Node\Param $param) => ! class_exists($className = (string) $param->type) || ! is_a($className, Request::class, true))
-                ->filter(fn (Node\Param $param) => isset($param->var->name) && is_string($param->var->name))
-                ->mapWithKeys(function (Node\Param $param) {
-                    try {
-                        $type = (string) $param->type;
-                        $primitives = [
-                            'int' => 1,
-                            'bool' => true,
-                            'string' => '',
-                            'float' => 1,
-                        ];
-                        $value = $primitives[$type] ?? app($type);
-                        return [
-                            $param->var->name => $value,
-                        ];
-                    } catch (\Throwable $e) {
-                        return [];
-                    }
-                })
-                ->all();
-
-            try {
-                extract($injectableParams);
-                $rules = eval("\$request = request(); return $validationRulesCode;");
-            } catch (\Throwable $exception) {
-                throw $exception;
-//                dump(['err validation eval' => $validationRulesCode]);
-//                return null;
-            }
-        }
-
-        return $rules ?? null;
-    }
-
-    private function getPossibleParamType(Node\Stmt\ClassMethod $methodNode, Node\Expr\Variable $node): ?string
-    {
-        $paramsMap = collect($methodNode->getParams())
-            ->mapWithKeys(function (Node\Param $param) {
-                try {
-                    return [
-                        $param->var->name => implode('\\', $param->type->parts ?? []),
-                    ];
-                } catch (\Throwable $exception) {
-                    throw $exception;
-                    dd($exception->getMessage(), $param);
-                }
-            })
-            ->toArray();
-
-        return $paramsMap[$node->name] ?? null;
+        return null;
     }
 
     private function findFirstNode(?array $classAst, \Closure $param)
