@@ -48,7 +48,7 @@ class Generator
         $openApi = $this->makeOpenApi();
 
         $routes//->dd()
-            ->map(fn (Route $route) => $this->routeToOperation($route))
+            ->map(fn (Route $route) => $this->routeToOperation($openApi, $route))
             ->eachSpread(fn (string $path, Operation $operation) => $openApi->addPath(
                 Path::make(str_replace('api/', '', $path))->addOperation($operation)
             ))
@@ -79,13 +79,14 @@ class Generator
 //            ->filter(fn (Route $route) => $route->uri === 'api/brand/{brand}/creators-import/claim'&& $route->methods()[0] === 'PUT')
 //            ->filter(fn (Route $route) => $route->uri === 'api/campaigns'&& $route->methods()[0] === 'POST')
 //            ->filter(fn (Route $route) => $route->uri === 'api/creators/{creator}'&& $route->methods()[0] === 'PUT')
+//            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}/brief' && $route->methods()[0] === 'POST')
 //            ->filter(fn (Route $route) => $route->uri === 'api/todo-item' && $route->methods()[0] === 'POST')
             ->filter(fn (Route $route) => in_array('api', $route->gatherMiddleware()))
 //            ->filter(fn (Route $route) => Str::contains($route->getAction('as'), 'api.creators.update'))
             ->values();
     }
 
-    private function routeToOperation(Route $route)
+    private function routeToOperation(OpenApi $openApi, Route $route)
     {
         /** @var Node\Stmt\ClassMethod|null $methodNode */
         /** @var PhpDocNode|null $methodPhpDocNode */
@@ -152,7 +153,7 @@ class Generator
             $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
         }
 
-        $responses = (new ResponsesExtractor($route, $methodNode, $reflectionMethod, $classAliasesMap))();
+        $responses = (new ResponsesExtractor($openApi, $route, $methodNode, $reflectionMethod, $classAliasesMap))();
 //        dd($responses);
         foreach ($responses as $response) {
             $operation->addResponse($response);

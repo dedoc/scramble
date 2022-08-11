@@ -8,12 +8,15 @@ class OpenApi
 
     private InfoObject $info;
 
+    public Components $components;
+
     /** @var Path[] */
     private array $paths = [];
 
     public function __construct(string $version)
     {
         $this->version = $version;
+        $this->components = new Components;
     }
 
     public static function make(string $version)
@@ -53,6 +56,10 @@ class OpenApi
             }
 
             $result['paths'] = $paths;
+        }
+
+        if (count($serializedComponents = $this->components->toArray())) {
+            $result['components'] = $serializedComponents;
         }
 
         return $result;

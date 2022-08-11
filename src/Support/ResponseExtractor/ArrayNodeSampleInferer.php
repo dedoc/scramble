@@ -2,10 +2,14 @@
 
 namespace Dedoc\Documentor\Support\ResponseExtractor;
 
+use Dedoc\Documentor\Support\Generator\OpenApi;
+use Dedoc\Documentor\Support\Generator\Schema;
+use Illuminate\Http\Resources\Json\JsonResource;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayItem;
 use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 
 /**
@@ -23,10 +27,14 @@ use PhpParser\Node\Scalar\String_;
 class ArrayNodeSampleInferer
 {
     private Array_ $node;
+    private OpenApi $openApi;
+    private $getFqName;
 
-    public function __construct(Array_ $arrayNode)
+    public function __construct(OpenApi $openApi, Array_ $arrayNode, callable $getFqName)
     {
         $this->node = $arrayNode;
+        $this->openApi = $openApi;
+        $this->getFqName = $getFqName;
     }
 
     public function __invoke()
@@ -34,6 +42,29 @@ class ArrayNodeSampleInferer
         $requiredFields = [];
         $result = collect($this->node->items)
             ->mapWithKeys(function (ArrayItem $arrayItem) use (&$requiredFields) {
+                // new JsonResource
+                if (
+                    $arrayItem->key instanceof String_
+                    && $arrayItem->value instanceof Expr\New_
+                    && $arrayItem->value->class instanceof Name
+                    && is_a($resourceClassName = ($this->getFqName)($arrayItem->value->class->toString()), JsonResource::class, true)
+                ) {
+                    // if call to `whenLoaded` in constructor, then field is not required
+                    $isCallToWhenLoaded = $arrayItem->value->args[0]->value instanceof Expr\MethodCall
+                        && $arrayItem->value->args[0]->value->name instanceof Identifier
+                        && $arrayItem->value->args[0]->value->name->toString() === 'whenLoaded';
+
+                    if (! $isCallToWhenLoaded) {
+                        $requiredFields[] = $arrayItem->key->value;
+                    }
+
+                    (new JsonResourceResponseExtractor($this->openApi, $resourceClassName))->extract();
+
+                    return [
+                        $arrayItem->key->value => Schema::reference('schemas', class_basename($resourceClassName)),
+                    ];
+                }
+
                 if ($arrayItem->key instanceof String_) {
                     $requiredFields[] = $arrayItem->key->value;
 
@@ -58,7 +89,7 @@ class ArrayNodeSampleInferer
                         }
 
                         if ($argValue instanceof Array_) {
-                            [$sampleResponse] = (new ArrayNodeSampleInferer($argValue))();
+                            [$sampleResponse] = (new ArrayNodeSampleInferer($this->openApi, $argValue, $this->getFqName))();
 
                             return $sampleResponse;
                         }
@@ -78,7 +109,7 @@ class ArrayNodeSampleInferer
                         }
 
                         if ($argValue instanceof Array_) {
-                            [$sampleResponse, $requiredArrayFields] = (new ArrayNodeSampleInferer($argValue))();
+                            [$sampleResponse, $requiredArrayFields] = (new ArrayNodeSampleInferer($this->openApi, $argValue, $this->getFqName))();
 
                             $requiredFields = array_merge($requiredFields, $requiredArrayFields);
 

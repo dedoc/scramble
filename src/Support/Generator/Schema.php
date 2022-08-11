@@ -12,6 +12,8 @@ class Schema
 {
     private Type $type;
 
+    private ?string $reference = null;
+
     private array $enum = [];
 
     public static function createFromArray(array $request)
@@ -56,6 +58,10 @@ class Schema
 
     public function toArray()
     {
+        if ($this->reference) {
+            return ['$ref' => $this->reference];
+        }
+
         $enum = count($this->enum) ? $this->enum : null;
 
         return array_merge($this->type->toArray(), array_filter([
@@ -78,9 +84,23 @@ class Schema
         return $schema;
     }
 
+    public static function reference(string $type, string $schemaName): Schema
+    {
+        $schema = (new static());
+
+        return $schema->setReference("#/components/{$type}/{$schemaName}");
+    }
+
     public function enum(array $enum): Schema
     {
         $this->enum = $enum;
+
+        return $this;
+    }
+
+    public function setReference(string $reference): Schema
+    {
+        $this->reference = $reference;
 
         return $this;
     }
