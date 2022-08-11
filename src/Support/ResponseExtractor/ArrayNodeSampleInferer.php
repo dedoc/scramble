@@ -27,7 +27,9 @@ use PhpParser\Node\Scalar\String_;
 class ArrayNodeSampleInferer
 {
     private Array_ $node;
+
     private OpenApi $openApi;
+
     private $getFqName;
 
     public function __construct(OpenApi $openApi, Array_ $arrayNode, callable $getFqName)

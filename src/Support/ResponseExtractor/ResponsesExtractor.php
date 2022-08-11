@@ -18,6 +18,7 @@ class ResponsesExtractor
     private ?\ReflectionMethod $reflectionMethod;
 
     private array $classAliasesMap;
+
     private OpenApi $openApi;
 
     public function __construct(OpenApi $openApi, Route $route, ?ClassMethod $methodNode, ?\ReflectionMethod $reflectionMethod, array $classAliasesMap)
@@ -81,7 +82,7 @@ class ResponsesExtractor
          */
         if ($jsonResourceReturnNode) {
             return [
-                $this->classAliasesMap[$jsonResourceReturnNode->expr->class->toString()] ?? $jsonResourceReturnNode->expr->class->toString()
+                $this->classAliasesMap[$jsonResourceReturnNode->expr->class->toString()] ?? $jsonResourceReturnNode->expr->class->toString(),
             ];
         }
 

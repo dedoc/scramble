@@ -2,7 +2,6 @@
 
 namespace Dedoc\Documentor\Support\ResponseExtractor;
 
-use App\Http\Agency\Production\Resources\EventProductionResource;
 use Dedoc\Documentor\Support\Generator\OpenApi;
 use Dedoc\Documentor\Support\Generator\Response;
 use Dedoc\Documentor\Support\Generator\Schema;
@@ -20,6 +19,7 @@ use ReflectionClass;
 class JsonResourceResponseExtractor
 {
     private string $class;
+
     private OpenApi $openApi;
 
     public function __construct(OpenApi $openApi, string $class)
@@ -108,7 +108,6 @@ class JsonResourceResponseExtractor
             } elseif ($v instanceof Schema) {
                 $type->addProperty($key, $v);
             }
-
         })->filter();
         $type->setRequired($requiredFields);
 
