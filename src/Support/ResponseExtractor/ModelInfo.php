@@ -96,23 +96,23 @@ class ModelInfo
     /**
      * Get the column attributes for the given model.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
+     * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return \Illuminate\Support\Collection
      */
     protected function getAttributes($model)
     {
         $schema = $model->getConnection()->getDoctrineSchemaManager();
-        $table = $model->getConnection()->getTablePrefix() . $model->getTable();
+        $table = $model->getConnection()->getTablePrefix().$model->getTable();
         $columns = $schema->listTableColumns($table);
         $indexes = $schema->listTableIndexes($table);
 
         return collect($columns)
             ->values()
-            ->map(fn(Column $column) => [
+            ->map(fn (Column $column) => [
                 'name' => $column->getName(),
                 'type' => $this->getColumnType($column),
                 'increments' => $column->getAutoincrement(),
-                'nullable' => !$column->getNotnull(),
+                'nullable' => ! $column->getNotnull(),
                 'default' => $this->getColumnDefault($column, $model),
                 'unique' => $this->columnIsUnique($column->getName(), $indexes),
                 'fillable' => $model->isFillable($column->getName()),
@@ -127,8 +127,8 @@ class ModelInfo
     /**
      * Get the virtual (non-column) attributes for the given model.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param \Doctrine\DBAL\Schema\Column[] $columns
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @param  \Doctrine\DBAL\Schema\Column[]  $columns
      * @return \Illuminate\Support\Collection
      */
     protected function getVirtualAttributes($model, $columns)
@@ -137,7 +137,7 @@ class ModelInfo
 
         return collect($class->getMethods())
             ->reject(
-                fn(ReflectionMethod $method) => $method->isStatic()
+                fn (ReflectionMethod $method) => $method->isStatic()
                     || $method->isAbstract()
                     || $method->getDeclaringClass()->getName() !== get_class($model)
             )
@@ -150,8 +150,8 @@ class ModelInfo
                     return [];
                 }
             })
-            ->reject(fn($cast, $name) => collect($columns)->has($name))
-            ->map(fn($cast, $name) => [
+            ->reject(fn ($cast, $name) => collect($columns)->has($name))
+            ->map(fn ($cast, $name) => [
                 'name' => $name,
                 'type' => null,
                 'increments' => false,
@@ -169,15 +169,15 @@ class ModelInfo
     /**
      * Get the relations from the given model.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
+     * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return \Illuminate\Support\Collection
      */
     protected function getRelations($model)
     {
         return collect(get_class_methods($model))
-            ->map(fn($method) => new ReflectionMethod($model, $method))
+            ->map(fn ($method) => new ReflectionMethod($model, $method))
             ->reject(
-                fn(ReflectionMethod $method) => $method->isStatic()
+                fn (ReflectionMethod $method) => $method->isStatic()
                     || $method->isAbstract()
                     || $method->getDeclaringClass()->getName() !== get_class($model)
             )
@@ -191,12 +191,12 @@ class ModelInfo
                 }
 
                 return collect($this->relationMethods)
-                    ->contains(fn($relationMethod) => str_contains($code, '$this->' . $relationMethod . '('));
+                    ->contains(fn ($relationMethod) => str_contains($code, '$this->'.$relationMethod.'('));
             })
             ->map(function (ReflectionMethod $method) use ($model) {
                 $relation = $method->invoke($model);
 
-                if (!$relation instanceof Relation) {
+                if (! $relation instanceof Relation) {
                     return null;
                 }
 
@@ -214,11 +214,11 @@ class ModelInfo
     /**
      * Render the model information as JSON.
      *
-     * @param string $class
-     * @param string $database
-     * @param string $table
-     * @param \Illuminate\Support\Collection $attributes
-     * @param \Illuminate\Support\Collection $relations
+     * @param  string  $class
+     * @param  string  $database
+     * @param  string  $table
+     * @param  \Illuminate\Support\Collection  $attributes
+     * @param  \Illuminate\Support\Collection  $relations
      * @return void
      */
     protected function displayJson($class, $database, $table, $attributes, $relations)
@@ -235,8 +235,8 @@ class ModelInfo
     /**
      * Get the cast type for the given column.
      *
-     * @param string $column
-     * @param \Illuminate\Database\Eloquent\Model $model
+     * @param  string  $column
+     * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return string|null
      */
     protected function getCastType($column, $model)
@@ -255,21 +255,21 @@ class ModelInfo
     /**
      * Get the model casts, including any date casts.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
+     * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return \Illuminate\Support\Collection
      */
     protected function getCastsWithDates($model)
     {
         return collect($model->getDates())
             ->flip()
-            ->map(fn() => 'datetime')
+            ->map(fn () => 'datetime')
             ->merge($model->getCasts());
     }
 
     /**
      * Get the type of the given column.
      *
-     * @param \Doctrine\DBAL\Schema\Column $column
+     * @param  \Doctrine\DBAL\Schema\Column  $column
      * @return string
      */
     protected function getColumnType($column)
@@ -279,7 +279,7 @@ class ModelInfo
         $unsigned = $column->getUnsigned() ? ' unsigned' : '';
 
         $details = get_class($column->getType()) === DecimalType::class
-            ? $column->getPrecision() . ',' . $column->getScale()
+            ? $column->getPrecision().','.$column->getScale()
             : $column->getLength();
 
         if ($details) {
@@ -292,8 +292,8 @@ class ModelInfo
     /**
      * Get the default value for the given column.
      *
-     * @param \Doctrine\DBAL\Schema\Column $column
-     * @param \Illuminate\Database\Eloquent\Model $model
+     * @param  \Doctrine\DBAL\Schema\Column  $column
+     * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return mixed|null
      */
     protected function getColumnDefault($column, $model)
@@ -306,8 +306,8 @@ class ModelInfo
     /**
      * Determine if the given attribute is hidden.
      *
-     * @param string $attribute
-     * @param \Illuminate\Database\Eloquent\Model $model
+     * @param  string  $attribute
+     * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return bool
      */
     protected function attributeIsHidden($attribute, $model)
@@ -317,7 +317,7 @@ class ModelInfo
         }
 
         if (count($model->getVisible()) > 0) {
-            return !in_array($attribute, $model->getVisible());
+            return ! in_array($attribute, $model->getVisible());
         }
 
         return false;
@@ -326,21 +326,21 @@ class ModelInfo
     /**
      * Determine if the given attribute is unique.
      *
-     * @param string $column
-     * @param \Doctrine\DBAL\Schema\Index[] $indexes
+     * @param  string  $column
+     * @param  \Doctrine\DBAL\Schema\Index[]  $indexes
      * @return bool
      */
     protected function columnIsUnique($column, $indexes)
     {
         return collect($indexes)
-            ->filter(fn(Index $index) => count($index->getColumns()) === 1 && $index->getColumns()[0] === $column)
-            ->contains(fn(Index $index) => $index->isUnique());
+            ->filter(fn (Index $index) => count($index->getColumns()) === 1 && $index->getColumns()[0] === $column)
+            ->contains(fn (Index $index) => $index->isUnique());
     }
 
     /**
      * Qualify the given model class base name.
      *
-     * @param string $model
+     * @param  string  $model
      * @return string
      *
      * @see \Illuminate\Console\GeneratorCommand
@@ -362,7 +362,7 @@ class ModelInfo
         }
 
         return is_dir(app_path('Models'))
-            ? $rootNamespace . 'Models\\' . $model
-            : $rootNamespace . $model;
+            ? $rootNamespace.'Models\\'.$model
+            : $rootNamespace.$model;
     }
 }

@@ -2,7 +2,6 @@
 
 namespace Dedoc\Documentor\Support\Generator;
 
-use Dedoc\Documentor\Support\Generator\Types\BooleanType;
 use Dedoc\Documentor\Support\Generator\Types\ObjectType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
 use Dedoc\Documentor\Support\Generator\Types\Type;

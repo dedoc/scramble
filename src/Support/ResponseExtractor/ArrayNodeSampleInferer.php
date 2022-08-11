@@ -8,8 +8,8 @@ use Dedoc\Documentor\Support\Generator\Types\BooleanType;
 use Dedoc\Documentor\Support\Generator\Types\IntegerType;
 use Dedoc\Documentor\Support\Generator\Types\NumberType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
-use Illuminate\Support\Collection;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayItem;
@@ -37,6 +37,7 @@ class ArrayNodeSampleInferer
     private OpenApi $openApi;
 
     private $getFqName;
+
     private ?Collection $modelInfo;
 
     public function __construct(OpenApi $openApi, Array_ $arrayNode, callable $getFqName, ?Collection $modelInfo)
