@@ -2,6 +2,7 @@
 
 namespace Dedoc\Documentor;
 
+use App\Http\Resources\TodoItemResource;
 use Dedoc\Documentor\Support\Generator\InfoObject;
 use Dedoc\Documentor\Support\Generator\OpenApi;
 use Dedoc\Documentor\Support\Generator\Operation;
@@ -14,6 +15,8 @@ use Dedoc\Documentor\Support\Generator\Types\BooleanType;
 use Dedoc\Documentor\Support\Generator\Types\IntegerType;
 use Dedoc\Documentor\Support\Generator\Types\NumberType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
+use Dedoc\Documentor\Support\ResponseExtractor\JsonResourceResponseExtractor;
+use Dedoc\Documentor\Support\ResponseExtractor\ResponsesExtractor;
 use Dedoc\Documentor\Support\RulesExtractor\FormRequestRulesExtractor;
 use Dedoc\Documentor\Support\RulesExtractor\ValidateCallExtractor;
 use Illuminate\Http\Request;
@@ -77,7 +80,9 @@ class Generator
             })
 //            ->filter(fn (Route $route) => Str::contains($route->uri, 'impersonate'))
 //            ->filter(fn (Route $route) => $route->uri === 'api/brand/{brand}/creators-import/claim'&& $route->methods()[0] === 'PUT')
-//            ->filter(fn (Route $route) => $route->uri === 'api/thread/{thread}/subscriptions'&& $route->methods()[0] === 'POST')
+//            ->filter(fn (Route $route) => $route->uri === 'api/campaigns'&& $route->methods()[0] === 'POST')
+//            ->filter(fn (Route $route) => $route->uri === 'api/creators/{creator}'&& $route->methods()[0] === 'PUT')
+//            ->filter(fn (Route $route) => $route->uri === 'api/todo-item' && $route->methods()[0] === 'POST')
             ->filter(fn (Route $route) => in_array('api', $route->gatherMiddleware()))
 //            ->filter(fn (Route $route) => Str::contains($route->getAction('as'), 'api.creators.update'))
             ->values();
@@ -85,42 +90,29 @@ class Generator
 
     private function routeToOperation(Route $route)
     {
+        /** @var Node\Stmt\ClassMethod|null $methodNode */
+        /** @var PhpDocNode|null $methodPhpDocNode */
+        /** @var \ReflectionMethod|null $reflectionMethod */
+        [$methodNode, $methodPhpDocNode, $reflectionMethod, $classAliasesMap] = $this->extractNodes($route);
+
         $summary = Str::of('');
         $description = Str::of('');
 
-        $methodPhpDocNode = null;
-        if (($uses = $route->getAction('uses')) && is_string($uses)) {
-            [$className, $method] = explode('@', $uses);
+        if ($methodPhpDocNode) {
+            $text = collect($methodPhpDocNode->children)
+                ->filter(fn ($v) => $v instanceof PhpDocTextNode)
+                ->map(fn (PhpDocTextNode $n) => $n->text)
+                ->implode("\n");
 
-            if (method_exists($className, $method)) {
-                $reflection = new ReflectionClass($className);
-                $method = $reflection->getMethod($method);
+            $text = Str::of($text)
+                ->trim()
+                ->explode("\n\n", 2);
 
-                if ($docComment = $method->getDocComment()) {
-                    $lexer = new Lexer();
-                    $constExprParser = new ConstExprParser();
-                    $typeParser = new TypeParser($constExprParser);
-                    $phpDocParser = new PhpDocParser($typeParser, $constExprParser);
-
-                    $tokens = new TokenIterator($lexer->tokenize($docComment));
-                    $methodPhpDocNode = $phpDocParser->parse($tokens);
-
-                    $text = collect($methodPhpDocNode->children)
-                        ->filter(fn ($v) => $v instanceof PhpDocTextNode)
-                        ->map(fn (PhpDocTextNode $n) => $n->text)
-                        ->implode("\n");
-
-                    $text = Str::of($text)
-                        ->trim()
-                        ->explode("\n\n", 2);
-
-                    if (count($text) === 2) {
-                        $summary = Str::of($text[0]);
-                        $description = Str::of($text[1]);
-                    } elseif (count($text) === 1) {
-                        $description = Str::of($text[0]);
-                    }
-                }
+            if (count($text) === 2) {
+                $summary = Str::of($text[0]);
+                $description = Str::of($text[1]);
+            } elseif (count($text) === 1) {
+                $description = Str::of($text[0]);
             }
         }
 
@@ -141,7 +133,7 @@ class Generator
 
         /** @var Parameter[] $bodyParams */
         try {
-            if (count($bodyParams = $this->extractParamsFromRequestValidationRules($route))) {
+            if (count($bodyParams = $this->extractParamsFromRequestValidationRules($route, $methodNode, $classAliasesMap))) {
                 if ($method !== 'get') {
                     $operation->addRequestBodyObject(
                         RequestBodyObject::make()->setContent('application/json', Schema::createFromParameters($bodyParams))
@@ -163,14 +155,18 @@ class Generator
             $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
         }
 
-        $operation
-            ->addResponse(
-                Response::make(200)
-                    ->setContent(
-                        'application/json',
-                        Schema::createFromArray([])
-                    )
-            );
+        $responses = (new ResponsesExtractor($route, $methodNode, $reflectionMethod, $classAliasesMap))();
+//        dd($responses);
+        foreach ($responses as $response) {
+            $operation->addResponse($response);
+        }
+
+
+//        dd($response);
+
+//        if ($response) {
+//            $operation->addResponse($response);
+//        }
 
         $operation
             ->summary($summary->rtrim('.'))
@@ -262,9 +258,9 @@ class Generator
         return [$params, $aliases];
     }
 
-    private function extractParamsFromRequestValidationRules(Route $route)
+    private function extractParamsFromRequestValidationRules(Route $route, ?Node\Stmt\ClassMethod $methodNode, $classAliasesMap)
     {
-        $rules = $this->extractRouteRequestValidationRules($route);
+        $rules = $this->extractRouteRequestValidationRules($route, $methodNode, $classAliasesMap);
 
         if (! $rules) {
             return [];
@@ -327,38 +323,59 @@ class Generator
             ->all();
     }
 
-    private function extractRouteRequestValidationRules(Route $route)
+    private function extractRouteRequestValidationRules(Route $route, $methodNode, $classAliasesMap)
     {
-        $parser = (new ParserFactory)->create(ParserFactory::PREFER_PHP7);
-
-        // @todo: support closures, not only "Controller@action" string
-        if (! is_string($uses = $route->getAction('uses'))) {
-            return null;
-        }
-
-        [$class, $method] = explode('@', $uses);
-
-        $reflectionClass = new ReflectionClass($class);
-
-        $classSourceCode = file_get_contents($reflectionClass->getFileName());
-        $classAst = $parser->parse($classSourceCode);
-
-        /** @var Node\Stmt\ClassMethod $methodNode */
-        [$methodNode, $aliases] = $this->findFirstNode(
-            $classAst,
-            fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $method
-        );
-
         // Custom form request's class `validate` method
         if (($formRequestRulesExtractor = new FormRequestRulesExtractor($methodNode))->shouldHandle()) {
             return $formRequestRulesExtractor->extract($route);
         }
 
-        if (($validateCallExtractor = new ValidateCallExtractor($methodNode, $aliases))->shouldHandle()) {
+        if (($validateCallExtractor = new ValidateCallExtractor($methodNode, $classAliasesMap))->shouldHandle()) {
             return $validateCallExtractor->extract($route);
         }
 
         return null;
+    }
+
+    private function extractNodes(Route $route)
+    {
+        /** @var Node\Stmt\ClassMethod|null $methodNode */
+        $methodNode = null;
+        /** @var PhpDocNode|null $methodPhpDocNode */
+        $methodPhpDocNode = null;
+        /** @var \ReflectionMethod|null $reflectionMethod */
+        $reflectionMethod = null;
+        $aliases = [];
+
+        // @todo: support closures, not only "Controller@action" string
+        if (is_string($uses = $route->getAction('uses'))) {
+            [$class, $method] = explode('@', $uses);
+            $reflectionClass = new ReflectionClass($class);
+            $classSourceCode = file_get_contents($reflectionClass->getFileName());
+            $classAst = (new ParserFactory)->create(ParserFactory::PREFER_PHP7)->parse($classSourceCode);
+
+            /** @var Node\Stmt\ClassMethod $methodNode */
+            [$methodNode, $aliases] = $this->findFirstNode(
+                $classAst,
+                fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $method
+            );
+
+            if ($methodNode) {
+                $reflectionMethod = $reflectionClass->getMethod($method);
+
+                if ($docComment = $reflectionMethod->getDocComment()) {
+                    $lexer = new Lexer();
+                    $constExprParser = new ConstExprParser();
+                    $typeParser = new TypeParser($constExprParser);
+                    $phpDocParser = new PhpDocParser($typeParser, $constExprParser);
+
+                    $tokens = new TokenIterator($lexer->tokenize($docComment));
+                    $methodPhpDocNode = $phpDocParser->parse($tokens);
+                }
+            }
+        }
+
+        return [$methodNode, $methodPhpDocNode, $reflectionMethod, $aliases];
     }
 
     private function findFirstNode(?array $classAst, \Closure $param)
@@ -373,7 +390,6 @@ class Generator
 
         /** @var Node\Stmt\ClassMethod $methodNode */
         $methodNode = $visitor->getFoundNode();
-        $nameContext = $nameResolver->getNameContext();
 
         // @todo Fix dirty way of getting the map of aliases
         $context = $nameResolver->getNameContext();
