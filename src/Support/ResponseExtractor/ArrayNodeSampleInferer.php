@@ -3,7 +3,12 @@
 namespace Dedoc\Documentor\Support\ResponseExtractor;
 
 use Dedoc\Documentor\Support\Generator\OpenApi;
-use Dedoc\Documentor\Support\Generator\Schema;
+use Dedoc\Documentor\Support\Generator\Types\ArrayType;
+use Dedoc\Documentor\Support\Generator\Types\BooleanType;
+use Dedoc\Documentor\Support\Generator\Types\IntegerType;
+use Dedoc\Documentor\Support\Generator\Types\NumberType;
+use Dedoc\Documentor\Support\Generator\Types\StringType;
+use Illuminate\Support\Collection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
@@ -18,11 +23,12 @@ use PhpParser\Node\Scalar\String_;
  * - key type when string +
  * - value type from property fetch on resource ($this->id)
  * - value type from property fetch on resource prop ($this->resource->id)
- * - value type from resource construction (new SomeResource(xxx)), when xxx is `when` call, key is optional
+ * - value type from resource construction (new SomeResource(xxx)), when xxx is `when` call, key is optional +
  * - optionally merged arrays:
  * -- mergeWhen +
  * -- merge +
  * -- when
+ * - same name resources
  */
 class ArrayNodeSampleInferer
 {
@@ -31,12 +37,14 @@ class ArrayNodeSampleInferer
     private OpenApi $openApi;
 
     private $getFqName;
+    private ?Collection $modelInfo;
 
-    public function __construct(OpenApi $openApi, Array_ $arrayNode, callable $getFqName)
+    public function __construct(OpenApi $openApi, Array_ $arrayNode, callable $getFqName, ?Collection $modelInfo)
     {
         $this->node = $arrayNode;
         $this->openApi = $openApi;
         $this->getFqName = $getFqName;
+        $this->modelInfo = $modelInfo;
     }
 
     public function __invoke()
@@ -60,10 +68,10 @@ class ArrayNodeSampleInferer
                         $requiredFields[] = $arrayItem->key->value;
                     }
 
-                    (new JsonResourceResponseExtractor($this->openApi, $resourceClassName))->extract();
+                    $response = (new JsonResourceResponseExtractor($this->openApi, $resourceClassName))->extract();
 
                     return [
-                        $arrayItem->key->value => Schema::reference('schemas', class_basename($resourceClassName)),
+                        $arrayItem->key->value => $response->getContent('application/json'),
                     ];
                 }
 
@@ -91,7 +99,7 @@ class ArrayNodeSampleInferer
                         }
 
                         if ($argValue instanceof Array_) {
-                            [$sampleResponse] = (new ArrayNodeSampleInferer($this->openApi, $argValue, $this->getFqName))();
+                            [$sampleResponse] = (new ArrayNodeSampleInferer($this->openApi, $argValue, $this->getFqName, $this->modelInfo))();
 
                             return $sampleResponse;
                         }
@@ -111,7 +119,7 @@ class ArrayNodeSampleInferer
                         }
 
                         if ($argValue instanceof Array_) {
-                            [$sampleResponse, $requiredArrayFields] = (new ArrayNodeSampleInferer($this->openApi, $argValue, $this->getFqName))();
+                            [$sampleResponse, $requiredArrayFields] = (new ArrayNodeSampleInferer($this->openApi, $argValue, $this->getFqName, $this->modelInfo))();
 
                             $requiredFields = array_merge($requiredFields, $requiredArrayFields);
 
@@ -129,6 +137,54 @@ class ArrayNodeSampleInferer
 
     private function getArrayItemValueSample(Expr $value)
     {
+        // value type from property fetch on resource ($this->id)
+        $isThisPropertyFetch = $value instanceof Expr\PropertyFetch
+            && $value->var instanceof Expr\Variable
+            && is_string($value->var->name)
+            && $value->var->name === 'this';
+
+        // value type from property fetch on resource prop ($this->resource->id)
+        $isThisResourcePropertyFetch = $value instanceof Expr\PropertyFetch
+            && (
+                $value->var instanceof Expr\PropertyFetch
+                && $value->var->var instanceof Expr\Variable
+                && is_string($value->var->var->name)
+                && $value->var->var->name === 'this'
+                && $value->var->name instanceof Identifier && $value->var->name->toString() === 'resource'
+            );
+
+        if (
+            ($isThisPropertyFetch || $isThisResourcePropertyFetch)
+            && $value->name instanceof Identifier
+        ) {
+            $attrType = $this->modelInfo['attributes'][$value->name->toString()] ?? null;
+
+            if ($attrType) {
+                $schemaTypes = [
+                    'int' => new IntegerType(),
+                    'integer' => new IntegerType(),
+                    'bigint' => new IntegerType(),
+                    'float' => new NumberType(),
+                    'double' => new NumberType(),
+                    'string' => new StringType(),
+                    'datetime' => new StringType(),
+                    'bool' => new BooleanType(),
+                    'boolean' => new BooleanType(),
+                    'array' => new ArrayType(),
+                ];
+
+                $type = $schemaTypes[explode(' ', $attrType['type'])[0]] ?? $schemaTypes[$attrType['cast']] ?? new StringType();
+                $type->nullable((bool) $attrType['nullable']);
+
+                return $type;
+            }
+        }
+
+//        if (
+//            $value instanceof Expr\PropertyFetch
+//            && $value->var instanceof Expr\Variable && is_string($value->var->name) && $value->var->name === 'this'
+//            && $attrType = optional($this->modelInfo)->get('attributes')->get()
+//        )
         return '';
     }
 }

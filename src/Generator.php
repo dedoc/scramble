@@ -80,6 +80,7 @@ class Generator
 //            ->filter(fn (Route $route) => $route->uri === 'api/campaigns'&& $route->methods()[0] === 'POST')
 //            ->filter(fn (Route $route) => $route->uri === 'api/creators/{creator}'&& $route->methods()[0] === 'PUT')
 //            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}/brief' && $route->methods()[0] === 'POST')
+//            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}' && $route->methods()[0] === 'PUT')
 //            ->filter(fn (Route $route) => $route->uri === 'api/todo-item' && $route->methods()[0] === 'POST')
             ->filter(fn (Route $route) => in_array('api', $route->gatherMiddleware()))
 //            ->filter(fn (Route $route) => Str::contains($route->getAction('as'), 'api.creators.update'))

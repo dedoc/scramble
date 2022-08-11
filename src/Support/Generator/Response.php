@@ -42,7 +42,10 @@ class Response
         $result['content'] = $content;
 
         return $result;
+    }
 
-        return $result;
+    public function getContent(string $mediaType)
+    {
+        return $this->content[$mediaType];
     }
 }

@@ -7,6 +7,8 @@ use Dedoc\Documentor\Support\Generator\Response;
 use Dedoc\Documentor\Support\Generator\Schema;
 use Dedoc\Documentor\Support\Generator\Types\ObjectType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
+use Dedoc\Documentor\Support\Generator\Types\Type;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
@@ -53,6 +55,10 @@ class JsonResourceResponseExtractor
         }
 
         $modelClass = $this->getModelName($reflectionClass, $getFqName);
+        $modelInfo = null;
+        if ($modelClass && is_a($modelClass, Model::class, true)) {
+            $modelInfo = (new ModelInfo($modelClass))->handle();
+        }
 
         /*
          * To describe the response Documentor uses 2 strategies:
@@ -83,7 +89,7 @@ class JsonResourceResponseExtractor
         }
 
         if ($returnNode->expr instanceof Node\Expr\Array_) {
-            [$sampleResponse, $requiredFields] = (new ArrayNodeSampleInferer($this->openApi, $returnNode->expr, $getFqName))();
+            [$sampleResponse, $requiredFields] = (new ArrayNodeSampleInferer($this->openApi, $returnNode->expr, $getFqName, $modelInfo))();
         }
 
         if (! isset($sampleResponse)) {
@@ -106,6 +112,8 @@ class JsonResourceResponseExtractor
             if (is_string($v)) {
                 $type->addProperty($key, new StringType);
             } elseif ($v instanceof Schema) {
+                $type->addProperty($key, $v);
+            } elseif ($v instanceof Type) {
                 $type->addProperty($key, $v);
             }
         })->filter();
