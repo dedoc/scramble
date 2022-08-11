@@ -2,8 +2,6 @@
 
 namespace Dedoc\Documentor\Support\ResponseExtractor;
 
-use App\Http\Resources\TodoItemResource;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Route;
 use PhpParser\Node;
@@ -13,8 +11,11 @@ use PhpParser\NodeFinder;
 class ResponsesExtractor
 {
     private Route $route;
+
     private ?ClassMethod $methodNode;
+
     private ?\ReflectionMethod $reflectionMethod;
+
     private array $classAliasesMap;
 
     public function __construct(Route $route, ?ClassMethod $methodNode, ?\ReflectionMethod $reflectionMethod, array $classAliasesMap)
@@ -33,6 +34,7 @@ class ResponsesExtractor
             if (is_a($type, JsonResource::class, true)) {
                 return (new JsonResourceResponseExtractor($type))->extract();
             }
+
             return null;
         }, $types));
     }
@@ -82,6 +84,4 @@ class ResponsesExtractor
 
         return null;
     }
-
-
 }

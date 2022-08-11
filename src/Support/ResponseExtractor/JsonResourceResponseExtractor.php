@@ -2,13 +2,11 @@
 
 namespace Dedoc\Documentor\Support\ResponseExtractor;
 
-use Dedoc\Documentor\Support\Generator\Parameter;
 use Dedoc\Documentor\Support\Generator\Response;
 use Dedoc\Documentor\Support\Generator\Schema;
 use Dedoc\Documentor\Support\Generator\Types\ObjectType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
 use Illuminate\Support\Str;
-use Illuminate\Http\Resources\Json\JsonResource;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
@@ -89,7 +87,7 @@ class JsonResourceResponseExtractor
 
         $schema = Schema::fromType($type = new ObjectType);
 
-        collect($sampleResponse)->each(function ($v, $key) use ($requiredFields, $type) {
+        collect($sampleResponse)->each(function ($v, $key) use ($type) {
             if (! is_string($key)) {
                 return;
             }

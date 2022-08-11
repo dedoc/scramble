@@ -2,20 +2,17 @@
 
 namespace Dedoc\Documentor;
 
-use App\Http\Resources\TodoItemResource;
 use Dedoc\Documentor\Support\Generator\InfoObject;
 use Dedoc\Documentor\Support\Generator\OpenApi;
 use Dedoc\Documentor\Support\Generator\Operation;
 use Dedoc\Documentor\Support\Generator\Parameter;
 use Dedoc\Documentor\Support\Generator\Path;
 use Dedoc\Documentor\Support\Generator\RequestBodyObject;
-use Dedoc\Documentor\Support\Generator\Response;
 use Dedoc\Documentor\Support\Generator\Schema;
 use Dedoc\Documentor\Support\Generator\Types\BooleanType;
 use Dedoc\Documentor\Support\Generator\Types\IntegerType;
 use Dedoc\Documentor\Support\Generator\Types\NumberType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
-use Dedoc\Documentor\Support\ResponseExtractor\JsonResourceResponseExtractor;
 use Dedoc\Documentor\Support\ResponseExtractor\ResponsesExtractor;
 use Dedoc\Documentor\Support\RulesExtractor\FormRequestRulesExtractor;
 use Dedoc\Documentor\Support\RulesExtractor\ValidateCallExtractor;
@@ -160,7 +157,6 @@ class Generator
         foreach ($responses as $response) {
             $operation->addResponse($response);
         }
-
 
 //        dd($response);
 
