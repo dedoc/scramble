@@ -5,7 +5,9 @@ namespace Dedoc\Documentor\Support\Generator;
 class Reference
 {
     private string $referenceType;
+
     private string $fullName;
+
     private Components $components;
 
     public function __construct(string $referenceType, string $fullName, Components $components)

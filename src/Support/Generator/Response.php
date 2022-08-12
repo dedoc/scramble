@@ -22,7 +22,7 @@ class Response
     }
 
     /**
-     * @param Schema|Reference $schema
+     * @param  Schema|Reference  $schema
      */
     public function setContent(string $type, $schema)
     {

@@ -30,7 +30,7 @@ class Components
             $result['schemas'] = collect($this->schemas)
                 ->mapWithKeys(function (Schema $s, string $fullName) {
                     return [
-                        $this->uniqueSchemaName($fullName) => $s->setTitle($this->uniqueSchemaName($fullName))->toArray()
+                        $this->uniqueSchemaName($fullName) => $s->setTitle($this->uniqueSchemaName($fullName))->toArray(),
                     ];
                 })
                 ->toArray();
