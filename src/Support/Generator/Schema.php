@@ -14,6 +14,8 @@ class Schema
 
     private ?string $reference = null;
 
+    private ?string $title = null;
+
     private array $enum = [];
 
     public static function fromType(Type $type)
@@ -41,6 +43,7 @@ class Schema
 
         return array_merge($this->type->toArray(), array_filter([
             'enum' => $enum,
+            'title' => $this->title,
         ]));
     }
 
@@ -77,6 +80,12 @@ class Schema
     {
         $this->reference = $reference;
 
+        return $this;
+    }
+
+    public function setTitle(?string $title): Schema
+    {
+        $this->title = $title;
         return $this;
     }
 }

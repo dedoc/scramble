@@ -21,14 +21,14 @@ use PhpParser\Node\Scalar\String_;
  * Simple static analysis is really simple. It works only when array is returned from `toArray` and
  * can understand only few things regarding typing:
  * - key type when string +
- * - value type from property fetch on resource ($this->id)
- * - value type from property fetch on resource prop ($this->resource->id)
+ * - value type from property fetch on resource ($this->id) +
+ * - value type from property fetch on resource prop ($this->resource->id) +
  * - value type from resource construction (new SomeResource(xxx)), when xxx is `when` call, key is optional +
+ * - arrays within (objects)
  * - optionally merged arrays:
  * -- mergeWhen +
  * -- merge +
  * -- when
- * - same name resources
  */
 class ArrayNodeSampleInferer
 {
@@ -37,6 +37,7 @@ class ArrayNodeSampleInferer
     private OpenApi $openApi;
 
     private $getFqName;
+
     private ?Collection $modelInfo;
 
     public function __construct(OpenApi $openApi, Array_ $arrayNode, callable $getFqName, ?Collection $modelInfo)

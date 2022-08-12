@@ -103,7 +103,7 @@ class JsonResourceResponseExtractor
 //
 //        [$sampleResponse, $requiredFields] = $this->getSampleResponse($modelClass);
 
-        $schema = Schema::fromType($type = new ObjectType);
+        $schema = Schema::fromType($type = new ObjectType)->setTitle($schemaName);
         collect($sampleResponse)->each(function ($v, $key) use ($type) {
             if (! is_string($key)) {
                 return;
@@ -202,6 +202,6 @@ class JsonResourceResponseExtractor
             return null;
         }
 
-        return null;
+        return $modelClass;
     }
 }
