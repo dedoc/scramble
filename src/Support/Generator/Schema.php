@@ -85,6 +85,7 @@ class Schema
     public function setTitle(?string $title): Schema
     {
         $this->title = $title;
+
         return $this;
     }
 }
