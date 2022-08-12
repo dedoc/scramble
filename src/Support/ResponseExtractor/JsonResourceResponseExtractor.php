@@ -3,6 +3,7 @@
 namespace Dedoc\Documentor\Support\ResponseExtractor;
 
 use Dedoc\Documentor\Support\Generator\OpenApi;
+use Dedoc\Documentor\Support\Generator\Reference;
 use Dedoc\Documentor\Support\Generator\Response;
 use Dedoc\Documentor\Support\Generator\Schema;
 use Dedoc\Documentor\Support\Generator\Types\ObjectType;
@@ -32,11 +33,14 @@ class JsonResourceResponseExtractor
 
     public function extract(): ?Response
     {
-        if ($this->openApi->components->hasSchema($schemaName = class_basename($this->class))) {
+        $schemaName = class_basename($this->class);
+
+        if ($this->openApi->components->hasSchema($this->class)) {
             return Response::make(200)
+                ->description($this->openApi->components->uniqueSchemaName($this->class))
                 ->setContent(
                     'application/json',
-                    Schema::reference('schemas', $schemaName)
+                    new Reference('schemas', $this->class, $this->openApi->components),
                 );
         }
 
@@ -115,17 +119,20 @@ class JsonResourceResponseExtractor
                 $type->addProperty($key, $v);
             } elseif ($v instanceof Type) {
                 $type->addProperty($key, $v);
+            } elseif ($v instanceof Reference) {
+                $type->addProperty($key, $v);
             }
         })->filter();
         $type->setRequired($requiredFields);
 
         // Each resource is saved as a schema.
-        $this->openApi
+        $schemaReference = $this->openApi
             ->components
-            ->addSchema($schemaName, $schema);
+            ->addSchema($this->class, $schema);
 
         return Response::make(200)
-            ->setContent('application/json', Schema::reference('schemas', $schemaName));
+            ->description($this->openApi->components->uniqueSchemaName($this->class))
+            ->setContent('application/json', $schemaReference);
     }
 
     private function getSampleResponse(string $modelClass)

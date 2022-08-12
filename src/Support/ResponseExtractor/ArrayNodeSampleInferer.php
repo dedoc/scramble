@@ -3,12 +3,15 @@
 namespace Dedoc\Documentor\Support\ResponseExtractor;
 
 use Dedoc\Documentor\Support\Generator\OpenApi;
+use Dedoc\Documentor\Support\Generator\Schema;
 use Dedoc\Documentor\Support\Generator\Types\ArrayType;
 use Dedoc\Documentor\Support\Generator\Types\BooleanType;
 use Dedoc\Documentor\Support\Generator\Types\IntegerType;
 use Dedoc\Documentor\Support\Generator\Types\NumberType;
+use Dedoc\Documentor\Support\Generator\Types\ObjectType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Collection;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
@@ -59,6 +62,7 @@ class ArrayNodeSampleInferer
                     && $arrayItem->value instanceof Expr\New_
                     && $arrayItem->value->class instanceof Name
                     && is_a($resourceClassName = ($this->getFqName)($arrayItem->value->class->toString()), JsonResource::class, true)
+                    && ! is_a($resourceClassName, ResourceCollection::class, true)
                 ) {
                     // if call to `whenLoaded` in constructor, then field is not required
                     $isCallToWhenLoaded = $arrayItem->value->args[0]->value instanceof Expr\MethodCall
