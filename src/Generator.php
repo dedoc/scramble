@@ -76,7 +76,7 @@ class Generator
                 return ! Str::startsWith($name, 'documentor');
             })
 //            ->filter(fn (Route $route) => Str::contains($route->uri, 'impersonate'))
-//            ->filter(fn (Route $route) => $route->uri === 'api/brand/{brand}/creators-import/claim'&& $route->methods()[0] === 'PUT')
+//            ->filter(fn (Route $route) => $route->uri === 'api/brand/{brand}/publishers/{publisher}'&& $route->methods()[0] === 'GET')
 //            ->filter(fn (Route $route) => $route->uri === 'api/campaigns'&& $route->methods()[0] === 'POST')
 //            ->filter(fn (Route $route) => $route->uri === 'api/creators/{creator}'&& $route->methods()[0] === 'PUT')
 //            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}/brief' && $route->methods()[0] === 'POST')

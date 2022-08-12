@@ -7,6 +7,7 @@ use Dedoc\Documentor\Support\Generator\Types\ArrayType;
 use Dedoc\Documentor\Support\Generator\Types\BooleanType;
 use Dedoc\Documentor\Support\Generator\Types\IntegerType;
 use Dedoc\Documentor\Support\Generator\Types\NumberType;
+use Dedoc\Documentor\Support\Generator\Types\ObjectType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -25,7 +26,7 @@ use PhpParser\Node\Scalar\String_;
  * - value type from property fetch on resource ($this->id) +
  * - value type from property fetch on resource prop ($this->resource->id) +
  * - value type from resource construction (new SomeResource(xxx)), when xxx is `when` call, key is optional +
- * - arrays within (objects)
+ * - arrays within (objects) +
  * - optionally merged arrays:
  * -- mergeWhen +
  * -- merge +
@@ -72,9 +73,64 @@ class ArrayNodeSampleInferer
                     }
 
                     $response = (new JsonResourceResponseExtractor($this->openApi, $resourceClassName))->extract();
+                    if (! $response) {
+                        return [
+                            $arrayItem->key->value => new StringType,
+                        ];
+                    }
 
                     return [
                         $arrayItem->key->value => $response->getContent('application/json'),
+                    ];
+                }
+
+                // array
+                if (
+                    $arrayItem->key instanceof String_
+                    && $arrayItem->value instanceof Expr\Array_
+                ) {
+                    $type = new StringType;
+
+                    $requiredFields[] = $arrayItem->key->value;
+
+                    [$sampleResponse, $requiredSampleFields] = (new ArrayNodeSampleInferer($this->openApi, $arrayItem->value, $this->getFqName, $this->modelInfo))();
+                    if ($sampleResponse) {
+                        $type = (new ObjectType);
+                        foreach ($sampleResponse as $key => $value) {
+                            $type->addProperty($key, $value);
+                        }
+                        $type->setRequired($requiredSampleFields);
+                    }
+
+                    return [
+                        $arrayItem->key->value => $type,
+                    ];
+                }
+
+                // call to when
+                if (
+                    $arrayItem->key instanceof String_
+                    && $arrayItem->value instanceof Expr\MethodCall
+                    && $arrayItem->value->var instanceof Expr\Variable && $arrayItem->value->var->name === 'this'
+                    && $arrayItem->value->name instanceof Identifier && $arrayItem->value->name->toString() === 'when'
+                    && isset($arrayItem->value->args[1])
+                ) {
+                    $argValue = $arrayItem->value->args[1]->value;
+                    if ($argValue instanceof Expr\Closure) {
+                        $argValue = $argValue->stmts[count($argValue->stmts) - 1]->expr ?? null;
+                    }
+                    if ($argValue instanceof Expr\ArrowFunction) {
+                        $argValue = $argValue->expr;
+                    }
+
+                    $syntheticArray = new Array_([
+                        new ArrayItem($argValue, new String_('check'))
+                    ]);
+
+                    [$sampleResponse,] = (new ArrayNodeSampleInferer($this->openApi, $syntheticArray, $this->getFqName, $this->modelInfo))();
+
+                    return [
+                        $arrayItem->key->value => $sampleResponse['check'],
                     ];
                 }
 
@@ -100,6 +156,9 @@ class ArrayNodeSampleInferer
                         if ($argValue instanceof Expr\Closure) {
                             $argValue = $argValue->stmts[count($argValue->stmts) - 1]->expr ?? null;
                         }
+                        if ($argValue instanceof Expr\ArrowFunction) {
+                            $argValue = $argValue->expr;
+                        }
 
                         if ($argValue instanceof Array_) {
                             [$sampleResponse] = (new ArrayNodeSampleInferer($this->openApi, $argValue, $this->getFqName, $this->modelInfo))();
@@ -119,6 +178,9 @@ class ArrayNodeSampleInferer
 
                         if ($argValue instanceof Expr\Closure) {
                             $argValue = $argValue->stmts[count($argValue->stmts) - 1]->expr ?? null;
+                        }
+                        if ($argValue instanceof Expr\ArrowFunction) {
+                            $argValue = $argValue->expr;
                         }
 
                         if ($argValue instanceof Array_) {
