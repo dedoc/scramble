@@ -125,7 +125,7 @@ class ArrayNodeSampleInferer
                     }
 
                     $syntheticArray = new Array_([
-                        new ArrayItem($argValue, new String_('check'))
+                        new ArrayItem($argValue, new String_('check')),
                     ]);
 
                     [$sampleResponse,] = (new ArrayNodeSampleInferer($this->openApi, $syntheticArray, $this->getFqName, $this->modelInfo))();
