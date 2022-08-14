@@ -27,10 +27,11 @@ use PhpParser\Node\Scalar\String_;
  * - value type from property fetch on resource prop ($this->resource->id) +
  * - value type from resource construction (new SomeResource(xxx)), when xxx is `when` call, key is optional +
  * - arrays within (objects) +
- * - optionally merged arrays:
+ * - optionally merged arrays: +
  * -- mergeWhen +
  * -- merge +
- * -- when
+ * -- when +
+ * - manual typings
  */
 class ArrayNodeSampleInferer
 {
