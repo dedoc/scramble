@@ -80,6 +80,4 @@ class ArrayShapeNodeHandler implements TypeHandler
             && $this->node->items[1]->keyName === null
             && ($this->node->items[0]->valueType->name ?? 'string') === 'string';
     }
-
-
 }

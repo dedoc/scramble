@@ -14,7 +14,8 @@ expect(true)->toBeTrue();
 return;
  */
 
-function getTypeFromDoc (string $phpDoc) {
+function getTypeFromDoc(string $phpDoc)
+{
     $docNode = PhpDoc::parse($phpDoc);
     $varNode = $docNode->getVarTagValues()[0];
 
@@ -77,7 +78,8 @@ it('determines type from phpdoc array', function () {
     expect(true)->toBeTrue();
 })->skip();
 
-class TestResource extends JsonResource {
+class TestResource extends JsonResource
+{
     public function toArray($request)
     {
         return [
@@ -87,7 +89,8 @@ class TestResource extends JsonResource {
     }
 }
 
-class DestResource extends JsonResource {
+class DestResource extends JsonResource
+{
     public function toArray($request)
     {
         return [

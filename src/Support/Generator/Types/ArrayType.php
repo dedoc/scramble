@@ -25,6 +25,7 @@ class ArrayType extends Type
     public function setItems($items)
     {
         $this->items = $items;
+
         return $this;
     }
 }
