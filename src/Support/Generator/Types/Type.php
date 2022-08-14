@@ -6,6 +6,8 @@ abstract class Type
 {
     protected string $type;
 
+    protected string $description = '';
+
     protected bool $nullable = false;
 
     public function __construct(string $type)
@@ -22,8 +24,15 @@ abstract class Type
 
     public function toArray()
     {
-        return [
+        return array_filter([
             'type' => $this->nullable ? [$this->type, 'null'] : $this->type,
-        ];
+            'description' => $this->description,
+        ]);
+    }
+
+    public function setDescription(string $description): Type
+    {
+        $this->description = $description;
+        return $this;
     }
 }

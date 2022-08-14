@@ -143,12 +143,16 @@ class ArrayNodeSampleInferer
                     $docNode = PhpDoc::parse($doc->getText());
                     $varNode = $docNode->getVarTagValues()[0] ?? null;
 
-                    if ($varNode->type ?? null) {
-                        return [$arrayItem->key->value => TypeHandlers::handle($varNode->type) ?: new StringType];
+                    // @todo: unknown type
+                    $type = $varNode->type
+                        ? (TypeHandlers::handle($varNode->type) ?: new StringType)
+                        : new StringType;
+
+                    if ($varNode->description) {
+                        $type->setDescription($varNode->description);
                     }
 
-                    // @todo: unknown type
-                    return [$arrayItem->key->value => new StringType];
+                    return [$arrayItem->key->value => $type];
                 }
 
                 if ($arrayItem->key instanceof String_) {

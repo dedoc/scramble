@@ -78,6 +78,14 @@ it('determines type from phpdoc array', function () {
     expect(true)->toBeTrue();
 })->skip();
 
+it('determines comment from phpdoc', function () {
+    $openApi = new OpenApi('3.1.0');
+    $extractor = new JsonResourceResponseExtractor($openApi, SimpleTestResource::class);
+    $type = $openApi->components->schemas[$extractor->extract()->getContent('application/json')->fullName]->type->properties['sample'];
+    dd($openApi->components->toArray());
+    expect(true)->toBeTrue();
+})->skip();
+
 class TestResource extends JsonResource
 {
     public function toArray($request)
@@ -95,6 +103,17 @@ class DestResource extends JsonResource
     {
         return [
             'id' => 1,
+        ];
+    }
+}
+
+class SimpleTestResource extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            /** @var array<string> nice sample */
+            'sample' => some_unparsable_method(),
         ];
     }
 }
