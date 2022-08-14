@@ -2,11 +2,13 @@
 
 namespace Dedoc\Documentor\Support\Generator;
 
-class Reference
+use Dedoc\Documentor\Support\Generator\Types\Type;
+
+class Reference extends Type
 {
     private string $referenceType;
 
-    private string $fullName;
+    public string $fullName;
 
     private Components $components;
 

@@ -6,17 +6,10 @@
     backupStaticAttributes="false"
     bootstrap="vendor/autoload.php"
     colors="true"
-    convertErrorsToExceptions="true"
-    convertNoticesToExceptions="true"
-    convertWarningsToExceptions="true"
-    processIsolation="false"
-    stopOnFailure="false"
     executionOrder="random"
     failOnWarning="true"
     failOnRisky="true"
     failOnEmptyTestSuite="true"
-    beStrictAboutOutputDuringTests="true"
-    verbose="true"
 >
     <testsuites>
         <testsuite name="Dedoc Test Suite">
@@ -30,7 +23,6 @@
         <report>
             <html outputDirectory="build/coverage"/>
             <text outputFile="build/coverage.txt"/>
-            <clover outputFile="build/logs/clover.xml"/>
         </report>
     </coverage>
     <logging>

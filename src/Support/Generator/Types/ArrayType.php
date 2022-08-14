@@ -21,4 +21,10 @@ class ArrayType extends Type
             'items' => $this->items->toArray(),
         ]);
     }
+
+    public function setItems($items)
+    {
+        $this->items = $items;
+        return $this;
+    }
 }

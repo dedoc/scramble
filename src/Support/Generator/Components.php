@@ -54,4 +54,8 @@ class Components
 
         return $fullName;
     }
+
+    public function getSchema(Reference $getContent)
+    {
+    }
 }

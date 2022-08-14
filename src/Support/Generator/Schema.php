@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 
 class Schema
 {
-    private Type $type;
+    public Type $type;
 
     private ?string $title = null;
 

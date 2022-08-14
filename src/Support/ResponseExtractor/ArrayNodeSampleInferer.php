@@ -9,6 +9,8 @@ use Dedoc\Documentor\Support\Generator\Types\IntegerType;
 use Dedoc\Documentor\Support\Generator\Types\NumberType;
 use Dedoc\Documentor\Support\Generator\Types\ObjectType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
+use Dedoc\Documentor\Support\PhpDoc;
+use Dedoc\Documentor\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Collection;
@@ -133,6 +135,20 @@ class ArrayNodeSampleInferer
                     return [
                         $arrayItem->key->value => $sampleResponse['check'],
                     ];
+                }
+
+                if ($arrayItem->key instanceof String_ && $doc = $arrayItem->getDocComment()) {
+                    $requiredFields[] = $arrayItem->key->value;
+
+                    $docNode = PhpDoc::parse($doc->getText());
+                    $varNode = $docNode->getVarTagValues()[0] ?? null;
+
+                    if ($varNode->type ?? null) {
+                        return [$arrayItem->key->value => TypeHandlers::handle($varNode->type) ?: new StringType];
+                    }
+
+                    // @todo: unknown type
+                    return [$arrayItem->key->value => new StringType];
                 }
 
                 if ($arrayItem->key instanceof String_) {

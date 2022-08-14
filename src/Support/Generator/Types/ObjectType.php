@@ -5,10 +5,12 @@ namespace Dedoc\Documentor\Support\Generator\Types;
 class ObjectType extends Type
 {
     /** @var array<string, Type|null> */
-    private array $properties = [];
+    public array $properties = [];
 
     /** @var string[] */
-    private array $required = [];
+    public array $required = [];
+
+    private ?Type $additionalProperties = null;
 
     public function __construct()
     {
@@ -33,16 +35,29 @@ class ObjectType extends Type
     {
         $result = parent::toArray();
 
-        $properties = [];
-        foreach ($this->properties as $name => $property) {
-            $properties[$name] = $property ? $property->toArray() : ['type' => 'string'];
+        if (count($this->properties)) {
+            $properties = [];
+            foreach ($this->properties as $name => $property) {
+                $properties[$name] = $property ? $property->toArray() : ['type' => 'string'];
+            }
+            $result['properties'] = $properties;
         }
-        $result['properties'] = $properties;
 
         if (count($this->required)) {
             $result['required'] = $this->required;
         }
 
+        if ($this->additionalProperties) {
+            $result['additionalProperties'] = $this->additionalProperties->toArray();
+        }
+
         return $result;
+    }
+
+    public function additionalProperties(Type $type)
+    {
+        $this->additionalProperties = $type;
+
+        return $this;
     }
 }

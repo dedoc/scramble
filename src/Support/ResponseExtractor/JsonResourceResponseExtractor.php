@@ -9,7 +9,9 @@ use Dedoc\Documentor\Support\Generator\Schema;
 use Dedoc\Documentor\Support\Generator\Types\ObjectType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
 use Dedoc\Documentor\Support\Generator\Types\Type;
+use Dedoc\Documentor\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
@@ -46,13 +48,30 @@ class JsonResourceResponseExtractor
 
         $reflectionClass = new ReflectionClass($this->class);
         $classSourceCode = file_get_contents($reflectionClass->getFileName());
-        $classAst = (new ParserFactory)->create(ParserFactory::PREFER_PHP7)->parse($classSourceCode);
+        $fileAst = (new ParserFactory)->create(ParserFactory::PREFER_PHP7)->parse($classSourceCode);
+        [$classAst, $getFqName] = $this->findFirstNode(
+            $fileAst,
+            fn (Node $node) => $node instanceof Node\Stmt\Class_
+                && ($node->namespacedName ?? $node->name)->toString() === $this->class,
+        );
 
         /** @var Node\Stmt\ClassMethod|null $methodNode */
-        [$methodNode, $getFqName] = $this->findFirstNode(
+        [$methodNode] = $this->findFirstNode(
             $classAst,
             fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === 'toArray'
         );
+
+        TypeHandlers::registerIdentifierHandler($this->class, function (string $name) use ($getFqName) {
+            $fqName = $getFqName($name);
+
+            if ($fqName && is_a($fqName, JsonResource::class, true)) {
+                $response = (new JsonResourceResponseExtractor($this->openApi, $fqName))->extract();
+
+                if ($response) {
+                    return $response->getContent('application/json');
+                }
+            }
+        });
 
         if (! $methodNode) {
             return null;
@@ -145,8 +164,10 @@ class JsonResourceResponseExtractor
         ];
     }
 
-    private function findFirstNode(?array $classAst, \Closure $param)
+    private function findFirstNode($classAst, \Closure $param)
     {
+        $classAst = is_array($classAst) ? $classAst : [$classAst];
+
         $visitor = new FirstFindingVisitor($param);
 
         $nameResolver = new NameResolver();
