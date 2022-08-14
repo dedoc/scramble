@@ -33,6 +33,7 @@ abstract class Type
     public function setDescription(string $description): Type
     {
         $this->description = $description;
+
         return $this;
     }
 }
