@@ -39,7 +39,7 @@ class JsonResourceResponseExtractor
 
         if ($this->openApi->components->hasSchema($this->class)) {
             return Response::make(200)
-                ->description($this->openApi->components->uniqueSchemaName($this->class))
+                ->description('`'.$this->openApi->components->uniqueSchemaName($this->class).'`')
                 ->setContent(
                     'application/json',
                     new Reference('schemas', $this->class, $this->openApi->components),
@@ -150,7 +150,7 @@ class JsonResourceResponseExtractor
             ->addSchema($this->class, $schema);
 
         return Response::make(200)
-            ->description($this->openApi->components->uniqueSchemaName($this->class))
+            ->description('`'.$this->openApi->components->uniqueSchemaName($this->class).'`')
             ->setContent('application/json', $schemaReference);
     }
 

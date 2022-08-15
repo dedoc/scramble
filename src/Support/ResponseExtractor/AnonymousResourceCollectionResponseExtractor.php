@@ -38,7 +38,7 @@ class AnonymousResourceCollectionResponseExtractor
             : (new ArrayType())->setItems($type);
 
         return Response::make(200)
-            ->description('Array of '.$this->openApi->components->uniqueSchemaName($this->class))
+            ->description('Array of `'.$this->openApi->components->uniqueSchemaName($this->class).'`')
             ->setContent(
                 'application/json',
                 Schema::fromType($responseType),

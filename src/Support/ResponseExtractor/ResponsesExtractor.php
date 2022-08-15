@@ -108,6 +108,25 @@ class ResponsesExtractor
             ];
         }
 
+        $anonymousResourceCollection = (new NodeFinder())->findFirst(
+            $this->methodNode,
+            fn (Node $node) => $node instanceof Node\Stmt\Return_
+                && $node->expr instanceof Node\Expr\StaticCall
+                && $node->expr->name instanceof Node\Identifier
+                && $node->expr->name->toString() === 'collection'
+                && $node->expr->class instanceof Node\Name
+                && is_a($this->classAliasesMap[$node->expr->class->toString()] ?? $node->expr->class->toString(), JsonResource::class, true)
+        );
+
+        if ($anonymousResourceCollection) {
+            return [
+                [
+                    AnonymousResourceCollection::class,
+                    [ $this->classAliasesMap[$anonymousResourceCollection->expr->class->toString()] ?? $anonymousResourceCollection->expr->class->toString() ]
+                ],
+            ];
+        }
+
         return null;
     }
 
