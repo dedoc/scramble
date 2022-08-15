@@ -32,11 +32,6 @@ use PhpParser\ParserFactory;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ParamTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTextNode;
-use PHPStan\PhpDocParser\Lexer\Lexer;
-use PHPStan\PhpDocParser\Parser\ConstExprParser;
-use PHPStan\PhpDocParser\Parser\PhpDocParser;
-use PHPStan\PhpDocParser\Parser\TokenIterator;
-use PHPStan\PhpDocParser\Parser\TypeParser;
 use ReflectionClass;
 
 class Generator
@@ -69,7 +64,7 @@ class Generator
         return collect(RouteFacade::getRoutes())//->dd()
             // Now care only about API routes
             ->filter(function (Route $route) {
-                return !($name = $route->getAction('as')) || !Str::startsWith($name, 'documentor');
+                return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'documentor');
             })
 //            ->filter(fn (Route $route) => Str::contains($route->uri, 'impersonate'))
 //            ->filter(fn (Route $route) => $route->uri === 'api/brand/{brand}/publishers/{publisher}'&& $route->methods()[0] === 'GET')
