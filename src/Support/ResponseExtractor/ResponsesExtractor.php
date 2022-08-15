@@ -155,7 +155,7 @@ class ResponsesExtractor
                 array_map(
                     fn ($genericType) => $getFqn($genericType->name),
                     $returnTagValue->type->genericTypes,
-                )
+                ),
             ];
         }
     }
