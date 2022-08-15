@@ -122,7 +122,7 @@ class ResponsesExtractor
             return [
                 [
                     AnonymousResourceCollection::class,
-                    [ $this->classAliasesMap[$anonymousResourceCollection->expr->class->toString()] ?? $anonymousResourceCollection->expr->class->toString() ]
+                    [$this->classAliasesMap[$anonymousResourceCollection->expr->class->toString()] ?? $anonymousResourceCollection->expr->class->toString()],
                 ],
             ];
         }
