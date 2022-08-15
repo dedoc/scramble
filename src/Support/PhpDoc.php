@@ -2,6 +2,7 @@
 
 namespace Dedoc\Documentor\Support;
 
+use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Lexer\Lexer;
 use PHPStan\PhpDocParser\Parser\ConstExprParser;
@@ -13,6 +14,8 @@ class PhpDoc
 {
     public static function parse(string $docComment): PhpDocNode
     {
+        $docComment = Str::replace(['@response'], '@return', $docComment);
+
         $lexer = new Lexer();
         $constExprParser = new ConstExprParser();
         $typeParser = new TypeParser($constExprParser);

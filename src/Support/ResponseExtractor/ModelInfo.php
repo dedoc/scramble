@@ -14,45 +14,6 @@ use SplFileObject;
 
 class ModelInfo
 {
-    /**
-     * The console command name.
-     *
-     * @var string
-     */
-    protected $name = 'model:show {model}';
-
-    /**
-     * The name of the console command.
-     *
-     * This name is used to identify the command during lazy loading.
-     *
-     * @var string|null
-     *
-     * @deprecated
-     */
-    protected static $defaultName = 'model:show';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Show information about an Eloquent model';
-
-    /**
-     * The console command signature.
-     *
-     * @var string
-     */
-    protected $signature = 'model:show {model : The model to show}
-                {--database= : The database connection to use}
-                {--json : Output the model as JSON}';
-
-    /**
-     * The methods that can be called in a model to indicate a relation.
-     *
-     * @var array
-     */
     protected $relationMethods = [
         'hasMany',
         'hasManyThrough',
@@ -78,11 +39,7 @@ class ModelInfo
     {
         $class = $this->qualifyModel($this->class);
 
-        try {
-            $model = app()->make($class);
-        } catch (BindingResolutionException $e) {
-            return $this->components->error($e->getMessage());
-        }
+        $model = app()->make($class);
 
         return $this->displayJson(
             $class,
@@ -213,13 +170,6 @@ class ModelInfo
 
     /**
      * Render the model information as JSON.
-     *
-     * @param  string  $class
-     * @param  string  $database
-     * @param  string  $table
-     * @param  \Illuminate\Support\Collection  $attributes
-     * @param  \Illuminate\Support\Collection  $relations
-     * @return void
      */
     protected function displayJson($class, $database, $table, $attributes, $relations)
     {

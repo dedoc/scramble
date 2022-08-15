@@ -13,6 +13,7 @@ use Dedoc\Documentor\Support\Generator\Types\BooleanType;
 use Dedoc\Documentor\Support\Generator\Types\IntegerType;
 use Dedoc\Documentor\Support\Generator\Types\NumberType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
+use Dedoc\Documentor\Support\PhpDoc;
 use Dedoc\Documentor\Support\ResponseExtractor\ResponsesExtractor;
 use Dedoc\Documentor\Support\RulesExtractor\FormRequestRulesExtractor;
 use Dedoc\Documentor\Support\RulesExtractor\ValidateCallExtractor;
@@ -68,15 +69,11 @@ class Generator
         return collect(RouteFacade::getRoutes())//->dd()
             // Now care only about API routes
             ->filter(function (Route $route) {
-                $name = $route->getAction('as');
-                if (! $name) {
-                    return true;
-                }
-
-                return ! Str::startsWith($name, 'documentor');
+                return !($name = $route->getAction('as')) || !Str::startsWith($name, 'documentor');
             })
 //            ->filter(fn (Route $route) => Str::contains($route->uri, 'impersonate'))
 //            ->filter(fn (Route $route) => $route->uri === 'api/brand/{brand}/publishers/{publisher}'&& $route->methods()[0] === 'GET')
+//            ->filter(fn (Route $route) => $route->uri === 'api/slack-conversations'&& $route->methods()[0] === 'GET')
 //            ->filter(fn (Route $route) => $route->uri === 'api/campaigns'&& $route->methods()[0] === 'POST')
 //            ->filter(fn (Route $route) => $route->uri === 'api/creators/{creator}'&& $route->methods()[0] === 'PUT')
 //            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}/brief' && $route->methods()[0] === 'POST')
@@ -154,17 +151,10 @@ class Generator
             $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
         }
 
-        $responses = (new ResponsesExtractor($openApi, $route, $methodNode, $reflectionMethod, $classAliasesMap))();
-//        dd($responses);
+        $responses = (new ResponsesExtractor($openApi, $route, $methodNode, $reflectionMethod, $methodPhpDocNode, $classAliasesMap))();
         foreach ($responses as $response) {
             $operation->addResponse($response);
         }
-
-//        dd($response);
-
-//        if ($response) {
-//            $operation->addResponse($response);
-//        }
 
         $operation
             ->summary($summary->rtrim('.'))
@@ -264,7 +254,7 @@ class Generator
             return [];
         }
 
-        return collect($rules)//->dd()
+        return collect($rules)
             ->map(function ($rules, $name) {
                 $rules = Arr::wrap(is_string($rules) ? explode('|', $rules) : $rules);
                 $rules = array_map(
@@ -293,10 +283,8 @@ class Generator
                         ->replaceFirst('in:', '')
                         ->explode(',')
                         ->mapInto(Stringable::class)
-                        ->map(fn (Stringable $v) => (string) $v
-                            ->trim('"')
-                            ->replace('""', '"')
-                        )->values()->all();
+                        ->map(fn (Stringable $v) => (string) $v->trim('"')->replace('""', '"'))
+                        ->values()->all();
                 }
 
                 if (in_array('nullable', $rules)) {
@@ -362,13 +350,7 @@ class Generator
                 $reflectionMethod = $reflectionClass->getMethod($method);
 
                 if ($docComment = $reflectionMethod->getDocComment()) {
-                    $lexer = new Lexer();
-                    $constExprParser = new ConstExprParser();
-                    $typeParser = new TypeParser($constExprParser);
-                    $phpDocParser = new PhpDocParser($typeParser, $constExprParser);
-
-                    $tokens = new TokenIterator($lexer->tokenize($docComment));
-                    $methodPhpDocNode = $phpDocParser->parse($tokens);
+                    $methodPhpDocNode = PhpDoc::parse($docComment);
                 }
             }
         }

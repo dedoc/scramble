@@ -6,7 +6,7 @@ abstract class Type
 {
     protected string $type;
 
-    protected string $description = '';
+    public string $description = '';
 
     protected bool $nullable = false;
 

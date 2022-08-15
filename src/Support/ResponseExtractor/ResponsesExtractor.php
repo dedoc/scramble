@@ -3,11 +3,16 @@
 namespace Dedoc\Documentor\Support\ResponseExtractor;
 
 use Dedoc\Documentor\Support\Generator\OpenApi;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Arr;
 use PhpParser\Node;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeFinder;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 
 class ResponsesExtractor
 {
@@ -21,26 +26,37 @@ class ResponsesExtractor
 
     private OpenApi $openApi;
 
-    public function __construct(OpenApi $openApi, Route $route, ?ClassMethod $methodNode, ?\ReflectionMethod $reflectionMethod, array $classAliasesMap)
+    private ?PhpDocNode $methodPhpDocNode;
+
+    public function __construct(OpenApi $openApi, Route $route, ?ClassMethod $methodNode, ?\ReflectionMethod $reflectionMethod, ?PhpDocNode $methodPhpDocNode, array $classAliasesMap)
     {
         $this->route = $route;
         $this->methodNode = $methodNode;
         $this->reflectionMethod = $reflectionMethod;
         $this->classAliasesMap = $classAliasesMap;
         $this->openApi = $openApi;
+        $this->methodPhpDocNode = $methodPhpDocNode;
     }
 
     public function __invoke()
     {
-        $types = $this->getReturnTypes();
+        return collect($this->getReturnTypes())
+            ->map(function ($type) {
+                $type = Arr::wrap($type);
 
-        return array_filter(array_map(function (string $type) {
-            if (is_a($type, JsonResource::class, true)) {
-                return (new JsonResourceResponseExtractor($this->openApi, $type))->extract();
-            }
+                if (is_a($type[0], AnonymousResourceCollection::class, true) && isset($type[1])) {
+                    return (new AnonymousResourceCollectionResponseExtractor($this->openApi, $type[1][0]))->extract();
+                }
 
-            return null;
-        }, $types));
+                if (is_a($type[0], JsonResource::class, true)) {
+                    return (new JsonResourceResponseExtractor($this->openApi, $type[0]))->extract();
+                }
+
+                return null;
+            })
+            ->filter()
+            ->values()
+            ->all();
     }
 
     private function getReturnTypes()
@@ -53,7 +69,13 @@ class ResponsesExtractor
 
         if ($this->reflectionMethod) {
             if ($returnType = $this->reflectionMethod->getReturnType()) {
-                $types[] = (string) $returnType;
+                $types[] = $returnType;
+            }
+        }
+
+        if ($this->methodPhpDocNode) {
+            if ($returnType = $this->getReturnTypesFromPhpDoc()) {
+                $types[] = $returnType;
             }
         }
 
@@ -87,5 +109,35 @@ class ResponsesExtractor
         }
 
         return null;
+    }
+
+    private function getReturnTypesFromPhpDoc()
+    {
+        $returnTagValue = $this->methodPhpDocNode->getReturnTagValues()[0] ?? null;
+
+        if (! $returnTagValue) {
+            return null;
+        }
+
+        $getFqn = fn ($className) => $this->classAliasesMap[$className] ?? $className;
+
+        if ($returnTagValue->type instanceof IdentifierTypeNode) {
+            return [
+                $getFqn($returnTagValue->type->name),
+            ];
+        }
+
+        if (
+            $returnTagValue->type instanceof GenericTypeNode
+            && collect($returnTagValue->type->genericTypes)->every(fn ($gt) => $gt instanceof IdentifierTypeNode)
+        ) {
+            return [
+                $getFqn($returnTagValue->type->type->name),
+                array_map(
+                    fn ($genericType) => $getFqn($genericType->name),
+                    $returnTagValue->type->genericTypes,
+                )
+            ];
+        }
     }
 }

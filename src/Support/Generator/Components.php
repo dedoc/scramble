@@ -55,7 +55,8 @@ class Components
         return $fullName;
     }
 
-    public function getSchema(Reference $getContent)
+    public function getSchema(string $schemaName)
     {
+        return new Reference('schemas', $schemaName, $this);
     }
 }
