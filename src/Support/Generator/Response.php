@@ -33,9 +33,9 @@ class Response
 
     public function toArray()
     {
-        $result = array_filter([
+        $result = [
             'description' => $this->description,
-        ]);
+        ];
 
         $content = [];
         foreach ($this->content as $mediaType => $schema) {

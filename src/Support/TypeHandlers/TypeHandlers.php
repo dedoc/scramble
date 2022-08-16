@@ -2,7 +2,9 @@
 
 namespace Dedoc\Documentor\Support\TypeHandlers;
 
+use Dedoc\Documentor\Support\ComplexTypeHandler\ComplexTypeHandlers;
 use Dedoc\Documentor\Support\Generator\Types\Type;
+use Dedoc\Documentor\Support\Type\Identifier;
 
 class TypeHandlers
 {
@@ -25,7 +27,6 @@ class TypeHandlers
             }
         }
 
-//        dd($node);
 
         return null; // @todo: unknown type with reason
     }
@@ -33,6 +34,11 @@ class TypeHandlers
     public static function registerIdentifierHandler(string $id, callable $handler)
     {
         static::$identifierHandlers[$id] = $handler;
+    }
+
+    public static function unregisterIdentifierHandler(string $id)
+    {
+        unset(static::$identifierHandlers[$id]);
     }
 
     /**

@@ -55,8 +55,13 @@ class Components
         return $fullName;
     }
 
-    public function getSchema(string $schemaName)
+    public function getSchemaReference(string $schemaName)
     {
         return new Reference('schemas', $schemaName, $this);
+    }
+
+    public function getSchema(string $schemaName)
+    {
+        return $this->schemas[$schemaName];
     }
 }

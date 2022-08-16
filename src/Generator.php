@@ -2,6 +2,8 @@
 
 namespace Dedoc\Documentor;
 
+use Dedoc\Documentor\Support\ClassAstHelper;
+use Dedoc\Documentor\Support\ComplexTypeHandler\ComplexTypeHandlers;
 use Dedoc\Documentor\Support\Generator\InfoObject;
 use Dedoc\Documentor\Support\Generator\OpenApi;
 use Dedoc\Documentor\Support\Generator\Operation;
@@ -12,11 +14,14 @@ use Dedoc\Documentor\Support\Generator\Schema;
 use Dedoc\Documentor\Support\Generator\Types\BooleanType;
 use Dedoc\Documentor\Support\Generator\Types\IntegerType;
 use Dedoc\Documentor\Support\Generator\Types\NumberType;
+use Dedoc\Documentor\Support\Generator\Types\ObjectType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
 use Dedoc\Documentor\Support\PhpDoc;
 use Dedoc\Documentor\Support\ResponseExtractor\ResponsesExtractor;
 use Dedoc\Documentor\Support\RulesExtractor\FormRequestRulesExtractor;
 use Dedoc\Documentor\Support\RulesExtractor\ValidateCallExtractor;
+use Dedoc\Documentor\Support\Type\Identifier;
+use Dedoc\Documentor\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
@@ -25,6 +30,7 @@ use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 use PhpParser\Node;
+use PhpParser\Node\Expr\Array_;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\FirstFindingVisitor;
 use PhpParser\NodeVisitor\NameResolver;
@@ -42,6 +48,8 @@ class Generator
 
         /** @var OpenApi $openApi */
         $openApi = $this->makeOpenApi();
+
+        ComplexTypeHandlers::registerComponentsRepository($openApi->components);
 
         $routes//->dd()
             ->map(fn (Route $route) => $this->routeToOperation($openApi, $route))
@@ -74,6 +82,8 @@ class Generator
 //            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}/brief' && $route->methods()[0] === 'POST')
 //            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}' && $route->methods()[0] === 'PUT')
 //            ->filter(fn (Route $route) => $route->uri === 'api/todo-item' && $route->methods()[0] === 'POST')
+//            ->filter(fn (Route $route) => $route->uri === 'api/users' && $route->methods()[0] === 'POST')
+//            ->filter(fn (Route $route) => $route->uri === 'api/permissions' && $route->methods()[0] === 'GET')
             ->filter(fn (Route $route) => in_array('api', $route->gatherMiddleware()))
 //            ->filter(fn (Route $route) => Str::contains($route->getAction('as'), 'api.creators.update'))
             ->values();
@@ -85,6 +95,16 @@ class Generator
         /** @var PhpDocNode|null $methodPhpDocNode */
         /** @var \ReflectionMethod|null $reflectionMethod */
         [$methodNode, $methodPhpDocNode, $reflectionMethod, $classAliasesMap] = $this->extractNodes($route);
+
+        if ($methodNode) {
+            $name = explode($route->getAction('uses'), '@')[0];
+
+            TypeHandlers::registerIdentifierHandler($name, function (string $name) use ($classAliasesMap) {
+                $fqName = $classAliasesMap[$name] ?? $name;
+
+                return ComplexTypeHandlers::handle(new Identifier($fqName));
+            });
+        }
 
         $summary = Str::of('');
         $description = Str::of('');
@@ -133,15 +153,15 @@ class Generator
                     $operation->addParameters($bodyParams);
                 }
             } else {
-//            $operation
-//                ->addRequesBodyObject(
-//                    RequestBodyObject::make()
-//                        ->setContent(
-//                            'application/json',
-//                            Schema::createFromArray([])
-//                        )
-//                );
-            }
+                $operation
+                    ->addRequestBodyObject(
+                        RequestBodyObject::make()
+                            ->setContent(
+                                'application/json',
+                                Schema::fromType(new ObjectType)
+                            )
+                    );
+                }
         } catch (\Throwable $exception) {
             $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
         }

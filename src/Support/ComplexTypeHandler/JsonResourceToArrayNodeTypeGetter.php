@@ -1,8 +1,7 @@
 <?php
 
-namespace Dedoc\Documentor\Support\ResponseExtractor;
+namespace Dedoc\Documentor\Support\ComplexTypeHandler;
 
-use Dedoc\Documentor\Support\Generator\OpenApi;
 use Dedoc\Documentor\Support\Generator\Types\ArrayType;
 use Dedoc\Documentor\Support\Generator\Types\BooleanType;
 use Dedoc\Documentor\Support\Generator\Types\IntegerType;
@@ -10,60 +9,46 @@ use Dedoc\Documentor\Support\Generator\Types\NumberType;
 use Dedoc\Documentor\Support\Generator\Types\ObjectType;
 use Dedoc\Documentor\Support\Generator\Types\StringType;
 use Dedoc\Documentor\Support\PhpDoc;
+use Dedoc\Documentor\Support\Type\Identifier as TypeIdentifier;
 use Dedoc\Documentor\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Collection;
-use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayItem;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 
-/**
- * Simple static analysis is really simple. It works only when array is returned from `toArray` and
- * can understand only few things regarding typing:
- * - key type when string +
- * - value type from property fetch on resource ($this->id) +
- * - value type from property fetch on resource prop ($this->resource->id) +
- * - value type from resource construction (new SomeResource(xxx)), when xxx is `when` call, key is optional +
- * - arrays within (objects) +
- * - optionally merged arrays: +
- * -- mergeWhen +
- * -- merge +
- * -- when +
- * - manual typings
- */
-class ArrayNodeSampleInferer
+class JsonResourceToArrayNodeTypeGetter
 {
     private Array_ $node;
 
-    private OpenApi $openApi;
-
-    private $getFqName;
+    private $namesResolver;
 
     private ?Collection $modelInfo;
 
-    public function __construct(OpenApi $openApi, Array_ $arrayNode, callable $getFqName, ?Collection $modelInfo)
+    public function __construct(Array_ $node, callable $namesResolver, ?Collection $modelInfo)
     {
-        $this->node = $arrayNode;
-        $this->openApi = $openApi;
-        $this->getFqName = $getFqName;
+        $this->node = $node;
+        $this->namesResolver = $namesResolver;
         $this->modelInfo = $modelInfo;
     }
 
-    public function __invoke()
+    public function __invoke(): ObjectType
     {
         $requiredFields = [];
-        $result = collect($this->node->items)
+        $type = new ObjectType;
+
+        $fields = collect($this->node->items)
             ->mapWithKeys(function (ArrayItem $arrayItem) use (&$requiredFields) {
                 // new JsonResource
                 if (
                     $arrayItem->key instanceof String_
                     && $arrayItem->value instanceof Expr\New_
                     && $arrayItem->value->class instanceof Name
-                    && is_a($resourceClassName = ($this->getFqName)($arrayItem->value->class->toString()), JsonResource::class, true)
+                    && is_a($resourceClassName = ($this->namesResolver)($arrayItem->value->class->toString()), JsonResource::class, true)
                     && ! is_a($resourceClassName, ResourceCollection::class, true)
                 ) {
                     // if call to `whenLoaded` in constructor, then field is not required
@@ -75,15 +60,10 @@ class ArrayNodeSampleInferer
                         $requiredFields[] = $arrayItem->key->value;
                     }
 
-                    $response = (new JsonResourceResponseExtractor($this->openApi, $resourceClassName))->extract();
-                    if (! $response) {
-                        return [
-                            $arrayItem->key->value => new StringType,
-                        ];
-                    }
-
                     return [
-                        $arrayItem->key->value => $response->getContent('application/json'),
+                        $arrayItem->key->value => ($type = ComplexTypeHandlers::handle(new TypeIdentifier($resourceClassName)))
+                            ? $type
+                            : new StringType
                     ];
                 }
 
@@ -92,21 +72,10 @@ class ArrayNodeSampleInferer
                     $arrayItem->key instanceof String_
                     && $arrayItem->value instanceof Expr\Array_
                 ) {
-                    $type = new StringType;
-
                     $requiredFields[] = $arrayItem->key->value;
 
-                    [$sampleResponse, $requiredSampleFields] = (new ArrayNodeSampleInferer($this->openApi, $arrayItem->value, $this->getFqName, $this->modelInfo))();
-                    if ($sampleResponse) {
-                        $type = (new ObjectType);
-                        foreach ($sampleResponse as $key => $value) {
-                            $type->addProperty($key, $value);
-                        }
-                        $type->setRequired($requiredSampleFields);
-                    }
-
                     return [
-                        $arrayItem->key->value => $type,
+                        $arrayItem->key->value => (new static($arrayItem->value, $this->namesResolver, $this->modelInfo))(),
                     ];
                 }
 
@@ -130,10 +99,10 @@ class ArrayNodeSampleInferer
                         new ArrayItem($argValue, new String_('check')),
                     ]);
 
-                    [$sampleResponse,] = (new ArrayNodeSampleInferer($this->openApi, $syntheticArray, $this->getFqName, $this->modelInfo))();
+                    $type = (new static($syntheticArray, $this->namesResolver, $this->modelInfo))();
 
                     return [
-                        $arrayItem->key->value => $sampleResponse['check'],
+                        $arrayItem->key->value => $type->getProperty('check'),
                     ];
                 }
 
@@ -159,7 +128,7 @@ class ArrayNodeSampleInferer
                     $requiredFields[] = $arrayItem->key->value;
 
                     return [
-                        $arrayItem->key->value => $this->getArrayItemValueSample($arrayItem->value),
+                        $arrayItem->key->value => $this->getArrayItemValueType($arrayItem->value),
                     ];
                 }
 
@@ -182,9 +151,7 @@ class ArrayNodeSampleInferer
                         }
 
                         if ($argValue instanceof Array_) {
-                            [$sampleResponse] = (new ArrayNodeSampleInferer($this->openApi, $argValue, $this->getFqName, $this->modelInfo))();
-
-                            return $sampleResponse;
+                            return (new self($argValue, $this->namesResolver, $this->modelInfo))()->properties;
                         }
                     }
 
@@ -205,11 +172,11 @@ class ArrayNodeSampleInferer
                         }
 
                         if ($argValue instanceof Array_) {
-                            [$sampleResponse, $requiredArrayFields] = (new ArrayNodeSampleInferer($this->openApi, $argValue, $this->getFqName, $this->modelInfo))();
+                            $type = (new self($argValue, $this->namesResolver, $this->modelInfo))();
 
-                            $requiredFields = array_merge($requiredFields, $requiredArrayFields);
+                            $requiredFields = array_merge($requiredFields, $type->required);
 
-                            return $sampleResponse;
+                            return $type->properties;
                         }
                     }
                 }
@@ -218,10 +185,14 @@ class ArrayNodeSampleInferer
             })
             ->toArray();
 
-        return [$result, $requiredFields];
+        foreach ($fields as $name => $fieldType) {
+            $type->addProperty($name, $fieldType);
+        }
+
+        return $type->setRequired($requiredFields);
     }
 
-    private function getArrayItemValueSample(Expr $value)
+    private function getArrayItemValueType(Expr $value)
     {
         // value type from property fetch on resource ($this->id)
         $isThisPropertyFetch = $value instanceof Expr\PropertyFetch
@@ -266,11 +237,6 @@ class ArrayNodeSampleInferer
             }
         }
 
-//        if (
-//            $value instanceof Expr\PropertyFetch
-//            && $value->var instanceof Expr\Variable && is_string($value->var->name) && $value->var->name === 'this'
-//            && $attrType = optional($this->modelInfo)->get('attributes')->get()
-//        )
-        return '';
+        return new StringType;
     }
 }

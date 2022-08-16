@@ -2,10 +2,15 @@
 
 namespace Dedoc\Documentor\Support\TypeHandlers;
 
+use Dedoc\Documentor\Support\ComplexTypeHandler\ComplexTypeHandlers;
 use Dedoc\Documentor\Support\Generator\Types\Type;
+use Dedoc\Documentor\Support\Type\Generic;
+use Dedoc\Documentor\Support\Type\Identifier;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeItemNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 
 class GenericTypeNodeHandler implements TypeHandler
 {
@@ -32,6 +37,27 @@ class GenericTypeNodeHandler implements TypeHandler
             ));
         }
 
-        return null; // @todo: unknown type with reason
+        if (! collect($this->node->genericTypes)->every(fn ($t) => $t instanceof IdentifierTypeNode || $t instanceof GenericTypeNode)) {
+            return null; // @todo: unknown type with reason
+        }
+
+        return ComplexTypeHandlers::handle($this->phpDocTypeToType($this->node));
+    }
+
+    private function phpDocTypeToType(TypeNode $type)
+    {
+        if ($type instanceof IdentifierTypeNode) {
+            return new Identifier($type->name);
+        }
+
+        if ($type instanceof GenericTypeNode) {
+            return new Generic(
+                $this->phpDocTypeToType($type->type),
+                array_map(
+                    fn ($type) => $this->phpDocTypeToType($type),
+                    $type->genericTypes,
+                ),
+            );
+        }
     }
 }

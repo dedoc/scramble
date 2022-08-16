@@ -70,22 +70,6 @@ it('handles shape arrays', function ($phpDoc) {
     '/** @var array{string, string} */',
 ]);
 
-it('determines type from phpdoc array', function () {
-    $openApi = new OpenApi('3.1.0');
-    $extractor = new JsonResourceResponseExtractor($openApi, TestResource::class);
-    $type = $openApi->components->schemas[$extractor->extract()->getContent('application/json')->fullName]->type->properties['sample'];
-    dd($openApi->components->toArray());
-    expect(true)->toBeTrue();
-})->skip();
-
-it('determines comment from phpdoc', function () {
-    $openApi = new OpenApi('3.1.0');
-    $extractor = new JsonResourceResponseExtractor($openApi, SimpleTestResource::class);
-    $type = $openApi->components->schemas[$extractor->extract()->getContent('application/json')->fullName]->type->properties['sample'];
-    dd($openApi->components->toArray());
-    expect(true)->toBeTrue();
-})->skip();
-
 class TestResource extends JsonResource
 {
     public function toArray($request)
