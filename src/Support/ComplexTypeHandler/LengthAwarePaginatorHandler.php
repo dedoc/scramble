@@ -10,7 +10,6 @@ use Dedoc\Documentor\Support\Generator\Types\StringType;
 use Dedoc\Documentor\Support\Generator\Types\Type;
 use Dedoc\Documentor\Support\Type\Generic;
 use Dedoc\Documentor\Support\Type\Identifier;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -30,7 +29,6 @@ class LengthAwarePaginatorHandler
             && count($type->genericTypes) === 1
             && $type->genericTypes[0] instanceof Identifier;
     }
-
 
     public function handle(): ?Type
     {

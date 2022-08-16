@@ -14,9 +14,9 @@ use Dedoc\Documentor\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Collection;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayItem;
-use PhpParser\Node\Expr;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
@@ -63,7 +63,7 @@ class JsonResourceToArrayNodeTypeGetter
                     return [
                         $arrayItem->key->value => ($type = ComplexTypeHandlers::handle(new TypeIdentifier($resourceClassName)))
                             ? $type
-                            : new StringType
+                            : new StringType,
                     ];
                 }
 

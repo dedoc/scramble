@@ -5,7 +5,6 @@ namespace Dedoc\Documentor\Support\TypeHandlers;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
-use Symfony\Component\PropertyInfo\Util\PhpDocTypeHelper;
 
 class PhpDocTypeWalker
 {

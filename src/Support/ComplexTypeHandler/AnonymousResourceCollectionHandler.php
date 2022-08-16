@@ -26,7 +26,6 @@ class AnonymousResourceCollectionHandler
             && count($type->genericTypes) === 1;
     }
 
-
     public function handle(): ?Type
     {
         /** @var Identifier $collectingClassType */

@@ -18,10 +18,10 @@ class ComplexTypeHandlersTest_SampleType extends JsonResource
         return [
             'foo' => 1,
             $this->mergeWhen(true, [
-                'hey' => 'ho'
+                'hey' => 'ho',
             ]),
             $this->merge([
-                'bar' => 'foo'
+                'bar' => 'foo',
             ]),
         ];
     }

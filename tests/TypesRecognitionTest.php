@@ -1,8 +1,6 @@
 <?php
 
-use Dedoc\Documentor\Support\Generator\OpenApi;
 use Dedoc\Documentor\Support\PhpDoc;
-use Dedoc\Documentor\Support\ResponseExtractor\JsonResourceResponseExtractor;
 use Dedoc\Documentor\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Http\Resources\Json\JsonResource;
 use function Spatie\Snapshots\assertMatchesSnapshot;

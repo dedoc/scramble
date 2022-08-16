@@ -2,9 +2,7 @@
 
 namespace Dedoc\Documentor\Support\TypeHandlers;
 
-use Dedoc\Documentor\Support\ComplexTypeHandler\ComplexTypeHandlers;
 use Dedoc\Documentor\Support\Generator\Types\Type;
-use Dedoc\Documentor\Support\Type\Identifier;
 
 class TypeHandlers
 {
@@ -26,7 +24,6 @@ class TypeHandlers
                 return (new $handler($node))->handle();
             }
         }
-
 
         return null; // @todo: unknown type with reason
     }

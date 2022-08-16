@@ -2,7 +2,6 @@
 
 namespace Dedoc\Documentor;
 
-use Dedoc\Documentor\Support\ClassAstHelper;
 use Dedoc\Documentor\Support\ComplexTypeHandler\ComplexTypeHandlers;
 use Dedoc\Documentor\Support\Generator\InfoObject;
 use Dedoc\Documentor\Support\Generator\OpenApi;
@@ -30,7 +29,6 @@ use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 use PhpParser\Node;
-use PhpParser\Node\Expr\Array_;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\FirstFindingVisitor;
 use PhpParser\NodeVisitor\NameResolver;
@@ -161,7 +159,7 @@ class Generator
                                 Schema::fromType(new ObjectType)
                             )
                     );
-                }
+            }
         } catch (\Throwable $exception) {
             $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
         }
