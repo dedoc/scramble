@@ -2,7 +2,6 @@
 
 namespace Dedoc\ApiDocs;
 
-use Dedoc\ApiDocs\Commands\ApiDocsCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
