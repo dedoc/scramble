@@ -1,10 +1,10 @@
 {
-    "name": "dedoc/documentor",
-    "description": "This is my package documentor",
+    "name": "dedoc/laravel-api-docs",
+    "description": "Automatic generation of API documentation for Laravel app.",
     "keywords": [
-        "dedoc",
         "laravel",
-        "documentor"
+        "documentation",
+        "openapi"
     ],
     "homepage": "https://github.com/dedoc/documentor",
     "license": "MIT",
