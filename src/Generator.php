@@ -1,26 +1,26 @@
 <?php
 
-namespace Dedoc\Documentor;
+namespace Dedoc\ApiDocs;
 
-use Dedoc\Documentor\Support\ComplexTypeHandler\ComplexTypeHandlers;
-use Dedoc\Documentor\Support\Generator\InfoObject;
-use Dedoc\Documentor\Support\Generator\OpenApi;
-use Dedoc\Documentor\Support\Generator\Operation;
-use Dedoc\Documentor\Support\Generator\Parameter;
-use Dedoc\Documentor\Support\Generator\Path;
-use Dedoc\Documentor\Support\Generator\RequestBodyObject;
-use Dedoc\Documentor\Support\Generator\Schema;
-use Dedoc\Documentor\Support\Generator\Types\BooleanType;
-use Dedoc\Documentor\Support\Generator\Types\IntegerType;
-use Dedoc\Documentor\Support\Generator\Types\NumberType;
-use Dedoc\Documentor\Support\Generator\Types\ObjectType;
-use Dedoc\Documentor\Support\Generator\Types\StringType;
-use Dedoc\Documentor\Support\PhpDoc;
-use Dedoc\Documentor\Support\ResponseExtractor\ResponsesExtractor;
-use Dedoc\Documentor\Support\RulesExtractor\FormRequestRulesExtractor;
-use Dedoc\Documentor\Support\RulesExtractor\ValidateCallExtractor;
-use Dedoc\Documentor\Support\Type\Identifier;
-use Dedoc\Documentor\Support\TypeHandlers\TypeHandlers;
+use Dedoc\ApiDocs\Support\ComplexTypeHandler\ComplexTypeHandlers;
+use Dedoc\ApiDocs\Support\Generator\InfoObject;
+use Dedoc\ApiDocs\Support\Generator\OpenApi;
+use Dedoc\ApiDocs\Support\Generator\Operation;
+use Dedoc\ApiDocs\Support\Generator\Parameter;
+use Dedoc\ApiDocs\Support\Generator\Path;
+use Dedoc\ApiDocs\Support\Generator\RequestBodyObject;
+use Dedoc\ApiDocs\Support\Generator\Schema;
+use Dedoc\ApiDocs\Support\Generator\Types\BooleanType;
+use Dedoc\ApiDocs\Support\Generator\Types\IntegerType;
+use Dedoc\ApiDocs\Support\Generator\Types\NumberType;
+use Dedoc\ApiDocs\Support\Generator\Types\ObjectType;
+use Dedoc\ApiDocs\Support\Generator\Types\StringType;
+use Dedoc\ApiDocs\Support\PhpDoc;
+use Dedoc\ApiDocs\Support\ResponseExtractor\ResponsesExtractor;
+use Dedoc\ApiDocs\Support\RulesExtractor\FormRequestRulesExtractor;
+use Dedoc\ApiDocs\Support\RulesExtractor\ValidateCallExtractor;
+use Dedoc\ApiDocs\Support\Type\Identifier;
+use Dedoc\ApiDocs\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
@@ -70,7 +70,7 @@ class Generator
         return collect(RouteFacade::getRoutes())//->dd()
             // Now care only about API routes
             ->filter(function (Route $route) {
-                return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'documentor');
+                return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'laravel_api_docs');
             })
 //            ->filter(fn (Route $route) => Str::contains($route->uri, 'impersonate'))
 //            ->filter(fn (Route $route) => $route->uri === 'api/brand/{brand}/publishers/{publisher}'&& $route->methods()[0] === 'GET')

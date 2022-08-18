@@ -1,9 +1,9 @@
 <?php
 
-namespace Dedoc\Documentor\Support\TypeHandlers;
+namespace Dedoc\ApiDocs\Support\TypeHandlers;
 
-use Dedoc\Documentor\Support\Generator\Types\ArrayType;
-use Dedoc\Documentor\Support\Generator\Types\Type;
+use Dedoc\ApiDocs\Support\Generator\Types\ArrayType;
+use Dedoc\ApiDocs\Support\Generator\Types\Type;
 use PHPStan\PhpDocParser\Ast\Type\ArrayTypeNode;
 
 class ArrayTypeNodeHandler implements TypeHandler

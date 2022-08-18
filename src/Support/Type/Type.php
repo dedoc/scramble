@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Documentor\Support\Type;
+namespace Dedoc\ApiDocs\Support\Type;
 
 interface Type
 {

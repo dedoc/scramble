@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Documentor\Support;
+namespace Dedoc\ApiDocs\Support;
 
 use PhpParser\Node;
 use PhpParser\NodeFinder;

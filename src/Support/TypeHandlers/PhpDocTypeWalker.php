@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Documentor\Support\TypeHandlers;
+namespace Dedoc\ApiDocs\Support\TypeHandlers;
 
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;

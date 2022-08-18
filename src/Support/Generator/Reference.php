@@ -1,8 +1,8 @@
 <?php
 
-namespace Dedoc\Documentor\Support\Generator;
+namespace Dedoc\ApiDocs\Support\Generator;
 
-use Dedoc\Documentor\Support\Generator\Types\Type;
+use Dedoc\ApiDocs\Support\Generator\Types\Type;
 
 class Reference extends Type
 {

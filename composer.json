@@ -1,12 +1,12 @@
 {
     "name": "dedoc/laravel-api-docs",
-    "description": "Automatic generation of API documentation for Laravel app.",
+    "description": "Automatic generation of API documentation for Laravel applications.",
     "keywords": [
         "laravel",
         "documentation",
         "openapi"
     ],
-    "homepage": "https://github.com/dedoc/documentor",
+    "homepage": "https://github.com/dedoc/laravel-api-docs",
     "license": "MIT",
     "authors": [
         {
@@ -32,13 +32,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Dedoc\\Documentor\\": "src",
-            "Dedoc\\Documentor\\Database\\Factories\\": "database/factories"
+            "Dedoc\\ApiDocs\\": "src",
+            "Dedoc\\ApiDocs\\Database\\Factories\\": "database/factories"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Dedoc\\Documentor\\Tests\\": "tests"
+            "Dedoc\\ApiDocs\\Tests\\": "tests"
         }
     },
     "scripts": {
@@ -53,11 +53,8 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Dedoc\\Documentor\\DocumentorServiceProvider"
-            ],
-            "aliases": {
-                "Documentor": "Dedoc\\Documentor\\Facades\\Documentor"
-            }
+                "Dedoc\\ApiDocs\\ApiDocsServiceProvider"
+            ]
         }
     },
     "minimum-stability": "dev",

@@ -1,17 +1,17 @@
 <?php
 
-namespace Dedoc\Documentor\Support\ResponseExtractor;
+namespace Dedoc\ApiDocs\Support\ResponseExtractor;
 
-use Dedoc\Documentor\Support\ComplexTypeHandler\ComplexTypeHandlers;
-use Dedoc\Documentor\Support\Generator\OpenApi;
-use Dedoc\Documentor\Support\Generator\Reference;
-use Dedoc\Documentor\Support\Generator\Response;
-use Dedoc\Documentor\Support\Generator\Schema;
-use Dedoc\Documentor\Support\Type\Generic;
-use Dedoc\Documentor\Support\Type\Identifier;
-use Dedoc\Documentor\Support\TypeHandlers\PhpDocTypeWalker;
-use Dedoc\Documentor\Support\TypeHandlers\ResolveFqnPhpDocTypeVisitor;
-use Dedoc\Documentor\Support\TypeHandlers\TypeHandlers;
+use Dedoc\ApiDocs\Support\ComplexTypeHandler\ComplexTypeHandlers;
+use Dedoc\ApiDocs\Support\Generator\OpenApi;
+use Dedoc\ApiDocs\Support\Generator\Reference;
+use Dedoc\ApiDocs\Support\Generator\Response;
+use Dedoc\ApiDocs\Support\Generator\Schema;
+use Dedoc\ApiDocs\Support\Type\Generic;
+use Dedoc\ApiDocs\Support\Type\Identifier;
+use Dedoc\ApiDocs\Support\TypeHandlers\PhpDocTypeWalker;
+use Dedoc\ApiDocs\Support\TypeHandlers\ResolveFqnPhpDocTypeVisitor;
+use Dedoc\ApiDocs\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Route;

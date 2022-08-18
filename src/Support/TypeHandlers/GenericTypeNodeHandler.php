@@ -1,11 +1,11 @@
 <?php
 
-namespace Dedoc\Documentor\Support\TypeHandlers;
+namespace Dedoc\ApiDocs\Support\TypeHandlers;
 
-use Dedoc\Documentor\Support\ComplexTypeHandler\ComplexTypeHandlers;
-use Dedoc\Documentor\Support\Generator\Types\Type;
-use Dedoc\Documentor\Support\Type\Generic;
-use Dedoc\Documentor\Support\Type\Identifier;
+use Dedoc\ApiDocs\Support\ComplexTypeHandler\ComplexTypeHandlers;
+use Dedoc\ApiDocs\Support\Generator\Types\Type;
+use Dedoc\ApiDocs\Support\Type\Generic;
+use Dedoc\ApiDocs\Support\Type\Identifier;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeItemNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;

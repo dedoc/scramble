@@ -3,9 +3,9 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('docs/api.json', function () {
-    $generator = new \Dedoc\Documentor\Generator();
+    $generator = new \Dedoc\ApiDocs\Generator();
 
     return $generator();
-})->name('documentor.docs.index');
+})->name('api-docs.docs.index');
 
-Route::view('docs/api', 'documentor::docs')->name('documentor.docs.api');
+Route::view('docs/api', 'api-docs::docs')->name('api-docs.docs.api');

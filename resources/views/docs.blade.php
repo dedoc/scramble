@@ -10,8 +10,7 @@
 </head>
 <body style="height: 100vh; overflow-y: hidden">
 <elements-api
-    apiDescriptionUrl="{{ route('documentor.docs.index') }}"
-{{--    apiDescriptionUrl="https://gist.githubusercontent.com/romalytvynenko/0536cc3e96ff51347c7b713c60bd0889/raw/14f9313c2aa954751df337aea59021fa53db5cd4/openapi2.yaml"--}}
+    apiDescriptionUrl="{{ route('api-docs.docs.index') }}"
     router="hash"
 />
 </body>

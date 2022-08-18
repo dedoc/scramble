@@ -1,11 +1,11 @@
 <?php
 
-namespace Dedoc\Documentor\Support\ComplexTypeHandler;
+namespace Dedoc\ApiDocs\Support\ComplexTypeHandler;
 
-use Dedoc\Documentor\Support\Generator\Components;
-use Dedoc\Documentor\Support\Generator\Schema;
-use Dedoc\Documentor\Support\Generator\Types\Type;
-use Dedoc\Documentor\Support\Type\Identifier;
+use Dedoc\ApiDocs\Support\Generator\Components;
+use Dedoc\ApiDocs\Support\Generator\Schema;
+use Dedoc\ApiDocs\Support\Generator\Types\Type;
+use Dedoc\ApiDocs\Support\Type\Identifier;
 
 class ComplexTypeHandlers
 {
@@ -17,7 +17,7 @@ class ComplexTypeHandlers
 
     public static Components $components;
 
-    public static function handle(\Dedoc\Documentor\Support\Type\Type $type): ?Type
+    public static function handle(\Dedoc\ApiDocs\Support\Type\Type $type): ?Type
     {
         if (isset(static::$components) && $type instanceof Identifier && static::$components->hasSchema($type->name)) {
             return static::$components->getSchemaReference($type->name);

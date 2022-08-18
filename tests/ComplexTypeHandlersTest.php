@@ -1,7 +1,7 @@
 <?php
 
-use Dedoc\Documentor\Support\ComplexTypeHandler\ComplexTypeHandlers;
-use Dedoc\Documentor\Support\Type\Identifier;
+use Dedoc\ApiDocs\Support\ComplexTypeHandler\ComplexTypeHandlers;
+use Dedoc\ApiDocs\Support\Type\Identifier;
 use Illuminate\Http\Resources\Json\JsonResource;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 

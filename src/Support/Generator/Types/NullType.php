@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Documentor\Support\Generator\Types;
+namespace Dedoc\ApiDocs\Support\Generator\Types;
 
 class NullType extends Type
 {

@@ -1,8 +1,8 @@
 <?php
 
-namespace Dedoc\Documentor\Support\TypeHandlers;
+namespace Dedoc\ApiDocs\Support\TypeHandlers;
 
-use Dedoc\Documentor\Support\Generator\Types\Type;
+use Dedoc\ApiDocs\Support\Generator\Types\Type;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeItemNode;
 
 class ArrayShapeItemNodeHandler implements TypeHandler

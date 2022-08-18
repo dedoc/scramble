@@ -1,18 +1,18 @@
 
 [<img src="https://github-ads.s3.eu-central-1.amazonaws.com/support-ukraine.svg?t=1" />](https://supportukrainenow.org)
 
-# This is my package documentor
+# Laravel API Docs
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/dedoc/documentor.svg?style=flat-square)](https://packagist.org/packages/dedoc/documentor)
-[![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/dedoc/documentor/run-tests?label=tests)](https://github.com/dedoc/documentor/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/workflow/status/dedoc/documentor/Fix%20PHP%20code%20style%20issues?label=code%20style)](https://github.com/dedoc/documentor/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/dedoc/documentor.svg?style=flat-square)](https://packagist.org/packages/dedoc/documentor)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/dedoc/laravel-api-docs.svg?style=flat-square)](https://packagist.org/packages/dedoc/laravel-api-docs)
+[![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/dedoc/laravel-api-docs/run-tests?label=tests)](https://github.com/dedoc/laravel-api-docs/actions?query=workflow%3Arun-tests+branch%3Amain)
+[![GitHub Code Style Action Status](https://img.shields.io/github/workflow/status/dedoc/laravel-api-docs/Fix%20PHP%20code%20style%20issues?label=code%20style)](https://github.com/dedoc/laravel-api-docs/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
+[![Total Downloads](https://img.shields.io/packagist/dt/dedoc/laravel-api-docs.svg?style=flat-square)](https://packagist.org/packages/dedoc/laravel-api-docs)
 
 This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
 
 ## Support us
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/documentor.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/documentor)
+[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/laravel-api-docs.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/laravel-api-docs)
 
 We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
 
@@ -23,20 +23,20 @@ We highly appreciate you sending us a postcard from your hometown, mentioning wh
 You can install the package via composer:
 
 ```bash
-composer require dedoc/documentor
+composer require dedoc/laravel-api-docs
 ```
 
 You can publish and run the migrations with:
 
 ```bash
-php artisan vendor:publish --tag="documentor-migrations"
+php artisan vendor:publish --tag="laravel-api-docs-migrations"
 php artisan migrate
 ```
 
 You can publish the config file with:
 
 ```bash
-php artisan vendor:publish --tag="documentor-config"
+php artisan vendor:publish --tag="laravel-api-docs-config"
 ```
 
 This is the contents of the published config file:
@@ -49,14 +49,14 @@ return [
 Optionally, you can publish the views using
 
 ```bash
-php artisan vendor:publish --tag="documentor-views"
+php artisan vendor:publish --tag="laravel-api-docs-views"
 ```
 
 ## Usage
 
 ```php
-$documentor = new Dedoc\Documentor();
-echo $documentor->echoPhrase('Hello, Dedoc!');
+$laravel-api-docs = new Dedoc\laravel-api-docs();
+echo $laravel-api-docs->echoPhrase('Hello, Dedoc!');
 ```
 
 ## Testing

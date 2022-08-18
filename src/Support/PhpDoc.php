@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Documentor\Support;
+namespace Dedoc\ApiDocs\Support;
 
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;

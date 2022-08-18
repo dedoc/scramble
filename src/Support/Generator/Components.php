@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Documentor\Support\Generator;
+namespace Dedoc\ApiDocs\Support\Generator;
 
 class Components
 {

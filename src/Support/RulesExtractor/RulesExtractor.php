@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Documentor\Support\RulesExtractor;
+namespace Dedoc\ApiDocs\Support\RulesExtractor;
 
 class RulesExtractor
 {

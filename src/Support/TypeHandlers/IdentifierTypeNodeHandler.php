@@ -1,15 +1,15 @@
 <?php
 
-namespace Dedoc\Documentor\Support\TypeHandlers;
+namespace Dedoc\ApiDocs\Support\TypeHandlers;
 
-use Dedoc\Documentor\Support\Generator\Types\ArrayType;
-use Dedoc\Documentor\Support\Generator\Types\BooleanType;
-use Dedoc\Documentor\Support\Generator\Types\IntegerType;
-use Dedoc\Documentor\Support\Generator\Types\NullType;
-use Dedoc\Documentor\Support\Generator\Types\NumberType;
-use Dedoc\Documentor\Support\Generator\Types\ObjectType;
-use Dedoc\Documentor\Support\Generator\Types\StringType;
-use Dedoc\Documentor\Support\Generator\Types\Type;
+use Dedoc\ApiDocs\Support\Generator\Types\ArrayType;
+use Dedoc\ApiDocs\Support\Generator\Types\BooleanType;
+use Dedoc\ApiDocs\Support\Generator\Types\IntegerType;
+use Dedoc\ApiDocs\Support\Generator\Types\NullType;
+use Dedoc\ApiDocs\Support\Generator\Types\NumberType;
+use Dedoc\ApiDocs\Support\Generator\Types\ObjectType;
+use Dedoc\ApiDocs\Support\Generator\Types\StringType;
+use Dedoc\ApiDocs\Support\Generator\Types\Type;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 
 class IdentifierTypeNodeHandler implements TypeHandler

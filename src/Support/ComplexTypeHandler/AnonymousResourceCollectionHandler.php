@@ -1,12 +1,12 @@
 <?php
 
-namespace Dedoc\Documentor\Support\ComplexTypeHandler;
+namespace Dedoc\ApiDocs\Support\ComplexTypeHandler;
 
-use Dedoc\Documentor\Support\Generator\Types\ArrayType;
-use Dedoc\Documentor\Support\Generator\Types\ObjectType;
-use Dedoc\Documentor\Support\Generator\Types\Type;
-use Dedoc\Documentor\Support\Type\Generic;
-use Dedoc\Documentor\Support\Type\Identifier;
+use Dedoc\ApiDocs\Support\Generator\Types\ArrayType;
+use Dedoc\ApiDocs\Support\Generator\Types\ObjectType;
+use Dedoc\ApiDocs\Support\Generator\Types\Type;
+use Dedoc\ApiDocs\Support\Type\Generic;
+use Dedoc\ApiDocs\Support\Type\Identifier;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,7 +19,7 @@ class AnonymousResourceCollectionHandler
         $this->type = $type;
     }
 
-    public static function shouldHandle(\Dedoc\Documentor\Support\Type\Type $type)
+    public static function shouldHandle(\Dedoc\ApiDocs\Support\Type\Type $type)
     {
         return $type instanceof Generic
             && $type->type->name === AnonymousResourceCollection::class

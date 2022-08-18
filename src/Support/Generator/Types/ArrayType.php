@@ -1,8 +1,8 @@
 <?php
 
-namespace Dedoc\Documentor\Support\Generator\Types;
+namespace Dedoc\ApiDocs\Support\Generator\Types;
 
-use Dedoc\Documentor\Support\Generator\Schema;
+use Dedoc\ApiDocs\Support\Generator\Schema;
 
 class ArrayType extends Type
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Documentor\Support\RulesExtractor;
+namespace Dedoc\ApiDocs\Support\RulesExtractor;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
