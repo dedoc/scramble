@@ -42,6 +42,7 @@ abstract class Type
     public function setHint(string $hint): Type
     {
         $this->hint = $hint;
+
         return $this;
     }
 }
