@@ -59,7 +59,7 @@ class JsonResourceHandler
         TypeHandlers::unregisterIdentifierHandler($this->type->name);
 
         if ($type && isset(ComplexTypeHandlers::$components)) {
-            $type->setDescription('`'.ComplexTypeHandlers::$components->uniqueSchemaName($this->type->name).'`');
+            $type->setHint('`'.ComplexTypeHandlers::$components->uniqueSchemaName($this->type->name).'`');
         }
 
         return $type;

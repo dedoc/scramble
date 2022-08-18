@@ -76,6 +76,6 @@ class LengthAwarePaginatorHandler
         );
         $type->setRequired(['data', 'links', 'meta']);
 
-        return $type->setDescription('Paginated set of `'.ComplexTypeHandlers::$components->uniqueSchemaName($collectingClassType->name).'`');
+        return $type->setHint('Paginated set of `'.ComplexTypeHandlers::$components->uniqueSchemaName($collectingClassType->name).'`');
     }
 }

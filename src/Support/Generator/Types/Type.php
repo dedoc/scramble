@@ -8,6 +8,8 @@ abstract class Type
 
     public string $description = '';
 
+    public string $hint = '';
+
     protected bool $nullable = false;
 
     public function __construct(string $type)
@@ -34,6 +36,12 @@ abstract class Type
     {
         $this->description = $description;
 
+        return $this;
+    }
+
+    public function setHint(string $hint): Type
+    {
+        $this->hint = $hint;
         return $this;
     }
 }

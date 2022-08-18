@@ -54,6 +54,6 @@ class AnonymousResourceCollectionHandler
             ? (new ObjectType)->addProperty($responseWrapKey, $type)->setRequired([$responseWrapKey])
             : (new ArrayType())->setItems($type);
 
-        return $type->setDescription('Array of `'.ComplexTypeHandlers::$components->uniqueSchemaName($collectingClassType->name).'`');
+        return $type->setHint('Array of `'.ComplexTypeHandlers::$components->uniqueSchemaName($collectingClassType->name).'`');
     }
 }

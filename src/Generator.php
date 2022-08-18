@@ -10,6 +10,7 @@ use Dedoc\ApiDocs\Support\Generator\Parameter;
 use Dedoc\ApiDocs\Support\Generator\Path;
 use Dedoc\ApiDocs\Support\Generator\RequestBodyObject;
 use Dedoc\ApiDocs\Support\Generator\Schema;
+use Dedoc\ApiDocs\Support\Generator\Server;
 use Dedoc\ApiDocs\Support\Generator\Types\BooleanType;
 use Dedoc\ApiDocs\Support\Generator\Types\IntegerType;
 use Dedoc\ApiDocs\Support\Generator\Types\NumberType;
@@ -61,8 +62,12 @@ class Generator
 
     private function makeOpenApi()
     {
-        return OpenApi::make('3.1.0')
-            ->addInfo(new InfoObject(config('app.name')));
+        $openApi = OpenApi::make('3.1.0')
+            ->addInfo(InfoObject::make(config('app.name'))->setVersion('0.0.1'));
+
+        $openApi->servers->add(Server::make(url('/api')));
+
+        return $openApi;
     }
 
     private function getRoutes(): Collection
@@ -70,7 +75,7 @@ class Generator
         return collect(RouteFacade::getRoutes())//->dd()
             // Now care only about API routes
             ->filter(function (Route $route) {
-                return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'laravel_api_docs');
+                return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'api-docs');
             })
 //            ->filter(fn (Route $route) => Str::contains($route->uri, 'impersonate'))
 //            ->filter(fn (Route $route) => $route->uri === 'api/brand/{brand}/publishers/{publisher}'&& $route->methods()[0] === 'GET')
@@ -81,7 +86,7 @@ class Generator
 //            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}' && $route->methods()[0] === 'PUT')
 //            ->filter(fn (Route $route) => $route->uri === 'api/todo-item' && $route->methods()[0] === 'POST')
 //            ->filter(fn (Route $route) => $route->uri === 'api/users' && $route->methods()[0] === 'POST')
-//            ->filter(fn (Route $route) => $route->uri === 'api/permissions' && $route->methods()[0] === 'GET')
+            ->filter(fn (Route $route) => $route->uri === 'api/brand/{brand}/suggested_publishers' && $route->methods()[0] === 'GET')
             ->filter(fn (Route $route) => in_array('api', $route->gatherMiddleware()))
 //            ->filter(fn (Route $route) => Str::contains($route->getAction('as'), 'api.creators.update'))
             ->values();
@@ -92,7 +97,8 @@ class Generator
         /** @var Node\Stmt\ClassMethod|null $methodNode */
         /** @var PhpDocNode|null $methodPhpDocNode */
         /** @var \ReflectionMethod|null $reflectionMethod */
-        [$methodNode, $methodPhpDocNode, $reflectionMethod, $classAliasesMap] = $this->extractNodes($route);
+        /** @var PhpDocNode|null $aliasPhpDocNode */
+        [$methodNode, $methodPhpDocNode, $reflectionMethod, $classAliasesMap, $aliasPhpDocNode] = $this->extractNodes($route);
 
         if ($methodNode) {
             $name = explode($route->getAction('uses'), '@')[0];
@@ -121,7 +127,7 @@ class Generator
                 $summary = Str::of($text[0]);
                 $description = Str::of($text[1]);
             } elseif (count($text) === 1) {
-                $description = Str::of($text[0]);
+                $summary = Str::of($text[0]);
             }
         }
 
@@ -130,12 +136,13 @@ class Generator
         $operation = Operation::make($method = strtolower($route->methods()[0]))
             // @todo: Not always correct/expected in real projects.
 //            ->setOperationId(Str::camel($route->getAction('as')))
-            ->setTags(
+            ->setTags(array_merge(
+                $this->extractTagsForMethod($aliasPhpDocNode),
                 // @todo: Fix real mess in the real projects
                 $route->getAction('controller')
                     ? [Str::of(get_class($route->controller))->explode('\\')->mapInto(Stringable::class)->last()->replace('Controller', '')]
                     : []
-            )
+            ))
             // @todo: Figure out when params are for the implicit/explicit model binding and type them appropriately
             // @todo: Use route function typehints to get the primitive types
             ->addParameters($pathParams);
@@ -150,7 +157,7 @@ class Generator
                 } else {
                     $operation->addParameters($bodyParams);
                 }
-            } else {
+            } elseif ($method !== 'get') {
                 $operation
                     ->addRequestBodyObject(
                         RequestBodyObject::make()
@@ -173,10 +180,27 @@ class Generator
             ->summary($summary->rtrim('.'))
             ->description($description);
 
+        if (isset(ApiDocs::$operationResolver)) {
+            (ApiDocs::$operationResolver)($operation, $route, $methodNode, $reflectionMethod, $methodPhpDocNode);
+        }
+
         return [
             Str::replace(array_keys($pathAliases), array_values($pathAliases), $route->uri),
             $operation,
         ];
+    }
+
+    private function extractTagsForMethod(?PhpDocNode $classPhpDocNode)
+    {
+        if (! $classPhpDocNode) {
+            return [];
+        }
+
+        if (! count($tagNodes = $classPhpDocNode->getTagsByName('@tags'))) {
+            return [];
+        }
+
+        return explode(',', $tagNodes[0]->value->value);
     }
 
     private function getRoutePathParameters(Route $route, ?PhpDocNode $methodPhpDocNode)
@@ -345,6 +369,8 @@ class Generator
         /** @var \ReflectionMethod|null $reflectionMethod */
         $reflectionMethod = null;
         $aliases = [];
+        /** @var PhpDocNode|null $aliasPhpDocNode */
+        $aliasPhpDocNode = null;
 
         // @todo: support closures, not only "Controller@action" string
         if (is_string($uses = $route->getAction('uses'))) {
@@ -352,6 +378,10 @@ class Generator
             $reflectionClass = new ReflectionClass($class);
             $classSourceCode = file_get_contents($reflectionClass->getFileName());
             $classAst = (new ParserFactory)->create(ParserFactory::PREFER_PHP7)->parse($classSourceCode);
+
+            if ($classComment = $reflectionClass->getDocComment()) {
+                $aliasPhpDocNode = PhpDoc::parse($classComment);
+            }
 
             /** @var Node\Stmt\ClassMethod $methodNode */
             [$methodNode, $aliases] = $this->findFirstNode(
@@ -368,7 +398,7 @@ class Generator
             }
         }
 
-        return [$methodNode, $methodPhpDocNode, $reflectionMethod, $aliases];
+        return [$methodNode, $methodPhpDocNode, $reflectionMethod, $aliases, $aliasPhpDocNode];
     }
 
     private function findFirstNode(?array $classAst, \Closure $param)

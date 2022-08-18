@@ -10,6 +10,8 @@ class OpenApi
 
     public Components $components;
 
+    public Servers $servers;
+
     /** @var Path[] */
     private array $paths = [];
 
@@ -17,6 +19,7 @@ class OpenApi
     {
         $this->version = $version;
         $this->components = new Components;
+        $this->servers = new Servers;
     }
 
     public static function make(string $version)
@@ -44,6 +47,10 @@ class OpenApi
             'openapi' => $this->version,
             'info' => $this->info->toArray(),
         ];
+
+        if (count($serializedServers = $this->servers->toArray())) {
+            $result['servers'] = $serializedServers;
+        }
 
         if (count($this->paths)) {
             $paths = [];

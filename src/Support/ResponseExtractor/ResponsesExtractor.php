@@ -50,14 +50,14 @@ class ResponsesExtractor
         return collect(Arr::wrap($this->getReturnTypes()))
             ->filter()
             ->map(function ($type) {
-                $description = $type instanceof Reference
-                    ? ComplexTypeHandlers::$components->getSchema($type->fullName)->type->description
-                    : $type->description;
+                $hint = $type instanceof Reference
+                    ? ComplexTypeHandlers::$components->getSchema($type->fullName)->type->hint
+                    : $type->hint;
 
                 $type->setDescription('');
 
                 return Response::make(200)
-                    ->description($description)
+                    ->description($hint)
                     ->setContent('application/json', Schema::fromType($type));
             })
             ->values()

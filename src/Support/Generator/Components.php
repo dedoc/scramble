@@ -2,6 +2,8 @@
 
 namespace Dedoc\ApiDocs\Support\Generator;
 
+use Illuminate\Support\Str;
+
 class Components
 {
     /** @var array<string, Schema> */
@@ -49,10 +51,10 @@ class Components
         ) {
             $this->tempNames[$shortestPossibleName] = $fullName;
 
-            return $shortestPossibleName;
+            return static::slug($shortestPossibleName);
         }
 
-        return $fullName;
+        return static::slug($fullName);
     }
 
     public function getSchemaReference(string $schemaName)
@@ -63,5 +65,10 @@ class Components
     public function getSchema(string $schemaName)
     {
         return $this->schemas[$schemaName];
+    }
+
+    public static function slug(string $name)
+    {
+        return Str::replace('\\', '.', $name);
     }
 }
