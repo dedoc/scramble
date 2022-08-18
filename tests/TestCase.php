@@ -1,8 +1,8 @@
 <?php
 
-namespace Dedoc\Documentor\Tests;
+namespace Dedoc\ApiDocs\Tests;
 
-use Dedoc\Documentor\DocumentorServiceProvider;
+use Dedoc\ApiDocs\ApiDocsServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
 
@@ -13,14 +13,14 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'Dedoc\\Documentor\\Database\\Factories\\'.class_basename($modelName).'Factory'
+            fn (string $modelName) => 'Dedoc\\ApiDocs\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
     }
 
     protected function getPackageProviders($app)
     {
         return [
-            DocumentorServiceProvider::class,
+            ApiDocsServiceProvider::class,
         ];
     }
 

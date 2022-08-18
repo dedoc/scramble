@@ -1,5 +1,5 @@
 <?php
 
-use Dedoc\Documentor\Tests\TestCase;
+use Dedoc\ApiDocs\Tests\TestCase;
 
 uses(TestCase::class)->in(__DIR__);
