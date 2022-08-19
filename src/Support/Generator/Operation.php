@@ -17,10 +17,10 @@ class Operation
     /** @var Parameter[] */
     public array $parameters = [];
 
-    private ?RequestBodyObject $requestBodyObject = null;
+    public ?RequestBodyObject $requestBodyObject = null;
 
     /** @var Response[]|null */
-    private ?array $responses = [];
+    public ?array $responses = [];
 
     public function __construct(string $method)
     {

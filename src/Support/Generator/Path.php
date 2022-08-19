@@ -7,7 +7,7 @@ class Path
     public string $path;
 
     /** @var array<string, Operation> */
-    private array $operations = [];
+    public array $operations = [];
 
     public function __construct(string $path)
     {

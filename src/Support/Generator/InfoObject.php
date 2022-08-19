@@ -4,9 +4,9 @@ namespace Dedoc\ApiDocs\Support\Generator;
 
 class InfoObject
 {
-    private string $title;
+    public string $title;
 
-    private string $version;
+    public string $version;
 
     public function __construct(string $title)
     {

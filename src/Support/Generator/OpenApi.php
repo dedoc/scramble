@@ -4,22 +4,24 @@ namespace Dedoc\ApiDocs\Support\Generator;
 
 class OpenApi
 {
-    private string $version;
+    public string $version;
 
-    private InfoObject $info;
+    public InfoObject $info;
 
     public Components $components;
 
-    public Servers $servers;
+    /** @var Server[] */
+    public array $servers = [];
 
     /** @var Path[] */
-    private array $paths = [];
+    public array $paths = [];
+
+    private ?Security $defaultSecurity = null;
 
     public function __construct(string $version)
     {
         $this->version = $version;
         $this->components = new Components;
-        $this->servers = new Servers;
     }
 
     public static function make(string $version)
@@ -41,6 +43,20 @@ class OpenApi
         return $this;
     }
 
+    public function addServer(Server $server)
+    {
+        $this->servers[] = $server;
+
+        return $this;
+    }
+
+    public function defaultSecurity(Security $security)
+    {
+        $this->defaultSecurity = $security;
+
+        return $this;
+    }
+
     public function toArray()
     {
         $result = [
@@ -48,8 +64,15 @@ class OpenApi
             'info' => $this->info->toArray(),
         ];
 
-        if (count($serializedServers = $this->servers->toArray())) {
-            $result['servers'] = $serializedServers;
+        if (count($this->servers)) {
+            $result['servers'] = array_map(
+                fn (Server $s) => $s->toArray(),
+                $this->servers,
+            );
+        }
+
+        if ($this->defaultSecurity) {
+            $result['security'] = [$this->defaultSecurity->toArray()];
         }
 
         if (count($this->paths)) {

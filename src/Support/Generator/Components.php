@@ -9,8 +9,18 @@ class Components
     /** @var array<string, Schema> */
     public array $schemas = [];
 
+    /** @var array<string, SecurityScheme> */
+    public array $securitySchemes = [];
+
     // @todo: figure out how to solve the problem of duplicating resource names better
     public array $tempNames = [];
+
+    public function addSecurityScheme(string $name, SecurityScheme $securityScheme)
+    {
+        $this->securitySchemes[$name] = $securityScheme;
+
+        return $this;
+    }
 
     public function hasSchema(string $schemaName): bool
     {
@@ -27,6 +37,12 @@ class Components
     public function toArray()
     {
         $result = [];
+
+        if (count($this->securitySchemes)) {
+            $result['securitySchemes'] = collect($this->securitySchemes)
+                ->map(fn (SecurityScheme $s) => $s->toArray())
+                ->toArray();
+        }
 
         if (count($this->schemas)) {
             $result['schemas'] = collect($this->schemas)

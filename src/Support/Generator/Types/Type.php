@@ -8,6 +8,10 @@ abstract class Type
 
     public string $description = '';
 
+    /**
+     * Hint is used to pass a description to other handlers but not show it with type.
+     * For example, for response documentation.
+     */
     public string $hint = '';
 
     protected bool $nullable = false;

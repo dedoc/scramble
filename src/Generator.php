@@ -43,19 +43,20 @@ class Generator
 {
     public function __invoke()
     {
-        $routes = $this->getRoutes();
-
-        /** @var OpenApi $openApi */
         $openApi = $this->makeOpenApi();
 
         ComplexTypeHandlers::registerComponentsRepository($openApi->components);
 
-        $routes//->dd()
+        $this->getRoutes()
             ->map(fn (Route $route) => $this->routeToOperation($openApi, $route))
             ->eachSpread(fn (string $path, Operation $operation) => $openApi->addPath(
                 Path::make(str_replace('api/', '', $path))->addOperation($operation)
             ))
             ->toArray();
+
+        if (isset(ApiDocs::$openApiExtender)) {
+            $openApi = (ApiDocs::$openApiExtender)($openApi);
+        }
 
         return $openApi->toArray();
     }
@@ -65,30 +66,22 @@ class Generator
         $openApi = OpenApi::make('3.1.0')
             ->addInfo(InfoObject::make(config('app.name'))->setVersion('0.0.1'));
 
-        $openApi->servers->add(Server::make(url('/api')));
+        $openApi->addServer(Server::make(url('/api')));
 
         return $openApi;
     }
 
     private function getRoutes(): Collection
     {
-        return collect(RouteFacade::getRoutes())//->dd()
-            // Now care only about API routes
+        return collect(RouteFacade::getRoutes())
             ->filter(function (Route $route) {
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'api-docs');
             })
-//            ->filter(fn (Route $route) => Str::contains($route->uri, 'impersonate'))
-//            ->filter(fn (Route $route) => $route->uri === 'api/brand/{brand}/publishers/{publisher}'&& $route->methods()[0] === 'GET')
-//            ->filter(fn (Route $route) => $route->uri === 'api/slack-conversations'&& $route->methods()[0] === 'GET')
-//            ->filter(fn (Route $route) => $route->uri === 'api/campaigns'&& $route->methods()[0] === 'POST')
-//            ->filter(fn (Route $route) => $route->uri === 'api/creators/{creator}'&& $route->methods()[0] === 'PUT')
-//            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}/brief' && $route->methods()[0] === 'POST')
-//            ->filter(fn (Route $route) => $route->uri === 'api/event-production/{event_production}' && $route->methods()[0] === 'PUT')
-//            ->filter(fn (Route $route) => $route->uri === 'api/todo-item' && $route->methods()[0] === 'POST')
-//            ->filter(fn (Route $route) => $route->uri === 'api/users' && $route->methods()[0] === 'POST')
-            ->filter(fn (Route $route) => $route->uri === 'api/brand/{brand}/suggested_publishers' && $route->methods()[0] === 'GET')
-            ->filter(fn (Route $route) => in_array('api', $route->gatherMiddleware()))
-//            ->filter(fn (Route $route) => Str::contains($route->getAction('as'), 'api.creators.update'))
+            ->filter(function (Route $route) {
+                $routeResolver = ApiDocs::$routeResolver ?? fn(Route $route) => in_array('api', $route->gatherMiddleware());
+
+                return $routeResolver($route);
+            })
             ->values();
     }
 
@@ -134,17 +127,12 @@ class Generator
         [$pathParams, $pathAliases] = $this->getRoutePathParameters($route, $methodPhpDocNode);
 
         $operation = Operation::make($method = strtolower($route->methods()[0]))
-            // @todo: Not always correct/expected in real projects.
-//            ->setOperationId(Str::camel($route->getAction('as')))
             ->setTags(array_merge(
                 $this->extractTagsForMethod($aliasPhpDocNode),
-                // @todo: Fix real mess in the real projects
                 $route->getAction('controller')
                     ? [Str::of(get_class($route->controller))->explode('\\')->mapInto(Stringable::class)->last()->replace('Controller', '')]
                     : []
             ))
-            // @todo: Figure out when params are for the implicit/explicit model binding and type them appropriately
-            // @todo: Use route function typehints to get the primitive types
             ->addParameters($pathParams);
 
         /** @var Parameter[] $bodyParams */
