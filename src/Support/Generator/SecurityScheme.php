@@ -22,12 +22,14 @@ class SecurityScheme
         $scheme = new self('apiKey');
         $scheme->in = $in;
         $scheme->name = $name;
+
         return $scheme;
     }
 
     public function setDescription(string $description): SecurityScheme
     {
         $this->description = $description;
+
         return $this;
     }
 
