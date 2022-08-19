@@ -40,7 +40,7 @@ class ClassAstHelper
         $classAst = (new NodeFinder())->findFirst(
             $fileAst,
             fn (Node $node) => $node instanceof Node\Stmt\Class_
-                && ($node->namespacedName ?? $node->name)->toString() === $this->class,
+                && ($node->namespacedName ?? $node->name)->toString() === ltrim($this->class, '\\'),
         );
 
         if (! $classAst) {
