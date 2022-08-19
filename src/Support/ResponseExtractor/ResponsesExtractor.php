@@ -29,18 +29,18 @@ class ResponsesExtractor
 
     private ?\ReflectionMethod $reflectionMethod;
 
-    private array $classAliasesMap;
+    private $nameResolver;
 
     private OpenApi $openApi;
 
     private ?PhpDocNode $methodPhpDocNode;
 
-    public function __construct(OpenApi $openApi, Route $route, ?ClassMethod $methodNode, ?\ReflectionMethod $reflectionMethod, ?PhpDocNode $methodPhpDocNode, array $classAliasesMap)
+    public function __construct(OpenApi $openApi, Route $route, ?ClassMethod $methodNode, ?\ReflectionMethod $reflectionMethod, ?PhpDocNode $methodPhpDocNode, callable $nameResolver)
     {
         $this->route = $route;
         $this->methodNode = $methodNode;
         $this->reflectionMethod = $reflectionMethod;
-        $this->classAliasesMap = $classAliasesMap;
+        $this->nameResolver = $nameResolver;
         $this->openApi = $openApi;
         $this->methodPhpDocNode = $methodPhpDocNode;
     }
@@ -99,7 +99,7 @@ class ResponsesExtractor
             fn (Node $node) => $node instanceof Node\Stmt\Return_
                 && $node->expr instanceof Node\Expr\New_
                 && $node->expr->class instanceof Node\Name
-                && is_a($this->classAliasesMap[$node->expr->class->toString()] ?? $node->expr->class->toString(), JsonResource::class, true)
+                && is_a($node->expr->class->toString(), JsonResource::class, true)
         );
 
         /*
@@ -107,7 +107,7 @@ class ResponsesExtractor
          */
         if ($jsonResourceReturnNode) {
             return ComplexTypeHandlers::handle(
-                new Identifier($this->classAliasesMap[$jsonResourceReturnNode->expr->class->toString()] ?? $jsonResourceReturnNode->expr->class->toString())
+                new Identifier($jsonResourceReturnNode->expr->class->toString())
             );
         }
 
@@ -118,7 +118,7 @@ class ResponsesExtractor
                 && $node->expr->name instanceof Node\Identifier
                 && $node->expr->name->toString() === 'collection'
                 && $node->expr->class instanceof Node\Name
-                && is_a($this->classAliasesMap[$node->expr->class->toString()] ?? $node->expr->class->toString(), JsonResource::class, true)
+                && is_a($node->expr->class->toString(), JsonResource::class, true)
         );
 
         if ($anonymousResourceCollection) {
@@ -126,7 +126,7 @@ class ResponsesExtractor
                 new Identifier(AnonymousResourceCollection::class),
                 array_map(
                     fn ($name) => new Identifier($name),
-                    [$this->classAliasesMap[$anonymousResourceCollection->expr->class->toString()] ?? $anonymousResourceCollection->expr->class->toString()],
+                    [$anonymousResourceCollection->expr->class->toString()],
                 )
             ));
         }
@@ -142,9 +142,7 @@ class ResponsesExtractor
             return null;
         }
 
-        $getFqn = fn ($className) => $this->classAliasesMap[$className] ?? $className;
-
-        PhpDocTypeWalker::traverse($returnTagValue->type, [new ResolveFqnPhpDocTypeVisitor($getFqn)]);
+        PhpDocTypeWalker::traverse($returnTagValue->type, [new ResolveFqnPhpDocTypeVisitor($this->nameResolver)]);
 
         return TypeHandlers::handle($returnTagValue->type);
     }

@@ -12,12 +12,9 @@ class ValidateCallExtractor
 {
     private ?Node\FunctionLike $handle;
 
-    private array $aliases;
-
-    public function __construct(?Node\FunctionLike $handle, array $aliases)
+    public function __construct(?Node\FunctionLike $handle)
     {
         $this->handle = $handle;
-        $this->aliases = $aliases;
     }
 
     public function shouldHandle()
@@ -58,12 +55,6 @@ class ValidateCallExtractor
         if ($validationRules) {
             $printer = new \PhpParser\PrettyPrinter\Standard();
             $validationRulesCode = $printer->prettyPrint([$validationRules]);
-
-            $validationRulesCode = Str::replace(
-                [...array_map(fn ($c) => "$c::", array_keys($this->aliases)), ...array_map(fn ($c) => "$c(", array_keys($this->aliases))],
-                [...array_map(fn ($c) => "$c::", array_values($this->aliases)), ...array_map(fn ($c) => "$c(", array_values($this->aliases))],
-                $validationRulesCode,
-            );
 
             $injectableParams = collect($methodNode->getParams())
                 ->filter(fn (Node\Param $param) => ! class_exists($className = (string) $param->type) || ! is_a($className, Request::class, true))
