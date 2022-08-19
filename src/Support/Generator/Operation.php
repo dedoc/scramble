@@ -69,7 +69,7 @@ class Operation
 
     public function setTags(array $tags)
     {
-        $this->tags = $tags;
+        $this->tags = array_map(fn ($t) => (string) $t, $tags);
 
         return $this;
     }
