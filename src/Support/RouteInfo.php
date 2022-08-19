@@ -29,7 +29,7 @@ class RouteInfo
 
     private function initClassInfo()
     {
-        if (!$this->isClassBased()) {
+        if (! $this->isClassBased()) {
             return;
         }
 
@@ -86,11 +86,11 @@ class RouteInfo
 
     public function reflectionMethod(): ?ReflectionMethod
     {
-        if (!$this->isClassBased()) {
+        if (! $this->isClassBased()) {
             return null;
         }
 
-        if (!method_exists($this->className(), $this->methodName())) {
+        if (! method_exists($this->className(), $this->methodName())) {
             return null;
         }
 
@@ -109,7 +109,7 @@ class RouteInfo
             ->trim()
             ->explode("\n\n", 2);
 
-        $phpDoc->setAttribute('summary',  $text[0] ?? '');
+        $phpDoc->setAttribute('summary', $text[0] ?? '');
         $phpDoc->setAttribute('description', $text[1] ?? '');
     }
 }
