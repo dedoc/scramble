@@ -1,11 +1,11 @@
 <?php
 
-namespace Dedoc\ApiDocs\Support\TypeHandlers;
+namespace Dedoc\Scramble\Support\TypeHandlers;
 
-use Dedoc\ApiDocs\Support\Generator\Types\ArrayType;
-use Dedoc\ApiDocs\Support\Generator\Types\ObjectType;
-use Dedoc\ApiDocs\Support\Generator\Types\StringType;
-use Dedoc\ApiDocs\Support\Generator\Types\Type;
+use Dedoc\Scramble\Support\Generator\Types\ArrayType;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types\Type;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 

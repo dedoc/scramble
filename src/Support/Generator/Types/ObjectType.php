@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\ApiDocs\Support\Generator\Types;
+namespace Dedoc\Scramble\Support\Generator\Types;
 
 class ObjectType extends Type
 {

@@ -1,3 +1,3 @@
 # Changelog
 
-All notable changes to `documentor` will be documented in this file.
+All notable changes to `scramble` will be documented in this file.

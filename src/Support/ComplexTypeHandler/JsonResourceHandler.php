@@ -1,12 +1,12 @@
 <?php
 
-namespace Dedoc\ApiDocs\Support\ComplexTypeHandler;
+namespace Dedoc\Scramble\Support\ComplexTypeHandler;
 
-use Dedoc\ApiDocs\Support\ClassAstHelper;
-use Dedoc\ApiDocs\Support\ResponseExtractor\ModelInfo;
-use Dedoc\ApiDocs\Support\Type\Identifier;
-use Dedoc\ApiDocs\Support\Type\Type;
-use Dedoc\ApiDocs\Support\TypeHandlers\TypeHandlers;
+use Dedoc\Scramble\Support\ClassAstHelper;
+use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
+use Dedoc\Scramble\Support\Type\Identifier;
+use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;

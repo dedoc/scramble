@@ -1,15 +1,15 @@
 <?php
 
-namespace Dedoc\ApiDocs\Support\ComplexTypeHandler;
+namespace Dedoc\Scramble\Support\ComplexTypeHandler;
 
-use Dedoc\ApiDocs\Support\Generator\Types\ArrayType;
-use Dedoc\ApiDocs\Support\Generator\Types\BooleanType;
-use Dedoc\ApiDocs\Support\Generator\Types\IntegerType;
-use Dedoc\ApiDocs\Support\Generator\Types\ObjectType;
-use Dedoc\ApiDocs\Support\Generator\Types\StringType;
-use Dedoc\ApiDocs\Support\Generator\Types\Type;
-use Dedoc\ApiDocs\Support\Type\Generic;
-use Dedoc\ApiDocs\Support\Type\Identifier;
+use Dedoc\Scramble\Support\Generator\Types\ArrayType;
+use Dedoc\Scramble\Support\Generator\Types\BooleanType;
+use Dedoc\Scramble\Support\Generator\Types\IntegerType;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types\Type;
+use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\Identifier;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -22,7 +22,7 @@ class LengthAwarePaginatorHandler
         $this->type = $type;
     }
 
-    public static function shouldHandle(\Dedoc\ApiDocs\Support\Type\Type $type)
+    public static function shouldHandle(\Dedoc\Scramble\Support\Type\Type $type)
     {
         return $type instanceof Generic
             && $type->type->name === LengthAwarePaginator::class

@@ -1,87 +1,23 @@
 
 [<img src="https://github-ads.s3.eu-central-1.amazonaws.com/support-ukraine.svg?t=1" />](https://supportukrainenow.org)
 
-# Laravel API Docs
+# Scramble
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/dedoc/laravel-api-docs.svg?style=flat-square)](https://packagist.org/packages/dedoc/laravel-api-docs)
-[![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/dedoc/laravel-api-docs/run-tests?label=tests)](https://github.com/dedoc/laravel-api-docs/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/workflow/status/dedoc/laravel-api-docs/Fix%20PHP%20code%20style%20issues?label=code%20style)](https://github.com/dedoc/laravel-api-docs/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/dedoc/laravel-api-docs.svg?style=flat-square)](https://packagist.org/packages/dedoc/laravel-api-docs)
+Scramble generates docs for your API in OpenAPI 3.1.0 format automatically from your code.
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+The main motto of the project is generating your API documentation without requiring you to annotate your code.
 
-## Support us
+This allows you to focus on code and avoid annotating every possible param/field as it may result in outdated documentation. By generating docs automatically from the code your API will always have up-to-date docs which you can trust.
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/laravel-api-docs.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/laravel-api-docs)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
-
-## Installation
-
+# Installation
 You can install the package via composer:
-
-```bash
-composer require dedoc/laravel-api-docs
+```shell
+composer require dedoc/scramble
 ```
 
-You can publish and run the migrations with:
+# Usage
+After install you will have 2 routes added to your application:
 
-```bash
-php artisan vendor:publish --tag="laravel-api-docs-migrations"
-php artisan migrate
-```
+- `/docs/api` - UI viewer for your documentation
+- `/docs/api.json` - Open API document in JSON format describing your API.
 
-You can publish the config file with:
-
-```bash
-php artisan vendor:publish --tag="laravel-api-docs-config"
-```
-
-This is the contents of the published config file:
-
-```php
-return [
-];
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="laravel-api-docs-views"
-```
-
-## Usage
-
-```php
-$laravel-api-docs = new Dedoc\laravel-api-docs();
-echo $laravel-api-docs->echoPhrase('Hello, Dedoc!');
-```
-
-## Testing
-
-```bash
-composer test
-```
-
-## Changelog
-
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Contributing
-
-Please see [CONTRIBUTING](https://github.com/roman/.github/blob/main/CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
-
-## Credits
-
-- [Roman Lytvynenko](https://github.com/roman)
-- [All Contributors](../../contributors)
-
-## License
-
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.

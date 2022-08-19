@@ -1,8 +1,8 @@
 <?php
 
-namespace Dedoc\ApiDocs;
+namespace Dedoc\Scramble;
 
-class ApiDocs
+class Scramble
 {
     public static $operationResolver;
 

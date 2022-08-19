@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\ApiDocs\Support\ResponseExtractor;
+namespace Dedoc\Scramble\Support\ResponseExtractor;
 
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Index;

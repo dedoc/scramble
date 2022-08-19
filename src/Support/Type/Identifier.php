@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\ApiDocs\Support\Type;
+namespace Dedoc\Scramble\Support\Type;
 
 class Identifier implements Type
 {

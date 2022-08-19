@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\ApiDocs\Support\Generator;
+namespace Dedoc\Scramble\Support\Generator;
 
 class Operation
 {

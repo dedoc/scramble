@@ -1,16 +1,16 @@
 <?php
 
-namespace Dedoc\ApiDocs\Support\ComplexTypeHandler;
+namespace Dedoc\Scramble\Support\ComplexTypeHandler;
 
-use Dedoc\ApiDocs\Support\Generator\Types\ArrayType;
-use Dedoc\ApiDocs\Support\Generator\Types\BooleanType;
-use Dedoc\ApiDocs\Support\Generator\Types\IntegerType;
-use Dedoc\ApiDocs\Support\Generator\Types\NumberType;
-use Dedoc\ApiDocs\Support\Generator\Types\ObjectType;
-use Dedoc\ApiDocs\Support\Generator\Types\StringType;
-use Dedoc\ApiDocs\Support\PhpDoc;
-use Dedoc\ApiDocs\Support\Type\Identifier as TypeIdentifier;
-use Dedoc\ApiDocs\Support\TypeHandlers\TypeHandlers;
+use Dedoc\Scramble\Support\Generator\Types\ArrayType;
+use Dedoc\Scramble\Support\Generator\Types\BooleanType;
+use Dedoc\Scramble\Support\Generator\Types\IntegerType;
+use Dedoc\Scramble\Support\Generator\Types\NumberType;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\PhpDoc;
+use Dedoc\Scramble\Support\Type\Identifier as TypeIdentifier;
+use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Collection;

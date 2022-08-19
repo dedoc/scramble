@@ -1,7 +1,7 @@
 <?php
 
-use Dedoc\ApiDocs\Support\PhpDoc;
-use Dedoc\ApiDocs\Support\TypeHandlers\TypeHandlers;
+use Dedoc\Scramble\Support\PhpDoc;
+use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Http\Resources\Json\JsonResource;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 

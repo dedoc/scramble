@@ -1,27 +1,27 @@
 <?php
 
-namespace Dedoc\ApiDocs;
+namespace Dedoc\Scramble;
 
-use Dedoc\ApiDocs\Support\ComplexTypeHandler\ComplexTypeHandlers;
-use Dedoc\ApiDocs\Support\Generator\InfoObject;
-use Dedoc\ApiDocs\Support\Generator\OpenApi;
-use Dedoc\ApiDocs\Support\Generator\Operation;
-use Dedoc\ApiDocs\Support\Generator\Parameter;
-use Dedoc\ApiDocs\Support\Generator\Path;
-use Dedoc\ApiDocs\Support\Generator\RequestBodyObject;
-use Dedoc\ApiDocs\Support\Generator\Schema;
-use Dedoc\ApiDocs\Support\Generator\Server;
-use Dedoc\ApiDocs\Support\Generator\Types\BooleanType;
-use Dedoc\ApiDocs\Support\Generator\Types\IntegerType;
-use Dedoc\ApiDocs\Support\Generator\Types\NumberType;
-use Dedoc\ApiDocs\Support\Generator\Types\ObjectType;
-use Dedoc\ApiDocs\Support\Generator\Types\StringType;
-use Dedoc\ApiDocs\Support\PhpDoc;
-use Dedoc\ApiDocs\Support\ResponseExtractor\ResponsesExtractor;
-use Dedoc\ApiDocs\Support\RulesExtractor\FormRequestRulesExtractor;
-use Dedoc\ApiDocs\Support\RulesExtractor\ValidateCallExtractor;
-use Dedoc\ApiDocs\Support\Type\Identifier;
-use Dedoc\ApiDocs\Support\TypeHandlers\TypeHandlers;
+use Dedoc\Scramble\Support\ComplexTypeHandler\ComplexTypeHandlers;
+use Dedoc\Scramble\Support\Generator\InfoObject;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\Parameter;
+use Dedoc\Scramble\Support\Generator\Path;
+use Dedoc\Scramble\Support\Generator\RequestBodyObject;
+use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Server;
+use Dedoc\Scramble\Support\Generator\Types\BooleanType;
+use Dedoc\Scramble\Support\Generator\Types\IntegerType;
+use Dedoc\Scramble\Support\Generator\Types\NumberType;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\PhpDoc;
+use Dedoc\Scramble\Support\ResponseExtractor\ResponsesExtractor;
+use Dedoc\Scramble\Support\RulesExtractor\FormRequestRulesExtractor;
+use Dedoc\Scramble\Support\RulesExtractor\ValidateCallExtractor;
+use Dedoc\Scramble\Support\Type\Identifier;
+use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
@@ -54,8 +54,8 @@ class Generator
             ))
             ->toArray();
 
-        if (isset(ApiDocs::$openApiExtender)) {
-            $openApi = (ApiDocs::$openApiExtender)($openApi);
+        if (isset(Scramble::$openApiExtender)) {
+            $openApi = (Scramble::$openApiExtender)($openApi);
         }
 
         return $openApi->toArray();
@@ -78,7 +78,7 @@ class Generator
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'api-docs');
             })
             ->filter(function (Route $route) {
-                $routeResolver = ApiDocs::$routeResolver ?? fn(Route $route) => in_array('api', $route->gatherMiddleware());
+                $routeResolver = Scramble::$routeResolver ?? fn(Route $route) => in_array('api', $route->gatherMiddleware());
 
                 return $routeResolver($route);
             })
@@ -168,8 +168,8 @@ class Generator
             ->summary($summary->rtrim('.'))
             ->description($description);
 
-        if (isset(ApiDocs::$operationResolver)) {
-            (ApiDocs::$operationResolver)($operation, $route, $methodNode, $reflectionMethod, $methodPhpDocNode);
+        if (isset(Scramble::$operationResolver)) {
+            (Scramble::$operationResolver)($operation, $route, $methodNode, $reflectionMethod, $methodPhpDocNode);
         }
 
         return [

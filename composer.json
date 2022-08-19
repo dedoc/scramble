@@ -1,12 +1,12 @@
 {
-    "name": "dedoc/laravel-api-docs",
+    "name": "dedoc/scramble",
     "description": "Automatic generation of API documentation for Laravel applications.",
     "keywords": [
         "laravel",
         "documentation",
         "openapi"
     ],
-    "homepage": "https://github.com/dedoc/laravel-api-docs",
+    "homepage": "https://github.com/dedoc/scramble",
     "license": "MIT",
     "authors": [
         {
@@ -32,13 +32,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Dedoc\\ApiDocs\\": "src",
-            "Dedoc\\ApiDocs\\Database\\Factories\\": "database/factories"
+            "Dedoc\\Scramble\\": "src",
+            "Dedoc\\Scramble\\Database\\Factories\\": "database/factories"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Dedoc\\ApiDocs\\Tests\\": "tests"
+            "Dedoc\\Scramble\\Tests\\": "tests"
         }
     },
     "scripts": {
@@ -53,7 +53,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Dedoc\\ApiDocs\\ApiDocsServiceProvider"
+                "Dedoc\\Scramble\\ScrambleServiceProvider"
             ]
         }
     },

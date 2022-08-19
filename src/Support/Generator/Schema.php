@@ -1,10 +1,10 @@
 <?php
 
-namespace Dedoc\ApiDocs\Support\Generator;
+namespace Dedoc\Scramble\Support\Generator;
 
-use Dedoc\ApiDocs\Support\Generator\Types\ObjectType;
-use Dedoc\ApiDocs\Support\Generator\Types\StringType;
-use Dedoc\ApiDocs\Support\Generator\Types\Type;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types\Type;
 use Illuminate\Support\Collection;
 
 class Schema

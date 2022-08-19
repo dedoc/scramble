@@ -1,18 +1,18 @@
 <?php
 
-namespace Dedoc\ApiDocs;
+namespace Dedoc\Scramble;
 
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
-class ApiDocsServiceProvider extends PackageServiceProvider
+class ScrambleServiceProvider extends PackageServiceProvider
 {
     public function configurePackage(Package $package): void
     {
         $package
-            ->name('laravel-api-docs')
+            ->name('scramble')
             ->hasConfigFile()
             ->hasRoute('web')
-            ->hasViews('api-docs');
+            ->hasViews('scramble');
     }
 }
