@@ -78,7 +78,7 @@ class Generator
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'api-docs');
             })
             ->filter(function (Route $route) {
-                $routeResolver = ApiDocs::$routeResolver ?? fn(Route $route) => in_array('api', $route->gatherMiddleware());
+                $routeResolver = ApiDocs::$routeResolver ?? fn (Route $route) => in_array('api', $route->gatherMiddleware());
 
                 return $routeResolver($route);
             })
