@@ -21,6 +21,7 @@ class Server
     public function setDescription(string $description): Server
     {
         $this->description = $description;
+
         return $this;
     }
 
