@@ -14,6 +14,8 @@ it('extracts rules from request->validate call', function () {
     Scramble::routes(fn (Route $r) => $r->uri === 'test');
     $openApiDocument = (new \Dedoc\Scramble\Generator())();
 
+    dump($openApiDocument);
+
     assertMatchesSnapshot(json_decode(json_encode($openApiDocument)));
 });
 
