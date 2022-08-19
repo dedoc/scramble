@@ -6,6 +6,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 it('gets json resource type', function () {
+    ComplexTypeHandlers::$components = null;
     $type = ComplexTypeHandlers::handle(new Identifier(ComplexTypeHandlersTest_SampleType::class));
 
     assertMatchesSnapshot($type->toArray());

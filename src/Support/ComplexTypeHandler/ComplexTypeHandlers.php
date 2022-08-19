@@ -15,11 +15,11 @@ class ComplexTypeHandlers
         LengthAwarePaginatorHandler::class,
     ];
 
-    public static Components $components;
+    public static ?Components $components = null;
 
     public static function handle(\Dedoc\Scramble\Support\Type\Type $type): ?Type
     {
-        if (isset(static::$components) && $type instanceof Identifier && static::$components->hasSchema($type->name)) {
+        if (isset(static::$components) && static::$components && $type instanceof Identifier && static::$components->hasSchema($type->name)) {
             return static::$components->getSchemaReference($type->name);
         }
 
