@@ -29,7 +29,8 @@ class ValidationRulesDocumenting_Test
     }
 }
 
-class ValidationRulesDocumenting_TestResource extends JsonResource {
+class ValidationRulesDocumenting_TestResource extends JsonResource
+{
     public function toArray($request)
     {
         return [

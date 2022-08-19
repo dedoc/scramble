@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Support\RulesExtractor;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
-use Illuminate\Support\Str;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 

@@ -3,11 +3,23 @@
 namespace Dedoc\Scramble;
 
 use Dedoc\Scramble\Support\ComplexTypeHandler\ComplexTypeHandlers;
-use Dedoc\Scramble\Support\Generator\{InfoObject, OpenApi, Operation, Parameter, Path, RequestBodyObject, Schema, Server};
-use Dedoc\Scramble\Support\Generator\Types\{BooleanType, IntegerType, NumberType, ObjectType, StringType};
-use Dedoc\Scramble\Support\RulesExtractor\{FormRequestRulesExtractor, ValidateCallExtractor};
+use Dedoc\Scramble\Support\Generator\InfoObject;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\Parameter;
+use Dedoc\Scramble\Support\Generator\Path;
+use Dedoc\Scramble\Support\Generator\RequestBodyObject;
+use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Server;
+use Dedoc\Scramble\Support\Generator\Types\BooleanType;
+use Dedoc\Scramble\Support\Generator\Types\IntegerType;
+use Dedoc\Scramble\Support\Generator\Types\NumberType;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\ResponseExtractor\ResponsesExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
+use Dedoc\Scramble\Support\RulesExtractor\FormRequestRulesExtractor;
+use Dedoc\Scramble\Support\RulesExtractor\ValidateCallExtractor;
 use Dedoc\Scramble\Support\Type\Identifier;
 use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Http\Request;
@@ -18,7 +30,8 @@ use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 use PhpParser\Node;
-use PHPStan\PhpDocParser\Ast\PhpDoc\{ParamTagValueNode, PhpDocNode};
+use PHPStan\PhpDocParser\Ast\PhpDoc\ParamTagValueNode;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class Generator
 {
@@ -60,7 +73,7 @@ class Generator
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'api-docs');
             })
             ->filter(function (Route $route) {
-                $routeResolver = Scramble::$routeResolver ?? fn(Route $route) => in_array('api', $route->gatherMiddleware());
+                $routeResolver = Scramble::$routeResolver ?? fn (Route $route) => in_array('api', $route->gatherMiddleware());
 
                 return $routeResolver($route);
             })
