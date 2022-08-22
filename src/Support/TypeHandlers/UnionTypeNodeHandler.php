@@ -22,9 +22,9 @@ class UnionTypeNodeHandler implements TypeHandler
 
     public function handle(): ?Type
     {
-        return (new OneOf)->setItems(array_map(
+        return (new OneOf)->setItems(array_filter(array_map(
             fn ($t) => TypeHandlers::handle($t),
             $this->node->types,
-        ));
+        )));
     }
 }

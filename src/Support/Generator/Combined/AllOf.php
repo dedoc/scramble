@@ -28,7 +28,7 @@ class AllOf extends Type
 
     public function setItems($items)
     {
-        $this->items = array_filter($items);
+        $this->items = $items;
 
         return $this;
     }

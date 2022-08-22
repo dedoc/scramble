@@ -22,9 +22,9 @@ class IntersectionTypeNodeHandler implements TypeHandler
 
     public function handle(): ?Type
     {
-        return (new AllOf)->setItems(array_map(
+        return (new AllOf)->setItems(array_filter(array_map(
             fn ($t) => TypeHandlers::handle($t),
             $this->node->types,
-        ));
+        )));
     }
 }
