@@ -22,7 +22,7 @@ class AllOf extends Type
             'allOf' => array_map(
                 fn ($item) => $item->toArray(),
                 $this->items,
-            )
+            ),
         ];
     }
 
