@@ -68,6 +68,20 @@ it('handles shape arrays', function ($phpDoc) {
     '/** @var array{string, string} */',
 ]);
 
+it('handles intersection type', function () {
+    $phpDoc = '/** @var array{test: string, wow?: string} & array{nice: bool} & array{kek: bool} */';
+    $result = getTypeFromDoc($phpDoc);
+
+    assertMatchesSnapshot($result ? $result->toArray() : null);
+});
+
+it('handles union type', function () {
+    $phpDoc = '/** @var array{test: string, wow?: string} | array{nice: bool} | array{kek: bool} */';
+    $result = getTypeFromDoc($phpDoc);
+
+    assertMatchesSnapshot($result ? $result->toArray() : null);
+});
+
 class TestResource extends JsonResource
 {
     public function toArray($request)

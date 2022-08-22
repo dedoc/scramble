@@ -70,7 +70,7 @@ class Generator
     {
         return collect(RouteFacade::getRoutes())
             ->filter(function (Route $route) {
-                return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'api-docs');
+                return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
             })
             ->filter(function (Route $route) {
                 $routeResolver = Scramble::$routeResolver ?? fn (Route $route) => in_array('api', $route->gatherMiddleware());

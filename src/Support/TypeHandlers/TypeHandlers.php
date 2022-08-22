@@ -12,6 +12,8 @@ class TypeHandlers
         ArrayShapeItemNodeHandler::class,
         GenericTypeNodeHandler::class,
         ArrayTypeNodeHandler::class,
+        IntersectionTypeNodeHandler::class,
+        UnionTypeNodeHandler::class,
     ];
 
     /** @var array<string, callable> */
