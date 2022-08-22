@@ -13,8 +13,6 @@ class Schema
 
     private ?string $title = null;
 
-    private array $enum = [];
-
     public static function fromType(Type $type)
     {
         $schema = new static();
@@ -32,10 +30,7 @@ class Schema
 
     public function toArray()
     {
-        $enum = count($this->enum) ? $this->enum : null;
-
         return array_merge($this->type->toArray(), array_filter([
-            'enum' => $enum,
             'title' => $this->title,
         ]));
     }
@@ -53,13 +48,6 @@ class Schema
             ));
 
         return $schema;
-    }
-
-    public function enum(array $enum): Schema
-    {
-        $this->enum = $enum;
-
-        return $this;
     }
 
     public function setTitle(?string $title): Schema

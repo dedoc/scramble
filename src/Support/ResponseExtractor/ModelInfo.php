@@ -150,7 +150,12 @@ class ModelInfo
                     ->contains(fn ($relationMethod) => str_contains($code, '$this->'.$relationMethod.'('));
             })
             ->map(function (ReflectionMethod $method) use ($model) {
-                $relation = $method->invoke($model);
+                try {
+                    $relation = $method->invoke($model);
+                } catch (\Throwable $e) {
+                    // @todo: add verbosity levels for debugging
+                    return null;
+                }
 
                 if (! $relation instanceof Relation) {
                     return null;

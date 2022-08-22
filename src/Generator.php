@@ -19,6 +19,7 @@ use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\ResponseExtractor\ResponsesExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\RulesExtractor\FormRequestRulesExtractor;
+use Dedoc\Scramble\Support\RulesExtractor\RulesToParameter;
 use Dedoc\Scramble\Support\RulesExtractor\ValidateCallExtractor;
 use Dedoc\Scramble\Support\Type\Identifier;
 use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
@@ -246,54 +247,7 @@ class Generator
 
         return collect($rules)
             ->map(function ($rules, $name) {
-                $rules = Arr::wrap(is_string($rules) ? explode('|', $rules) : $rules);
-                $rules = array_map(
-                    fn ($v) => method_exists($v, '__toString') ? $v->__toString() : $v,
-                    $rules,
-                );
-
-                $type = new StringType;
-                $description = '';
-                $enum = [];
-
-                if (in_array('bool', $rules) || in_array('boolean', $rules)) {
-                    $type = new BooleanType;
-                } elseif (in_array('numeric', $rules)) {
-                    $type = new NumberType;
-                } elseif (in_array('integer', $rules) || in_array('int', $rules)) {
-                    $type = new IntegerType;
-                }
-
-                if (collect($rules)->contains(fn ($v) => is_string($v) && Str::is('exists:*,id*', $v))) {
-                    $type = new IntegerType;
-                }
-
-                if ($inRule = collect($rules)->first(fn ($v) => is_string($v) && Str::is('in:*', $v))) {
-                    $enum = Str::of($inRule)
-                        ->replaceFirst('in:', '')
-                        ->explode(',')
-                        ->mapInto(Stringable::class)
-                        ->map(fn (Stringable $v) => (string) $v->trim('"')->replace('""', '"'))
-                        ->values()->all();
-                }
-
-                if (in_array('nullable', $rules)) {
-                    $type->nullable(true);
-                }
-
-                if ($type instanceof NumberType) {
-                    if ($min = Str::replace('min:', '', collect($rules)->first(fn ($v) => is_string($v) && Str::startsWith($v, 'min:'), ''))) {
-                        $type->setMin((float) $min);
-                    }
-                    if ($max = Str::replace('max:', '', collect($rules)->first(fn ($v) => is_string($v) && Str::startsWith($v, 'max:'), ''))) {
-                        $type->setMax((float) $max);
-                    }
-                }
-
-                return Parameter::make($name, 'query')
-                    ->setSchema(Schema::fromType($type)->enum($enum))
-                    ->required(in_array('required', $rules))
-                    ->description($description);
+                return (new RulesToParameter($name, $rules))->generate();
             })
             ->values()
             ->all();
@@ -303,7 +257,9 @@ class Generator
     {
         // Custom form request's class `validate` method
         if (($formRequestRulesExtractor = new FormRequestRulesExtractor($methodNode))->shouldHandle()) {
-            return $formRequestRulesExtractor->extract($route);
+            if (count($rules = $formRequestRulesExtractor->extract($route))) {
+                return $rules;
+            }
         }
 
         if (($validateCallExtractor = new ValidateCallExtractor($methodNode))->shouldHandle()) {

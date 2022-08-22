@@ -10,6 +10,8 @@ class Scramble
 
     public static $routeResolver;
 
+    public static array $customComplexTypesHandlers = [];
+
     public static function resolveOperationUsing(callable $operationResolver)
     {
         static::$operationResolver = $operationResolver;
@@ -26,5 +28,10 @@ class Scramble
     public static function routes(callable $routeResolver)
     {
         static::$routeResolver = $routeResolver;
+    }
+
+    public static function registerCustomComplexTypeHandler(string $handlerClassName)
+    {
+        static::$customComplexTypesHandlers[] = $handlerClassName;
     }
 }

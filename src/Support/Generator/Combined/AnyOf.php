@@ -5,21 +5,21 @@ namespace Dedoc\Scramble\Support\Generator\Combined;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 
-class OneOf extends Type
+class AnyOf extends Type
 {
     /** @var Type[] */
     private $items;
 
     public function __construct()
     {
-        parent::__construct('oneOf');
+        parent::__construct('anyOf');
         $this->items = [new StringType];
     }
 
     public function toArray()
     {
         return [
-            'oneOf' => array_map(
+            'anyOf' => array_map(
                 fn ($item) => $item->toArray(),
                 $this->items,
             ),

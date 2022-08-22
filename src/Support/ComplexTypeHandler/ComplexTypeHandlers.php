@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\ComplexTypeHandler;
 
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\Type;
@@ -23,7 +24,9 @@ class ComplexTypeHandlers
             return static::$components->getSchemaReference($type->name);
         }
 
-        foreach (static::$handlers as $handler) {
+        $handlers = array_merge(static::$handlers, Scramble::$customComplexTypesHandlers);
+
+        foreach ($handlers as $handler) {
             if (! $handler::shouldHandle($type)) {
                 continue;
             }

@@ -4,9 +4,13 @@ namespace Dedoc\Scramble\Support\Generator\Types;
 
 abstract class Type
 {
+    use TypeAttributes;
+
     protected string $type;
 
     public string $description = '';
+
+    public array $enum = [];
 
     /**
      * Hint is used to pass a description to other handlers but not show it with type.
@@ -33,6 +37,7 @@ abstract class Type
         return array_filter([
             'type' => $this->nullable ? [$this->type, 'null'] : $this->type,
             'description' => $this->description,
+            'enum' => count($this->enum) ? $this->enum : null,
         ]);
     }
 
@@ -47,6 +52,12 @@ abstract class Type
     {
         $this->hint = $hint;
 
+        return $this;
+    }
+
+    public function enum(array $enum): Type
+    {
+        $this->enum = $enum;
         return $this;
     }
 }

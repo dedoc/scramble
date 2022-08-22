@@ -32,7 +32,6 @@ class LengthAwarePaginatorHandler
 
     public function handle(): ?Type
     {
-
         /** @var Identifier $collectingClassType */
         $collectingClassType = $this->type->genericTypes[0];
 
