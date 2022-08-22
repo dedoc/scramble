@@ -22,7 +22,7 @@ class OneOf extends Type
             'oneOf' => array_map(
                 fn ($item) => $item->toArray(),
                 $this->items,
-            )
+            ),
         ];
     }
 
