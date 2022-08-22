@@ -45,6 +45,7 @@ class RulesMapper
         if (in_array('id', $params)) {
             return $this->int($type);
         }
+
         return $type;
     }
 

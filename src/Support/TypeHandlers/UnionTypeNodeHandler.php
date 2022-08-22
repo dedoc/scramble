@@ -30,6 +30,7 @@ class UnionTypeNodeHandler implements TypeHandler
 
         if (count($types) === 2 && collect($types)->contains(fn (Type $t) => $t instanceof NullType)) {
             $nonNullType = collect($types)->reject(fn (Type $t) => $t instanceof NullType)->first();
+
             return $nonNullType->nullable(true);
         }
 
