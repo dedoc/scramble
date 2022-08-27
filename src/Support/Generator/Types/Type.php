@@ -58,6 +58,7 @@ abstract class Type
     public function enum(array $enum): Type
     {
         $this->enum = $enum;
+
         return $this;
     }
 }

@@ -177,10 +177,12 @@ For the cases when automatic field type resolution is not working or you need to
 ```php
 return [
     'id' => $this->id,
-    /** @var string The content of todo item, truncated. */
+    /** @var string $content The content of todo item, truncated. */
     'content' => $this->someMethodCall(),
 ];
 ```
+
+Note, that you need to add var name when you need to add description. You don't need it if it is only type.
 
 You can use other resource classes or more complex types to document more complex structures:
 

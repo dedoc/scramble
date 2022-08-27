@@ -11,6 +11,7 @@ use Illuminate\Support\Arr;
 class RulesToParameter
 {
     private string $name;
+
     private array $rules = [];
 
     const RULES_PRIORITY = [
@@ -33,6 +34,7 @@ class RulesToParameter
             if (is_string($rule)) {
                 return $this->getTypeFromRule($type, $rule);
             }
+
             return method_exists($rule, 'docs')
                 ? $rule->docs($type)
                 : $type;
