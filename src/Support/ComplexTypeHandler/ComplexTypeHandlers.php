@@ -26,23 +26,33 @@ class ComplexTypeHandlers
 
         $handlers = array_merge(static::$handlers, Scramble::$customComplexTypesHandlers);
 
+        /*
+         * This flag is needed, so later when JsonHandler is used, we will add a resource
+         * to the OpenAPI components and reuse it as a reference.
+         */
+        $isJsonResourceHandlerUsed = false;
+
+        $openApiType = null;
+
         foreach ($handlers as $handler) {
             if (! $handler::shouldHandle($type)) {
                 continue;
             }
 
-            if (! $resolvedType = (new $handler($type))->handle()) {
+            if (! $resolvedType = (new $handler($type))->handle($openApiType)) {
                 continue;
             }
 
-            if ($handler === JsonResourceHandler::class && isset(static::$components)) {
-                return static::$components->addSchema($type->name, Schema::fromType($resolvedType));
-            }
+            $openApiType = $resolvedType;
 
-            return $resolvedType;
+            $isJsonResourceHandlerUsed = $isJsonResourceHandlerUsed || $handler === JsonResourceHandler::class;
         }
 
-        return null; // @todo: unknown type with reason
+        if ($openApiType && $isJsonResourceHandlerUsed && isset(static::$components)) {
+            $openApiType = static::$components->addSchema($type->name, Schema::fromType($openApiType));
+        }
+
+        return $openApiType;
     }
 
     public static function registerComponentsRepository(Components $components)

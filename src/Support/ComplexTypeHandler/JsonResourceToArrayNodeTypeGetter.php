@@ -95,9 +95,11 @@ class JsonResourceToArrayNodeTypeGetter
                         $argValue = $argValue->expr;
                     }
 
-                    $syntheticArray = new Array_([
-                        new ArrayItem($argValue, new String_('check')),
-                    ]);
+                    $syntheticArrayItem = new ArrayItem($argValue, new String_('check'));
+                    if ($doc = $arrayItem->getDocComment()) {
+                        $syntheticArrayItem->setDocComment($doc);
+                    }
+                    $syntheticArray = new Array_([$syntheticArrayItem]);
 
                     $type = (new static($syntheticArray, $this->namesResolver, $this->modelInfo))();
 
