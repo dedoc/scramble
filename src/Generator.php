@@ -127,7 +127,7 @@ class Generator
             $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
         }
 
-        $responses = (new ResponsesExtractor($openApi, $route, $routeInfo->methodNode(), $routeInfo->reflectionMethod(), $routeInfo->phpDoc(), $routeInfo->class->namesResolver))();
+        $responses = (new ResponsesExtractor($routeInfo))();
         foreach ($responses as $response) {
             $operation->addResponse($response);
         }

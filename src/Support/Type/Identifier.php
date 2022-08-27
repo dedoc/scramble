@@ -16,4 +16,15 @@ class Identifier implements Type
     {
         return $this->name;
     }
+
+    public function isSame(Type $type)
+    {
+        return $type instanceof static
+            && $type->name === $this->name;
+    }
+
+    public function toString(): string
+    {
+        return $this->name;
+    }
 }

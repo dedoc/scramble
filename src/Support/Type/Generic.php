@@ -13,4 +13,20 @@ class Generic implements Type
         $this->type = $type;
         $this->genericTypes = $genericTypes;
     }
+
+    public function isSame(Type $type)
+    {
+        return $type instanceof static
+            && $this->type->isSame($type->type)
+            && collect($this->genericTypes)->every(fn (Type $t, $i) => $t->isSame($type->genericTypes[$i]));
+    }
+
+    public function toString(): string
+    {
+        return sprintf(
+            '%s<%s>',
+            $this->type->toString(),
+            implode(', ', array_map(fn ($t) => $t->toString(), $this->genericTypes))
+        );
+    }
 }
