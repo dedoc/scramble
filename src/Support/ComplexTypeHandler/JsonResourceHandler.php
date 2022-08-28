@@ -52,9 +52,9 @@ class JsonResourceHandler
             return null;
         }
 
-        $openApiType = (new OpenApiTypeHelper([]))->fromType($type);
+        $openApiType = OpenApiTypeHelper::fromType($type);
 
-        if ($openApiType && isset(ComplexTypeHandlers::$components)) {
+        if (isset(ComplexTypeHandlers::$components)) {
             $openApiType->setHint('`'.ComplexTypeHandlers::$components->uniqueSchemaName($this->type->name).'`');
         }
 

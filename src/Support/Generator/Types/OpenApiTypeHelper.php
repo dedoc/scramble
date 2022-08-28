@@ -13,7 +13,7 @@ use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
 
 class OpenApiTypeHelper
 {
-    public function fromType(\Dedoc\Scramble\Support\Type\AbstractType $type): Type
+    public static function fromType(\Dedoc\Scramble\Support\Type\AbstractType $type): Type
     {
         $openApiType = new StringType();
 
@@ -22,7 +22,7 @@ class OpenApiTypeHelper
             && collect($type->items)->every(fn ($t) => is_numeric($t->key))
         ) {
             $itemsType = isset($type->items[0])
-                ? $this->fromType($type->items[0]->value)
+                ? static::fromType($type->items[0]->value)
                 : new StringType();
 
             $openApiType = (new ArrayType())->setItems($itemsType);
@@ -42,7 +42,7 @@ class OpenApiTypeHelper
                             $item->value instanceof Generic
                             && $item->value->type->name === 'Illuminate\Http\Resources\MergeValue'
                         ) {
-                            $nestedType = $this->fromType($item->value->genericTypes[1]);
+                            $nestedType = static::fromType($item->value->genericTypes[1]);
 
                             if (! ($nestedType instanceof ObjectType)) {
                                 return [];
@@ -62,7 +62,7 @@ class OpenApiTypeHelper
                         $requiredKeys[] = $item->key;
                     }
                     return [
-                        $item->key => $this->fromType($item),
+                        $item->key => static::fromType($item),
                     ];
                 });
 
@@ -70,7 +70,7 @@ class OpenApiTypeHelper
 
             $openApiType->setRequired($requiredKeys);
         } elseif ($type instanceof ArrayItemType_) {
-            $openApiType = $this->fromType($type->value);
+            $openApiType = static::fromType($type->value);
 
             if ($docNode = $type->getAttribute('docNode')) {
                 $varNode = $docNode->getVarTagValues()[0] ?? null;
@@ -88,13 +88,13 @@ class OpenApiTypeHelper
             if (count($type->types) === 2 && collect($type->types)->contains(fn ($t) => $t instanceof \Dedoc\Scramble\Support\Type\NullType)) {
                 $notNullType = collect($type->types)->first(fn ($t) => !($t instanceof \Dedoc\Scramble\Support\Type\NullType));
                 if ($notNullType) {
-                    $openApiType = $this->fromType($notNullType)->nullable(true);
+                    $openApiType = static::fromType($notNullType)->nullable(true);
                 } else {
                     $openApiType = new NullType();
                 }
             } else {
                 $openApiType = (new AnyOf)->setItems(array_map(
-                    fn ($t) => $this->fromType($t),
+                    fn ($t) => static::fromType($t),
                     $type->types,
                 ));
             }
