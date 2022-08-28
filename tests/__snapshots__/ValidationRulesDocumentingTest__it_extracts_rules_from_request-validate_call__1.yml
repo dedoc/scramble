@@ -7,4 +7,4 @@ servers:
 paths:
     /test: { get: { tags: [ValidationRulesDocumenting_Test], parameters: [{ name: content, in: query, required: true, schema: { type: string, enum: [wow] } }], responses: { 200: { description: '`ValidationRulesDocumenting_TestResource`', content: { application/json: { schema: { $ref: '#/components/schemas/ValidationRulesDocumenting_TestResource' } } } } } } }
 components:
-    schemas: { ValidationRulesDocumenting_TestResource: { type: object, properties: { id: { type: string } }, required: [id], title: ValidationRulesDocumenting_TestResource } }
+    schemas: { ValidationRulesDocumenting_TestResource: { type: object, properties: { id: { type: integer } }, required: [id], title: ValidationRulesDocumenting_TestResource } }

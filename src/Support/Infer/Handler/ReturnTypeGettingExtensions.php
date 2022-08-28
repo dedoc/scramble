@@ -18,7 +18,7 @@ class ReturnTypeGettingExtensions
         $type = array_reduce(
             static::$extensions,
             function ($acc, $extensionClass) use ($node) {
-                $type = (new $extensionClass)->getNodeReturnType($node);
+                $type = (new $extensionClass)->getNodeReturnType($node, $node->getAttribute('scope'));
                 if ($type) {
                     return $type;
                 }

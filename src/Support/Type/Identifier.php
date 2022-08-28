@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-class Identifier implements Type
+class Identifier extends AbstractType
 {
     /** @var string */
     public $name;

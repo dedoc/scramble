@@ -3,8 +3,11 @@
 namespace Dedoc\Scramble\Support\ComplexTypeHandler;
 
 use Dedoc\Scramble\Support\ClassAstHelper;
+use Dedoc\Scramble\Support\Generator\Types\OpenApiTypeHelper;
+use Dedoc\Scramble\Support\Infer\Handler\ReturnTypeGettingExtensions;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\Identifier;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Database\Eloquent\Model;
@@ -12,19 +15,22 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Str;
 use PhpParser\Node\Expr\Array_;
+use Symfony\Component\Yaml\Yaml;
 
 class JsonResourceHandler
 {
     private Identifier $type;
 
-    public function __construct(Identifier $type)
+    public function __construct($type)
     {
-        $this->type = $type;
+        $this->type = $type instanceof ObjectType
+            ? new Identifier($type->name)
+            : $type;
     }
 
     public static function shouldHandle(Type $type)
     {
-        return $type instanceof Identifier
+        return ($type instanceof Identifier || $type instanceof ObjectType)
             && is_a($type->name, JsonResource::class, true)
             && ! is_a($type->name, ResourceCollection::class, true);
     }
@@ -42,54 +48,16 @@ class JsonResourceHandler
             return null;
         }
 
-        TypeHandlers::registerIdentifierHandler($this->type->name, function (string $name) use ($classAstHelper) {
-            $fqName = $classAstHelper->resolveFqName($name);
-
-            return ComplexTypeHandlers::handle(new Identifier($fqName));
-        });
-
-        $modelClass = $this->getModelName($classAstHelper->classReflection, $classAstHelper->namesResolver);
-        $modelInfo = null;
-        if ($modelClass && is_a($modelClass, Model::class, true)) {
-            $modelInfo = (new ModelInfo($modelClass))->handle();
-        }
-
-        $type = (new JsonResourceToArrayNodeTypeGetter($returnNode->expr, $classAstHelper->namesResolver, $modelInfo))();
-
-        TypeHandlers::unregisterIdentifierHandler($this->type->name);
-
-        if ($type && isset(ComplexTypeHandlers::$components)) {
-            $type->setHint('`'.ComplexTypeHandlers::$components->uniqueSchemaName($this->type->name).'`');
-        }
-
-        return $type;
-    }
-
-    private function getModelName(\ReflectionClass $reflectionClass, callable $getFqName)
-    {
-        $phpDoc = $reflectionClass->getDocComment() ?: '';
-
-        $mixinOrPropertyLine = Str::of($phpDoc)
-            ->explode("\n")
-            ->first(fn ($str) => Str::is(['*@property*$resource', '*@mixin*'], $str));
-
-        if ($mixinOrPropertyLine) {
-            $modelName = Str::replace(['@property', '$resource', '@mixin', ' ', '*'], '', $mixinOrPropertyLine);
-
-            $modelClass = $getFqName($modelName);
-
-            if (class_exists($modelClass)) {
-                return $modelClass;
-            }
-        }
-
-        $modelName = (string) Str::of(Str::of($this->type->name)->explode('\\')->last())->replace('Resource', '')->singular();
-
-        $modelClass = 'App\\Models\\'.$modelName;
-        if (! class_exists($modelClass)) {
+        if (! $type = $returnNode->expr->getAttribute('type')) {
             return null;
         }
 
-        return $modelClass;
+        $openApiType = (new OpenApiTypeHelper([]))->fromType($type);
+
+        if ($openApiType && isset(ComplexTypeHandlers::$components)) {
+            $openApiType->setHint('`'.ComplexTypeHandlers::$components->uniqueSchemaName($this->type->name).'`');
+        }
+
+        return $openApiType;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-class IntegerType implements Type
+class IntegerType extends AbstractType
 {
     public function isSame(Type $type)
     {

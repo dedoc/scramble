@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-class NullType implements Type
+class NullType extends AbstractType
 {
     public function isSame(Type $type)
     {

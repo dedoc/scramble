@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-class VoidType extends AbstractType
+class FloatType extends AbstractType
 {
     public function isSame(Type $type)
     {
@@ -11,6 +11,6 @@ class VoidType extends AbstractType
 
     public function toString(): string
     {
-        return 'void';
+        return 'float';
     }
 }

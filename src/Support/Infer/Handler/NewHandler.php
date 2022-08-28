@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Identifier;
 use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Union;
 use PhpParser\Node;
@@ -28,7 +29,7 @@ class NewHandler
 
         $node->setAttribute(
             'type',
-            new Identifier($node->class->toString()),
+            new ObjectType($node->class->toString()),
         );
     }
 }

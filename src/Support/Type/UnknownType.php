@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-class UnknownType implements Type
+class UnknownType extends AbstractType
 {
     private string $comment;
 

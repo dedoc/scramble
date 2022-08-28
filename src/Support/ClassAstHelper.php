@@ -45,7 +45,7 @@ class ClassAstHelper
         );
 
         $traverser = new NodeTraverser;
-        $traverser->addVisitor(new TypeInferringVisitor);
+        $traverser->addVisitor(new TypeInferringVisitor($this->namesResolver));
         $traverser->traverse([$classAst]);
 
         if (! $classAst) {

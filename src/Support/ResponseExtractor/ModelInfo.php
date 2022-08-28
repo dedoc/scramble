@@ -2,9 +2,19 @@
 
 namespace Dedoc\Scramble\Support\ResponseExtractor;
 
+use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\BooleanType;
+use Dedoc\Scramble\Support\Type\FloatType;
+use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\NullType;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\Union;
+use Dedoc\Scramble\Support\Type\UnknownType;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Types\DecimalType;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 use ReflectionClass;
@@ -46,6 +56,56 @@ class ModelInfo
             $model->getConnection()->getTablePrefix().$model->getTable(),
             $this->getAttributes($model),
             $this->getRelations($model),
+        );
+    }
+
+    public function type()
+    {
+        $modelInfo = $this->handle();
+
+        /** @var Model $model */
+        $model = app()->make($modelInfo->get('class'));
+
+        $properties = $modelInfo->get('attributes')
+            ->map(function ($value, $key) use ($model) {
+                $isNullable = $value['nullable'];
+                $createType = fn ($t) => $isNullable
+                    ? Union::wrap([new NullType(), $t])
+                    : $t;
+
+                $type = explode(' ', $value['type']);
+                $typeName = explode('(', $type[0])[0];
+
+                if (in_array($key, $model->getDates())) {
+                    return $createType(new ObjectType('\\Carbon\\Carbon'));
+                }
+
+                $types = [
+                    'int' => new IntegerType(),
+                    'integer' => new IntegerType(),
+                    'bigint' => new IntegerType(),
+                    'float' => new FloatType(),
+                    'double' => new FloatType(),
+                    'decimal' => new FloatType(),
+                    'string' => new StringType(),
+                    'datetime' => new StringType(),
+                    'bool' => new BooleanType(),
+                    'boolean' => new BooleanType(),
+                    'json' => new ArrayType(),
+                    'array' => new ArrayType(),
+                ];
+
+                if (array_key_exists($typeName, $types)) {
+                    return $createType($types[$typeName]);
+                }
+
+                return new UnknownType("unimplemented DB column type [$type[0]]");
+            })
+            ->all();
+
+        return new ObjectType(
+            $modelInfo->get('class'),
+            $properties,
         );
     }
 

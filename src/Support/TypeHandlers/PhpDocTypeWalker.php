@@ -2,11 +2,15 @@
 
 namespace Dedoc\Scramble\Support\TypeHandlers;
 
+use Dedoc\Scramble\Support\Type\ArrayType;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeItemNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
+use PHPStan\PhpDocParser\Ast\Type\ArrayTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\IntersectionTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
+use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 
 class PhpDocTypeWalker
 {
@@ -47,6 +51,28 @@ class PhpDocTypeWalker
             }
             if ($type->valueType) {
                 static::traverse($type->valueType, $visitors);
+            }
+            $callVisitors($type, 'leave');
+        }
+
+        if ($type instanceof ArrayTypeNode) {
+            $callVisitors($type, 'enter');
+            static::traverse($type->type, $visitors);
+            $callVisitors($type, 'leave');
+        }
+
+        if ($type instanceof IntersectionTypeNode) {
+            $callVisitors($type, 'enter');
+            foreach ($type->types as $itemType) {
+                static::traverse($itemType, $visitors);
+            }
+            $callVisitors($type, 'leave');
+        }
+
+        if ($type instanceof UnionTypeNode) {
+            $callVisitors($type, 'enter');
+            foreach ($type->types as $itemType) {
+                static::traverse($itemType, $visitors);
             }
             $callVisitors($type, 'leave');
         }

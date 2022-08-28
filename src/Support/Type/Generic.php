@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-class Generic implements Type
+class Generic extends AbstractType
 {
     public Identifier $type;
 
@@ -12,6 +12,11 @@ class Generic implements Type
     {
         $this->type = $type;
         $this->genericTypes = $genericTypes;
+    }
+
+    public function isInstanceOf(string $className)
+    {
+        return is_a($this->type->name, $className, true);
     }
 
     public function isSame(Type $type)

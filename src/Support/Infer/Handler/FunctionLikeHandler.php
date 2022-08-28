@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\Infer\Handler;
 
 use Dedoc\Scramble\Support\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
@@ -16,7 +17,11 @@ class FunctionLikeHandler implements CreatesScope
 {
     public function createScope(Scope $scope): Scope
     {
-        return new Scope($scope);
+        return new Scope(
+            clone $scope->context,
+            $scope->namesResolver,
+            $scope
+        );
     }
 
     public function shouldHandle($node)
@@ -47,8 +52,10 @@ class FunctionLikeHandler implements CreatesScope
         /** @var Node\Stmt\Return_[] $returnNodes */
         $returnNodes = (new NodeFinder)->find(
             $node->getStmts(),
-            fn (Node $n) => $n instanceof Node\Stmt\Return_
-                && $node->getAttribute('scope') === $n->getAttribute('scope')
+            function (Node $n) use ($node) {
+                return $n instanceof Node\Stmt\Return_
+                    && $node->getAttribute('scope') === ($n->getAttribute('scope') ?: $n->expr->getAttribute('scope'));
+            }
         );
 
         $types = array_filter(array_map(

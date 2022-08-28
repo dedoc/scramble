@@ -4,7 +4,7 @@ namespace Dedoc\Scramble\Support\Type;
 
 use Illuminate\Support\Arr;
 
-class Union implements Type
+class Union extends AbstractType
 {
     /** @var Type[] */
     public array $types;

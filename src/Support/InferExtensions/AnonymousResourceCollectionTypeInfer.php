@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support\ResponseExtractor\InferExtensions;
+namespace Dedoc\Scramble\Support\InferExtensions;
 
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Identifier;
@@ -15,7 +15,6 @@ class AnonymousResourceCollectionTypeInfer
         if (! ($node instanceof Node\Expr\StaticCall)) {
             return null;
         }
-
 
         if (! ($node->class instanceof Node\Name && is_a($node->class->toString(), JsonResource::class, true))) {
             return null;

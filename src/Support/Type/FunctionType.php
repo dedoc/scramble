@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-class FunctionType implements FunctionLikeType
+class FunctionType extends AbstractType implements FunctionLikeType
 {
     public array $arguments;
 

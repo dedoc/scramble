@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-class StringType implements Type
+class StringType extends AbstractType
 {
     public function isSame(Type $type)
     {

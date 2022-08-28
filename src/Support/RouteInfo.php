@@ -101,7 +101,7 @@ class RouteInfo
 
         if ($this->methodNode) {
             $traverser = new NodeTraverser;
-            $traverser->addVisitor(new TypeInferringVisitor);
+            $traverser->addVisitor(new TypeInferringVisitor($this->class->namesResolver));
             $traverser->traverse([$this->methodNode]);
         }
 

@@ -2,18 +2,30 @@
 
 namespace Dedoc\Scramble\Support\Infer;
 
+use Dedoc\Scramble\Support\Infer\Handler\ArrayHandler;
+use Dedoc\Scramble\Support\Infer\Handler\ArrayItemHandler;
+use Dedoc\Scramble\Support\Infer\Handler\ClassHandler;
 use Dedoc\Scramble\Support\Infer\Handler\CreatesScope;
 use Dedoc\Scramble\Support\Infer\Handler\FunctionLikeHandler;
 use Dedoc\Scramble\Support\Infer\Handler\NewHandler;
+use Dedoc\Scramble\Support\Infer\Handler\PropertyFetchHandler;
 use Dedoc\Scramble\Support\Infer\Handler\ReturnTypeGettingExtensions;
 use Dedoc\Scramble\Support\Infer\Handler\ScalarHandler;
 use Dedoc\Scramble\Support\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Infer\Scope\ScopeContext;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 
 class TypeInferringVisitor extends NodeVisitorAbstract
 {
     private Scope $scope;
+
+    private $namesResolver;
+
+    public function __construct(callable $namesResolver)
+    {
+        $this->namesResolver = $namesResolver;
+    }
 
     public function enterNode(Node $node)
     {
@@ -67,6 +79,10 @@ class TypeInferringVisitor extends NodeVisitorAbstract
             FunctionLikeHandler::class,
             ScalarHandler::class,
             NewHandler::class,
+            ClassHandler::class,
+            PropertyFetchHandler::class,
+            ArrayHandler::class,
+            ArrayItemHandler::class,
             ReturnTypeGettingExtensions::class,
         ];
     }
@@ -74,7 +90,7 @@ class TypeInferringVisitor extends NodeVisitorAbstract
     private function getOrCreateScope()
     {
         if (! isset($this->scope)) {
-            $this->scope = new Scope;
+            $this->scope = new Scope(new ScopeContext, $this->namesResolver);
         }
         return $this->scope;
     }
