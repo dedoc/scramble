@@ -14,8 +14,7 @@ class ObjectType extends AbstractType
     public function __construct(
         string $name,
         array $properties = []
-    )
-    {
+    ) {
         $this->name = $name;
         $this->properties = $properties;
     }

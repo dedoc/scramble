@@ -7,9 +7,6 @@ use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\RouteInfo;
-use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Support\Arr;
 
 class ResponsesExtractor
@@ -24,7 +21,7 @@ class ResponsesExtractor
     public function __invoke()
     {
         return collect(Arr::wrap([$this->routeInfo->getHandledReturnType()]))
-            ->filter(fn ($t) => !! $t[1])
+            ->filter(fn ($t) => (bool) $t[1])
             ->map(function ($type) {
                 $type = $type[1];
 

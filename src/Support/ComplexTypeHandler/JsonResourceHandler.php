@@ -4,18 +4,12 @@ namespace Dedoc\Scramble\Support\ComplexTypeHandler;
 
 use Dedoc\Scramble\Support\ClassAstHelper;
 use Dedoc\Scramble\Support\Generator\Types\OpenApiTypeHelper;
-use Dedoc\Scramble\Support\Infer\Handler\ReturnTypeGettingExtensions;
-use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\Identifier;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Str;
 use PhpParser\Node\Expr\Array_;
-use Symfony\Component\Yaml\Yaml;
 
 class JsonResourceHandler
 {

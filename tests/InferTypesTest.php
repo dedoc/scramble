@@ -1,10 +1,9 @@
 <?php
 
 use Dedoc\Scramble\Support\ClassAstHelper;
-use Dedoc\Scramble\Support\Generator\Types\OpenApiTypeHelper;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PhpParser\Node\Stmt\ClassMethod;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use function Spatie\Snapshots\assertMatchesTextSnapshot;
 
 uses(RefreshDatabase::class);
@@ -28,7 +27,7 @@ class InferTypesTest_SampleClass
 {
     public function wow($request)
     {
-        return (new BrandEdge($request));
+        return new BrandEdge($request);
     }
 }
 

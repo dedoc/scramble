@@ -21,7 +21,7 @@ class Scope
 
     public function isInClass()
     {
-        return !!$this->context->class;
+        return (bool) $this->context->class;
     }
 
     public function class(): ?ObjectType

@@ -92,6 +92,7 @@ class TypeInferringVisitor extends NodeVisitorAbstract
         if (! isset($this->scope)) {
             $this->scope = new Scope(new ScopeContext, $this->namesResolver);
         }
+
         return $this->scope;
     }
 }

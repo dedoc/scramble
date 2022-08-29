@@ -61,6 +61,7 @@ class OpenApiTypeHelper
                     if (! $item->isOptional) {
                         $requiredKeys[] = $item->key;
                     }
+
                     return [
                         $item->key => static::fromType($item),
                     ];
@@ -86,7 +87,7 @@ class OpenApiTypeHelper
             }
         } elseif ($type instanceof Union) {
             if (count($type->types) === 2 && collect($type->types)->contains(fn ($t) => $t instanceof \Dedoc\Scramble\Support\Type\NullType)) {
-                $notNullType = collect($type->types)->first(fn ($t) => !($t instanceof \Dedoc\Scramble\Support\Type\NullType));
+                $notNullType = collect($type->types)->first(fn ($t) => ! ($t instanceof \Dedoc\Scramble\Support\Type\NullType));
                 if ($notNullType) {
                     $openApiType = static::fromType($notNullType)->nullable(true);
                 } else {

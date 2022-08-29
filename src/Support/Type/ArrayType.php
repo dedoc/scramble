@@ -22,6 +22,7 @@ class ArrayType extends AbstractType
     public function toString(): string
     {
         $numIndex = 0;
+
         return sprintf(
             'array{%s}',
             implode(', ', array_map(function (ArrayItemType_ $item) use (&$numIndex) {

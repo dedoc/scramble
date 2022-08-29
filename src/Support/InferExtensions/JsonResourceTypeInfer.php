@@ -20,7 +20,7 @@ use PhpParser\Node;
 
 class JsonResourceTypeInfer
 {
-    static $jsonResourcesModelTypesCache = [];
+    public static $jsonResourcesModelTypesCache = [];
 
     public function getNodeReturnType(Node $node, Scope $scope)
     {
@@ -43,7 +43,7 @@ class JsonResourceTypeInfer
          * $this->mergeWhen()
          */
         if ($this->isMethodCallToThis($node, ['merge', 'mergeWhen'])) {
-            if(! $type = $node->args[count($node->args) - 1]->value->getAttribute('type') ?? null) {
+            if (! $type = $node->args[count($node->args) - 1]->value->getAttribute('type') ?? null) {
                 return null;
             }
 
@@ -51,20 +51,20 @@ class JsonResourceTypeInfer
                 $type = $type->getReturnType();
             }
 
-            return (new Generic(
+            return new Generic(
                 new Identifier(MergeValue::class),
                 [
                     $node->name->name === 'merge' ? new LiteralBooleanType(true) : new BooleanType(),
-                    $type
+                    $type,
                 ],
-            ));
+            );
         }
 
         /*
          * $this->when()
          */
         if ($this->isMethodCallToThis($node, ['when'])) {
-            if(! $type = $node->args[count($node->args) - 1]->value->getAttribute('type') ?? null) {
+            if (! $type = $node->args[count($node->args) - 1]->value->getAttribute('type') ?? null) {
                 return null;
             }
 
@@ -114,7 +114,6 @@ class JsonResourceTypeInfer
 
         return static::$jsonResourcesModelTypesCache[$jsonClass->name] = $modelType;
     }
-
 
     private static function getModelName(string $jsonResourceClassName, \ReflectionClass $reflectionClass, callable $getFqName)
     {

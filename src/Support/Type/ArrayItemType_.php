@@ -8,15 +8,16 @@ class ArrayItemType_ extends AbstractType
 {
     /** @var string|int|null */
     public $key;
+
     public Type $value;
+
     public bool $isOptional;
 
     public function __construct(
         $key,
         Type $value,
         bool $isOptional = false
-    )
-    {
+    ) {
         $this->key = $key;
         $this->value = $value;
         $this->isOptional = $isOptional;

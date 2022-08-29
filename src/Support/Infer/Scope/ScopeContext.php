@@ -11,6 +11,7 @@ class ScopeContext
     public function setClass(?ObjectType $class): ScopeContext
     {
         $this->class = $class;
+
         return $this;
     }
 }

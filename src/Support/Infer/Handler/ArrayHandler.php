@@ -2,9 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Infer\Handler;
 
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
 
 class ArrayHandler

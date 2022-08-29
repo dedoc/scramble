@@ -2,17 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Infer\Handler;
 
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\FunctionLikeType;
-use Dedoc\Scramble\Support\Type\FunctionType;
-use Dedoc\Scramble\Support\Type\Identifier;
-use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\StringType;
-use Dedoc\Scramble\Support\Type\Union;
 use PhpParser\Node;
-use PhpParser\Node\FunctionLike;
-use PhpParser\NodeFinder;
 
 class NewHandler
 {

@@ -6,7 +6,7 @@ use PhpParser\Node;
 
 class ReturnTypeGettingExtensions
 {
-    static $extensions = [];
+    public static $extensions = [];
 
     public function shouldHandle($node)
     {
@@ -22,6 +22,7 @@ class ReturnTypeGettingExtensions
                 if ($type) {
                     return $type;
                 }
+
                 return $acc;
             },
         );

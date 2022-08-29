@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\TypeHandlers;
 
-use Dedoc\Scramble\Support\Type\ArrayType;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeItemNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayTypeNode;

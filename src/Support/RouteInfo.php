@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Support;
 use Dedoc\Scramble\Support\ComplexTypeHandler\ComplexTypeHandlers;
 use Dedoc\Scramble\Support\Infer\TypeInferringVisitor;
 use Dedoc\Scramble\Support\Type\FunctionLikeType;
-use Dedoc\Scramble\Support\Type\Identifier;
 use Dedoc\Scramble\Support\TypeHandlers\PhpDocTypeWalker;
 use Dedoc\Scramble\Support\TypeHandlers\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
@@ -84,7 +83,6 @@ class RouteInfo
                 PhpDocTypeWalker::traverse($returnTagValue->type, [new ResolveFqnPhpDocTypeVisitor($this->class->namesResolver)]);
             }
         }
-
 
         return $this->phpDoc;
     }

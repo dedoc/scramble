@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Support\Infer\Handler;
 
 use Dedoc\Scramble\Support\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TypeHelper;

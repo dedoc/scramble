@@ -41,7 +41,6 @@ class ObjectType extends Type
         $result = parent::toArray();
 
         try {
-
             if (count($this->properties)) {
                 $properties = [];
                 foreach ($this->properties as $name => $property) {
