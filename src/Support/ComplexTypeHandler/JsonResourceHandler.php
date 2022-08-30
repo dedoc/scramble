@@ -42,7 +42,7 @@ class JsonResourceHandler
             return null;
         }
 
-        if (! $type = $returnNode->expr->getAttribute('type')) {
+        if (! $type = $classAstHelper->scope->getType($returnNode->expr)) {
             return null;
         }
 
