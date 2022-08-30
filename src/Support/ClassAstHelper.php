@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support;
 
+use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Infer\TypeInferringVisitor;
 use Illuminate\Support\Arr;
 use PhpParser\Node;
@@ -19,6 +20,8 @@ class ClassAstHelper
     public \ReflectionClass $classReflection;
 
     public Node\Stmt\Class_ $classAst;
+
+    public Scope $scope;
 
     public $namesResolver = null;
 
@@ -45,8 +48,10 @@ class ClassAstHelper
         );
 
         $traverser = new NodeTraverser;
-        $traverser->addVisitor(new TypeInferringVisitor($this->namesResolver));
+        $traverser->addVisitor($infer = new TypeInferringVisitor($this->namesResolver));
         $traverser->traverse([$classAst]);
+
+        $this->scope = $infer->scope;
 
         if (! $classAst) {
             throw new \InvalidArgumentException('Cannot create class AST of the class '.$this->class);

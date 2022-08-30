@@ -2,23 +2,24 @@
 
 namespace Dedoc\Scramble\Support\Infer\Handler;
 
+use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use PhpParser\Node;
 
 class ReturnTypeGettingExtensions
 {
     public static $extensions = [];
 
-    public function shouldHandle($node)
+    public function shouldHandle()
     {
         return true;
     }
 
-    public function leave(Node $node)
+    public function leave(Node $node, Scope $scope)
     {
         $type = array_reduce(
             static::$extensions,
-            function ($acc, $extensionClass) use ($node) {
-                $type = (new $extensionClass)->getNodeReturnType($node, $node->getAttribute('scope'));
+            function ($acc, $extensionClass) use ($node, $scope) {
+                $type = (new $extensionClass)->getNodeReturnType($node, $scope);
                 if ($type) {
                     return $type;
                 }
@@ -28,7 +29,7 @@ class ReturnTypeGettingExtensions
         );
 
         if ($type) {
-            $node->setAttribute('type', $type);
+            $scope->setType($node, $type);
         }
     }
 }

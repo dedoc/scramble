@@ -16,12 +16,29 @@ it('gets types', function () {
 
 it('gets json resource type', function () {
     $class = new ClassAstHelper(InferTypesTest_SampleJsonResource::class);
+    $scope = $class->scope;
     $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
 
-    $returnType = $method->getAttribute('type')->getReturnType();
+    $returnType = $scope->getType($method)->getReturnType();
 
     assertMatchesTextSnapshot($returnType->toString());
+})->only();
+
+it('simply infers method types', function () {
+    $class = new ClassAstHelper(Foo_SampleClass::class);
+    $scope = $class->scope;
+    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+
+    $returnType = $scope->getType($method)->getReturnType();
+
+    dd(spl_object_id($method), $returnType->toString());
 });
+
+class Foo_SampleClass {
+    public function foo () {
+        return fn (): string => 1;
+    }
+}
 
 class InferTypesTest_SampleClass
 {
