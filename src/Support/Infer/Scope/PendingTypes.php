@@ -36,6 +36,10 @@ class PendingTypes
                     continue;
                 }
 
+                if (count(TypeWalker::find($resolvedType, fn ($t) => $t === $pendingType))) {
+                    $resolvedType = new UnknownType;
+                }
+
                 $referenceResolver($pendingType, $resolvedType);
                 $this->references[$index][2]--;
                 $hasResolvedSomeReferences = true;
