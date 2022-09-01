@@ -81,7 +81,12 @@ class Scope
 
     public function setType(Node $node, Type $type)
     {
-        if ($node instanceof CallLike) {
+        if (
+            $node instanceof Node\Expr\MethodCall
+            || $node instanceof Node\Expr\FuncCall
+            || $node instanceof Node\Expr\StaticCall
+            || $node instanceof Node\Expr\NullsafeMethodCall
+        ) {
             // While unknown type here may be legit and type is unknown, it also may mean
             // that there is enough information to get the type. But later there may be more
             // info. So we can wait for that info to appear.

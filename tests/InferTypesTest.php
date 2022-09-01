@@ -42,7 +42,7 @@ it('infers method types for methods declared not in order', function () {
     $returnType = $scope->getType($method)->getReturnType();
 
     expect($returnType->toString())->toBe('(): int');
-});
+})->only();
 
 it('infers unknown method call', function () {
     $class = new ClassAstHelper(FooThree_SampleClass::class);
