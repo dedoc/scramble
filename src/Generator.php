@@ -124,6 +124,7 @@ class Generator
                     );
             }
         } catch (\Throwable $exception) {
+            throw $exception;
             $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
         }
 

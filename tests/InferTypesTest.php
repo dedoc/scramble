@@ -22,7 +22,7 @@ it('gets json resource type', function () {
     $returnType = $scope->getType($method)->getReturnType();
 
     assertMatchesTextSnapshot($returnType->toString());
-})->only();
+});
 
 it('simply infers method types', function () {
     $class = new ClassAstHelper(Foo_SampleClass::class);
@@ -31,12 +31,34 @@ it('simply infers method types', function () {
 
     $returnType = $scope->getType($method)->getReturnType();
 
-    dd(spl_object_id($method), $returnType->toString());
+    expect($returnType->toString())->toBe('int');
 });
 
-class Foo_SampleClass {
+it('infers method types for methods declared not in order', function () {
+    $class = new ClassAstHelper(FooTwo_SampleClass::class);
+    $scope = $class->scope;
+    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+
+    $returnType = $scope->getType($method)->getReturnType();
+
+    expect($returnType->toString())->toBe('(): int');
+});
+
+class FooTwo_SampleClass {
     public function foo () {
-        return fn (): string => 1;
+        return fn () => $this->bar();
+    }
+    public function bar () {
+        return 1;
+    }
+}
+
+class Foo_SampleClass {
+    public function bar () {
+        return 1;
+    }
+    public function foo () {
+        return $this->bar();
     }
 }
 

@@ -13,6 +13,13 @@ class NodeTypesResolver
 {
     private $nodeTypes = [];
 
+    public function hasType(Node $node): bool
+    {
+        $nodeId = spl_object_id($node);
+
+        return array_key_exists($nodeId, $this->nodeTypes);
+    }
+
     public function getType(Node $node): Type
     {
         $nodeId = spl_object_id($node);
@@ -25,5 +32,10 @@ class NodeTypesResolver
         $nodeId = spl_object_id($node);
 
         $this->nodeTypes[$nodeId] = $type;
+    }
+
+    public function resolvePendingTypes()
+    {
+
     }
 }

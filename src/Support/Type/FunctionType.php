@@ -16,6 +16,14 @@ class FunctionType extends AbstractType implements FunctionLikeType
         $this->returnType = $returnType ?: new VoidType();
     }
 
+    public function children(): array
+    {
+        return [
+            ...$this->arguments,
+            $this->returnType,
+        ];
+    }
+
     public function setReturnType(Type $type): self
     {
         $this->returnType = $type;

@@ -12,10 +12,13 @@ use Dedoc\Scramble\Support\Infer\Handler\NewHandler;
 use Dedoc\Scramble\Support\Infer\Handler\PropertyFetchHandler;
 use Dedoc\Scramble\Support\Infer\Handler\ReturnHandler;
 use Dedoc\Scramble\Support\Infer\Handler\ReturnTypeGettingExtensions;
-use Dedoc\Scramble\Support\Infer\Handler\ScalarHandler;
 use Dedoc\Scramble\Support\Infer\Scope\NodeTypesResolver;
+use Dedoc\Scramble\Support\Infer\Scope\PendingTypes;
 use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Infer\Scope\ScopeContext;
+use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\PendingReturnType;
+use Dedoc\Scramble\Support\Type\TypeWalker;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 
@@ -71,6 +74,28 @@ class TypeInferringVisitor extends NodeVisitorAbstract
             }
         }
 
+        if ($node instanceof Node\FunctionLike) {
+            /** @var FunctionType $type */
+            $type = $this->scope->getType($node);
+
+            // When there is a referenced type in fn return, we want to add it to the pending
+            // resolution types, so it can be resolved later.
+            if (count(TypeWalker::find($type->getReturnType(), fn ($t) => $t instanceof PendingReturnType))) {
+                $this->scope->pending->addReference(
+                    $type,
+                    function ($pendingType, $resolvedPendingType) use ($type) {
+                        $type->setReturnType(
+                            TypeWalker::replace($type->getReturnType(), $pendingType, $resolvedPendingType)
+                        );
+                    }
+                );
+            }
+
+            // And in the end, after the function is analyzed, we try to resolve all pending types
+            // that exist in the current global check run.
+            $this->scope->pending->resolve();
+        }
+
         return null;
     }
 
@@ -84,7 +109,6 @@ class TypeInferringVisitor extends NodeVisitorAbstract
             ArrayHandler::class,
             ArrayItemHandler::class,
             ReturnHandler::class,
-//            MethodCallHandler::class,
             ReturnTypeGettingExtensions::class,
         ];
     }
@@ -94,6 +118,7 @@ class TypeInferringVisitor extends NodeVisitorAbstract
         if (! isset($this->scope)) {
             $this->scope = new Scope(
                 new NodeTypesResolver,
+                new PendingTypes,
                 new ScopeContext,
                 $this->namesResolver
             );

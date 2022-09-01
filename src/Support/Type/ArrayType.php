@@ -14,6 +14,11 @@ class ArrayType extends AbstractType
         $this->items = $items;
     }
 
+    public function children(): array
+    {
+        return $this->items;
+    }
+
     public function isSame(Type $type)
     {
         return false;
