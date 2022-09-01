@@ -7,7 +7,6 @@ use Dedoc\Scramble\Support\Infer\Handler\ArrayItemHandler;
 use Dedoc\Scramble\Support\Infer\Handler\ClassHandler;
 use Dedoc\Scramble\Support\Infer\Handler\CreatesScope;
 use Dedoc\Scramble\Support\Infer\Handler\FunctionLikeHandler;
-use Dedoc\Scramble\Support\Infer\Handler\MethodCallHandler;
 use Dedoc\Scramble\Support\Infer\Handler\NewHandler;
 use Dedoc\Scramble\Support\Infer\Handler\PropertyFetchHandler;
 use Dedoc\Scramble\Support\Infer\Handler\ReturnHandler;

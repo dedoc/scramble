@@ -26,6 +26,7 @@ class TypeWalker
             if ($index !== false) {
                 $subject->types[$index] = $replace;
             }
+
             return TypeHelper::mergeTypes(...$subject->types);
         }
 

@@ -7,7 +7,6 @@ use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node;
-use PhpParser\PrettyPrinter\Standard;
 
 class ReturnHandler
 {

@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Support\Infer\Handler;
 
 use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
 
 class ArrayItemHandler

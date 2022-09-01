@@ -38,7 +38,7 @@ class FunctionLikeHandler implements CreatesScope
 
         if ($returnTypeAnnotation = $node->getReturnType()) {
             $type->setReturnType(TypeHelper::createTypeFromTypeNode($returnTypeAnnotation) ?: new VoidType);
-            // @todo Here we may not need to go deep in the fn and analyze nodes as we already know the type.
+        // @todo Here we may not need to go deep in the fn and analyze nodes as we already know the type.
         } else {
             // Simple way of handling the arrow functions, as they do not have a return statement.
             // So here we just create a "virtual" return and processing it as by default.
@@ -54,7 +54,7 @@ class FunctionLikeHandler implements CreatesScope
         // to the class so classes can be analyzed later.
         if ($node instanceof Node\Stmt\ClassMethod) {
             // @todo: remove as this should not happen - class must be always there
-            if(! $scope->context->class) {
+            if (! $scope->context->class) {
                 return;
             }
             $scope->context->class->methods = array_merge(

@@ -44,20 +44,28 @@ it('infers method types for methods declared not in order', function () {
     expect($returnType->toString())->toBe('(): int');
 });
 
-class FooTwo_SampleClass {
-    public function foo () {
+class FooTwo_SampleClass
+{
+    public function foo()
+    {
         return fn () => $this->bar();
     }
-    public function bar () {
+
+    public function bar()
+    {
         return 1;
     }
 }
 
-class Foo_SampleClass {
-    public function bar () {
+class Foo_SampleClass
+{
+    public function bar()
+    {
         return 1;
     }
-    public function foo () {
+
+    public function foo()
+    {
         return $this->bar();
     }
 }

@@ -17,6 +17,7 @@ class TypeHelper
                 if ($c->count() > 1 && $c->contains(fn ($t) => $t instanceof VoidType)) {
                     return $c->reject(fn ($t) => $t instanceof VoidType);
                 }
+
                 return $c;
             })
             ->all();

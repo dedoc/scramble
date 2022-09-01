@@ -36,6 +36,5 @@ class NodeTypesResolver
 
     public function resolvePendingTypes()
     {
-
     }
 }

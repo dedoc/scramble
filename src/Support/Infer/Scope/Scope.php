@@ -50,7 +50,7 @@ class Scope
 
         $type = $this->nodeTypesResolver->getType($node);
 
-        if (!$type instanceof PendingReturnType && !$type instanceof UnknownType) {
+        if (! $type instanceof PendingReturnType && ! $type instanceof UnknownType) {
             return $type;
         }
 
@@ -64,7 +64,7 @@ class Scope
 
         if ($node instanceof Node\Expr\MethodCall) {
             // Only string method names support.
-            if (!$node->name instanceof Node\Identifier) {
+            if (! $node->name instanceof Node\Identifier) {
                 return $type;
             }
 
