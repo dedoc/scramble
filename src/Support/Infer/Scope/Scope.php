@@ -9,7 +9,6 @@ use Dedoc\Scramble\Support\Type\PendingReturnType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
-use PhpParser\Node\Expr\CallLike;
 
 class Scope
 {
