@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Infer\Handler;
 
+use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use PhpParser\Node;
 
 class PropertyFetchHandler
@@ -11,16 +12,15 @@ class PropertyFetchHandler
         return $node instanceof Node\Expr\PropertyFetch;
     }
 
-    public function leave(Node\Expr\PropertyFetch $node)
+    public function leave(Node\Expr\PropertyFetch $node, Scope $scope)
     {
-        if (! $type = $node->var->getAttribute('type')) {
-            return null;
-        }
-
+        // Only string property names support.
         if (! $name = ($node->name->name ?? null)) {
             return null;
         }
 
-        $node->setAttribute('type', $type->getPropertyFetchType($name));
+        $type = $scope->getType($node->var);
+
+        $scope->setType($node, $type->getPropertyFetchType($name));
     }
 }

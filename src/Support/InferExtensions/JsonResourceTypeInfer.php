@@ -43,9 +43,7 @@ class JsonResourceTypeInfer
          * $this->mergeWhen()
          */
         if ($this->isMethodCallToThis($node, ['merge', 'mergeWhen'])) {
-            if (! $type = $node->args[count($node->args) - 1]->value->getAttribute('type') ?? null) {
-                return null;
-            }
+            $type = $scope->getType($node->args[count($node->args) - 1]->value);
 
             if ($type instanceof FunctionType) {
                 $type = $type->getReturnType();
@@ -64,9 +62,7 @@ class JsonResourceTypeInfer
          * $this->when()
          */
         if ($this->isMethodCallToThis($node, ['when'])) {
-            if (! $type = $node->args[count($node->args) - 1]->value->getAttribute('type') ?? null) {
-                return null;
-            }
+            $type = $scope->getType($node->args[count($node->args) - 1]->value);
 
             if ($type instanceof FunctionType) {
                 $type = $type->getReturnType();
@@ -75,7 +71,7 @@ class JsonResourceTypeInfer
             return $type;
         }
         if ($node instanceof Node\Expr\ArrayItem && $this->isMethodCallToThis($node->value, ['when'])) {
-            $node->getAttribute('type')->isOptional = true;
+            $scope->getType($node)->isOptional = true;
 
             return null;
         }
@@ -86,10 +82,10 @@ class JsonResourceTypeInfer
         if (
             $node instanceof Node\Expr\ArrayItem
             && $node->value instanceof Node\Expr\New_
-            && optional($node->value->getAttribute('type'))->isInstanceOf(JsonResource::class)
+            && $scope->getType($node->value)->isInstanceOf(JsonResource::class)
             && $this->isMethodCallToThis(optional($node->value->args[0])->value, ['whenLoaded'])
         ) {
-            $node->getAttribute('type')->isOptional = true;
+            $scope->getType($node)->isOptional = true;
 
             return null;
         }

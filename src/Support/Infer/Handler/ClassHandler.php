@@ -10,11 +10,7 @@ class ClassHandler implements CreatesScope
 {
     public function createScope(Scope $scope): Scope
     {
-        return new Scope(
-            clone $scope->context,
-            $scope->namesResolver,
-            $scope
-        );
+        return $scope->createChildScope(clone $scope->context);
     }
 
     public function shouldHandle($node)
@@ -22,10 +18,10 @@ class ClassHandler implements CreatesScope
         return $node instanceof Node\Stmt\Class_;
     }
 
-    public function enter(Node\Stmt\Class_ $node)
+    public function enter(Node\Stmt\Class_ $node, Scope $scope)
     {
-        $node->getAttribute('scope')->context->setClass(
-            new ObjectType($node->name ? $node->getAttribute('scope')->resolveName($node->name->toString()) : 'anonymous@class'),
+        $scope->context->setClass(
+            new ObjectType($node->name ? $scope->resolveName($node->name->toString()) : 'anonymous@class'),
         );
     }
 }

@@ -13,7 +13,7 @@ use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
 
 class OpenApiTypeHelper
 {
-    public static function fromType(\Dedoc\Scramble\Support\Type\AbstractType $type): Type
+    public static function fromType(\Dedoc\Scramble\Support\Type\Type $type): Type
     {
         $openApiType = new StringType();
 

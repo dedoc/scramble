@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Infer\Handler;
 
+use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use PhpParser\Node;
 
@@ -12,15 +13,13 @@ class ArrayHandler
         return $node instanceof Node\Expr\Array_;
     }
 
-    public function leave(Node\Expr\Array_ $node)
+    public function leave(Node\Expr\Array_ $node, Scope $scope)
     {
         $arrayItems = collect($node->items)
             ->filter()
-            ->map(function (Node\Expr\ArrayItem $arrayItem) {
-                return $arrayItem->getAttribute('type');
-            })
+            ->map(fn (Node\Expr\ArrayItem $arrayItem) => $scope->getType($arrayItem))
             ->all();
 
-        $node->setAttribute('type', new ArrayType($arrayItems));
+        $scope->setType($node, new ArrayType($arrayItems));
     }
 }

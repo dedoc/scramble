@@ -9,16 +9,21 @@ use Dedoc\Scramble\Support\Infer\Handler\CreatesScope;
 use Dedoc\Scramble\Support\Infer\Handler\FunctionLikeHandler;
 use Dedoc\Scramble\Support\Infer\Handler\NewHandler;
 use Dedoc\Scramble\Support\Infer\Handler\PropertyFetchHandler;
+use Dedoc\Scramble\Support\Infer\Handler\ReturnHandler;
 use Dedoc\Scramble\Support\Infer\Handler\ReturnTypeGettingExtensions;
-use Dedoc\Scramble\Support\Infer\Handler\ScalarHandler;
+use Dedoc\Scramble\Support\Infer\Scope\NodeTypesResolver;
+use Dedoc\Scramble\Support\Infer\Scope\PendingTypes;
 use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Infer\Scope\ScopeContext;
+use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\PendingReturnType;
+use Dedoc\Scramble\Support\Type\TypeWalker;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 
 class TypeInferringVisitor extends NodeVisitorAbstract
 {
-    private Scope $scope;
+    public Scope $scope;
 
     private $namesResolver;
 
@@ -30,7 +35,6 @@ class TypeInferringVisitor extends NodeVisitorAbstract
     public function enterNode(Node $node)
     {
         $scope = $this->getOrCreateScope();
-        $node->setAttribute('scope', $scope);
 
         foreach ($this->getHandlers() as $handlerClass) {
             $handlerInstance = new $handlerClass;
@@ -41,11 +45,10 @@ class TypeInferringVisitor extends NodeVisitorAbstract
 
             if ($handlerInstance instanceof CreatesScope) {
                 $this->scope = $handlerInstance->createScope($scope);
-                $node->setAttribute('scope', $this->scope);
             }
 
             if (method_exists($handlerInstance, 'enter')) {
-                $handlerInstance->enter($node);
+                $handlerInstance->enter($node, $this->scope);
             }
         }
 
@@ -61,13 +64,36 @@ class TypeInferringVisitor extends NodeVisitorAbstract
                 continue;
             }
 
-            if ($handlerInstance instanceof CreatesScope) {
-                $this->scope = $node->getAttribute('scope')->parentScope;
+            if (method_exists($handlerInstance, 'leave')) {
+                $handlerInstance->leave($node, $this->scope);
             }
 
-            if (method_exists($handlerInstance, 'leave')) {
-                $handlerInstance->leave($node);
+            if ($handlerInstance instanceof CreatesScope) {
+                $this->scope = $this->scope->parentScope;
             }
+        }
+
+        if ($node instanceof Node\FunctionLike) {
+            /** @var FunctionType $type */
+            $type = $this->scope->getType($node);
+
+            // When there is a referenced type in fn return, we want to add it to the pending
+            // resolution types, so it can be resolved later.
+            if ($pendingTypesCount = count(TypeWalker::find($type->getReturnType(), fn ($t) => $t instanceof PendingReturnType))) {
+                $this->scope->pending->addReference(
+                    $type,
+                    function ($pendingType, $resolvedPendingType) use ($type) {
+                        $type->setReturnType(
+                            TypeWalker::replace($type->getReturnType(), $pendingType, $resolvedPendingType)
+                        );
+                    },
+                    $pendingTypesCount,
+                );
+            }
+
+            // And in the end, after the function is analyzed, we try to resolve all pending types
+            // that exist in the current global check run.
+            $this->scope->pending->resolve();
         }
 
         return null;
@@ -77,20 +103,30 @@ class TypeInferringVisitor extends NodeVisitorAbstract
     {
         return [
             FunctionLikeHandler::class,
-            ScalarHandler::class,
             NewHandler::class,
             ClassHandler::class,
             PropertyFetchHandler::class,
             ArrayHandler::class,
             ArrayItemHandler::class,
+            ReturnHandler::class,
             ReturnTypeGettingExtensions::class,
         ];
+    }
+
+    public function afterTraverse(array $nodes)
+    {
+        $this->scope->pending->resolveAllPendingIntoUnknowns();
     }
 
     private function getOrCreateScope()
     {
         if (! isset($this->scope)) {
-            $this->scope = new Scope(new ScopeContext, $this->namesResolver);
+            $this->scope = new Scope(
+                new NodeTypesResolver,
+                new PendingTypes,
+                new ScopeContext,
+                $this->namesResolver
+            );
         }
 
         return $this->scope;

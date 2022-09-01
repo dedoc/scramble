@@ -2,6 +2,9 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+use Dedoc\Scramble\Support\Infer\Scope\Scope;
+use PhpParser\Node\Expr\MethodCall;
+
 class ObjectType extends AbstractType
 {
     public string $name;
@@ -10,6 +13,11 @@ class ObjectType extends AbstractType
      * @var array<string, Type>
      */
     public array $properties = [];
+
+    /**
+     * @var array<string, FunctionType>
+     */
+    public array $methods = [];
 
     public function __construct(
         string $name,
@@ -26,6 +34,28 @@ class ObjectType extends AbstractType
         }
 
         return new UnknownType("Cannot get type of property [$propertyName] on object [$this->name]");
+    }
+
+    public function children(): array
+    {
+        return [
+            ...array_values($this->properties),
+            ...array_values($this->methods),
+        ];
+    }
+
+    public function nodes(): array
+    {
+        return ['methods', 'properties'];
+    }
+
+    public function getMethodCallType(string $methodName, MethodCall $node, Scope $scope): Type
+    {
+        if (! array_key_exists($methodName, $this->methods)) {
+            return new UnknownType("Cannot get type of calling method [$methodName] on object [$this->name]");
+        }
+
+        return $this->methods[$methodName]->getReturnType();
     }
 
     public function isInstanceOf(string $className)

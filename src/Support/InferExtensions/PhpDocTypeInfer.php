@@ -24,7 +24,7 @@ class PhpDocTypeInfer
                 }
             }
 
-            $node->getAttribute('type')->setAttribute('docNode', $docNode);
+            $scope->getType($node)->setAttribute('docNode', $docNode);
         }
     }
 }

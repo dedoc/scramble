@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Infer\Handler;
 
+use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use PhpParser\Node;
 
@@ -12,14 +13,14 @@ class NewHandler
         return $node instanceof Node\Expr\New_;
     }
 
-    public function leave(Node\Expr\New_ $node)
+    public function leave(Node\Expr\New_ $node, Scope $scope)
     {
         if (! ($node->class instanceof Node\Name)) {
             return null;
         }
 
-        $node->setAttribute(
-            'type',
+        $scope->setType(
+            $node,
             new ObjectType($node->class->toString()),
         );
     }

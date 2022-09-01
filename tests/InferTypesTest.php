@@ -16,12 +16,126 @@ it('gets types', function () {
 
 it('gets json resource type', function () {
     $class = new ClassAstHelper(InferTypesTest_SampleJsonResource::class);
+    $scope = $class->scope;
     $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
 
-    $returnType = $method->getAttribute('type')->getReturnType();
+    $returnType = $scope->getType($method)->getReturnType();
 
     assertMatchesTextSnapshot($returnType->toString());
 });
+
+it('simply infers method types', function () {
+    $class = new ClassAstHelper(Foo_SampleClass::class);
+    $scope = $class->scope;
+    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+
+    $returnType = $scope->getType($method)->getReturnType();
+
+    expect($returnType->toString())->toBe('int');
+});
+
+it('infers method types for methods declared not in order', function () {
+    $class = new ClassAstHelper(FooTwo_SampleClass::class);
+    $scope = $class->scope;
+    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+
+    $returnType = $scope->getType($method)->getReturnType();
+
+    expect($returnType->toString())->toBe('(): int');
+});
+
+it('infers method types for methods in array', function () {
+    $class = new ClassAstHelper(FooFour_SampleClass::class);
+    $scope = $class->scope;
+    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+
+    $returnType = $scope->getType($method)->getReturnType();
+
+    expect($returnType->toString())->toBe('array{a: int}');
+});
+
+it('infers unknown method call', function () {
+    $class = new ClassAstHelper(FooThree_SampleClass::class);
+    $scope = $class->scope;
+    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+
+    $returnType = $scope->getType($method)->getReturnType();
+
+    expect($returnType->toString())->toBe('array{a: array{p: unknown}, b: unknown}');
+});
+
+it('infers cast', function () {
+    $class = new ClassAstHelper(FooFive_SampleClass::class);
+    $scope = $class->scope;
+    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+
+    $returnType = $scope->getType($method)->getReturnType();
+
+    expect($returnType->toString())->toBe('int');
+});
+
+class FooFive_SampleClass
+{
+    public function foo()
+    {
+        return (int) $a;
+    }
+}
+
+class FooFour_SampleClass
+{
+    public function foo()
+    {
+        return ['a' => $this->bar()];
+    }
+
+    public function bar()
+    {
+        return 1;
+    }
+}
+
+class FooThree_SampleClass
+{
+    public function foo()
+    {
+        return [
+            'a' => $this->bar(),
+            'b' => $this->someMethod(),
+        ];
+    }
+
+    public function bar()
+    {
+        return ['p' => $a];
+    }
+}
+
+class FooTwo_SampleClass
+{
+    public function foo()
+    {
+        return fn () => $this->bar();
+    }
+
+    public function bar()
+    {
+        return 1;
+    }
+}
+
+class Foo_SampleClass
+{
+    public function bar()
+    {
+        return 1;
+    }
+
+    public function foo()
+    {
+        return $this->bar();
+    }
+}
 
 class InferTypesTest_SampleClass
 {

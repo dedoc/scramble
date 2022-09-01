@@ -23,6 +23,16 @@ class ArrayItemType_ extends AbstractType
         $this->isOptional = $isOptional;
     }
 
+    public function children(): array
+    {
+        return [$this->value];
+    }
+
+    public function nodes(): array
+    {
+        return ['value'];
+    }
+
     public function isNumericKey()
     {
         return $this->key === null || is_numeric($this->key);

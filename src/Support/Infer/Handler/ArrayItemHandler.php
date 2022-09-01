@@ -2,8 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Infer\Handler;
 
+use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
 
 class ArrayItemHandler
@@ -13,13 +13,13 @@ class ArrayItemHandler
         return $node instanceof Node\Expr\ArrayItem;
     }
 
-    public function leave(Node\Expr\ArrayItem $node)
+    public function leave(Node\Expr\ArrayItem $node, Scope $scope)
     {
-        $node->setAttribute(
-            'type',
+        $scope->setType(
+            $node,
             new ArrayItemType_(
                 $node->key->value ?? null,
-                $node->value->getAttribute('type', new UnknownType()),
+                $scope->getType($node->value),
                 $isOptional = false,
             )
         );

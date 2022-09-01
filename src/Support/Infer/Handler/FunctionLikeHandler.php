@@ -3,24 +3,17 @@
 namespace Dedoc\Scramble\Support\Infer\Handler;
 
 use Dedoc\Scramble\Support\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
-use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node;
 use PhpParser\Node\FunctionLike;
-use PhpParser\NodeFinder;
 
 class FunctionLikeHandler implements CreatesScope
 {
     public function createScope(Scope $scope): Scope
     {
-        return new Scope(
-            clone $scope->context,
-            $scope->namesResolver,
-            $scope
-        );
+        return $scope->createChildScope(clone $scope->context);
     }
 
     public function shouldHandle($node)
@@ -28,40 +21,46 @@ class FunctionLikeHandler implements CreatesScope
         return $node instanceof FunctionLike;
     }
 
-    public function enter(FunctionLike $node)
+    public function enter(FunctionLike $node, Scope $scope)
     {
-        $type = new FunctionType();
+        // when entering function node, the only thing we need/want to do
+        // is to set node param types to scope.
+        // Also, if here we add a reference to the function node type, it may allow us to
+        // set function return types not in leave function, but in the return handlers.
+        $scope->setType($node, $fnType = new FunctionType);
 
-        $node->setAttribute('type', $type);
+        $scope->context->setFunction($fnType);
     }
 
-    public function leave(FunctionLike $node)
+    public function leave(FunctionLike $node, Scope $scope)
     {
-        /** @var $type FunctionLikeType */
-        if (! $type = $node->getAttribute('type')) {
-            throw new \LogicException('Type should have been set on node, but was not.');
-        }
+        $type = $scope->context->function;
 
         if ($returnTypeAnnotation = $node->getReturnType()) {
             $type->setReturnType(TypeHelper::createTypeFromTypeNode($returnTypeAnnotation) ?: new VoidType);
-
-            return;
+        // @todo Here we may not need to go deep in the fn and analyze nodes as we already know the type.
+        } else {
+            // Simple way of handling the arrow functions, as they do not have a return statement.
+            // So here we just create a "virtual" return and processing it as by default.
+            if ($node instanceof Node\Expr\ArrowFunction) {
+                (new ReturnHandler)->leave(
+                    new Node\Stmt\Return_($node->expr, $node->getAttributes()),
+                    $scope,
+                );
+            }
         }
 
-        /** @var Node\Stmt\Return_[] $returnNodes */
-        $returnNodes = (new NodeFinder)->find(
-            $node->getStmts(),
-            function (Node $n) use ($node) {
-                return $n instanceof Node\Stmt\Return_
-                    && $node->getAttribute('scope') === ($n->getAttribute('scope') ?: $n->expr->getAttribute('scope'));
+        // In case of method in class being analyzed, we want to attach the method information
+        // to the class so classes can be analyzed later.
+        if ($node instanceof Node\Stmt\ClassMethod) {
+            // @todo: remove as this should not happen - class must be always there
+            if (! $scope->context->class) {
+                return;
             }
-        );
-
-        $types = array_filter(array_map(
-            fn (Node\Stmt\Return_ $n) => $n->expr ? $n->expr->getAttribute('type') : new VoidType,
-            $returnNodes,
-        ));
-
-        $type->setReturnType(Union::wrap($types));
+            $scope->context->class->methods = array_merge(
+                $scope->context->class->methods,
+                [$node->name->name => $type],
+            );
+        }
     }
 }

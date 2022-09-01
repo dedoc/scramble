@@ -19,6 +19,19 @@ class Generic extends AbstractType
         return is_a($this->type->name, $className, true);
     }
 
+    public function children(): array
+    {
+        return [
+            $this->type,
+            ...$this->genericTypes,
+        ];
+    }
+
+    public function nodes(): array
+    {
+        return ['type', 'genericTypes'];
+    }
+
     public function isSame(Type $type)
     {
         return $type instanceof static
