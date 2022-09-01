@@ -54,4 +54,34 @@ class PendingTypes
             $this->resolve();
         }
     }
+
+    public function resolveAllPendingIntoUnknowns()
+    {
+        $resolvedReferences = [];
+
+        foreach ($this->references as $index => [$type, $referenceResolver]) {
+            /** @var PendingReturnType[] $pendingTypes */
+            $pendingTypes = TypeWalker::find($type, fn ($t) => $t instanceof PendingReturnType);
+
+            foreach ($pendingTypes as $pendingType) {
+                $resolvedType = $pendingType->defaultType;
+
+                $referenceResolver($pendingType, $resolvedType);
+                $resolvedReferences[] = $index;
+            }
+        }
+
+        foreach ($resolvedReferences as $index) {
+            if (isset($this->references[$index])) {
+                unset($this->references[$index]);
+            }
+        }
+
+        // Something was resolved, so this can allow resolving other pending return types.
+        // Performance bottleneck may be here, so some smarter way of dependencies resolving
+        // may be used to avoid recursion.
+        if (count($resolvedReferences)) {
+            $this->resolveAllPendingIntoUnknowns();
+        }
+    }
 }

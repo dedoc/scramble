@@ -112,6 +112,11 @@ class TypeInferringVisitor extends NodeVisitorAbstract
         ];
     }
 
+    public function afterTraverse(array $nodes)
+    {
+        $this->scope->pending->resolveAllPendingIntoUnknowns();
+    }
+
     private function getOrCreateScope()
     {
         if (! isset($this->scope)) {

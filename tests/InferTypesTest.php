@@ -44,6 +44,24 @@ it('infers method types for methods declared not in order', function () {
     expect($returnType->toString())->toBe('(): int');
 });
 
+it('infers unknown method call', function () {
+    $class = new ClassAstHelper(FooThree_SampleClass::class);
+    $scope = $class->scope;
+    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+
+    $returnType = $scope->getType($method)->getReturnType();
+
+    expect($returnType->toString())->toBe('unknown');
+});
+
+class FooThree_SampleClass
+{
+    public function foo()
+    {
+        return $this->bar();
+    }
+}
+
 class FooTwo_SampleClass
 {
     public function foo()
