@@ -58,7 +58,7 @@ Based on these validation rules ${name} knows that there are 2 request body para
 
 The same applies to the `rules` method in custom `FormRequest`.
 
-### Rules evaluation
+### Rules evaluation caveats
 
 It is important to keep in mind that rules are evaluated to be analyzed: `rules` method is called when there is a custom request class and the array with rules passed to the `validate` is evaluated as well.
 
