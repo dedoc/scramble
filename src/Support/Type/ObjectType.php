@@ -44,6 +44,11 @@ class ObjectType extends AbstractType
         ];
     }
 
+    public function nodes(): array
+    {
+        return ['methods', 'properties'];
+    }
+
     public function getMethodCallType(string $methodName, MethodCall $node, Scope $scope): Type
     {
         if (! array_key_exists($methodName, $this->methods)) {

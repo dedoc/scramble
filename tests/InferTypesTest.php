@@ -42,7 +42,17 @@ it('infers method types for methods declared not in order', function () {
     $returnType = $scope->getType($method)->getReturnType();
 
     expect($returnType->toString())->toBe('(): int');
-})->only();
+});
+
+it('infers method types for methods in array', function () {
+    $class = new ClassAstHelper(FooFour_SampleClass::class);
+    $scope = $class->scope;
+    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+
+    $returnType = $scope->getType($method)->getReturnType();
+
+    expect($returnType->toString())->toBe('array{a: int}');
+});
 
 it('infers unknown method call', function () {
     $class = new ClassAstHelper(FooThree_SampleClass::class);
@@ -51,14 +61,53 @@ it('infers unknown method call', function () {
 
     $returnType = $scope->getType($method)->getReturnType();
 
-    expect($returnType->toString())->toBe('unknown');
+    expect($returnType->toString())->toBe('array{a: array{p: unknown}, b: unknown}');
 });
+
+it('infers cast', function () {
+    $class = new ClassAstHelper(FooFive_SampleClass::class);
+    $scope = $class->scope;
+    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+
+    $returnType = $scope->getType($method)->getReturnType();
+
+    expect($returnType->toString())->toBe('int');
+});
+
+class FooFive_SampleClass
+{
+    public function foo()
+    {
+        return (int) $a;
+    }
+}
+
+class FooFour_SampleClass
+{
+    public function foo()
+    {
+        return ['a' => $this->bar()];
+    }
+
+    public function bar()
+    {
+        return 1;
+    }
+}
 
 class FooThree_SampleClass
 {
     public function foo()
     {
-        return $this->bar();
+        return [
+            'a' => $this->bar(),
+            'b' => $this->someMethod(),
+        ];
+    }
+
+    public function bar()
+    {
+        return ['p' => $a];
     }
 }
 

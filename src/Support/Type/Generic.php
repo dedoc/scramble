@@ -27,6 +27,11 @@ class Generic extends AbstractType
         ];
     }
 
+    public function nodes(): array
+    {
+        return ['type', 'genericTypes'];
+    }
+
     public function isSame(Type $type)
     {
         return $type instanceof static

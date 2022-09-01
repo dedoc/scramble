@@ -20,6 +20,11 @@ abstract class AbstractType implements Type
         return new UnknownType('Cannot find method call type.');
     }
 
+    public function nodes(): array
+    {
+        return [];
+    }
+
     public function children(): array
     {
         return [];

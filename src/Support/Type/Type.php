@@ -19,6 +19,8 @@ interface Type
 
     public function getMethodCallType(string $methodName, MethodCall $node, Scope $scope): Type;
 
+    public function nodes(): array;
+
     public function children(): array;
 
     public function isSame(self $type);

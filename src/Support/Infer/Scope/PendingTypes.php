@@ -9,17 +9,17 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 
 class PendingTypes
 {
-    /** @var array{0: Type, 1: callable(PendingReturnType, Type): void} */
+    /** @var array{0: Type, 1: callable(PendingReturnType, Type): void, 2: int} */
     private array $references = [];
 
-    public function addReference(Type $type, callable $referenceResolver)
+    public function addReference(Type $type, callable $referenceResolver, int $pendingTypesCount)
     {
-        $this->references[] = [$type, $referenceResolver];
+        $this->references[] = [$type, $referenceResolver, $pendingTypesCount];
     }
 
     public function resolve()
     {
-        $resolvedReferences = [];
+        $hasResolvedSomeReferences = false;
 
         foreach ($this->references as $index => [$type, $referenceResolver]) {
             /** @var PendingReturnType[] $pendingTypes */
@@ -37,12 +37,13 @@ class PendingTypes
                 }
 
                 $referenceResolver($pendingType, $resolvedType);
-                $resolvedReferences[] = $index;
+                $this->references[$index][2]--;
+                $hasResolvedSomeReferences = true;
             }
         }
 
-        foreach ($resolvedReferences as $index) {
-            if (isset($this->references[$index])) {
+        foreach ($this->references as $index => [,,$count]) {
+            if ($count === 0) {
                 unset($this->references[$index]);
             }
         }
@@ -50,16 +51,14 @@ class PendingTypes
         // Something was resolved, so this can allow resolving other pending return types.
         // Performance bottleneck may be here, so some smarter way of dependencies resolving
         // may be used to avoid recursion.
-        if (count($resolvedReferences)) {
+        if ($hasResolvedSomeReferences) {
             $this->resolve();
         }
     }
 
     public function resolveAllPendingIntoUnknowns()
     {
-        $resolvedReferences = [];
-
-        foreach ($this->references as $index => [$type, $referenceResolver]) {
+        foreach ($this->references as [$type, $referenceResolver]) {
             /** @var PendingReturnType[] $pendingTypes */
             $pendingTypes = TypeWalker::find($type, fn ($t) => $t instanceof PendingReturnType);
 
@@ -67,21 +66,9 @@ class PendingTypes
                 $resolvedType = $pendingType->defaultType;
 
                 $referenceResolver($pendingType, $resolvedType);
-                $resolvedReferences[] = $index;
             }
         }
 
-        foreach ($resolvedReferences as $index) {
-            if (isset($this->references[$index])) {
-                unset($this->references[$index]);
-            }
-        }
-
-        // Something was resolved, so this can allow resolving other pending return types.
-        // Performance bottleneck may be here, so some smarter way of dependencies resolving
-        // may be used to avoid recursion.
-        if (count($resolvedReferences)) {
-            $this->resolveAllPendingIntoUnknowns();
-        }
+        $this->references = [];
     }
 }

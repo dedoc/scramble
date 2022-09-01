@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Infer\Scope;
 
+use Dedoc\Scramble\Support\Infer\SimpleTypeGetters\CastTypeGetter;
 use Dedoc\Scramble\Support\Infer\SimpleTypeGetters\ScalarTypeGetter;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\PendingReturnType;
@@ -41,6 +42,10 @@ class Scope
     {
         if ($node instanceof Node\Scalar) {
             return (new ScalarTypeGetter)($node);
+        }
+
+        if ($node instanceof Node\Expr\Cast) {
+            return (new CastTypeGetter)($node);
         }
 
         if ($node instanceof Node\Expr\Variable && $node->name === 'this') {

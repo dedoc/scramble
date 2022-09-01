@@ -21,13 +21,16 @@ class TypeWalker
             return $replace;
         }
 
-        if ($subject instanceof Union) {
-            $index = array_search($search, $subject->types);
-            if ($index !== false) {
-                $subject->types[$index] = $replace;
+        $propertiesWithNodes = $subject->nodes();
+        foreach ($propertiesWithNodes as $propertyWithNode) {
+            $node = $subject->$propertyWithNode;
+            if (! is_array($node)) {
+                $subject->$propertyWithNode = static::replace($node, $search, $replace);
+            } else {
+                foreach ($node as $index => $item) {
+                    $subject->$propertyWithNode[$index] = static::replace($item, $search, $replace);
+                }
             }
-
-            return TypeHelper::mergeTypes(...$subject->types);
         }
 
         return $subject;

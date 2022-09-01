@@ -19,6 +19,11 @@ class Union extends AbstractType
         return $this->types;
     }
 
+    public function nodes(): array
+    {
+        return ['types'];
+    }
+
     public function isSame(Type $type)
     {
         return $type instanceof static
