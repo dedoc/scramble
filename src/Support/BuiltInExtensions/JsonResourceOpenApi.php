@@ -3,9 +3,9 @@
 namespace Dedoc\Scramble\Support\BuiltInExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
+use Illuminate\Http\Resources\Json\{ResourceCollection, JsonResource};
 use Dedoc\Scramble\Support\Generator\{Reference, Response, Schema};
 use Dedoc\Scramble\Support\Type\{ArrayItemType_, ArrayType, Generic, Literal\LiteralBooleanType, ObjectType, StringType, Type};
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MergeValue;
 
 class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
@@ -13,7 +13,8 @@ class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
     public function shouldHandle(Type $type)
     {
         return $type instanceof ObjectType
-            && $type->isInstanceOf(JsonResource::class);
+            && $type->isInstanceOf(JsonResource::class)
+            && ! $type->isInstanceOf(ResourceCollection::class);
     }
 
     public function toSchema(ObjectType $type)

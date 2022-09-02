@@ -15,6 +15,21 @@ class TypeWalker
         return $foundTypes;
     }
 
+    public static function first(Type $type, callable $lookup): ?Type
+    {
+        if ($lookup($type)) {
+            return $type;
+        }
+
+        foreach ($type->children() as $child) {
+            if ($foundType = static::first($child, $lookup)) {
+                return $foundType;
+            }
+        }
+
+        return null;
+    }
+
     public static function replace(Type $subject, Type $search, Type $replace): Type
     {
         if ($subject === $search) {
