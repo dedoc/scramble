@@ -2,10 +2,10 @@
 
 namespace Dedoc\Scramble\Support\InferExtensions;
 
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
+use Dedoc\Scramble\Support\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\PhpDoc;
 use PhpParser\Node;
 
 class PhpDocTypeInfer

@@ -7,7 +7,6 @@ use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\Identifier;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;

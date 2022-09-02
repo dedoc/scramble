@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\PhpDoc;
 
-use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
@@ -65,7 +64,7 @@ class PhpDocTypeHelper
                 ));
             }
 
-            if (!($typeObject = static::toType($type->type)) instanceof ObjectType) {
+            if (! ($typeObject = static::toType($type->type)) instanceof ObjectType) {
                 return $typeObject;
             }
 
@@ -122,6 +121,7 @@ class PhpDocTypeHelper
         if ($type->name === 'null') {
             return new NullType;
         }
+
         return new ObjectType($type->name);
     }
 }

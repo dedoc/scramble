@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
@@ -15,8 +16,6 @@ use Dedoc\Scramble\Support\Infer\Infer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
-use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\PhpDoc\TypeHandlers;
 
 /**
  * Transforms PHP type to OpenAPI schema type.

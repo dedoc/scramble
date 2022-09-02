@@ -27,7 +27,7 @@ class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
     }
 
     /**
-     * @param ObjectType $type
+     * @param  ObjectType  $type
      */
     public function toSchema(Type $type)
     {
@@ -87,7 +87,7 @@ class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
     }
 
     /**
-     * @param ObjectType $type
+     * @param  ObjectType  $type
      */
     public function toResponse(Type $type)
     {

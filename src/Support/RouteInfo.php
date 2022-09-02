@@ -2,13 +2,11 @@
 
 namespace Dedoc\Scramble\Support;
 
-use Dedoc\Scramble\Support\ComplexTypeHandler\ComplexTypeHandlers;
-use Dedoc\Scramble\Support\Infer\TypeInferringVisitor;
-use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
-use Dedoc\Scramble\PhpDoc\TypeHandlers;
+use Dedoc\Scramble\Support\Infer\TypeInferringVisitor;
+use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Str;
 use PhpParser\Node;

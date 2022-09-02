@@ -24,7 +24,7 @@ class AnonymousResourceCollectionOpenApi extends TypeToOpenApiSchemaExtension
     }
 
     /**
-     * @param Generic $type
+     * @param  Generic  $type
      */
     public function toSchema(Type $type)
     {
@@ -37,7 +37,7 @@ class AnonymousResourceCollectionOpenApi extends TypeToOpenApiSchemaExtension
     }
 
     /**
-     * @param Generic $type
+     * @param  Generic  $type
      */
     public function toResponse(Type $type)
     {

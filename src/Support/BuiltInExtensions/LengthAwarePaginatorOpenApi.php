@@ -27,7 +27,7 @@ class LengthAwarePaginatorOpenApi extends TypeToOpenApiSchemaExtension
     }
 
     /**
-     * @param Generic $type
+     * @param  Generic  $type
      */
     public function toResponse(Type $type)
     {
