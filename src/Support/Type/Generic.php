@@ -4,11 +4,11 @@ namespace Dedoc\Scramble\Support\Type;
 
 class Generic extends AbstractType
 {
-    public Identifier $type;
+    public ObjectType $type;
 
     public array $genericTypes;
 
-    public function __construct(Identifier $type, array $genericTypes)
+    public function __construct(ObjectType $type, array $genericTypes)
     {
         $this->type = $type;
         $this->genericTypes = $genericTypes;
@@ -16,7 +16,7 @@ class Generic extends AbstractType
 
     public function isInstanceOf(string $className)
     {
-        return is_a($this->type->name, $className, true);
+        return $this->type->isInstanceOf($className);
     }
 
     public function children(): array

@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
@@ -40,13 +41,31 @@ class TypeTransformer
 
         if (
             $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
-            && collect($type->items)->every(fn ($t) => is_numeric($t->key))
+            && (
+                (collect($type->items)->every(fn ($t) => is_numeric($t->key)) && collect($type->items)->count() === 1)
+                || collect($type->items)->every(fn ($t) => $t->key === null)
+            )
         ) {
-            $itemsType = isset($type->items[0])
-                ? $this->transform($type->items[0]->value)
-                : new StringType();
+            $isMap = collect($type->items)->every(fn ($t) => $t->key === null)
+                && count($type->items) === 2;
 
-            $openApiType = (new ArrayType())->setItems($itemsType);
+            if ($isMap) {
+                $keyType = $this->transform($type->items[0]->value);
+
+                if ($keyType instanceof IntegerType) {
+                    $openApiType = (new ArrayType)
+                        ->setItems($this->transform($type->items[1]->value));
+                } else {
+                    $openApiType = (new ObjectType)
+                        ->additionalProperties($this->transform($type->items[1]->value));
+                }
+            } else {
+                $itemsType = isset($type->items[0])
+                    ? $this->transform($type->items[0]->value)
+                    : new StringType();
+
+                $openApiType = (new ArrayType())->setItems($itemsType);
+            }
         } elseif (
             $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
         ) {
@@ -106,7 +125,16 @@ class TypeTransformer
             $openApiType = new BooleanType();
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\NullType) {
             $openApiType = new NullType();
-        } elseif ($typeHandledByExtension = $this->handleUsingExtensions($type)) {
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\ObjectType) {
+            $openApiType = new ObjectType();
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntersectionType) {
+            $openApiType = (new AllOf)->setItems(array_filter(array_map(
+                fn ($t) => $this->transform($t),
+                $type->types,
+            )));
+        }
+
+        if ($typeHandledByExtension = $this->handleUsingExtensions($type)) {
             $openApiType = $typeHandledByExtension;
         }
 

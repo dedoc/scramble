@@ -62,7 +62,6 @@ class ArrayShapeNodeHandler implements TypeHandler
         }
 
         // array{int, string}
-
         if (
             count($this->node->items) === 2
             && $this->node->items[0]->keyName === null

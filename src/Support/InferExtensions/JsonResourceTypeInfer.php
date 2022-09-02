@@ -50,7 +50,7 @@ class JsonResourceTypeInfer
             }
 
             return new Generic(
-                new Identifier(MergeValue::class),
+                new ObjectType(MergeValue::class),
                 [
                     $node->name->name === 'merge' ? new LiteralBooleanType(true) : new BooleanType(),
                     $type,

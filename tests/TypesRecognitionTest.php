@@ -1,6 +1,11 @@
 <?php
 
+use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Infer\Infer;
 use Dedoc\Scramble\Support\PhpDoc;
+use Dedoc\Scramble\Support\Type\TypeHelper;
+use Dedoc\Scramble\Support\TypeHandlers\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Http\Resources\Json\JsonResource;
 use function Spatie\Snapshots\assertMatchesSnapshot;
@@ -17,7 +22,8 @@ function getTypeFromDoc(string $phpDoc)
     $docNode = PhpDoc::parse($phpDoc);
     $varNode = $docNode->getVarTagValues()[0];
 
-    return TypeHandlers::handle($varNode->type);
+    return (new TypeTransformer(new Infer, new Components))
+        ->transform(PhpDocTypeHelper::toType($varNode->type));
 }
 
 it('handles simple types', function ($phpDoc) {
