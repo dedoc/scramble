@@ -1,0 +1,8 @@
+type: object
+properties:
+    foo: { type: integer }
+    hey: { type: string }
+    bar: { type: string }
+required:
+    - foo
+    - bar

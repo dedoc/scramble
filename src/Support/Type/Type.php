@@ -17,7 +17,7 @@ interface Type
 
     public function getPropertyFetchType(string $propertyName): Type;
 
-    public function getMethodCallType(string $methodName, MethodCall $node, Scope $scope): Type;
+    public function getMethodCallType(string $methodName): Type;
 
     public function nodes(): array;
 

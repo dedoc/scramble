@@ -82,7 +82,7 @@ it('infers cyclic dep', function () {
     $returnType = $scope->getType($method)->getReturnType();
 
     expect($returnType->toString())->toBe('unknown|int');
-})->only();
+});
 
 class FooSix_SampleClass
 {
