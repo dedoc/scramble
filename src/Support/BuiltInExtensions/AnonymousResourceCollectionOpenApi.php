@@ -23,7 +23,10 @@ class AnonymousResourceCollectionOpenApi extends TypeToOpenApiSchemaExtension
             && count($type->genericTypes) === 1;
     }
 
-    public function toSchema(Generic $type)
+    /**
+     * @param Generic $type
+     */
+    public function toSchema(Type $type)
     {
         if (! $collectingResourceType = $this->getCollectingResourceType($type)) {
             return null;
@@ -33,7 +36,10 @@ class AnonymousResourceCollectionOpenApi extends TypeToOpenApiSchemaExtension
             ->setItems($this->openApiTransformer->transform($collectingResourceType));
     }
 
-    public function toResponse(Generic $type)
+    /**
+     * @param Generic $type
+     */
+    public function toResponse(Type $type)
     {
         // In case of paginated resource, we want to get pagination response.
         if ($type->genericTypes[0] instanceof Generic) {

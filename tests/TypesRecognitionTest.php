@@ -5,8 +5,8 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Infer\Infer;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\TypeHelper;
-use Dedoc\Scramble\Support\TypeHandlers\PhpDocTypeHelper;
-use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
+use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
+use Dedoc\Scramble\PhpDoc\TypeHandlers;
 use Illuminate\Http\Resources\Json\JsonResource;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 

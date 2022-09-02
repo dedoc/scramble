@@ -26,7 +26,10 @@ class LengthAwarePaginatorOpenApi extends TypeToOpenApiSchemaExtension
             && $type->genericTypes[0] instanceof ObjectType;
     }
 
-    public function toResponse(Generic $type)
+    /**
+     * @param Generic $type
+     */
+    public function toResponse(Type $type)
     {
         $collectingClassType = $type->genericTypes[0];
 

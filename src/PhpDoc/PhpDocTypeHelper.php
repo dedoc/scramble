@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support\TypeHandlers;
+namespace Dedoc\Scramble\PhpDoc;
 
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;

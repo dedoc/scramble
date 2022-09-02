@@ -26,7 +26,10 @@ class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
             && ! $type->isInstanceOf(ResourceCollection::class);
     }
 
-    public function toSchema(ObjectType $type)
+    /**
+     * @param ObjectType $type
+     */
+    public function toSchema(Type $type)
     {
         $type = $this->infer->analyzeClass($type->name);
 
@@ -83,7 +86,10 @@ class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
             ->all();
     }
 
-    public function toResponse(ObjectType $type)
+    /**
+     * @param ObjectType $type
+     */
+    public function toResponse(Type $type)
     {
         return Response::make(200)
             ->description('`'.$this->components->uniqueSchemaName($type->name).'`')

@@ -5,9 +5,10 @@ namespace Dedoc\Scramble\Support;
 use Dedoc\Scramble\Support\ComplexTypeHandler\ComplexTypeHandlers;
 use Dedoc\Scramble\Support\Infer\TypeInferringVisitor;
 use Dedoc\Scramble\Support\Type\FunctionLikeType;
-use Dedoc\Scramble\Support\TypeHandlers\PhpDocTypeWalker;
-use Dedoc\Scramble\Support\TypeHandlers\ResolveFqnPhpDocTypeVisitor;
-use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
+use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
+use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
+use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
+use Dedoc\Scramble\PhpDoc\TypeHandlers;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Str;
 use PhpParser\Node;
@@ -120,18 +121,12 @@ class RouteInfo
             ->getMethod($this->methodName());
     }
 
-    public function getHandledReturnType()
+    public function getReturnTypes()
     {
-        if ($phpDocType = $this->getDocReturnType()) {
-            if ($type = TypeHandlers::handle($phpDocType)) {
-                return [$phpDocType, $type];
-            }
-        }
-
-        return [
-            $codeType = $this->getCodeReturnType(),
-            $codeType ? ComplexTypeHandlers::handle($codeType) : null,
-        ];
+        return array_values(array_filter([
+            ($phpDocType = $this->getDocReturnType()) ? PhpDocTypeHelper::toType($phpDocType) : null,
+            $this->getCodeReturnType(),
+        ]));
     }
 
     public function getReturnType()

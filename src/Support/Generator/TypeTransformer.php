@@ -15,7 +15,8 @@ use Dedoc\Scramble\Support\Infer\Infer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
-use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
+use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
+use Dedoc\Scramble\PhpDoc\TypeHandlers;
 
 /**
  * Transforms PHP type to OpenAPI schema type.
@@ -94,7 +95,7 @@ class TypeTransformer
 
                 // @todo: unknown type
                 $openApiType = $varNode->type
-                    ? (TypeHandlers::handle($varNode->type) ?: new StringType)
+                    ? $this->transform(PhpDocTypeHelper::toType($varNode->type))
                     : new StringType;
 
                 if ($varNode->description) {
@@ -167,6 +168,35 @@ class TypeTransformer
                     }
 
                     return $type;
+                }
+
+                return $acc;
+            }
+        );
+    }
+
+    public function toResponse(Type $type): ?Response
+    {
+        if ($response = $this->handleResponseUsingExtensions($type)) {
+            return $response;
+        }
+
+        return null;
+    }
+
+    private function handleResponseUsingExtensions(Type $type)
+    {
+        return array_reduce(
+            $this->extensions,
+            function ($acc, $extensionClass) use ($type) {
+                $extension = new $extensionClass($this->infer, $this, $this->components);
+
+                if (! $extension->shouldHandle($type)) {
+                    return $acc;
+                }
+
+                if ($response = $extension->toResponse($type, $acc)) {
+                    return $response;
                 }
 
                 return $acc;

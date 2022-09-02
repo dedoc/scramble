@@ -19,6 +19,9 @@ it('extracts rules from request->validate call', function () {
 
 class ValidationRulesDocumenting_Test
 {
+    /**
+     * @return ValidationRulesDocumenting_TestResource
+     */
     public function index(Request $request)
     {
         $request->validate([
