@@ -33,7 +33,7 @@ it('transforms simple types', function ($type, $openApiArrayed) {
             'key' => ['type' => 'integer'],
             'optional_key' => ['type' => 'integer'],
         ],
-        'required' => ['key']
+        'required' => ['key'],
     ]],
 ]);
 
@@ -96,8 +96,8 @@ class ComplexTypeHandlersWithNestedTest_SampleType extends JsonResource
                     'kek' => [
                         $this->merge([
                             'bar' => 'foo',
-                        ])
-                    ]
+                        ]),
+                    ],
                 ]),
             ],
             $this->mergeWhen(true, [

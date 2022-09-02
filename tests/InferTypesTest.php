@@ -91,6 +91,7 @@ class FooSix_SampleClass
         if (piu()) {
             return 1;
         }
+
         return $this->foo();
     }
 }

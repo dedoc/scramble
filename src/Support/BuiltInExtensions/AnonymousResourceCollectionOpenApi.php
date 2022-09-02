@@ -3,9 +3,16 @@
 namespace Dedoc\Scramble\Support\BuiltInExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
-use Illuminate\Http\Resources\Json\{AnonymousResourceCollection, JsonResource};
-use Dedoc\Scramble\Support\Generator\{Response, Schema, Types\ArrayType as OpenApiArrayType, Types\ObjectType as OpenApiObjectType};
-use Dedoc\Scramble\Support\Type\{Generic, ObjectType, Type, TypeWalker};
+use Dedoc\Scramble\Support\Generator\Response;
+use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Types\ArrayType as OpenApiArrayType;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
+use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeWalker;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class AnonymousResourceCollectionOpenApi extends TypeToOpenApiSchemaExtension
 {
@@ -18,7 +25,7 @@ class AnonymousResourceCollectionOpenApi extends TypeToOpenApiSchemaExtension
 
     public function toSchema(Generic $type)
     {
-        if (!$collectingResourceType = $this->getCollectingResourceType($type)) {
+        if (! $collectingResourceType = $this->getCollectingResourceType($type)) {
             return null;
         }
 
@@ -33,7 +40,7 @@ class AnonymousResourceCollectionOpenApi extends TypeToOpenApiSchemaExtension
             return $this->openApiTransformer->toResponse($type->genericTypes[0]);
         }
 
-        if (!$collectingResourceType = $this->getCollectingResourceType($type)) {
+        if (! $collectingResourceType = $this->getCollectingResourceType($type)) {
             return null;
         }
 

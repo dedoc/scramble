@@ -3,10 +3,18 @@
 namespace Dedoc\Scramble\Support\BuiltInExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
+use Dedoc\Scramble\Support\Generator\Response;
+use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Types\ArrayType;
+use Dedoc\Scramble\Support\Generator\Types\BooleanType;
+use Dedoc\Scramble\Support\Generator\Types\IntegerType;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Dedoc\Scramble\Support\Generator\{Response, Schema, Types\ArrayType, Types\BooleanType, Types\IntegerType, Types\ObjectType as OpenApiObjectType, Types\StringType};
-use Dedoc\Scramble\Support\Type\{Generic, ObjectType, Type};
 
 class LengthAwarePaginatorOpenApi extends TypeToOpenApiSchemaExtension
 {

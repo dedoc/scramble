@@ -2,9 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
-use PhpParser\Node\Expr\MethodCall;
-
 class ObjectType extends AbstractType
 {
     public string $name;

@@ -3,8 +3,6 @@
 namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Support\Generator\Types\TypeAttributes;
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
-use PhpParser\Node\Expr\MethodCall;
 
 abstract class AbstractType implements Type
 {

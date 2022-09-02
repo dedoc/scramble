@@ -3,9 +3,18 @@
 namespace Dedoc\Scramble\Support\BuiltInExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
-use Illuminate\Http\Resources\Json\{ResourceCollection, JsonResource};
-use Dedoc\Scramble\Support\Generator\{Reference, Response, Schema};
-use Dedoc\Scramble\Support\Type\{ArrayItemType_, ArrayType, Generic, Literal\LiteralBooleanType, ObjectType, StringType, Type};
+use Dedoc\Scramble\Support\Generator\Reference;
+use Dedoc\Scramble\Support\Generator\Response;
+use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\Type;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\MergeValue;
 
 class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
@@ -23,7 +32,7 @@ class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
 
         $array = $type->getMethodCallType('toArray');
 
-        if (!$array instanceof ArrayType) {
+        if (! $array instanceof ArrayType) {
             return new StringType(); // @todo unknown type
         }
 
@@ -50,7 +59,7 @@ class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
 
                     // Second generic argument of the `MergeValue` class must be an array.
                     // Otherwise, we ignore it from the resulting array.
-                    if (!$arrayToMerge instanceof ArrayType) {
+                    if (! $arrayToMerge instanceof ArrayType) {
                         return [];
                     }
 
@@ -59,7 +68,7 @@ class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
                     $mergingArrayValuesShouldBeRequired = $item->value->genericTypes[0] instanceof LiteralBooleanType
                         && $item->value->genericTypes[0]->value === true;
 
-                    if (!$mergingArrayValuesShouldBeRequired) {
+                    if (! $mergingArrayValuesShouldBeRequired) {
                         foreach ($arrayToMergeItems as $mergingItem) {
                             $mergingItem->isOptional = true;
                         }

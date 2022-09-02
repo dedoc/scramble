@@ -22,7 +22,9 @@ use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
 class TypeTransformer
 {
     private Infer $infer;
+
     private Components $components;
+
     private array $extensions = [];
 
     public function __construct(Infer $infer, Components $components, array $extensions = [])
@@ -135,6 +137,7 @@ class TypeTransformer
                     if ($reference) {
                         return $this->components->addSchema($reference->fullName, Schema::fromType($type));
                     }
+
                     return $type;
                 }
 

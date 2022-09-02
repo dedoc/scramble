@@ -9,7 +9,9 @@ use Dedoc\Scramble\Support\Infer\Infer;
 abstract class TypeToOpenApiSchemaExtension
 {
     protected Infer $infer;
+
     protected TypeTransformer $openApiTransformer;
+
     protected Components $components;
 
     public function __construct(Infer $infer, TypeTransformer $openApiTransformer, Components $components)
