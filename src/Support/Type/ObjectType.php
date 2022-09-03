@@ -2,9 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
-use PhpParser\Node\Expr\MethodCall;
-
 class ObjectType extends AbstractType
 {
     public string $name;
@@ -49,7 +46,7 @@ class ObjectType extends AbstractType
         return ['methods', 'properties'];
     }
 
-    public function getMethodCallType(string $methodName, MethodCall $node, Scope $scope): Type
+    public function getMethodCallType(string $methodName): Type
     {
         if (! array_key_exists($methodName, $this->methods)) {
             return new UnknownType("Cannot get type of calling method [$methodName] on object [$this->name]");

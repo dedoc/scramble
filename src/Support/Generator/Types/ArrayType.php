@@ -7,7 +7,7 @@ use Dedoc\Scramble\Support\Generator\Schema;
 class ArrayType extends Type
 {
     /** @var Type|Schema */
-    private $items;
+    public $items;
 
     public function __construct()
     {

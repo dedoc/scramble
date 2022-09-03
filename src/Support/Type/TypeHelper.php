@@ -35,11 +35,11 @@ class TypeHelper
         }
 
         if ($typeNode instanceof Node\Identifier) {
-            return new Identifier($typeNode->toString());
+            return new ObjectType($typeNode->toString());
         }
 
         if ($typeNode instanceof Node\Name) {
-            return new Identifier($typeNode->toString());
+            return new ObjectType($typeNode->toString());
         }
 
         if ($typeNode instanceof Node\UnionType) {

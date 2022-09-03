@@ -2,40 +2,31 @@
 
 namespace Dedoc\Scramble\Support\ResponseExtractor;
 
-use Dedoc\Scramble\Support\ComplexTypeHandler\ComplexTypeHandlers;
-use Dedoc\Scramble\Support\Generator\Reference;
-use Dedoc\Scramble\Support\Generator\Response;
-use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\RouteInfo;
-use Illuminate\Support\Arr;
 
 class ResponsesExtractor
 {
     private RouteInfo $routeInfo;
 
-    public function __construct(RouteInfo $routeInfo)
+    private TypeTransformer $transformer;
+
+    public function __construct(RouteInfo $routeInfo, TypeTransformer $transformer)
     {
         $this->routeInfo = $routeInfo;
+        $this->transformer = $transformer;
     }
 
     public function __invoke()
     {
-        return collect(Arr::wrap([$this->routeInfo->getHandledReturnType()]))
-            ->filter(fn ($t) => (bool) $t[1])
-            ->map(function ($type) {
-                $type = $type[1];
+        $returnTypes = $this->routeInfo->getReturnTypes();
 
-                $hint = $type instanceof Reference
-                    ? ComplexTypeHandlers::$components->getSchema($type->fullName)->type->hint
-                    : $type->hint;
+        if (! $returnType = $returnTypes[0] ?? null) {
+            return [];
+        }
 
-                $type->setDescription('');
-
-                return Response::make(200)
-                    ->description($hint)
-                    ->setContent('application/json', Schema::fromType($type));
-            })
-            ->values()
-            ->all();
+        return array_filter([
+            $this->transformer->toResponse($returnType),
+        ]);
     }
 }

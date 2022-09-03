@@ -1,0 +1,10 @@
+type: object
+properties:
+    foo: { type: integer }
+    wait: { type: object, properties: { one: { type: integer }, bar: { type: string }, kek: { type: object, properties: { bar: { type: string } }, required: [bar] } }, required: [one, bar, kek] }
+    hey: { type: string }
+    bar: { type: string }
+required:
+    - foo
+    - wait
+    - bar

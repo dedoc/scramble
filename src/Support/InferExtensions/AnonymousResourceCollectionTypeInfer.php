@@ -3,7 +3,7 @@
 namespace Dedoc\Scramble\Support\InferExtensions;
 
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\Identifier;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PhpParser\Node;
@@ -25,8 +25,8 @@ class AnonymousResourceCollectionTypeInfer
         }
 
         return new Generic(
-            new Identifier(AnonymousResourceCollection::class),
-            [new Identifier($node->class->toString())],
+            new ObjectType(AnonymousResourceCollection::class),
+            [new ObjectType($node->class->toString())],
         );
     }
 }

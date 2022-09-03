@@ -3,8 +3,6 @@
 namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Support\Generator\Types\TypeAttributes;
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
-use PhpParser\Node\Expr\MethodCall;
 
 abstract class AbstractType implements Type
 {
@@ -15,7 +13,7 @@ abstract class AbstractType implements Type
         return new UnknownType('Cannot find property fetch type.');
     }
 
-    public function getMethodCallType(string $methodName, MethodCall $node, Scope $scope): Type
+    public function getMethodCallType(string $methodName): Type
     {
         return new UnknownType('Cannot find method call type.');
     }

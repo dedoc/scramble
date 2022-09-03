@@ -6,7 +6,7 @@ use Dedoc\Scramble\Support\Generator\Types\Type;
 
 class Reference extends Type
 {
-    private string $referenceType;
+    public string $referenceType;
 
     public string $fullName;
 

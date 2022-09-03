@@ -24,4 +24,9 @@ class ClassHandler implements CreatesScope
             new ObjectType($node->name ? $scope->resolveName($node->name->toString()) : 'anonymous@class'),
         );
     }
+
+    public function leave(Node\Stmt\Class_ $node, Scope $scope)
+    {
+        $scope->setType($node, $scope->context->class);
+    }
 }

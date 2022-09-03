@@ -2,7 +2,10 @@
 
 namespace Dedoc\Scramble;
 
-use Dedoc\Scramble\Support\ComplexTypeHandler\ComplexTypeHandlers;
+use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
+use Dedoc\Scramble\Support\BuiltInExtensions\AnonymousResourceCollectionOpenApi;
+use Dedoc\Scramble\Support\BuiltInExtensions\JsonResourceOpenApi;
+use Dedoc\Scramble\Support\BuiltInExtensions\LengthAwarePaginatorOpenApi;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
@@ -16,13 +19,13 @@ use Dedoc\Scramble\Support\Generator\Types\IntegerType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Infer\Infer;
 use Dedoc\Scramble\Support\ResponseExtractor\ResponsesExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\RulesExtractor\FormRequestRulesExtractor;
 use Dedoc\Scramble\Support\RulesExtractor\RulesToParameter;
 use Dedoc\Scramble\Support\RulesExtractor\ValidateCallExtractor;
-use Dedoc\Scramble\Support\Type\Identifier;
-use Dedoc\Scramble\Support\TypeHandlers\TypeHandlers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
@@ -34,11 +37,39 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class Generator
 {
+    private TypeTransformer $transformer;
+
+    const NATIVE_TYPES_TO_OPEN_API_EXTENSIONS = [
+        JsonResourceOpenApi::class,
+        AnonymousResourceCollectionOpenApi::class,
+        LengthAwarePaginatorOpenApi::class,
+    ];
+
+    private function initTransformer(OpenApi $openApi)
+    {
+        $extensions = config('scramble.extensions', []);
+
+        $typesToOpenApiSchemaExtensions = array_values(array_filter(
+            $extensions,
+            fn ($e) => is_a($e, TypeToOpenApiSchemaExtension::class, true),
+        ));
+        $typeInferringExtensions = [];
+
+        $this->transformer = new TypeTransformer(
+            new Infer,
+            $openApi->components,
+            array_merge(
+                static::NATIVE_TYPES_TO_OPEN_API_EXTENSIONS,
+                $typesToOpenApiSchemaExtensions,
+            ),
+        );
+    }
+
     public function __invoke()
     {
         $openApi = $this->makeOpenApi();
 
-        ComplexTypeHandlers::registerComponentsRepository($openApi->components);
+        $this->initTransformer($openApi);
 
         $this->getRoutes()
             ->map(fn (Route $route) => $this->routeToOperation($openApi, $route))
@@ -68,6 +99,25 @@ class Generator
     private function getRoutes(): Collection
     {
         return collect(RouteFacade::getRoutes())
+            ->pipe(function (Collection $c) {
+                $onlyRoute = $c->first(function (Route $route) {
+                    if (! is_string($route->getAction('uses'))) {
+                        return false;
+                    }
+                    try {
+                        $reflection = new \ReflectionMethod(...explode('@', $route->getAction('uses')));
+
+                        if (str_contains($reflection->getDocComment() ?: '', '@only-docs')) {
+                            return true;
+                        }
+                    } catch (\Throwable $e) {
+                    }
+
+                    return false;
+                });
+
+                return $onlyRoute ? collect([$onlyRoute]) : $c;
+            })
             ->filter(function (Route $route) {
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
             })
@@ -86,13 +136,6 @@ class Generator
         if (! $routeInfo->isClassBased()) {
             return null;
         }
-
-        TypeHandlers::registerIdentifierHandler(
-            $routeInfo->className(),
-            function (string $name) use ($routeInfo) {
-                return ComplexTypeHandlers::handle(new Identifier($routeInfo->class->resolveFqName($name)));
-            },
-        );
 
         [$pathParams, $pathAliases] = $this->getRoutePathParameters($route, $routeInfo->phpDoc());
 
@@ -128,7 +171,7 @@ class Generator
             $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
         }
 
-        $responses = (new ResponsesExtractor($routeInfo))();
+        $responses = (new ResponsesExtractor($routeInfo, $this->transformer))();
         foreach ($responses as $response) {
             $operation->addResponse($response);
         }

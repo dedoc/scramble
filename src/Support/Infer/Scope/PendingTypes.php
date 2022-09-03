@@ -23,7 +23,7 @@ class PendingTypes
 
         foreach ($this->references as $index => [$type, $referenceResolver]) {
             /** @var PendingReturnType[] $pendingTypes */
-            $pendingTypes = TypeWalker::find($type, fn ($t) => $t instanceof PendingReturnType);
+            $pendingTypes = (new TypeWalker)->find($type, fn ($t) => $t instanceof PendingReturnType);
 
             foreach ($pendingTypes as $pendingType) {
                 $resolvedType = $pendingType->scope->getType($pendingType->node);
@@ -36,7 +36,7 @@ class PendingTypes
                     continue;
                 }
 
-                if (count(TypeWalker::find($resolvedType, fn ($t) => $t === $pendingType))) {
+                if (count((new TypeWalker)->find($resolvedType, fn ($t) => $t === $pendingType))) {
                     $resolvedType = new UnknownType;
                 }
 
@@ -64,7 +64,7 @@ class PendingTypes
     {
         foreach ($this->references as [$type, $referenceResolver]) {
             /** @var PendingReturnType[] $pendingTypes */
-            $pendingTypes = TypeWalker::find($type, fn ($t) => $t instanceof PendingReturnType);
+            $pendingTypes = (new TypeWalker)->find($type, fn ($t) => $t instanceof PendingReturnType);
 
             foreach ($pendingTypes as $pendingType) {
                 $resolvedType = $pendingType->defaultType;

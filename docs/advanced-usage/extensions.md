@@ -26,11 +26,56 @@ The example of such an extension is an ability to add 403 response, if there is 
 
 These extensions are needed to tell the Scramble how different types look like when represented in JSON/OpenAPI schema. For example, to PHP’s type `int` represented in JSON schema look like `{"type": "integer"}`. To have this logic in place, type to OpenAPI schema extension is used.
 
-The extension’s function accepts 1 argument — the type. The function must return either `null`, if the extension should not handle the type, or new OpenAPI schema type otherwise.
+To create this type of extension, create a class extending the class `Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension`. Then, you need to implement a method `shouldHandle` that will decide if the extension should handle the `Type`.
 
-The more useful example is `JsonResource` response. When `JsonResource` response is returned from the controller you would want to know, how it will look like in the response. And to know that, you need to know how to represent `JsonResource` as an OpenAPI schema.
+In the extension, you can use `$this->infer`, `$this->openApiTransformer`, and `$this->components` to analyze the types.
 
-So you’ll need to implement this extension in case you have some custom responsable objects. Or in case Scramble doesn’t cover your use case, the custom extension can cover it as well.
+For example, consider `JsonResource` class. It can be referenced in some other OpenAPI type, or it may be returned from the endpoint.
+
+So, to start we need to check the type and make sure that the type should be checked.
+
+```php
+use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Dedoc\Scramble\Support\Type\ObjectType;
+
+class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
+{
+    public function shouldHandle(Type $type)
+    {
+        return $type instanceof ObjectType 
+            && $type->isInstanceOf(JsonResource::class);
+    }
+    
+    //...
+}
+```
+
+Then, we can implement the method `toSchema` that will describe how the type should be rendered in the OpenAPI. When serializing JsonResource to array, `toArray` method call result is used. So the simplest implementation for JsonResource looks like this (in reality it is a bit more complex, as there are merge values being serialized):
+
+```php
+use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Dedoc\Scramble\Support\Type\ObjectType;
+
+class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
+{
+    public function shouldHandle(Type $type) {/*...*/}
+    
+    public function toSchema(ObjectType $type)
+    {
+        $type = $this->infer->analyzeClass($type->name);
+        
+        $array = $type->getMethodCallType('toArray');
+        
+        return $this->openApiTransformer->transform($array);
+    }
+}
+```
+
+Also, when type should be used as an OpenAPI reference, you can implement `reference` method. When it is implemented, object's schema will be analyzed only once and will be saved in OpenAPI document components. When type is referenced, this reference will be used. 
+
+To implement how types look like when they returned as responses, `toResponse` method can be implemented.
 
 ## Type inferring extension
 

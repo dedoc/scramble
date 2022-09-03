@@ -82,7 +82,25 @@ it('infers cyclic dep', function () {
     $returnType = $scope->getType($method)->getReturnType();
 
     expect($returnType->toString())->toBe('unknown|int');
-})->only();
+});
+
+it('infers this return', function () {
+    $class = new ClassAstHelper(FooSeven_SampleClass::class);
+    $scope = $class->scope;
+    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+
+    $returnType = $scope->getType($method)->getReturnType();
+
+    expect($returnType->toString())->toBe('FooSeven_SampleClass');
+});
+
+class FooSeven_SampleClass
+{
+    public function foo()
+    {
+        return $this;
+    }
+}
 
 class FooSix_SampleClass
 {

@@ -7,7 +7,6 @@ use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\Identifier;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -50,7 +49,7 @@ class JsonResourceTypeInfer
             }
 
             return new Generic(
-                new Identifier(MergeValue::class),
+                new ObjectType(MergeValue::class),
                 [
                     $node->name->name === 'merge' ? new LiteralBooleanType(true) : new BooleanType(),
                     $type,
