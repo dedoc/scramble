@@ -4,25 +4,37 @@ namespace Dedoc\Scramble\Support\Type;
 
 class TypeWalker
 {
-    public static function find(Type $type, callable $lookup): array
+    private array $visitedNodes = [];
+
+    public function find(Type $type, callable $lookup): array
     {
+        if (in_array($type, $this->visitedNodes)) {
+            return [];
+        }
+        $this->visitedNodes[] = $type;
+
         $foundTypes = $lookup($type) ? [$type] : [];
 
         foreach ($type->children() as $child) {
-            $foundTypes = array_merge($foundTypes, static::find($child, $lookup));
+            $foundTypes = array_merge($foundTypes, $this->find($child, $lookup));
         }
 
         return $foundTypes;
     }
 
-    public static function first(Type $type, callable $lookup): ?Type
+    public function first(Type $type, callable $lookup): ?Type
     {
+        if (in_array($type, $this->visitedNodes)) {
+            return null;
+        }
+        $this->visitedNodes[] = $type;
+
         if ($lookup($type)) {
             return $type;
         }
 
         foreach ($type->children() as $child) {
-            if ($foundType = static::first($child, $lookup)) {
+            if ($foundType = $this->first($child, $lookup)) {
                 return $foundType;
             }
         }

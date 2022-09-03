@@ -121,6 +121,9 @@ class PhpDocTypeHelper
         if ($type->name === 'null') {
             return new NullType;
         }
+        if ($type->name === 'mixed') {
+            return new UnknownType('PhpDoc mixed type');
+        }
 
         return new ObjectType($type->name);
     }

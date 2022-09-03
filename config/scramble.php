@@ -7,4 +7,6 @@ return [
         'web',
         RestrictedDocsAccess::class,
     ],
+
+    'extensions' => [],
 ];

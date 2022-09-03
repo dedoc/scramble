@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
 use Dedoc\Scramble\Support\BuiltInExtensions\AnonymousResourceCollectionOpenApi;
 use Dedoc\Scramble\Support\BuiltInExtensions\JsonResourceOpenApi;
 use Dedoc\Scramble\Support\BuiltInExtensions\LengthAwarePaginatorOpenApi;
@@ -38,15 +39,37 @@ class Generator
 {
     private TypeTransformer $transformer;
 
+    const NATIVE_TYPES_TO_OPEN_API_EXTENSIONS = [
+        JsonResourceOpenApi::class,
+        AnonymousResourceCollectionOpenApi::class,
+        LengthAwarePaginatorOpenApi::class,
+    ];
+
+    private function initTransformer(OpenApi $openApi)
+    {
+        $extensions = config('scramble.extensions', []);
+
+        $typesToOpenApiSchemaExtensions = array_values(array_filter(
+            $extensions,
+            fn ($e) => is_a($e, TypeToOpenApiSchemaExtension::class, true),
+        ));
+        $typeInferringExtensions = [];
+
+        $this->transformer = new TypeTransformer(
+            new Infer,
+            $openApi->components,
+            array_merge(
+                static::NATIVE_TYPES_TO_OPEN_API_EXTENSIONS,
+                $typesToOpenApiSchemaExtensions,
+            ),
+        );
+    }
+
     public function __invoke()
     {
         $openApi = $this->makeOpenApi();
 
-        $this->transformer = new TypeTransformer(new Infer, $openApi->components, [
-            JsonResourceOpenApi::class,
-            AnonymousResourceCollectionOpenApi::class,
-            LengthAwarePaginatorOpenApi::class,
-        ]);
+        $this->initTransformer($openApi);
 
         $this->getRoutes()
             ->map(fn (Route $route) => $this->routeToOperation($openApi, $route))
@@ -76,6 +99,25 @@ class Generator
     private function getRoutes(): Collection
     {
         return collect(RouteFacade::getRoutes())
+            ->pipe(function (Collection $c) {
+                $onlyRoute = $c->first(function (Route $route) {
+                    if (! is_string($route->getAction('uses'))) {
+                        return false;
+                    }
+                    try {
+                        $reflection = new \ReflectionMethod(...explode('@', $route->getAction('uses')));
+
+                        if (str_contains($reflection->getDocComment() ?: '', '@only-docs')) {
+                            return true;
+                        }
+                    } catch (\Throwable $e) {
+                    }
+
+                    return false;
+                });
+
+                return $onlyRoute ? collect([$onlyRoute]) : $c;
+            })
             ->filter(function (Route $route) {
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
             })

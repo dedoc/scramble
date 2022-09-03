@@ -7,6 +7,8 @@ use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\Infer\TypeInferringVisitor;
 use Dedoc\Scramble\Support\Type\FunctionLikeType;
+use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Str;
 use PhpParser\Node;
@@ -121,10 +123,15 @@ class RouteInfo
 
     public function getReturnTypes()
     {
-        return array_values(array_filter([
+        return collect([
             ($phpDocType = $this->getDocReturnType()) ? PhpDocTypeHelper::toType($phpDocType) : null,
             $this->getCodeReturnType(),
-        ]));
+        ])
+            ->filter()
+            // Make sure the type with more leafs is first one.
+            ->sortByDesc(fn ($type) => count((new TypeWalker)->find($type, fn ($t) => !$t instanceof UnknownType)))
+            ->values()
+            ->all();
     }
 
     public function getReturnType()

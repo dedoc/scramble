@@ -6,12 +6,12 @@ use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -34,6 +34,7 @@ class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
         $type = $this->infer->analyzeClass($type->name);
 
         $array = $type->getMethodCallType('toArray');
+
 
         if (! $array instanceof ArrayType) {
             return new StringType(); // @todo unknown type

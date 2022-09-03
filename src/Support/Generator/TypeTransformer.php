@@ -161,12 +161,12 @@ class TypeTransformer
                     return $reference;
                 }
 
-                if ($type = $extension->toSchema($type, $acc)) {
+                if ($handledType = $extension->toSchema($type, $acc)) {
                     if ($reference) {
-                        return $this->components->addSchema($reference->fullName, Schema::fromType($type));
+                        return $this->components->addSchema($reference->fullName, Schema::fromType($handledType));
                     }
 
-                    return $type;
+                    return $handledType;
                 }
 
                 return $acc;
@@ -180,7 +180,11 @@ class TypeTransformer
             return $response;
         }
 
-        return null;
+        return Response::make(200)
+            ->setContent(
+                'application/json',
+                Schema::fromType($this->transform($type))
+            );
     }
 
     private function handleResponseUsingExtensions(Type $type)

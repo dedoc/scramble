@@ -65,7 +65,7 @@ class AnonymousResourceCollectionOpenApi extends TypeToOpenApiSchemaExtension
     private function getCollectingResourceType(Generic $type): ?ObjectType
     {
         // In case of paginated resource, we still want to get to the underlying JsonResource.
-        return TypeWalker::first(
+        return (new TypeWalker)->first(
             $type->genericTypes[0],
             fn (Type $t) => $t->isInstanceOf(JsonResource::class),
         );
