@@ -129,7 +129,7 @@ class RouteInfo
         ])
             ->filter()
             // Make sure the type with more leafs is first one.
-            ->sortByDesc(fn ($type) => count((new TypeWalker)->find($type, fn ($t) => !$t instanceof UnknownType)))
+            ->sortByDesc(fn ($type) => count((new TypeWalker)->find($type, fn ($t) => ! $t instanceof UnknownType)))
             ->values()
             ->all();
     }

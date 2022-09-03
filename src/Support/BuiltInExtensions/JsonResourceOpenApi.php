@@ -35,7 +35,6 @@ class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
 
         $array = $type->getMethodCallType('toArray');
 
-
         if (! $array instanceof ArrayType) {
             return new StringType(); // @todo unknown type
         }
