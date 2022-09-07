@@ -3,7 +3,7 @@ title: Responses
 weight: 3
 ---
 
-Based on source code analysis, ${name} can generate endpoint responses documentation. Currently, these response types documentation is supported automatically:
+Based on source code analysis, Scramble can generate endpoint responses documentation. Currently, these response types documentation is supported automatically:
 
 - `JsonResource` response
 - `AnonymousResourceCollection` of `JsonResource` items
@@ -26,7 +26,7 @@ class TodoItemsController
 }
 ```
 
-${name} extracts controller’s method return type based on priority:
+Scramble extracts controller’s method return type based on priority:
 
 1. PhpDoc comment
 2. Typehint
@@ -34,7 +34,7 @@ ${name} extracts controller’s method return type based on priority:
 
 This is implemented in this way because by its nature PHP is very dynamic language and Laravel uses a lot of its magic. So it can be pretty challenging to figure out method’s response type reliably in 100% cases without developing another PhpStan library.
 
-So while ${name} ultimate goal is to handle all possible return types automatically, for now I’ve decided to build it for the most popular things first.
+So while Scramble ultimate goal is to handle all possible return types automatically, for now I’ve decided to build it for the most popular things first.
 
 Automatic response definition from code return statements for now are limited to these 2 cases:
 
@@ -86,7 +86,7 @@ All resource property types that are accessed on `$this` or `$this->resource` ar
 
 </aside>
 
-By default, ${name} tries to find a model in `App\\Models\\` namespace, based on resource name. Before the lookup resource name is converted to singular form (`TodoItemsResource` → `TodoItem`).
+By default, Scramble tries to find a model in `App\\Models\\` namespace, based on resource name. Before the lookup resource name is converted to singular form (`TodoItemsResource` → `TodoItem`).
 
 You can provide the name of the model manually in case you have your custom models namespaces by adding PhpDoc to the resource class. You can either document `$resource` property type, or define the model as a `@mixin`:
 

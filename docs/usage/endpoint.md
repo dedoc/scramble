@@ -36,7 +36,7 @@ class DownloadMediaController
 ```
 
 ## General documentation
-${name} can get endpoint docs from PhpDoc comment of the route's method.
+Scramble can get endpoint docs from PhpDoc comment of the route's method.
 
 `summary` is a first row of the doc. `description` is the other text in doc. When there is only one line of text in PhpDoc it is treated as `summary`, as you can expect.
 

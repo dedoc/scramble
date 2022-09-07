@@ -10,7 +10,7 @@ For example, when you have this route:
 PUT /todo-items/{todoItem}
 ```
 
-`todoItem` is added to the docs as a route parameter. When `todoItem` is a route parameter that uses model binding, ${name} will automatically set a type to `integer` and a description will be added in format `The todo item ID`.
+`todoItem` is added to the docs as a route parameter. When `todoItem` is a route parameter that uses model binding, Scramble will automatically set a type to `integer` and a description will be added in format `The todo item ID`.
 
 You can override the parameter type and description in docs by providing a PhpDoc comment to the controller's method.
 ```php
@@ -30,11 +30,11 @@ class TodoItemsController
 This will override defaults and `todoItem` parameter in docs will have `string` type and corresponding description from the PhpDoc.
 
 ## Body
-${name} understands request body based on request validation rules.
+Scramble understands request body based on request validation rules.
 
 This is the source of truth both for the code and for the docs.
 
-Currently, there are 2 ways of validating requests that are understood by ${name}:
+Currently, there are 2 ways of validating requests that are understood by Scramble:
 
 - Call to `validate` on `$request` or `$this` in controller’s method
 - `rules` method on custom `FormRequest` class
@@ -54,7 +54,7 @@ class TodoItemsController
 }
 ```
 
-Based on these validation rules ${name} knows that there are 2 request body params: `body` and `is_complete`.
+Based on these validation rules Scramble knows that there are 2 request body params: `body` and `is_complete`.
 
 The same applies to the `rules` method in custom `FormRequest`.
 

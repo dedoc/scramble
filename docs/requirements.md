@@ -1,8 +1,8 @@
 ---
 title: Requirements
-weight: 2
+weight: 3
 ---
 
-This package requires:
+Scramble requires:
 - PHP 7.4 or higher
 - Laravel 8.x or higher

@@ -9,8 +9,12 @@ To add custom behavior to the Scramble, you can create extensions.
 There are 3 types of extensions:
 
 - OpenAPI operation extension: for describing routes in docs;
-- Type to OpenAPI schema extension: for describing PHP types as OpenAPI schema objects;
+- Type to schema extension: for describing PHP types as OpenAPI schema objects;
 - Type inferring extension: to help Scramble better understand types in code.
+
+Extension is a class implementing extension's interface. 
+
+To register an extension, you add the class name to the `scramble.extensions` config's array. 
 
 ## OpenAPI operations extension
 
@@ -22,9 +26,9 @@ You add information to the operation by mutating the object.
 
 The example of such an extension is an ability to add 403 response, if there is a call to `$this->authorize` in the controller’s method. To implement it, you need to get method’s AST from route info and look for this call there. If it is there, there might be possible 403 response, so it can be added to the operation.
 
-## Type to OpenAPI schema extension
+## Type to schema extension
 
-These extensions are needed to tell the Scramble how different types look like when represented in JSON/OpenAPI schema. For example, to PHP’s type `int` represented in JSON schema look like `{"type": "integer"}`. To have this logic in place, type to OpenAPI schema extension is used.
+These extensions are needed to tell the Scramble how different types look like when represented in JSON/OpenAPI schema. For example, to PHP’s type `int` represented in JSON schema look like `{"type": "integer"}`. To have this logic in place, type to schema extension is used.
 
 To create this type of extension, create a class extending the class `Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension`. Then, you need to implement a method `shouldHandle` that will decide if the extension should handle the `Type`.
 
