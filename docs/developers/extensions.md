@@ -2,9 +2,9 @@
 title: Extensions
 weight: 1
 ---
-# Extensions
+Imagine you've installed some awesome package that you use in your API and you want the documentation to correctly describe your API. As a good example, it can be Spatie's Laravel Query Builder package. This package will allow you to build Eloquent queries from API requests. But also the code you write will determine a shape and form of the incoming request.
 
-To add custom behavior to the Scramble, you can create extensions.
+To add support of custom packages (or your own ones) to the Scramble, you can create extensions.
 
 There are 3 types of extensions:
 
@@ -14,7 +14,19 @@ There are 3 types of extensions:
 
 Extension is a class implementing extension's interface. 
 
-To register an extension, you add the class name to the `scramble.extensions` config's array. 
+To register an extension, you add the class name to the `scramble.extensions` config's array:
+
+```php
+<?php
+
+return [
+    'middleware' => [/*...*/],
+
+    'extensions' => [
+        YourCustomExtension::class,
+    ],
+];
+```
 
 ## OpenAPI operations extension
 

@@ -2,8 +2,9 @@
 title: How it works
 weight: 2
 ---
+The package uses static code analysis and existing Laravel conventions to generate API documentation without forcing you to write annotations. Annotations are still useful where you want to add some descriptions, or you see that Scramble cannot infer types fully – you can help it as well.
 
-The package heavily relies on the existing Laravel conventions and uses them, so it can generate most of the documentation correctly without your help. Here is a brief description of how the docs is generated.
+Here is a brief description of how the docs are generated.
 
 ## Requests
 To generate docs for the requests, Scramble analyzes the rules used for validation of the request and route parameters. It can easily extract rules from `FormRequest` classes by looking at `rules` method. 
@@ -11,11 +12,12 @@ To generate docs for the requests, Scramble analyzes the rules used for validati
 If a custom request class is not used, the package will look a call to `validate` method in controller's method and will use rules from there **by evaluating** the rules array code.
 
 ## Responses
-As Scramble relies on conventions, it currently supports these response types:
-- `JsonResource`
-- `AnonymousResourceCollection` of `JsonResource` items
-- `LengthAwarePaginator` of `JsonResource` items
+When analyzing responses, Scramble tries to figure out the response type of your controller's method. It uses pretty naїve static code analysis to determine what is returned from the controller. In most cases it should get you covered. 
 
-For analysing responses, nothing is being evaluated and only AST analysis is used.
+Especially in cases you could've directly seen in Laravel documentation (here comes "convention" part of "how):
 
-`doctrine/dbal` allows to get the types of model attributes, so `JsonResource` based responses are properly documented.
+- `JsonResource` (`return new TodoItemResource($item);`)
+- `AnonymousResourceCollection` of `JsonResource` items (`return TodoItemResource::collection($items);`)
+- `LengthAwarePaginator` of `JsonResource` items (this need to be manually typehinted in PhpDoc for now)
+
+`doctrine/dbal` package allows to get the types of model attributes, so `JsonResource` based responses are properly documented.
