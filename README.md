@@ -1,6 +1,6 @@
 <p>
   <a href="https://savelife.in.ua/en/donate-en/" target="_blank">
-    <img src="./.github/gh-promo.svg" alt="Donate" width="640" height="124">
+    <img src="./.github/gh-promo.svg?_=1" alt="Donate" width="640" height="124">
   </a>
 </p> 
 
