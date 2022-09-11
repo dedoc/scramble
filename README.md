@@ -1,5 +1,7 @@
 <img src="./.github/gh-img.png" alt="Donate"/>
 
+# Scramble
+
 Scramble generates API documentation for Laravel project. Without requiring you to manually write PHPDoc annotations. Docs are generated in OpenAPI 3.1.0 format.
 
 > **Warning**
