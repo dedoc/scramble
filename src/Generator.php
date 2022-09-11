@@ -2,10 +2,6 @@
 
 namespace Dedoc\Scramble;
 
-use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
-use Dedoc\Scramble\Support\BuiltInExtensions\AnonymousResourceCollectionTypeToSchema;
-use Dedoc\Scramble\Support\BuiltInExtensions\JsonResourceTypeToSchema;
-use Dedoc\Scramble\Support\BuiltInExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
@@ -20,10 +16,6 @@ use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\Infer\Infer;
-use Dedoc\Scramble\Support\InferExtensions\AnonymousResourceCollectionTypeInfer;
-use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
-use Dedoc\Scramble\Support\InferExtensions\PhpDocTypeInfer;
 use Dedoc\Scramble\Support\ResponseExtractor\ResponsesExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\RulesExtractor\FormRequestRulesExtractor;

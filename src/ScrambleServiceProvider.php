@@ -8,7 +8,6 @@ use Dedoc\Scramble\Support\BuiltInExtensions\AnonymousResourceCollectionTypeToSc
 use Dedoc\Scramble\Support\BuiltInExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\BuiltInExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\Generator\Components;
-use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Infer\Infer;
 use Dedoc\Scramble\Support\InferExtensions\AnonymousResourceCollectionTypeInfer;

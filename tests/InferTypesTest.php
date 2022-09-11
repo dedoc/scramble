@@ -1,11 +1,9 @@
 <?php
 
-use Dedoc\Scramble\Support\ClassAstHelper;
 use Dedoc\Scramble\Support\Infer\Infer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Resources\Json\JsonResource;
-use PhpParser\Node\Stmt\ClassMethod;
 use function Spatie\Snapshots\assertMatchesTextSnapshot;
 
 uses(RefreshDatabase::class);
