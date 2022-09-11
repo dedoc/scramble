@@ -2,11 +2,13 @@
 
 namespace Dedoc\Scramble\Support\Infer\Handler;
 
+use Dedoc\Scramble\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use PhpParser\Node;
 
 class ExpressionTypeInferringExtensions
 {
+    /** @var class-string<ExpressionTypeInferExtension>[] */
     private array $extensions;
 
     public function __construct(array $extensions = [])
@@ -24,7 +26,7 @@ class ExpressionTypeInferringExtensions
         $type = array_reduce(
             $this->extensions,
             function ($acc, $extensionClass) use ($node, $scope) {
-                $type = (new $extensionClass)->getExpressionType($node, $scope);
+                $type = (new $extensionClass)->getType($node, $scope);
                 if ($type) {
                     return $type;
                 }

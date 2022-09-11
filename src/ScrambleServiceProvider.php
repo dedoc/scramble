@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Support\BuiltInExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\BuiltInExtensions\JsonResourceTypeToSchema;
@@ -31,7 +32,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
             $expressionTypeInferringExtensions = array_values(array_filter(
                 $extensions,
-                fn ($e) => method_exists($e, 'getExpressionType'),
+                fn ($e) => is_a($e, ExpressionTypeInferExtension::class, true),
             ));
 
             return new Infer(array_merge($expressionTypeInferringExtensions, [

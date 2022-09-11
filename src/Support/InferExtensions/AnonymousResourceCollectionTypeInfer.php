@@ -2,15 +2,19 @@
 
 namespace Dedoc\Scramble\Support\InferExtensions;
 
+use Dedoc\Scramble\Extensions\ExpressionTypeInferExtension;
+use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PhpParser\Node;
+use PhpParser\Node\Expr;
 
-class AnonymousResourceCollectionTypeInfer
+class AnonymousResourceCollectionTypeInfer implements ExpressionTypeInferExtension
 {
-    public function getExpressionType(Node $node)
+    public function getType(Expr $node, Scope $scope): ?Type
     {
         if (! ($node instanceof Node\Expr\StaticCall)) {
             return null;

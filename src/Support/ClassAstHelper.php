@@ -95,11 +95,6 @@ class ClassAstHelper
         );
     }
 
-    public function resolveFqName(string $class)
-    {
-        return ($this->namesResolver)($class);
-    }
-
     private function extractNamesResolver($fileAst)
     {
         $fileAst = Arr::wrap($fileAst);
