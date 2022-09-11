@@ -1,6 +1,6 @@
 <p>
   <a href="https://scramble.dedoc.co" target="_blank">
-    <img src="./.github/gh-img.png" alt="Scramble – Laravel API documentation generator"/>
+    <img src="./.github/gh-img.png?v=1" alt="Scramble – Laravel API documentation generator"/>
   </a>
 </p>
 
@@ -37,6 +37,6 @@ After install you will have 2 routes added to your application:
 
 <p>
   <a href="https://savelife.in.ua/en/donate-en/" target="_blank">
-    <img src="./.github/gh-promo.svg?_=1" alt="Donate"/>
+    <img src="./.github/gh-promo.svg?v=1" alt="Donate"/>
   </a>
 </p> 
