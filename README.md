@@ -1,5 +1,5 @@
 
-[<img src="/dedoc/scramble/raw/main/.github/gh-promo.svg" />](https://savelife.in.ua/en/donate-en/)
+[<img src="./.github/gh-promo.svg" />](https://savelife.in.ua/en/donate-en/)
 
 # Scramble
 
