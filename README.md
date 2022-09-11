@@ -6,7 +6,13 @@
 
 # Scramble
 
-Scramble generates docs for your API in OpenAPI 3.1.0 format automatically from your code.
+Scramble generates API documentation for Laravel project. Without requiring you to manually write PHPDoc annotations. Docs are generated in OpenAPI 3.1.0 format.
+
+## Documentation
+
+You can find full documentation at [scramble.dedoc.co](https://scramble.dedoc.co).
+
+## Introduction
 
 The main motto of the project is generating your API documentation without requiring you to annotate your code.
 
@@ -23,4 +29,3 @@ After install you will have 2 routes added to your application:
 
 - `/docs/api` - UI viewer for your documentation
 - `/docs/api.json` - Open API document in JSON format describing your API.
-
