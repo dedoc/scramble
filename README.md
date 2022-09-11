@@ -1,4 +1,8 @@
-<img src="./.github/gh-img.png" alt="Donate"/>
+<p>
+  <a href="https://scramble.dedoc.co" target="_blank">
+    <img src="./.github/gh-img.png" alt="Scramble – Laravel API documentation generator"/>
+  </a>
+</p>
 
 # Scramble
 
