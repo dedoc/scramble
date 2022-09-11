@@ -2,14 +2,14 @@
 
 namespace Dedoc\Scramble;
 
-use Dedoc\Scramble\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
+use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Support\BuiltInExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\BuiltInExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\BuiltInExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\Infer\Infer;
 use Dedoc\Scramble\Support\InferExtensions\AnonymousResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\PhpDocTypeInfer;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support\Infer\Scope;
+namespace Dedoc\Scramble\Infer\Scope;
 
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;

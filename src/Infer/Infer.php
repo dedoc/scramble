@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support\Infer;
+namespace Dedoc\Scramble\Infer;
 
 use Dedoc\Scramble\Support\ClassAstHelper;
 use Dedoc\Scramble\Support\Type\ObjectType;

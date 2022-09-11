@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support\Infer\SimpleTypeGetters;
+namespace Dedoc\Scramble\Infer\SimpleTypeGetters;
 
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\StringType;

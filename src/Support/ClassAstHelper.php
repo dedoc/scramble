@@ -2,8 +2,8 @@
 
 namespace Dedoc\Scramble\Support;
 
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Infer\TypeInferringVisitor;
+use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\TypeInferringVisitor;
 use Illuminate\Support\Arr;
 use PhpParser\Node;
 use PhpParser\NodeFinder;

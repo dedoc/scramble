@@ -1,9 +1,9 @@
 <?php
 
-namespace Dedoc\Scramble\Support\Infer\Scope;
+namespace Dedoc\Scramble\Infer\Scope;
 
-use Dedoc\Scramble\Support\Infer\SimpleTypeGetters\CastTypeGetter;
-use Dedoc\Scramble\Support\Infer\SimpleTypeGetters\ScalarTypeGetter;
+use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
+use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\PendingReturnType;
 use Dedoc\Scramble\Support\Type\Type;

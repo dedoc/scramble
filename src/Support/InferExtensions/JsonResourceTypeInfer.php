@@ -2,8 +2,8 @@
 
 namespace Dedoc\Scramble\Support\InferExtensions;
 
-use Dedoc\Scramble\Extensions\ExpressionTypeInferExtension;
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FunctionType;

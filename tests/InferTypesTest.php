@@ -1,6 +1,6 @@
 <?php
 
-use Dedoc\Scramble\Support\Infer\Infer;
+use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Resources\Json\JsonResource;

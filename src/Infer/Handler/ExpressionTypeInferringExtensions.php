@@ -1,9 +1,9 @@
 <?php
 
-namespace Dedoc\Scramble\Support\Infer\Handler;
+namespace Dedoc\Scramble\Infer\Handler;
 
-use Dedoc\Scramble\Extensions\ExpressionTypeInferExtension;
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use PhpParser\Node;
 
 class ExpressionTypeInferringExtensions

@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
@@ -12,7 +13,6 @@ use Dedoc\Scramble\Support\Generator\Types\NullType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
-use Dedoc\Scramble\Support\Infer\Infer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;

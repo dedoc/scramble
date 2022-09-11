@@ -1,8 +1,8 @@
 <?php
 
-namespace Dedoc\Scramble\Extensions;
+namespace Dedoc\Scramble\Infer\Extensions;
 
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\Type;
 use PhpParser\Node\Expr;
 

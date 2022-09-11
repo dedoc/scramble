@@ -2,10 +2,10 @@
 
 namespace Dedoc\Scramble\Support\InferExtensions;
 
-use Dedoc\Scramble\Extensions\ExpressionTypeInferExtension;
+use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\Type;
 use PhpParser\Node\Expr;

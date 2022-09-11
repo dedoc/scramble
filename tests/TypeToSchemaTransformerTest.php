@@ -1,9 +1,9 @@
 <?php
 
+use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Support\BuiltInExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\Infer\Infer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;

@@ -1,20 +1,20 @@
 <?php
 
-namespace Dedoc\Scramble\Support\Infer;
+namespace Dedoc\Scramble\Infer;
 
-use Dedoc\Scramble\Support\Infer\Handler\ArrayHandler;
-use Dedoc\Scramble\Support\Infer\Handler\ArrayItemHandler;
-use Dedoc\Scramble\Support\Infer\Handler\ClassHandler;
-use Dedoc\Scramble\Support\Infer\Handler\CreatesScope;
-use Dedoc\Scramble\Support\Infer\Handler\ExpressionTypeInferringExtensions;
-use Dedoc\Scramble\Support\Infer\Handler\FunctionLikeHandler;
-use Dedoc\Scramble\Support\Infer\Handler\NewHandler;
-use Dedoc\Scramble\Support\Infer\Handler\PropertyFetchHandler;
-use Dedoc\Scramble\Support\Infer\Handler\ReturnHandler;
-use Dedoc\Scramble\Support\Infer\Scope\NodeTypesResolver;
-use Dedoc\Scramble\Support\Infer\Scope\PendingTypes;
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Infer\Scope\ScopeContext;
+use Dedoc\Scramble\Infer\Handler\ArrayHandler;
+use Dedoc\Scramble\Infer\Handler\ArrayItemHandler;
+use Dedoc\Scramble\Infer\Handler\ClassHandler;
+use Dedoc\Scramble\Infer\Handler\CreatesScope;
+use Dedoc\Scramble\Infer\Handler\ExpressionTypeInferringExtensions;
+use Dedoc\Scramble\Infer\Handler\FunctionLikeHandler;
+use Dedoc\Scramble\Infer\Handler\NewHandler;
+use Dedoc\Scramble\Infer\Handler\PropertyFetchHandler;
+use Dedoc\Scramble\Infer\Handler\ReturnHandler;
+use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
+use Dedoc\Scramble\Infer\Scope\PendingTypes;
+use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\PendingReturnType;
 use Dedoc\Scramble\Support\Type\TypeWalker;

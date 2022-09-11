@@ -1,8 +1,8 @@
 <?php
 
-namespace Dedoc\Scramble\Support\Infer\Handler;
+namespace Dedoc\Scramble\Infer\Handler;
 
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use PhpParser\Node;
 
