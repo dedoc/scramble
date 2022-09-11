@@ -18,13 +18,13 @@ The main motto of the project is generating your API documentation without requi
 
 This allows you to focus on code and avoid annotating every possible param/field as it may result in outdated documentation. By generating docs automatically from the code your API will always have up-to-date docs which you can trust.
 
-# Installation
+## Installation
 You can install the package via composer:
 ```shell
 composer require dedoc/scramble
 ```
 
-# Usage
+## Usage
 After install you will have 2 routes added to your application:
 
 - `/docs/api` - UI viewer for your documentation
