@@ -2,10 +2,10 @@
 
 namespace Dedoc\Scramble;
 
-use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
-use Dedoc\Scramble\Support\BuiltInExtensions\AnonymousResourceCollectionOpenApi;
-use Dedoc\Scramble\Support\BuiltInExtensions\JsonResourceOpenApi;
-use Dedoc\Scramble\Support\BuiltInExtensions\LengthAwarePaginatorOpenApi;
+use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Support\BuiltInExtensions\AnonymousResourceCollectionTypeToSchema;
+use Dedoc\Scramble\Support\BuiltInExtensions\JsonResourceTypeToSchema;
+use Dedoc\Scramble\Support\BuiltInExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
@@ -40,9 +40,9 @@ class Generator
     private TypeTransformer $transformer;
 
     const NATIVE_TYPES_TO_OPEN_API_EXTENSIONS = [
-        JsonResourceOpenApi::class,
-        AnonymousResourceCollectionOpenApi::class,
-        LengthAwarePaginatorOpenApi::class,
+        JsonResourceTypeToSchema::class,
+        AnonymousResourceCollectionTypeToSchema::class,
+        LengthAwarePaginatorTypeToSchema::class,
     ];
 
     private function initTransformer(OpenApi $openApi)
@@ -51,7 +51,7 @@ class Generator
 
         $typesToOpenApiSchemaExtensions = array_values(array_filter(
             $extensions,
-            fn ($e) => is_a($e, TypeToOpenApiSchemaExtension::class, true),
+            fn ($e) => is_a($e, TypeToSchemaExtension::class, true),
         ));
         $typeInferringExtensions = [];
 

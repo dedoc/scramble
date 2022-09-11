@@ -1,6 +1,6 @@
 <?php
 
-use Dedoc\Scramble\Support\BuiltInExtensions\JsonResourceOpenApi;
+use Dedoc\Scramble\Support\BuiltInExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Infer\Infer;
@@ -38,8 +38,8 @@ it('transforms simple types', function ($type, $openApiArrayed) {
 ]);
 
 it('gets json resource type', function () {
-    $transformer = new TypeTransformer($infer = new Infer, $components = new Components, [JsonResourceOpenApi::class]);
-    $extension = new JsonResourceOpenApi($infer, $transformer, $components);
+    $transformer = new TypeTransformer($infer = new Infer, $components = new Components, [JsonResourceTypeToSchema::class]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
 
     $type = new ObjectType(ComplexTypeHandlersTest_SampleType::class);
 
@@ -47,8 +47,8 @@ it('gets json resource type', function () {
 });
 
 it('gets json resource type with nested merges', function () {
-    $transformer = new TypeTransformer($infer = new Infer, $components = new Components, [JsonResourceOpenApi::class]);
-    $extension = new JsonResourceOpenApi($infer, $transformer, $components);
+    $transformer = new TypeTransformer($infer = new Infer, $components = new Components, [JsonResourceTypeToSchema::class]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
 
     $type = new ObjectType(ComplexTypeHandlersWithNestedTest_SampleType::class);
 
@@ -56,7 +56,7 @@ it('gets json resource type with nested merges', function () {
 });
 
 it('gets json resource type reference', function () {
-    $transformer = new TypeTransformer(new Infer, $components = new Components, [JsonResourceOpenApi::class]);
+    $transformer = new TypeTransformer(new Infer, $components = new Components, [JsonResourceTypeToSchema::class]);
 
     $type = new ObjectType(ComplexTypeHandlersTest_SampleType::class);
 

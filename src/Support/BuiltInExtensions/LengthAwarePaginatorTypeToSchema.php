@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\BuiltInExtensions;
 
-use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
+use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
@@ -16,7 +16,7 @@ use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class LengthAwarePaginatorOpenApi extends TypeToOpenApiSchemaExtension
+class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
 {
     public function shouldHandle(Type $type)
     {

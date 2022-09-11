@@ -104,7 +104,12 @@ class JsonResourceTypeInfer
 
         $modelType = new UnknownType("Cannot resolve [$modelClass] model type.");
         if ($modelClass && is_a($modelClass, Model::class, true)) {
-            $modelType = (new ModelInfo($modelClass))->type();
+            try {
+                $modelType = (new ModelInfo($modelClass))->type();
+            } catch (\LogicException $e) {
+                // Here doctrine/dbal is not installed.
+                $modelType = null;
+            }
         }
 
         return static::$jsonResourcesModelTypesCache[$jsonClass->name] = $modelType;

@@ -1,12 +1,9 @@
-<p>
-  <a href="https://savelife.in.ua/en/donate-en/" target="_blank">
-    <img src="./.github/gh-promo.svg?_=1" alt="Donate"/>
-  </a>
-</p> 
-
-# Scramble
+<img src="./.github/gh-img.png" alt="Donate"/>
 
 Scramble generates API documentation for Laravel project. Without requiring you to manually write PHPDoc annotations. Docs are generated in OpenAPI 3.1.0 format.
+
+> **Warning**
+> Package is in its early stage. It means there may be dumb bugs and API is very likely to change. Please leave reports/suggest ideas.
 
 ## Documentation
 
@@ -29,3 +26,11 @@ After install you will have 2 routes added to your application:
 
 - `/docs/api` - UI viewer for your documentation
 - `/docs/api.json` - Open API document in JSON format describing your API.
+
+---
+
+<p>
+  <a href="https://savelife.in.ua/en/donate-en/" target="_blank">
+    <img src="./.github/gh-promo.svg?_=1" alt="Donate"/>
+  </a>
+</p> 

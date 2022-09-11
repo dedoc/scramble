@@ -51,11 +51,11 @@ For example, consider `JsonResource` class. It can be referenced in some other O
 So, to start we need to check the type and make sure that the type should be checked.
 
 ```php
-use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
+use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Dedoc\Scramble\Support\Type\ObjectType;
 
-class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
+class JsonResourceOpenApi extends TypeToSchemaExtension
 {
     public function shouldHandle(Type $type)
     {
@@ -70,11 +70,11 @@ class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
 Then, we can implement the method `toSchema` that will describe how the type should be rendered in the OpenAPI. When serializing JsonResource to array, `toArray` method call result is used. So the simplest implementation for JsonResource looks like this (in reality it is a bit more complex, as there are merge values being serialized):
 
 ```php
-use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
+use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Dedoc\Scramble\Support\Type\ObjectType;
 
-class JsonResourceOpenApi extends TypeToOpenApiSchemaExtension
+class JsonResourceOpenApi extends TypeToSchemaExtension
 {
     public function shouldHandle(Type $type) {/*...*/}
     

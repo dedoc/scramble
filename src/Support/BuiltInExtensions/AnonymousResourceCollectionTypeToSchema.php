@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\BuiltInExtensions;
 
-use Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension;
+use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType as OpenApiArrayType;
@@ -14,7 +14,7 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class AnonymousResourceCollectionOpenApi extends TypeToOpenApiSchemaExtension
+class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
 {
     public function shouldHandle(Type $type)
     {

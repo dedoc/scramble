@@ -61,6 +61,10 @@ class ModelInfo
 
     public function type()
     {
+        if (! class_exists(Column::class)) {
+            throw new \LogicException('`doctrine/dbal` package is not installed. It is needed to get model attribute types.');
+        }
+
         $modelInfo = $this->handle();
 
         /** @var Model $model */

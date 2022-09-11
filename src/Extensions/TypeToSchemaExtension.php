@@ -8,7 +8,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Infer\Infer;
 use Dedoc\Scramble\Support\Type\Type;
 
-abstract class TypeToOpenApiSchemaExtension
+abstract class TypeToSchemaExtension
 {
     protected Infer $infer;
 
