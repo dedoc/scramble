@@ -1,5 +1,8 @@
-
-[<img src="./.github/gh-promo.svg" />](https://savelife.in.ua/en/donate-en/)
+<p>
+  <a href="https://savelife.in.ua/en/donate-en/" target="_blank">
+    <img src="./.github/gh-promo.svg" alt="Donate" width="640" height="124">
+  </a>
+</p> 
 
 # Scramble
 
