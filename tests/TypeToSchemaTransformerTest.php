@@ -14,7 +14,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 it('transforms simple types', function ($type, $openApiArrayed) {
-    $transformer = new TypeTransformer(new Infer, new Components);
+    $transformer = app(TypeTransformer::class);
 
     expect($transformer->transform($type)->toArray())->toBe($openApiArrayed);
 })->with([
@@ -38,7 +38,7 @@ it('transforms simple types', function ($type, $openApiArrayed) {
 ]);
 
 it('gets json resource type', function () {
-    $transformer = new TypeTransformer($infer = new Infer, $components = new Components, [JsonResourceTypeToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
 
     $type = new ObjectType(ComplexTypeHandlersTest_SampleType::class);
@@ -47,7 +47,7 @@ it('gets json resource type', function () {
 });
 
 it('gets json resource type with nested merges', function () {
-    $transformer = new TypeTransformer($infer = new Infer, $components = new Components, [JsonResourceTypeToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
 
     $type = new ObjectType(ComplexTypeHandlersWithNestedTest_SampleType::class);
@@ -56,7 +56,7 @@ it('gets json resource type with nested merges', function () {
 });
 
 it('gets json resource type reference', function () {
-    $transformer = new TypeTransformer(new Infer, $components = new Components, [JsonResourceTypeToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
 
     $type = new ObjectType(ComplexTypeHandlersTest_SampleType::class);
 

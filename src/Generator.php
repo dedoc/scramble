@@ -21,6 +21,9 @@ use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Infer\Infer;
+use Dedoc\Scramble\Support\InferExtensions\AnonymousResourceCollectionTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\PhpDocTypeInfer;
 use Dedoc\Scramble\Support\ResponseExtractor\ResponsesExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\RulesExtractor\FormRequestRulesExtractor;
@@ -39,41 +42,18 @@ class Generator
 {
     private TypeTransformer $transformer;
 
-    const NATIVE_TYPES_TO_OPEN_API_EXTENSIONS = [
-        JsonResourceTypeToSchema::class,
-        AnonymousResourceCollectionTypeToSchema::class,
-        LengthAwarePaginatorTypeToSchema::class,
-    ];
-
-    private function initTransformer(OpenApi $openApi)
+    public function __construct(TypeTransformer $transformer)
     {
-        $extensions = config('scramble.extensions', []);
-
-        $typesToOpenApiSchemaExtensions = array_values(array_filter(
-            $extensions,
-            fn ($e) => is_a($e, TypeToSchemaExtension::class, true),
-        ));
-        $typeInferringExtensions = [];
-
-        $this->transformer = new TypeTransformer(
-            new Infer,
-            $openApi->components,
-            array_merge(
-                static::NATIVE_TYPES_TO_OPEN_API_EXTENSIONS,
-                $typesToOpenApiSchemaExtensions,
-            ),
-        );
+        $this->transformer = $transformer;
     }
 
     public function __invoke()
     {
         $openApi = $this->makeOpenApi();
 
-        $this->initTransformer($openApi);
-
         $this->getRoutes()
             ->map(fn (Route $route) => $this->routeToOperation($openApi, $route))
-            ->filter() // Closure based routes are filtered out for now
+            ->filter() // Closure based routes are filtered out for now, right here
             ->eachSpread(fn (string $path, Operation $operation) => $openApi->addPath(
                 Path::make(str_replace('api/', '', $path))->addOperation($operation)
             ))
@@ -89,7 +69,8 @@ class Generator
     private function makeOpenApi()
     {
         $openApi = OpenApi::make('3.1.0')
-            ->addInfo(InfoObject::make(config('app.name'))->setVersion('0.0.1'));
+            ->setComponents($this->transformer->getComponents())
+            ->setInfo(InfoObject::make(config('app.name'))->setVersion('0.0.1'));
 
         $openApi->addServer(Server::make(url('/api')));
 

@@ -29,7 +29,14 @@ class OpenApi
         return new self($version);
     }
 
-    public function addInfo(InfoObject $info)
+    public function setComponents(Components $components)
+    {
+        $this->components = $components;
+
+        return $this;
+    }
+
+    public function setInfo(InfoObject $info)
     {
         $this->info = $info;
 

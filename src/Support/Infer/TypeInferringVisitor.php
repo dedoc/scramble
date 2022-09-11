@@ -10,7 +10,7 @@ use Dedoc\Scramble\Support\Infer\Handler\FunctionLikeHandler;
 use Dedoc\Scramble\Support\Infer\Handler\NewHandler;
 use Dedoc\Scramble\Support\Infer\Handler\PropertyFetchHandler;
 use Dedoc\Scramble\Support\Infer\Handler\ReturnHandler;
-use Dedoc\Scramble\Support\Infer\Handler\ReturnTypeGettingExtensions;
+use Dedoc\Scramble\Support\Infer\Handler\ExpressionTypeInferringExtensions;
 use Dedoc\Scramble\Support\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Support\Infer\Scope\PendingTypes;
 use Dedoc\Scramble\Support\Infer\Scope\Scope;
@@ -27,28 +27,42 @@ class TypeInferringVisitor extends NodeVisitorAbstract
 
     private $namesResolver;
 
-    public function __construct(callable $namesResolver)
+    private array $extensions;
+
+    private array $handlers = [];
+
+    public function __construct(callable $namesResolver, array $extensions = [])
     {
         $this->namesResolver = $namesResolver;
+        $this->extensions = $extensions;
+
+        $this->handlers = [
+            new FunctionLikeHandler(),
+            new NewHandler(),
+            new ClassHandler(),
+            new PropertyFetchHandler(),
+            new ArrayHandler(),
+            new ArrayItemHandler(),
+            new ReturnHandler(),
+            new ExpressionTypeInferringExtensions($this->extensions),
+        ];
     }
 
     public function enterNode(Node $node)
     {
         $scope = $this->getOrCreateScope();
 
-        foreach ($this->getHandlers() as $handlerClass) {
-            $handlerInstance = new $handlerClass;
-
-            if (! $handlerInstance->shouldHandle($node)) {
+        foreach ($this->handlers as $handler) {
+            if (! $handler->shouldHandle($node)) {
                 continue;
             }
 
-            if ($handlerInstance instanceof CreatesScope) {
-                $this->scope = $handlerInstance->createScope($scope);
+            if ($handler instanceof CreatesScope) {
+                $this->scope = $handler->createScope($scope);
             }
 
-            if (method_exists($handlerInstance, 'enter')) {
-                $handlerInstance->enter($node, $this->scope);
+            if (method_exists($handler, 'enter')) {
+                $handler->enter($node, $this->scope);
             }
         }
 
@@ -57,18 +71,16 @@ class TypeInferringVisitor extends NodeVisitorAbstract
 
     public function leaveNode(Node $node)
     {
-        foreach ($this->getHandlers() as $handlerClass) {
-            $handlerInstance = new $handlerClass;
-
-            if (! $handlerInstance->shouldHandle($node)) {
+        foreach ($this->handlers as $handler) {
+            if (! $handler->shouldHandle($node)) {
                 continue;
             }
 
-            if (method_exists($handlerInstance, 'leave')) {
-                $handlerInstance->leave($node, $this->scope);
+            if (method_exists($handler, 'leave')) {
+                $handler->leave($node, $this->scope);
             }
 
-            if ($handlerInstance instanceof CreatesScope) {
+            if ($handler instanceof CreatesScope) {
                 $this->scope = $this->scope->parentScope;
             }
         }
@@ -76,10 +88,6 @@ class TypeInferringVisitor extends NodeVisitorAbstract
         if ($node instanceof Node\FunctionLike) {
             /** @var FunctionType $type */
             $type = $this->scope->getType($node);
-
-//            dd(
-//                (new TypeWalker)->find($type->getReturnType(), fn ($t) => $t instanceof PendingReturnType)
-//            );
 
             // When there is a referenced type in fn return, we want to add it to the pending
             // resolution types, so it can be resolved later.
@@ -101,20 +109,6 @@ class TypeInferringVisitor extends NodeVisitorAbstract
         }
 
         return null;
-    }
-
-    private function getHandlers()
-    {
-        return [
-            FunctionLikeHandler::class,
-            NewHandler::class,
-            ClassHandler::class,
-            PropertyFetchHandler::class,
-            ArrayHandler::class,
-            ArrayItemHandler::class,
-            ReturnHandler::class,
-            ReturnTypeGettingExtensions::class,
-        ];
     }
 
     public function afterTraverse(array $nodes)

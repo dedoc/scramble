@@ -21,7 +21,7 @@ class JsonResourceTypeInfer
 {
     public static $jsonResourcesModelTypesCache = [];
 
-    public function getNodeReturnType(Node $node, Scope $scope)
+    public function getExpressionType(Node $node, Scope $scope)
     {
         if (! optional($scope->class())->isInstanceOf(JsonResource::class)) {
             return null;

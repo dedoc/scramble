@@ -35,6 +35,11 @@ class TypeTransformer
         $this->extensions = $extensions;
     }
 
+    public function getComponents(): Components
+    {
+        return $this->components;
+    }
+
     public function transform(Type $type)
     {
         $openApiType = new StringType();

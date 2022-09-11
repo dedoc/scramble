@@ -1,6 +1,8 @@
 <?php
 
 use Dedoc\Scramble\Support\ClassAstHelper;
+use Dedoc\Scramble\Support\Infer\Infer;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PhpParser\Node\Stmt\ClassMethod;
@@ -8,88 +10,74 @@ use function Spatie\Snapshots\assertMatchesTextSnapshot;
 
 uses(RefreshDatabase::class);
 
-it('gets types', function () {
-    $class = new ClassAstHelper(InferTypesTest_SampleClass::class);
-    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
-    dd($method->getAttribute('type')->getReturnType());
-})->skip();
-
 it('gets json resource type', function () {
-    $class = new ClassAstHelper(InferTypesTest_SampleJsonResource::class);
-    $scope = $class->scope;
-    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+    /** @var ObjectType $type */
+    $type = app(Infer::class)->analyzeClass(InferTypesTest_SampleJsonResource::class);
 
-    $returnType = $scope->getType($method)->getReturnType();
+    $returnType = $type->getMethodCallType('toArray');
 
     assertMatchesTextSnapshot($returnType->toString());
 });
 
 it('simply infers method types', function () {
-    $class = new ClassAstHelper(Foo_SampleClass::class);
-    $scope = $class->scope;
-    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+    /** @var ObjectType $type */
+    $type = app(Infer::class)->analyzeClass(Foo_SampleClass::class);
 
-    $returnType = $scope->getType($method)->getReturnType();
+    $returnType = $type->getMethodCallType('bar');
 
     expect($returnType->toString())->toBe('int');
 });
 
 it('infers method types for methods declared not in order', function () {
-    $class = new ClassAstHelper(FooTwo_SampleClass::class);
-    $scope = $class->scope;
-    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+    /** @var ObjectType $type */
+    $type = app(Infer::class)->analyzeClass(FooTwo_SampleClass::class);
 
-    $returnType = $scope->getType($method)->getReturnType();
+    $returnType = $type->getMethodCallType('foo');
 
     expect($returnType->toString())->toBe('(): int');
 });
 
 it('infers method types for methods in array', function () {
-    $class = new ClassAstHelper(FooFour_SampleClass::class);
-    $scope = $class->scope;
-    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+    /** @var ObjectType $type */
+    $type = app(Infer::class)->analyzeClass(FooFour_SampleClass::class);
 
-    $returnType = $scope->getType($method)->getReturnType();
+    $returnType = $type->getMethodCallType('foo');
 
     expect($returnType->toString())->toBe('array{a: int}');
 });
 
 it('infers unknown method call', function () {
-    $class = new ClassAstHelper(FooThree_SampleClass::class);
-    $scope = $class->scope;
-    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+    /** @var ObjectType $type */
+    $type = app(Infer::class)->analyzeClass(FooThree_SampleClass::class);
 
-    $returnType = $scope->getType($method)->getReturnType();
+    $returnType = $type->getMethodCallType('foo');
 
     expect($returnType->toString())->toBe('array{a: array{p: unknown}, b: unknown}');
 });
 
 it('infers cast', function () {
-    $class = new ClassAstHelper(FooFive_SampleClass::class);
-    $scope = $class->scope;
-    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+    /** @var ObjectType $type */
+    $type = app(Infer::class)->analyzeClass(FooFive_SampleClass::class);
 
-    $returnType = $scope->getType($method)->getReturnType();
+    $returnType = $type->getMethodCallType('foo');
 
     expect($returnType->toString())->toBe('int');
 });
 
 it('infers cyclic dep', function () {
-    $class = new ClassAstHelper(FooSix_SampleClass::class);
-    $scope = $class->scope;
-    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+    /** @var ObjectType $type */
+    $type = app(Infer::class)->analyzeClass(FooSix_SampleClass::class);
 
-    $returnType = $scope->getType($method)->getReturnType();
+    $returnType = $type->getMethodCallType('foo');
 
     expect($returnType->toString())->toBe('unknown|int');
 });
 
 it('infers this return', function () {
-    $class = new ClassAstHelper(FooSeven_SampleClass::class);
-    $scope = $class->scope;
-    $method = $class->findFirstNode(fn ($node) => $node instanceof ClassMethod);
+    /** @var ObjectType $type */
+    $type = app(Infer::class)->analyzeClass(FooSeven_SampleClass::class);
 
-    $returnType = $scope->getType($method)->getReturnType();
+    $returnType = $type->getMethodCallType('foo');
 
     expect($returnType->toString())->toBe('FooSeven_SampleClass');
 });

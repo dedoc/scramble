@@ -98,12 +98,6 @@ class RouteInfo
             fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $this->methodName(),
         );
 
-        if ($this->methodNode) {
-            $traverser = new NodeTraverser;
-            $traverser->addVisitor(new TypeInferringVisitor($this->class->namesResolver));
-            $traverser->traverse([$this->methodNode]);
-        }
-
         return $this->methodNode;
     }
 

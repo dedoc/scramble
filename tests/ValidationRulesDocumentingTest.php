@@ -12,7 +12,7 @@ it('extracts rules from request->validate call', function () {
     RouteFacade::get('test', [ValidationRulesDocumenting_Test::class, 'index']);
 
     Scramble::routes(fn (Route $r) => $r->uri === 'test');
-    $openApiDocument = (new \Dedoc\Scramble\Generator())();
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });

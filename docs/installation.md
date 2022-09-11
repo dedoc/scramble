@@ -24,3 +24,13 @@ composer require doctrine/dbal
 ```
 
 Without the `doctrine/dbal`, Scramble won't know the types of model attributes, so they will be shown as `string` in resulting docs.
+
+## Publishing config
+
+Optionally, you can publish package's config file:
+
+```sh
+php artisan vendor:publish --provider="Dedoc\Scramble\ScrambleServiceProvider" --tag="scramble-config"
+```
+
+This will allow you to add custom extensions.

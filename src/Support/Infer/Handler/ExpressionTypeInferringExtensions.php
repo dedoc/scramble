@@ -5,21 +5,26 @@ namespace Dedoc\Scramble\Support\Infer\Handler;
 use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use PhpParser\Node;
 
-class ReturnTypeGettingExtensions
+class ExpressionTypeInferringExtensions
 {
-    public static $extensions = [];
+    private array $extensions;
 
-    public function shouldHandle()
+    public function __construct(array $extensions = [])
     {
-        return true;
+        $this->extensions = $extensions;
+    }
+
+    public function shouldHandle($node)
+    {
+        return $node instanceof Node\Expr;
     }
 
     public function leave(Node $node, Scope $scope)
     {
         $type = array_reduce(
-            static::$extensions,
+            $this->extensions,
             function ($acc, $extensionClass) use ($node, $scope) {
-                $type = (new $extensionClass)->getNodeReturnType($node, $scope);
+                $type = (new $extensionClass)->getExpressionType($node, $scope);
                 if ($type) {
                     return $type;
                 }

@@ -10,7 +10,7 @@ use PhpParser\Node;
 
 class PhpDocTypeInfer
 {
-    public function getNodeReturnType(Node $node, Scope $scope)
+    public function getExpressionType(Node $node, Scope $scope)
     {
         if ($node instanceof Node\Expr\ArrayItem && $doc = $node->getDocComment()) {
             $docNode = PhpDoc::parse($doc->getText());

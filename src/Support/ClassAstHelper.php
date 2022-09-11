@@ -27,9 +27,12 @@ class ClassAstHelper
 
     private ?PhpDocNode $phpDoc = null;
 
-    public function __construct(string $class)
+    private array $extensions;
+
+    public function __construct(string $class, array $extensions = [])
     {
         $this->class = $class;
+        $this->extensions = $extensions;
         $this->init();
     }
 
@@ -48,7 +51,7 @@ class ClassAstHelper
         );
 
         $traverser = new NodeTraverser;
-        $traverser->addVisitor($infer = new TypeInferringVisitor($this->namesResolver));
+        $traverser->addVisitor($infer = new TypeInferringVisitor($this->namesResolver, $this->extensions));
         $traverser->traverse([$classAst]);
 
         $this->scope = $infer->scope;

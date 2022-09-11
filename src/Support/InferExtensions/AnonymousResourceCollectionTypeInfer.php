@@ -10,7 +10,7 @@ use PhpParser\Node;
 
 class AnonymousResourceCollectionTypeInfer
 {
-    public function getNodeReturnType(Node $node)
+    public function getExpressionType(Node $node)
     {
         if (! ($node instanceof Node\Expr\StaticCall)) {
             return null;
