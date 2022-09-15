@@ -2,12 +2,16 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Infer;
-use Dedoc\Scramble\Support\BuiltInExtensions\AnonymousResourceCollectionTypeToSchema;
-use Dedoc\Scramble\Support\BuiltInExtensions\JsonResourceTypeToSchema;
-use Dedoc\Scramble\Support\BuiltInExtensions\LengthAwarePaginatorTypeToSchema;
+use Dedoc\Scramble\Support\OperationBuilder;
+use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
+use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\InferExtensions\AnonymousResourceCollectionTypeInfer;
@@ -41,7 +45,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ]));
         });
 
-        $this->app->bind(TypeTransformer::class, function () {
+        $this->app->singleton(TypeTransformer::class, function () {
             $extensions = config('scramble.extensions', []);
 
             $typesToSchemaExtensions = array_values(array_filter(
@@ -57,6 +61,24 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     AnonymousResourceCollectionTypeToSchema::class,
                     LengthAwarePaginatorTypeToSchema::class,
                 ]),
+            );
+        });
+
+        $this->app->bind(OperationBuilder::class, function () {
+            $extensions = config('scramble.extensions', []);
+
+            $operationExtensions = array_values(array_filter(
+                $extensions,
+                fn ($e) => is_a($e, OperationExtension::class, true),
+            ));
+
+            $extensions = array_merge($operationExtensions, [
+                RequestBodyExtension::class,
+                ResponseExtension::class,
+            ]);
+
+            return new OperationBuilder(
+                array_map(fn ($extensionClass) => $this->app->make($extensionClass), $extensions),
             );
         });
     }

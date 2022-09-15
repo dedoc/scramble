@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support\RulesExtractor;
+namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;

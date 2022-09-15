@@ -16,11 +16,12 @@ use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\OperationBuilder;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\FormRequestRulesExtractor;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameter;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ValidateCallExtractor;
 use Dedoc\Scramble\Support\ResponseExtractor\ResponsesExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
-use Dedoc\Scramble\Support\RulesExtractor\FormRequestRulesExtractor;
-use Dedoc\Scramble\Support\RulesExtractor\RulesToParameter;
-use Dedoc\Scramble\Support\RulesExtractor\ValidateCallExtractor;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
@@ -33,10 +34,12 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 class Generator
 {
     private TypeTransformer $transformer;
+    private OperationBuilder $operationBuilder;
 
-    public function __construct(TypeTransformer $transformer)
+    public function __construct(TypeTransformer $transformer, OperationBuilder $operationBuilder)
     {
         $this->transformer = $transformer;
+        $this->operationBuilder = $operationBuilder;
     }
 
     public function __invoke()
@@ -44,7 +47,7 @@ class Generator
         $openApi = $this->makeOpenApi();
 
         $this->getRoutes()
-            ->map(fn (Route $route) => $this->routeToOperation($openApi, $route))
+            ->map(fn (Route $route) => $this->routeToOperation($route))
             ->filter() // Closure based routes are filtered out for now, right here
             ->eachSpread(fn (string $path, Operation $operation) => $openApi->addPath(
                 Path::make(str_replace('api/', '', $path))->addOperation($operation)
@@ -102,7 +105,7 @@ class Generator
             ->values();
     }
 
-    private function routeToOperation(OpenApi $openApi, Route $route)
+    private function routeToOperation(Route $route)
     {
         $routeInfo = new RouteInfo($route);
 
@@ -112,46 +115,14 @@ class Generator
 
         [$pathParams, $pathAliases] = $this->getRoutePathParameters($route, $routeInfo->phpDoc());
 
-        $operation = Operation::make($method = strtolower($route->methods()[0]))
+        $operation = Operation::make(strtolower($route->methods()[0]))
             ->setTags(array_merge(
                 $this->extractTagsForMethod($routeInfo->class->phpDoc()),
                 [Str::of(class_basename($routeInfo->className()))->replace('Controller', '')],
             ))
             ->addParameters($pathParams);
 
-        $description = Str::of($routeInfo->phpDoc()->getAttribute('description'));
-        try {
-            if (count($bodyParams = $this->extractParamsFromRequestValidationRules($route, $routeInfo->methodNode()))) {
-                if ($method !== 'get') {
-                    $operation->addRequestBodyObject(
-                        RequestBodyObject::make()->setContent('application/json', Schema::createFromParameters($bodyParams))
-                    );
-                } else {
-                    $operation->addParameters($bodyParams);
-                }
-            } elseif ($method !== 'get') {
-                $operation
-                    ->addRequestBodyObject(
-                        RequestBodyObject::make()
-                            ->setContent(
-                                'application/json',
-                                Schema::fromType(new ObjectType)
-                            )
-                    );
-            }
-        } catch (\Throwable $exception) {
-            throw $exception;
-            $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
-        }
-
-        $responses = (new ResponsesExtractor($routeInfo, $this->transformer))();
-        foreach ($responses as $response) {
-            $operation->addResponse($response);
-        }
-
-        $operation
-            ->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'))
-            ->description($description);
+        $this->operationBuilder->build($operation, $routeInfo);
 
         if (isset(Scramble::$operationResolver)) {
             (Scramble::$operationResolver)($operation, $routeInfo);
@@ -250,37 +221,5 @@ class Generator
         }, $route->parameterNames());
 
         return [$params, $aliases];
-    }
-
-    private function extractParamsFromRequestValidationRules(Route $route, ?Node\Stmt\ClassMethod $methodNode)
-    {
-        $rules = $this->extractRouteRequestValidationRules($route, $methodNode);
-
-        if (! $rules) {
-            return [];
-        }
-
-        return collect($rules)
-            ->map(function ($rules, $name) {
-                return (new RulesToParameter($name, $rules))->generate();
-            })
-            ->values()
-            ->all();
-    }
-
-    private function extractRouteRequestValidationRules(Route $route, $methodNode)
-    {
-        // Custom form request's class `validate` method
-        if (($formRequestRulesExtractor = new FormRequestRulesExtractor($methodNode))->shouldHandle()) {
-            if (count($rules = $formRequestRulesExtractor->extract($route))) {
-                return $rules;
-            }
-        }
-
-        if (($validateCallExtractor = new ValidateCallExtractor($methodNode))->shouldHandle()) {
-            return $validateCallExtractor->extract($route);
-        }
-
-        return null;
     }
 }

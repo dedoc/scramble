@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support\RulesExtractor;
+namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;

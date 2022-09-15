@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support\BuiltInExtensions;
+namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Support\Generator\Reference;

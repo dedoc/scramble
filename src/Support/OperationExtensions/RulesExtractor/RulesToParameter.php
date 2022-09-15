@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support\RulesExtractor;
+namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
