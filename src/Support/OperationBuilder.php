@@ -13,10 +13,14 @@ class OperationBuilder
         $this->extensions = $extensions;
     }
 
-    public function build(Operation $operation, RouteInfo $routeInfo)
+    public function build(RouteInfo $routeInfo)
     {
+        $operation = new Operation('get');
+
         foreach ($this->extensions as $extension) {
-            $operation = $extension->handle($operation, $routeInfo);
+            $extension->handle($operation, $routeInfo);
         }
+
+        return $operation;
     }
 }

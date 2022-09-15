@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
+use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
@@ -72,10 +73,11 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 fn ($e) => is_a($e, OperationExtension::class, true),
             ));
 
-            $extensions = array_merge($operationExtensions, [
+            $extensions = array_merge([
+                RequestEssentialsExtension::class,
                 RequestBodyExtension::class,
                 ResponseExtension::class,
-            ]);
+            ], $operationExtensions);
 
             return new OperationBuilder(
                 array_map(fn ($extensionClass) => $this->app->make($extensionClass), $extensions),

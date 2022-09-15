@@ -6,6 +6,8 @@ class Operation
 {
     public string $method;
 
+    public string $path = '';
+
     public ?string $operationId = null;
 
     public string $description = '';
@@ -49,6 +51,20 @@ class Operation
     public function setOperationId(?string $operationId)
     {
         $this->operationId = $operationId;
+
+        return $this;
+    }
+
+    public function setMethod(string $method)
+    {
+        $this->method = $method;
+
+        return $this;
+    }
+
+    public function setPath(string $path)
+    {
+        $this->path = $path;
 
         return $this;
     }

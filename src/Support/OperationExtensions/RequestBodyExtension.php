@@ -47,7 +47,7 @@ class RequestBodyExtension extends OperationExtension
             $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
         }
 
-        return $operation
+        $operation
             ->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'))
             ->description($description);
     }

@@ -8,7 +8,7 @@ use Dedoc\Scramble\Support\RouteInfo;
 
 class ResponseExtension extends OperationExtension
 {
-    function handle(Operation $operation, RouteInfo $routeInfo)
+    public function handle(Operation $operation, RouteInfo $routeInfo)
     {
         $returnTypes = $routeInfo->getReturnTypes();
 

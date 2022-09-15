@@ -49,8 +49,8 @@ class Generator
         $this->getRoutes()
             ->map(fn (Route $route) => $this->routeToOperation($route))
             ->filter() // Closure based routes are filtered out for now, right here
-            ->eachSpread(fn (string $path, Operation $operation) => $openApi->addPath(
-                Path::make(str_replace('api/', '', $path))->addOperation($operation)
+            ->each(fn (Operation $operation) => $openApi->addPath(
+                Path::make(str_replace('api/', '', $operation->path))->addOperation($operation)
             ))
             ->toArray();
 
@@ -113,113 +113,6 @@ class Generator
             return null;
         }
 
-        [$pathParams, $pathAliases] = $this->getRoutePathParameters($route, $routeInfo->phpDoc());
-
-        $operation = Operation::make(strtolower($route->methods()[0]))
-            ->setTags(array_merge(
-                $this->extractTagsForMethod($routeInfo->class->phpDoc()),
-                [Str::of(class_basename($routeInfo->className()))->replace('Controller', '')],
-            ))
-            ->addParameters($pathParams);
-
-        $this->operationBuilder->build($operation, $routeInfo);
-
-        if (isset(Scramble::$operationResolver)) {
-            (Scramble::$operationResolver)($operation, $routeInfo);
-        }
-
-        return [
-            Str::replace(array_keys($pathAliases), array_values($pathAliases), $route->uri),
-            $operation,
-        ];
-    }
-
-    private function extractTagsForMethod(PhpDocNode $classPhpDoc)
-    {
-        if (! count($tagNodes = $classPhpDoc->getTagsByName('@tags'))) {
-            return [];
-        }
-
-        return explode(',', $tagNodes[0]->value->value);
-    }
-
-    private function getRoutePathParameters(Route $route, ?PhpDocNode $methodPhpDocNode)
-    {
-        $paramNames = $route->parameterNames();
-        $paramsWithRealNames = ($reflectionParams = collect($route->signatureParameters())
-            ->filter(function (\ReflectionParameter $v) {
-                if (($type = $v->getType()) && $typeName = $type->getName()) {
-                    if (is_a($typeName, Request::class, true)) {
-                        return false;
-                    }
-                }
-
-                return true;
-            })
-            ->values())
-            ->map(fn (\ReflectionParameter $v) => $v->name)
-            ->all();
-
-        if (count($paramNames) !== count($paramsWithRealNames)) {
-            $paramsWithRealNames = $paramNames;
-        }
-
-        $aliases = collect($paramNames)->mapWithKeys(fn ($name, $i) => [$name => $paramsWithRealNames[$i]])->all();
-
-        $reflectionParamsByKeys = $reflectionParams->keyBy->name;
-        $phpDocTypehintParam = $methodPhpDocNode
-            ? collect($methodPhpDocNode->getParamTagValues())->keyBy(fn (ParamTagValueNode $n) => Str::replace('$', '', $n->parameterName))
-            : collect();
-
-        /*
-         * Figure out param type based on importance priority:
-         * 1. Typehint (reflection)
-         * 2. PhpDoc Typehint
-         * 3. String (?)
-         */
-        $params = array_map(function (string $paramName) use ($aliases, $reflectionParamsByKeys, $phpDocTypehintParam) {
-            $paramName = $aliases[$paramName];
-
-            $description = '';
-            $type = null;
-
-            if (isset($reflectionParamsByKeys[$paramName]) || isset($phpDocTypehintParam[$paramName])) {
-                /** @var ParamTagValueNode $docParam */
-                if ($docParam = $phpDocTypehintParam[$paramName] ?? null) {
-                    if ($docType = $docParam->type) {
-                        $type = (string) $docType;
-                    }
-                    if ($docParam->description) {
-                        $description = $docParam->description;
-                    }
-                }
-
-                if (
-                    ($reflectionParam = $reflectionParamsByKeys[$paramName] ?? null)
-                    && ($reflectionParam->hasType())
-                ) {
-                    /** @var \ReflectionParameter $reflectionParam */
-                    $type = $reflectionParam->getType()->getName();
-                }
-            }
-
-            $schemaTypesMap = [
-                'int' => new IntegerType(),
-                'float' => new NumberType(),
-                'string' => new StringType(),
-                'bool' => new BooleanType(),
-            ];
-            $schemaType = $type ? ($schemaTypesMap[$type] ?? new IntegerType) : new StringType;
-
-            if ($type && ! isset($schemaTypesMap[$type]) && $description === '') {
-                $description = 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' ID';
-            }
-
-            return Parameter::make($paramName, 'path')
-                ->description($description)
-                ->setSchema(Schema::fromType($schemaType));
-        }, $route->parameterNames());
-
-        return [$params, $aliases];
+        return $this->operationBuilder->build($routeInfo);
     }
 }
