@@ -5,35 +5,20 @@ namespace Dedoc\Scramble;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
-use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Path;
-use Dedoc\Scramble\Support\Generator\RequestBodyObject;
-use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Server;
-use Dedoc\Scramble\Support\Generator\Types\BooleanType;
-use Dedoc\Scramble\Support\Generator\Types\IntegerType;
-use Dedoc\Scramble\Support\Generator\Types\NumberType;
-use Dedoc\Scramble\Support\Generator\Types\ObjectType;
-use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationBuilder;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\FormRequestRulesExtractor;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameter;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ValidateCallExtractor;
-use Dedoc\Scramble\Support\ResponseExtractor\ResponsesExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
-use PhpParser\Node;
-use PHPStan\PhpDocParser\Ast\PhpDoc\ParamTagValueNode;
-use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class Generator
 {
     private TypeTransformer $transformer;
+
     private OperationBuilder $operationBuilder;
 
     public function __construct(TypeTransformer $transformer, OperationBuilder $operationBuilder)
