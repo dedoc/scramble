@@ -1,7 +1,6 @@
 <?php
 
 use Dedoc\Scramble\Scramble;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameter;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
