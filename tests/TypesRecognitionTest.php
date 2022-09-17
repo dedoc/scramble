@@ -1,9 +1,9 @@
 <?php
 
+use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\Infer\Infer;
 use Dedoc\Scramble\Support\PhpDoc;
 use Illuminate\Http\Resources\Json\JsonResource;
 use function Spatie\Snapshots\assertMatchesSnapshot;

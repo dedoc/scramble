@@ -2,8 +2,8 @@
 
 namespace Dedoc\Scramble\Support;
 
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Infer\TypeInferringVisitor;
+use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\TypeInferringVisitor;
 use Illuminate\Support\Arr;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
@@ -27,9 +27,12 @@ class ClassAstHelper
 
     private ?PhpDocNode $phpDoc = null;
 
-    public function __construct(string $class)
+    private array $extensions;
+
+    public function __construct(string $class, array $extensions = [])
     {
         $this->class = $class;
+        $this->extensions = $extensions;
         $this->init();
     }
 
@@ -48,7 +51,7 @@ class ClassAstHelper
         );
 
         $traverser = new NodeTraverser;
-        $traverser->addVisitor($infer = new TypeInferringVisitor($this->namesResolver));
+        $traverser->addVisitor($infer = new TypeInferringVisitor($this->namesResolver, $this->extensions));
         $traverser->traverse([$classAst]);
 
         $this->scope = $infer->scope;
@@ -90,11 +93,6 @@ class ClassAstHelper
             $methodNode,
             fn (Node $node) => $node instanceof Node\Stmt\Return_
         );
-    }
-
-    public function resolveFqName(string $class)
-    {
-        return ($this->namesResolver)($class);
     }
 
     private function extractNamesResolver($fileAst)

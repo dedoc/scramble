@@ -2,17 +2,19 @@
 
 namespace Dedoc\Scramble\Support\InferExtensions;
 
+use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\PhpDoc;
-use PhpParser\Node;
+use Dedoc\Scramble\Support\Type\Type;
+use PhpParser\Node\Expr;
 
-class PhpDocTypeInfer
+class PhpDocTypeInfer implements ExpressionTypeInferExtension
 {
-    public function getNodeReturnType(Node $node, Scope $scope)
+    public function getType(Expr $node, Scope $scope): ?Type
     {
-        if ($node instanceof Node\Expr\ArrayItem && $doc = $node->getDocComment()) {
+        if ($node instanceof Expr\ArrayItem && $doc = $node->getDocComment()) {
             $docNode = PhpDoc::parse($doc->getText());
 
             if (count($varTagValues = $docNode->getVarTagValues())) {
@@ -26,5 +28,7 @@ class PhpDocTypeInfer
 
             $scope->getType($node)->setAttribute('docNode', $docNode);
         }
+
+        return null;
     }
 }

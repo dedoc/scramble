@@ -32,11 +32,11 @@ return [
 
 These are the extensions that allows to add information from route to this route’s documentation. Each route is an operation in OpenAPI standard, so here you can add and shape information about the operation from the code you have.
 
-The extension’s function accepts 2 arguments, first is an instance of operation and second one is route info object.
+Every operation extension must extend `\Dedoc\Scramble\Extensions\OperationExtension` class and implement `handle` method. The method accepts 2 arguments, first is an instance of operation and second one is route info object.
 
-You add information to the operation by mutating the object.
+You can add information to the operation by mutating the object (see methods on `Operation` class).
 
-The example of such an extension is an ability to add 403 response, if there is a call to `$this->authorize` in the controller’s method. To implement it, you need to get method’s AST from route info and look for this call there. If it is there, there might be possible 403 response, so it can be added to the operation.
+The example of such an extension is an ability to add 403 response, if there is a call to `$this->authorize` in the controller’s method. To implement it, you need to get method’s AST from route info and look for this call there. If it is there, there might be possible 403 response, so it can be added to the operation (see available methods on `RouteInfo` class).
 
 ## Type to schema extension
 

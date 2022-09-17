@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use PhpParser\Node;
 
 class PendingReturnType extends AbstractType

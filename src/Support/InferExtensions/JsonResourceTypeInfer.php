@@ -2,7 +2,8 @@
 
 namespace Dedoc\Scramble\Support\InferExtensions;
 
-use Dedoc\Scramble\Support\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -16,12 +17,13 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MergeValue;
 use Illuminate\Support\Str;
 use PhpParser\Node;
+use PhpParser\Node\Expr;
 
-class JsonResourceTypeInfer
+class JsonResourceTypeInfer implements ExpressionTypeInferExtension
 {
     public static $jsonResourcesModelTypesCache = [];
 
-    public function getNodeReturnType(Node $node, Scope $scope)
+    public function getType(Expr $node, Scope $scope): ?Type
     {
         if (! optional($scope->class())->isInstanceOf(JsonResource::class)) {
             return null;
@@ -88,6 +90,8 @@ class JsonResourceTypeInfer
 
             return null;
         }
+
+        return null;
     }
 
     private static function modelType(ObjectType $jsonClass, Scope $scope): Type
