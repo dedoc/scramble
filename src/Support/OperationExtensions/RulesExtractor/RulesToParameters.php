@@ -109,11 +109,11 @@ class RulesToParameters
 
             $next = $path[1];
             if ($next === '*') {
-                if (!$base->items instanceof ArrayType) {
+                if (! $base->items instanceof ArrayType) {
                     $base->items = new ArrayType;
                 }
             } else {
-                if (!$base->items instanceof ObjectType) {
+                if (! $base->items instanceof ObjectType) {
                     $base->items = new ObjectType;
                 }
             }
