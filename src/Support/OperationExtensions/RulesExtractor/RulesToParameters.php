@@ -109,8 +109,6 @@ class RulesToParameters
 
             return;
         }
-
-        dd($containingType, $this);
     }
 
     private function getOrCreateDeepTypeContainer(Type &$base, array $path)

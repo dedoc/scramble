@@ -52,16 +52,12 @@ class ObjectType extends Type
     {
         $result = parent::toArray();
 
-        try {
-            if (count($this->properties)) {
-                $properties = [];
-                foreach ($this->properties as $name => $property) {
-                    $properties[$name] = $property ? $property->toArray() : ['type' => 'string'];
-                }
-                $result['properties'] = $properties;
+        if (count($this->properties)) {
+            $properties = [];
+            foreach ($this->properties as $name => $property) {
+                $properties[$name] = $property ? $property->toArray() : ['type' => 'string'];
             }
-        } catch (\Throwable $e) {
-            dd($this);
+            $result['properties'] = $properties;
         }
 
         if (count($this->required)) {
