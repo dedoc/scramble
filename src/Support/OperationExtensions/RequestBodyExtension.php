@@ -59,10 +59,6 @@ class RequestBodyExtension extends OperationExtension
     {
         $rules = $this->extractRouteRequestValidationRules($route, $methodNode);
 
-        if (! $rules) {
-            return [];
-        }
-
         return (new RulesToParameters($rules))->handle();
     }
 
@@ -71,17 +67,21 @@ class RequestBodyExtension extends OperationExtension
      */
     private function extractRouteRequestValidationRules(Route $route, $methodNode)
     {
+        $rules = [];
+
         // Custom form request's class `validate` method
         if (($formRequestRulesExtractor = new FormRequestRulesExtractor($methodNode))->shouldHandle()) {
-            if (count($rules = $formRequestRulesExtractor->extract($route))) {
-                return $rules;
+            if (count($formRequestRules = $formRequestRulesExtractor->extract($route))) {
+                $rules = array_merge($rules, $formRequestRules);
             }
         }
 
         if (($validateCallExtractor = new ValidateCallExtractor($methodNode))->shouldHandle()) {
-            return $validateCallExtractor->extract($route);
+            if ($validateCallRules = $validateCallExtractor->extract($route)) {
+                $rules = array_merge($rules, $validateCallRules);
+            }
         }
 
-        return null;
+        return $rules;
     }
 }
