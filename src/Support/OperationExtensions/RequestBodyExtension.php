@@ -8,7 +8,7 @@ use Dedoc\Scramble\Support\Generator\RequestBodyObject;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\FormRequestRulesExtractor;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameter;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ValidateCallExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Routing\Route;
@@ -59,16 +59,7 @@ class RequestBodyExtension extends OperationExtension
     {
         $rules = $this->extractRouteRequestValidationRules($route, $methodNode);
 
-        if (! $rules) {
-            return [];
-        }
-
-        return collect($rules)
-            ->map(function ($rules, $name) {
-                return (new RulesToParameter($name, $rules))->generate();
-            })
-            ->values()
-            ->all();
+        return (new RulesToParameters($rules))->handle();
     }
 
     /**
@@ -76,17 +67,21 @@ class RequestBodyExtension extends OperationExtension
      */
     private function extractRouteRequestValidationRules(Route $route, $methodNode)
     {
+        $rules = [];
+
         // Custom form request's class `validate` method
         if (($formRequestRulesExtractor = new FormRequestRulesExtractor($methodNode))->shouldHandle()) {
-            if (count($rules = $formRequestRulesExtractor->extract($route))) {
-                return $rules;
+            if (count($formRequestRules = $formRequestRulesExtractor->extract($route))) {
+                $rules = array_merge($rules, $formRequestRules);
             }
         }
 
         if (($validateCallExtractor = new ValidateCallExtractor($methodNode))->shouldHandle()) {
-            return $validateCallExtractor->extract($route);
+            if ($validateCallRules = $validateCallExtractor->extract($route)) {
+                $rules = array_merge($rules, $validateCallRules);
+            }
         }
 
-        return null;
+        return $rules;
     }
 }

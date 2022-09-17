@@ -78,7 +78,9 @@ Declaring local variable in method before calling `validate` and using it there 
 - `bool`, `boolean`
 - `number`
 - `int`, `integer`
+- `array`
 - `in`, `Rule::in`
 - `nullable`
+- `exists` (required value to be `int`)
 - `min` (numeric types only)
 - `max` (numeric types only)

@@ -24,6 +24,11 @@ class ObjectType extends Type
         return $this;
     }
 
+    public function hasProperty(string $name)
+    {
+        return array_key_exists($name, $this->properties);
+    }
+
     public function getProperty(string $name)
     {
         return $this->properties[$name];
@@ -32,6 +37,13 @@ class ObjectType extends Type
     public function setRequired(array $keys)
     {
         $this->required = $keys;
+
+        return $this;
+    }
+
+    public function addRequired(array $keys)
+    {
+        $this->required = array_merge($this->required, $keys);
 
         return $this;
     }
