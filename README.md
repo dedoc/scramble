@@ -9,7 +9,7 @@
 Scramble generates API documentation for Laravel project. Without requiring you to manually write PHPDoc annotations. Docs are generated in OpenAPI 3.1.0 format.
 
 > **Warning**
-> Package is in early stage. It means there may be dumb bugs and API is very likely to change. Create an issue if you spot a bug. Ideas are welcome.
+> Package is in early stage. It means there may be bugs and API is very likely to change. Create an issue if you spot a bug. Ideas are welcome.
 
 ## Documentation
 
