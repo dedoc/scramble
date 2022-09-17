@@ -92,7 +92,7 @@ class RulesToParameters
             $base = $containingType;
         }
 
-        if (!($containingType instanceof ArrayType || $containingType instanceof ObjectType)) {
+        if (! ($containingType instanceof ArrayType || $containingType instanceof ObjectType)) {
             return;
         }
 
@@ -159,7 +159,7 @@ class RulesToParameters
                 );
             }
 
-            if ($next === '*' && !$existingType instanceof ArrayType) {
+            if ($next === '*' && ! $existingType instanceof ArrayType) {
                 $base->addProperty($key, (new ArrayType)->addProperties($existingType));
             }
             if ($next !== '*' && $existingType instanceof ArrayType) {
