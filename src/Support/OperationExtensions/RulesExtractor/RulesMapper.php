@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
+use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
@@ -35,6 +36,11 @@ class RulesMapper
         return $this->int($_);
     }
 
+    public function array(Type $_)
+    {
+        return new ArrayType();
+    }
+
     public function nullable(Type $type)
     {
         return $type->nullable(true);
@@ -45,6 +51,13 @@ class RulesMapper
         if (in_array('id', $params)) {
             return $this->int($type);
         }
+
+        return $type;
+    }
+
+    public function required(Type $type)
+    {
+        $type->setAttribute('required', true);
 
         return $type;
     }

@@ -8,7 +8,7 @@ use Dedoc\Scramble\Support\Generator\RequestBodyObject;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\FormRequestRulesExtractor;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameter;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ValidateCallExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Routing\Route;
@@ -63,12 +63,7 @@ class RequestBodyExtension extends OperationExtension
             return [];
         }
 
-        return collect($rules)
-            ->map(function ($rules, $name) {
-                return (new RulesToParameter($name, $rules))->generate();
-            })
-            ->values()
-            ->all();
+        return (new RulesToParameters($rules))->handle();
     }
 
     /**

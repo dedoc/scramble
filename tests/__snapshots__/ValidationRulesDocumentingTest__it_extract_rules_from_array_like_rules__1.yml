@@ -1,0 +1,9 @@
+-
+    name: id
+    in: query
+    schema: { type: integer }
+-
+    name: some
+    in: query
+    required: true
+    schema: { type: array, items: { type: object, properties: { id: { type: integer }, name: { type: string } }, required: [id] } }
