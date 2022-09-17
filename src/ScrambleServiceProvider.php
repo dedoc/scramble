@@ -6,6 +6,7 @@ use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Infer;
+use Dedoc\Scramble\Support\ClassAstHelper;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\InferExtensions\AnonymousResourceCollectionTypeInfer;
@@ -31,20 +32,22 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->hasRoute('web')
             ->hasViews('scramble');
 
-        $this->app->bind(Infer::class, function () {
-            $extensions = config('scramble.extensions', []);
+        $this->app->when([Infer::class, ClassAstHelper::class])
+            ->needs('$extensions')
+            ->give(function () {
+                $extensions = config('scramble.extensions', []);
 
-            $expressionTypeInferringExtensions = array_values(array_filter(
-                $extensions,
-                fn ($e) => is_a($e, ExpressionTypeInferExtension::class, true),
-            ));
+                $expressionTypeInferringExtensions = array_values(array_filter(
+                    $extensions,
+                    fn ($e) => is_a($e, ExpressionTypeInferExtension::class, true),
+                ));
 
-            return new Infer(array_merge($expressionTypeInferringExtensions, [
-                AnonymousResourceCollectionTypeInfer::class,
-                JsonResourceTypeInfer::class,
-                PhpDocTypeInfer::class,
-            ]));
-        });
+                return array_merge($expressionTypeInferringExtensions, [
+                    AnonymousResourceCollectionTypeInfer::class,
+                    JsonResourceTypeInfer::class,
+                    PhpDocTypeInfer::class,
+                ]);
+            });
 
         $this->app->singleton(TypeTransformer::class, function () {
             $extensions = config('scramble.extensions', []);

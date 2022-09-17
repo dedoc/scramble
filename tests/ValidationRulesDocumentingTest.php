@@ -22,6 +22,46 @@ it('extract rules from array like rules', function () {
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
 
+it('extract rules from object like rules', function () {
+    $rules = [
+        'channels.agency' => 'nullable',
+        'channels.agency.id' => 'nullable|int',
+        'channels.agency.name' => 'nullable|string',
+    ];
+
+    $params = (new RulesToParameters($rules))->handle();
+
+    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+});
+
+it('extract rules from object like rules heavy case', function () {
+    $rules = [
+        'channel' => 'required',
+        'channel.publisher' => 'nullable|array',
+        'channels.publisher.id' => 'nullable|int',
+        'channels.publisher.name' => 'nullable|string',
+        'channels.channel_url' => 'filled|url',
+        'channels.agency' => 'nullable',
+        'channels.agency.id' => 'nullable|int',
+        'channels.agency.name' => 'nullable|string',
+    ];
+
+    $params = (new RulesToParameters($rules))->handle();
+
+    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+});
+
+it('extract rules from object like rules with explicit array', function () {
+    $rules = [
+        'channels.publisher' => 'array',
+        'channels.publisher.id' => 'int',
+    ];
+
+    $params = (new RulesToParameters($rules))->handle();
+
+    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+});
+
 it('extracts rules from request->validate call', function () {
     RouteFacade::get('test', [ValidationRulesDocumenting_Test::class, 'index']);
 

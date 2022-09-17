@@ -39,7 +39,7 @@ class RouteInfo
             return;
         }
 
-        $this->class = new ClassAstHelper($this->className());
+        $this->class = app()->make(ClassAstHelper::class, ['class' => $this->className()]);
     }
 
     public function isClassBased(): bool

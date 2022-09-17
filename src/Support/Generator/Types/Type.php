@@ -12,13 +12,7 @@ abstract class Type
 
     public array $enum = [];
 
-    /**
-     * Hint is used to pass a description to other handlers but not show it with type.
-     * For example, for response documentation.
-     */
-    public string $hint = '';
-
-    protected bool $nullable = false;
+    public bool $nullable = false;
 
     public function __construct(string $type)
     {
@@ -28,6 +22,17 @@ abstract class Type
     public function nullable(bool $nullable)
     {
         $this->nullable = $nullable;
+
+        return $this;
+    }
+
+    public function addProperties(Type $fromType)
+    {
+        $this->attributes = $fromType->attributes;
+
+        $this->nullable = $fromType->nullable;
+        $this->enum = $fromType->enum;
+        $this->description = $fromType->description;
 
         return $this;
     }
@@ -44,13 +49,6 @@ abstract class Type
     public function setDescription(string $description): Type
     {
         $this->description = $description;
-
-        return $this;
-    }
-
-    public function setHint(string $hint): Type
-    {
-        $this->hint = $hint;
 
         return $this;
     }

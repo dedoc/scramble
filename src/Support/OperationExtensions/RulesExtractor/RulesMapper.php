@@ -38,21 +38,17 @@ class RulesMapper
 
     public function array(Type $_)
     {
-        return new ArrayType();
+        return new ArrayType;
+    }
+
+    public function exists(Type $type, $params)
+    {
+        return $this->int($type);
     }
 
     public function nullable(Type $type)
     {
         return $type->nullable(true);
-    }
-
-    public function exists(Type $type, $params)
-    {
-        if (in_array('id', $params)) {
-            return $this->int($type);
-        }
-
-        return $type;
     }
 
     public function required(Type $type)

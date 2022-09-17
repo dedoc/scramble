@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
+use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -54,12 +55,14 @@ class RulesToParameters
                         ))
                 );
 
-                $baseType = $baseParam->schema->type;
-
                 $params->offsetUnset($groupName);
 
                 foreach ($params as $param) {
-                    $this->setDeepType($baseType, $param->name, $param->schema->type);
+                    $this->setDeepType(
+                        $baseParam->schema->type,
+                        $param->name,
+                        $param->schema->type,
+                    );
                 }
 
                 return $baseParam;
@@ -69,17 +72,29 @@ class RulesToParameters
             ->merge($nested);
     }
 
-    private function setDeepType(Type $base, string $key, Type $typeToSet)
+    private function setDeepType(Type &$base, string $key, Type $typeToSet)
     {
         $containingType = $this->getOrCreateDeepTypeContainer(
             $base,
             collect(explode('.', $key))->splice(1)->values()->all(),
         );
+
         if (! $containingType) {
             return;
         }
 
         $isSettingArrayItems = ($settingKey = collect(explode('.', $key))->last()) === '*';
+
+        if ($containingType === $base && $base instanceof UnknownType) {
+            $containingType = ($isSettingArrayItems ? new ArrayType : new ObjectType)
+                ->addProperties($base);
+
+            $base = $containingType;
+        }
+
+        if (!($containingType instanceof ArrayType || $containingType instanceof ObjectType)) {
+            return;
+        }
 
         if ($isSettingArrayItems && $containingType instanceof ArrayType) {
             $containingType->items = $typeToSet;
@@ -91,7 +106,11 @@ class RulesToParameters
             $containingType
                 ->addProperty($settingKey, $typeToSet)
                 ->addRequired($typeToSet->getAttribute('required') ? [$settingKey] : []);
+
+            return;
         }
+
+        dd($containingType, $this);
     }
 
     private function getOrCreateDeepTypeContainer(Type &$base, array $path)
@@ -134,6 +153,19 @@ class RulesToParameters
                     $key,
                     $next === '*' ? new ArrayType : new ObjectType,
                 );
+            }
+            if (($existingType = $base->getProperty($key)) instanceof UnknownType) {
+                $base = $base->addProperty(
+                    $key,
+                    ($next === '*' ? new ArrayType : new ObjectType)->addProperties($existingType),
+                );
+            }
+
+            if ($next === '*' && !$existingType instanceof ArrayType) {
+                $base->addProperty($key, (new ArrayType)->addProperties($existingType));
+            }
+            if ($next !== '*' && $existingType instanceof ArrayType) {
+                $base->addProperty($key, (new ObjectType)->addProperties($existingType));
             }
 
             return $this->getOrCreateDeepTypeContainer(

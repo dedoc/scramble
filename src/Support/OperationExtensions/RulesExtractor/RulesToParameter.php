@@ -6,6 +6,7 @@ use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
+use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Illuminate\Support\Arr;
 
 class RulesToParameter
@@ -15,7 +16,7 @@ class RulesToParameter
     private array $rules = [];
 
     const RULES_PRIORITY = [
-        'bool', 'boolean', 'number', 'int', 'integer', 'string', 'exists',
+        'bool', 'boolean', 'number', 'int', 'integer', 'string', 'array', 'exists',
     ];
 
     public function __construct(string $name, $rules)
@@ -38,7 +39,7 @@ class RulesToParameter
             return method_exists($rule, 'docs')
                 ? $rule->docs($type)
                 : $type;
-        }, new StringType);
+        }, new UnknownType);
 
         $description = $type->description;
         $type->setDescription('');
