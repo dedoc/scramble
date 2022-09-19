@@ -6,12 +6,14 @@ use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Infer;
+use Dedoc\Scramble\Infer\TypeInferringVisitor;
 use Dedoc\Scramble\Support\ClassAstHelper;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\InferExtensions\AnonymousResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\PhpDocTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
@@ -19,6 +21,7 @@ use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -32,7 +35,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->hasRoute('web')
             ->hasViews('scramble');
 
-        $this->app->when([Infer::class, ClassAstHelper::class])
+        $this->app->when([Infer::class, ClassAstHelper::class, TypeInferringVisitor::class])
             ->needs('$extensions')
             ->give(function () {
                 $extensions = config('scramble.extensions', []);
@@ -45,6 +48,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 return array_merge($expressionTypeInferringExtensions, [
                     AnonymousResourceCollectionTypeInfer::class,
                     JsonResourceTypeInfer::class,
+                    ResponseFactoryTypeInfer::class,
                     PhpDocTypeInfer::class,
                 ]);
             });
@@ -64,6 +68,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     JsonResourceTypeToSchema::class,
                     AnonymousResourceCollectionTypeToSchema::class,
                     LengthAwarePaginatorTypeToSchema::class,
+                    ResponseTypeToSchema::class,
                 ]),
             );
         });

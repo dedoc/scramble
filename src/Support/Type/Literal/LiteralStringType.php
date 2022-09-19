@@ -2,13 +2,13 @@
 
 namespace Dedoc\Scramble\Support\Type\Literal;
 
-use Dedoc\Scramble\Support\Type\BooleanType;
+use Dedoc\Scramble\Support\Type\StringType;
 
-class LiteralBooleanType extends BooleanType
+class LiteralStringType extends StringType
 {
-    public bool $value;
+    public string $value;
 
-    public function __construct(bool $value)
+    public function __construct(string $value)
     {
         $this->value = $value;
     }

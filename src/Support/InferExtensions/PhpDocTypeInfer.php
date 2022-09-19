@@ -10,6 +10,10 @@ use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\Type;
 use PhpParser\Node\Expr;
 
+/**
+ * Extension that added info from PHPDoc to the node. Thanks to this, other extensions
+ * can get more information for the returning types.
+ */
 class PhpDocTypeInfer implements ExpressionTypeInferExtension
 {
     public function getType(Expr $node, Scope $scope): ?Type
