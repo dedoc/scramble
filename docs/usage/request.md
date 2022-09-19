@@ -81,6 +81,7 @@ Declaring local variable in method before calling `validate` and using it there 
 - `array`
 - `in`, `Rule::in`
 - `nullable`
-- `exists` (required value to be `int`)
+- `exists`
+- `email`
 - `min` (numeric types only)
 - `max` (numeric types only)
