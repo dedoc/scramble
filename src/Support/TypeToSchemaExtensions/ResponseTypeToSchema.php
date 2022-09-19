@@ -34,7 +34,9 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
             ->description($code === 204 ? 'No content' : '')
             ->setContent(
                 'application/json', // @todo: Some other response types are possible as well
-                Schema::fromType($this->openApiTransformer->transform($type->genericTypes[0])),
+                $code === 204
+                    ? new Schema
+                    : Schema::fromType($this->openApiTransformer->transform($type->genericTypes[0])),
             );
     }
 }
