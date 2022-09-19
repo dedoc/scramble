@@ -23,7 +23,7 @@ it('simply infers method types', function () {
 
     $returnType = $type->getMethodCallType('bar');
 
-    expect($returnType->toString())->toBe('int');
+    expect($returnType->toString())->toBe('int(1)');
 });
 
 it('infers method types for methods declared not in order', function () {
@@ -32,7 +32,7 @@ it('infers method types for methods declared not in order', function () {
 
     $returnType = $type->getMethodCallType('foo');
 
-    expect($returnType->toString())->toBe('(): int');
+    expect($returnType->toString())->toBe('(): int(1)');
 });
 
 it('infers method types for methods in array', function () {
@@ -41,7 +41,7 @@ it('infers method types for methods in array', function () {
 
     $returnType = $type->getMethodCallType('foo');
 
-    expect($returnType->toString())->toBe('array{a: int}');
+    expect($returnType->toString())->toBe('array{a: int(1)}');
 });
 
 it('infers unknown method call', function () {
@@ -68,7 +68,7 @@ it('infers cyclic dep', function () {
 
     $returnType = $type->getMethodCallType('foo');
 
-    expect($returnType->toString())->toBe('unknown|int');
+    expect($returnType->toString())->toBe('unknown|int(1)');
 });
 
 it('infers this return', function () {

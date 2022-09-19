@@ -9,7 +9,7 @@ it('response()->noContent() type', function () {
 
     $returnType = $type->getMethodCallType('bar');
 
-    expect($returnType->toString())->toBe("Illuminate\Http\Response<string, int(204), array{}>");
+    expect($returnType->toString())->toBe("Illuminate\Http\Response<string(), int(204), array{}>");
 });
 
 class Foo_First {
