@@ -26,7 +26,7 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
-        if (!$type->genericTypes[1] instanceof LiteralIntegerType) {
+        if (! $type->genericTypes[1] instanceof LiteralIntegerType) {
             return null;
         }
 
