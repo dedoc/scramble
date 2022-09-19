@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support\Generator\Types;
+namespace Dedoc\Scramble\Support\Type;
 
 trait TypeAttributes
 {
