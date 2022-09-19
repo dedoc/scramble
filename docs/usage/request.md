@@ -37,6 +37,7 @@ This is the source of truth both for the code and for the docs.
 Currently, there are 2 ways of validating requests that are understood by Scramble:
 
 - Call to `validate` on `$request` or `$this` in controller’s method
+- Call to `Validator` facade's `make` method with method call on request (`$request->?()`) as a first argument
 - `rules` method on custom `FormRequest` class
 
 ```php
@@ -55,6 +56,25 @@ class TodoItemsController
 ```
 
 Based on these validation rules Scramble knows that there are 2 request body params: `body` and `is_complete`.
+
+Same applies to `Validator::make` call.
+
+```php
+use App\Models\TodoItem;
+use Illuminate\Support\Facades\Validator;
+
+class TodoItemsController
+{
+    public function update(Request $request, TodoItem $item)
+    {
+        Validator::make($request->all(), [
+            'body' => ['required', 'string'],
+            'is_complete' => 'bool',
+        ]);
+        // ...
+    }
+}
+```
 
 The same applies to the `rules` method in custom `FormRequest`.
 

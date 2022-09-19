@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
 use Illuminate\Http\Request;
-use Illuminate\Routing\Route;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 
@@ -21,7 +20,7 @@ class ValidateCallExtractor
         return (bool) $this->handle;
     }
 
-    public function extract(Route $route)
+    public function extract()
     {
         $methodNode = $this->handle;
 
@@ -47,6 +46,19 @@ class ValidateCallExtractor
                     && $node->args[0]->value instanceof Node\Expr\Variable
                     && is_a($this->getPossibleParamType($methodNode, $node->args[0]->value), Request::class, true)
                     && $node->name->name === 'validate'
+            );
+            $validationRules = $callToValidate->args[1] ?? null;
+        }
+
+        if (! $validationRules) {
+            // Validator::make($request->...(), $rules), rules are second param. First should be $request, but no way to check type. So relying on convention.
+            $callToValidate = (new NodeFinder())->findFirst(
+                $methodNode,
+                fn (Node $node) => $node instanceof Node\Expr\StaticCall
+                    && count($node->args) === 2
+                    && $node->class instanceof Node\Name && is_a($node->class->toString(), \Illuminate\Support\Facades\Validator::class, true)
+                    && $node->name instanceof Node\Identifier && $node->name->name === 'make'
+                    && $node->args[0]->value instanceof Node\Expr\MethodCall && is_a($this->getPossibleParamType($methodNode, $node->args[0]->value->var), Request::class, true)
             );
             $validationRules = $callToValidate->args[1] ?? null;
         }
