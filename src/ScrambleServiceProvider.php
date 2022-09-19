@@ -6,6 +6,7 @@ use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Infer;
+use Dedoc\Scramble\Infer\TypeInferringVisitor;
 use Dedoc\Scramble\Support\ClassAstHelper;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -33,7 +34,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->hasRoute('web')
             ->hasViews('scramble');
 
-        $this->app->when([Infer::class, ClassAstHelper::class])
+        $this->app->when([Infer::class, ClassAstHelper::class, TypeInferringVisitor::class])
             ->needs('$extensions')
             ->give(function () {
                 $extensions = config('scramble.extensions', []);

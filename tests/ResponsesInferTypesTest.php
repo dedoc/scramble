@@ -1,65 +1,32 @@
 <?php
 
-use Dedoc\Scramble\Infer\Infer;
-use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Infer\TypeInferringVisitor;
+use PhpParser\NodeTraverser;
+use PhpParser\ParserFactory;
 
-it('response()->noContent() type', function () {
-    /** @var ObjectType $type */
-    $type = app(Infer::class)->analyzeClass(Foo_First::class);
+it('infers response factory expressions', function (string $expression, string $expectedType) {
+    $type = getExpressionType($expression);
+response();
+    expect($type->toString())->toBe($expectedType);
+})->with([
+    ['response()', 'Illuminate\Contracts\Routing\ResponseFactory'],
+    ['response("hey", 401)', 'Illuminate\Http\Response<string(hey), int(401), array{}>'],
+    ['response()->noContent()', 'Illuminate\Http\Response<string(), int(204), array{}>'],
+    ['response()->json()', 'Illuminate\Http\JsonResponse<array{}, int(200), array{}>'],
+    ['response()->json(status: 329)', 'Illuminate\Http\JsonResponse<array{}, int(329), array{}>'],
+    ["response()->make('Hello')", 'Illuminate\Http\Response<string(Hello), int(200), array{}>'],
+]);
 
-    $returnType = $type->getMethodCallType('bar');
+function getExpressionType(string $expression)
+{
+    $code = "<?php $expression;";
 
-    expect($returnType->toString())->toBe("Illuminate\Http\Response<string(), int(204), array{}>");
-});
+    $fileAst = (new ParserFactory)->create(ParserFactory::PREFER_PHP7)->parse($code);
 
-class Foo_First {
-    public function bar()
-    {
-        return response()->noContent();
-    }
-}
+    $infer = app()->make(TypeInferringVisitor::class, ['namesResolver' => fn ($s) => $s]);
+    $traverser = new NodeTraverser;
+    $traverser->addVisitor($infer);
+    $traverser->traverse($fileAst);
 
-it('response()->json() type with default params', function () {
-    /** @var ObjectType $type */
-    $type = app(Infer::class)->analyzeClass(Foo_Second::class);
-
-    $returnType = $type->getMethodCallType('bar');
-
-    expect($returnType->toString())->toBe("Illuminate\Http\JsonResponse<array{}, int(200), array{}>");
-});
-class Foo_Second {
-    public function bar()
-    {
-        return response()->json();
-    }
-}
-
-it('response()->json() type with named params', function () {
-    /** @var ObjectType $type */
-    $type = app(Infer::class)->analyzeClass(Foo_Third::class);
-
-    $returnType = $type->getMethodCallType('bar');
-
-    expect($returnType->toString())->toBe("Illuminate\Http\JsonResponse<array{}, int(329), array{}>");
-});
-class Foo_Third {
-    public function bar()
-    {
-        return response()->json(status: 329);
-    }
-}
-
-it('response()->make() with params', function () {
-    /** @var ObjectType $type */
-    $type = app(Infer::class)->analyzeClass(Foo_Fourth::class);
-
-    $returnType = $type->getMethodCallType('bar');
-
-    expect($returnType->toString())->toBe("Illuminate\Http\Response<string(Hello), int(200), array{}>");
-});
-class Foo_Fourth {
-    public function bar()
-    {
-        return response()->make('Hello');
-    }
+    return $infer->scope->getType($fileAst[0]->expr);
 }

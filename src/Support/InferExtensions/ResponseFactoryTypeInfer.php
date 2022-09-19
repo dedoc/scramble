@@ -27,7 +27,14 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
             && $node->name instanceof Name && $node->name->toString() === 'response'
         ) {
             if (count($node->args)) {
-                // Response
+                return new Generic(
+                    new ObjectType(Response::class),
+                    [
+                        $this->getArgType($scope, $node->args, ['content', 0], new LiteralStringType('')),
+                        $this->getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
+                        $this->getArgType($scope, $node->args, ['headers', 2], new ArrayType),
+                    ],
+                );
             }
 
             return new ObjectType(ResponseFactory::class);
