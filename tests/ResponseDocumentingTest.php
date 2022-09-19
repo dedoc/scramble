@@ -61,6 +61,7 @@ class Foo_TestThree
         if ($foo) {
             return response()->json(['foo' => 'one']);
         }
+
         return response()->json(['foo' => 'bar']);
     }
 }
