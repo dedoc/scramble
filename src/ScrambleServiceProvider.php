@@ -12,6 +12,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\InferExtensions\AnonymousResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\PhpDocTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
@@ -45,6 +46,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 return array_merge($expressionTypeInferringExtensions, [
                     AnonymousResourceCollectionTypeInfer::class,
                     JsonResourceTypeInfer::class,
+                    ResponseFactoryTypeInfer::class,
                     PhpDocTypeInfer::class,
                 ]);
             });
