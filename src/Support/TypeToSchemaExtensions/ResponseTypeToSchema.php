@@ -30,12 +30,14 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
             return null;
         }
 
+        $emptyContent = ($type->genericTypes[0]->value ?? null) === '';
+
         return Response::make($code = $type->genericTypes[1]->value)
             ->description($code === 204 ? 'No content' : '')
             ->setContent(
                 'application/json', // @todo: Some other response types are possible as well
-                $code === 204
-                    ? new Schema
+                $emptyContent
+                    ? null
                     : Schema::fromType($this->openApiTransformer->transform($type->genericTypes[0])),
             );
     }

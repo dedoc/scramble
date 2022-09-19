@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 
 class Schema
 {
-    public ?Type $type = null;
+    public Type $type;
 
     private ?string $title = null;
 
@@ -30,7 +30,7 @@ class Schema
 
     public function toArray()
     {
-        return array_merge($this->type ? $this->type->toArray() : [], array_filter([
+        return array_merge($this->type->toArray(), array_filter([
             'title' => $this->title,
         ]));
     }

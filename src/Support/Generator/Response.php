@@ -6,7 +6,7 @@ class Response
 {
     public ?int $code = null;
 
-    /** @var array<string, Schema|Reference> */
+    /** @var array<string, Schema|Reference|null> */
     public array $content;
 
     public string $description = '';
@@ -22,7 +22,7 @@ class Response
     }
 
     /**
-     * @param  Schema|Reference  $schema
+     * @param  Schema|Reference|null  $schema
      */
     public function setContent(string $type, $schema)
     {
@@ -39,9 +39,7 @@ class Response
 
         $content = [];
         foreach ($this->content as $mediaType => $schema) {
-            $content[$mediaType] = [
-                'schema' => $schema->toArray(),
-            ];
+            $content[$mediaType] = $schema ? ['schema' => $schema->toArray()] : [];
         }
 
         $result['content'] = $content;
