@@ -7,9 +7,9 @@ class Response
     public ?int $code = null;
 
     /** @var array<string, Schema|Reference> */
-    private array $content;
+    public array $content;
 
-    private string $description = '';
+    public string $description = '';
 
     public function __construct(?int $code)
     {
