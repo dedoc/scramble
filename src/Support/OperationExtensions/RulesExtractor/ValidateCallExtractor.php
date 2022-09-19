@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
 use Illuminate\Http\Request;
-use Illuminate\Routing\Route;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 
