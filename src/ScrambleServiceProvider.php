@@ -21,6 +21,7 @@ use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -67,6 +68,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     JsonResourceTypeToSchema::class,
                     AnonymousResourceCollectionTypeToSchema::class,
                     LengthAwarePaginatorTypeToSchema::class,
+                    ResponseTypeToSchema::class,
                 ]),
             );
         });
