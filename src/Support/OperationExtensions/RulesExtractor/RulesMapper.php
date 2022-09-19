@@ -51,7 +51,7 @@ class RulesMapper
 
     public function exists(Type $type, $params)
     {
-        if (!$type instanceof UnknownType) {
+        if (! $type instanceof UnknownType) {
             return $type;
         }
 
