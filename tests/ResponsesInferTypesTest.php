@@ -6,7 +6,7 @@ use PhpParser\ParserFactory;
 
 it('infers response factory expressions', function (string $expression, string $expectedType) {
     $type = getExpressionType($expression);
-response();
+    response();
     expect($type->toString())->toBe($expectedType);
 })->with([
     ['response()', 'Illuminate\Contracts\Routing\ResponseFactory'],
