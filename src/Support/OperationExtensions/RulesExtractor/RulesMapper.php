@@ -6,11 +6,19 @@ use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
+use Dedoc\Scramble\Support\Generator\Types\UnknownType;
+use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 
 class RulesMapper
 {
+    public function string(Type $_)
+    {
+        return new StringType;
+    }
+
     public function bool(Type $_)
     {
         return new BooleanType;
@@ -43,7 +51,24 @@ class RulesMapper
 
     public function exists(Type $type, $params)
     {
-        return $this->int($type);
+        if (! $type instanceof UnknownType) {
+            return $type;
+        }
+
+        if (Str::is(['id', '*_id'], $column = $params[1] ?? 'id')) {
+            return $this->int($type);
+        }
+
+        return $type;
+    }
+
+    public function email(Type $type)
+    {
+        if ($type instanceof UnknownType) {
+            $type = $this->string($type);
+        }
+
+        return $type->format('email');
     }
 
     public function nullable(Type $type)

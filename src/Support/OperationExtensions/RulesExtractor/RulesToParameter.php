@@ -15,7 +15,7 @@ class RulesToParameter
     private array $rules = [];
 
     const RULES_PRIORITY = [
-        'bool', 'boolean', 'number', 'int', 'integer', 'string', 'array', 'exists',
+        'string', 'bool', 'boolean', 'number', 'int', 'integer', 'string', 'array', 'exists',
     ];
 
     public function __construct(string $name, $rules)

@@ -8,6 +8,8 @@ abstract class Type
 
     protected string $type;
 
+    public string $format = '';
+
     public string $description = '';
 
     public array $enum = [];
@@ -22,6 +24,13 @@ abstract class Type
     public function nullable(bool $nullable)
     {
         $this->nullable = $nullable;
+
+        return $this;
+    }
+
+    public function format(string $format)
+    {
+        $this->format = $format;
 
         return $this;
     }
@@ -41,6 +50,7 @@ abstract class Type
     {
         return array_filter([
             'type' => $this->nullable ? [$this->type, 'null'] : $this->type,
+            'format' => $this->format,
             'description' => $this->description,
             'enum' => count($this->enum) ? $this->enum : null,
         ]);
