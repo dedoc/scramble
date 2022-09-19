@@ -1,6 +1,7 @@
 <?php
 
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -60,6 +61,17 @@ it('extract rules from object like rules with explicit array', function () {
     $params = (new RulesToParameters($rules))->handle();
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
+});
+
+it('supports exists rule', function () {
+    $rules = [
+        'email' => 'required|email|exists:users,email',
+    ];
+
+    $type = (new RulesToParameters($rules))->handle()[0]->schema->type;
+
+    expect($type)->toBeInstanceOf(StringType::class)
+        ->and($type->format)->toBe('email');
 });
 
 it('extracts rules from request->validate call', function () {
