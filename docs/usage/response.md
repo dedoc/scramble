@@ -7,9 +7,10 @@ Based on source code analysis, Scramble can generate endpoint responses document
 
 - `JsonResource` response
 - `AnonymousResourceCollection` of `JsonResource` items
+- Some `response()` (`ResponseFactory`) support: `response()->make(...)`, `response()->json(...)`, `response()->noContent()`
 - `LengthAwarePaginator` of `JsonResource` items
 
-First two can be understood automatically from the code. The latest one needs to be documented in PhpDoc for now.
+First three can be understood automatically from the code. The latest one needs to be documented in PhpDoc for now.
 
 ```php
 use App\Models\TodoItem;
