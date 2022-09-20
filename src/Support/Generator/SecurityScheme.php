@@ -2,50 +2,66 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\Support\Generator\SecuritySchemes\ApiKeySecurityScheme;
+use Dedoc\Scramble\Support\Generator\SecuritySchemes\HttpSecurityScheme;
+use Dedoc\Scramble\Support\Generator\SecuritySchemes\Oauth2SecurityScheme;
+use Dedoc\Scramble\Support\Generator\SecuritySchemes\OpenIdConnectUrlSecurityScheme;
+
 class SecurityScheme
 {
     public string $type;
-
-    public string $name;
-
-    public string $in;
 
     public string $description = '';
 
     public string $schemeName = 'scheme';
 
-    public bool $isDefault = false;
+    public bool $default = false;
 
-    private function __construct(string $type)
+    public function __construct(string $type)
     {
         $this->type = $type;
     }
 
     public static function apiKey(string $in, string $name)
     {
-        $scheme = new self('apiKey');
-        $scheme->schemeName = 'apiKey';
-        $scheme->in = $in;
-        $scheme->name = $name;
-
-        return $scheme;
+        return (new ApiKeySecurityScheme($in, $name))->as('apiKey');
     }
 
-    public function as(string $schemeName): SecurityScheme
+    public static function http(string $scheme, string $bearerFormat = '')
+    {
+        return (new HttpSecurityScheme($scheme, $bearerFormat))->as('http');
+    }
+
+    public static function oauth2()
+    {
+        return (new Oauth2SecurityScheme)->as('oauth2');
+    }
+
+    public static function openIdConnect(string $openIdConnectUrl)
+    {
+        return (new OpenIdConnectUrlSecurityScheme($openIdConnectUrl))->as('openIdConnect');
+    }
+
+    public static function mutualTLS()
+    {
+        return (new static('mutualTLS'))->as('mutualTLS');
+    }
+
+    public function as(string $schemeName): self
     {
         $this->schemeName = $schemeName;
 
         return $this;
     }
 
-    public function setDescription(string $description): SecurityScheme
+    public function setDescription(string $description): self
     {
         $this->description = $description;
 
         return $this;
     }
 
-    public function default(): SecurityScheme
+    public function default(): self
     {
         $this->default = true;
 
@@ -56,8 +72,6 @@ class SecurityScheme
     {
         return array_filter([
             'type' => $this->type,
-            'in' => $this->in,
-            'name' => $this->name,
             'description' => $this->description,
         ]);
     }
