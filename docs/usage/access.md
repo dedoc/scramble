@@ -1,11 +1,11 @@
 ---
-title: Restricting access to docs
+title: Docs authorization
 weight: 4
 ---
 
-The access to docs in non-production environment is enabled by default.
+Scramble exposes docs at the `/docs/api` URI. By default, you will only be able to access this dashboard in the `local` environment.
 
-If you need to allow access to docs in production environment, implement gate called `viewApiDocs`:
+If you need to allow access to docs in `production` environment, implement gate called `viewApiDocs`:
 
 ```php
 Gate::define('viewApiDocs', function (User $user) {

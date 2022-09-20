@@ -4,13 +4,17 @@ namespace Dedoc\Scramble\Support\Generator;
 
 class SecurityScheme
 {
-    private string $type;
+    public string $type;
 
-    private string $name;
+    public string $name;
 
-    private string $in;
+    public string $in;
 
-    private string $description = '';
+    public string $description = '';
+
+    public string $schemeName = 'scheme';
+
+    public bool $isDefault = false;
 
     private function __construct(string $type)
     {
@@ -20,15 +24,30 @@ class SecurityScheme
     public static function apiKey(string $in, string $name)
     {
         $scheme = new self('apiKey');
+        $scheme->schemeName = 'apiKey';
         $scheme->in = $in;
         $scheme->name = $name;
 
         return $scheme;
     }
 
+    public function as(string $schemeName): SecurityScheme
+    {
+        $this->schemeName = $schemeName;
+
+        return $this;
+    }
+
     public function setDescription(string $description): SecurityScheme
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function default(): SecurityScheme
+    {
+        $this->default = true;
 
         return $this;
     }
