@@ -1,9 +1,9 @@
 ---
 title: Docs authorization
-weight: 4
+weight: 5
 ---
 
-Scramble exposes docs at the `/docs/api` URI. By default, you will only be able to access this dashboard in the `local` environment.
+Scramble exposes docs at the `/docs/api` URI. By default, you will only be able to access this route in the `local` environment.
 
 If you need to allow access to docs in `production` environment, implement gate called `viewApiDocs`:
 

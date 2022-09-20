@@ -10,7 +10,7 @@ it('builds security scheme', function () {
     $openApi = (new OpenApi('3.1.0'))
         ->setInfo(InfoObject::make('API')->setVersion('0.0.1'));
 
-    $openApi->secure(SecurityScheme::apiKey('query', 'api_token')->default());
+    $openApi->secure(SecurityScheme::apiKey('query', 'api_token'));
     $document = $openApi->toArray();
 
     expect($document['security'])->toBe([['apiKey' => []]])
@@ -35,7 +35,6 @@ it('builds oauth2 security scheme', function () {
                     ->tokenUrl('https://test.com/token')
                     ->addScope('wow', 'nice');
             })
-            ->default()
     );
 
     assertMatchesSnapshot($openApi->toArray());

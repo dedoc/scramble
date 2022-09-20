@@ -38,6 +38,8 @@ class OpenApi
 
     public function secure(SecurityScheme $securityScheme)
     {
+        $securityScheme->default();
+
         $this->components->addSecurityScheme($securityScheme->schemeName, $securityScheme);
         if ($securityScheme->default) {
             $this->defaultSecurity(new Security($securityScheme->schemeName));
