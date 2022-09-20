@@ -40,7 +40,7 @@ class Generator
             ->toArray();
 
         if (isset(Scramble::$openApiExtender)) {
-            $openApi = (Scramble::$openApiExtender)($openApi);
+            (Scramble::$openApiExtender)($openApi);
         }
 
         return $openApi->toArray();

@@ -36,6 +36,18 @@ class OpenApi
         return $this;
     }
 
+    public function secure(SecurityScheme $securityScheme)
+    {
+        $securityScheme->default();
+
+        $this->components->addSecurityScheme($securityScheme->schemeName, $securityScheme);
+        if ($securityScheme->default) {
+            $this->defaultSecurity(new Security($securityScheme->schemeName));
+        }
+
+        return $this;
+    }
+
     public function setInfo(InfoObject $info)
     {
         $this->info = $info;
