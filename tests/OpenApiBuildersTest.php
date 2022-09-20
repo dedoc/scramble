@@ -19,7 +19,7 @@ it('builds security scheme', function () {
                 'type' => 'apiKey',
                 'in' => 'query',
                 'name' => 'api_token',
-            ]
+            ],
         ]);
 });
 
