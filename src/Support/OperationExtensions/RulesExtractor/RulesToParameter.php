@@ -6,22 +6,27 @@ use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 class RulesToParameter
 {
     private string $name;
 
-    private array $rules = [];
+    private array $rules;
+
+    private TypeTransformer $openApiTransformer;
 
     const RULES_PRIORITY = [
-        'string', 'bool', 'boolean', 'number', 'int', 'integer', 'string', 'array', 'exists',
+        'bool', 'boolean', 'number', 'int', 'integer', 'string', 'array', 'exists',
     ];
 
-    public function __construct(string $name, $rules)
+    public function __construct(string $name, $rules, TypeTransformer $openApiTransformer)
     {
         $this->name = $name;
         $this->rules = Arr::wrap(is_string($rules) ? explode('|', $rules) : $rules);
+        $this->openApiTransformer = $openApiTransformer;
     }
 
     public function generate()
@@ -32,12 +37,12 @@ class RulesToParameter
 
         $type = $rules->reduce(function (OpenApiType $type, $rule) {
             if (is_string($rule)) {
-                return $this->getTypeFromRule($type, $rule);
+                return $this->getTypeFromStringRule($type, $rule);
             }
 
             return method_exists($rule, 'docs')
-                ? $rule->docs($type)
-                : $type;
+                ? $rule->docs($type, $this->openApiTransformer)
+                : $this->getTypeFromObjectRule($type, $rule);
         }, new UnknownType);
 
         $description = $type->description;
@@ -62,9 +67,9 @@ class RulesToParameter
         };
     }
 
-    private function getTypeFromRule(OpenApiType $type, string $rule)
+    private function getTypeFromStringRule(OpenApiType $type, string $rule)
     {
-        $rulesHandler = app(RulesMapper::class);
+        $rulesHandler = new RulesMapper($this->openApiTransformer);
 
         $explodedRule = explode(':', $rule, 2);
 
@@ -73,6 +78,17 @@ class RulesToParameter
 
         return method_exists($rulesHandler, $ruleName)
             ? $rulesHandler->$ruleName($type, $params)
+            : $type;
+    }
+
+    private function getTypeFromObjectRule(OpenApiType $type, $rule)
+    {
+        $rulesHandler = new RulesMapper($this->openApiTransformer);
+
+        $methodName = Str::camel(class_basename(get_class($rule)));
+
+        return method_exists($rulesHandler, $methodName)
+            ? $rulesHandler->$methodName($type, $rule)
             : $type;
     }
 }

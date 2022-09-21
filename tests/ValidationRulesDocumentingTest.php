@@ -9,6 +9,7 @@ use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Enum;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 it('extract rules from array like rules', function () {
@@ -19,7 +20,17 @@ it('extract rules from array like rules', function () {
         'some.*.name' => 'string',
     ];
 
-    $params = (new RulesToParameters($rules))->handle();
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+});
+
+it('extract rules from enum rule', function () {
+    $rules = [
+        'status' => new Enum(StatusValidationEnum::class),
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -31,7 +42,7 @@ it('extract rules from object like rules', function () {
         'channels.agency.name' => 'nullable|string',
     ];
 
-    $params = (new RulesToParameters($rules))->handle();
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -48,7 +59,7 @@ it('extract rules from object like rules heavy case', function () {
         'channels.agency.name' => 'nullable|string',
     ];
 
-    $params = (new RulesToParameters($rules))->handle();
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -59,7 +70,7 @@ it('extract rules from object like rules with explicit array', function () {
         'channels.publisher.id' => 'int',
     ];
 
-    $params = (new RulesToParameters($rules))->handle();
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -69,7 +80,7 @@ it('supports exists rule', function () {
         'email' => 'required|email|exists:users,email',
     ];
 
-    $type = (new RulesToParameters($rules))->handle()[0]->schema->type;
+    $type = app()->make(RulesToParameters::class, ['rules' => $rules])->handle()[0]->schema->type;
 
     expect($type)->toBeInstanceOf(StringType::class)
         ->and($type->format)->toBe('email');
@@ -160,4 +171,11 @@ class ValidationRulesAndFormRequestAtTheSameTime_TestFormRequest extends \Illumi
             'from_form_request' => 'int',
         ];
     }
+}
+
+enum StatusValidationEnum: string
+{
+    case DRAFT = 'draft';
+    case PUBLISHED = 'published';
+    case ARCHIVED = 'archived';
 }

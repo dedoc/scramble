@@ -59,7 +59,7 @@ class RequestBodyExtension extends OperationExtension
     {
         $rules = $this->extractRouteRequestValidationRules($route, $methodNode);
 
-        return (new RulesToParameters($rules))->handle();
+        return (new RulesToParameters($rules, $this->openApiTransformer))->handle();
     }
 
     /**

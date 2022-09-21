@@ -8,22 +8,25 @@ use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class RulesToParameters
 {
     private array $rules;
+    private TypeTransformer $openApiTransformer;
 
-    public function __construct(array $rules)
+    public function __construct(array $rules, TypeTransformer $openApiTransformer)
     {
         $this->rules = $rules;
+        $this->openApiTransformer = $openApiTransformer;
     }
 
     public function handle()
     {
         return collect($this->rules)
-            ->map(fn ($rules, $name) => (new RulesToParameter($name, $rules))->generate())
+            ->map(fn ($rules, $name) => (new RulesToParameter($name, $rules, $this->openApiTransformer))->generate())
             ->pipe(\Closure::fromCallable([$this, 'handleNested']))
             ->values()
             ->all();

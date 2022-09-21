@@ -144,10 +144,6 @@ class TypeTransformer
             $openApiType = $typeHandledByExtension;
         }
 
-        if ($enum = $type->getAttribute('enum')) {
-            $openApiType->enum($enum);
-        }
-
         return $openApiType;
     }
 

@@ -9,11 +9,21 @@ use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
+use Illuminate\Validation\Rules\Enum;
 
 class RulesMapper
 {
+    private TypeTransformer $openApiTransformer;
+
+    public function __construct(TypeTransformer $openApiTransformer)
+    {
+        $this->openApiTransformer = $openApiTransformer;
+    }
+
     public function string(Type $_)
     {
         return new StringType;
@@ -109,6 +119,21 @@ class RulesMapper
                 ->map(fn (Stringable $v) => (string) $v->trim('"')->replace('""', '"'))
                 ->values()
                 ->all()
+        );
+    }
+
+    public function enum(Type $_, Enum $rule)
+    {
+        $getProtectedValue = function ($obj, $name) {
+            $array = (array)$obj;
+            $prefix = chr(0).'*'.chr(0);
+            return $array[$prefix.$name];
+        };
+
+        $enumName = $getProtectedValue($rule, 'type');
+
+        return $this->openApiTransformer->transform(
+            new ObjectType($enumName)
         );
     }
 }
