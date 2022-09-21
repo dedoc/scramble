@@ -123,6 +123,12 @@ class ModelInfo
     {
         $schema = $model->getConnection()->getDoctrineSchemaManager();
         $table = $model->getConnection()->getTablePrefix().$model->getTable();
+
+        $model->getConnection()
+            ->getDoctrineConnection()
+            ->getDatabasePlatform()
+            ->registerDoctrineTypeMapping('enum', 'string');
+
         $columns = $schema->listTableColumns($table);
         $indexes = $schema->listTableIndexes($table);
 

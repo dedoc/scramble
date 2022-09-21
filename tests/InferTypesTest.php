@@ -17,6 +17,15 @@ it('gets json resource type', function () {
     assertMatchesTextSnapshot($returnType->toString());
 });
 
+it('gets json resource type with enum', function () {
+    /** @var ObjectType $type */
+    $type = app(Infer::class)->analyzeClass(InferTypesTest_SampleTwoPostJsonResource::class);
+
+    $returnType = $type->getMethodCallType('toArray');
+
+    assertMatchesTextSnapshot($returnType->toString());
+});
+
 it('simply infers method types', function () {
     /** @var ObjectType $type */
     $type = app(Infer::class)->analyzeClass(Foo_SampleClass::class);
@@ -218,9 +227,30 @@ class InferTypesTest_SampleTwoJsonResource extends JsonResource
     }
 }
 
+/**
+ * @property InferTypesTest_SamplePostModel $resource
+ */
+class InferTypesTest_SampleTwoPostJsonResource extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'id' => $this->id,
+            'status' => $this->status,
+        ];
+    }
+}
+
 class InferTypesTest_SampleModel extends \Illuminate\Database\Eloquent\Model
 {
     public $timestamps = true;
 
     protected $table = 'users';
+}
+
+class InferTypesTest_SamplePostModel extends \Illuminate\Database\Eloquent\Model
+{
+    public $timestamps = true;
+
+    protected $table = 'posts';
 }
