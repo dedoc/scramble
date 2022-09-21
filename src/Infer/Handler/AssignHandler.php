@@ -14,7 +14,7 @@ class AssignHandler
 
     public function leave(Node\Expr\Assign $node, Scope $scope)
     {
-        if (!$node->var instanceof Node\Expr\Variable) {
+        if (! $node->var instanceof Node\Expr\Variable) {
             return;
         }
 

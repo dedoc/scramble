@@ -53,7 +53,7 @@ class FunctionLikeHandler implements CreatesScope
             ->toArray();
 
         foreach ($node->getParams() as $param) {
-            if (!$param->var instanceof Node\Expr\Variable) {
+            if (! $param->var instanceof Node\Expr\Variable) {
                 continue;
             }
 
