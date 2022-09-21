@@ -125,8 +125,9 @@ class RulesMapper
     public function enum(Type $_, Enum $rule)
     {
         $getProtectedValue = function ($obj, $name) {
-            $array = (array)$obj;
+            $array = (array) $obj;
             $prefix = chr(0).'*'.chr(0);
+
             return $array[$prefix.$name];
         };
 

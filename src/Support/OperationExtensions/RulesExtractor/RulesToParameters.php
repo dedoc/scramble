@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
 class RulesToParameters
 {
     private array $rules;
+
     private TypeTransformer $openApiTransformer;
 
     public function __construct(array $rules, TypeTransformer $openApiTransformer)
