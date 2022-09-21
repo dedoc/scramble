@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Infer;
 
 use Dedoc\Scramble\Infer\Handler\ArrayHandler;
 use Dedoc\Scramble\Infer\Handler\ArrayItemHandler;
+use Dedoc\Scramble\Infer\Handler\AssignHandler;
 use Dedoc\Scramble\Infer\Handler\ClassHandler;
 use Dedoc\Scramble\Infer\Handler\CreatesScope;
 use Dedoc\Scramble\Infer\Handler\ExpressionTypeInferringExtensions;
@@ -38,6 +39,7 @@ class TypeInferringVisitor extends NodeVisitorAbstract
 
         $this->handlers = [
             new FunctionLikeHandler(),
+            new AssignHandler(),
             new NewHandler(),
             new ClassHandler(),
             new PropertyFetchHandler(),
@@ -58,7 +60,7 @@ class TypeInferringVisitor extends NodeVisitorAbstract
             }
 
             if ($handler instanceof CreatesScope) {
-                $this->scope = $handler->createScope($scope);
+                $this->scope = $handler->createScope($scope, $node);
             }
 
             if (method_exists($handler, 'enter')) {

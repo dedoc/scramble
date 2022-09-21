@@ -8,7 +8,7 @@ use PhpParser\Node;
 
 class ClassHandler implements CreatesScope
 {
-    public function createScope(Scope $scope): Scope
+    public function createScope(Scope $scope, Node $node): Scope
     {
         return $scope->createChildScope(clone $scope->context);
     }

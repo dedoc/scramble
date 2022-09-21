@@ -19,7 +19,7 @@ class FunctionType extends AbstractType implements FunctionLikeType
     public function children(): array
     {
         return [
-            ...$this->arguments,
+            ...array_values($this->arguments),
             $this->returnType,
         ];
     }

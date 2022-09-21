@@ -5,20 +5,33 @@ namespace Dedoc\Scramble\Infer\Handler;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
+use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node;
 use PhpParser\Node\FunctionLike;
 
 class FunctionLikeHandler implements CreatesScope
 {
-    public function createScope(Scope $scope): Scope
-    {
-        return $scope->createChildScope(clone $scope->context);
-    }
-
     public function shouldHandle($node)
     {
         return $node instanceof FunctionLike;
+    }
+
+    public function createScope(Scope $scope, Node $node): Scope
+    {
+        $fnScope = $scope->createChildScope(clone $scope->context);
+
+        if ($node instanceof Node\Expr\ArrowFunction) {
+            $fnScope->variables = $scope->variables;
+        }
+
+        if ($node instanceof Node\Expr\Closure) {
+            foreach ($node->uses as $use) {
+                $fnScope->variables[$use->var->name] = $scope->variables[$use->var->name] ?? [];
+            }
+        }
+
+        return $fnScope;
     }
 
     public function enter(FunctionLike $node, Scope $scope)
@@ -28,6 +41,32 @@ class FunctionLikeHandler implements CreatesScope
         // Also, if here we add a reference to the function node type, it may allow us to
         // set function return types not in leave function, but in the return handlers.
         $scope->setType($node, $fnType = new FunctionType);
+
+        $fnType->arguments = collect($node->getParams())
+            ->mapWithKeys(function (Node\Param $param) {
+                return $param->var instanceof Node\Expr\Variable ? [
+                    $param->var->name => isset($param->type)
+                        ? TypeHelper::createTypeFromTypeNode($param->type)
+                        : new UnknownType,
+                ] : [];
+            })
+            ->toArray();
+
+        foreach ($node->getParams() as $param) {
+            if (!$param->var instanceof Node\Expr\Variable) {
+                continue;
+            }
+
+            $scope->addVariableType(
+                $param->getAttribute('startLine'),
+                (string) $param->var->name,
+                isset($param->default)
+                    ? $scope->getType($param->default)
+                    : (isset($param->type)
+                    ? TypeHelper::createTypeFromTypeNode($param->type)
+                    : new UnknownType),
+            );
+        }
 
         $scope->context->setFunction($fnType);
     }
