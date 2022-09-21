@@ -5,15 +5,18 @@ namespace Dedoc\Scramble\Support\ResponseExtractor;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Types\DecimalType;
+use Illuminate\Contracts\Database\Eloquent\Castable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
@@ -99,11 +102,21 @@ class ModelInfo
                     'array' => new ArrayType(),
                 ];
 
+                $attributeType = null;
+
                 if (array_key_exists($typeName, $types)) {
-                    return $createType($types[$typeName]);
+                    $attributeType = $createType($types[$typeName]);
                 }
 
-                return new UnknownType("unimplemented DB column type [$type[0]]");
+                if ($attributeType && $value['cast'] && function_exists('enum_exists') && enum_exists($value['cast'])) {
+                    if (! isset($value['cast']::cases()[0]->value)) {
+                        return $attributeType;
+                    }
+
+                    $attributeType = new ObjectType($value['cast']);
+                }
+
+                return $attributeType ?: new UnknownType("unimplemented DB column type [$type[0]]");
             })
             ->all();
 

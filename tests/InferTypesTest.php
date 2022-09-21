@@ -253,4 +253,15 @@ class InferTypesTest_SamplePostModel extends \Illuminate\Database\Eloquent\Model
     public $timestamps = true;
 
     protected $table = 'posts';
+
+    protected $casts = [
+        'status' => Status::class,
+    ];
+}
+
+enum Status: string
+{
+    case DRAFT = 'draft';
+    case PUBLISHED = 'published';
+    case ARCHIVED = 'archived';
 }

@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Generator\Types\NullType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
@@ -141,6 +142,10 @@ class TypeTransformer
 
         if ($typeHandledByExtension = $this->handleUsingExtensions($type)) {
             $openApiType = $typeHandledByExtension;
+        }
+
+        if ($enum = $type->getAttribute('enum')) {
+            $openApiType->enum($enum);
         }
 
         return $openApiType;

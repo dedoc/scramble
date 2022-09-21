@@ -19,6 +19,7 @@ use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
@@ -65,6 +66,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 $this->app->make(Infer::class),
                 new Components,
                 array_merge($typesToSchemaExtensions, [
+                    EnumToSchema::class,
                     JsonResourceTypeToSchema::class,
                     AnonymousResourceCollectionTypeToSchema::class,
                     LengthAwarePaginatorTypeToSchema::class,
