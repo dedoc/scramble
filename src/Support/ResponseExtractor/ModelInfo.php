@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Doctrine\DBAL\Schema\Column;
@@ -99,11 +100,21 @@ class ModelInfo
                     'array' => new ArrayType(),
                 ];
 
+                $attributeType = null;
+
                 if (array_key_exists($typeName, $types)) {
-                    return $createType($types[$typeName]);
+                    $attributeType = $createType($types[$typeName]);
                 }
 
-                return new UnknownType("unimplemented DB column type [$type[0]]");
+                if ($attributeType && $value['cast'] && function_exists('enum_exists') && enum_exists($value['cast'])) {
+                    if (! isset($value['cast']::cases()[0]->value)) {
+                        return $attributeType;
+                    }
+
+                    $attributeType = new ObjectType($value['cast']);
+                }
+
+                return $attributeType ?: new UnknownType("unimplemented DB column type [$type[0]]");
             })
             ->all();
 
@@ -123,6 +134,12 @@ class ModelInfo
     {
         $schema = $model->getConnection()->getDoctrineSchemaManager();
         $table = $model->getConnection()->getTablePrefix().$model->getTable();
+
+        $model->getConnection()
+            ->getDoctrineConnection()
+            ->getDatabasePlatform()
+            ->registerDoctrineTypeMapping('enum', 'string');
+
         $columns = $schema->listTableColumns($table);
         $indexes = $schema->listTableIndexes($table);
 

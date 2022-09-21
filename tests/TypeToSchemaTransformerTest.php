@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Illuminate\Http\Resources\Json\JsonResource;
 use function Spatie\Snapshots\assertMatchesSnapshot;
@@ -42,6 +43,15 @@ it('gets json resource type', function () {
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
 
     $type = new ObjectType(ComplexTypeHandlersTest_SampleType::class);
+
+    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+});
+
+it('gets enum with values type', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [EnumToSchema::class]);
+    $extension = new EnumToSchema($infer, $transformer, $components);
+
+    $type = new ObjectType(StatusTwo::class);
 
     assertMatchesSnapshot($extension->toSchema($type)->toArray());
 });
@@ -108,4 +118,11 @@ class ComplexTypeHandlersWithNestedTest_SampleType extends JsonResource
             ]),
         ];
     }
+}
+
+enum StatusTwo: string
+{
+    case DRAFT = 'draft';
+    case PUBLISHED = 'published';
+    case ARCHIVED = 'archived';
 }
