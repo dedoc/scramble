@@ -31,7 +31,7 @@ class Generator
     {
         $openApi = $this->makeOpenApi();
 
-        $this->getRoutes()
+        $this->getRoutes()//->dd()
             ->map(fn (Route $route) => $this->routeToOperation($route))
             ->filter() // Closure based routes are filtered out for now, right here
             ->each(fn (Operation $operation) => $openApi->addPath(
@@ -82,6 +82,7 @@ class Generator
             ->filter(function (Route $route) {
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
             })
+            ->filter(fn (Route $r) => isset($r->action['controller']))
             ->filter(function (Route $route) {
                 $routeResolver = Scramble::$routeResolver ?? fn (Route $route) => in_array('api', $route->gatherMiddleware());
 
