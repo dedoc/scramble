@@ -5,13 +5,27 @@ weight: 1
 
 By default, all routes with `api` middleware are added to the documentation.
 
-You can override this behavior by providing a closure that determines if route should be added to the docs. 
+To customize which routes are added to docs, you may provide your own route resolver function using `Scramble::route` in `boot` method of a service provider. For example, in your `AppServiceProvider`:
 
 ```php
-ApiDocs::routes(function (\Illuminate\Routing\Route $route) {
-    return in_array('my-api-middleware', $route->gatherMiddleware());
-});
+use Dedoc\Scramble\Scramble;
+use Illuminate\Routing\Route;
+use Illuminate\Support\Str;
+
+/**
+ * Bootstrap any application services.
+ *
+ * @return void
+ */
+public function boot()
+{
+    Scramble::routes(function (Route $route) {
+        return Str::startsWith($route->uri, 'api/');
+    });
+}
 ```
+
+Route resolver function accepts a route and return `bool` determining if the route should be added to docs or not.
 
 ## Tags (folders)
 All the endpoints are organized in folders by the controller names. Endpoints organisation in rendered docs is based on OpenAPI operation's tags. 
@@ -21,6 +35,8 @@ When there are a lot of controllers in your application, you will have a ton of 
 You can add your own tags on the controller's level using `@tags` in PhpDoc. This will put all the routes from that controller in this folder. It allows you to reduce the amount of folders in rendered docs and organize the docs in a way that makes more sense.
 
 Multiple tags is supported: simply write them in one line separated via comma.
+
+> **Note** Please note that the UI Scramble uses for rendering docs doesn't support nested folders. It uses the first tag as a folder. Other tags will still be there in OpenAPI documentation but won't be shown in the UI.
 
 ```php
 /**
