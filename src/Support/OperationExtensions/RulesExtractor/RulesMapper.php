@@ -81,6 +81,15 @@ class RulesMapper
         return $type->format('email');
     }
 
+    public function uuid(Type $type)
+    {
+        if ($type instanceof UnknownType) {
+            $type = $this->string($type);
+        }
+
+        return $type->format('uuid');
+    }
+
     public function nullable(Type $type)
     {
         return $type->nullable(true);

@@ -47,6 +47,16 @@ it('extract rules from object like rules', function () {
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
 
+it('supports uuid', function () {
+    $rules = [
+        'foo' => ['required', 'uuid', 'exists:App\Models\Section,id'],
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+});
+
 it('extract rules from object like rules heavy case', function () {
     $rules = [
         'channel' => 'required',
