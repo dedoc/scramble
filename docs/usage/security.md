@@ -8,27 +8,27 @@ Most likely, your API is protected by some sort of the auth. OpenAPI have plenty
 ## Adding security scheme
 Scramble allows you to document how your API is secured. To document this, you can use `Scramble::extendOpenApi` method and add security information to OpenAPI document using `secure` method.
 
-You should call `extendOpenApi` in `register` method of some of your service providers. This method accepts a callback that accepts OpenAPI document as a first argument.
+You should call `extendOpenApi` in `boot` method of some of your service providers. This method accepts a callback that accepts OpenAPI document as a first argument.
 
 `secure` method on `OpenApi` object accepts security scheme as an argument. It makes the security scheme default for all endpoints.
 
 ```php
-namespace App\Providers;
-
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
-use Illuminate\Support\ServiceProvider;
 
-class DocsServiceProvider extends ServiceProvider
+/**
+ * Bootstrap any application services.
+ *
+ * @return void
+ */
+public function boot()
 {
-    public function register()
-    {
-        Scramble::extendOpenApi(function (OpenApi $openApi) {
-            $openApi->secure(
-                SecurityScheme::apiKey('query', 'api_token')
-            );
-        });
-    }
+    Scramble::extendOpenApi(function (OpenApi $openApi) {
+        $openApi->secure(
+            SecurityScheme::apiKey('query', 'api_token')
+        );
+    });
 }
 ```
 
