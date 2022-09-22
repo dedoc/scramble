@@ -13,6 +13,7 @@ You should call `extendOpenApi` in `boot` method of some of your service provide
 `secure` method on `OpenApi` object accepts security scheme as an argument. It makes the security scheme default for all endpoints.
 
 ```php
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 
