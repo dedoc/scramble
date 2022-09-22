@@ -82,12 +82,12 @@ class Generator
             ->filter(function (Route $route) {
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
             })
-            ->filter(fn (Route $r) => isset($r->action['controller']))
             ->filter(function (Route $route) {
                 $routeResolver = Scramble::$routeResolver ?? fn (Route $route) => in_array('api', $route->gatherMiddleware());
 
                 return $routeResolver($route);
             })
+            ->filter(fn (Route $r) => $r->getAction('controller'))
             ->values();
     }
 
