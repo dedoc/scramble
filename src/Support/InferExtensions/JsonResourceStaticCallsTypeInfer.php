@@ -24,7 +24,7 @@ class JsonResourceStaticCallsTypeInfer implements ExpressionTypeInferExtension
             return null;
         }
 
-        if (!$node->name instanceof Node\Identifier) {
+        if (! $node->name instanceof Node\Identifier) {
             return null;
         }
 
