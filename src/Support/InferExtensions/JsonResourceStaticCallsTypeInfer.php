@@ -12,7 +12,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 
-class AnonymousResourceCollectionTypeInfer implements ExpressionTypeInferExtension
+class JsonResourceStaticCallsTypeInfer implements ExpressionTypeInferExtension
 {
     public function getType(Expr $node, Scope $scope): ?Type
     {
@@ -24,13 +24,21 @@ class AnonymousResourceCollectionTypeInfer implements ExpressionTypeInferExtensi
             return null;
         }
 
-        if (! ($node->name instanceof Node\Identifier && $node->name->toString() === 'collection')) {
+        if (!$node->name instanceof Node\Identifier) {
             return null;
         }
 
-        return new Generic(
-            new ObjectType(AnonymousResourceCollection::class),
-            [new ObjectType($node->class->toString())],
-        );
+        if ($node->name->toString() === 'collection') {
+            return new Generic(
+                new ObjectType(AnonymousResourceCollection::class),
+                [new ObjectType($node->class->toString())],
+            );
+        }
+
+        if ($node->name->toString() === 'make') {
+            return new ObjectType($node->class->toString());
+        }
+
+        return null;
     }
 }

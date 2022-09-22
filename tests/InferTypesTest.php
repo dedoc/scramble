@@ -192,6 +192,7 @@ class InferTypesTest_SampleJsonResource extends JsonResource
             $this->mergeWhen(true, fn () => ['foo' => 'bar', 'id_inside' => $this->resource->id]),
             'when' => $this->when(true, ['wiw']),
             'item' => new InferTypesTest_SampleTwoJsonResource($this->resource),
+            'item_make' => InferTypesTest_SampleTwoJsonResource::make($this->resource),
             'items' => InferTypesTest_SampleTwoJsonResource::collection($this->resource),
             'optional_when_new' => $this->when(true, fn () => new InferTypesTest_SampleTwoJsonResource($this->resource)),
             $this->mergeWhen(true, fn () => [
