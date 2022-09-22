@@ -146,7 +146,7 @@ class Scope
 
     public function addVariableType(int $line, string $name, Type $type)
     {
-        if (!isset($this->variables[$name])) {
+        if (! isset($this->variables[$name])) {
             $this->variables[$name] = [];
         }
 
