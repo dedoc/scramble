@@ -87,6 +87,7 @@ class Generator
 
                 return $routeResolver($route);
             })
+            ->filter(fn (Route $r) => $r->getAction('controller'))
             ->values();
     }
 
