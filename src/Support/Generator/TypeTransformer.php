@@ -171,6 +171,8 @@ class TypeTransformer
                     return $reference;
                 }
 
+//                info($reference->fullName);
+
                 if ($reference) {
                     $this->components->addSchema($reference->fullName, Schema::fromType(new UnknownType('Reference is being analyzed.')));
                 }

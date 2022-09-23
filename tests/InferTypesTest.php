@@ -109,6 +109,20 @@ it('infers model type', function () {
     assertMatchesSnapshot($openApiType->toArray());
 });
 
+it('infers model type when toArray is implemented', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+        ModelToSchema::class,
+        EloquentCollectionToSchema::class,
+    ]);
+    $extension = new ModelToSchema($infer, $transformer, $components);
+
+    $type = new ObjectType(InferTypesTest_SamplePostModelWithToArray::class);
+    $openApiType = $extension->toSchema($type);
+
+    expect($components->schemas)->toHaveLength(2)->toHaveKeys(['InferTypesTest_SamplePostModelWithToArray', 'InferTypesTest_SampleModel']);
+    assertMatchesSnapshot($openApiType->toArray());
+});
+
 class FooSeven_SampleClass
 {
     public function foo()
@@ -296,6 +310,50 @@ class InferTypesTest_SamplePostModel extends \Illuminate\Database\Eloquent\Model
     public function children()
     {
         return $this->hasMany(InferTypesTest_SamplePostModel::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(InferTypesTest_SampleModel::class, 'user_id');
+    }
+}
+
+class InferTypesTest_SamplePostModelWithToArray extends \Illuminate\Database\Eloquent\Model
+{
+    public $timestamps = true;
+
+    protected $guarded = [];
+
+    protected $table = 'posts';
+
+    protected $casts = [
+        'status' => Status::class,
+    ];
+
+    public function getReadTimeAttribute()
+    {
+        return 123;
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(InferTypesTest_SamplePostModelWithToArray::class);
+    }
+
+    public function children()
+    {
+        return $this->hasMany(InferTypesTest_SamplePostModelWithToArray::class);
+    }
+
+    public function toArray()
+    {
+        return [
+            'id' => $this->id,
+            'children' => $this->children,
+            'read_time' => $this->read_time,
+            'user' => $this->user,
+            'created_at' => $this->created_at,
+        ];
     }
 
     public function user()

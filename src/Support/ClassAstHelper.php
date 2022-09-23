@@ -29,10 +29,14 @@ class ClassAstHelper
 
     private array $extensions;
 
-    public function __construct(string $class, array $extensions = [])
+    private array $handlers;
+
+    public function __construct(string $class, array $extensions = [], array $handlers = [])
     {
         $this->class = $class;
         $this->extensions = $extensions;
+        $this->handlers = $handlers;
+
         $this->init();
     }
 
@@ -51,7 +55,7 @@ class ClassAstHelper
         );
 
         $traverser = new NodeTraverser;
-        $traverser->addVisitor($infer = new TypeInferringVisitor($this->namesResolver, $this->extensions));
+        $traverser->addVisitor($infer = new TypeInferringVisitor($this->namesResolver, $this->extensions, $this->handlers));
         $traverser->traverse([$classAst]);
 
         $this->scope = $infer->scope;

@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\ResponseExtractor;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -17,6 +18,7 @@ use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Types\DecimalType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionMethod;
@@ -24,6 +26,8 @@ use SplFileObject;
 
 class ModelInfo
 {
+    public static array $cache = [];
+
     protected $relationMethods = [
         'hasMany',
         'hasManyThrough',
@@ -62,6 +66,10 @@ class ModelInfo
 
     public function type()
     {
+        if (isset(static::$cache[$this->class])) {
+            return static::$cache[$this->class];
+        }
+
         if (! class_exists(Column::class)) {
             throw new \LogicException('`doctrine/dbal` package is not installed. It is needed to get model attribute types.');
         }
@@ -71,6 +79,7 @@ class ModelInfo
         /** @var Model $model */
         $model = app()->make($modelInfo->get('class'));
 
+        /** @var Collection $properties */
         $properties = $modelInfo->get('attributes')
             ->map(function ($value, $key) use ($model) {
                 $isNullable = $value['nullable'];
@@ -116,12 +125,23 @@ class ModelInfo
                 }
 
                 return $attributeType ?: new UnknownType("unimplemented DB column type [$type[0]]");
-            })
-            ->all();
+            });
 
-        return new ObjectType(
+        $relations = $modelInfo->get('relations')
+            ->map(function ($relation) {
+                if ($isManyRelation = Str::contains($relation['type'], 'Many')) {
+                    return new Generic(
+                        new ObjectType(\Illuminate\Database\Eloquent\Collection::class),
+                        [new ObjectType($relation['related'])]
+                    );
+                }
+
+                return new ObjectType($relation['related']);
+            });
+
+        return static::$cache[$this->class] = new ObjectType(
             $modelInfo->get('class'),
-            $properties,
+            $properties->merge($relations)->all(),
         );
     }
 

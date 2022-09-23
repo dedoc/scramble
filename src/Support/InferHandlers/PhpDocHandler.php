@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support\InferExtensions;
+namespace Dedoc\Scramble\Support\InferHandlers;
 
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -8,15 +8,21 @@ use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\Type;
+use PhpParser\Node;
 use PhpParser\Node\Expr;
 
 /**
- * Extension that added info from PHPDoc to the node. Thanks to this, other extensions
+ * Handler that adds info from PHPDoc to the node. Thanks to this, other extensions
  * can get more information for the returning types.
  */
-class PhpDocTypeInfer implements ExpressionTypeInferExtension
+class PhpDocHandler
 {
-    public function getType(Expr $node, Scope $scope): ?Type
+    public function shouldHandle(Node $node)
+    {
+        return (bool) $node->getDocComment();
+    }
+
+    public function leave(Node $node, Scope $scope): ?Type
     {
         if ($node instanceof Expr\ArrayItem && $doc = $node->getDocComment()) {
             $docNode = PhpDoc::parse($doc->getText());

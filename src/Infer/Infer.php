@@ -12,9 +12,12 @@ class Infer
 
     private array $extensions;
 
-    public function __construct(array $extensions = [])
+    private array $handlers;
+
+    public function __construct(array $extensions = [], array $handlers = [])
     {
         $this->extensions = $extensions;
+        $this->handlers = $handlers;
     }
 
     public function analyzeClass(string $class): ObjectType
@@ -28,7 +31,7 @@ class Infer
 
     private function traverseClassAstAndInferType(string $class): ObjectType
     {
-        $astHelper = new ClassAstHelper($class, $this->extensions);
+        $astHelper = new ClassAstHelper($class, $this->extensions, $this->handlers);
 
         return $astHelper->scope->getType($astHelper->classAst);
     }

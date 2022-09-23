@@ -1,43 +1,65 @@
 <?php
 
-namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
+namespace Dedoc\Scramble\Support\InferHandlers;
 
 use Carbon\Carbon;
-use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
-use Dedoc\Scramble\Support\Generator\Reference;
-use Dedoc\Scramble\Support\Generator\Response;
-use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
-use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Database\Eloquent\Model;
+use PhpParser\Node;
 
-class ModelToSchema extends TypeToSchemaExtension
+class ModelClassHandler
 {
-    public function shouldHandle(Type $type)
+    public function shouldHandle(Node $node)
     {
-        return $type instanceof ObjectType
-            && $type->isInstanceOf(Model::class);
+        return $node instanceof Node\Stmt\Class_;
     }
 
-    /**
-     * @param  ObjectType  $type
-     */
-    public function toSchema(Type $type)
+    public function enter(Node $node, Scope $scope)
     {
-        $modelName = $type->name;
+        $type = $scope->getType($node);
 
+        if (! $type->isInstanceOf(Model::class)) {
+            return;
+        }
+    }
+
+    public function leave(Node $node, Scope $scope)
+    {
+        $type = $scope->getType($node);
+
+        if (! $type->isInstanceOf(Model::class)) {
+            return;
+        }
+
+//        $modelType = (new ModelInfo($type->name))->type();
+
+//        $type->properties = array_merge($modelType->properties, $type->properties);
+
+//        dd($type);
+
+//        if (array_key_exists('toArray', $type->methods)) {
+//            return;
+//        }
+//
+//        $type->methods['toArray'] = (new FunctionType())
+//            ->setReturnType($this->getDefaultToArrayType($type, $type->name));
+    }
+
+    private function getDefaultToArrayType(ObjectType $type, string $modelName)
+    {
         $modelInfo = new ModelInfo($modelName);
 
         /** @var Model $instance */
         $instance = app()->make($modelName);
         $info = $modelInfo->handle();
-        $type = $modelInfo->type();
 
         $arrayableAttributesTypes = $info->get('attributes', collect())
             ->when($instance->getVisible(), fn ($c, $visible) => $c->only($visible))
@@ -67,35 +89,9 @@ class ModelToSchema extends TypeToSchemaExtension
                 return $type->getPropertyFetchType($name);
             });
 
-        $t = new ArrayType([
+        return new ArrayType([
             ...$arrayableAttributesTypes->map(fn ($type, $name) => new ArrayItemType_($name, $type))->values()->all(),
             ...$arrayableRelationsTypes->map(fn ($type, $name) => new ArrayItemType_($name, $type, $isOptional = true))->values()->all(),
         ]);
-//        dd($t);
-        return $this->openApiTransformer->transform($t);
-
-        $type = $this->infer->analyzeClass($type->name);
-
-        return $this->openApiTransformer->transform(
-            $type->getMethodCallType('toArray')
-        );
-    }
-
-    /**
-     * @param  ObjectType  $type
-     */
-    public function toResponse(Type $type)
-    {
-        return Response::make(200)
-            ->description('`'.$this->components->uniqueSchemaName($type->name).'`')
-            ->setContent(
-                'application/json',
-                Schema::fromType($this->openApiTransformer->transform($type)),
-            );
-    }
-
-    public function reference(ObjectType $type)
-    {
-        return new Reference('schemas', $type->name, $this->components);
     }
 }

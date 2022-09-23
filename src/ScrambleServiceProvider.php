@@ -7,6 +7,7 @@ use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Infer\TypeInferringVisitor;
+use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\ClassAstHelper;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -14,6 +15,8 @@ use Dedoc\Scramble\Support\InferExtensions\JsonResourceStaticCallsTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\PhpDocTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
+use Dedoc\Scramble\Support\InferHandlers\ModelClassHandler;
+use Dedoc\Scramble\Support\InferHandlers\PhpDocHandler;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
@@ -52,8 +55,16 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     JsonResourceStaticCallsTypeInfer::class,
                     JsonResourceTypeInfer::class,
                     ResponseFactoryTypeInfer::class,
-                    PhpDocTypeInfer::class,
                 ]);
+            });
+
+        $this->app->when([Infer::class, ClassAstHelper::class, TypeInferringVisitor::class])
+            ->needs('$handlers')
+            ->give(function () {
+                return [
+//                    new PhpDocHandler(),
+//                    new ModelClassHandler(),
+                ];
             });
 
         $this->app->singleton(TypeTransformer::class, function () {

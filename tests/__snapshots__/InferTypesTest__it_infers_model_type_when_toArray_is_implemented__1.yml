@@ -1,0 +1,13 @@
+type: object
+properties:
+    id: { type: integer }
+    children: { type: array, items: { $ref: '#/components/schemas/InferTypesTest_SamplePostModelWithToArray' } }
+    read_time: { type: string }
+    user: { $ref: '#/components/schemas/InferTypesTest_SampleModel' }
+    created_at: { type: [object, 'null'] }
+required:
+    - id
+    - children
+    - read_time
+    - user
+    - created_at
