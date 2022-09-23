@@ -93,6 +93,7 @@ class ModelInfo
                     'double' => new FloatType(),
                     'decimal' => new FloatType(),
                     'string' => new StringType(),
+                    'text' => new StringType(),
                     'datetime' => new StringType(),
                     'bool' => new BooleanType(),
                     'boolean' => new BooleanType(),
@@ -382,6 +383,10 @@ class ModelInfo
      */
     protected function qualifyModel(string $model)
     {
+        if (class_exists($model)) {
+            return $model;
+        }
+
         if (str_contains($model, '\\') && class_exists($model)) {
             return $model;
         }

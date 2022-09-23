@@ -34,6 +34,13 @@ class Components
         return new Reference('schemas', $schemaName, $this);
     }
 
+    public function removeSchema(string $schemaName): void
+    {
+        unset($this->schemas[$schemaName]);
+
+        return;
+    }
+
     public function toArray()
     {
         $result = [];

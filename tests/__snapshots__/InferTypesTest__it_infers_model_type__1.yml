@@ -1,0 +1,20 @@
+type: object
+properties:
+    id: { type: integer }
+    status: { type: object }
+    user_id: { type: integer }
+    title: { type: string }
+    body: { type: string }
+    created_at: { type: [string, 'null'], format: date-time }
+    updated_at: { type: [string, 'null'], format: date-time }
+    parent: { $ref: '#/components/schemas/InferTypesTest_SamplePostModel' }
+    children: { type: array, items: { $ref: '#/components/schemas/InferTypesTest_SamplePostModel' } }
+    user: { $ref: '#/components/schemas/InferTypesTest_SampleModel' }
+required:
+    - id
+    - status
+    - user_id
+    - title
+    - body
+    - created_at
+    - updated_at

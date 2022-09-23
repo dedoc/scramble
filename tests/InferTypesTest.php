@@ -1,9 +1,15 @@
 <?php
 
 use Dedoc\Scramble\Infer\Infer;
+use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Resources\Json\JsonResource;
+use function Spatie\Snapshots\assertMatchesSnapshot;
 use function Spatie\Snapshots\assertMatchesTextSnapshot;
 
 uses(RefreshDatabase::class);
@@ -87,6 +93,20 @@ it('infers this return', function () {
     $returnType = $type->getMethodCallType('foo');
 
     expect($returnType->toString())->toBe('FooSeven_SampleClass');
+});
+
+it('infers model type', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+        ModelToSchema::class,
+        EloquentCollectionToSchema::class,
+    ]);
+    $extension = new ModelToSchema($infer, $transformer, $components);
+
+    $type = new ObjectType(InferTypesTest_SamplePostModel::class);
+    $openApiType = $extension->toSchema($type);
+
+    expect($components->schemas)->toHaveLength(2)->toHaveKeys(['InferTypesTest_SamplePostModel', 'InferTypesTest_SampleModel']);
+    assertMatchesSnapshot($openApiType->toArray());
 });
 
 class FooSeven_SampleClass
@@ -246,6 +266,8 @@ class InferTypesTest_SampleModel extends \Illuminate\Database\Eloquent\Model
 {
     public $timestamps = true;
 
+    protected $guarded = [];
+
     protected $table = 'users';
 }
 
@@ -253,11 +275,33 @@ class InferTypesTest_SamplePostModel extends \Illuminate\Database\Eloquent\Model
 {
     public $timestamps = true;
 
+    protected $guarded = [];
+
     protected $table = 'posts';
 
     protected $casts = [
         'status' => Status::class,
     ];
+
+    public function getReadTimeAttribute()
+    {
+        return 123;
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(InferTypesTest_SamplePostModel::class);
+    }
+
+    public function children()
+    {
+        return $this->hasMany(InferTypesTest_SamplePostModel::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(InferTypesTest_SampleModel::class, 'user_id');
+    }
 }
 
 enum Status: string

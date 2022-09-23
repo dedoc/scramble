@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Generator\Types\NullType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
@@ -143,6 +144,10 @@ class TypeTransformer
             $openApiType = $typeHandledByExtension;
         }
 
+        if ($type->hasAttribute('format')) {
+            $openApiType->format($type->getAttribute('format'));
+        }
+
         return $openApiType;
     }
 
@@ -166,12 +171,23 @@ class TypeTransformer
                     return $reference;
                 }
 
+                if ($reference) {
+                    $this->components->addSchema($reference->fullName, Schema::fromType(new UnknownType('Reference is being analyzed.')));
+                }
+
                 if ($handledType = $extension->toSchema($type, $acc)) {
                     if ($reference) {
                         return $this->components->addSchema($reference->fullName, Schema::fromType($handledType));
                     }
 
                     return $handledType;
+                }
+
+                /*
+                 * If we couldn't handle a type, reference is removed.
+                 */
+                if ($reference) {
+                    $this->components->removeSchema($reference->fullName);
                 }
 
                 return $acc;

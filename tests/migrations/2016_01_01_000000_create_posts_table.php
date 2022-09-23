@@ -16,6 +16,9 @@ class CreatePostsTable extends Migration
         Schema::create('posts', function (Blueprint $table) {
             $table->increments('id');
             $table->enum('status', ['draft', 'published']);
+            $table->integer('user_id');
+            $table->string('title');
+            $table->text('body');
             $table->timestamps();
         });
     }
