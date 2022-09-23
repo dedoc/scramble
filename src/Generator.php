@@ -34,6 +34,7 @@ class Generator
         $this->getRoutes()
             ->map(function (Route $route) {
                 info('handling '.$route->uri);
+
                 return $this->routeToOperation($route);
             })
             ->filter() // Closure based routes are filtered out for now, right here

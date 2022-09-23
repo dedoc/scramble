@@ -38,7 +38,6 @@ class Components
     {
         unset($this->schemas[$schemaName]);
 
-        return;
     }
 
     public function toArray()
