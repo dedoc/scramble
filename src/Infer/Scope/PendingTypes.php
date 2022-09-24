@@ -9,23 +9,20 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 
 class PendingTypes
 {
-    /** @var array{0: Type, 1: callable(PendingReturnType, Type): void, 2: int} */
+    /** @var array{0: Type, 1: callable(PendingReturnType, Type): void, 2: PendingReturnType[] } */
     private array $references = [];
 
-    public function addReference(Type $type, callable $referenceResolver, int $pendingTypesCount)
+    public function addReference(Type $type, callable $referenceResolver, array $pendingTypes)
     {
-        $this->references[] = [$type, $referenceResolver, $pendingTypesCount];
+        $this->references[] = [$type, $referenceResolver, $pendingTypes];
     }
 
     public function resolve()
     {
         $hasResolvedSomeReferences = false;
 
-        foreach ($this->references as $index => [$type, $referenceResolver]) {
-            /** @var PendingReturnType[] $pendingTypes */
-            $pendingTypes = (new TypeWalker)->find($type, fn ($t) => $t instanceof PendingReturnType);
-
-            foreach ($pendingTypes as $pendingType) {
+        foreach ($this->references as $index => [$type, $referenceResolver, $pendingTypes]) {
+            foreach ($pendingTypes as $pendingTypeIndex => $pendingType) {
                 $resolvedType = $pendingType->scope->getType($pendingType->node);
 
                 if ($resolvedType instanceof PendingReturnType) {
@@ -41,13 +38,13 @@ class PendingTypes
                 }
 
                 $referenceResolver($pendingType, $resolvedType);
-                $this->references[$index][2]--;
+                unset($this->references[$index][2][$pendingTypeIndex]);
                 $hasResolvedSomeReferences = true;
             }
         }
 
-        foreach ($this->references as $index => [,,$count]) {
-            if ($count === 0) {
+        foreach ($this->references as $index => [,,$pendingTypes]) {
+            if (count($pendingTypes) === 0) {
                 unset($this->references[$index]);
             }
         }
@@ -62,10 +59,7 @@ class PendingTypes
 
     public function resolveAllPendingIntoUnknowns()
     {
-        foreach ($this->references as [$type, $referenceResolver]) {
-            /** @var PendingReturnType[] $pendingTypes */
-            $pendingTypes = (new TypeWalker)->find($type, fn ($t) => $t instanceof PendingReturnType);
-
+        foreach ($this->references as [$type, $referenceResolver, $pendingTypes]) {
             foreach ($pendingTypes as $pendingType) {
                 $resolvedType = $pendingType->defaultType;
 

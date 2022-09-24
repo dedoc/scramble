@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Infer;
 
 use Dedoc\Scramble\Infer\Handler\ArrayHandler;
 use Dedoc\Scramble\Infer\Handler\ArrayItemHandler;
+use Dedoc\Scramble\Infer\Handler\AssignHandler;
 use Dedoc\Scramble\Infer\Handler\ClassHandler;
 use Dedoc\Scramble\Infer\Handler\CreatesScope;
 use Dedoc\Scramble\Infer\Handler\ExpressionTypeInferringExtensions;
@@ -27,24 +28,23 @@ class TypeInferringVisitor extends NodeVisitorAbstract
 
     private $namesResolver;
 
-    private array $extensions;
+    private array $handlers;
 
-    private array $handlers = [];
-
-    public function __construct(callable $namesResolver, array $extensions = [])
+    public function __construct(callable $namesResolver, array $extensions = [], array $handlers = [])
     {
         $this->namesResolver = $namesResolver;
-        $this->extensions = $extensions;
 
         $this->handlers = [
             new FunctionLikeHandler(),
+            new AssignHandler(),
             new NewHandler(),
             new ClassHandler(),
             new PropertyFetchHandler(),
             new ArrayHandler(),
             new ArrayItemHandler(),
             new ReturnHandler(),
-            new ExpressionTypeInferringExtensions($this->extensions),
+            new ExpressionTypeInferringExtensions($extensions),
+            ...$handlers,
         ];
     }
 
@@ -58,7 +58,7 @@ class TypeInferringVisitor extends NodeVisitorAbstract
             }
 
             if ($handler instanceof CreatesScope) {
-                $this->scope = $handler->createScope($scope);
+                $this->scope = $handler->createScope($scope, $node);
             }
 
             if (method_exists($handler, 'enter')) {
@@ -91,7 +91,7 @@ class TypeInferringVisitor extends NodeVisitorAbstract
 
             // When there is a referenced type in fn return, we want to add it to the pending
             // resolution types, so it can be resolved later.
-            if ($pendingTypesCount = count((new TypeWalker)->find($type->getReturnType(), fn ($t) => $t instanceof PendingReturnType))) {
+            if (count($pendingTypes = (new TypeWalker)->find($type->getReturnType(), fn ($t) => $t instanceof PendingReturnType))) {
                 $this->scope->pending->addReference(
                     $type,
                     function ($pendingType, $resolvedPendingType) use ($type) {
@@ -99,7 +99,7 @@ class TypeInferringVisitor extends NodeVisitorAbstract
                             TypeWalker::replace($type->getReturnType(), $pendingType, $resolvedPendingType)
                         );
                     },
-                    $pendingTypesCount,
+                    $pendingTypes,
                 );
             }
 

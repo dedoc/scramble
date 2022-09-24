@@ -20,6 +20,11 @@ class Scope
 
     public ?Scope $parentScope;
 
+    /**
+     * @var array<string, array{line: int, type: Type}[]>
+     */
+    public array $variables = [];
+
     public $namesResolver;
 
     public function __construct(
@@ -50,6 +55,10 @@ class Scope
         if ($node instanceof Node\Expr\Variable && $node->name === 'this') {
             // @todo: remove as this should not happen - class must be always there
             return $this->context->class ?? new UnknownType;
+        }
+
+        if ($node instanceof Node\Expr\Variable) {
+            return $this->getVariableType($node) ?: new UnknownType;
         }
 
         $type = $this->nodeTypesResolver->getType($node);
@@ -133,5 +142,32 @@ class Scope
     public function resolveName(string $name)
     {
         return ($this->namesResolver)($name);
+    }
+
+    public function addVariableType(int $line, string $name, Type $type)
+    {
+        if (! isset($this->variables[$name])) {
+            $this->variables[$name] = [];
+        }
+
+        $this->variables[$name][] = compact('line', 'type');
+    }
+
+    private function getVariableType(Node\Expr\Variable $node)
+    {
+        $name = (string) $node->name;
+        $line = $node->getAttribute('startLine', 0);
+
+        $definitions = $this->variables[$name] ?? [];
+
+        $type = new UnknownType;
+        foreach ($definitions as $definition) {
+            if ($definition['line'] > $line) {
+                return $type;
+            }
+            $type = $definition['type'];
+        }
+
+        return $type;
     }
 }

@@ -144,6 +144,10 @@ class TypeTransformer
             $openApiType = $typeHandledByExtension;
         }
 
+        if ($type->hasAttribute('format')) {
+            $openApiType->format($type->getAttribute('format'));
+        }
+
         return $openApiType;
     }
 

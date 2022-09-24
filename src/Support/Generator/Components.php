@@ -34,6 +34,11 @@ class Components
         return new Reference('schemas', $schemaName, $this);
     }
 
+    public function removeSchema(string $schemaName): void
+    {
+        unset($this->schemas[$schemaName]);
+    }
+
     public function toArray()
     {
         $result = [];
@@ -86,10 +91,5 @@ class Components
     public static function slug(string $name)
     {
         return Str::replace('\\', '.', $name);
-    }
-
-    public function removeSchema(string $schemaName): void
-    {
-        unset($this->schemas[$schemaName]);
     }
 }

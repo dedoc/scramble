@@ -35,6 +35,22 @@ class TypeHelper
         }
 
         if ($typeNode instanceof Node\Identifier) {
+            if ($typeNode->name === 'int') {
+                return new IntegerType();
+            }
+
+            if ($typeNode->name === 'string') {
+                return new StringType();
+            }
+
+            if ($typeNode->name === 'bool') {
+                return new BooleanType();
+            }
+
+            if ($typeNode->name === 'float') {
+                return new FloatType();
+            }
+
             return new ObjectType($typeNode->toString());
         }
 
