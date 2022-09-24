@@ -17,6 +17,8 @@ use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
+use Illuminate\Support\Str;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 /**
  * Transforms PHP type to OpenAPI schema type.
@@ -197,15 +199,36 @@ class TypeTransformer
 
     public function toResponse(Type $type): ?Response
     {
-        if ($response = $this->handleResponseUsingExtensions($type)) {
-            return $response;
+        if (!$response = $this->handleResponseUsingExtensions($type)) {
+            $response = Response::make(200)
+                ->setContent(
+                    'application/json',
+                    Schema::fromType($this->transform($type))
+                );
         }
 
-        return Response::make(200)
-            ->setContent(
-                'application/json',
-                Schema::fromType($this->transform($type))
-            );
+        /** @var PhpDocNode $docNode */
+        if ($docNode = $type->getAttribute('docNode')) {
+            $description = (string) Str::of($docNode->getAttribute('summary') ?: '')
+                ->append("\n\n".($docNode->getAttribute('description') ?: ''))
+                ->append("\n\n".$response->description)
+                ->trim();
+            $response->description($description);
+
+            $code = (int)(array_values($docNode->getTagsByName('@code'))[0]->value->value ?? 200);
+            $response->code = $code;
+
+            if ($varType = $docNode->getVarTagValues()[0]->type ?? null) {
+                $response->setContent(
+                    'application/json',
+                    Schema::fromType($this->transform(
+                        PhpDocTypeHelper::toType($varType),
+                    ))
+                );
+            }
+        }
+
+        return $response;
     }
 
     private function handleResponseUsingExtensions(Type $type)
