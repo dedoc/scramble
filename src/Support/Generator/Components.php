@@ -37,7 +37,6 @@ class Components
     public function removeSchema(string $schemaName): void
     {
         unset($this->schemas[$schemaName]);
-
     }
 
     public function toArray()
