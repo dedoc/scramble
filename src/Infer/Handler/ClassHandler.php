@@ -21,12 +21,9 @@ class ClassHandler implements CreatesScope
     public function enter(Node\Stmt\Class_ $node, Scope $scope)
     {
         $scope->context->setClass(
-            new ObjectType($node->name ? $scope->resolveName($node->name->toString()) : 'anonymous@class'),
+            $classType = new ObjectType($node->name ? $scope->resolveName($node->name->toString()) : 'anonymous@class'),
         );
-    }
 
-    public function leave(Node\Stmt\Class_ $node, Scope $scope)
-    {
-        $scope->setType($node, $scope->context->class);
+        $scope->setType($node, $classType);
     }
 }

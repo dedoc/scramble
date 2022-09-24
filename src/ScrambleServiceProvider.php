@@ -60,8 +60,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->needs('$handlers')
             ->give(function () {
                 return [
-                    //                    new PhpDocHandler(),
-                    //                    new ModelClassHandler(),
+                    new PhpDocHandler(),
+                    new ModelClassHandler(),
                 ];
             });
 

@@ -12,6 +12,7 @@ use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Union;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Model;
 use PhpParser\Node;
 
@@ -29,6 +30,16 @@ class ModelClassHandler
         if (! $type->isInstanceOf(Model::class)) {
             return;
         }
+
+        try {
+            app()->make($type->name);
+        } catch (BindingResolutionException $e) {
+            return;
+        }
+
+        $modelType = (new ModelInfo($type->name))->type();
+
+        $type->properties = array_merge($modelType->properties, $type->properties);
     }
 
     public function leave(Node $node, Scope $scope)
@@ -39,18 +50,18 @@ class ModelClassHandler
             return;
         }
 
-//        $modelType = (new ModelInfo($type->name))->type();
+        if (array_key_exists('toArray', $type->methods)) {
+            return;
+        }
 
-//        $type->properties = array_merge($modelType->properties, $type->properties);
+        try {
+            app()->make($type->name);
+        } catch (BindingResolutionException $e) {
+            return;
+        }
 
-//        dd($type);
-
-//        if (array_key_exists('toArray', $type->methods)) {
-//            return;
-//        }
-//
-//        $type->methods['toArray'] = (new FunctionType())
-//            ->setReturnType($this->getDefaultToArrayType($type, $type->name));
+        $type->methods['toArray'] = (new FunctionType())
+            ->setReturnType($this->getDefaultToArrayType($type, $type->name));
     }
 
     private function getDefaultToArrayType(ObjectType $type, string $modelName)
@@ -83,6 +94,7 @@ class ModelClassHandler
             });
 
         $arrayableRelationsTypes = $info->get('relations', collect())
+            ->only($this->getProtectedValue($instance, 'with'))
             ->when($instance->getVisible(), fn ($c, $visible) => $c->only($visible))
             ->when($instance->getHidden(), fn ($c, $visible) => $c->except($visible))
             ->map(function ($_, $name) use ($type) {
@@ -93,5 +105,13 @@ class ModelClassHandler
             ...$arrayableAttributesTypes->map(fn ($type, $name) => new ArrayItemType_($name, $type))->values()->all(),
             ...$arrayableRelationsTypes->map(fn ($type, $name) => new ArrayItemType_($name, $type, $isOptional = true))->values()->all(),
         ]);
+    }
+
+    private function getProtectedValue($obj, $name)
+    {
+        $array = (array) $obj;
+        $prefix = chr(0).'*'.chr(0);
+
+        return $array[$prefix.$name];
     }
 }

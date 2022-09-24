@@ -15,7 +15,8 @@ class TypeWalker
 
         $foundTypes = $lookup($type) ? [$type] : [];
 
-        foreach ($type->children() as $child) {
+        $children = $type instanceof ObjectType ? [] : $type->children();
+        foreach ($children as $child) {
             $foundTypes = array_merge($foundTypes, $this->find($child, $lookup));
         }
 
@@ -33,7 +34,8 @@ class TypeWalker
             return $type;
         }
 
-        foreach ($type->children() as $child) {
+        $children = $type instanceof ObjectType ? [] : $type->children();
+        foreach ($children as $child) {
             if ($foundType = $this->first($child, $lookup)) {
                 return $foundType;
             }
@@ -48,7 +50,7 @@ class TypeWalker
             return $replace;
         }
 
-        $propertiesWithNodes = $subject->nodes();
+        $propertiesWithNodes = $subject instanceof ObjectType ? [] : $subject->nodes();
         foreach ($propertiesWithNodes as $propertyWithNode) {
             $node = $subject->$propertyWithNode;
             if (! is_array($node)) {

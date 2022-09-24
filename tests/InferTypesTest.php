@@ -292,6 +292,8 @@ class InferTypesTest_SamplePostModel extends \Illuminate\Database\Eloquent\Model
 
     protected $table = 'posts';
 
+    protected $with = ['parent', 'children', 'user'];
+
     protected $casts = [
         'status' => Status::class,
     ];
