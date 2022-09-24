@@ -28,9 +28,7 @@ class TypeInferringVisitor extends NodeVisitorAbstract
 
     private $namesResolver;
 
-    private array $handlers = [];
-
-    private array $handlerExtensions = [];
+    private array $handlers;
 
     public function __construct(callable $namesResolver, array $extensions = [], array $handlers = [])
     {
@@ -46,9 +44,8 @@ class TypeInferringVisitor extends NodeVisitorAbstract
             new ArrayItemHandler(),
             new ReturnHandler(),
             new ExpressionTypeInferringExtensions($extensions),
+            ...$handlers,
         ];
-
-        $this->handlerExtensions = $handlers;
     }
 
     public function enterNode(Node $node)
@@ -62,16 +59,6 @@ class TypeInferringVisitor extends NodeVisitorAbstract
 
             if ($handler instanceof CreatesScope) {
                 $this->scope = $handler->createScope($scope, $node);
-            }
-
-            if (method_exists($handler, 'enter')) {
-                $handler->enter($node, $this->scope);
-            }
-        }
-
-        foreach ($this->handlerExtensions as $handler) {
-            if (! $handler->shouldHandle($node)) {
-                continue;
             }
 
             if (method_exists($handler, 'enter')) {
@@ -119,16 +106,6 @@ class TypeInferringVisitor extends NodeVisitorAbstract
             // And in the end, after the function is analyzed, we try to resolve all pending types
             // that exist in the current global check run.
             $this->scope->pending->resolve();
-        }
-
-        foreach ($this->handlerExtensions as $handler) {
-            if (! $handler->shouldHandle($node)) {
-                continue;
-            }
-
-            if (method_exists($handler, 'leave')) {
-                $handler->leave($node, $this->scope);
-            }
         }
 
         return null;
