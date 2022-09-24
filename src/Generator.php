@@ -32,7 +32,7 @@ class Generator
         $openApi = $this->makeOpenApi();
 
         $this->getRoutes()
-            ->map(fn(Route $route) => $this->routeToOperation($route))
+            ->map(fn (Route $route) => $this->routeToOperation($route))
             ->filter() // Closure based routes are filtered out for now, right here
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(str_replace('api/', '', $operation->path))->addOperation($operation)
