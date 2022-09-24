@@ -93,4 +93,9 @@ class Components
     {
         return Str::replace('\\', '.', $name);
     }
+
+    public function removeSchema(string $schemaName): void
+    {
+        unset($this->schemas[$schemaName]);
+    }
 }

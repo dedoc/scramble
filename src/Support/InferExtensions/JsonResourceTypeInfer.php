@@ -78,11 +78,12 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         }
 
         /*
-         * new JsonResource($this->whenLoaded)
+         * new JsonResource($this->whenLoaded('?'))
+         * JsonResource::make($this->whenLoaded('?'))
+         * JsonResource::collection($this->whenLoaded('?'))
          */
         if (
             $node instanceof Node\Expr\ArrayItem
-            && $node->value instanceof Node\Expr\New_
             && $scope->getType($node->value)->isInstanceOf(JsonResource::class)
             && $this->isMethodCallToThis(optional($node->value->args[0])->value, ['whenLoaded'])
         ) {
