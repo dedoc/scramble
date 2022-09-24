@@ -199,7 +199,7 @@ class TypeTransformer
 
     public function toResponse(Type $type): ?Response
     {
-        if (!$response = $this->handleResponseUsingExtensions($type)) {
+        if (! $response = $this->handleResponseUsingExtensions($type)) {
             $response = Response::make(200)
                 ->setContent(
                     'application/json',
@@ -215,7 +215,7 @@ class TypeTransformer
                 ->trim();
             $response->description($description);
 
-            $code = (int)(array_values($docNode->getTagsByName('@code'))[0]->value->value ?? 200);
+            $code = (int) (array_values($docNode->getTagsByName('@code'))[0]->value->value ?? 200);
             $response->code = $code;
 
             if ($varType = $docNode->getVarTagValues()[0]->type ?? null) {
