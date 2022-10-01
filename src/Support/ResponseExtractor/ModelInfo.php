@@ -53,12 +53,11 @@ class ModelInfo
     {
         $class = $this->qualifyModel($this->class);
 
+        /** @var Model $model */
         $model = app()->make($class);
 
         return $this->displayJson(
             $class,
-            $model->getConnection()->getName(),
-            $model->getConnection()->getTablePrefix().$model->getTable(),
             $this->getAttributes($model),
             $this->getRelations($model),
         );
@@ -277,12 +276,10 @@ class ModelInfo
     /**
      * Render the model information as JSON.
      */
-    protected function displayJson($class, $database, $table, $attributes, $relations)
+    protected function displayJson($class, $attributes, $relations)
     {
         return collect([
             'class' => $class,
-            'database' => $database,
-            'table' => $table,
             'attributes' => $attributes,
             'relations' => $relations,
         ]);
