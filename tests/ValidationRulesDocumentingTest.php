@@ -1,6 +1,8 @@
 <?php
 
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\SecuritySchemes\ApiKeySecurityScheme;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Illuminate\Http\Request;
@@ -122,7 +124,6 @@ it('supports validation rules and form request at the same time', function () {
 
     assertMatchesSnapshot($openApiDocument);
 });
-
 class ValidationRulesDocumenting_Test
 {
     /**
@@ -188,4 +189,25 @@ enum StatusValidationEnum: string
     case DRAFT = 'draft';
     case PUBLISHED = 'published';
     case ARCHIVED = 'archived';
+}
+
+it('supports manual authentication info', function () {
+    RouteFacade::get('api/test', [ControllerWithoutSecurity::class, 'index']);
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
+
+    Scramble::extendOpenApi(function (OpenApi $openApi) {
+        $openApi->secure(
+            ApiKeySecurityScheme::apiKey('query', 'api_token')
+        );
+    });
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    assertMatchesSnapshot($openApiDocument);
+});
+class ControllerWithoutSecurity
+{
+    /**
+     * @unauthenticated
+     */
+    public function index() {}
 }

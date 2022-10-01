@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Tests;
 
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\ScrambleServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -15,6 +16,8 @@ class TestCase extends Orchestra
         Factory::guessFactoryNamesUsing(
             fn (string $modelName) => 'Dedoc\\Scramble\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
+
+        Scramble::$openApiExtender = null;
     }
 
     protected function getPackageProviders($app)

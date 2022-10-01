@@ -14,6 +14,9 @@ class Operation
 
     public string $summary = '';
 
+    /** @var array<Security|array>  */
+    public array $security = [];
+
     public array $tags = [];
 
     /** @var Parameter[] */
@@ -44,6 +47,13 @@ class Operation
     public function addResponse(Response $response)
     {
         $this->responses[] = $response;
+
+        return $this;
+    }
+
+    public function addSecurity($security)
+    {
+        $this->security[] = $security;
 
         return $this;
     }
@@ -133,6 +143,14 @@ class Operation
                 $responses[$response->code ?: 'default'] = $response->toArray();
             }
             $result['responses'] = $responses;
+        }
+
+        if (count($this->security)) {
+            $securities = [];
+            foreach ($this->security as $security) {
+                $securities[] = is_array($security) ? $security : $security->toArray();
+            }
+            $result['security'] = $securities;
         }
 
         return $result;
