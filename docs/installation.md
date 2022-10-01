@@ -33,4 +33,4 @@ Optionally, you can publish package's config file:
 php artisan vendor:publish --provider="Dedoc\Scramble\ScrambleServiceProvider" --tag="scramble-config"
 ```
 
-This will allow you to add custom extensions.
+This will allow you to customize the OpenAPI document info and add custom extensions.

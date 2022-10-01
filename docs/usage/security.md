@@ -32,7 +32,7 @@ public function boot()
 }
 ```
 
-## Examples
+## Security scheme examples
 Here are some common examples of the security schemes object you may have in your API. For full list of available methods check implementation of `SecurityScheme` class.
 
 ### API Key
@@ -58,4 +58,18 @@ SecurityScheme::oauth2()
             ->authorizationUrl('https://example.com/api/oauth/dialog')
             ->addScope('write:pets', 'modify pets in your account');
     });
+```
+
+## Excluding a route from security requirements
+
+You can exclude a route from security requirements by adding `@unauthenticated` annotation to the route method's PhpDoc comment block.
+
+```php
+/**
+ * @unauthenticated
+ */
+public function index(Request $request)
+{
+    return response()->json(/* some data */);
+}
 ```

@@ -1,3 +1,19 @@
+---
+title: Documentation config
+weight: 5
+---
+
+Scramble allows to customize API base URL and OpenAPI document's `info` block by publishing a config file.
+
+`info` block includes API version and API description. API description is rendered on the home page (`/docs/api`).
+
+```sh
+php artisan vendor:publish --provider="Dedoc\Scramble\ScrambleServiceProvider" --tag="scramble-config"
+```
+
+The content of `scramble` config:
+
+```php
 <?php
 
 use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
@@ -27,3 +43,4 @@ return [
 
     'extensions' => [],
 ];
+```

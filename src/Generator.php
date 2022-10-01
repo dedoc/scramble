@@ -36,7 +36,7 @@ class Generator
             ->filter() // Closure based routes are filtered out for now, right here
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
-                    str_replace(config('scramble.base_url', url('/api')).'/', '', url($operation->path))
+                    str_replace(config('scramble.api_base_url', url('/api')).'/', '', url($operation->path))
                 )->addOperation($operation)
             ))
             ->toArray();
@@ -58,7 +58,7 @@ class Generator
                     ->setDescription(config('scramble.info.description', ''))
             );
 
-        $openApi->addServer(Server::make(config('scramble.base_url', url('/api'))));
+        $openApi->addServer(Server::make(config('scramble.api_base_url', url('/api'))));
 
         return $openApi;
     }

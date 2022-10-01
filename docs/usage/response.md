@@ -8,7 +8,9 @@ Based on source code analysis, Scramble can generate endpoint responses document
 - `JsonResource` response
 - `AnonymousResourceCollection` of `JsonResource` items
 - Some `response()` (`ResponseFactory`) support: `response()->make(...)`, `response()->json(...)`, `response()->noContent()`
+- Manually constructed `JsonResponse` and `Response` (using `new`)
 - `LengthAwarePaginator` of `JsonResource` items
+- Models
 
 First three can be understood automatically from the code. The latest one needs to be documented in PhpDoc for now.
 
@@ -84,7 +86,6 @@ All resource property types that are accessed on `$this` or `$this->resource` ar
 
 <aside>
 💡 You need to have `doctrine/dbal` package installed for this to work.
-
 </aside>
 
 By default, Scramble tries to find a model in `App\\Models\\` namespace, based on resource name. Before the lookup resource name is converted to singular form (`TodoItemsResource` → `TodoItem`).
@@ -223,6 +224,23 @@ class TodoItemsController
 }
 ```
 
+## Models
+
+When you don't have a resource and simply return a model from controller's method, Scramble will be able to document that as well.
+
+When documenting models, Scramble will document what model's `toArray` return. So if `toArray` is overridden, it should return array to be properly analyzed.
+
+```php
+public function show(Request $request, User $user)
+{
+    return $user;
+}
+```
+
+<aside>
+Please note that if you don't type annotate method's return type, model type should be specified in arguments list. Otherwise, Scramble won't be able to infer returned variable type and document it properly. Also, now only relations that always present on a model (`$with` property) are documented.
+</aside> 
+
 ## LengthAwarePaginator response
 
 Paginated response cannot be inferred from code automatically so you need to typehint it manually in PhpDoc like so:
@@ -248,7 +266,7 @@ class TodoItemsController
 
 This will add all the meta and other information to the docs.
 
-## Arbitrary response types
+## Arbitrary responses
 
 If nothing from above works, and something custom needed, you can use PhpStan PhpDoc format and document return type of the method:
 
@@ -271,3 +289,29 @@ class TodoItemsController
     }
 }
 ```
+
+## Response description
+
+Description can be added to the response by adding a comment right before the `return` in a controller.
+```php
+public function show(Request $request, User $user)
+{
+    // A user resource.
+    return new UserResource($user);
+}
+```
+
+Response status and type can be added manually as well using `@status` and `@body` tags in PhpDoc block before the `return`.
+```php
+public function create(Request $request)
+{
+    /**
+     * A user resource.
+     * 
+     * @status 201
+     * @body User
+     */
+    return User::create($request->only(['email']));
+}
+```
+
