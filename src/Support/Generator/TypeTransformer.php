@@ -215,7 +215,7 @@ class TypeTransformer
                 ->trim();
             $response->description($description);
 
-            $code = (int)(array_values($docNode->getTagsByName('@code'))[0]->value->value ?? 200);
+            $code = (int)(array_values($docNode->getTagsByName('@status'))[0]->value->value ?? 200);
             $response->code = $code;
 
             if ($varType = $docNode->getVarTagValues()[0]->type ?? null) {
