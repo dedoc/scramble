@@ -3,7 +3,10 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\BooleanType;
+use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
@@ -75,18 +78,37 @@ class FunctionLikeHandler implements CreatesScope
     {
         $type = $scope->context->function;
 
-        if ($returnTypeAnnotation = $node->getReturnType()) {
+        /*
+         * @todo
+         *
+         * Here we may not need to go deep in the fn and analyze nodes as we already know the type from
+         * the annotation. The problem is that almost always annotated type is not specific enough to be
+         * useful for analysis.
+         */
+        if (
+            ($returnTypeAnnotation = $node->getReturnType())
+            && (
+                in_array(get_class($type->getReturnType()), [
+                    UnknownType::class,
+                    VoidType::class, // When fn is not analyzed (?)
+                ])
+                || in_array(get_class(TypeHelper::createTypeFromTypeNode($returnTypeAnnotation)), [
+                    IntegerType::class,
+                    FloatType::class,
+                    BooleanType::class,
+                ])
+            )
+        ) {
             $type->setReturnType(TypeHelper::createTypeFromTypeNode($returnTypeAnnotation) ?: new VoidType);
-        // @todo Here we may not need to go deep in the fn and analyze nodes as we already know the type.
-        } else {
-            // Simple way of handling the arrow functions, as they do not have a return statement.
-            // So here we just create a "virtual" return and processing it as by default.
-            if ($node instanceof Node\Expr\ArrowFunction) {
-                (new ReturnHandler)->leave(
-                    new Node\Stmt\Return_($node->expr, $node->getAttributes()),
-                    $scope,
-                );
-            }
+        }
+
+        // Simple way of handling the arrow functions, as they do not have a return statement.
+        // So here we just create a "virtual" return and processing it as by default.
+        if ($node instanceof Node\Expr\ArrowFunction) {
+            (new ReturnHandler)->leave(
+                new Node\Stmt\Return_($node->expr, $node->getAttributes()),
+                $scope,
+            );
         }
 
         // In case of method in class being analyzed, we want to attach the method information

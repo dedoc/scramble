@@ -19,7 +19,7 @@ class ReturnHandler
     {
         $fnType = $scope->context->function;
 
-        if (! ($fnType instanceof FunctionType)) {
+        if (!$fnType instanceof FunctionType) {
             return;
         }
 
