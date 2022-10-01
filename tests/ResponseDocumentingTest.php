@@ -65,3 +65,32 @@ class Foo_TestThree
         return response()->json(['foo' => 'bar']);
     }
 }
+
+test('manually annotated responses support', function () {
+    \Illuminate\Support\Facades\Route::get('test', [Foo_TestFour::class, 'index']);
+
+    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'test');
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    assertMatchesSnapshot($openApiDocument);
+});
+class Foo_TestFour
+{
+    public function index()
+    {
+        if ($foo) {
+            /**
+             * Advanced comment.
+             *
+             * With more description.
+             *
+             * @status 201
+             * @body array{foo: string}
+             */
+            return response()->json(['foo' => 'one']);
+        }
+
+        // Simple comment.
+        return response()->json(['foo' => 'bar']);
+    }
+}

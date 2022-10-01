@@ -9,11 +9,9 @@ use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Routing\Route;
-use Illuminate\Support\Str;
 use PhpParser\Node;
 use PhpParser\Node\Stmt\ClassMethod;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
-use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTextNode;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -71,7 +69,6 @@ class RouteInfo
 
         if ($docComment = optional($this->reflectionMethod())->getDocComment()) {
             $this->phpDoc = PhpDoc::parse($docComment);
-            $this->addPhpDocAttributes($this->phpDoc);
         }
 
         if (count($returnTagValues = $this->phpDoc->getReturnTagValues())) {
@@ -154,20 +151,5 @@ class RouteInfo
         $methodType = $this->class->scope->getType($this->methodNode());
 
         return $methodType->getReturnType();
-    }
-
-    private function addPhpDocAttributes(PhpDocNode $phpDoc)
-    {
-        $text = collect($phpDoc->children)
-            ->filter(fn ($v) => $v instanceof PhpDocTextNode)
-            ->map(fn (PhpDocTextNode $n) => $n->text)
-            ->implode("\n");
-
-        $text = Str::of($text)
-            ->trim()
-            ->explode("\n\n", 2);
-
-        $phpDoc->setAttribute('summary', $text[0] ?? '');
-        $phpDoc->setAttribute('description', $text[1] ?? '');
     }
 }
