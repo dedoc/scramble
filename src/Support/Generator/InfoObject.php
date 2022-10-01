@@ -8,9 +8,12 @@ class InfoObject
 
     public string $version;
 
-    public function __construct(string $title)
+    public string $description = '';
+
+    public function __construct(string $title, string $version = '0.0.1')
     {
         $this->title = $title;
+        $this->version = $version;
     }
 
     public static function make(string $title)
@@ -18,18 +21,26 @@ class InfoObject
         return new self($title);
     }
 
-    public function setVersion(string $version): InfoObject
+    public function setVersion(string $version): self
     {
         $this->version = $version;
 
         return $this;
     }
 
+    public function setDescription(string $description): self
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
     public function toArray()
     {
-        return [
+        return array_filter([
             'title' => $this->title,
             'version' => $this->version,
-        ];
+            'description' => $this->description,
+        ]);
     }
 }

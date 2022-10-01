@@ -97,27 +97,27 @@ it('supports exists rule', function () {
 });
 
 it('extracts rules from request->validate call', function () {
-    RouteFacade::get('test', [ValidationRulesDocumenting_Test::class, 'index']);
+    RouteFacade::get('api/test', [ValidationRulesDocumenting_Test::class, 'index']);
 
-    Scramble::routes(fn (Route $r) => $r->uri === 'test');
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
     $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });
 
 it('extracts rules from Validator::make facade call', function () {
-    RouteFacade::get('test', [ValidationFacadeRulesDocumenting_Test::class, 'index']);
+    RouteFacade::get('api/test', [ValidationFacadeRulesDocumenting_Test::class, 'index']);
 
-    Scramble::routes(fn (Route $r) => $r->uri === 'test');
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
     $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });
 
 it('supports validation rules and form request at the same time', function () {
-    RouteFacade::get('test', [ValidationRulesAndFormRequestAtTheSameTime_Test::class, 'index']);
+    RouteFacade::get('api/test', [ValidationRulesAndFormRequestAtTheSameTime_Test::class, 'index']);
 
-    Scramble::routes(fn (Route $r) => $r->uri === 'test');
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
     $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);

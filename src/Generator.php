@@ -35,7 +35,9 @@ class Generator
             ->map(fn (Route $route) => $this->routeToOperation($route))
             ->filter() // Closure based routes are filtered out for now, right here
             ->each(fn (Operation $operation) => $openApi->addPath(
-                Path::make(str_replace('api/', '', $operation->path))->addOperation($operation)
+                Path::make(
+                    str_replace(config('scramble.base_url', url('/api')).'/', '', url($operation->path))
+                )->addOperation($operation)
             ))
             ->toArray();
 
@@ -50,9 +52,13 @@ class Generator
     {
         $openApi = OpenApi::make('3.1.0')
             ->setComponents($this->transformer->getComponents())
-            ->setInfo(InfoObject::make(config('app.name'))->setVersion('0.0.1'));
+            ->setInfo(
+                InfoObject::make(config('app.name'))
+                    ->setVersion(config('scramble.info.version', '0.0.1'))
+                    ->setDescription(config('scramble.info.description', ''))
+            );
 
-        $openApi->addServer(Server::make(url('/api')));
+        $openApi->addServer(Server::make(config('scramble.base_url', url('/api'))));
 
         return $openApi;
     }

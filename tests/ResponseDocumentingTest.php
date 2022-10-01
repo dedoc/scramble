@@ -4,9 +4,9 @@ use Illuminate\Routing\Route;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 test('response()->noContent() call support', function () {
-    \Illuminate\Support\Facades\Route::get('test', [Foo_Test::class, 'index']);
+    \Illuminate\Support\Facades\Route::get('api/test', [Foo_Test::class, 'index']);
 
-    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'test');
+    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
     $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
@@ -20,9 +20,9 @@ class Foo_Test
 }
 
 test('response()->json() call support with phpdoc help', function () {
-    \Illuminate\Support\Facades\Route::get('test', [Foo_TestTwo::class, 'index']);
+    \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestTwo::class, 'index']);
 
-    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'test');
+    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
     $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
@@ -39,9 +39,9 @@ class Foo_TestTwo
 }
 
 test('multiple responses support', function () {
-    \Illuminate\Support\Facades\Route::get('test', [Foo_TestThree::class, 'index']);
+    \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestThree::class, 'index']);
 
-    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'test');
+    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
     $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
@@ -67,9 +67,9 @@ class Foo_TestThree
 }
 
 test('manually annotated responses support', function () {
-    \Illuminate\Support\Facades\Route::get('test', [Foo_TestFour::class, 'index']);
+    \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestFour::class, 'index']);
 
-    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'test');
+    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
     $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
