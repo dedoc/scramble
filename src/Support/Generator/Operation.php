@@ -14,7 +14,7 @@ class Operation
 
     public string $summary = '';
 
-    /** @var array<Security|array>  */
+    /** @var array<Security|array> */
     public array $security = [];
 
     public array $tags = [];
