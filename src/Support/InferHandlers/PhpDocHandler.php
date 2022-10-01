@@ -32,7 +32,7 @@ class PhpDocHandler
             $scope->getType($node)->setAttribute('docNode', $docNode);
         }
 
-        if ($node instanceof Node\Stmt\Return_ && count($node->getComments()) && !$node->getDocComment()) {
+        if ($node instanceof Node\Stmt\Return_ && count($node->getComments()) && ! $node->getDocComment()) {
             $docText = collect($node->getComments())
                 ->map(fn (Comment $c) => $c->getReformattedText())
                 ->join("\n");

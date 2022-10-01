@@ -199,7 +199,7 @@ class TypeTransformer
 
     public function toResponse(Type $type): ?Response
     {
-        if (!$response = $this->handleResponseUsingExtensions($type)) {
+        if (! $response = $this->handleResponseUsingExtensions($type)) {
             $response = Response::make(200)
                 ->setContent(
                     'application/json',
