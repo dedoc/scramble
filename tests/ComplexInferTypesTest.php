@@ -58,6 +58,45 @@ EOD;
     expect($scope->getType($ast[2]->expr)->toString())->toBe('(): int(2)');
 });
 
+it('array type is analyzed with details', function () {
+    $code = <<<'EOD'
+<?php
+class Foo {
+    public function toArray(): array
+    {
+        return ['foo' => 'bar'];
+    }
+}
+EOD;
+
+    ['scope' => $scope, 'ast' => $ast] = analyzeFile($code);
+
+    expect($scope->getType($ast[0])->getMethodCallType('toArray')->toString())
+        ->toBe('array{foo: string(bar)}');
+});
+
+/*
+ * When int, float, bool, return type annotated, there is no point in using types from return
+ * as there is no more useful information about the function can be extracted.
+ * Sure we could've extracted some literals, but for now there is no point (?).
+ */
+it('uses function return annotation type when int, float, bool, used', function () {
+    $code = <<<'EOD'
+<?php
+class Foo {
+    public function bar(): int
+    {
+        return [];
+    }
+}
+EOD;
+
+    ['scope' => $scope, 'ast' => $ast] = analyzeFile($code);
+
+    expect($scope->getType($ast[0])->getMethodCallType('bar')->toString())
+        ->toBe('int');
+});
+
 /**
  * @return array{ast: PhpParser\Node\Stmt[], scope: \Dedoc\Scramble\Infer\Scope\Scope}
  */
