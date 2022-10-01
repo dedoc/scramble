@@ -6,13 +6,14 @@ class InfoObject
 {
     public string $title;
 
-    public string $version = '';
+    public string $version;
 
     public string $description = '';
 
-    public function __construct(string $title)
+    public function __construct(string $title, string $version = '0.0.1')
     {
         $this->title = $title;
+        $this->version = $version;
     }
 
     public static function make(string $title)

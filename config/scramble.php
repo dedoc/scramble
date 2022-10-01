@@ -5,9 +5,11 @@ use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 return [
     'base_url' => url('/api'),
 
-    'version' => env('API_VERSION', '0.0.1'),
+    'info' => [
+        'version' => env('API_VERSION', '0.0.1'),
 
-    'description' => '',
+        'description' => '',
+    ],
 
     'middleware' => [
         'web',

@@ -54,8 +54,8 @@ class Generator
             ->setComponents($this->transformer->getComponents())
             ->setInfo(
                 InfoObject::make(config('app.name'))
-                    ->setVersion(config('scramble.version', '0.0.1'))
-                    ->setDescription(config('scramble.description', ''))
+                    ->setVersion(config('scramble.info.version', '0.0.1'))
+                    ->setDescription(config('scramble.info.description', ''))
             );
 
         $openApi->addServer(Server::make(config('scramble.base_url', url('/api'))));
