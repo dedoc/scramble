@@ -6,7 +6,9 @@ class InfoObject
 {
     public string $title;
 
-    public string $version;
+    public string $version = '';
+
+    public string $description = '';
 
     public function __construct(string $title)
     {
@@ -18,18 +20,26 @@ class InfoObject
         return new self($title);
     }
 
-    public function setVersion(string $version): InfoObject
+    public function setVersion(string $version): self
     {
         $this->version = $version;
 
         return $this;
     }
 
+    public function setDescription(string $description): self
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
     public function toArray()
     {
-        return [
+        return array_filter([
             'title' => $this->title,
             'version' => $this->version,
-        ];
+            'description' => $this->description,
+        ]);
     }
 }
