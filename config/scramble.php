@@ -4,9 +4,11 @@ use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 
 return [
     /*
-     * Your API server base URL: will be used as base URL in docs.
+     * Your API path. Full API base URL will be created using `url` helper: `url(config('scramble.api_path'))`.
+     * By default, all routes starting with this path will be added to the docs. If you need to change
+     * this behavior, you can add your custom routes resolver using `Scramble::routes()`.
      */
-    'api_base_url' => url('/api'),
+    'api_path' => 'api',
 
     'info' => [
         /*

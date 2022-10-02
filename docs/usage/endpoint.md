@@ -3,9 +3,9 @@ title: Endpoint documentation
 weight: 1
 ---
 
-By default, all routes with `api` middleware are added to the documentation.
+By default, all routes starting with `api` are added to the documentation.
 
-To customize which routes are added to docs, you may provide your own route resolver function using `Scramble::route` in `boot` method of a service provider. For example, in your `AppServiceProvider`:
+To customize which routes are added to docs, you can either modify `scramble.api_path` config value, or you may provide your own route resolver function using `Scramble::route` in `boot` method of a service provider. For example, in your `AppServiceProvider`:
 
 ```php
 use Dedoc\Scramble\Scramble;
