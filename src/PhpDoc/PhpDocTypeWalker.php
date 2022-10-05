@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\PhpDoc;
 
+use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeItemNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayTypeNode;
@@ -13,7 +14,7 @@ use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 
 class PhpDocTypeWalker
 {
-    public static function traverse(TypeNode $type, array $visitors)
+    public static function traverse(TypeNode|ConstExprNode $type, array $visitors)
     {
         $callVisitors = function ($node, $method) use ($visitors) {
             foreach ($visitors as $visitor) {
