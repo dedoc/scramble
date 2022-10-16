@@ -1,9 +1,5 @@
 <?php
 
-use Dedoc\Scramble\Infer\TypeInferringVisitor;
-use PhpParser\NodeTraverser;
-use PhpParser\ParserFactory;
-
 it('infers param type', function () {
     $code = <<<'EOD'
 <?php
