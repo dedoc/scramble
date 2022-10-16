@@ -2,7 +2,9 @@
 
 namespace Dedoc\Scramble\Infer\Scope;
 
+use Dedoc\Scramble\Infer\SimpleTypeGetters\BooleanNotTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
+use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\PendingReturnType;
@@ -39,7 +41,6 @@ class Scope
         $this->context = $context;
         $this->namesResolver = $namesResolver;
         $this->parentScope = $parentScope;
-        $this->pending = $pending;
     }
 
     public function getType(Node $node)
@@ -50,6 +51,14 @@ class Scope
 
         if ($node instanceof Node\Expr\Cast) {
             return (new CastTypeGetter)($node);
+        }
+
+        if ($node instanceof Node\Expr\ConstFetch) {
+            return (new ConstFetchTypeGetter)($node);
+        }
+
+        if ($node instanceof Node\Expr\BooleanNot) {
+            return (new BooleanNotTypeGetter)($node);
         }
 
         if ($node instanceof Node\Expr\Variable && $node->name === 'this') {

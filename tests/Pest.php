@@ -1,6 +1,7 @@
 <?php
 
 use Dedoc\Scramble\Infer\TypeInferringVisitor;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Tests\TestCase;
 use Dedoc\Scramble\Tests\Utils\AnalysisResult;
 use PhpParser\NodeTraverser;
@@ -18,4 +19,14 @@ function analyzeFile(string $code): AnalysisResult
     $traverser->traverse($fileAst);
 
     return new AnalysisResult($infer->scope, $fileAst);
+}
+
+function getStatementType(string $statement): ?Type
+{
+    $code = <<<EOD
+<?php
+\$a = $statement;
+EOD;
+
+    return analyzeFile($code)->getVarType('a');
 }
