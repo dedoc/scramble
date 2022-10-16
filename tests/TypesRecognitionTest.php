@@ -2,6 +2,8 @@
 
 use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
+use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
+use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
@@ -24,6 +26,16 @@ function getTypeFromDoc(string $phpDoc)
         ->transform(PhpDocTypeHelper::toType($varNode->type));
 }
 
+function getPhpTypeFromDoc(string $phpDoc)
+{
+    $docNode = PhpDoc::parse($phpDoc);
+    $varNode = $docNode->getVarTagValues()[0];
+
+    PhpDocTypeWalker::traverse($varNode->type, [new ResolveFqnPhpDocTypeVisitor(fn ($s) => $s)]);
+
+    return PhpDocTypeHelper::toType($varNode->type);
+}
+
 it('handles simple types', function ($phpDoc) {
     $result = getTypeFromDoc($phpDoc);
 
@@ -43,6 +55,17 @@ it('handles simple types', function ($phpDoc) {
     '/** @var array */',
     '/** @var null */',
     '/** @var object */',
+]);
+
+it('handles literal types', function ($phpDoc, $expectedType) {
+    $result = getPhpTypeFromDoc($phpDoc);
+
+    expect($result->toString())->toBe($expectedType);
+})->with([
+    ["/** @var 'foo' */", 'string(foo)'],
+    ['/** @var true */', 'boolean(true)'],
+    ['/** @var false */', 'boolean(false)'],
+    ["/** @var array{'foo': string} */", 'array{foo: string}'],
 ]);
 
 /**

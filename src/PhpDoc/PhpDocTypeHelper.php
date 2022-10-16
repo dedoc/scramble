@@ -9,14 +9,21 @@ use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\IntersectionType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprFloatNode;
+use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprIntegerNode;
+use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprStringNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeItemNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\ConstTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IntersectionTypeNode;
@@ -91,6 +98,20 @@ class PhpDocTypeHelper
             ));
         }
 
+        if ($type instanceof ConstTypeNode) {
+            if ($type->constExpr instanceof ConstExprStringNode) {
+                return new LiteralStringType($type->constExpr->value);
+            }
+
+            if ($type->constExpr instanceof ConstExprIntegerNode) {
+                return new LiteralIntegerType($type->constExpr->value);
+            }
+
+            if ($type->constExpr instanceof ConstExprFloatNode) {
+                return new FloatType(); // todo: float literal?
+            }
+        }
+
         return new UnknownType('Unknown phpDoc type ['.$type.']');
     }
 
@@ -105,8 +126,14 @@ class PhpDocTypeHelper
         if (in_array($type->name, ['int', 'integer'])) {
             return new IntegerType;
         }
-        if (in_array($type->name, ['bool', 'boolean', 'true', 'false'])) {
+        if (in_array($type->name, ['bool', 'boolean'])) {
             return new BooleanType;
+        }
+        if ($type->name === 'true') {
+            return new LiteralBooleanType(true);
+        }
+        if ($type->name === 'false') {
+            return new LiteralBooleanType(false);
         }
         if ($type->name === 'scalar') {
             // @todo: Scalar variables are those containing an int, float, string or bool.
