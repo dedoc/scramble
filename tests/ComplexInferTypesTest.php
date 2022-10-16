@@ -91,26 +91,8 @@ class Foo {
 }
 EOD;
 
-    ['scope' => $scope, 'ast' => $ast] = analyzeFile($code);
+    $result = analyzeFile($code);
 
-    expect($scope->getType($ast[0])->getMethodCallType('bar')->toString())
+    expect($result->getClassType('Foo')->getMethodCallType('bar')->toString())
         ->toBe('int');
 });
-
-/**
- * @return array{ast: PhpParser\Node\Stmt[], scope: \Dedoc\Scramble\Infer\Scope\Scope}
- */
-function analyzeFile(string $code): array
-{
-    $fileAst = (new ParserFactory)->create(ParserFactory::PREFER_PHP7)->parse($code);
-
-    $infer = app()->make(TypeInferringVisitor::class, ['namesResolver' => fn ($s) => $s]);
-    $traverser = new NodeTraverser;
-    $traverser->addVisitor($infer);
-    $traverser->traverse($fileAst);
-
-    return [
-        'scope' => $infer->scope,
-        'ast' => $fileAst,
-    ];
-}
