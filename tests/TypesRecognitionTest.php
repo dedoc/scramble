@@ -63,8 +63,8 @@ it('handles literal types', function ($phpDoc, $expectedType) {
     expect($result->toString())->toBe($expectedType);
 })->with([
     ["/** @var 'foo' */", 'string(foo)'],
-    ["/** @var true */", 'boolean(true)'],
-    ["/** @var false */", 'boolean(false)'],
+    ['/** @var true */', 'boolean(true)'],
+    ['/** @var false */', 'boolean(false)'],
     ["/** @var array{'foo': string} */", 'array{foo: string}'],
 ]);
 

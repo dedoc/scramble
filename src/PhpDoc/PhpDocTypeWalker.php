@@ -15,7 +15,7 @@ use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 class PhpDocTypeWalker
 {
     /**
-     * @param TypeNode|ConstExprNode $type
+     * @param  TypeNode|ConstExprNode  $type
      */
     public static function traverse($type, array $visitors)
     {
