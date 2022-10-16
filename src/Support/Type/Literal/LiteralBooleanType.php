@@ -15,6 +15,8 @@ class LiteralBooleanType extends BooleanType
 
     public function toString(): string
     {
-        return parent::toString()."($this->value)";
+        $value = $this->value ? 'true' : 'false';
+
+        return parent::toString()."($value)";
     }
 }
