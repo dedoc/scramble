@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Exceptions\RouteAnalysisErrorException;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
@@ -14,6 +15,7 @@ use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
+use Throwable;
 
 class Generator
 {
@@ -32,7 +34,13 @@ class Generator
         $openApi = $this->makeOpenApi();
 
         $this->getRoutes()
-            ->map(fn (Route $route) => $this->routeToOperation($route))
+            ->map(function (Route $route) {
+                try {
+                    return $this->routeToOperation($route);
+                } catch (Throwable $e) {
+                    throw RouteAnalysisErrorException::make($route, $e);
+                }
+            })
             ->filter() // Closure based routes are filtered out for now, right here
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
@@ -81,7 +89,7 @@ class Generator
                         if (str_contains($reflection->getDocComment() ?: '', '@only-docs')) {
                             return true;
                         }
-                    } catch (\Throwable $e) {
+                    } catch (Throwable $e) {
                     }
 
                     return false;
