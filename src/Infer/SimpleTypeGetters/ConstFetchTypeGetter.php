@@ -6,7 +6,6 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
-use PhpParser\Node\Expr\BooleanNot;
 
 class ConstFetchTypeGetter
 {
