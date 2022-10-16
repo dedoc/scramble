@@ -22,6 +22,7 @@ it('infers response creation', function (string $expression, string $expectedTyp
 
     expect($type->toString())->toBe($expectedType);
 })->with([
+    ["new Illuminate\Http\Response", 'Illuminate\Http\Response<string(), int(200), array{}>'],
     ["new Illuminate\Http\Response('')", 'Illuminate\Http\Response<string(), int(200), array{}>'],
     ["new Illuminate\Http\JsonResponse(['data' => 1])", 'Illuminate\Http\JsonResponse<array{data: int(1)}, int(200), array{}>'],
     ["new Illuminate\Http\JsonResponse(['data' => 1], 201, ['x-foo' => 'bar'])", 'Illuminate\Http\JsonResponse<array{data: int(1)}, int(201), array{x-foo: string(bar)}>'],
