@@ -29,7 +29,7 @@ class AllOf extends Type
 
     public function setItems($items)
     {
-        if (collect($items)->contains(fn ($item) => !$item instanceof Type)) {
+        if (collect($items)->contains(fn ($item) => ! $item instanceof Type)) {
             throw new InvalidArgumentException('All items should be instances of '.Type::class);
         }
 
