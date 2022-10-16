@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\Generator\Combined;
 
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
+use InvalidArgumentException;
 
 class AnyOf extends Type
 {
@@ -28,6 +29,10 @@ class AnyOf extends Type
 
     public function setItems($items)
     {
+        if (collect($items)->contains(fn ($item) => ! $item instanceof Type)) {
+            throw new InvalidArgumentException('All items should be instances of '.Type::class);
+        }
+
         $this->items = $items;
 
         return $this;

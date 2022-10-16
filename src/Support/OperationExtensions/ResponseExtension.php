@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Collection;
@@ -37,7 +38,15 @@ class ResponseExtension extends OperationExtension
                 return Response::make((int) $code)
                     ->setContent(
                         'application/json',
-                        Schema::fromType((new AnyOf)->setItems($responses->pluck('content.application/json.type')->all()))
+                        Schema::fromType((new AnyOf)->setItems(
+                            $responses->pluck('content.application/json.type')
+                                /*
+                                 * Empty response body can happen, and in case it is going to be grouped
+                                 * by status, it should become an empty string.
+                                 */
+                                ->map(fn ($type) => $type ?: new StringType)
+                                ->all()
+                        ))
                     );
             })
             ->all();
