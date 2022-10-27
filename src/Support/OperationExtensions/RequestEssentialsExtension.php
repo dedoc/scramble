@@ -25,11 +25,15 @@ class RequestEssentialsExtension extends OperationExtension
 
         $operation
             ->setMethod(strtolower($routeInfo->route->methods()[0]))
-            ->setPath(Str::replace(array_keys($pathAliases), array_values($pathAliases), $routeInfo->route->uri))
-            ->setTags(array_merge(
-                $this->extractTagsForMethod($routeInfo->class->phpDoc()),
-                [Str::of(class_basename($routeInfo->className()))->replace('Controller', '')],
+            ->setPath(Str::replace(
+                collect($pathAliases)->keys()->map(fn ($k) => '{'.$k.'}')->all(),
+                collect($pathAliases)->values()->map(fn ($v) => '{'.$v.'}')->all(),
+                $routeInfo->route->uri,
             ))
+            ->setTags([
+                ...$this->extractTagsForMethod($routeInfo->class->phpDoc()),
+                Str::of(class_basename($routeInfo->className()))->replace('Controller', ''),
+            ])
             ->addParameters($pathParams);
 
         if (count($routeInfo->phpDoc()->getTagsByName('@unauthenticated'))) {
