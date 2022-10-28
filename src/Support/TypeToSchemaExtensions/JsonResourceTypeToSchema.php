@@ -35,14 +35,12 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         $type = $this->infer->analyzeClass($type->name);
 
         $array = $type->getMethodCallType('toArray');
+
         if (! $array instanceof ArrayType) {
             return new UnknownType();
         }
-        $array->items = $this->flattenMergeValues($array->items);
 
-        if (($withArray = $type->getMethodCallType('with')) instanceof ArrayType) {
-            $array->items = array_merge($array->items, $this->flattenMergeValues($withArray->items));
-        }
+        $array->items = $this->flattenMergeValues($array->items);
 
         return $this->openApiTransformer->transform($array);
     }
@@ -94,11 +92,41 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
+        $type = $this->infer->analyzeClass($className = $type->name);
+
+        $withArray = $type->getMethodCallType('with');
+        if ($withArray instanceof ArrayType) {
+            $withArray->items = $this->flattenMergeValues($withArray->items);
+        }
+
+        $wrapKey = $type->name::$wrap ?? null;
+
+        $shouldWrap = $withArray instanceof ArrayType || $wrapKey !== null;
+
+        $wrapKey = $wrapKey ?: 'data';
+
+        $openApiType = $this->openApiTransformer->transform($type);
+        if ($shouldWrap) {
+            $openApiType = (new \Dedoc\Scramble\Support\Generator\Types\ObjectType())
+                ->addProperty($wrapKey, $openApiType)
+                ->setRequired([$wrapKey]);
+
+            if ($withArray instanceof ArrayType) {
+                $withType = $this->openApiTransformer->transform($withArray);
+
+                foreach ($withType->properties as $name => $property) {
+                    $openApiType->addProperty($name, $property);
+                }
+
+                $openApiType->addRequired(array_keys($withType->properties));
+            }
+        }
+
         return Response::make(200)
-            ->description('`'.$this->components->uniqueSchemaName($type->name).'`')
+            ->description('`'.$this->components->uniqueSchemaName($className).'`')
             ->setContent(
                 'application/json',
-                Schema::fromType($this->openApiTransformer->transform($type)),
+                Schema::fromType($openApiType),
             );
     }
 

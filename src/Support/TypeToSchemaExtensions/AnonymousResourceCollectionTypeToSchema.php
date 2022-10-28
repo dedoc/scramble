@@ -51,15 +51,17 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
         }
 
         $jsonResourceOpenApiType = $this->openApiTransformer->transform($collectingResourceType);
-        $responseWrapKey = ($collectingResourceType->name)::$wrap;
+        $responseWrapKey = AnonymousResourceCollection::$wrap;
 
-        $type = $responseWrapKey
-            ? (new OpenApiObjectType)->addProperty($responseWrapKey, $jsonResourceOpenApiType)->setRequired([$responseWrapKey])
+        $openApiType = $responseWrapKey
+            ? (new OpenApiObjectType)
+                ->addProperty($responseWrapKey, (new OpenApiArrayType)->setItems($jsonResourceOpenApiType))
+                ->setRequired([$responseWrapKey])
             : (new OpenApiArrayType)->setItems($jsonResourceOpenApiType);
 
         return Response::make(200)
             ->description('Array of `'.$this->components->uniqueSchemaName($collectingResourceType->name).'`')
-            ->setContent('application/json', Schema::fromType($type));
+            ->setContent('application/json', Schema::fromType($openApiType));
     }
 
     private function getCollectingResourceType(Generic $type): ?ObjectType

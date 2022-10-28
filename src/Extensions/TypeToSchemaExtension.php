@@ -28,7 +28,7 @@ abstract class TypeToSchemaExtension
         return new StringType(); // @todo unknown type
     }
 
-    public function toResponse(Type $type)
+    public function toResponse(Type $openApiType)
     {
         return null;
     }
