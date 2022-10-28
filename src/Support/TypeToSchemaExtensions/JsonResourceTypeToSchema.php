@@ -13,8 +13,8 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\MergeValue;
 
 class JsonResourceTypeToSchema extends TypeToSchemaExtension
@@ -23,7 +23,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     {
         return $type instanceof ObjectType
             && $type->isInstanceOf(JsonResource::class)
-            && ! $type->isInstanceOf(ResourceCollection::class);
+            && ! $type->isInstanceOf(AnonymousResourceCollection::class);
     }
 
     /**

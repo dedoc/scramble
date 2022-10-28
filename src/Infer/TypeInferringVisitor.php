@@ -11,6 +11,7 @@ use Dedoc\Scramble\Infer\Handler\ExpressionTypeInferringExtensions;
 use Dedoc\Scramble\Infer\Handler\FunctionLikeHandler;
 use Dedoc\Scramble\Infer\Handler\NewHandler;
 use Dedoc\Scramble\Infer\Handler\PropertyFetchHandler;
+use Dedoc\Scramble\Infer\Handler\PropertyHandler;
 use Dedoc\Scramble\Infer\Handler\ReturnHandler;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\PendingTypes;
@@ -39,6 +40,7 @@ class TypeInferringVisitor extends NodeVisitorAbstract
             new AssignHandler(),
             new NewHandler(),
             new ClassHandler(),
+            new PropertyHandler(),
             new PropertyFetchHandler(),
             new ArrayHandler(),
             new ArrayItemHandler(),

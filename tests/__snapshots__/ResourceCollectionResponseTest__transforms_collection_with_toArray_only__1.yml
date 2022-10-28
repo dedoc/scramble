@@ -1,0 +1,9 @@
+type: object
+properties:
+    foo: { type: string }
+    users: { type: array, items: { $ref: '#/components/schemas/UserResource' } }
+    meta: { type: object, properties: { foo: { type: string } }, required: [foo] }
+required:
+    - foo
+    - users
+    - meta
