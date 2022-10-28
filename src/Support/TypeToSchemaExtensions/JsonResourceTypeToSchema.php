@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -34,12 +35,14 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         $type = $this->infer->analyzeClass($type->name);
 
         $array = $type->getMethodCallType('toArray');
-
         if (! $array instanceof ArrayType) {
-            return new StringType(); // @todo unknown type
+            return new UnknownType();
         }
-
         $array->items = $this->flattenMergeValues($array->items);
+
+        if (($withArray = $type->getMethodCallType('with')) instanceof ArrayType) {
+            $array->items = array_merge($array->items, $this->flattenMergeValues($withArray->items));
+        }
 
         return $this->openApiTransformer->transform($array);
     }
