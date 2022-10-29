@@ -10,6 +10,13 @@ return [
      */
     'api_path' => 'api',
 
+    /*
+     * List the servers that are used in your API.
+     */
+    'servers' => [
+        'Live' => url(config('scramble.api_path', 'api')),
+    ],
+
     'info' => [
         /*
          * API version.

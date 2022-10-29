@@ -68,9 +68,13 @@ class Generator
                     ->setDescription(config('scramble.info.description', ''))
             );
 
-        $openApi->addServer(Server::make(
-            url(config('scramble.api_path', 'api'))
-        ));
+        $servers = config('scramble.servers', []);
+
+        foreach ($servers as $description => $url){
+            $server = Server::make($url);
+            $server->setDescription($description);
+            $openApi->addServer($server);
+        }
 
         return $openApi;
     }
