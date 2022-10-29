@@ -20,6 +20,5 @@ class PossibleExceptionInfer implements ExpressionTypeInferExtension
 
         // `can` middleware
         //
-
     }
 }

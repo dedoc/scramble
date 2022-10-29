@@ -3,7 +3,6 @@
 use Dedoc\Scramble\Infer\Extensions\ExpressionExceptionExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Type;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\FuncCall;
 
@@ -61,15 +60,15 @@ function foo () {
     return bar();
 }
 EOD, [
-        new class implements ExpressionExceptionExtension {
-
+        new class implements ExpressionExceptionExtension
+        {
             public function getException(Expr $node, Scope $scope): array
             {
                 if ($node instanceof FuncCall && $node->name->toString() === 'bar') {
                     return [new ObjectType(Exception::class)];
                 }
             }
-        }
+        },
     ])->getFunctionType('foo');
 
     expect($type)->not()->toBeNull()

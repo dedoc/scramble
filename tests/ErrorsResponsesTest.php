@@ -17,7 +17,7 @@ it('adds validation error response', function () {
 })->skip();
 class ErrorsResponsesTest_Controller
 {
-    public function adds_validation_error_response(\Illuminate\Http\Request $request)
+    public function adds_validation_error_response(Illuminate\Http\Request $request)
     {
         $request->validate(['foo' => 'required']);
     }
