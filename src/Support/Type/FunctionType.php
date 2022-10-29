@@ -4,14 +4,18 @@ namespace Dedoc\Scramble\Support\Type;
 
 class FunctionType extends AbstractType implements FunctionLikeType
 {
+    public string $name;
+
     public array $arguments;
 
     public Type $returnType;
 
     public function __construct(
+        string $name,
         $arguments = [],
-        $returnType = null
+        $returnType = null,
     ) {
+        $this->name = $name;
         $this->arguments = $arguments;
         $this->returnType = $returnType ?: new VoidType();
     }

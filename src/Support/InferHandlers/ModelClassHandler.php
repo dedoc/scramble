@@ -60,7 +60,7 @@ class ModelClassHandler
             return;
         }
 
-        $type->methods['toArray'] = (new FunctionType())
+        $type->methods['toArray'] = (new FunctionType('toArray'))
             ->setReturnType($this->getDefaultToArrayType($type, $type->name));
     }
 

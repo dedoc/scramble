@@ -6,13 +6,16 @@ use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
+use Dedoc\Scramble\Support\Generator\Types\UnknownType;
+use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\MergeValue;
@@ -23,7 +26,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     {
         return $type instanceof ObjectType
             && $type->isInstanceOf(JsonResource::class)
-            && ! $type->isInstanceOf(ResourceCollection::class);
+            && ! $type->isInstanceOf(AnonymousResourceCollection::class);
     }
 
     /**
@@ -36,7 +39,11 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         $array = $type->getMethodCallType('toArray');
 
         if (! $array instanceof ArrayType) {
-            return new StringType(); // @todo unknown type
+            if ($type->isInstanceOf(ResourceCollection::class)) {
+                $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($type);
+            } else {
+                return new UnknownType();
+            }
         }
 
         $array->items = $this->flattenMergeValues($array->items);
@@ -91,11 +98,44 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
+        $additional = $type->getPropertyFetchType('additional');
+
+        $type = $this->infer->analyzeClass($className = $type->name);
+
+        $openApiType = $this->openApiTransformer->transform($type);
+
+        if (($withArray = $type->getMethodCallType('with')) instanceof ArrayType) {
+            $withArray->items = $this->flattenMergeValues($withArray->items);
+        }
+        if ($additional instanceof ArrayType) {
+            $additional->items = $this->flattenMergeValues($additional->items);
+        }
+
+        $wrapKey = $type->name::$wrap ?? null;
+        $shouldWrap = $withArray instanceof ArrayType
+            || $additional instanceof ArrayType
+            || $wrapKey !== null;
+        $wrapKey = $wrapKey ?: 'data';
+
+        if ($shouldWrap) {
+            $openApiType = (new \Dedoc\Scramble\Support\Generator\Types\ObjectType())
+                ->addProperty($wrapKey, $openApiType)
+                ->setRequired([$wrapKey]);
+
+            if ($withArray instanceof ArrayType) {
+                $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($withArray));
+            }
+
+            if ($additional instanceof ArrayType) {
+                $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));
+            }
+        }
+
         return Response::make(200)
-            ->description('`'.$this->components->uniqueSchemaName($type->name).'`')
+            ->description('`'.$this->components->uniqueSchemaName($className).'`')
             ->setContent(
                 'application/json',
-                Schema::fromType($this->openApiTransformer->transform($type)),
+                Schema::fromType($openApiType),
             );
     }
 
@@ -110,5 +150,18 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         return Reference::in('schemas')
             ->shortName(class_basename($type->name))
             ->uniqueName($type->name);
+    }
+
+    private function mergeOpenApiObjects(OpenApiTypes\ObjectType $into, OpenApiTypes\Type $what)
+    {
+        if (! $what instanceof OpenApiTypes\ObjectType) {
+            return;
+        }
+
+        foreach ($what->properties as $name => $property) {
+            $into->addProperty($name, $property);
+        }
+
+        $into->addRequired(array_keys($what->properties));
     }
 }

@@ -4,8 +4,10 @@ namespace Dedoc\Scramble\Infer\Scope;
 
 use Dedoc\Scramble\Infer\SimpleTypeGetters\BooleanNotTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
+use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\PendingReturnType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -55,6 +57,10 @@ class Scope
 
         if ($node instanceof Node\Expr\ConstFetch) {
             return (new ConstFetchTypeGetter)($node);
+        }
+
+        if ($node instanceof Node\Expr\ClassConstFetch) {
+            return (new ClassConstFetchTypeGetter)($node);
         }
 
         if ($node instanceof Node\Expr\BooleanNot) {
@@ -146,6 +152,16 @@ class Scope
     public function class(): ?ObjectType
     {
         return $this->context->class;
+    }
+
+    public function isInFunction()
+    {
+        return (bool) $this->context->function;
+    }
+
+    public function function(): ?FunctionType
+    {
+        return $this->context->function;
     }
 
     public function resolveName(string $name)
