@@ -8,7 +8,7 @@ use PhpParser\Node;
 
 class ExpressionTypeInferringExtensions
 {
-    /** @var class-string<ExpressionTypeInferExtension>[] */
+    /** @var ExpressionTypeInferExtension[] */
     private array $extensions;
 
     public function __construct(array $extensions = [])
@@ -21,12 +21,12 @@ class ExpressionTypeInferringExtensions
         return $node instanceof Node\Expr;
     }
 
-    public function leave(Node $node, Scope $scope)
+    public function leave(Node\Expr $node, Scope $scope)
     {
         $type = array_reduce(
             $this->extensions,
-            function ($acc, $extensionClass) use ($node, $scope) {
-                $type = (new $extensionClass)->getType($node, $scope);
+            function ($acc, ExpressionTypeInferExtension $extension) use ($node, $scope) {
+                $type = $extension->getType($node, $scope);
                 if ($type) {
                     return $type;
                 }

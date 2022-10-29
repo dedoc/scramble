@@ -10,14 +10,21 @@ class FunctionType extends AbstractType implements FunctionLikeType
 
     public Type $returnType;
 
+    /**
+     * @var array<ObjectType|Generic>
+     */
+    public array $exceptions;
+
     public function __construct(
         string $name,
         $arguments = [],
         $returnType = null,
+        $exceptions = []
     ) {
         $this->name = $name;
         $this->arguments = $arguments;
         $this->returnType = $returnType ?: new VoidType();
+        $this->exceptions = $exceptions;
     }
 
     public function children(): array

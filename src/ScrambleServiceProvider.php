@@ -5,6 +5,7 @@ namespace Dedoc\Scramble;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
+use Dedoc\Scramble\Infer\Extensions\InferExtension;
 use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Infer\TypeInferringVisitor;
 use Dedoc\Scramble\Support\ClassAstHelper;
@@ -46,18 +47,16 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->give(function () {
                 $extensions = config('scramble.extensions', []);
 
-                $expressionTypeInferringExtensions = array_values(array_filter(
+                $inferExtensionsClasses = array_values(array_filter(
                     $extensions,
-                    fn ($e) => is_a($e, ExpressionTypeInferExtension::class, true),
+                    fn ($e) => is_a($e, InferExtension::class, true),
                 ));
+                $inferExtensions = array_map(
+                    fn ($inferExtensionClass) => new $inferExtensionClass(),
+                    $inferExtensionsClasses,
+                );
 
-                return array_merge($expressionTypeInferringExtensions, [
-                    JsonResourceCallsTypeInfer::class,
-                    JsonResourceStaticCallsTypeInfer::class,
-                    JsonResourceTypeInfer::class,
-                    ResourceCollectionTypeInfer::class,
-                    ResponseFactoryTypeInfer::class,
-                ]);
+                return array_merge($inferExtensions, DefaultExtensions::infer());
             });
 
         $this->app->when([Infer::class, ClassAstHelper::class, TypeInferringVisitor::class])

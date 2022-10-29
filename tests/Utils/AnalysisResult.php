@@ -61,4 +61,9 @@ class AnalysisResult
 
         return $this->scope->getType($node);
     }
+
+    public function getAst()
+    {
+        return $this->ast;
+    }
 }
