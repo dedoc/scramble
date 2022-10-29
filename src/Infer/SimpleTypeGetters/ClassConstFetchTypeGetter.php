@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Infer\SimpleTypeGetters;
 
-use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;

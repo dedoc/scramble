@@ -1,18 +1,18 @@
 <?php
 
 use Dedoc\Scramble\Infer\Infer;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
-use Dedoc\Scramble\Scramble;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 test('transforms collection with toArray only', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
-        JsonResourceTypeToSchema::class
+        JsonResourceTypeToSchema::class,
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
 
@@ -38,7 +38,7 @@ class UserCollection_One extends \Illuminate\Http\Resources\Json\ResourceCollect
 
 test('transforms collection with toArray and with', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
-        JsonResourceTypeToSchema::class
+        JsonResourceTypeToSchema::class,
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
 
@@ -71,7 +71,7 @@ class UserCollection_Two extends \Illuminate\Http\Resources\Json\ResourceCollect
 
 test('transforms collection without proper toArray implementation', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
-        JsonResourceTypeToSchema::class
+        JsonResourceTypeToSchema::class,
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
 
@@ -94,7 +94,7 @@ class UserCollection_Three extends \Illuminate\Http\Resources\Json\ResourceColle
 
 test('transforms collection without toArray implementation', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
-        JsonResourceTypeToSchema::class
+        JsonResourceTypeToSchema::class,
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
 

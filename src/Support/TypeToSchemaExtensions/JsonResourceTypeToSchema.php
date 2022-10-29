@@ -7,8 +7,8 @@ use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
-use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
+use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -16,10 +16,9 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\MergeValue;
-use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 
 class JsonResourceTypeToSchema extends TypeToSchemaExtension
 {
@@ -113,8 +112,8 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         }
 
         $wrapKey = $type->name::$wrap ?? null;
-        $shouldWrap = $withArray instanceof ArrayType 
-            || $additional instanceof ArrayType 
+        $shouldWrap = $withArray instanceof ArrayType
+            || $additional instanceof ArrayType
             || $wrapKey !== null;
         $wrapKey = $wrapKey ?: 'data';
 

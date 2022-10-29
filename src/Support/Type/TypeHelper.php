@@ -2,9 +2,9 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Illuminate\Support\Collection;
 use PhpParser\Node;
-use Dedoc\Scramble\Infer\Scope\Scope;
 use PhpParser\PrettyPrinter\Standard;
 
 class TypeHelper

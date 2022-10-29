@@ -51,7 +51,7 @@ class ResourceCollectionTypeInfer implements ExpressionTypeInferExtension
         if (! $collectingClassType) {
             return new UnknownType('Cannot find a type of the collecting class.');
         }
-        
+
         return new ArrayType([
             new ArrayItemType_(0, new ObjectType($collectingClassType->value)),
         ]);
