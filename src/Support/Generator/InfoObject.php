@@ -10,6 +10,8 @@ class InfoObject
 
     public string $description = '';
 
+    public string $logo = '';
+
     public function __construct(string $title, string $version = '0.0.1')
     {
         $this->title = $title;
@@ -35,12 +37,22 @@ class InfoObject
         return $this;
     }
 
+    public function setLogo(string $logo): self
+    {
+        $this->logo = $logo;
+
+        return $this;
+    }
+
     public function toArray()
     {
         return array_filter([
             'title' => $this->title,
             'version' => $this->version,
             'description' => $this->description,
+            'x-logo' => [
+                'url' => $this->logo
+            ],
         ]);
     }
 }

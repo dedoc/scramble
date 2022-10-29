@@ -66,6 +66,7 @@ class Generator
                 InfoObject::make(config('app.name'))
                     ->setVersion(config('scramble.info.version', '0.0.1'))
                     ->setDescription(config('scramble.info.description', ''))
+                    ->setLogo(config('scramble.info.logo', ''))
             );
 
         $openApi->addServer(Server::make(

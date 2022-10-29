@@ -20,6 +20,11 @@ return [
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
         'description' => '',
+
+        /*
+         * Logo rendered in the top left corner of the documentation
+         */
+        'logo' => '',
     ],
 
     'middleware' => [
