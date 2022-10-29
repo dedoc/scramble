@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\Type;
 
 use Illuminate\Support\Collection;
 use PhpParser\Node;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use PhpParser\PrettyPrinter\Standard;
 
 class TypeHelper
@@ -66,5 +67,24 @@ class TypeHelper
         }
 
         return new UnknownType('Cannot get type from AST node '.(new Standard())->prettyPrint([$typeNode]));
+    }
+
+    public static function getArgType(Scope $scope, array $args, array $parameterNameIndex, ?Type $default = null)
+    {
+        $default = $default ?: new UnknownType("Cannot get a type of the arg #{$parameterNameIndex[1]}($parameterNameIndex[0])");
+
+        $matchingArg = static::getArg($args, $parameterNameIndex);
+
+        return $matchingArg ? $scope->getType($matchingArg->value) : $default;
+    }
+
+    private static function getArg(array $args, array $parameterNameIndex)
+    {
+        [$name, $index] = $parameterNameIndex;
+
+        return collect($args)->first(
+            fn ($arg) => ($arg->name->name ?? '') === $name,
+            fn () => empty($args[$index]->name->name) ? ($args[$index] ?? null) : null,
+        );
     }
 }

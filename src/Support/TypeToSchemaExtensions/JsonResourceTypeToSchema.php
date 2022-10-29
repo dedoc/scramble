@@ -98,16 +98,21 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
+        $additional = $type->getPropertyFetchType('additional');
+
         $type = $this->infer->analyzeClass($className = $type->name);
 
         $withArray = $type->getMethodCallType('with');
         if ($withArray instanceof ArrayType) {
             $withArray->items = $this->flattenMergeValues($withArray->items);
         }
+        if ($additional instanceof ArrayType) {
+            $additional->items = $this->flattenMergeValues($additional->items);
+        }
 
         $wrapKey = $type->name::$wrap ?? null;
 
-        $shouldWrap = $withArray instanceof ArrayType || $wrapKey !== null;
+        $shouldWrap = $withArray instanceof ArrayType || $additional instanceof ArrayType || $wrapKey !== null;
 
         $wrapKey = $wrapKey ?: 'data';
 
@@ -125,6 +130,16 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
                 }
 
                 $openApiType->addRequired(array_keys($withType->properties));
+            }
+
+            if ($additional instanceof ArrayType) {
+                $additionalType = $this->openApiTransformer->transform($additional);
+
+                foreach ($additionalType->properties as $name => $property) {
+                    $openApiType->addProperty($name, $property);
+                }
+
+                $openApiType->addRequired(array_keys($additionalType->properties));
             }
         }
 

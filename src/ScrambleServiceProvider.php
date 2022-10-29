@@ -11,6 +11,7 @@ use Dedoc\Scramble\Support\ClassAstHelper;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceStaticCallsTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\JsonResourceCallsTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
@@ -51,6 +52,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ));
 
                 return array_merge($expressionTypeInferringExtensions, [
+                    JsonResourceCallsTypeInfer::class,
                     JsonResourceStaticCallsTypeInfer::class,
                     JsonResourceTypeInfer::class,
                     ResourceCollectionTypeInfer::class,
