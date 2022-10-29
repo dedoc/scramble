@@ -66,6 +66,47 @@ class UserCollection_Two extends \Illuminate\Http\Resources\Json\ResourceCollect
     }
 }
 
+test('transforms collection without proper toArray implementation', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+        JsonResourceTypeToSchema::class
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+
+    $type = new ObjectType(UserCollection_Three::class);
+
+    assertMatchesSnapshot([
+        'response' => $extension->toResponse($type)->toArray(),
+        'components' => $components->toArray(),
+    ]);
+});
+class UserCollection_Three extends \Illuminate\Http\Resources\Json\ResourceCollection
+{
+    public $collects = UserResource::class;
+
+    public function toArray($request)
+    {
+        return parent::toArray($request);
+    }
+}
+
+test('transforms collection without toArray implementation', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+        JsonResourceTypeToSchema::class
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+
+    $type = new ObjectType(UserCollection_Four::class);
+
+    assertMatchesSnapshot([
+        'response' => $extension->toResponse($type)->toArray(),
+        'components' => $components->toArray(),
+    ]);
+});
+class UserCollection_Four extends \Illuminate\Http\Resources\Json\ResourceCollection
+{
+    public $collects = UserResource::class;
+}
+
 class UserResource extends \Illuminate\Http\Resources\Json\JsonResource
 {
     public function toArray($request)

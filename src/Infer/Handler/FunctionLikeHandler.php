@@ -43,7 +43,7 @@ class FunctionLikeHandler implements CreatesScope
         // is to set node param types to scope.
         // Also, if here we add a reference to the function node type, it may allow us to
         // set function return types not in leave function, but in the return handlers.
-        $scope->setType($node, $fnType = new FunctionType);
+        $scope->setType($node, $fnType = new FunctionType($node->name->name ?? 'anonymous'));
 
         $fnType->arguments = collect($node->getParams())
             ->mapWithKeys(function (Node\Param $param) {

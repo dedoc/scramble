@@ -15,8 +15,10 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MergeValue;
+use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 
 class JsonResourceTypeToSchema extends TypeToSchemaExtension
 {
@@ -37,7 +39,11 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         $array = $type->getMethodCallType('toArray');
 
         if (! $array instanceof ArrayType) {
-            return new UnknownType();
+            if ($type->isInstanceOf(ResourceCollection::class)) {
+                $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($type);
+            } else {
+                return new UnknownType();
+            }
         }
 
         $array->items = $this->flattenMergeValues($array->items);

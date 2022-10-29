@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\PendingReturnType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -151,6 +152,16 @@ class Scope
     public function class(): ?ObjectType
     {
         return $this->context->class;
+    }
+
+    public function isInFunction()
+    {
+        return (bool) $this->context->function;
+    }
+
+    public function function(): ?FunctionType
+    {
+        return $this->context->function;
     }
 
     public function resolveName(string $name)
