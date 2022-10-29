@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -30,9 +31,9 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
                 return new Generic(
                     new ObjectType(Response::class),
                     [
-                        $this->getArgType($scope, $node->args, ['content', 0], new LiteralStringType('')),
-                        $this->getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
-                        $this->getArgType($scope, $node->args, ['headers', 2], new ArrayType),
+                        TypeHelper::getArgType($scope, $node->args, ['content', 0], new LiteralStringType('')),
+                        TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
+                        TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
                     ],
                 );
             }
@@ -51,8 +52,8 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
                     new ObjectType(Response::class),
                     [
                         new LiteralStringType(''),
-                        $this->getArgType($scope, $node->args, ['status', 0], new LiteralIntegerType(204)),
-                        $this->getArgType($scope, $node->args, ['headers', 1], new ArrayType),
+                        TypeHelper::getArgType($scope, $node->args, ['status', 0], new LiteralIntegerType(204)),
+                        TypeHelper::getArgType($scope, $node->args, ['headers', 1], new ArrayType),
                     ],
                 );
             }
@@ -61,9 +62,9 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
                 return new Generic(
                     new ObjectType(JsonResponse::class),
                     [
-                        $this->getArgType($scope, $node->args, ['data', 0], new ArrayType),
-                        $this->getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
-                        $this->getArgType($scope, $node->args, ['headers', 2], new ArrayType),
+                        TypeHelper::getArgType($scope, $node->args, ['data', 0], new ArrayType),
+                        TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
+                        TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
                     ],
                 );
             }
@@ -72,9 +73,9 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
                 return new Generic(
                     new ObjectType(Response::class),
                     [
-                        $this->getArgType($scope, $node->args, ['content', 0], new LiteralStringType('')),
-                        $this->getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
-                        $this->getArgType($scope, $node->args, ['headers', 2], new ArrayType),
+                        TypeHelper::getArgType($scope, $node->args, ['content', 0], new LiteralStringType('')),
+                        TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
+                        TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
                     ],
                 );
             }
@@ -97,30 +98,13 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
             return new Generic(
                 $scope->getType($node),
                 [
-                    $this->getArgType($scope, $node->args, [$contentName, 0], $contentDefaultType),
-                    $this->getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
-                    $this->getArgType($scope, $node->args, ['headers', 2], new ArrayType),
+                    TypeHelper::getArgType($scope, $node->args, [$contentName, 0], $contentDefaultType),
+                    TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
+                    TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
                 ],
             );
         }
 
         return null;
-    }
-
-    private function getArgType(Scope $scope, array $args, array $parameterNameIndex, Type $default)
-    {
-        $matchingArg = $this->getArg($args, $parameterNameIndex);
-
-        return $matchingArg ? $scope->getType($matchingArg->value) : $default;
-    }
-
-    private function getArg(array $args, array $parameterNameIndex)
-    {
-        [$name, $index] = $parameterNameIndex;
-
-        return collect($args)->first(
-            fn ($arg) => ($arg->name->name ?? '') === $name,
-            fn () => empty($args[$index]->name->name) ? ($args[$index] ?? null) : null,
-        );
     }
 }

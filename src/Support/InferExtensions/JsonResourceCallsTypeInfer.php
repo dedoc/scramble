@@ -17,15 +17,11 @@ class JsonResourceCallsTypeInfer implements ExpressionTypeInferExtension
 {
     public function getType(Expr $node, Scope $scope): ?Type
     {
-        if (! $node instanceof Node\Expr\MethodCall) {
+        if (! $node instanceof Node\Expr\MethodCall || ! $node->name instanceof Node\Identifier) {
             return null;
         }
 
         if (! $scope->getType($node->var)->isInstanceOf(JsonResource::class)) {
-            return null;
-        }
-
-        if (! $node->name instanceof Node\Identifier) {
             return null;
         }
 
