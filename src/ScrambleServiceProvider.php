@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\InferHandlers\ModelClassHandler;
 use Dedoc\Scramble\Support\InferHandlers\PhpDocHandler;
 use Dedoc\Scramble\Support\OperationBuilder;
+use Dedoc\Scramble\Support\OperationExtensions\ErrorResponsesExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
@@ -96,6 +97,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             $extensions = array_merge([
                 RequestEssentialsExtension::class,
                 RequestBodyExtension::class,
+                ErrorResponsesExtension::class,
                 ResponseExtension::class,
             ], $operationExtensions);
 

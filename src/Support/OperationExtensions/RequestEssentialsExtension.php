@@ -120,6 +120,8 @@ class RequestEssentialsExtension extends OperationExtension
 
             if ($type && ! isset($schemaTypesMap[$type]) && $description === '') {
                 $description = 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' ID';
+
+                $schemaType->setAttribute('isModelId', true);
             }
 
             return Parameter::make($paramName, 'path')

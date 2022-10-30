@@ -52,9 +52,6 @@ class RequestBodyExtension extends OperationExtension
             ->description($description);
     }
 
-    /**
-     * @throws Throwable
-     */
     private function extractParamsFromRequestValidationRules(Route $route, ?ClassMethod $methodNode)
     {
         $rules = $this->extractRouteRequestValidationRules($route, $methodNode);
@@ -62,9 +59,6 @@ class RequestBodyExtension extends OperationExtension
         return (new RulesToParameters($rules, $this->openApiTransformer))->handle();
     }
 
-    /**
-     * @throws Throwable
-     */
     private function extractRouteRequestValidationRules(Route $route, $methodNode)
     {
         $rules = [];

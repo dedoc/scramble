@@ -6,6 +6,7 @@ use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\Type\FunctionLikeType;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Routing\Route;
@@ -150,13 +151,13 @@ class RouteInfo
         return $methodType->getReturnType();
     }
 
-    public function getMethodType(): ?FunctionLikeType
+    public function getMethodType(): ?FunctionType
     {
         if (! $this->isClassBased() || ! $this->methodNode()) {
             return null;
         }
 
-        /** @var FunctionLikeType $methodType */
+        /** @var FunctionType $methodType */
         return $this->class->scope->getType($this->methodNode());
     }
 }
