@@ -54,6 +54,15 @@ it('adds not found error response', function () {
 
     assertMatchesSnapshot($openApiDocument);
 });
+
+it('adds validation error response when documented in phpdoc', function () {
+    RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'phpdoc_exception_response']);
+
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    assertMatchesSnapshot($openApiDocument);
+});
 class ErrorsResponsesTest_Controller extends Controller
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
@@ -79,6 +88,13 @@ class ErrorsResponsesTest_Controller extends Controller
     }
 
     public function adds_not_found_error_response(Illuminate\Http\Request $request, UserModel_ErrorsResponsesTest $user)
+    {
+    }
+
+    /**
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function phpdoc_exception_response(Illuminate\Http\Request $request)
     {
     }
 }
