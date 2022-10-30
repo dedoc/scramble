@@ -143,13 +143,20 @@ class RouteInfo
 
     public function getCodeReturnType()
     {
+        if(! $methodType = $this->getMethodType()) {
+            return null;
+        }
+
+        return $methodType->getReturnType();
+    }
+
+    public function getMethodType(): ?FunctionLikeType
+    {
         if (! $this->isClassBased() || ! $this->methodNode()) {
             return null;
         }
 
         /** @var FunctionLikeType $methodType */
-        $methodType = $this->class->scope->getType($this->methodNode());
-
-        return $methodType->getReturnType();
+        return $this->class->scope->getType($this->methodNode());
     }
 }

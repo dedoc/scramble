@@ -14,7 +14,7 @@ it('adds validation error response', function () {
     dd($openApiDocument);
 
     assertMatchesSnapshot($openApiDocument);
-})->skip();
+});
 class ErrorsResponsesTest_Controller
 {
     public function adds_validation_error_response(Illuminate\Http\Request $request)
