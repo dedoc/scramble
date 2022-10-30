@@ -38,8 +38,7 @@ class TypeTransformer
         Components $components,
         array $typeToSchemaExtensions = [],
         array $exceptionToResponseExtensions = []
-    )
-    {
+    ) {
         $this->infer = $infer;
         $this->components = $components;
         $this->typeToSchemaExtensions = $typeToSchemaExtensions;

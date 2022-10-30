@@ -45,7 +45,7 @@ class Operation
     }
 
     /**
-     * @param Response|Reference $response
+     * @param  Response|Reference  $response
      */
     public function addResponse($response)
     {

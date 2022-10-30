@@ -6,10 +6,10 @@ use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Validation\ValidationException;
-use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
 
 class ValidationExceptionToResponseExtension extends ExceptionToResponseExtension
 {

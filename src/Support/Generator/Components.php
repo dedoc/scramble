@@ -2,8 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-use InvalidArgumentException;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class Components
 {
