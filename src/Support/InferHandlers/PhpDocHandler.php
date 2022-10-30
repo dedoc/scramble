@@ -8,13 +8,11 @@ use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Support\Str;
 use PhpParser\Comment;
 use PhpParser\Comment\Doc;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
-use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTagNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ThrowsTagValueNode;
 
 /**

@@ -105,10 +105,13 @@ class UserModel_ErrorsResponsesTest
 
 class ErrorsResponsesTest_Controller_CustomRequest extends \Illuminate\Foundation\Http\FormRequest
 {
-    public function authorize() {
+    public function authorize()
+    {
         return something();
     }
-    public function rules() {
+
+    public function rules()
+    {
         return ['foo' => 'required'];
     }
 }
