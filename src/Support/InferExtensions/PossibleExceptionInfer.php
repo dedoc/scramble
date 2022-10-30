@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
@@ -23,17 +24,17 @@ class PossibleExceptionInfer implements ExpressionExceptionExtension
         if ($node instanceof Expr\MethodCall) {
             $isCallToValidate = $node->name instanceof Identifier && $node->name->name === 'validate';
             if (
-                $isCallToValidate
-                && (
-                    $scope->getType($node->var)->isInstanceOf(Request::class) // $request
-                    || ($node->var instanceof Expr\Variable && ($node->var->name ?? null) === 'this') // $this
-                )
+                $scope->getType($node->var)->isInstanceOf(Validator::class) // Validator::make()
+                || $scope->getType($node->var)->isInstanceOf(Request::class) // $request
+                || ($node->var instanceof Expr\Variable && ($node->var->name ?? null) === 'this')
             ) {
-                return [
-                    new ObjectType(ValidationException::class),
-                ];
+                if ($isCallToValidate) {
+                    return [
+                        new ObjectType(ValidationException::class),
+                    ];
+                }
             }
-            // Validator::make(...)->validate()?
+            // Validator::validate()?
 
             // $this->authorize
             if (
@@ -46,9 +47,7 @@ class PossibleExceptionInfer implements ExpressionExceptionExtension
             }
         }
 
-        // $this->authorizeResource in __constructor, not hehe
-
-        // `can` middleware
+        // $this->authorizeResource in __constructor
         return [];
     }
 }

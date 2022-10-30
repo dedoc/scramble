@@ -18,6 +18,15 @@ it('adds validation error response', function () {
     assertMatchesSnapshot($openApiDocument);
 });
 
+it('adds validation error response with facade made validators', function () {
+    RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_validation_error_response_with_facade_made_validators']);
+
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    assertMatchesSnapshot($openApiDocument);
+});
+
 it('adds auth error response', function () {
     RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_auth_error_response']);
 
@@ -43,6 +52,12 @@ class ErrorsResponsesTest_Controller extends Controller
     public function adds_validation_error_response(Illuminate\Http\Request $request)
     {
         $request->validate(['foo' => 'required']);
+    }
+
+    public function adds_validation_error_response_with_facade_made_validators(Illuminate\Http\Request $request)
+    {
+        \Illuminate\Support\Facades\Validator::make($request->all(), ['foo' => 'required'])
+            ->validate();
     }
 
     public function adds_auth_error_response(Illuminate\Http\Request $request)
