@@ -1,12 +1,12 @@
 <?php
 
 use Dedoc\Scramble\Scramble;
-use Illuminate\Routing\Controller;
-use Illuminate\Routing\Route;
-use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Routing\Controller;
+use Illuminate\Routing\Route;
+use Illuminate\Support\Facades\Route as RouteFacade;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 it('adds validation error response', function () {
@@ -70,4 +70,6 @@ class ErrorsResponsesTest_Controller extends Controller
     }
 }
 
-class UserModel_ErrorsResponsesTest {}
+class UserModel_ErrorsResponsesTest
+{
+}

@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Support;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
-use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -144,7 +143,7 @@ class RouteInfo
 
     public function getCodeReturnType()
     {
-        if(! $methodType = $this->getMethodType()) {
+        if (! $methodType = $this->getMethodType()) {
             return null;
         }
 

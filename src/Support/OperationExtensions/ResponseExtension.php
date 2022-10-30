@@ -65,7 +65,7 @@ class ResponseExtension extends OperationExtension
     }
 
     /**
-     * @param array<ObjectType|Generic> $exceptions
+     * @param  array<ObjectType|Generic>  $exceptions
      */
     private function getErrorResponses(array $exceptions)
     {
