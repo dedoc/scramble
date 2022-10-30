@@ -16,6 +16,8 @@ use PhpParser\Node;
 
 class Scope
 {
+    public Index $index;
+
     public NodeTypesResolver $nodeTypesResolver;
 
     public PendingTypes $pending;
@@ -32,12 +34,14 @@ class Scope
     public $namesResolver;
 
     public function __construct(
+        Index $index,
         NodeTypesResolver $nodeTypesResolver,
         PendingTypes $pending,
         ScopeContext $context,
         callable $namesResolver,
         ?Scope $parentScope = null)
     {
+        $this->index = $index;
         $this->nodeTypesResolver = $nodeTypesResolver;
         $this->pending = $pending;
         $this->context = $context;
@@ -98,10 +102,35 @@ class Scope
 
             $objectType = $this->getType($node->var);
 
+            if ($this->isInFunction() && isset($objectType->methods[$node->name->name]) && count($objectType->methods[$node->name->name]->exceptions)) {
+                $this->context->function->exceptions = [
+                    ...$this->context->function->exceptions,
+                    ...$objectType->methods[$node->name->name]->exceptions,
+                ];
+            }
+
             $type = $this->setType(
                 $node,
-                $objectType->getMethodCallType($node->name->name, $node, $this),
+                $objectType->getMethodCallType($node->name->name),
             );
+        }
+
+        if ($node instanceof Node\Expr\FuncCall) {
+            // Only string func names support.
+            if (! $node->name instanceof Node\Name) {
+                return $type;
+            }
+
+            $fnType = $this->index->getFunctionType($node->name->toString());
+
+            if ($this->isInFunction() && $fnType && count($fnType->exceptions)) {
+                $this->context->function->exceptions = [
+                    ...$this->context->function->exceptions,
+                    ...$fnType->exceptions,
+                ];
+            }
+
+            $type = $this->setType($node, $fnType ? $fnType->getReturnType() : new UnknownType);
         }
 
         return $type;
@@ -136,6 +165,7 @@ class Scope
     public function createChildScope(?ScopeContext $context = null, ?callable $namesResolver = null)
     {
         return new Scope(
+            $this->index,
             $this->nodeTypesResolver,
             $this->pending,
             $context ?: $this->context,

@@ -33,8 +33,4 @@ class NodeTypesResolver
 
         $this->nodeTypes[$nodeId] = $type;
     }
-
-    public function resolvePendingTypes()
-    {
-    }
 }

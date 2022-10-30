@@ -100,7 +100,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     {
         $additional = $type->getPropertyFetchType('additional');
 
-        $type = $this->infer->analyzeClass($className = $type->name);
+        $type = $this->infer->analyzeClass($type->name);
 
         $openApiType = $this->openApiTransformer->transform($type);
 
@@ -111,10 +111,9 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             $additional->items = $this->flattenMergeValues($additional->items);
         }
 
-        $wrapKey = $type->name::$wrap ?? null;
-        $shouldWrap = $withArray instanceof ArrayType
-            || $additional instanceof ArrayType
-            || $wrapKey !== null;
+        $shouldWrap = ($wrapKey = $type->name::$wrap ?? null) !== null
+            || $withArray instanceof ArrayType
+            || $additional instanceof ArrayType;
         $wrapKey = $wrapKey ?: 'data';
 
         if ($shouldWrap) {
@@ -132,7 +131,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         }
 
         return Response::make(200)
-            ->description('`'.$this->components->uniqueSchemaName($className).'`')
+            ->description('`'.$this->components->uniqueSchemaName($type->name).'`')
             ->setContent(
                 'application/json',
                 Schema::fromType($openApiType),

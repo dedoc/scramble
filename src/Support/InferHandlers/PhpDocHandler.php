@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\InferHandlers;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\PhpDoc;
@@ -12,6 +13,7 @@ use PhpParser\Comment;
 use PhpParser\Comment\Doc;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
+use PHPStan\PhpDocParser\Ast\PhpDoc\ThrowsTagValueNode;
 
 /**
  * Handler that adds info from PHPDoc to the node. Thanks to this, other extensions
@@ -54,6 +56,20 @@ class PhpDocHandler
             }
         }
 
+        if ($node instanceof Node\Stmt\ClassMethod && ($methodType = $scope->getType($node)) && $doc = $node->getDocComment()) {
+            $docNode = $this->getDocNode($scope, $doc);
+
+            $thrownExceptions = array_map(
+                fn (ThrowsTagValueNode $t) => PhpDocTypeHelper::toType($t->type),
+                $docNode->getThrowsTagValues(),
+            );
+
+            $methodType->exceptions = [
+                ...$methodType->exceptions,
+                ...$thrownExceptions,
+            ];
+        }
+
         return null;
     }
 
@@ -61,13 +77,16 @@ class PhpDocHandler
     {
         $docNode = PhpDoc::parse($doc->getText());
 
-        if (count($varTagValues = $docNode->getVarTagValues())) {
-            foreach ($varTagValues as $varTagValue) {
-                if (! $varTagValue->type) {
-                    continue;
-                }
-                PhpDocTypeWalker::traverse($varTagValue->type, [new ResolveFqnPhpDocTypeVisitor($scope->namesResolver)]);
+        $tagValues = [
+            ...$docNode->getVarTagValues(),
+            ...$docNode->getThrowsTagValues(),
+        ];
+
+        foreach ($tagValues as $tagValue) {
+            if (! $tagValue->type) {
+                continue;
             }
+            PhpDocTypeWalker::traverse($tagValue->type, [new ResolveFqnPhpDocTypeVisitor($scope->namesResolver)]);
         }
 
         return $docNode;

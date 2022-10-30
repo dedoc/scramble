@@ -7,7 +7,7 @@ use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Collection;
@@ -27,7 +27,12 @@ class ResponseExtension extends OperationExtension
             : [$returnTypes];
 
         $responses = collect($returnTypes)
-            ->map(fn ($returnType) => $this->openApiTransformer->toResponse($returnType))
+            ->merge($routeInfo->getMethodType()->exceptions)
+            ->map(fn ($returnType) => $this->openApiTransformer->toResponse($returnType));
+
+        [$responses, $references] = $responses->partition(fn ($r) => $r instanceof Response);
+
+        $responses = $responses
             ->filter()
             ->groupBy('code')
             ->map(function (Collection $responses, $code) {
@@ -44,11 +49,13 @@ class ResponseExtension extends OperationExtension
                                  * Empty response body can happen, and in case it is going to be grouped
                                  * by status, it should become an empty string.
                                  */
-                                ->map(fn ($type) => $type ?: new StringType)
+                                ->map(fn ($type) => $type ?: new OpenApiTypes\StringType)
                                 ->all()
                         ))
                     );
             })
+            ->values()
+            ->merge($references)
             ->all();
 
         foreach ($responses as $response) {

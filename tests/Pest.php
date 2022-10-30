@@ -1,5 +1,6 @@
 <?php
 
+use Dedoc\Scramble\DefaultExtensions;
 use Dedoc\Scramble\Infer\TypeInferringVisitor;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Tests\TestCase;
@@ -9,11 +10,14 @@ use PhpParser\ParserFactory as ParserFactoryAlias;
 
 uses(TestCase::class)->in(__DIR__);
 
-function analyzeFile(string $code): AnalysisResult
+function analyzeFile(string $code, array $extensions = []): AnalysisResult
 {
     $fileAst = (new ParserFactoryAlias)->create(ParserFactoryAlias::PREFER_PHP7)->parse($code);
 
-    $infer = app()->make(TypeInferringVisitor::class, ['namesResolver' => fn ($s) => $s]);
+    $infer = app()->make(TypeInferringVisitor::class, [
+        'namesResolver' => fn ($s) => $s,
+        'extensions' => [...$extensions, ...DefaultExtensions::infer()],
+    ]);
     $traverser = new NodeTraverser;
     $traverser->addVisitor($infer);
     $traverser->traverse($fileAst);
