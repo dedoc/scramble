@@ -7,11 +7,14 @@ use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * This extension is responsible for adding exceptions to the method return type
@@ -26,7 +29,8 @@ class ErrorResponsesExtension extends OperationExtension
         }
 
         $this->attachNotFoundException($operation, $methodType);
-        $this->attachAuthorizationException($operation, $routeInfo, $methodType);
+        $this->attachAuthorizationException($routeInfo, $methodType);
+        $this->attachCustomRequestExceptions($operation, $routeInfo, $methodType);
     }
 
     private function attachNotFoundException(Operation $operation, FunctionType $methodType)
@@ -47,7 +51,7 @@ class ErrorResponsesExtension extends OperationExtension
         ];
     }
 
-    private function attachAuthorizationException(Operation $operation, RouteInfo $routeInfo, FunctionType $methodType)
+    private function attachAuthorizationException(RouteInfo $routeInfo, FunctionType $methodType)
     {
         if (! collect($routeInfo->route->gatherMiddleware())->contains(fn ($m) => is_string($m) && Str::startsWith($m, 'can:'))) {
             return;
@@ -61,5 +65,30 @@ class ErrorResponsesExtension extends OperationExtension
             ...$methodType->exceptions,
             new ObjectType(AuthorizationException::class),
         ];
+    }
+
+    private function attachCustomRequestExceptions(Operation $operation, RouteInfo $routeInfo, FunctionType $methodType)
+    {
+        if (! $formRequest = collect($methodType->arguments)->first(fn (Type $arg) => $arg instanceof ObjectType && $arg->isInstanceOf(FormRequest::class))) {
+            return;
+        }
+
+        $methodType->exceptions = [
+            ...$methodType->exceptions,
+            new ObjectType(ValidationException::class),
+        ];
+
+        $formRequest = $this->infer->analyzeClass($formRequest->name);
+
+        $authorizeReturnType = $formRequest->getMethodCallType('authorize');
+        if (
+            (! $authorizeReturnType instanceof LiteralBooleanType)
+            || $authorizeReturnType->value !== true
+        ) {
+            $methodType->exceptions = [
+                ...$methodType->exceptions,
+                new ObjectType(AuthorizationException::class),
+            ];
+        }
     }
 }

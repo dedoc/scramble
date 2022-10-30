@@ -27,6 +27,15 @@ it('adds validation error response with facade made validators', function () {
     assertMatchesSnapshot($openApiDocument);
 });
 
+it('adds errors responses with custom requests', function () {
+    RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_errors_with_custom_request']);
+
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    assertMatchesSnapshot($openApiDocument);
+});
+
 it('adds auth error response', function () {
     RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_auth_error_response']);
 
@@ -60,6 +69,10 @@ class ErrorsResponsesTest_Controller extends Controller
             ->validate();
     }
 
+    public function adds_errors_with_custom_request(ErrorsResponsesTest_Controller_CustomRequest $request)
+    {
+    }
+
     public function adds_auth_error_response(Illuminate\Http\Request $request)
     {
         $this->authorize('read');
@@ -72,4 +85,14 @@ class ErrorsResponsesTest_Controller extends Controller
 
 class UserModel_ErrorsResponsesTest
 {
+}
+
+class ErrorsResponsesTest_Controller_CustomRequest extends \Illuminate\Foundation\Http\FormRequest
+{
+    public function authorize() {
+        return something();
+    }
+    public function rules() {
+        return ['foo' => 'required'];
+    }
 }
