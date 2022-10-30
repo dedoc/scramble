@@ -13,8 +13,11 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\RecordsNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ResponseExtension extends OperationExtension
 {
@@ -85,6 +88,43 @@ class ResponseExtension extends OperationExtension
 
                     return Response::make(422)
                         ->description('Validation error')
+                        ->setContent(
+                            'application/json',
+                            Schema::fromType($validationResponseBodyType)
+                        );
+                }
+
+                if ($exception->isInstanceOf(AuthorizationException::class)) {
+                    $validationResponseBodyType = (new OpenApiTypes\ObjectType())
+                        ->addProperty(
+                            'message',
+                            (new OpenApiTypes\StringType())
+                                ->setDescription('Error overview.')
+                        )
+                        ->setRequired(['message']);
+
+                    return Response::make(403)
+                        ->description('Authorization error')
+                        ->setContent(
+                            'application/json',
+                            Schema::fromType($validationResponseBodyType)
+                        );
+                }
+
+                if (
+                    $exception->isInstanceOf(RecordsNotFoundException::class)
+                    || $exception->isInstanceOf(NotFoundHttpException::class)
+                ) {
+                    $validationResponseBodyType = (new OpenApiTypes\ObjectType())
+                        ->addProperty(
+                            'message',
+                            (new OpenApiTypes\StringType())
+                                ->setDescription('Error overview.')
+                        )
+                        ->setRequired(['message']);
+
+                    return Response::make(404)
+                        ->description('Not found')
                         ->setContent(
                             'application/json',
                             Schema::fromType($validationResponseBodyType)

@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
@@ -32,14 +33,22 @@ class PossibleExceptionInfer implements ExpressionExceptionExtension
                     new ObjectType(ValidationException::class),
                 ];
             }
-        }
-        // Validator::make(...)->validate()?
+            // Validator::make(...)->validate()?
 
-        // $this->authorize
+            // $this->authorize
+            if (
+                $node->name instanceof Identifier && $node->name->name === 'authorize'
+                && ($node->var instanceof Expr\Variable && ($node->var->name ?? null) === 'this') // $this
+            ) {
+                return [
+                    new ObjectType(AuthorizationException::class),
+                ];
+            }
+        }
+
         // $this->authorizeResource in __constructor, not hehe
 
         // `can` middleware
-        // TODO: Implement getException() method.
         return [];
     }
 }
