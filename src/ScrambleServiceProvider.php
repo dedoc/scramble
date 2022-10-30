@@ -2,12 +2,16 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Extensions\InferExtension;
 use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Infer\TypeInferringVisitor;
 use Dedoc\Scramble\Support\ClassAstHelper;
+use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthorizationExceptionToResponseExtension;
+use Dedoc\Scramble\Support\ExceptionToResponseExtensions\NotFoundExceptionToResponseExtension;
+use Dedoc\Scramble\Support\ExceptionToResponseExtensions\ValidationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\InferHandlers\ModelClassHandler;
@@ -71,6 +75,11 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 fn ($e) => is_a($e, TypeToSchemaExtension::class, true),
             ));
 
+            $exceptionToResponseExtensions = array_values(array_filter(
+                $extensions,
+                fn ($e) => is_a($e, ExceptionToResponseExtension::class, true),
+            ));
+
             return new TypeTransformer(
                 $this->app->make(Infer::class),
                 new Components,
@@ -82,6 +91,11 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     AnonymousResourceCollectionTypeToSchema::class,
                     LengthAwarePaginatorTypeToSchema::class,
                     ResponseTypeToSchema::class,
+                ]),
+                array_merge($exceptionToResponseExtensions, [
+                    ValidationExceptionToResponseExtension::class,
+                    AuthorizationExceptionToResponseExtension::class,
+                    NotFoundExceptionToResponseExtension::class,
                 ]),
             );
         });

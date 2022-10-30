@@ -2,12 +2,16 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use InvalidArgumentException;
 use Illuminate\Support\Str;
 
 class Components
 {
     /** @var array<string, Schema> */
     public array $schemas = [];
+
+    /** @var array<string, Response> */
+    public array $responses = [];
 
     /** @var array<string, SecurityScheme> */
     public array $securitySchemes = [];
@@ -59,6 +63,16 @@ class Components
                 ->toArray();
         }
 
+        if (count($this->responses)) {
+            $result['responses'] = collect($this->responses)
+                ->mapWithKeys(function (Response $r, string $fullName) {
+                    return [
+                        $this->uniqueSchemaName($fullName) => $r->toArray(),
+                    ];
+                })
+                ->toArray();
+        }
+
         return $result;
     }
 
@@ -91,5 +105,54 @@ class Components
     public static function slug(string $name)
     {
         return Str::replace('\\', '.', $name);
+    }
+
+    public function has(Reference $reference): bool
+    {
+        $this->ensureValidReference($reference);
+
+        return array_key_exists($reference->fullName, $this->{$reference->referenceType});
+    }
+
+    public function add(Reference $reference, $object): Reference
+    {
+        $this->ensureValidReference($reference, $object);
+
+        $this->{$reference->referenceType}[$reference->fullName] = $object;
+
+        return $reference;
+    }
+
+    public function get(Reference $reference)
+    {
+        $this->ensureValidReference($reference);
+
+        return $this->{$reference->referenceType}[$reference->fullName];
+    }
+
+    private function ensureValidReference(Reference $reference, $object = null)
+    {
+        $references = [
+            'schemas' => Schema::class,
+            'responses' => Response::class,
+        ];
+
+        if (! in_array($reference->referenceType, $referenceTypes = array_keys($references))) {
+            $validTypes = implode(', ', $referenceTypes);
+
+            throw new InvalidArgumentException("Only $validTypes references are allowed");
+        }
+
+        if ($object === null) {
+            return;
+        }
+
+        $expectedType = $references[$reference->referenceType];
+
+        if (! is_a($object, $expectedType)) {
+            $actualType = get_class($object);
+
+            throw new InvalidArgumentException("Object must be $expectedType to be added to $reference->referenceType references, $actualType given");
+        }
     }
 }

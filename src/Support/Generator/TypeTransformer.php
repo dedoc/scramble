@@ -29,13 +29,21 @@ class TypeTransformer
 
     private Components $components;
 
-    private array $extensions = [];
+    private array $typeToSchemaExtensions;
 
-    public function __construct(Infer $infer, Components $components, array $extensions = [])
+    private array $exceptionToResponseExtensions;
+
+    public function __construct(
+        Infer $infer,
+        Components $components,
+        array $typeToSchemaExtensions = [],
+        array $exceptionToResponseExtensions = []
+    )
     {
         $this->infer = $infer;
         $this->components = $components;
-        $this->extensions = $extensions;
+        $this->typeToSchemaExtensions = $typeToSchemaExtensions;
+        $this->exceptionToResponseExtensions = $exceptionToResponseExtensions;
     }
 
     public function getComponents(): Components
@@ -156,7 +164,7 @@ class TypeTransformer
     private function handleUsingExtensions(Type $type)
     {
         return array_reduce(
-            $this->extensions,
+            $this->typeToSchemaExtensions,
             function ($acc, $extensionClass) use ($type) {
                 $extension = new $extensionClass($this->infer, $this, $this->components);
 
@@ -197,7 +205,7 @@ class TypeTransformer
         );
     }
 
-    public function toResponse(Type $type): ?Response
+    public function toResponse(Type $type)
     {
         if (! $response = $this->handleResponseUsingExtensions($type)) {
             $response = Response::make(200)
@@ -233,8 +241,27 @@ class TypeTransformer
 
     private function handleResponseUsingExtensions(Type $type)
     {
+        if (! $type->isInstanceOf(\Throwable::class)) {
+            return array_reduce(
+                $this->typeToSchemaExtensions,
+                function ($acc, $extensionClass) use ($type) {
+                    $extension = new $extensionClass($this->infer, $this, $this->components);
+
+                    if (! $extension->shouldHandle($type)) {
+                        return $acc;
+                    }
+
+                    if ($response = $extension->toResponse($type, $acc)) {
+                        return $response;
+                    }
+
+                    return $acc;
+                }
+            );
+        }
+
         return array_reduce(
-            $this->extensions,
+            $this->exceptionToResponseExtensions,
             function ($acc, $extensionClass) use ($type) {
                 $extension = new $extensionClass($this->infer, $this, $this->components);
 
@@ -242,7 +269,20 @@ class TypeTransformer
                     return $acc;
                 }
 
+                /** @var Reference|null $reference */
+                $reference = method_exists($extension, 'reference')
+                    ? $extension->reference($type)
+                    : null;
+
+                if ($reference && $this->components->has($reference)) {
+                    return $reference;
+                }
+
                 if ($response = $extension->toResponse($type, $acc)) {
+                    if ($reference) {
+                        return $this->components->add($reference, $response);
+                    }
+
                     return $response;
                 }
 

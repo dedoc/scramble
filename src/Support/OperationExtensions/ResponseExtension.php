@@ -9,15 +9,8 @@ use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
 use Dedoc\Scramble\Support\RouteInfo;
-use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\RecordsNotFoundException;
 use Illuminate\Support\Collection;
-use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ResponseExtension extends OperationExtension
 {
@@ -34,8 +27,12 @@ class ResponseExtension extends OperationExtension
             : [$returnTypes];
 
         $responses = collect($returnTypes)
-            ->map(fn ($returnType) => $this->openApiTransformer->toResponse($returnType))
-            ->merge($this->getErrorResponses($routeInfo->getMethodType()->exceptions ?? []))
+            ->merge($routeInfo->getMethodType()->exceptions)
+            ->map(fn ($returnType) => $this->openApiTransformer->toResponse($returnType));
+
+        [$responses, $references] = $responses->partition(fn ($r) => $r instanceof Response);
+
+        $responses = $responses
             ->filter()
             ->groupBy('code')
             ->map(function (Collection $responses, $code) {
@@ -57,84 +54,12 @@ class ResponseExtension extends OperationExtension
                         ))
                     );
             })
+            ->values()
+            ->merge($references)
             ->all();
 
         foreach ($responses as $response) {
             $operation->addResponse($response);
         }
-    }
-
-    /**
-     * @param  array<ObjectType|Generic>  $exceptions
-     */
-    private function getErrorResponses(array $exceptions)
-    {
-        return collect($exceptions)
-            ->map(function (Type $exception) {
-                if ($exception->isInstanceOf(ValidationException::class)) {
-                    $validationResponseBodyType = (new OpenApiTypes\ObjectType())
-                        ->addProperty(
-                            'message',
-                            (new OpenApiTypes\StringType())
-                                ->setDescription('Errors overview.')
-                        )
-                        ->addProperty(
-                            'errors',
-                            (new OpenApiTypes\ObjectType())
-                                ->setDescription('A detailed description of each field that failed validation.')
-                                ->additionalProperties((new OpenApiTypes\ArrayType)->setItems(new OpenApiTypes\StringType()))
-                        )
-                        ->setRequired(['message', 'errors']);
-
-                    return Response::make(422)
-                        ->description('Validation error')
-                        ->setContent(
-                            'application/json',
-                            Schema::fromType($validationResponseBodyType)
-                        );
-                }
-
-                if ($exception->isInstanceOf(AuthorizationException::class)) {
-                    $validationResponseBodyType = (new OpenApiTypes\ObjectType())
-                        ->addProperty(
-                            'message',
-                            (new OpenApiTypes\StringType())
-                                ->setDescription('Error overview.')
-                        )
-                        ->setRequired(['message']);
-
-                    return Response::make(403)
-                        ->description('Authorization error')
-                        ->setContent(
-                            'application/json',
-                            Schema::fromType($validationResponseBodyType)
-                        );
-                }
-
-                if (
-                    $exception->isInstanceOf(RecordsNotFoundException::class)
-                    || $exception->isInstanceOf(NotFoundHttpException::class)
-                ) {
-                    $validationResponseBodyType = (new OpenApiTypes\ObjectType())
-                        ->addProperty(
-                            'message',
-                            (new OpenApiTypes\StringType())
-                                ->setDescription('Error overview.')
-                        )
-                        ->setRequired(['message']);
-
-                    return Response::make(404)
-                        ->description('Not found')
-                        ->setContent(
-                            'application/json',
-                            Schema::fromType($validationResponseBodyType)
-                        );
-                }
-
-                return null;
-            })
-            ->filter()
-            ->values();
-        dd($exceptions);
     }
 }

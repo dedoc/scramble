@@ -44,7 +44,10 @@ class Operation
         return $this;
     }
 
-    public function addResponse(Response $response)
+    /**
+     * @param Response|Reference $response
+     */
+    public function addResponse($response)
     {
         $this->responses[] = $response;
 
@@ -140,7 +143,13 @@ class Operation
         if (count($this->responses)) {
             $responses = [];
             foreach ($this->responses as $response) {
-                $responses[$response->code ?: 'default'] = $response->toArray();
+                if ($response instanceof Response) {
+                    $responses[$response->code ?: 'default'] = $response->toArray();
+                } elseif ($response instanceof Reference) {
+                    $referencedResponse = $response->resolve();
+
+                    $responses[$referencedResponse->code ?: 'default'] = $response->toArray();
+                }
             }
             $result['responses'] = $responses;
         }

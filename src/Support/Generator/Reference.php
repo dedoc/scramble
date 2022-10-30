@@ -19,6 +19,11 @@ class Reference extends Type
         $this->components = $components;
     }
 
+    public function resolve()
+    {
+        return $this->components->get($this);
+    }
+
     public function toArray()
     {
         return [
