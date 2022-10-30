@@ -19,6 +19,11 @@ class Generic extends AbstractType
         return $this->type->isInstanceOf($className);
     }
 
+    public function getPropertyFetchType(string $propertyName): Type
+    {
+        return $this->type->getPropertyFetchType($propertyName);
+    }
+
     public function children(): array
     {
         return [

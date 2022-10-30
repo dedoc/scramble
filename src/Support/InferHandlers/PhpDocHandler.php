@@ -8,6 +8,7 @@ use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Str;
 use PhpParser\Comment;
 use PhpParser\Comment\Doc;
@@ -59,10 +60,16 @@ class PhpDocHandler
         if ($node instanceof Node\Stmt\ClassMethod && ($methodType = $scope->getType($node)) && $doc = $node->getDocComment()) {
             $docNode = $this->getDocNode($scope, $doc);
 
-            $thrownExceptions = array_map(
-                fn (ThrowsTagValueNode $t) => PhpDocTypeHelper::toType($t->type),
-                $docNode->getThrowsTagValues(),
-            );
+            $thrownExceptions = collect($docNode->getThrowsTagValues())
+                ->flatMap(function (ThrowsTagValueNode $t) {
+                    $type = PhpDocTypeHelper::toType($t->type);
+
+                    if ($type instanceof Union) {
+                        return $type->types;
+                    }
+
+                    return [$type];
+                });
 
             $methodType->exceptions = [
                 ...$methodType->exceptions,

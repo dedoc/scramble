@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Str;
 
 class AuthorizationExceptionToResponseExtension extends ExceptionToResponseExtension
 {
@@ -39,6 +40,6 @@ class AuthorizationExceptionToResponseExtension extends ExceptionToResponseExten
 
     public function reference(ObjectType $type)
     {
-        return new Reference('responses', $type->name, $this->components);
+        return new Reference('responses', Str::start($type->name, '\\'), $this->components);
     }
 }

@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Database\RecordsNotFoundException;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class NotFoundExceptionToResponseExtension extends ExceptionToResponseExtension
@@ -43,6 +44,6 @@ class NotFoundExceptionToResponseExtension extends ExceptionToResponseExtension
 
     public function reference(ObjectType $type)
     {
-        return new Reference('responses', $type->name, $this->components);
+        return new Reference('responses', Str::start($type->name, '\\'), $this->components);
     }
 }

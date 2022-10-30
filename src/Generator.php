@@ -38,6 +38,7 @@ class Generator
                 try {
                     return $this->routeToOperation($route);
                 } catch (Throwable $e) {
+                    throw $e;
                     throw RouteAnalysisErrorException::make($route, $e);
                 }
             })

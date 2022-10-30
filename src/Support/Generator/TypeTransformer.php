@@ -207,6 +207,10 @@ class TypeTransformer
     public function toResponse(Type $type)
     {
         if (! $response = $this->handleResponseUsingExtensions($type)) {
+            if ($type->isInstanceOf(\Throwable::class)) {
+                return null;
+            }
+
             $response = Response::make(200)
                 ->setContent(
                     'application/json',

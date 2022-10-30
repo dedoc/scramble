@@ -28,12 +28,12 @@ class ResponseExtension extends OperationExtension
 
         $responses = collect($returnTypes)
             ->merge($routeInfo->getMethodType()->exceptions)
-            ->map(fn ($returnType) => $this->openApiTransformer->toResponse($returnType));
+            ->map(fn ($returnType) => $this->openApiTransformer->toResponse($returnType))
+            ->filter();
 
         [$responses, $references] = $responses->partition(fn ($r) => $r instanceof Response);
 
         $responses = $responses
-            ->filter()
             ->groupBy('code')
             ->map(function (Collection $responses, $code) {
                 if (count($responses) === 1) {

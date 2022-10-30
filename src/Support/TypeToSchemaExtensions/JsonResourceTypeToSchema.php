@@ -46,6 +46,10 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             }
         }
 
+        if (! $array instanceof ArrayType) {
+            return new UnknownType();
+        }
+
         $array->items = $this->flattenMergeValues($array->items);
 
         return $this->openApiTransformer->transform($array);
