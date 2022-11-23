@@ -7,8 +7,10 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -75,6 +77,22 @@ it('gets json resource type reference', function () {
     ]);
 
     assertMatchesSnapshot($components->getSchema(ComplexTypeHandlersTest_SampleType::class)->toArray());
+});
+
+it('gets nullable type reference', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+
+    $type = new Union([
+        new ObjectType(ComplexTypeHandlersTest_SampleType::class),
+        new NullType,
+    ]);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        'anyOf' => [
+            ['$ref' => '#/components/schemas/ComplexTypeHandlersTest_SampleType'],
+            ['type' => 'null'],
+        ],
+    ]);
 });
 
 class ComplexTypeHandlersTest_SampleType extends JsonResource
