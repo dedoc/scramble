@@ -10,13 +10,6 @@ use Dedoc\Scramble\Support\PhpDoc;
 use Illuminate\Http\Resources\Json\JsonResource;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
-/*
-dump([$phpDoc => optional($result)->toArray()]);
-
-expect(true)->toBeTrue();
-return;
- */
-
 function getTypeFromDoc(string $phpDoc)
 {
     $docNode = PhpDoc::parse($phpDoc);

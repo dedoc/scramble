@@ -19,7 +19,7 @@ class RulesToParameter
     private TypeTransformer $openApiTransformer;
 
     const RULES_PRIORITY = [
-        'bool', 'boolean', 'number', 'int', 'integer', 'string', 'array', 'exists',
+        'bool', 'boolean', 'numeric', 'int', 'integer', 'string', 'array', 'exists',
     ];
 
     public function __construct(string $name, $rules, TypeTransformer $openApiTransformer)
