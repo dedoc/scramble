@@ -107,12 +107,11 @@ class TypeTransformer
             if ($docNode = $type->getAttribute('docNode')) {
                 $varNode = $docNode->getVarTagValues()[0] ?? null;
 
-                // @todo: unknown type
-                $openApiType = $varNode->type
+                $openApiType = $varNode && $varNode->type
                     ? $this->transform(PhpDocTypeHelper::toType($varNode->type))
-                    : new StringType;
+                    : new UnknownType;
 
-                if ($varNode->description) {
+                if ($varNode && $varNode->description) {
                     $openApiType->setDescription($varNode->description);
                 }
             }
