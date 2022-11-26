@@ -56,7 +56,7 @@ class RequestEssentialsExtension extends OperationExtension
         $expectedServer = Server::make($url = 'https://'.$route->getAction('domain').'/'.$route->getAction('prefix'))
             ->variables(
                 collect($this->getParametersFromString($route->getDomain()))
-                    ->mapWithKeys(fn ($name) => [$name => ServerVariable::make('example', [], 'wow')])
+                    ->mapWithKeys(fn ($name) => [$name => ServerVariable::make('example')])
                     ->toArray()
             );
 
@@ -100,7 +100,7 @@ class RequestEssentialsExtension extends OperationExtension
         return explode(',', $tagNodes[0]->value->value);
     }
 
-    private function getParametersFromString(string $str)
+    private function getParametersFromString(?string $str)
     {
         return str($str)->matchAll('/\{(.*?)\}/')->values()->toArray();
     }
