@@ -8,6 +8,7 @@ use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Server;
+use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
@@ -44,16 +45,20 @@ class RequestEssentialsExtension extends OperationExtension
         }
     }
 
+    /**
+     * Checks if route domain needs to have alternative servers defined. Route needs to have alternative servers defined if
+     * the route has not matching domain to any servers in the root.
+     *
+     * Domain is matching if all the server variables matching.
+     */
     private function getAlternativeServers(Route $route, OpenApi $openApi)
     {
-        /*
-        Checks if route domain needs to have alternative servers defined. Route needs to have alternative servers defined if
-        the route has not matching domain to any servers in the root.
-
-        Domain is matching if all the server variables matching.
-        */
-        $matchesAllParentServers = true;
-        $expectedServer = Server::make($url = 'https://'.$route->getAction('domain').'/'.$route->getAction('prefix'));
+        $expectedServer = Server::make($url = 'https://'.$route->getAction('domain').'/'.$route->getAction('prefix'))
+            ->variables(
+                collect($this->getParametersFromString($route->getDomain()))
+                    ->mapWithKeys(fn ($name) => [$name => ServerVariable::make('example', [], 'wow')])
+                    ->toArray()
+            );
 
         if ($this->isServerMatchesAllGivenServers($expectedServer, $openApi->servers)) {
             return [];
