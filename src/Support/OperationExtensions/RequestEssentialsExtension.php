@@ -83,7 +83,7 @@ class RequestEssentialsExtension extends OperationExtension
             [, $urlPart] = explode('://', $url);
             [$domain, $path] = explode('/', $urlPart, 2);
 
-            $params = str($domain)->matchAll('/\{(.*?)\}/');
+            $params = Str::of($domain)->matchAll('/\{(.*?)\}/');
 
             return $params->join('.').'/'.$path;
         };
@@ -102,7 +102,7 @@ class RequestEssentialsExtension extends OperationExtension
 
     private function getParametersFromString(?string $str)
     {
-        return str($str)->matchAll('/\{(.*?)\}/')->values()->toArray();
+        return Str::of($str)->matchAll('/\{(.*?)\}/')->values()->toArray();
     }
 
     private function getRoutePathParameters(Route $route, ?PhpDocNode $methodPhpDocNode)
