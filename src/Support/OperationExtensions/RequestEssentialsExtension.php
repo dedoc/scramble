@@ -53,7 +53,12 @@ class RequestEssentialsExtension extends OperationExtension
      */
     private function getAlternativeServers(Route $route, OpenApi $openApi)
     {
-        $expectedServer = Server::make($url = 'https://'.$route->getAction('domain').'/'.$route->getAction('prefix'))
+        if (! $route->getDomain()) {
+            return [];
+        }
+
+        [$protocol] = explode('://', url('/'));
+        $expectedServer = Server::make($url = $protocol.'://'.$route->getDomain().'/'.$route->getAction('prefix'))
             ->variables(
                 collect($this->getParametersFromString($route->getDomain()))
                     ->mapWithKeys(fn ($name) => [$name => ServerVariable::make('example')])
