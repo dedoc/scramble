@@ -34,9 +34,9 @@ class Generator
         $openApi = $this->makeOpenApi();
 
         $this->getRoutes()
-            ->map(function (Route $route) {
+            ->map(function (Route $route) use ($openApi) {
                 try {
-                    return $this->routeToOperation($route);
+                    return $this->routeToOperation($openApi, $route);
                 } catch (Throwable $e) {
                     throw $e;
                     throw RouteAnalysisErrorException::make($route, $e);
@@ -110,7 +110,7 @@ class Generator
             ->values();
     }
 
-    private function routeToOperation(Route $route)
+    private function routeToOperation(OpenApi $openApi, Route $route)
     {
         $routeInfo = new RouteInfo($route);
 
@@ -118,6 +118,6 @@ class Generator
             return null;
         }
 
-        return $this->operationBuilder->build($routeInfo);
+        return $this->operationBuilder->build($routeInfo, $openApi);
     }
 }

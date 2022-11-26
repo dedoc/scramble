@@ -4,7 +4,9 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Parameter;
+use Dedoc\Scramble\Support\Generator\Server;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
@@ -19,7 +21,7 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RequestEssentialsExtension extends OperationExtension
 {
-    public function handle(Operation $operation, RouteInfo $routeInfo)
+    public function handle(Operation $operation, RouteInfo $routeInfo, OpenApi $openApi)
     {
         [$pathParams, $pathAliases] = $this->getRoutePathParameters($routeInfo->route, $routeInfo->phpDoc());
 
@@ -34,11 +36,54 @@ class RequestEssentialsExtension extends OperationExtension
                 ...$this->extractTagsForMethod($routeInfo->class->phpDoc()),
                 Str::of(class_basename($routeInfo->className()))->replace('Controller', ''),
             ])
+            ->servers($this->getAlternativeServers($routeInfo->route, $openApi))
             ->addParameters($pathParams);
 
         if (count($routeInfo->phpDoc()->getTagsByName('@unauthenticated'))) {
             $operation->addSecurity([]);
         }
+    }
+
+    private function getAlternativeServers(Route $route, OpenApi $openApi)
+    {
+        /*
+        Checks if route domain needs to have alternative servers defined. Route needs to have alternative servers defined if
+        the route has not matching domain to any servers in the root. 
+
+        Domain is matching if all the server variables matching.
+        */
+        $matchesAllParentServers = true;
+        $expectedServer = Server::make($url = 'https://' . $route->getAction('domain') . '/' . $route->getAction('prefix'));
+
+        if ($this->isServerMatchesAllGivenServers($expectedServer, $openApi->servers)) {
+            return [];
+        }
+
+        $matchingServers = collect($openApi->servers)->filter(fn (Server $s) => $this->isMatchingServerUrls($expectedServer->url, $s->url));
+        if ($matchingServers->count()) {
+            return $matchingServers->values()->toArray();
+        }
+
+        return [$expectedServer];
+    }
+
+    private function isServerMatchesAllGivenServers(Server $expectedServer, array $actualServers)
+    {
+        return collect($actualServers)->every(fn (Server $s) => $this->isMatchingServerUrls($expectedServer->url, $s->url));
+    }
+
+    private function isMatchingServerUrls(string $expectedUrl, string $actualUrl)
+    {
+        $mask = function (string $url) {
+            [, $urlPart] = explode('://', $url);
+            [$domain, $path] = explode('/', $urlPart, 2);
+
+            $params = str($domain)->matchAll('/\{(.*?)\}/');
+
+            return $params->join('.').'/'.$path;
+        };
+
+        return $mask($expectedUrl) === $mask($actualUrl);
     }
 
     private function extractTagsForMethod(PhpDocNode $classPhpDoc)
@@ -48,6 +93,11 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         return explode(',', $tagNodes[0]->value->value);
+    }
+
+    private function getParametersFromString(string $str)
+    {
+        return str($str)->matchAll('/\{(.*?)\}/')->values()->toArray();
     }
 
     private function getRoutePathParameters(Route $route, ?PhpDocNode $methodPhpDocNode)
@@ -127,7 +177,7 @@ class RequestEssentialsExtension extends OperationExtension
             return Parameter::make($paramName, 'path')
                 ->description($description)
                 ->setSchema(Schema::fromType($schemaType));
-        }, $route->parameterNames());
+        }, array_values(array_diff($route->parameterNames(), $this->getParametersFromString($route->getDomain()))));
 
         return [$params, $aliases];
     }

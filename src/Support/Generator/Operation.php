@@ -27,6 +27,9 @@ class Operation
     /** @var Response[]|null */
     public ?array $responses = [];
 
+    /** @var Server[] */
+    public array $servers = [];
+
     public function __construct(string $method)
     {
         $this->method = $method;
@@ -41,6 +44,15 @@ class Operation
     {
         $this->requestBodyObject = $requestBodyObject;
 
+        return $this;
+    }
+
+    /**
+     * @param Server[] $servers
+     */
+    public function servers(array $servers)
+    {
+        $this->servers = $servers;
         return $this;
     }
 
@@ -160,6 +172,14 @@ class Operation
                 $securities[] = is_array($security) ? $security : $security->toArray();
             }
             $result['security'] = $securities;
+        }
+
+        if (count($this->servers)) {
+            $servers = [];
+            foreach ($this->servers as $server) {
+                $servers[] = $server->toArray();
+            }
+            $result['servers'] = $servers;
         }
 
         return $result;

@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support;
 
 use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 
 class OperationBuilder
 {
@@ -13,12 +14,12 @@ class OperationBuilder
         $this->extensions = $extensions;
     }
 
-    public function build(RouteInfo $routeInfo)
+    public function build(RouteInfo $routeInfo, OpenApi $openApi)
     {
         $operation = new Operation('get');
 
         foreach ($this->extensions as $extension) {
-            $extension->handle($operation, $routeInfo);
+            $extension->handle($operation, $routeInfo, $openApi);
         }
 
         return $operation;

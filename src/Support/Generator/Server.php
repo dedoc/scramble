@@ -4,9 +4,9 @@ namespace Dedoc\Scramble\Support\Generator;
 
 class Server
 {
-    private string $url;
+    public string $url;
 
-    private string $description = '';
+    public string $description = '';
 
     public function __construct(string $url)
     {
