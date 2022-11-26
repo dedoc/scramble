@@ -42,7 +42,7 @@ class Server
     }
 
     /**
-     * @param array<string, ServerVariable> $variables
+     * @param  array<string, ServerVariable>  $variables
      */
     public function variables(array $variables)
     {
