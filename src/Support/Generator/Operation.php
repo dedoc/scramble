@@ -48,11 +48,12 @@ class Operation
     }
 
     /**
-     * @param Server[] $servers
+     * @param  Server[]  $servers
      */
     public function servers(array $servers)
     {
         $this->servers = $servers;
+
         return $this;
     }
 

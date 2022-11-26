@@ -2,8 +2,8 @@
 
 namespace Dedoc\Scramble\Support;
 
-use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\Operation;
 
 class OperationBuilder
 {

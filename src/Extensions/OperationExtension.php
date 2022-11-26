@@ -3,9 +3,9 @@
 namespace Dedoc\Scramble\Extensions;
 
 use Dedoc\Scramble\Infer\Infer;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\RouteInfo;
 
 abstract class OperationExtension
