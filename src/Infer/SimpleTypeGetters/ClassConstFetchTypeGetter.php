@@ -11,7 +11,7 @@ class ClassConstFetchTypeGetter
 {
     public function __invoke(Node\Expr\ClassConstFetch $node): Type
     {
-        if ($node->name->toString() === 'class') {
+        if ($node->name->toString() === 'class' && method_exists($node->class, 'toString')) {
             return new LiteralStringType($node->class->toString());
         }
 

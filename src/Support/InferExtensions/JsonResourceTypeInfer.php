@@ -85,7 +85,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         if (
             $node instanceof Node\Expr\ArrayItem
             && $scope->getType($node->value)->isInstanceOf(JsonResource::class)
-            && $this->isMethodCallToThis(optional($node->value->args[0])->value, ['whenLoaded'])
+            && $this->isMethodCallToThis(optional(property_exists($node->value, 'args') ? $node->value->args[0] : null)->value, ['whenLoaded'])
         ) {
             $scope->getType($node)->isOptional = true;
 
