@@ -3,7 +3,7 @@ info:
     title: Laravel
     version: 0.0.1
 servers:
-    - { url: 'http://localhost/api', description: 'Live Server' }
+    - { url: 'http://localhost/api' }
 paths:
     /test: { get: { tags: [ValidationRulesDocumenting_Test], parameters: [{ name: content, in: query, required: true, schema: { type: string, enum: [wow] } }], responses: { 200: { description: '`ValidationRulesDocumenting_TestResource`', content: { application/json: { schema: { type: object, properties: { data: { $ref: '#/components/schemas/ValidationRulesDocumenting_TestResource' } }, required: [data] } } } }, 422: { $ref: '#/components/responses/ValidationException' } } } }
 components:

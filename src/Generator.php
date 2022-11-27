@@ -51,7 +51,7 @@ class Generator
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
                     (string) Str::of($operation->path)
-                        ->replaceFirst(config('scramble.api_routes.path', 'api'), '')
+                        ->replaceFirst(config('scramble.api_path', 'api'), '')
                         ->trim('/')
                 )->addOperation($operation)
             ))
@@ -74,13 +74,18 @@ class Generator
                     ->setDescription(config('scramble.info.description', ''))
             );
 
-        $servers = config('scramble.servers', [
-            'Live Server' => Server::make(url(config('scramble.api_routes.path', 'api'))),
-        ]);
+        [$defaultProtocol] = explode('://', url('/'));
+        $servers = config('scramble.servers') ?: [
+            '@default' => ($domain = config('scramble.api_domain'))
+                ? $defaultProtocol.'://'.$domain.'/'.config('scramble.api_path', 'api')
+                : config('scramble.api_path', 'api'),
+        ];
         foreach ($servers as $description => $url) {
-            $openApi->addServer(
-                Server::make(url($url ?: '/'))->setDescription($description)
-            );
+            $server = Server::make(url($url ?: '/'));
+            if ($description !== '@default') {
+                $server->setDescription($description);
+            }
+            $openApi->addServer($server);
         }
 
         return $openApi;
@@ -113,9 +118,9 @@ class Generator
             })
             ->filter(function (Route $route) {
                 $routeResolver = Scramble::$routeResolver ?? function (Route $route) {
-                    $expectedDomain = config('scramble.api_routes.domain');
+                    $expectedDomain = config('scramble.api_domain');
 
-                    return Str::startsWith($route->uri, config('scramble.api_routes.path', 'api'))
+                    return Str::startsWith($route->uri, config('scramble.api_path', 'api'))
                         && (! $expectedDomain || $route->getDomain() === $expectedDomain);
                 };
 

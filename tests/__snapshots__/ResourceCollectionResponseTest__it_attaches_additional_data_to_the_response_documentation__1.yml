@@ -3,7 +3,7 @@ info:
     title: Laravel
     version: 0.0.1
 servers:
-    - { url: 'http://localhost/api', description: 'Live Server' }
+    - { url: 'http://localhost/api' }
 paths:
     /test: { get: { tags: [ResourceCollectionResponseTest_], responses: { 200: { description: '`UserCollection_One`', content: { application/json: { schema: { type: object, properties: { data: { $ref: '#/components/schemas/UserCollection_One' }, something: { type: object, properties: { foo: { type: string } }, required: [foo] } }, required: [data, something] } } } } } } }
 components:

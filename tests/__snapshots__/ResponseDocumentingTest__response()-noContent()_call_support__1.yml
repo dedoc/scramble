@@ -3,6 +3,6 @@ info:
     title: Laravel
     version: 0.0.1
 servers:
-    - { url: 'http://localhost/api', description: 'Live Server' }
+    - { url: 'http://localhost/api' }
 paths:
     /test: { get: { tags: [Foo_Test], responses: { 204: { description: 'No content', content: { application/json: {  } } } } } }
