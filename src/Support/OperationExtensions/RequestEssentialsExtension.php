@@ -86,7 +86,7 @@ class RequestEssentialsExtension extends OperationExtension
     {
         $mask = function (string $url) {
             [, $urlPart] = explode('://', $url);
-            [$domain, $path] = explode('/', $urlPart, 2);
+            [$domain, $path] = count($parts = explode('/', $urlPart, 2)) !== 2 ? [$parts[0], ''] : $parts;
 
             $params = Str::of($domain)->matchAll('/\{(.*?)\}/');
 

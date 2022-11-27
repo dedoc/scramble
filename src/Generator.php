@@ -11,8 +11,10 @@ use Dedoc\Scramble\Support\Generator\Server;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\RouteInfo;
+use Facade\IgnitionContracts\BaseSolution;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
 use Throwable;
@@ -38,15 +40,21 @@ class Generator
                 try {
                     return $this->routeToOperation($openApi, $route);
                 } catch (Throwable $e) {
+                    if (config('app.debug', false)) {
+                        $method = $route->methods()[0];
+                        $action = $route->getAction('uses');
+
+                        logger()->error("Error when analyzing route '$method $route->uri' ($action): {$e->getMessage()} – ".($e->getFile().' on line '.$e->getLine()));
+                    }
+
                     throw $e;
-                    throw RouteAnalysisErrorException::make($route, $e);
                 }
             })
             ->filter() // Closure based routes are filtered out for now, right here
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
                     (string) Str::of($operation->path)
-                        ->replaceFirst(config('scramble.api_path', 'api'), '')
+                        ->replaceFirst(config('scramble.api_routes.path', 'api'), '')
                         ->trim('/')
                 )->addOperation($operation)
             ))
@@ -69,9 +77,14 @@ class Generator
                     ->setDescription(config('scramble.info.description', ''))
             );
 
-        $openApi->addServer(Server::make(
-            url(config('scramble.api_path', 'api'))
-        ));
+        $servers = config('scramble.servers', [
+            'Live Server' => Server::make(url(config('scramble.api_routes.path', 'api'))),
+        ]);
+        foreach ($servers as $description => $url) {
+            $openApi->addServer(
+                Server::make(url($url ?: '/'))->setDescription($description)
+            );
+        }
 
         return $openApi;
     }
@@ -102,7 +115,12 @@ class Generator
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
             })
             ->filter(function (Route $route) {
-                $routeResolver = Scramble::$routeResolver ?? fn (Route $route) => Str::startsWith($route->uri, config('scramble.api_path', 'api'));
+                $routeResolver = Scramble::$routeResolver ?? function (Route $route) {
+                    $expectedDomain = config('scramble.api_routes.domain');
+
+                    return Str::startsWith($route->uri, config('scramble.api_routes.path', 'api'))
+                        && (! $expectedDomain || $route->getDomain() === $expectedDomain);
+                };
 
                 return $routeResolver($route);
             })
