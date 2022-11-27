@@ -56,7 +56,7 @@ class OpenApi
     }
 
     /**
-     * @param Path[] $paths
+     * @param  Path[]  $paths
      */
     public function paths(array $paths)
     {

@@ -25,7 +25,7 @@ class Scramble
     }
 
     /**
-     * @param array<string, ServerVariable> $variables
+     * @param  array<string, ServerVariable>  $variables
      */
     public static function defineServerVariables(array $variables)
     {

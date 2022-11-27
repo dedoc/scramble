@@ -9,7 +9,6 @@ use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Server;
-use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
@@ -26,6 +25,7 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 class RequestEssentialsExtension extends OperationExtension
 {
     private OpenApi $openApi;
+
     private ServerFactory $serverFactory;
 
     public function __construct(
@@ -33,8 +33,7 @@ class RequestEssentialsExtension extends OperationExtension
         TypeTransformer $openApiTransformer,
         OpenApi $openApi,
         ServerFactory $serverFactory
-    )
-    {
+    ) {
         parent::__construct($infer, $openApiTransformer);
         $this->openApi = $openApi;
         $this->serverFactory = $serverFactory;

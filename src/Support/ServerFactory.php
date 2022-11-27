@@ -12,7 +12,7 @@ class ServerFactory
     private array $variables;
 
     /**
-     * @param array<string, ServerVariable> $variables
+     * @param  array<string, ServerVariable>  $variables
      */
     public function __construct(array $variables = [])
     {
@@ -20,7 +20,7 @@ class ServerFactory
     }
 
     /**
-     * @param array<string, ServerVariable> $variables
+     * @param  array<string, ServerVariable>  $variables
      */
     public function variables(array $variables = [])
     {
@@ -43,7 +43,7 @@ class ServerFactory
         return collect($this->variables)
             ->only($params)
             ->merge($params->reject(fn ($p) => array_key_exists($p, $this->variables))->mapWithKeys(fn ($p) => [
-                $p => ServerVariable::make('example')
+                $p => ServerVariable::make('example'),
             ]))
             ->toArray();
     }
