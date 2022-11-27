@@ -8,7 +8,7 @@ return [
      * By default, all routes starting with this path will be added to the docs. If you need to change
      * this behavior, you can add your custom routes resolver using `Scramble::routes()`.
      */
-//    'api_path' => 'api',
+    //    'api_path' => 'api',
     'api_routes' => [
         'path' => $apiRoutePath = 'api',
         'domain' => null,
