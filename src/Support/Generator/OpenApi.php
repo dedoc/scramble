@@ -55,9 +55,19 @@ class OpenApi
         return $this;
     }
 
-    public function addPath(Path $buildPath)
+    /**
+     * @param Path[] $paths
+     */
+    public function paths(array $paths)
     {
-        $this->paths[] = $buildPath;
+        $this->paths = $paths;
+
+        return $this;
+    }
+
+    public function addPath(Path $path)
+    {
+        $this->paths[] = $path;
 
         return $this;
     }

@@ -125,9 +125,7 @@ class Operation
 
     public function toArray()
     {
-        $result = [
-            //            'tags' => ['Shit I know', 'Wow'], 'summary' => 'List Todo Item', 'description' => 'Wow, this is very interesting'
-        ];
+        $result = [];
 
         if ($this->operationId) {
             $result['operationId'] = $this->operationId;

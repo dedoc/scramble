@@ -6,6 +6,7 @@ use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Path;
+use Dedoc\Scramble\Support\Generator\Server;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\RouteInfo;
@@ -59,6 +60,8 @@ class Generator
                 )->addOperation($operation)
             ))
             ->toArray();
+
+        $this->moveSameAlternativeServersToPath($openApi);
 
         if (isset(Scramble::$openApiExtender)) {
             (Scramble::$openApiExtender)($openApi);
@@ -140,5 +143,30 @@ class Generator
         }
 
         return $this->operationBuilder->build($routeInfo, $openApi);
+    }
+
+    private function moveSameAlternativeServersToPath(OpenApi $openApi)
+    {
+        foreach ($openApi->paths as $path) {
+            if (empty($path->operations)) {
+                continue;
+            }
+
+            $operations = collect($path->operations);
+            $operationsHaveSameAlternativeServers = $operations->every(fn (Operation $o) => count($o->servers))
+                && $operations->unique(function (Operation $o) {
+                    return collect($o->servers)->map(fn (Server $s) => $s->url)->join('.');
+                })->count() === 1;
+
+            if (! $operationsHaveSameAlternativeServers) {
+                continue;
+            }
+
+            $path->servers(array_values($path->operations)[0]->servers);
+
+            foreach ($path->operations as $operation) {
+                $operation->servers([]);
+            }
+        }
     }
 }
