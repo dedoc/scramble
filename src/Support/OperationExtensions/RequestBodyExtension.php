@@ -19,7 +19,7 @@ use Throwable;
 
 class RequestBodyExtension extends OperationExtension
 {
-    public function handle(Operation $operation, RouteInfo $routeInfo, OpenApi $openApi)
+    public function handle(Operation $operation, RouteInfo $routeInfo)
     {
         $method = $operation->method;
 

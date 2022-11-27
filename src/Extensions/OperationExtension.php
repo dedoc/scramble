@@ -20,5 +20,5 @@ abstract class OperationExtension
         $this->openApiTransformer = $openApiTransformer;
     }
 
-    abstract public function handle(Operation $operation, RouteInfo $routeInfo, OpenApi $openApi);
+    abstract public function handle(Operation $operation, RouteInfo $routeInfo);
 }

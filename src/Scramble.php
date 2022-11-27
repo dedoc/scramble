@@ -2,6 +2,9 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Support\Generator\ServerVariable;
+use Dedoc\Scramble\Support\ServerFactory;
+
 class Scramble
 {
     public static $openApiExtender;
@@ -19,5 +22,13 @@ class Scramble
     public static function routes(callable $routeResolver)
     {
         static::$routeResolver = $routeResolver;
+    }
+
+    /**
+     * @param array<string, ServerVariable> $variables
+     */
+    public static function defineServerVariables(array $variables)
+    {
+        app(ServerFactory::class)->variables($variables);
     }
 }

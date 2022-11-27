@@ -23,7 +23,7 @@ use Illuminate\Validation\ValidationException;
  */
 class ErrorResponsesExtension extends OperationExtension
 {
-    public function handle(Operation $operation, RouteInfo $routeInfo, OpenApi $openApi)
+    public function handle(Operation $operation, RouteInfo $routeInfo)
     {
         if (! $methodType = $routeInfo->getMethodType()) {
             return;

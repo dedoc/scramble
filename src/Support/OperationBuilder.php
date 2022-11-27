@@ -2,24 +2,30 @@
 
 namespace Dedoc\Scramble\Support;
 
+use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 
 class OperationBuilder
 {
-    private array $extensions;
+    /** @var class-string<OperationExtension> */
+    private array $extensionsClasses;
 
-    public function __construct(array $extensions = [])
+    public function __construct(array $extensionsClasses = [])
     {
-        $this->extensions = $extensions;
+        $this->extensionsClasses = $extensionsClasses;
     }
 
     public function build(RouteInfo $routeInfo, OpenApi $openApi)
     {
         $operation = new Operation('get');
 
-        foreach ($this->extensions as $extension) {
-            $extension->handle($operation, $routeInfo, $openApi);
+        foreach ($this->extensionsClasses as $extensionClass) {
+            $extension = app()->make($extensionClass, [
+                'openApi' => $openApi,
+            ]);
+
+            $extension->handle($operation, $routeInfo);
         }
 
         return $operation;

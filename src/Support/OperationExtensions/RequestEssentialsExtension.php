@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
+use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
@@ -13,7 +14,9 @@ use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\RouteInfo;
+use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Str;
@@ -22,7 +25,22 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RequestEssentialsExtension extends OperationExtension
 {
-    public function handle(Operation $operation, RouteInfo $routeInfo, OpenApi $openApi)
+    private OpenApi $openApi;
+    private ServerFactory $serverFactory;
+
+    public function __construct(
+        Infer $infer,
+        TypeTransformer $openApiTransformer,
+        OpenApi $openApi,
+        ServerFactory $serverFactory
+    )
+    {
+        parent::__construct($infer, $openApiTransformer);
+        $this->openApi = $openApi;
+        $this->serverFactory = $serverFactory;
+    }
+
+    public function handle(Operation $operation, RouteInfo $routeInfo)
     {
         [$pathParams, $pathAliases] = $this->getRoutePathParameters($routeInfo->route, $routeInfo->phpDoc());
 
@@ -37,7 +55,7 @@ class RequestEssentialsExtension extends OperationExtension
                 ...$this->extractTagsForMethod($routeInfo->class->phpDoc()),
                 Str::of(class_basename($routeInfo->className()))->replace('Controller', ''),
             ])
-            ->servers($this->getAlternativeServers($routeInfo->route, $openApi))
+            ->servers($this->getAlternativeServers($routeInfo->route))
             ->addParameters($pathParams);
 
         if (count($routeInfo->phpDoc()->getTagsByName('@unauthenticated'))) {
@@ -51,25 +69,20 @@ class RequestEssentialsExtension extends OperationExtension
      *
      * Domain is matching if all the server variables matching.
      */
-    private function getAlternativeServers(Route $route, OpenApi $openApi)
+    private function getAlternativeServers(Route $route)
     {
         if (! $route->getDomain()) {
             return [];
         }
 
         [$protocol] = explode('://', url('/'));
-        $expectedServer = Server::make($url = $protocol.'://'.$route->getDomain().'/'.$route->getAction('prefix'))
-            ->variables(
-                collect($this->getParametersFromString($route->getDomain()))
-                    ->mapWithKeys(fn ($name) => [$name => ServerVariable::make('example')])
-                    ->toArray()
-            );
+        $expectedServer = $this->serverFactory->make($protocol.'://'.$route->getDomain().'/'.$route->getAction('prefix'));
 
-        if ($this->isServerMatchesAllGivenServers($expectedServer, $openApi->servers)) {
+        if ($this->isServerMatchesAllGivenServers($expectedServer, $this->openApi->servers)) {
             return [];
         }
 
-        $matchingServers = collect($openApi->servers)->filter(fn (Server $s) => $this->isMatchingServerUrls($expectedServer->url, $s->url));
+        $matchingServers = collect($this->openApi->servers)->filter(fn (Server $s) => $this->isMatchingServerUrls($expectedServer->url, $s->url));
         if ($matchingServers->count()) {
             return $matchingServers->values()->toArray();
         }

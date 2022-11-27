@@ -6,10 +6,10 @@ use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Path;
-use Dedoc\Scramble\Support\Generator\Server;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\RouteInfo;
+use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
@@ -22,10 +22,13 @@ class Generator
 
     private OperationBuilder $operationBuilder;
 
-    public function __construct(TypeTransformer $transformer, OperationBuilder $operationBuilder)
+    private ServerFactory $serverFactory;
+
+    public function __construct(TypeTransformer $transformer, OperationBuilder $operationBuilder, ServerFactory $serverFactory)
     {
         $this->transformer = $transformer;
         $this->operationBuilder = $operationBuilder;
+        $this->serverFactory = $serverFactory;
     }
 
     public function __invoke()
@@ -76,16 +79,14 @@ class Generator
 
         [$defaultProtocol] = explode('://', url('/'));
         $servers = config('scramble.servers') ?: [
-            '@default' => ($domain = config('scramble.api_domain'))
+            '' => ($domain = config('scramble.api_domain'))
                 ? $defaultProtocol.'://'.$domain.'/'.config('scramble.api_path', 'api')
                 : config('scramble.api_path', 'api'),
         ];
         foreach ($servers as $description => $url) {
-            $server = Server::make(url($url ?: '/'));
-            if ($description !== '@default') {
-                $server->setDescription($description);
-            }
-            $openApi->addServer($server);
+            $openApi->addServer(
+                $this->serverFactory->make(url($url ?: '/'), $description)
+            );
         }
 
         return $openApi;
