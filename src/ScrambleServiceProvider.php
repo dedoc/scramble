@@ -21,6 +21,7 @@ use Dedoc\Scramble\Support\OperationExtensions\ErrorResponsesExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
+use Dedoc\Scramble\Support\ServerFactory;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
@@ -67,6 +68,26 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ];
             });
 
+        $this->app->when(OperationBuilder::class)
+            ->needs('$extensionsClasses')
+            ->give(function () {
+                $extensions = config('scramble.extensions', []);
+
+                $operationExtensions = array_values(array_filter(
+                    $extensions,
+                    fn ($e) => is_a($e, OperationExtension::class, true),
+                ));
+
+                return array_merge([
+                    RequestEssentialsExtension::class,
+                    RequestBodyExtension::class,
+                    ErrorResponsesExtension::class,
+                    ResponseExtension::class,
+                ], $operationExtensions);
+            });
+
+        $this->app->singleton(ServerFactory::class);
+
         $this->app->singleton(TypeTransformer::class, function () {
             $extensions = config('scramble.extensions', []);
 
@@ -97,26 +118,6 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     AuthorizationExceptionToResponseExtension::class,
                     NotFoundExceptionToResponseExtension::class,
                 ]),
-            );
-        });
-
-        $this->app->bind(OperationBuilder::class, function () {
-            $extensions = config('scramble.extensions', []);
-
-            $operationExtensions = array_values(array_filter(
-                $extensions,
-                fn ($e) => is_a($e, OperationExtension::class, true),
-            ));
-
-            $extensions = array_merge([
-                RequestEssentialsExtension::class,
-                RequestBodyExtension::class,
-                ErrorResponsesExtension::class,
-                ResponseExtension::class,
-            ], $operationExtensions);
-
-            return new OperationBuilder(
-                array_map(fn ($extensionClass) => $this->app->make($extensionClass), $extensions),
             );
         });
     }

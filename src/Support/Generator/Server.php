@@ -4,9 +4,14 @@ namespace Dedoc\Scramble\Support\Generator;
 
 class Server
 {
-    private string $url;
+    public string $url;
 
-    private string $description = '';
+    public string $description = '';
+
+    /**
+     * @var array<string, ServerVariable>
+     */
+    public array $variables = [];
 
     public function __construct(string $url)
     {
@@ -30,6 +35,19 @@ class Server
         return array_filter([
             'url' => $this->url,
             'description' => $this->description,
+            'variables' => count($this->variables)
+                ? array_map(fn (ServerVariable $v) => $v->toArray(), $this->variables)
+                : null,
         ]);
+    }
+
+    /**
+     * @param  array<string, ServerVariable>  $variables
+     */
+    public function variables(array $variables)
+    {
+        $this->variables = $variables;
+
+        return $this;
     }
 }

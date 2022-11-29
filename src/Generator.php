@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble;
 
-use Dedoc\Scramble\Exceptions\RouteAnalysisErrorException;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
@@ -11,6 +10,7 @@ use Dedoc\Scramble\Support\Generator\Server;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\RouteInfo;
+use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
@@ -23,10 +23,13 @@ class Generator
 
     private OperationBuilder $operationBuilder;
 
-    public function __construct(TypeTransformer $transformer, OperationBuilder $operationBuilder)
+    private ServerFactory $serverFactory;
+
+    public function __construct(TypeTransformer $transformer, OperationBuilder $operationBuilder, ServerFactory $serverFactory)
     {
         $this->transformer = $transformer;
         $this->operationBuilder = $operationBuilder;
+        $this->serverFactory = $serverFactory;
     }
 
     public function __invoke()
@@ -34,12 +37,18 @@ class Generator
         $openApi = $this->makeOpenApi();
 
         $this->getRoutes()
-            ->map(function (Route $route) {
+            ->map(function (Route $route) use ($openApi) {
                 try {
-                    return $this->routeToOperation($route);
+                    return $this->routeToOperation($openApi, $route);
                 } catch (Throwable $e) {
+                    if (config('app.debug', false)) {
+                        $method = $route->methods()[0];
+                        $action = $route->getAction('uses');
+
+                        logger()->error("Error when analyzing route '$method $route->uri' ($action): {$e->getMessage()} – ".($e->getFile().' on line '.$e->getLine()));
+                    }
+
                     throw $e;
-                    throw RouteAnalysisErrorException::make($route, $e);
                 }
             })
             ->filter() // Closure based routes are filtered out for now, right here
@@ -51,6 +60,8 @@ class Generator
                 )->addOperation($operation)
             ))
             ->toArray();
+
+        $this->moveSameAlternativeServersToPath($openApi);
 
         if (isset(Scramble::$openApiExtender)) {
             (Scramble::$openApiExtender)($openApi);
@@ -69,9 +80,17 @@ class Generator
                     ->setDescription(config('scramble.info.description', ''))
             );
 
-        $openApi->addServer(Server::make(
-            url(config('scramble.api_path', 'api'))
-        ));
+        [$defaultProtocol] = explode('://', url('/'));
+        $servers = config('scramble.servers') ?: [
+            '' => ($domain = config('scramble.api_domain'))
+                ? $defaultProtocol.'://'.$domain.'/'.config('scramble.api_path', 'api')
+                : config('scramble.api_path', 'api'),
+        ];
+        foreach ($servers as $description => $url) {
+            $openApi->addServer(
+                $this->serverFactory->make(url($url ?: '/'), $description)
+            );
+        }
 
         return $openApi;
     }
@@ -102,7 +121,12 @@ class Generator
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
             })
             ->filter(function (Route $route) {
-                $routeResolver = Scramble::$routeResolver ?? fn (Route $route) => Str::startsWith($route->uri, config('scramble.api_path', 'api'));
+                $routeResolver = Scramble::$routeResolver ?? function (Route $route) {
+                    $expectedDomain = config('scramble.api_domain');
+
+                    return Str::startsWith($route->uri, config('scramble.api_path', 'api'))
+                        && (! $expectedDomain || $route->getDomain() === $expectedDomain);
+                };
 
                 return $routeResolver($route);
             })
@@ -110,7 +134,7 @@ class Generator
             ->values();
     }
 
-    private function routeToOperation(Route $route)
+    private function routeToOperation(OpenApi $openApi, Route $route)
     {
         $routeInfo = new RouteInfo($route);
 
@@ -118,6 +142,32 @@ class Generator
             return null;
         }
 
-        return $this->operationBuilder->build($routeInfo);
+        return $this->operationBuilder->build($routeInfo, $openApi);
+    }
+
+    private function moveSameAlternativeServersToPath(OpenApi $openApi)
+    {
+        foreach (collect($openApi->paths)->groupBy('path') as $pathsGroup) {
+            if ($pathsGroup->isEmpty()) {
+                continue;
+            }
+
+            $operations = collect($pathsGroup->pluck('operations')->flatten());
+            $operationsHaveSameAlternativeServers = $operations->count()
+                && $operations->every(fn (Operation $o) => count($o->servers))
+                && $operations->unique(function (Operation $o) {
+                    return collect($o->servers)->map(fn (Server $s) => $s->url)->join('.');
+                })->count() === 1;
+
+            if (! $operationsHaveSameAlternativeServers) {
+                continue;
+            }
+
+            $pathsGroup->every->servers($operations->first()->servers);
+
+            foreach ($operations as $operation) {
+                $operation->servers([]);
+            }
+        }
     }
 }
