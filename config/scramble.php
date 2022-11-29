@@ -36,7 +36,7 @@ return [
      *
      * ```php
      * 'servers' => [
-     *     'Live' => '/api',
+     *     'Live' => 'api',
      *     'Prod' => 'https://scramble.dedoc.co/api',
      * ],
      * ```
