@@ -147,13 +147,14 @@ class Generator
 
     private function moveSameAlternativeServersToPath(OpenApi $openApi)
     {
-        foreach ($openApi->paths as $path) {
-            if (empty($path->operations)) {
+        foreach (collect($openApi->paths)->groupBy('path') as $pathsGroup) {
+            if ($pathsGroup->isEmpty()) {
                 continue;
             }
 
-            $operations = collect($path->operations);
-            $operationsHaveSameAlternativeServers = $operations->every(fn (Operation $o) => count($o->servers))
+            $operations = collect($pathsGroup->pluck('operations')->flatten());
+            $operationsHaveSameAlternativeServers = $operations->count()
+                && $operations->every(fn (Operation $o) => count($o->servers))
                 && $operations->unique(function (Operation $o) {
                     return collect($o->servers)->map(fn (Server $s) => $s->url)->join('.');
                 })->count() === 1;
@@ -162,9 +163,9 @@ class Generator
                 continue;
             }
 
-            $path->servers(array_values($path->operations)[0]->servers);
+            $pathsGroup->every->servers($operations->first()->servers);
 
-            foreach ($path->operations as $operation) {
+            foreach ($operations as $operation) {
                 $operation->servers([]);
             }
         }

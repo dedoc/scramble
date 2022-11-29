@@ -75,7 +75,7 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         [$protocol] = explode('://', url('/'));
-        $expectedServer = $this->serverFactory->make($protocol.'://'.$route->getDomain().'/'.$route->getAction('prefix'));
+        $expectedServer = $this->serverFactory->make($protocol.'://'.$route->getDomain().'/'.config('scramble.api_path', 'api'));
 
         if ($this->isServerMatchesAllGivenServers($expectedServer, $this->openApi->servers)) {
             return [];
