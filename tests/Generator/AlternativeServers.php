@@ -18,7 +18,7 @@ it('adds an alternative server to operation when no matching server found', func
 
 it('doesnt add an alternative server when there is matching server', function () {
     config()->set('scramble.servers', [
-        'Live' => 'http://{param}.localhost/api'
+        'Live' => 'http://{param}.localhost/api',
     ]);
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::domain('{param}.localhost')->get('api/test', [AlternativeServers_Test::class, 'a']);
@@ -47,13 +47,14 @@ it('adds an alternative server when there is matching and not matching servers',
                 'param' => [
                     'default' => 'example',
                 ],
-            ]
+            ],
         ]);
 });
 
 it('alternative server is moved to paths when all path operations have it', function () {
     $openApiDocument = generateForRoute(function () {
         RouteFacade::domain('{param}.localhost')->post('api/test', [AlternativeServers_Test::class, 'a']);
+
         return RouteFacade::domain('{param}.localhost')->get('api/test', [AlternativeServers_Test::class, 'a']);
     });
 
@@ -62,7 +63,9 @@ it('alternative server is moved to paths when all path operations have it', func
 
 class AlternativeServers_Test extends \Illuminate\Routing\Controller
 {
-    public function a(){}
+    public function a()
+    {
+    }
 }
 
 function generateForRoute(Closure $param)
