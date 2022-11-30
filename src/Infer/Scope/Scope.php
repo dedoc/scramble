@@ -64,7 +64,7 @@ class Scope
         }
 
         if ($node instanceof Node\Expr\ClassConstFetch) {
-            return (new ClassConstFetchTypeGetter)($node);
+            return (new ClassConstFetchTypeGetter)($node, $this);
         }
 
         if ($node instanceof Node\Expr\BooleanNot) {
