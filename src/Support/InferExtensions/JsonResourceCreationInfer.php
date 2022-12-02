@@ -57,7 +57,7 @@ class JsonResourceCreationInfer implements ExpressionTypeInferExtension
     }
 
     /**
-     * @param Node\Arg[] $args
+     * @param  Node\Arg[]  $args
      */
     private function setResourceProperty(ObjectType $obj, Scope $scope, array $args)
     {
