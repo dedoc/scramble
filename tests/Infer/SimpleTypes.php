@@ -4,6 +4,7 @@ it(
     'infers simple types',
     fn ($statement, $expectedType) => expect(getStatementType($statement)->toString())->toBe($expectedType),
 )->with([
+    ['null', 'null'],
     ['true', 'boolean(true)'],
     ['false', 'boolean(false)'],
 ]);

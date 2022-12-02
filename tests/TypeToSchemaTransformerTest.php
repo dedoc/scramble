@@ -11,6 +11,7 @@ use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Union;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -63,6 +64,27 @@ it('gets json resource type with nested merges', function () {
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
 
     $type = new ObjectType(ComplexTypeHandlersWithNestedTest_SampleType::class);
+
+    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+});
+
+it('gets json resource type with when', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+
+    $type = new ObjectType(ComplexTypeHandlersWithWhen_SampleType::class);
+
+    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+});
+
+it('gets json resource type with when loaded', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+        JsonResourceTypeToSchema::class,
+        AnonymousResourceCollectionTypeToSchema::class,
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+
+    $type = new ObjectType(ComplexTypeHandlersWithWhenLoaded_SampleType::class);
 
     assertMatchesSnapshot($extension->toSchema($type)->toArray());
 });
@@ -134,6 +156,34 @@ class ComplexTypeHandlersWithNestedTest_SampleType extends JsonResource
             $this->merge([
                 'bar' => 'foo',
             ]),
+        ];
+    }
+}
+
+class ComplexTypeHandlersWithWhen_SampleType extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'foo' => $this->when(true, fn () => 1),
+            'bar' => $this->when(true, fn () => 'b', null),
+        ];
+    }
+}
+
+class ComplexTypeHandlersWithWhenLoaded_SampleType extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'opt_foo_new' => new ComplexTypeHandlersWithWhen_SampleType($this->whenLoaded('foo')),
+            'opt_foo_make' => ComplexTypeHandlersWithWhen_SampleType::make($this->whenLoaded('foo')),
+            'opt_foo_collection' => ComplexTypeHandlersWithWhen_SampleType::collection($this->whenLoaded('foo')),
+            'foo_new' => new ComplexTypeHandlersWithWhen_SampleType($this->foo),
+            'foo_make' => ComplexTypeHandlersWithWhen_SampleType::make($this->foo),
+            'foo_collection' => ComplexTypeHandlersWithWhen_SampleType::collection($this->foo),
+            'bar' => $this->whenLoaded('bar', fn () => 1),
+            'bar_nullable' => $this->whenLoaded('bar', fn () => 's', null),
         ];
     }
 }

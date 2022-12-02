@@ -1,0 +1,15 @@
+type: object
+properties:
+    opt_foo_new: { $ref: '#/components/schemas/ComplexTypeHandlersWithWhen_SampleType' }
+    opt_foo_make: { $ref: '#/components/schemas/ComplexTypeHandlersWithWhen_SampleType' }
+    opt_foo_collection: { type: array, items: { $ref: '#/components/schemas/ComplexTypeHandlersWithWhen_SampleType' } }
+    foo_new: { $ref: '#/components/schemas/ComplexTypeHandlersWithWhen_SampleType' }
+    foo_make: { $ref: '#/components/schemas/ComplexTypeHandlersWithWhen_SampleType' }
+    foo_collection: { type: array, items: { $ref: '#/components/schemas/ComplexTypeHandlersWithWhen_SampleType' } }
+    bar: { type: integer }
+    bar_nullable: { type: [string, 'null'] }
+required:
+    - foo_new
+    - foo_make
+    - foo_collection
+    - bar_nullable
