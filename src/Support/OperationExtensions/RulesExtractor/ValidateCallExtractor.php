@@ -81,7 +81,7 @@ class ValidateCallExtractor
     public function extract()
     {
         $methodNode = $this->handle;
-        $validationRules = $this->node()->node;
+        $validationRules = $this->node()->node ?? null;
 
         if ($validationRules) {
             $printer = new Standard();
