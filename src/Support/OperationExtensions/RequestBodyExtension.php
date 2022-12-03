@@ -72,7 +72,7 @@ class RequestBodyExtension extends OperationExtension
         $nodesResults = [];
 
         // Custom form request's class `validate` method
-        if (($formRequestRulesExtractor = new FormRequestRulesExtractor($methodNode, $this->infer))->shouldHandle()) {
+        if (($formRequestRulesExtractor = new FormRequestRulesExtractor($methodNode))->shouldHandle()) {
             if (count($formRequestRules = $formRequestRulesExtractor->extract($route))) {
                 $rules = array_merge($rules, $formRequestRules);
                 $nodesResults[] = $formRequestRulesExtractor->node();

@@ -16,12 +16,9 @@ class FormRequestRulesExtractor
 {
     private ?FunctionLike $handler;
 
-    private Infer $infer;
-
-    public function __construct(?FunctionLike $handler, Infer $infer)
+    public function __construct(?FunctionLike $handler)
     {
         $this->handler = $handler;
-        $this->infer = $infer;
     }
 
     public function shouldHandle()
