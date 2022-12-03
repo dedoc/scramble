@@ -28,7 +28,6 @@ class FormRequestRulesExtractor
 
     public function node()
     {
-
     }
 
     public function extract(Route $route)

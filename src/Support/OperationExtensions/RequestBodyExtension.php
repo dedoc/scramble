@@ -19,6 +19,7 @@ use Throwable;
 class RequestBodyExtension extends OperationExtension
 {
     private RouteInfo $routeInfo;
+
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
         $this->routeInfo = $routeInfo;

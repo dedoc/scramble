@@ -10,7 +10,6 @@ use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use PhpParser\Node\Param;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RulesToParameter
@@ -69,7 +68,7 @@ class RulesToParameter
         }
 
         $description = (string) Str::of($this->docNode->getAttribute('summary') ?: '')
-            ->append(" ".($this->docNode->getAttribute('description') ?: ''))
+            ->append(' '.($this->docNode->getAttribute('description') ?: ''))
             ->trim();
         if ($description) {
             $parameter->description($description);

@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 class ValidationNodesResult
 {
     public $node;
+
     public Scope $scope;
 
     public function __construct($node, Scope $scope)

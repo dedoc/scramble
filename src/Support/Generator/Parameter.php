@@ -80,7 +80,7 @@ class Parameter
     }
 
     /**
-     * @param array|scalar|null $example
+     * @param  array|scalar|null  $example
      */
     public function example($example)
     {

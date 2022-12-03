@@ -11,6 +11,7 @@ use PhpParser\PrettyPrinter\Standard;
 class ValidateCallExtractor
 {
     private ?Node\FunctionLike $handle;
+
     private Scope $scope;
 
     public function __construct(?Node\FunctionLike $handle, Scope $scope)

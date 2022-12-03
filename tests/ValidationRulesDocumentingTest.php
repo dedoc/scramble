@@ -185,6 +185,7 @@ class ValidationRulesWithDocs_Test
         $request->validate([
             /**
              * A foo prop.
+             *
              * @example 'wow'
              */
             'foo' => ['required', 'string'],
@@ -192,6 +193,7 @@ class ValidationRulesWithDocs_Test
             'bar' => 'string',
             /**
              * A type redefined prop.
+             *
              * @var int
              */
             'var' => ['required', 'string'],
