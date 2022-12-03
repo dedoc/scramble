@@ -15,6 +15,7 @@ use PhpParser\NodeFinder;
 class FormRequestRulesExtractor
 {
     private ?FunctionLike $handler;
+
     private Infer $infer;
 
     public function __construct(?FunctionLike $handler, Infer $infer)

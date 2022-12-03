@@ -217,6 +217,7 @@ class ValidationRulesWithDocsAndFormRequest_Test
         $request->validate([
             /**
              * A foo prop.
+             *
              * @example wow
              */
             'foo' => ['required', 'string'],
