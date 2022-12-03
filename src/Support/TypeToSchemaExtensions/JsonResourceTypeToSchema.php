@@ -71,7 +71,6 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
                 if ($item->value->isInstanceOf(JsonResource::class)) {
                     $resource = $this->getResourceType($item->value);
 
-
                     if ($resource->isInstanceOf(MissingValue::class)) {
                         return [];
                     }
