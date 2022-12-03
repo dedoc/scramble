@@ -186,7 +186,7 @@ class ValidationRulesWithDocs_Test
             /**
              * A foo prop.
              *
-             * @example 'wow'
+             * @example wow
              */
             'foo' => ['required', 'string'],
             // A bar prop.
