@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
+use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
@@ -9,6 +10,8 @@ use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use PhpParser\Node\Param;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RulesToParameter
 {
@@ -18,14 +21,17 @@ class RulesToParameter
 
     private TypeTransformer $openApiTransformer;
 
+    private ?PhpDocNode $docNode;
+
     const RULES_PRIORITY = [
         'bool', 'boolean', 'numeric', 'int', 'integer', 'string', 'array', 'exists',
     ];
 
-    public function __construct(string $name, $rules, TypeTransformer $openApiTransformer)
+    public function __construct(string $name, $rules, ?PhpDocNode $docNode, TypeTransformer $openApiTransformer)
     {
         $this->name = $name;
         $this->rules = Arr::wrap(is_string($rules) ? explode('|', $rules) : $rules);
+        $this->docNode = $docNode;
         $this->openApiTransformer = $openApiTransformer;
     }
 
@@ -48,10 +54,52 @@ class RulesToParameter
         $description = $type->description;
         $type->setDescription('');
 
-        return Parameter::make($this->name, 'query')
+        $parameter = Parameter::make($this->name, 'query')
             ->setSchema(Schema::fromType($type))
             ->required($rules->contains('required'))
             ->description($description);
+
+        return $this->applyDocsInfo($parameter);
+    }
+
+    private function applyDocsInfo(Parameter $parameter)
+    {
+        if (! $this->docNode) {
+            return $parameter;
+        }
+
+        $description = (string) Str::of($this->docNode->getAttribute('summary') ?: '')
+            ->append(" ".($this->docNode->getAttribute('description') ?: ''))
+            ->trim();
+        if ($description) {
+            $parameter->description($description);
+        }
+
+        if (count($example = $this->docNode->getTagsByName('@example'))) {
+            $exampleValue = array_values($example)[0]->value->value ?? null;
+
+            if ($exampleValue && is_string($exampleValue)) {
+                if (function_exists('json_decode')) {
+                    $json = json_decode($exampleValue, true);
+
+                    $exampleValue = $json === null || $json == $exampleValue
+                        ? $exampleValue
+                        : $json;
+                }
+
+                $parameter->example($exampleValue);
+            }
+        }
+
+        if (count($varTags = $this->docNode->getVarTagValues())) {
+            $varTag = $varTags[0];
+
+            $parameter->setSchema(Schema::fromType(
+                $this->openApiTransformer->transform(PhpDocTypeHelper::toType($varTag->type)),
+            ));
+        }
+
+        return $parameter;
     }
 
     private function rulesSorter()

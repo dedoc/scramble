@@ -15,6 +15,9 @@ class Parameter
 
     public string $description = '';
 
+    /** @var array|scalar|null */
+    public $example = null;
+
     public bool $deprecated = false;
 
     public bool $allowEmptyValue = false;
@@ -43,6 +46,7 @@ class Parameter
             'in' => $this->in,
             'required' => $this->required,
             'description' => $this->description,
+            'example' => $this->example,
             'deprecated' => $this->deprecated,
             'allowEmptyValue' => $this->allowEmptyValue,
         ]);
@@ -71,6 +75,16 @@ class Parameter
     public function description(string $description)
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * @param array|scalar|null $example
+     */
+    public function example($example)
+    {
+        $this->example = $example;
 
         return $this;
     }

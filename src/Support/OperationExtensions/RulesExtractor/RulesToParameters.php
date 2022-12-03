@@ -11,23 +11,34 @@ use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use PhpParser\Node;
+use PhpParser\NodeFinder;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RulesToParameters
 {
     private array $rules;
 
+    /** @var ValidationNodesResult[] */
+    private array $validationNodesResults;
+
+    /** @var array<string, PhpDocNode> */
+    private array $nodeDocs;
+
     private TypeTransformer $openApiTransformer;
 
-    public function __construct(array $rules, TypeTransformer $openApiTransformer)
+    public function __construct(array $rules, array $validationNodesResults, TypeTransformer $openApiTransformer)
     {
         $this->rules = $rules;
+        $this->validationNodesResults = $validationNodesResults;
         $this->openApiTransformer = $openApiTransformer;
+        $this->nodeDocs = $this->extractNodeDocs();
     }
 
     public function handle()
     {
         return collect($this->rules)
-            ->map(fn ($rules, $name) => (new RulesToParameter($name, $rules, $this->openApiTransformer))->generate())
+            ->map(fn ($rules, $name) => (new RulesToParameter($name, $rules, $this->nodeDocs[$name] ?? null, $this->openApiTransformer))->generate())
             ->pipe(\Closure::fromCallable([$this, 'handleNested']))
             ->values()
             ->all();
@@ -175,5 +186,25 @@ class RulesToParameters
                 collect($path)->splice(1)->values()->all(),
             );
         }
+    }
+
+    private function extractNodeDocs()
+    {
+        return collect($this->validationNodesResults)
+            ->mapWithKeys(function (ValidationNodesResult $result) {
+                $arrayNodes = (new NodeFinder())->find(
+                    [$result->node],
+                    fn (Node $node) => $node instanceof Node\Expr\ArrayItem
+                        && $node->key instanceof Node\Scalar\String_
+                        && $result->scope->getType($node)->getAttribute('docNode')
+                );
+
+                return collect($arrayNodes)
+                    ->mapWithKeys(fn (Node\Expr\ArrayItem $item) => [
+                        $item->key->value => $result->scope->getType($item)->getAttribute('docNode'),
+                    ])
+                    ->toArray();
+            })
+            ->toArray();
     }
 }

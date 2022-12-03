@@ -26,6 +26,11 @@ class FormRequestRulesExtractor
             ->contains(\Closure::fromCallable([$this, 'findCustomRequestParam']));
     }
 
+    public function node()
+    {
+
+    }
+
     public function extract(Route $route)
     {
         $requestParam = collect($this->handler->getParams())

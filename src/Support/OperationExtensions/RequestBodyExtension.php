@@ -18,8 +18,11 @@ use Throwable;
 
 class RequestBodyExtension extends OperationExtension
 {
+    private RouteInfo $routeInfo;
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
+        $this->routeInfo = $routeInfo;
+
         $method = $operation->method;
 
         $description = Str::of($routeInfo->phpDoc()->getAttribute('description'));
@@ -44,6 +47,9 @@ class RequestBodyExtension extends OperationExtension
                     );
             }
         } catch (Throwable $exception) {
+            if (app()->environment('testing')) {
+                throw $exception;
+            }
             $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
         }
 
@@ -54,28 +60,31 @@ class RequestBodyExtension extends OperationExtension
 
     private function extractParamsFromRequestValidationRules(Route $route, ?ClassMethod $methodNode)
     {
-        $rules = $this->extractRouteRequestValidationRules($route, $methodNode);
+        [$rules, $nodesResults] = $this->extractRouteRequestValidationRules($route, $methodNode);
 
-        return (new RulesToParameters($rules, $this->openApiTransformer))->handle();
+        return (new RulesToParameters($rules, $nodesResults, $this->openApiTransformer))->handle();
     }
 
     private function extractRouteRequestValidationRules(Route $route, $methodNode)
     {
         $rules = [];
+        $nodesResults = [];
 
         // Custom form request's class `validate` method
         if (($formRequestRulesExtractor = new FormRequestRulesExtractor($methodNode))->shouldHandle()) {
             if (count($formRequestRules = $formRequestRulesExtractor->extract($route))) {
                 $rules = array_merge($rules, $formRequestRules);
+                $nodesResults[] = $formRequestRules->node();
             }
         }
 
-        if (($validateCallExtractor = new ValidateCallExtractor($methodNode))->shouldHandle()) {
-            if ($validateCallRules = $validateCallExtractor->extract($route)) {
+        if (($validateCallExtractor = new ValidateCallExtractor($methodNode, $this->routeInfo->class->scope))->shouldHandle()) {
+            if ($validateCallRules = $validateCallExtractor->extract()) {
                 $rules = array_merge($rules, $validateCallRules);
+                $nodesResults[] = $validateCallExtractor->node();
             }
         }
 
-        return $rules;
+        return [$rules, array_filter($nodesResults)];
     }
 }

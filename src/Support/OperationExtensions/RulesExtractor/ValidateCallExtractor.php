@@ -2,17 +2,21 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Illuminate\Http\Request;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
+use PhpParser\PrettyPrinter\Standard;
 
 class ValidateCallExtractor
 {
     private ?Node\FunctionLike $handle;
+    private Scope $scope;
 
-    public function __construct(?Node\FunctionLike $handle)
+    public function __construct(?Node\FunctionLike $handle, Scope $scope)
     {
         $this->handle = $handle;
+        $this->scope = $scope;
     }
 
     public function shouldHandle()
@@ -20,7 +24,7 @@ class ValidateCallExtractor
         return (bool) $this->handle;
     }
 
-    public function extract()
+    public function node(): ?ValidationNodesResult
     {
         $methodNode = $this->handle;
 
@@ -63,8 +67,23 @@ class ValidateCallExtractor
             $validationRules = $callToValidate->args[1] ?? null;
         }
 
+        if (! $validationRules) {
+            return null;
+        }
+
+        return new ValidationNodesResult(
+            $validationRules instanceof Node\Arg ? $validationRules->value : $validationRules,
+            $this->scope
+        );
+    }
+
+    public function extract()
+    {
+        $methodNode = $this->handle;
+        $validationRules = $this->node()->node;
+
         if ($validationRules) {
-            $printer = new \PhpParser\PrettyPrinter\Standard();
+            $printer = new Standard();
             $validationRulesCode = $printer->prettyPrint([$validationRules]);
 
             $injectableParams = collect($methodNode->getParams())

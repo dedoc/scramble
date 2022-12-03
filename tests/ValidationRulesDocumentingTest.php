@@ -107,6 +107,15 @@ it('extracts rules from request->validate call', function () {
     assertMatchesSnapshot($openApiDocument);
 });
 
+it('extracts rules docs', function () {
+    RouteFacade::get('api/test', [ValidationRulesWithDocs_Test::class, 'index']);
+
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    assertMatchesSnapshot($openApiDocument['paths']['/test']['get']['parameters']);
+});
+
 it('extracts rules from Validator::make facade call', function () {
     RouteFacade::get('api/test', [ValidationFacadeRulesDocumenting_Test::class, 'index']);
 
@@ -165,6 +174,27 @@ class ValidationRulesAndFormRequestAtTheSameTime_Test
     {
         $request->validate([
             'from_validate_call' => ['required', 'string'],
+        ]);
+    }
+}
+
+class ValidationRulesWithDocs_Test
+{
+    public function index(Request $request)
+    {
+        $request->validate([
+            /**
+             * A foo prop.
+             * @example 'wow'
+             */
+            'foo' => ['required', 'string'],
+            // A bar prop.
+            'bar' => 'string',
+            /**
+             * A type redefined prop.
+             * @var int
+             */
+            'var' => ['required', 'string'],
         ]);
     }
 }
