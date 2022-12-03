@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
-use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Support\ClassAstHelper;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
