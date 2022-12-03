@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use PhpParser\Node;
@@ -193,7 +194,7 @@ class RulesToParameters
         return collect($this->validationNodesResults)
             ->mapWithKeys(function (ValidationNodesResult $result) {
                 $arrayNodes = (new NodeFinder())->find(
-                    [$result->node],
+                    Arr::wrap($result->node),
                     fn (Node $node) => $node instanceof Node\Expr\ArrayItem
                         && $node->key instanceof Node\Scalar\String_
                         && $result->scope->getType($node)->getAttribute('docNode')
