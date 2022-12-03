@@ -3,7 +3,7 @@
 namespace Dedoc\Scramble;
 
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCallsTypeInfer;
-use Dedoc\Scramble\Support\InferExtensions\JsonResourceStaticCallsTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\JsonResourceCreationInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
@@ -18,7 +18,7 @@ class DefaultExtensions
             new PossibleExceptionInfer(),
 
             new JsonResourceCallsTypeInfer(),
-            new JsonResourceStaticCallsTypeInfer(),
+            new JsonResourceCreationInfer(),
             new JsonResourceTypeInfer(),
             new ValidatorTypeInfer(),
             new ResourceCollectionTypeInfer(),

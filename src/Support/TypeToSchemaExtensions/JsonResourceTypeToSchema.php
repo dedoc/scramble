@@ -15,10 +15,13 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\MergeValue;
+use Illuminate\Http\Resources\MissingValue;
 
 class JsonResourceTypeToSchema extends TypeToSchemaExtension
 {
@@ -61,6 +64,46 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             ->flatMap(function (ArrayItemType_ $item) {
                 if ($item->value instanceof ArrayType) {
                     $item->value->items = $this->flattenMergeValues($item->value->items);
+
+                    return [$item];
+                }
+
+                if ($item->value->isInstanceOf(JsonResource::class)) {
+                    $resource = $this->getResourceType($item->value);
+
+                    if ($resource->isInstanceOf(MissingValue::class)) {
+                        return [];
+                    }
+
+                    if (
+                        $resource instanceof Union
+                        && (new TypeWalker)->first($resource, fn (Type $t) => $t->isInstanceOf(MissingValue::class))
+                    ) {
+                        $item->isOptional = true;
+
+                        return [$item];
+                    }
+                }
+
+                if (
+                    $item->value instanceof Union
+                    && (new TypeWalker)->first($item->value, fn (Type $t) => $t->isInstanceOf(MissingValue::class))
+                ) {
+                    $newType = array_filter($item->value->types, fn (Type $t) => ! $t->isInstanceOf(MissingValue::class));
+
+                    if (! count($newType)) {
+                        return [];
+                    }
+
+                    $item->isOptional = true;
+
+                    if (count($newType) === 1) {
+                        $item->value = $newType[0];
+
+                        return [$item];
+                    }
+
+                    $item->value = new Union($newType);
 
                     return [$item];
                 }
@@ -166,5 +209,18 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         }
 
         $into->addRequired(array_keys($what->properties));
+    }
+
+    private function getResourceType(Type $type): Type
+    {
+        if ($type instanceof Generic) {
+            $type = $type->genericTypes[0] ?? new \Dedoc\Scramble\Support\Type\UnknownType();
+        }
+
+        if ($type instanceof ObjectType) {
+            return $type->properties['resource'] ?? new \Dedoc\Scramble\Support\Type\UnknownType();
+        }
+
+        return new \Dedoc\Scramble\Support\Type\UnknownType();
     }
 }

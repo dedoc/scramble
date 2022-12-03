@@ -11,10 +11,13 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeHelper;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MergeValue;
+use Illuminate\Http\Resources\MissingValue;
 use Illuminate\Support\Str;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
@@ -63,33 +66,28 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
          * $this->when()
          */
         if ($this->isMethodCallToThis($node, ['when'])) {
-            $type = $scope->getType($node->args[count($node->args) - 1]->value);
-
-            if ($type instanceof FunctionType) {
-                $type = $type->getReturnType();
-            }
-
-            return $type;
-        }
-        if ($node instanceof Node\Expr\ArrayItem && $this->isMethodCallToThis($node->value, ['when'])) {
-            $scope->getType($node)->isOptional = true;
-
-            return null;
+            return new Union([
+                $this->value(TypeHelper::getArgType($scope, $node->args, ['value', 1])),
+                $this->value(TypeHelper::getArgType($scope, $node->args, ['default', 2], new ObjectType(MissingValue::class))),
+            ]);
         }
 
         /*
-         * new JsonResource($this->whenLoaded('?'))
-         * JsonResource::make($this->whenLoaded('?'))
-         * JsonResource::collection($this->whenLoaded('?'))
+         * $this->whenLoaded()
          */
-        if (
-            $node instanceof Node\Expr\ArrayItem
-            && $scope->getType($node->value)->isInstanceOf(JsonResource::class)
-            && $this->isMethodCallToThis(optional($node->value->args[0])->value, ['whenLoaded'])
-        ) {
-            $scope->getType($node)->isOptional = true;
+        if ($this->isMethodCallToThis($node, ['whenLoaded'])) {
+            if (count($node->args) === 1) {
+                return new Union([
+                    // Relationship type which does not really matter
+                    new UnknownType('Skipped real relationship type extracting'),
+                    new ObjectType(MissingValue::class),
+                ]);
+            }
 
-            return null;
+            return new Union([
+                $this->value(TypeHelper::getArgType($scope, $node->args, ['value', 1])),
+                $this->value(TypeHelper::getArgType($scope, $node->args, ['default', 2], new ObjectType(MissingValue::class))),
+            ]);
         }
 
         return null;
@@ -163,5 +161,10 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         }
 
         return in_array($node->name->name ?? null, $methods);
+    }
+
+    private function value(Type $type)
+    {
+        return $type instanceof FunctionType ? $type->getReturnType() : $type;
     }
 }
