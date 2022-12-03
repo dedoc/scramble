@@ -75,7 +75,7 @@ class RequestBodyExtension extends OperationExtension
         if (($formRequestRulesExtractor = new FormRequestRulesExtractor($methodNode))->shouldHandle()) {
             if (count($formRequestRules = $formRequestRulesExtractor->extract($route))) {
                 $rules = array_merge($rules, $formRequestRules);
-                $nodesResults[] = $formRequestRules->node();
+                $nodesResults[] = $formRequestRulesExtractor->node();
             }
         }
 
