@@ -41,7 +41,13 @@ class Schema
 
         collect($parameters)
             ->each(function (Parameter $parameter) use ($type) {
-                $type->addProperty($parameter->name, $parameter->schema ?? new StringType);
+                $paramType = $parameter->schema ?? new StringType;
+                $paramType = $paramType instanceof Schema ? $paramType->type : $paramType;
+
+                $paramType->setDescription($parameter->description);
+                $paramType->example($parameter->example);
+
+                $type->addProperty($parameter->name, $paramType);
             })
             ->tap(fn (Collection $params) => $type->setRequired(
                 $params->where('required', true)->map->name->values()->all()

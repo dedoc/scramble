@@ -82,23 +82,6 @@ class ClassAstHelper
         return $this->phpDoc;
     }
 
-    public function getReturnNodeOfMethod(string $methodNodeName): ?Node\Stmt\Return_
-    {
-        /** @var Node\Stmt\ClassMethod|null $methodNode */
-        $methodNode = $this->findFirstNode(
-            fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $methodNodeName
-        );
-
-        if (! $methodNode) {
-            return null;
-        }
-
-        return (new NodeFinder())->findFirst(
-            $methodNode,
-            fn (Node $node) => $node instanceof Node\Stmt\Return_
-        );
-    }
-
     private function extractNamesResolver($fileAst)
     {
         $fileAst = Arr::wrap($fileAst);

@@ -12,6 +12,9 @@ abstract class Type
 
     public string $description = '';
 
+    /** @var array|scalar|null */
+    public $example = null;
+
     public array $enum = [];
 
     public bool $nullable = false;
@@ -42,6 +45,7 @@ abstract class Type
         $this->nullable = $fromType->nullable;
         $this->enum = $fromType->enum;
         $this->description = $fromType->description;
+        $this->example = $fromType->example;
 
         return $this;
     }
@@ -52,6 +56,7 @@ abstract class Type
             'type' => $this->nullable ? [$this->type, 'null'] : $this->type,
             'format' => $this->format,
             'description' => $this->description,
+            'example' => $this->example,
             'enum' => count($this->enum) ? $this->enum : null,
         ]);
     }
@@ -66,6 +71,16 @@ abstract class Type
     public function enum(array $enum): Type
     {
         $this->enum = $enum;
+
+        return $this;
+    }
+
+    /**
+     * @param  array|scalar|null  $example
+     */
+    public function example($example)
+    {
+        $this->example = $example;
 
         return $this;
     }

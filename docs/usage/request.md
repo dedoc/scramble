@@ -78,6 +78,49 @@ class TodoItemsController
 
 The same applies to the `rules` method in custom `FormRequest`.
 
+### Documenting request params manually
+
+You can add docs to your request params by adding PHPDoc block near a validation rules of the param:
+
+```php
+use App\Models\Location;
+
+class LocationsController
+{
+    public function update(Request $request, Location $location)
+    {
+        $request->validate([
+            /**
+             * The location coordinates.
+             * @var array{lat: float, long: float} 
+             * @example {"lat": 50.450001, "long": 30.523333}
+             */
+            'coordinates' => 'array',
+        ]);
+    }
+}
+```
+
+`@example` should be either a string, or valid JSON. 
+
+You can use `@var` to re-define or clarify type inferred from validation rules. Manually defined type will always take precedence over the automatically inferred type. 
+
+A simple PHP comment before a param will also be used as a request body parameter description:
+```php
+use App\Models\TodoItem;
+
+class TodoItemsController
+{
+    public function update(Request $request, TodoItem $item)
+    {
+        $request->validate([
+            // Whether the task is complete.
+            'is_complete' => 'bool',
+        ]);
+    }
+}
+```
+
 ### Rules evaluation caveats
 
 It is important to keep in mind that rules are evaluated to be analyzed: `rules` method is called when there is a custom request class and the array with rules passed to the `validate` is evaluated as well.

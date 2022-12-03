@@ -32,8 +32,9 @@ class Reference extends Type
             return (new AnyOf)->setItems([(clone $this)->nullable(false), new NullType])->toArray();
         }
 
-        return [
+        return array_filter([
+            'description' => $this->description,
             '$ref' => "#/components/{$this->referenceType}/{$this->components->uniqueSchemaName($this->fullName)}",
-        ];
+        ]);
     }
 }

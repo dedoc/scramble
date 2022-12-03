@@ -29,6 +29,18 @@ class PhpDocHandler
 
     public function leave(Node $node, Scope $scope): ?Type
     {
+        if ($node instanceof Expr\ArrayItem && count($node->getComments()) && ! $node->getDocComment()) {
+            $docText = collect($node->getComments())
+                ->map(fn (Comment $c) => $c->getReformattedText())
+                ->join("\n");
+
+            $docText = (string) Str::of($docText)->replace(['//', ' * ', '/*', '*/'], '')->trim();
+
+            $docNode = $this->getDocNode($scope, new Doc("/** $docText */"));
+
+            $scope->getType($node)->setAttribute('docNode', $docNode);
+        }
+
         if ($node instanceof Expr\ArrayItem && $doc = $node->getDocComment()) {
             $docNode = $this->getDocNode($scope, $doc);
 

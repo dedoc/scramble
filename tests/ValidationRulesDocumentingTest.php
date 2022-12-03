@@ -107,6 +107,24 @@ it('extracts rules from request->validate call', function () {
     assertMatchesSnapshot($openApiDocument);
 });
 
+it('extracts rules docs', function () {
+    RouteFacade::get('api/test', [ValidationRulesWithDocs_Test::class, 'index']);
+
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    assertMatchesSnapshot($openApiDocument['paths']['/test']['get']['parameters']);
+});
+
+it('extracts rules docs from form request', function () {
+    RouteFacade::get('api/test', [ValidationRulesWithDocsAndFormRequest_Test::class, 'index']);
+
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    assertMatchesSnapshot($openApiDocument['paths']['/test']['get']['parameters']);
+});
+
 it('extracts rules from Validator::make facade call', function () {
     RouteFacade::get('api/test', [ValidationFacadeRulesDocumenting_Test::class, 'index']);
 
@@ -169,6 +187,44 @@ class ValidationRulesAndFormRequestAtTheSameTime_Test
     }
 }
 
+class ValidationRulesWithDocs_Test
+{
+    public function index(Request $request)
+    {
+        $request->validate([
+            /**
+             * A foo prop.
+             *
+             * @example wow
+             */
+            'foo' => ['required', 'string'],
+            // A bar prop.
+            'bar' => 'string',
+            /**
+             * A type redefined prop.
+             *
+             * @var int
+             */
+            'var' => ['required', 'string'],
+        ]);
+    }
+}
+
+class ValidationRulesWithDocsAndFormRequest_Test
+{
+    public function index(FormRequestWithDocs_TestFormRequest $request)
+    {
+        $request->validate([
+            /**
+             * A foo prop.
+             *
+             * @example wow
+             */
+            'foo' => ['required', 'string'],
+        ]);
+    }
+}
+
 class ValidationRulesAndFormRequestAtTheSameTime_TestFormRequest extends \Illuminate\Foundation\Http\FormRequest
 {
     public function authorize()
@@ -179,6 +235,22 @@ class ValidationRulesAndFormRequestAtTheSameTime_TestFormRequest extends \Illumi
     public function rules()
     {
         return [
+            'from_form_request' => 'int',
+        ];
+    }
+}
+
+class FormRequestWithDocs_TestFormRequest extends \Illuminate\Foundation\Http\FormRequest
+{
+    public function authorize()
+    {
+        return true;
+    }
+
+    public function rules()
+    {
+        return [
+            // Wow, this is a comment!
             'from_form_request' => 'int',
         ];
     }
