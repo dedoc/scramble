@@ -47,7 +47,7 @@ it('supports array rule details', function () {
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
-    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+    assertMatchesSnapshot(json_encode(collect($params)->map->toArray()->all()));
 });
 
 it('supports array rule params', function () {
