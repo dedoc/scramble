@@ -38,6 +38,28 @@ it('extract rules from array rules', function () {
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
 
+it('supports array rule details', function () {
+    $rules = [
+        'destination' => 'array:lat,lon|required',
+        'destination.lat' => 'numeric|required|min:54|max:60',
+        'destination.lon' => 'numeric|required|min:20|max:28.5',
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+});
+
+it('supports array rule params', function () {
+    $rules = [
+        'destination' => 'array:lat,lon|required',
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+});
+
 it('extract rules from enum rule', function () {
     $rules = [
         'status' => new Enum(StatusValidationEnum::class),

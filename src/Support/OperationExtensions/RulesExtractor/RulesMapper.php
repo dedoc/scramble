@@ -54,8 +54,19 @@ class RulesMapper
         return $this->int($_);
     }
 
-    public function array(Type $_)
+    public function array(Type $_, $params)
     {
+        if (count($params)) {
+            $object = (new \Dedoc\Scramble\Support\Generator\Types\ObjectType())
+                ->setRequired($params);
+
+            foreach ($params as $param) {
+                $object->addProperty($param, new UnknownType);
+            }
+
+            return $object;
+        }
+
         return new ArrayType;
     }
 
