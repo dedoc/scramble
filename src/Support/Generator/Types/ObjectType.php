@@ -43,7 +43,10 @@ class ObjectType extends Type
 
     public function addRequired(array $keys)
     {
-        $this->required = array_merge($this->required, $keys);
+        $this->required = array_merge(
+            $this->required,
+            array_diff($keys, $this->required),
+        );
 
         return $this;
     }
