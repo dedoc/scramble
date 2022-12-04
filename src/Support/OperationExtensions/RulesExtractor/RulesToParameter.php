@@ -77,13 +77,21 @@ class RulesToParameter
         if (count($example = $this->docNode->getTagsByName('@example'))) {
             $exampleValue = array_values($example)[0]->value->value ?? null;
 
-            if ($exampleValue && is_string($exampleValue)) {
+            if (is_string($exampleValue)) {
                 if (function_exists('json_decode')) {
                     $json = json_decode($exampleValue, true);
 
                     $exampleValue = $json === null || $json == $exampleValue
                         ? $exampleValue
                         : $json;
+                }
+
+                if ($exampleValue === 'null') {
+                    $exampleValue = null;
+                } elseif (in_array($exampleValue, ['true', 'false'])) {
+                    $exampleValue = $exampleValue === 'true';
+                } elseif (is_numeric($exampleValue)) {
+                    $exampleValue = floatval($exampleValue);
                 }
 
                 $parameter->example($exampleValue);

@@ -6,6 +6,7 @@ use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -77,7 +78,7 @@ class RulesToParameters
                     $this->setDeepType(
                         $baseParam->schema->type,
                         $param->name,
-                        $param->schema->type,
+                        $this->extractTypeFromParameter($param),
                     );
                 }
 
@@ -122,8 +123,6 @@ class RulesToParameters
             $containingType
                 ->addProperty($settingKey, $typeToSet)
                 ->addRequired($typeToSet->getAttribute('required') ? [$settingKey] : []);
-
-            return;
         }
     }
 
@@ -132,6 +131,9 @@ class RulesToParameters
         $key = $path[0];
 
         if (count($path) === 1) {
+            if ($key !== '*' && $base instanceof ArrayType) {
+                $base = new ObjectType;
+            }
             return $base;
         }
 
@@ -207,5 +209,15 @@ class RulesToParameters
                     ->toArray();
             })
             ->toArray();
+    }
+
+    private function extractTypeFromParameter($parameter)
+    {
+        $paramType = $parameter->schema->type;
+
+        $paramType->setDescription($parameter->description);
+        $paramType->example($parameter->example);
+
+        return $paramType;
     }
 }

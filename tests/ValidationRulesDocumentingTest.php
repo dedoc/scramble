@@ -27,6 +27,17 @@ it('extract rules from array like rules', function () {
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
 
+it('extract rules from array rules', function () {
+    $rules = [
+        'foo' => 'array',
+        'foo.id' => 'int',
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+});
+
 it('extract rules from enum rule', function () {
     $rules = [
         'status' => new Enum(StatusValidationEnum::class),
