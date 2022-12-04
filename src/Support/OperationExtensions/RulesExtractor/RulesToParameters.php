@@ -77,7 +77,7 @@ class RulesToParameters
                     $this->setDeepType(
                         $baseParam->schema->type,
                         $param->name,
-                        $param->schema->type,
+                        $this->extractTypeFromParameter($param),
                     );
                 }
 
@@ -122,8 +122,6 @@ class RulesToParameters
             $containingType
                 ->addProperty($settingKey, $typeToSet)
                 ->addRequired($typeToSet->getAttribute('required') ? [$settingKey] : []);
-
-            return;
         }
     }
 
@@ -132,6 +130,10 @@ class RulesToParameters
         $key = $path[0];
 
         if (count($path) === 1) {
+            if ($key !== '*' && $base instanceof ArrayType) {
+                $base = new ObjectType;
+            }
+
             return $base;
         }
 
@@ -207,5 +209,15 @@ class RulesToParameters
                     ->toArray();
             })
             ->toArray();
+    }
+
+    private function extractTypeFromParameter($parameter)
+    {
+        $paramType = $parameter->schema->type;
+
+        $paramType->setDescription($parameter->description);
+        $paramType->example($parameter->example);
+
+        return $paramType;
     }
 }

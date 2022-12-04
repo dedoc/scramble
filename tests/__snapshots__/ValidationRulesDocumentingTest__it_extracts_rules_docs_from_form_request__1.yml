@@ -8,5 +8,5 @@
     in: query
     required: true
     description: 'A foo prop.'
-    example: wow
     schema: { type: string }
+    example: wow

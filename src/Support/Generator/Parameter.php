@@ -15,8 +15,8 @@ class Parameter
 
     public string $description = '';
 
-    /** @var array|scalar|null */
-    public $example = null;
+    /** @var array|scalar|null|MissingExample */
+    public $example;
 
     public bool $deprecated = false;
 
@@ -28,6 +28,7 @@ class Parameter
     {
         $this->name = $name;
         $this->in = $in;
+        $this->example = new MissingExample;
 
         if ($this->in === 'path') {
             $this->required = true;
@@ -46,7 +47,6 @@ class Parameter
             'in' => $this->in,
             'required' => $this->required,
             'description' => $this->description,
-            'example' => $this->example,
             'deprecated' => $this->deprecated,
             'allowEmptyValue' => $this->allowEmptyValue,
         ]);
@@ -55,7 +55,7 @@ class Parameter
             $result['schema'] = $this->schema->toArray();
         }
 
-        return $result;
+        return array_merge($result, $this->example instanceof MissingExample ? [] : ['example' => $this->example]);
     }
 
     public function required(bool $required)
@@ -80,7 +80,7 @@ class Parameter
     }
 
     /**
-     * @param  array|scalar|null  $example
+     * @param  array|scalar|null|MissingExample  $example
      */
     public function example($example)
     {

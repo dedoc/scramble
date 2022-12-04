@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Generator\Types;
 
+use Dedoc\Scramble\Support\Generator\MissingExample;
+
 abstract class Type
 {
     use TypeAttributes;
@@ -12,8 +14,8 @@ abstract class Type
 
     public string $description = '';
 
-    /** @var array|scalar|null */
-    public $example = null;
+    /** @var array|scalar|null|MissingExample */
+    public $example;
 
     public array $enum = [];
 
@@ -22,6 +24,7 @@ abstract class Type
     public function __construct(string $type)
     {
         $this->type = $type;
+        $this->example = new MissingExample;
     }
 
     public function nullable(bool $nullable)
@@ -52,13 +55,12 @@ abstract class Type
 
     public function toArray()
     {
-        return array_filter([
+        return array_merge(array_filter([
             'type' => $this->nullable ? [$this->type, 'null'] : $this->type,
             'format' => $this->format,
             'description' => $this->description,
-            'example' => $this->example,
             'enum' => count($this->enum) ? $this->enum : null,
-        ]);
+        ]), $this->example instanceof MissingExample ? [] : ['example' => $this->example]);
     }
 
     public function setDescription(string $description): Type
@@ -76,7 +78,7 @@ abstract class Type
     }
 
     /**
-     * @param  array|scalar|null  $example
+     * @param  array|scalar|null|MissingExample  $example
      */
     public function example($example)
     {
