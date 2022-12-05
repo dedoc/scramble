@@ -2,18 +2,26 @@
 
 namespace Dedoc\Scramble\Infer\Handler;
 
+use Dedoc\Scramble\Infer\Contracts\EnterTrait;
+use Dedoc\Scramble\Infer\Contracts\HandlerInterface;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use PhpParser\Node;
 
-class AssignHandler
+class AssignHandler implements HandlerInterface
 {
-    public function shouldHandle($node)
+    use EnterTrait;
+
+    public function shouldHandle(Node $node): bool
     {
         return $node instanceof Node\Expr\Assign;
     }
 
-    public function leave(Node\Expr\Assign $node, Scope $scope)
+    public function leave(Node $node, Scope $scope): void
     {
+        if (!$this->shouldHandle($node)) {
+            return;
+        }
+
         if (! $node->var instanceof Node\Expr\Variable) {
             return;
         }

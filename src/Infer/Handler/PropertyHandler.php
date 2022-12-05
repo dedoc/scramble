@@ -2,20 +2,27 @@
 
 namespace Dedoc\Scramble\Infer\Handler;
 
+use Dedoc\Scramble\Infer\Contracts\EnterTrait;
+use Dedoc\Scramble\Infer\Contracts\HandlerInterface;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
 
-class PropertyHandler
+class PropertyHandler implements HandlerInterface
 {
-    public function shouldHandle($node)
+    use EnterTrait;
+
+    public function shouldHandle(Node $node): bool
     {
         return $node instanceof Node\Stmt\Property;
     }
 
-    public function leave(Node\Stmt\Property $node, Scope $scope)
+    public function leave(Node $node, Scope $scope): void
     {
+        if (!$this->shouldHandle($node)) {
+            return;
+        }
         $classType = $scope->class();
 
         foreach ($node->props as $prop) {

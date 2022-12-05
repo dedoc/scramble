@@ -2,13 +2,14 @@
 
 namespace Dedoc\Scramble\Infer;
 
+use Dedoc\Scramble\Infer\Contracts\HandlerInterface;
+use Dedoc\Scramble\Infer\Contracts\ScopeCreator;
 use Dedoc\Scramble\Infer\Extensions\ExpressionExceptionExtension;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Handler\ArrayHandler;
 use Dedoc\Scramble\Infer\Handler\ArrayItemHandler;
 use Dedoc\Scramble\Infer\Handler\AssignHandler;
 use Dedoc\Scramble\Infer\Handler\ClassHandler;
-use Dedoc\Scramble\Infer\Handler\CreatesScope;
 use Dedoc\Scramble\Infer\Handler\ExceptionInferringExtensions;
 use Dedoc\Scramble\Infer\Handler\ExpressionTypeInferringExtensions;
 use Dedoc\Scramble\Infer\Handler\FunctionLikeHandler;
@@ -40,6 +41,7 @@ class TypeInferringVisitor extends NodeVisitorAbstract
     {
         $this->namesResolver = $namesResolver;
 
+        /** @var array<int,HandlerInterface> $this->handlers */
         $this->handlers = [
             new FunctionLikeHandler(),
             new AssignHandler(),
@@ -72,13 +74,11 @@ class TypeInferringVisitor extends NodeVisitorAbstract
                 continue;
             }
 
-            if ($handler instanceof CreatesScope) {
+            if ($handler instanceof ScopeCreator) {
                 $this->scope = $handler->createScope($scope, $node);
             }
 
-            if (method_exists($handler, 'enter')) {
-                $handler->enter($node, $this->scope);
-            }
+            $handler->enter($node, $this->scope);
         }
 
         return null;
@@ -91,11 +91,9 @@ class TypeInferringVisitor extends NodeVisitorAbstract
                 continue;
             }
 
-            if (method_exists($handler, 'leave')) {
-                $handler->leave($node, $this->scope);
-            }
+            $handler->leave($node, $this->scope);
 
-            if ($handler instanceof CreatesScope) {
+            if ($handler instanceof ScopeCreator) {
                 $this->scope = $this->scope->parentScope;
             }
         }

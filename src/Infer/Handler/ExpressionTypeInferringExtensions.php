@@ -2,12 +2,16 @@
 
 namespace Dedoc\Scramble\Infer\Handler;
 
+use Dedoc\Scramble\Infer\Contracts\EnterTrait;
+use Dedoc\Scramble\Infer\Contracts\HandlerInterface;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use PhpParser\Node;
 
-class ExpressionTypeInferringExtensions
+class ExpressionTypeInferringExtensions implements HandlerInterface
 {
+    use EnterTrait;
+
     /** @var ExpressionTypeInferExtension[] */
     private array $extensions;
 
@@ -16,13 +20,17 @@ class ExpressionTypeInferringExtensions
         $this->extensions = $extensions;
     }
 
-    public function shouldHandle($node)
+    public function shouldHandle(Node $node): bool
     {
         return $node instanceof Node\Expr;
     }
 
-    public function leave(Node\Expr $node, Scope $scope)
+    public function leave(Node $node, Scope $scope): void
     {
+        if (!$this->shouldHandle($node)) {
+            return;
+        }
+
         $type = array_reduce(
             $this->extensions,
             function ($acc, ExpressionTypeInferExtension $extension) use ($node, $scope) {

@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\Handler;
 
+use Dedoc\Scramble\Infer\Contracts\HandlerInterface;
+use Dedoc\Scramble\Infer\Contracts\ScopeCreator;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
@@ -13,9 +15,9 @@ use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node;
 use PhpParser\Node\FunctionLike;
 
-class FunctionLikeHandler implements CreatesScope
+class FunctionLikeHandler implements ScopeCreator, HandlerInterface
 {
-    public function shouldHandle($node)
+    public function shouldHandle(Node $node): bool
     {
         return $node instanceof FunctionLike;
     }
@@ -37,8 +39,12 @@ class FunctionLikeHandler implements CreatesScope
         return $fnScope;
     }
 
-    public function enter(FunctionLike $node, Scope $scope)
+    public function enter(Node $node, Scope $scope): void
     {
+        if (!$this->shouldHandle($node)) {
+            return;
+        }
+
         // when entering function node, the only thing we need/want to do
         // is to set node param types to scope.
         // Also, if here we add a reference to the function node type, it may allow us to
@@ -77,8 +83,12 @@ class FunctionLikeHandler implements CreatesScope
         $scope->context->setFunction($fnType);
     }
 
-    public function leave(FunctionLike $node, Scope $scope)
+    public function leave(Node $node, Scope $scope): void
     {
+        if (!$this->shouldHandle($node)) {
+            return;
+        }
+
         $type = $scope->context->function;
 
         /*
