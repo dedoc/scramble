@@ -63,6 +63,9 @@ abstract class Type
         ]), $this->example instanceof MissingExample ? [] : ['example' => $this->example]);
     }
 
+    /**
+     * @return static
+     */
     public function setDescription(string $description): Type
     {
         $this->description = $description;

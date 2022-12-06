@@ -48,21 +48,21 @@ class ClassAstHelper
 
         $this->namesResolver = $this->extractNamesResolver($fileAst);
 
+        /** @var Node\Stmt\Class_|null $classAst */
         $classAst = (new NodeFinder())->findFirst(
             $fileAst,
             fn (Node $node) => $node instanceof Node\Stmt\Class_
                 && ($node->namespacedName ?? $node->name)->toString() === ltrim($this->class, '\\'),
         );
+        if (! $classAst) {
+            throw new \InvalidArgumentException('Cannot create class AST of the class '.$this->class);
+        }
 
         $traverser = new NodeTraverser;
         $traverser->addVisitor($infer = new TypeInferringVisitor($this->namesResolver, $this->extensions, $this->handlers));
         $traverser->traverse([$classAst]);
 
         $this->scope = $infer->scope;
-
-        if (! $classAst) {
-            throw new \InvalidArgumentException('Cannot create class AST of the class '.$this->class);
-        }
 
         $this->classAst = $classAst;
     }

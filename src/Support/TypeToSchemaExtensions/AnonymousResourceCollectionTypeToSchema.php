@@ -67,6 +67,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     private function getCollectingResourceType(Generic $type): ?ObjectType
     {
         // In case of paginated resource, we still want to get to the underlying JsonResource.
+        // @phpstan-ignore-next-line
         return (new TypeWalker)->first(
             $type->genericTypes[0],
             fn (Type $t) => $t->isInstanceOf(JsonResource::class),

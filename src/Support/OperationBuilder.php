@@ -8,7 +8,7 @@ use Dedoc\Scramble\Support\Generator\Operation;
 
 class OperationBuilder
 {
-    /** @var class-string<OperationExtension> */
+    /** @var class-string<OperationExtension>[] */
     private array $extensionsClasses;
 
     public function __construct(array $extensionsClasses = [])

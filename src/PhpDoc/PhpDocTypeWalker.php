@@ -52,9 +52,7 @@ class PhpDocTypeWalker
             if ($type->keyName) {
                 static::traverse($type->keyName, $visitors);
             }
-            if ($type->valueType) {
-                static::traverse($type->valueType, $visitors);
-            }
+            static::traverse($type->valueType, $visitors);
             $callVisitors($type, 'leave');
         }
 

@@ -114,7 +114,7 @@ class RequestEssentialsExtension extends OperationExtension
             return [];
         }
 
-        return explode(',', $tagNodes[0]->value->value);
+        return explode(',', $tagNodes[0]->value->value ?? '');
     }
 
     private function getParametersFromString(?string $str)
@@ -127,7 +127,8 @@ class RequestEssentialsExtension extends OperationExtension
         $paramNames = $route->parameterNames();
         $paramsWithRealNames = ($reflectionParams = collect($route->signatureParameters())
             ->filter(function (\ReflectionParameter $v) {
-                if (($type = $v->getType()) && $typeName = $type->getName()) {
+                $type = $v->getType();
+                if (($type instanceof \ReflectionNamedType) && $typeName = $type->getName()) {
                     if (is_a($typeName, Request::class, true)) {
                         return false;
                     }
@@ -163,11 +164,9 @@ class RequestEssentialsExtension extends OperationExtension
             $type = null;
 
             if (isset($reflectionParamsByKeys[$paramName]) || isset($phpDocTypehintParam[$paramName])) {
-                /** @var ParamTagValueNode $docParam */
                 if ($docParam = $phpDocTypehintParam[$paramName] ?? null) {
-                    if ($docType = $docParam->type) {
-                        $type = (string) $docType;
-                    }
+                    /** @var ParamTagValueNode $docParam */
+                    $type = (string) $docParam->type;
                     if ($docParam->description) {
                         $description = $docParam->description;
                     }
@@ -175,10 +174,10 @@ class RequestEssentialsExtension extends OperationExtension
 
                 if (
                     ($reflectionParam = $reflectionParamsByKeys[$paramName] ?? null)
-                    && ($reflectionParam->hasType())
+                    && ($refType = $reflectionParam->getType())
+                    && ($refType instanceof \ReflectionNamedType)
                 ) {
-                    /** @var \ReflectionParameter $reflectionParam */
-                    $type = $reflectionParam->getType()->getName();
+                    $type = $refType->getName();
                 }
             }
 

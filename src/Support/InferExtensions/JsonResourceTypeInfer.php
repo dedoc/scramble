@@ -34,60 +34,62 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
 
         /** $this->resource */
         if ($node instanceof Node\Expr\PropertyFetch && ($node->var->name ?? null) === 'this' && ($node->name->name ?? null) === 'resource') {
-            return static::modelType($scope->class(), $scope);
+            return self::modelType($scope->class(), $scope);
         }
 
         /** $this->? */
         if ($node instanceof Node\Expr\PropertyFetch && ($node->var->name ?? null) === 'this' && is_string($node->name->name ?? null)) {
-            return static::modelType($scope->class(), $scope)->getPropertyFetchType($node->name->name);
+            return self::modelType($scope->class(), $scope)->getPropertyFetchType($node->name->name);
         }
 
-        /*
-         * $this->merge()
-         * $this->mergeWhen()
-         */
-        if ($this->isMethodCallToThis($node, ['merge', 'mergeWhen'])) {
-            $type = $scope->getType($node->args[count($node->args) - 1]->value);
+        if ($node instanceof Expr\MethodCall) {
+            /*
+             * $this->merge()
+             * $this->mergeWhen()
+             */
+            if ($this->isMethodCallToThis($node, ['merge', 'mergeWhen'])) {
+                $type = $scope->getType($node->args[count($node->args) - 1]->value);
 
-            if ($type instanceof FunctionType) {
-                $type = $type->getReturnType();
+                if ($type instanceof FunctionType) {
+                    $type = $type->getReturnType();
+                }
+
+                return new Generic(
+                    new ObjectType(MergeValue::class),
+                    [
+                        $node->name->name === 'merge' ? new LiteralBooleanType(true) : new BooleanType(),
+                        $type,
+                    ],
+                );
             }
 
-            return new Generic(
-                new ObjectType(MergeValue::class),
-                [
-                    $node->name->name === 'merge' ? new LiteralBooleanType(true) : new BooleanType(),
-                    $type,
-                ],
-            );
-        }
-
-        /*
-         * $this->when()
-         */
-        if ($this->isMethodCallToThis($node, ['when'])) {
-            return new Union([
-                $this->value(TypeHelper::getArgType($scope, $node->args, ['value', 1])),
-                $this->value(TypeHelper::getArgType($scope, $node->args, ['default', 2], new ObjectType(MissingValue::class))),
-            ]);
-        }
-
-        /*
-         * $this->whenLoaded()
-         */
-        if ($this->isMethodCallToThis($node, ['whenLoaded'])) {
-            if (count($node->args) === 1) {
+            /*
+             * $this->when()
+             */
+            if ($this->isMethodCallToThis($node, ['when'])) {
                 return new Union([
-                    // Relationship type which does not really matter
-                    new UnknownType('Skipped real relationship type extracting'),
-                    new ObjectType(MissingValue::class),
+                    $this->value(TypeHelper::getArgType($scope, $node->args, ['value', 1])),
+                    $this->value(TypeHelper::getArgType($scope, $node->args, ['default', 2], new ObjectType(MissingValue::class))),
                 ]);
             }
 
-            return new Union([
-                $this->value(TypeHelper::getArgType($scope, $node->args, ['value', 1])),
-                $this->value(TypeHelper::getArgType($scope, $node->args, ['default', 2], new ObjectType(MissingValue::class))),
-            ]);
+            /*
+             * $this->whenLoaded()
+             */
+            if ($this->isMethodCallToThis($node, ['whenLoaded'])) {
+                if (count($node->args) === 1) {
+                    return new Union([
+                        // Relationship type which does not really matter
+                        new UnknownType('Skipped real relationship type extracting'),
+                        new ObjectType(MissingValue::class),
+                    ]);
+                }
+
+                return new Union([
+                    $this->value(TypeHelper::getArgType($scope, $node->args, ['value', 1])),
+                    $this->value(TypeHelper::getArgType($scope, $node->args, ['default', 2], new ObjectType(MissingValue::class))),
+                ]);
+            }
         }
 
         return null;
@@ -99,7 +101,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
             return $cachedModelType;
         }
 
-        $modelClass = static::getModelName(
+        $modelClass = self::getModelName(
             $jsonClass->name,
             new \ReflectionClass($jsonClass->name),
             fn ($n) => $scope->resolveName($n)
@@ -146,16 +148,8 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         return $modelClass;
     }
 
-    private function isMethodCallToThis(?Node $node, array $methods)
+    private function isMethodCallToThis(Node\Expr\MethodCall $node, array $methods)
     {
-        if (! $node) {
-            return false;
-        }
-
-        if (! $node instanceof Node\Expr\MethodCall) {
-            return false;
-        }
-
         if (($node->var->name ?? null) !== 'this') {
             return false;
         }

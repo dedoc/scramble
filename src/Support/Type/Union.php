@@ -34,7 +34,7 @@ class Union extends AbstractType
     {
         $types = Arr::wrap(...$types);
         $types = collect(array_values($types))
-            ->unique(fn (Type $t) => $t->toString())
+            ->unique(fn (Type $t) => $t->toString()) // @phpstan-ignore-line
             ->values()
             ->all();
 
@@ -46,7 +46,7 @@ class Union extends AbstractType
             return $types[0];
         }
 
-        return new static($types);
+        return new self($types);
     }
 
     public function toString(): string

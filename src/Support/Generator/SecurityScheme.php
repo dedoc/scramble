@@ -44,7 +44,7 @@ class SecurityScheme
 
     public static function mutualTLS()
     {
-        return (new static('mutualTLS'))->as('mutualTLS');
+        return (new self('mutualTLS'))->as('mutualTLS');
     }
 
     public function as(string $schemeName): self

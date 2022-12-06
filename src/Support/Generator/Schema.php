@@ -15,7 +15,7 @@ class Schema
 
     public static function fromType(Type $type)
     {
-        $schema = new static();
+        $schema = new self();
         $schema->setType($type);
 
         return $schema;
@@ -37,7 +37,7 @@ class Schema
 
     public static function createFromParameters(array $parameters)
     {
-        $schema = (new static())->setType($type = new ObjectType);
+        $schema = (new self())->setType($type = new ObjectType);
 
         collect($parameters)
             ->each(function (Parameter $parameter) use ($type) {

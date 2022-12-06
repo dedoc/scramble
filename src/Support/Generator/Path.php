@@ -17,7 +17,7 @@ class Path
         $this->path = $path;
     }
 
-    public static function make(string $path)
+    public static function make(string $path): self
     {
         return new self($path);
     }
@@ -25,21 +25,24 @@ class Path
     /**
      * @param  Server[]  $servers
      */
-    public function servers(array $servers)
+    public function servers(array $servers): self
     {
         $this->servers = $servers;
 
         return $this;
     }
 
-    public function addOperation(Operation $operationBuilder)
+    public function addOperation(Operation $operationBuilder): self
     {
         $this->operations[$operationBuilder->method] = $operationBuilder;
 
         return $this;
     }
 
-    public function toArray()
+    /**
+     * @return array<mixed>
+     */
+    public function toArray(): array
     {
         $result = [];
 

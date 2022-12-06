@@ -13,7 +13,7 @@ class TypeHelper
     {
         $types = collect($types)
             ->flatMap(fn ($type) => $type instanceof Union ? $type->types : [$type])
-            ->unique(fn (Type $type) => $type->toString())
+            ->unique(fn (Type $type) => $type->toString()) // @phpstan-ignore-line
             ->pipe(function (Collection $c) {
                 if ($c->count() > 1 && $c->contains(fn ($t) => $t instanceof VoidType)) {
                     return $c->reject(fn ($t) => $t instanceof VoidType);
@@ -73,7 +73,7 @@ class TypeHelper
     {
         $default = $default ?: new UnknownType("Cannot get a type of the arg #{$parameterNameIndex[1]}($parameterNameIndex[0])");
 
-        $matchingArg = static::getArg($args, $parameterNameIndex);
+        $matchingArg = self::getArg($args, $parameterNameIndex);
 
         return $matchingArg ? $scope->getType($matchingArg->value) : $default;
     }

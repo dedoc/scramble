@@ -195,6 +195,7 @@ class RulesToParameters
     {
         return collect($this->validationNodesResults)
             ->mapWithKeys(function (ValidationNodesResult $result) {
+                /** @var Node\Expr\ArrayItem[] $arrayNodes */
                 $arrayNodes = (new NodeFinder())->find(
                     Arr::wrap($result->node),
                     fn (Node $node) => $node instanceof Node\Expr\ArrayItem
@@ -204,6 +205,7 @@ class RulesToParameters
 
                 return collect($arrayNodes)
                     ->mapWithKeys(fn (Node\Expr\ArrayItem $item) => [
+                        // @phpstan-ignore-next-line
                         $item->key->value => $result->scope->getType($item)->getAttribute('docNode'),
                     ])
                     ->toArray();

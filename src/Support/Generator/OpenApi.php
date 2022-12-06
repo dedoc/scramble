@@ -24,19 +24,19 @@ class OpenApi
         $this->components = new Components;
     }
 
-    public static function make(string $version)
+    public static function make(string $version): self
     {
         return new self($version);
     }
 
-    public function setComponents(Components $components)
+    public function setComponents(Components $components): self
     {
         $this->components = $components;
 
         return $this;
     }
 
-    public function secure(SecurityScheme $securityScheme)
+    public function secure(SecurityScheme $securityScheme): self
     {
         $securityScheme->default();
 
@@ -48,7 +48,7 @@ class OpenApi
         return $this;
     }
 
-    public function setInfo(InfoObject $info)
+    public function setInfo(InfoObject $info): self
     {
         $this->info = $info;
 
@@ -58,35 +58,38 @@ class OpenApi
     /**
      * @param  Path[]  $paths
      */
-    public function paths(array $paths)
+    public function paths(array $paths): self
     {
         $this->paths = $paths;
 
         return $this;
     }
 
-    public function addPath(Path $path)
+    public function addPath(Path $path): self
     {
         $this->paths[] = $path;
 
         return $this;
     }
 
-    public function addServer(Server $server)
+    public function addServer(Server $server): self
     {
         $this->servers[] = $server;
 
         return $this;
     }
 
-    public function defaultSecurity(Security $security)
+    public function defaultSecurity(Security $security): self
     {
         $this->defaultSecurity = $security;
 
         return $this;
     }
 
-    public function toArray()
+    /**
+     * @return array<mixed>
+     */
+    public function toArray(): array
     {
         $result = [
             'openapi' => $this->version,

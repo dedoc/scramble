@@ -102,9 +102,6 @@ class PhpDocHandler
         ];
 
         foreach ($tagValues as $tagValue) {
-            if (! $tagValue->type) {
-                continue;
-            }
             PhpDocTypeWalker::traverse($tagValue->type, [new ResolveFqnPhpDocTypeVisitor($scope->namesResolver)]);
         }
 

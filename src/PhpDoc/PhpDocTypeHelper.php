@@ -35,7 +35,7 @@ class PhpDocTypeHelper
     public static function toType(TypeNode $type)
     {
         if ($type instanceof IdentifierTypeNode) {
-            return static::handleIdentifierNode($type);
+            return self::handleIdentifierNode($type);
         }
 
         if ($type instanceof ArrayShapeNode) {
@@ -104,7 +104,7 @@ class PhpDocTypeHelper
             }
 
             if ($type->constExpr instanceof ConstExprIntegerNode) {
-                return new LiteralIntegerType($type->constExpr->value);
+                return new LiteralIntegerType((int) $type->constExpr->value);
             }
 
             if ($type->constExpr instanceof ConstExprFloatNode) {

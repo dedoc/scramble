@@ -9,7 +9,7 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 
 class PendingTypes
 {
-    /** @var array{0: Type, 1: callable(PendingReturnType, Type): void, 2: PendingReturnType[] } */
+    /** @var array{0: Type, 1: callable(PendingReturnType, Type): void, 2: PendingReturnType[] }[] */
     private array $references = [];
 
     public function addReference(Type $type, callable $referenceResolver, array $pendingTypes)

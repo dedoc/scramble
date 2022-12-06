@@ -14,9 +14,10 @@ class Operation
 
     public string $summary = '';
 
-    /** @var array<Security|array> */
+    /** @var list<Security|array{}> */
     public array $security = [];
 
+    /** @var array<string> */
     public array $tags = [];
 
     /** @var Parameter[] */
@@ -35,12 +36,12 @@ class Operation
         $this->method = $method;
     }
 
-    public static function make(string $method)
+    public static function make(string $method): self
     {
         return new self($method);
     }
 
-    public function addRequestBodyObject(RequestBodyObject $requestBodyObject)
+    public function addRequestBodyObject(RequestBodyObject $requestBodyObject): self
     {
         $this->requestBodyObject = $requestBodyObject;
 
@@ -50,7 +51,7 @@ class Operation
     /**
      * @param  Server[]  $servers
      */
-    public function servers(array $servers)
+    public function servers(array $servers): self
     {
         $this->servers = $servers;
 
@@ -60,70 +61,82 @@ class Operation
     /**
      * @param  Response|Reference  $response
      */
-    public function addResponse($response)
+    public function addResponse($response): self
     {
         $this->responses[] = $response;
 
         return $this;
     }
 
-    public function addSecurity($security)
+    /**
+     * @param Security|array{} $security
+     */
+    public function addSecurity($security): self
     {
         $this->security[] = $security;
 
         return $this;
     }
 
-    public function setOperationId(?string $operationId)
+    public function setOperationId(?string $operationId): self
     {
         $this->operationId = $operationId;
 
         return $this;
     }
 
-    public function setMethod(string $method)
+    public function setMethod(string $method): self
     {
         $this->method = $method;
 
         return $this;
     }
 
-    public function setPath(string $path)
+    public function setPath(string $path): self
     {
         $this->path = $path;
 
         return $this;
     }
 
-    public function summary(string $summary)
+    public function summary(string $summary): self
     {
         $this->summary = $summary;
 
         return $this;
     }
 
-    public function description(string $description)
+    public function description(string $description): self
     {
         $this->description = $description;
 
         return $this;
     }
 
-    public function setTags(array $tags)
+    /**
+     * @param string[] $tags
+     */
+    public function setTags(array $tags): self
     {
         $this->tags = array_map(fn ($t) => (string) $t, $tags);
 
         return $this;
     }
 
-    public function addParameters(array $parameters)
+    /**
+     * @param Parameter[] $parameters
+     */
+    public function addParameters(array $parameters): self
     {
         $this->parameters = array_merge($this->parameters, $parameters);
 
         return $this;
     }
 
-    public function toArray()
+    /**
+     * @return array<mixed>
+     */
+    public function toArray(): array
     {
         $result = [];
 

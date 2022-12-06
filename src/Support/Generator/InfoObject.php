@@ -16,7 +16,7 @@ class InfoObject
         $this->version = $version;
     }
 
-    public static function make(string $title)
+    public static function make(string $title): self
     {
         return new self($title);
     }
@@ -35,7 +35,10 @@ class InfoObject
         return $this;
     }
 
-    public function toArray()
+    /**
+     * @return array<mixed>
+     */
+    public function toArray(): array
     {
         return array_filter([
             'title' => $this->title,

@@ -155,7 +155,7 @@ class Generator
             $operations = collect($pathsGroup->pluck('operations')->flatten());
             $operationsHaveSameAlternativeServers = $operations->count()
                 && $operations->every(fn (Operation $o) => count($o->servers))
-                && $operations->unique(function (Operation $o) {
+                && $operations->unique(function (Operation $o) { // @phpstan-ignore-line
                     return collect($o->servers)->map(fn (Server $s) => $s->url)->join('.');
                 })->count() === 1;
 

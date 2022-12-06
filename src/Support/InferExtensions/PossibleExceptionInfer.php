@@ -23,7 +23,7 @@ class PossibleExceptionInfer implements ExpressionExceptionExtension
             if (
                 $scope->getType($node->var)->isInstanceOf(Validator::class) // Validator::make()
                 || $scope->getType($node->var)->isInstanceOf(Request::class) // $request
-                || ($node->var instanceof Expr\Variable && ($node->var->name ?? null) === 'this')
+                || ($node->var instanceof Expr\Variable && $node->var->name === 'this')
             ) {
                 if ($isCallToValidate) {
                     return [
@@ -36,7 +36,7 @@ class PossibleExceptionInfer implements ExpressionExceptionExtension
             // $this->authorize
             if (
                 $node->name instanceof Identifier && $node->name->name === 'authorize'
-                && ($node->var instanceof Expr\Variable && ($node->var->name ?? null) === 'this') // $this
+                && ($node->var instanceof Expr\Variable && $node->var->name === 'this') // $this
             ) {
                 return [
                     new ObjectType(AuthorizationException::class),

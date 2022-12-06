@@ -193,6 +193,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
          * @todo: Allow (enforce) user to explicitly pass short and unique names for the reference.
          * Otherwise, only class names are correctly handled for now.
          */
+        // @phpstan-ignore-next-line
         return Reference::in('schemas')
             ->shortName(class_basename($type->name))
             ->uniqueName($type->name);

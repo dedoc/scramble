@@ -37,9 +37,7 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
             return null;
         }
 
-        if (! ($collectingType = $this->openApiTransformer->transform($collectingClassType))) {
-            return null;
-        }
+        $collectingType = $this->openApiTransformer->transform($collectingClassType);
 
         $type = new OpenApiObjectType;
         $type->addProperty('data', (new ArrayType())->setItems($collectingType));

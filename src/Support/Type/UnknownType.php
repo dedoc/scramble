@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\Type;
 
 class UnknownType extends AbstractType
 {
+    // @phpstan-ignore-next-line
     private string $comment;
 
     public function __construct(string $comment = '')

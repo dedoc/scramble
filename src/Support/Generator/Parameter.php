@@ -15,7 +15,7 @@ class Parameter
 
     public string $description = '';
 
-    /** @var array|scalar|null|MissingExample */
+    /** @var array<mixed>|scalar|null|MissingExample */
     public $example;
 
     public bool $deprecated = false;
@@ -35,11 +35,14 @@ class Parameter
         }
     }
 
-    public static function make(string $name, string $in)
+    public static function make(string $name, string $in): self
     {
-        return new static($name, $in);
+        return new self($name, $in);
     }
 
+    /**
+     * @return array<mixed>
+     */
     public function toArray(): array
     {
         $result = array_filter([
@@ -58,7 +61,7 @@ class Parameter
         return array_merge($result, $this->example instanceof MissingExample ? [] : ['example' => $this->example]);
     }
 
-    public function required(bool $required)
+    public function required(bool $required): self
     {
         $this->required = $required;
 
@@ -72,7 +75,7 @@ class Parameter
         return $this;
     }
 
-    public function description(string $description)
+    public function description(string $description): self
     {
         $this->description = $description;
 
@@ -80,9 +83,9 @@ class Parameter
     }
 
     /**
-     * @param  array|scalar|null|MissingExample  $example
+     * @param  array<mixed>|scalar|null|MissingExample  $example
      */
-    public function example($example)
+    public function example($example): self
     {
         $this->example = $example;
 

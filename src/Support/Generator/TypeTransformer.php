@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Generator\Types\NullType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types\Type as GeneratorType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Type;
@@ -50,7 +51,7 @@ class TypeTransformer
         return $this->components;
     }
 
-    public function transform(Type $type)
+    public function transform(Type $type): GeneratorType
     {
         $openApiType = new StringType();
 
@@ -159,7 +160,7 @@ class TypeTransformer
         return $openApiType;
     }
 
-    private function handleUsingExtensions(Type $type)
+    private function handleUsingExtensions(Type $type): ?GeneratorType
     {
         return array_reduce(
             $this->typeToSchemaExtensions,
@@ -203,6 +204,9 @@ class TypeTransformer
         );
     }
 
+    /**
+     * @return Response|Reference|null
+     */
     public function toResponse(Type $type)
     {
         if (! $response = $this->handleResponseUsingExtensions($type)) {
@@ -217,8 +221,8 @@ class TypeTransformer
                 );
         }
 
-        /** @var PhpDocNode $docNode */
         if ($docNode = $type->getAttribute('docNode')) {
+            /** @var PhpDocNode $docNode */
             $description = (string) Str::of($docNode->getAttribute('summary') ?: '')
                 ->append("\n\n".($docNode->getAttribute('description') ?: ''))
                 ->append("\n\n".$response->description)
@@ -241,6 +245,9 @@ class TypeTransformer
         return $response;
     }
 
+    /**
+     * @return Response|Reference|null
+     */
     private function handleResponseUsingExtensions(Type $type)
     {
         if (! $type->isInstanceOf(\Throwable::class)) {

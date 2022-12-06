@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Illuminate\Http\Request;
 use PhpParser\Node;
+use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeFinder;
 use PhpParser\PrettyPrinter\Standard;
 
@@ -28,6 +29,10 @@ class ValidateCallExtractor
     public function node(): ?ValidationNodesResult
     {
         $methodNode = $this->handle;
+
+        if (! $methodNode instanceof ClassMethod) {
+            return null;
+        }
 
         // $request->validate, when $request is a Request instance
         /** @var Node\Expr\MethodCall $callToValidate */
@@ -63,7 +68,7 @@ class ValidateCallExtractor
                     && count($node->args) === 2
                     && $node->class instanceof Node\Name && is_a($node->class->toString(), \Illuminate\Support\Facades\Validator::class, true)
                     && $node->name instanceof Node\Identifier && $node->name->name === 'make'
-                    && $node->args[0]->value instanceof Node\Expr\MethodCall && is_a($this->getPossibleParamType($methodNode, $node->args[0]->value->var), Request::class, true)
+                    && $node->args[0]->value instanceof Node\Expr\MethodCall && ($node->args[0]->value->var instanceof Node\Expr\Variable) && is_a($this->getPossibleParamType($methodNode, $node->args[0]->value->var), Request::class, true)
             );
             $validationRules = $callToValidate->args[1] ?? null;
         }
@@ -104,6 +109,7 @@ class ValidateCallExtractor
                         return [
                             $param->var->name => $value,
                         ];
+                        // @phpstan-ignore-next-line
                     } catch (\Throwable $e) {
                         return [];
                     }

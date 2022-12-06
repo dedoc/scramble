@@ -67,7 +67,9 @@ class FormRequestRulesExtractor
         $request = (new $requestClassName);
         $request->setMethod($route->methods()[0]);
 
-        return $request->rules();
+        return method_exists($request, 'rules')
+            ? $request->rules()
+            : [];
     }
 
     private function findCustomRequestParam(Param $param)

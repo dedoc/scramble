@@ -73,9 +73,6 @@ class RouteInfo
 
         if (count($returnTagValues = $this->phpDoc->getReturnTagValues())) {
             foreach ($returnTagValues as $returnTagValue) {
-                if (! $returnTagValue->type) {
-                    continue;
-                }
                 PhpDocTypeWalker::traverse($returnTagValue->type, [new ResolveFqnPhpDocTypeVisitor($this->class->namesResolver)]);
             }
         }
@@ -134,7 +131,7 @@ class RouteInfo
 
     public function getDocReturnType()
     {
-        if ($this->phpDoc() && ($returnType = $this->phpDoc()->getReturnTagValues()[0] ?? null) && optional($returnType)->type) {
+        if (($returnType = $this->phpDoc()->getReturnTagValues()[0] ?? null) && optional($returnType)->type) {
             return $returnType->type;
         }
 
@@ -156,7 +153,6 @@ class RouteInfo
             return null;
         }
 
-        /** @var FunctionType $methodType */
         return $this->class->scope->getType($this->methodNode());
     }
 }

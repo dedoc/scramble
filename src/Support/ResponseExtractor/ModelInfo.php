@@ -207,6 +207,7 @@ class ModelInfo
                     return [];
                 }
             })
+            // @phpstan-ignore-next-line
             ->reject(fn ($cast, $name) => collect($columns)->has($name))
             ->map(fn ($cast, $name) => [
                 'name' => $name,
@@ -401,10 +402,6 @@ class ModelInfo
     protected function qualifyModel(string $model)
     {
         if (class_exists($model)) {
-            return $model;
-        }
-
-        if (str_contains($model, '\\') && class_exists($model)) {
             return $model;
         }
 
