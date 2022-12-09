@@ -19,9 +19,10 @@ jobs:
         include:
           - laravel: 9.*
             testbench: 7.*
+            larastan: 2.0.*
           - laravel: 8.81.*
             testbench: 6.24.*
-            nunomaduro/larastan: 1.0.*
+            larastan: 1.0.*
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
@@ -44,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: |
           composer config --no-plugins allow-plugins.pestphp/pest-plugin true
-          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "nunomaduro/larastan:${{ matrix.larastan }}" --no-interaction --no-update
           composer update --${{ matrix.stability }} --prefer-dist --no-interaction
 
       - name: Execute tests
