@@ -13,9 +13,9 @@ class PendingTypes
     private array $references = [];
 
     /**
-     * @param Type $type
-     * @param callable(PendingReturnType, Type): void $referenceResolver
-     * @param PendingReturnType[] $pendingTypes
+     * @param  Type  $type
+     * @param  callable(PendingReturnType, Type): void  $referenceResolver
+     * @param  PendingReturnType[]  $pendingTypes
      */
     public function addReference(Type $type, callable $referenceResolver, array $pendingTypes): void
     {

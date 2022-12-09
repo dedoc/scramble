@@ -114,7 +114,7 @@ class Operation
     }
 
     /**
-     * @param string[] $tags
+     * @param  string[]  $tags
      */
     public function setTags(array $tags): self
     {
@@ -124,7 +124,7 @@ class Operation
     }
 
     /**
-     * @param Parameter[] $parameters
+     * @param  Parameter[]  $parameters
      */
     public function addParameters(array $parameters): self
     {
