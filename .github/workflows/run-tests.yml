@@ -52,4 +52,4 @@ jobs:
         run: vendor/bin/pest
 
       - name: Run PHPStan
-        run: vendor/bin/phpstan analyze src
+        run: ./vendor/bin/phpstan analyze src
