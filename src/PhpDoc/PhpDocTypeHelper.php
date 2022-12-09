@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprFloatNode;
@@ -32,7 +33,7 @@ use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 
 class PhpDocTypeHelper
 {
-    public static function toType(TypeNode $type)
+    public static function toType(TypeNode $type): Type
     {
         if ($type instanceof IdentifierTypeNode) {
             return self::handleIdentifierNode($type);
@@ -115,7 +116,7 @@ class PhpDocTypeHelper
         return new UnknownType('Unknown phpDoc type ['.$type.']');
     }
 
-    private static function handleIdentifierNode(IdentifierTypeNode $type)
+    private static function handleIdentifierNode(IdentifierTypeNode $type): Type
     {
         if ($type->name === 'string') {
             return new StringType;

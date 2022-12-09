@@ -31,6 +31,7 @@ class Scope
      */
     public array $variables = [];
 
+    /** @var callable(string): string */
     public $namesResolver;
 
     public function __construct(
@@ -49,7 +50,7 @@ class Scope
         $this->parentScope = $parentScope;
     }
 
-    public function getType(Node $node)
+    public function getType(Node $node): Type
     {
         if ($node instanceof Node\Scalar) {
             return (new ScalarTypeGetter)($node);
@@ -77,7 +78,7 @@ class Scope
         }
 
         if ($node instanceof Node\Expr\Variable) {
-            return $this->getVariableType($node) ?: new UnknownType;
+            return $this->getVariableType($node);
         }
 
         $type = $this->nodeTypesResolver->getType($node);
@@ -136,7 +137,7 @@ class Scope
         return $type;
     }
 
-    public function setType(Node $node, Type $type)
+    public function setType(Node $node, Type $type): Type
     {
         if (
             $node instanceof Node\Expr\MethodCall
@@ -162,7 +163,7 @@ class Scope
         return $type;
     }
 
-    public function createChildScope(?ScopeContext $context = null, ?callable $namesResolver = null)
+    public function createChildScope(?ScopeContext $context = null, ?callable $namesResolver = null): Scope
     {
         return new Scope(
             $this->index,
@@ -174,7 +175,7 @@ class Scope
         );
     }
 
-    public function isInClass()
+    public function isInClass(): bool
     {
         return (bool) $this->context->class;
     }
@@ -184,7 +185,7 @@ class Scope
         return $this->context->class;
     }
 
-    public function isInFunction()
+    public function isInFunction(): bool
     {
         return (bool) $this->context->function;
     }
@@ -194,12 +195,12 @@ class Scope
         return $this->context->function;
     }
 
-    public function resolveName(string $name)
+    public function resolveName(string $name): string
     {
         return ($this->namesResolver)($name);
     }
 
-    public function addVariableType(int $line, string $name, Type $type)
+    public function addVariableType(int $line, string $name, Type $type): void
     {
         if (! isset($this->variables[$name])) {
             $this->variables[$name] = [];
@@ -208,7 +209,7 @@ class Scope
         $this->variables[$name][] = compact('line', 'type');
     }
 
-    private function getVariableType(Node\Expr\Variable $node)
+    private function getVariableType(Node\Expr\Variable $node): Type
     {
         $name = (string) $node->name;
         $line = $node->getAttribute('startLine', 0);

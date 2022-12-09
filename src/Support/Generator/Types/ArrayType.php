@@ -15,14 +15,17 @@ class ArrayType extends Type
         $this->items = new StringType;
     }
 
-    public function toArray()
+    /**
+     * @return array<mixed>
+     */
+    public function toArray(): array
     {
         return array_merge(parent::toArray(), [
             'items' => $this->items->toArray(),
         ]);
     }
 
-    public function setItems($items)
+    public function setItems($items): self
     {
         $this->items = $items;
 

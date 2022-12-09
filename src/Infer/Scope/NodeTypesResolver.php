@@ -11,7 +11,8 @@ use PhpParser\Node;
  */
 class NodeTypesResolver
 {
-    private $nodeTypes = [];
+    /** @var array<int, Type> */
+    private array $nodeTypes = [];
 
     public function hasType(Node $node): bool
     {

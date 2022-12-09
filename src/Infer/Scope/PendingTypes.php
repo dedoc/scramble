@@ -12,12 +12,17 @@ class PendingTypes
     /** @var array{0: Type, 1: callable(PendingReturnType, Type): void, 2: PendingReturnType[] }[] */
     private array $references = [];
 
-    public function addReference(Type $type, callable $referenceResolver, array $pendingTypes)
+    /**
+     * @param Type $type
+     * @param callable(PendingReturnType, Type): void $referenceResolver
+     * @param PendingReturnType[] $pendingTypes
+     */
+    public function addReference(Type $type, callable $referenceResolver, array $pendingTypes): void
     {
         $this->references[] = [$type, $referenceResolver, $pendingTypes];
     }
 
-    public function resolve()
+    public function resolve(): void
     {
         $hasResolvedSomeReferences = false;
 
@@ -57,7 +62,7 @@ class PendingTypes
         }
     }
 
-    public function resolveAllPendingIntoUnknowns()
+    public function resolveAllPendingIntoUnknowns(): void
     {
         foreach ($this->references as [$type, $referenceResolver, $pendingTypes]) {
             foreach ($pendingTypes as $pendingType) {
