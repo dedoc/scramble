@@ -153,6 +153,12 @@ class RouteInfo
             return null;
         }
 
-        return $this->class->scope->getType($this->methodNode());
+        $type = $this->class->scope->getType($this->methodNode());
+
+        if (! $type instanceof FunctionType) {
+            throw new \LogicException('Method type must be FunctionType.');
+        }
+
+        return $type;
     }
 }

@@ -7,6 +7,7 @@ use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\PhpDoc;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Str;
@@ -69,10 +70,13 @@ class PhpDocHandler
             }
         }
 
-        if ($node instanceof Node\Stmt\ClassMethod && ($methodType = $scope->getType($node)) && $doc = $node->getDocComment()) {
+        if ($node instanceof Node\Stmt\ClassMethod && $doc = $node->getDocComment()) {
             $docNode = $this->getDocNode($scope, $doc);
 
-            $thrownExceptions = collect($docNode->getThrowsTagValues())
+            /** @var array<int, ThrowsTagValueNode> $tagValues */
+            $tagValues = $docNode->getThrowsTagValues();
+
+            $thrownExceptions = collect($tagValues)
                 ->flatMap(function (ThrowsTagValueNode $t) {
                     $type = PhpDocTypeHelper::toType($t->type);
 
@@ -82,6 +86,11 @@ class PhpDocHandler
 
                     return [$type];
                 });
+
+            $methodType = $scope->getType($node);
+            if (! $methodType instanceof FunctionType) {
+                throw new \LogicException('Method should have function type.');
+            }
 
             $methodType->exceptions = [
                 ...$methodType->exceptions,

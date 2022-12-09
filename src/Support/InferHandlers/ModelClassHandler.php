@@ -23,11 +23,24 @@ class ModelClassHandler
         return $node instanceof Node\Stmt\Class_;
     }
 
-    public function enter(Node $node, Scope $scope)
+    private function getType(Node $node, Scope $scope): ?ObjectType
     {
         $type = $scope->getType($node);
 
+        if (! $type instanceof ObjectType) {
+            return null;
+        }
+
         if (! $type->isInstanceOf(Model::class)) {
+            return null;
+        }
+
+        return $type;
+    }
+
+    public function enter(Node $node, Scope $scope)
+    {
+        if (! $type = $this->getType($node, $scope)) {
             return;
         }
 
@@ -44,9 +57,7 @@ class ModelClassHandler
 
     public function leave(Node $node, Scope $scope)
     {
-        $type = $scope->getType($node);
-
-        if (! $type->isInstanceOf(Model::class)) {
+        if (! $type = $this->getType($node, $scope)) {
             return;
         }
 

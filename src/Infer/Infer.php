@@ -33,6 +33,12 @@ class Infer
     {
         $astHelper = new ClassAstHelper($class, $this->extensions, $this->handlers);
 
-        return $astHelper->scope->getType($astHelper->classAst);
+        $type = $astHelper->scope->getType($astHelper->classAst);
+
+        if (! $type instanceof ObjectType) {
+            throw new \LogicException('Got not ObjectType when analyzing class AST');
+        }
+
+        return $type;
     }
 }
