@@ -21,6 +21,7 @@ jobs:
             testbench: 7.*
           - laravel: 8.81.*
             testbench: 6.24.*
+            larastan: 1.*.*
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
