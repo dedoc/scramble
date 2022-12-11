@@ -51,7 +51,6 @@ it('documents abort_unless helper', function () {
         ->toHaveKey('content.application/json.schema.properties.message.example', 'Something is wrong.');
 });
 
-
 class AbortHelpersResponseDocumentation_Test extends \Illuminate\Routing\Controller
 {
     public function abort_404()

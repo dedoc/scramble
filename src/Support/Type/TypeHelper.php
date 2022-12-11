@@ -70,8 +70,8 @@ class TypeHelper
     }
 
     /**
-     * @param Node\Arg[] $args
-     * @param array{0: string, 1: int} $parameterNameIndex
+     * @param  Node\Arg[]  $args
+     * @param  array{0: string, 1: int}  $parameterNameIndex
      */
     public static function getArgType(Scope $scope, array $args, array $parameterNameIndex, ?Type $default = null)
     {
@@ -83,8 +83,8 @@ class TypeHelper
     }
 
     /**
-     * @param Node\Arg[] $args
-     * @param array{0: string, 1: int} $parameterNameIndex
+     * @param  Node\Arg[]  $args
+     * @param  array{0: string, 1: int}  $parameterNameIndex
      */
     private static function getArg(array $args, array $parameterNameIndex)
     {

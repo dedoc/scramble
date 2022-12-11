@@ -21,7 +21,7 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
     }
 
     /**
-     * @param ObjectType $type
+     * @param  ObjectType  $type
      */
     public function toResponse(Type $type)
     {
