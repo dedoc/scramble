@@ -156,7 +156,6 @@ class RouteInfo
             return null;
         }
 
-        /** @var FunctionType $methodType */
         return $this->class->scope->getType($this->methodNode());
     }
 }
