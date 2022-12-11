@@ -1,7 +1,5 @@
 <?php
 
-use Dedoc\Scramble\Scramble;
-use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 it('adds an alternative server to operation when no matching server found', function () {
@@ -66,13 +64,4 @@ class AlternativeServers_Test extends \Illuminate\Routing\Controller
     public function a()
     {
     }
-}
-
-function generateForRoute(Closure $param)
-{
-    $route = $param();
-
-    Scramble::routes(fn (Route $r) => $r->uri === $route->uri);
-
-    return app()->make(\Dedoc\Scramble\Generator::class)();
 }

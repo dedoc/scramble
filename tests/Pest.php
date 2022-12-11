@@ -2,9 +2,11 @@
 
 use Dedoc\Scramble\DefaultExtensions;
 use Dedoc\Scramble\Infer\TypeInferringVisitor;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Tests\TestCase;
 use Dedoc\Scramble\Tests\Utils\AnalysisResult;
+use Illuminate\Routing\Route;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory as ParserFactoryAlias;
 
@@ -33,4 +35,13 @@ function getStatementType(string $statement): ?Type
 EOD;
 
     return analyzeFile($code)->getVarType('a');
+}
+
+function generateForRoute(Closure $param)
+{
+    $route = $param();
+
+    Scramble::routes(fn (Route $r) => $r->uri === $route->uri);
+
+    return app()->make(\Dedoc\Scramble\Generator::class)();
 }
