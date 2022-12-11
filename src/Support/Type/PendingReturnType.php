@@ -32,4 +32,13 @@ class PendingReturnType extends AbstractType
     {
         return 'pending-type';
     }
+
+    public function getDefaultType()
+    {
+        foreach ($this->attributes() as $name => $value) {
+            $this->defaultType->setAttribute($name, $value);
+        }
+
+        return $this->defaultType;
+    }
 }

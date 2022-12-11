@@ -31,4 +31,9 @@ trait TypeAttributes
 
         return null;
     }
+
+    public function attributes()
+    {
+        return $this->attributes;
+    }
 }

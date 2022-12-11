@@ -9,7 +9,7 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 
 class PendingTypes
 {
-    /** @var array{0: Type, 1: callable(PendingReturnType, Type): void, 2: PendingReturnType[] } */
+    /** @var array{0: Type, 1: callable(PendingReturnType, Type): void, 2: PendingReturnType[] }[] */
     private array $references = [];
 
     public function addReference(Type $type, callable $referenceResolver, array $pendingTypes)
@@ -34,10 +34,11 @@ class PendingTypes
                 }
 
                 if (count((new TypeWalker)->find($resolvedType, fn ($t) => $t === $pendingType))) {
-                    $resolvedType = new UnknownType;
+                    $resolvedType = $pendingType->defaultType;
                 }
 
-                $referenceResolver($pendingType, $resolvedType);
+                $this->resolveType($pendingType, $referenceResolver, $resolvedType);
+
                 unset($this->references[$index][2][$pendingTypeIndex]);
                 $hasResolvedSomeReferences = true;
             }
@@ -63,10 +64,19 @@ class PendingTypes
             foreach ($pendingTypes as $pendingType) {
                 $resolvedType = $pendingType->defaultType;
 
-                $referenceResolver($pendingType, $resolvedType);
+                $this->resolveType($pendingType, $referenceResolver, $resolvedType);
             }
         }
 
         $this->references = [];
+    }
+
+    private function resolveType(PendingReturnType $pendingType, callable $referenceResolver, Type $resolvedType)
+    {
+        foreach ($pendingType->defaultType->attributes() as $name => $value) {
+            $resolvedType->setAttribute($name, $value);
+        }
+
+        $referenceResolver($pendingType, $resolvedType);
     }
 }
