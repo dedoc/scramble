@@ -14,10 +14,11 @@ it('documents a response even when return type is taken from an annotation', fun
 
 class ManualResponseDocumentation_Test extends \Illuminate\Routing\Controller
 {
-    public function a(): \Illuminate\Http\Resources\Json\JsonResource
+    public function a(): Illuminate\Http\Resources\Json\JsonResource
     {
         /**
          * Wow.
+         *
          * @body array{id: int}
          */
         return $this->unknown_fn();
