@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCallsTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCreationInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
@@ -16,6 +17,7 @@ class DefaultExtensions
     {
         return [
             new PossibleExceptionInfer(),
+            new AbortHelpersExceptionInfer(),
 
             new JsonResourceCallsTypeInfer(),
             new JsonResourceCreationInfer(),

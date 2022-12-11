@@ -69,6 +69,10 @@ class TypeHelper
         return new UnknownType('Cannot get type from AST node '.(new Standard())->prettyPrint([$typeNode]));
     }
 
+    /**
+     * @param  Node\Arg[]  $args
+     * @param  array{0: string, 1: int}  $parameterNameIndex
+     */
     public static function getArgType(Scope $scope, array $args, array $parameterNameIndex, ?Type $default = null)
     {
         $default = $default ?: new UnknownType("Cannot get a type of the arg #{$parameterNameIndex[1]}($parameterNameIndex[0])");
@@ -78,6 +82,10 @@ class TypeHelper
         return $matchingArg ? $scope->getType($matchingArg->value) : $default;
     }
 
+    /**
+     * @param  Node\Arg[]  $args
+     * @param  array{0: string, 1: int}  $parameterNameIndex
+     */
     private static function getArg(array $args, array $parameterNameIndex)
     {
         [$name, $index] = $parameterNameIndex;
