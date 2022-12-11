@@ -20,6 +20,6 @@ class ManualResponseDocumentation_Test extends \Illuminate\Routing\Controller
          * Wow.
          * @body array{id: int}
          */
-        return unknown_fn();
+        return $this->unknown_fn();
     }
 }

@@ -34,10 +34,11 @@ class PendingTypes
                 }
 
                 if (count((new TypeWalker)->find($resolvedType, fn ($t) => $t === $pendingType))) {
-                    $resolvedType = $pendingType->getDefaultType();
+                    $resolvedType = $pendingType->defaultType;
                 }
 
-                $referenceResolver($pendingType, $resolvedType);
+                $this->resolveType($pendingType, $referenceResolver, $resolvedType);
+
                 unset($this->references[$index][2][$pendingTypeIndex]);
                 $hasResolvedSomeReferences = true;
             }
@@ -61,12 +62,21 @@ class PendingTypes
     {
         foreach ($this->references as [$type, $referenceResolver, $pendingTypes]) {
             foreach ($pendingTypes as $pendingType) {
-                $resolvedType = $pendingType->getDefaultType();
+                $resolvedType = $pendingType->defaultType;
 
-                $referenceResolver($pendingType, $resolvedType);
+                $this->resolveType($pendingType, $referenceResolver, $resolvedType);
             }
         }
 
         $this->references = [];
+    }
+
+    private function resolveType(PendingReturnType $pendingType, callable $referenceResolver, Type $resolvedType)
+    {
+        foreach ($pendingType->defaultType->attributes() as $name => $value) {
+            $resolvedType->setAttribute($name, $value);
+        }
+
+        $referenceResolver($pendingType, $resolvedType);
     }
 }
