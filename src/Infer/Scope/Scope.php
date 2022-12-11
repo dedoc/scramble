@@ -92,7 +92,7 @@ class Scope
 
         // Here we either don't have type for node cached (so we've got a freshly created
         // instance of UnknownType), or we have pending type that needs to be resolved.
-        $type = $type instanceof PendingReturnType ? $type->defaultType : $type;
+        $type = $type instanceof PendingReturnType ? $type->getDefaultType() : $type;
 
         if ($node instanceof Node\Expr\MethodCall) {
             // Only string method names support.
@@ -109,10 +109,12 @@ class Scope
                 ];
             }
 
-            $type = $this->setType(
-                $node,
-                $objectType->getMethodCallType($node->name->name),
-            );
+            $methodCallType = $objectType->getMethodCallType($node->name->name);
+            if ($methodCallType instanceof UnknownType && $type instanceof UnknownType) {
+                $methodCallType = $type;
+            }
+
+            $type = $this->setType($node, $methodCallType);
         }
 
         if ($node instanceof Node\Expr\FuncCall) {
@@ -130,7 +132,7 @@ class Scope
                 ];
             }
 
-            $type = $this->setType($node, $fnType ? $fnType->getReturnType() : new UnknownType);
+            $type = $this->setType($node, $fnType ? $fnType->getReturnType() : $type);
         }
 
         return $type;
