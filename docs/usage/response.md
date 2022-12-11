@@ -266,6 +266,32 @@ class TodoItemsController
 
 This will add all the meta and other information to the docs.
 
+## Error response
+
+By analyzing the codebase Scramble can not only understand OK responses, but error responses as well. Here are the cases which Scramble understand and can document.  
+
+### Call to `validate` and `authorize` in controller
+
+Calls to `validate` and `authorize` will be documented as corresponding error responses in resulting docs: responses with `422` and `403` statuses respectively.
+
+### Model binding in route
+
+When model binding is used, Scramble adds possible `404` error response to the documentation. This is a case when model is not found. 
+
+### Abort helpers 
+
+When using abort helpers (`abort`, `abort_if`, `abort_unless`), Scramble will document the resulting response.
+
+Currently only numeric `code` is supported. Message content (`message`) will be documented as an example in resulting docs.
+
+For example, this line of code:
+
+```php
+abort(400, 'This case is not supported'); 
+```
+
+Corresponds to the error response in documentation with code `400` and `message` property with an example (`This case is not supported`). 
+
 ## Arbitrary responses
 
 If nothing from above works, and something custom needed, you can use PhpStan PhpDoc format and document return type of the method:
