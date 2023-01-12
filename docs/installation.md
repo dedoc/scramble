@@ -25,6 +25,10 @@ composer require doctrine/dbal
 
 Without the `doctrine/dbal`, Scramble won't know the types of model attributes, so they will be shown as `string` in resulting docs.
 
+### `Unknown database type` exception
+
+If you get this exception, simply add a type mapping into database config, like shown in this comment: https://github.com/dedoc/scramble/issues/98#issuecomment-1374444083
+
 ## Publishing config
 
 Optionally, you can publish package's config file:

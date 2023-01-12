@@ -85,6 +85,7 @@ class Foo_TestFour
              * With more description.
              *
              * @status 201
+             *
              * @body array{foo: string}
              */
             return response()->json(['foo' => 'one']);
