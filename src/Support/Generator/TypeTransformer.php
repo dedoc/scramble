@@ -109,7 +109,7 @@ class TypeTransformer
 
                 $openApiType = $varNode && $varNode->type
                     ? $this->transform(PhpDocTypeHelper::toType($varNode->type))
-                    : new UnknownType;
+                    : $openApiType;
 
                 if ($varNode && $varNode->description) {
                     $openApiType->setDescription($varNode->description);
