@@ -38,8 +38,12 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         }
 
         /** $this->? */
-        if ($node instanceof Node\Expr\PropertyFetch && ($node->var->name ?? null) === 'this' && is_string($node->name->name ?? null)) {
-            return static::modelType($scope->class(), $scope)->getPropertyFetchType($node->name->name);
+        if (
+            $node instanceof Node\Expr\PropertyFetch && ($node->var->name ?? null) === 'this'
+            && is_string($node->name->name ?? null)
+            && ($type = static::modelType($scope->class(), $scope))
+        ) {
+            return $type->getPropertyFetchType($node->name->name);
         }
 
         /*
@@ -93,7 +97,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         return null;
     }
 
-    private static function modelType(ObjectType $jsonClass, Scope $scope): Type
+    private static function modelType(ObjectType $jsonClass, Scope $scope): ?Type
     {
         if ($cachedModelType = static::$jsonResourcesModelTypesCache[$jsonClass->name] ?? null) {
             return $cachedModelType;

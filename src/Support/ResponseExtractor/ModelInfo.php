@@ -155,10 +155,12 @@ class ModelInfo
         $schema = $model->getConnection()->getDoctrineSchemaManager();
         $table = $model->getConnection()->getTablePrefix().$model->getTable();
 
-        $model->getConnection()
+        $platform = $model->getConnection()
             ->getDoctrineConnection()
-            ->getDatabasePlatform()
-            ->registerDoctrineTypeMapping('enum', 'string');
+            ->getDatabasePlatform();
+
+        $platform->registerDoctrineTypeMapping('enum', 'string');
+        $platform->registerDoctrineTypeMapping('geometry', 'string');
 
         $columns = $schema->listTableColumns($table);
         $indexes = $schema->listTableIndexes($table);
