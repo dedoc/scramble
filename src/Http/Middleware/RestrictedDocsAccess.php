@@ -15,7 +15,7 @@ class RestrictedDocsAccess
             
             abort(403);
         }
-        
+
         if (! app()->environment('production')) {
             return $next($request);
         }
