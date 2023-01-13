@@ -12,7 +12,7 @@ class RestrictedDocsAccess
             return $next($request);
         }
 
-        if (array_key_exists('viewApiDocs', Gate::abilities()) && Gate::allows('viewApiDocs')) {
+        if (Gate::allows('viewApiDocs')) {
             return $next($request);
         }
 
