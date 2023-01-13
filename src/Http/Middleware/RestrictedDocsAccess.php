@@ -8,11 +8,11 @@ class RestrictedDocsAccess
 {
     public function handle($request, \Closure $next)
     {
-        if (! app()->environment('production')) {
+        if (app()->environment('local')) {
             return $next($request);
         }
 
-        if ((bool) $request->user() && array_key_exists('viewApiDocs', Gate::abilities()) && Gate::check('viewApiDocs', [$request->user()])) {
+        if (Gate::allows('viewApiDocs')) {
             return $next($request);
         }
 
