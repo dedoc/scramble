@@ -3,9 +3,9 @@ title: Docs authorization
 weight: 5
 ---
 
-Scramble exposes docs at the `/docs/api` URI. By default, you will only be able to access this route if the environment is not `production`.
+Scramble exposes docs at the `/docs/api` URI. By default, you will only be able to access this route in the `local` environment.
 
-If you need to allow access to docs in `production` environment, implement gate called `viewApiDocs`:
+Define `viewApiDocs` gate if you need to allow the access in other environments:
 
 ```php
 Gate::define('viewApiDocs', function (User $user) {
