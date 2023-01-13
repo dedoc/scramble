@@ -11,7 +11,7 @@ class RestrictedDocsAccess
         if (app()->environment('local')) {
             return $next($request);
         }
-        
+
         if (array_key_exists('viewApiDocs', Gate::abilities()) && Gate::allows('viewApiDocs')) {
             return $next($request);
         }
