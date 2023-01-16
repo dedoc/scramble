@@ -10,8 +10,11 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Lang;
+use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\String_;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class AbortHelpersExceptionInfer implements ExpressionExceptionExtension
@@ -42,7 +45,7 @@ class AbortHelpersExceptionInfer implements ExpressionExceptionExtension
             return [new ObjectType(ModelNotFoundException::class)];
         }
 
-        $messageType = TypeHelper::getArgType($scope, $node->args, ['message', 1 + $paramsShift], new LiteralStringType(''));
+        $messageType = $this->getMessageType(1 + $paramsShift, $node, $scope);
         $headersType = TypeHelper::getArgType($scope, $node->args, ['headers', 2 + $paramsShift], new ArrayType());
 
         return [
@@ -54,5 +57,30 @@ class AbortHelpersExceptionInfer implements ExpressionExceptionExtension
                 ]);
             }),
         ];
+    }
+
+    private function getMessageType(int $index, Expr $node, Scope $scope)
+    {
+        $type = TypeHelper::getArgType($scope, $node->args, ['message', $index], new LiteralStringType(''));
+
+        // Message is a string and we should return that message
+        if ($type instanceof LiteralStringType) {
+            return $type;
+        }
+
+        // Extract Raw message argument from the function
+        $arg = TypeHelper::getArg($node->args, ['message', $index]);
+
+        // Handle Lang::get(...) / __(...) / trans(...) calls in the message argument
+        if ($arg instanceof Arg && $arg->value instanceof Expr\CallLike) {
+            $arg = TypeHelper::getArg($arg->value->args, ['key', 0]);
+        }
+
+        // If the argument is a string value and is translatable return that as the message type
+        if ($arg instanceof Arg && $arg->value instanceof String_ && Lang::has($arg->value->value)) {
+            return new LiteralStringType(Lang::get($arg->value->value));
+        }
+
+        return $type;
     }
 }

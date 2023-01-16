@@ -86,7 +86,7 @@ class TypeHelper
      * @param  Node\Arg[]  $args
      * @param  array{0: string, 1: int}  $parameterNameIndex
      */
-    private static function getArg(array $args, array $parameterNameIndex)
+    public static function getArg(array $args, array $parameterNameIndex)
     {
         [$name, $index] = $parameterNameIndex;
 
