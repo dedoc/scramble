@@ -27,10 +27,10 @@ class TodoItemsController
     }
 }
 ```
-This will override defaults and `todoItem` parameter in docs will have `string` type and corresponding description from the PhpDoc.
+This will override defaults and the `todoItem` parameter in docs will have `string` type and corresponding description from the PhpDoc.
 
 ## Body
-Scramble understands request body based on request validation rules.
+Scramble understands the request body based on request validation rules.
 
 This is the source of truth both for the code and for the docs.
 

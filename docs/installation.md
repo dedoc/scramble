@@ -8,14 +8,14 @@ You can install the package via composer:
 composer require dedoc/scramble
 ```
 
-When the package installed, 2 routes are added to your application:
+When the package is installed, 2 routes are added to your application:
 
 - `/docs/api` - UI viewer for your documentation
 - `/docs/api.json` - Open API document in JSON format describing your API.
 
 ## Models attributes support
 
-To support model attributes/relations types in JSON resources you need to have `doctrine/dbal` package installed.
+To support model attributes/relations types in JSON resources you need to have the `doctrine/dbal` package installed.
 
 If it is not installed, install it via composer:
 
@@ -23,15 +23,15 @@ If it is not installed, install it via composer:
 composer require doctrine/dbal
 ```
 
-Without the `doctrine/dbal`, Scramble won't know the types of model attributes, so they will be shown as `string` in resulting docs.
+Without the `doctrine/dbal` package, Scramble won't know the types of model attributes, so they will be shown as `string` in resulting docs.
 
 ### `Unknown database type` exception
 
-If you get this exception, simply add a type mapping into database config, like shown in this comment: https://github.com/dedoc/scramble/issues/98#issuecomment-1374444083
+If you get this exception, simply add a type mapping into database config, as shown in this comment: https://github.com/dedoc/scramble/issues/98#issuecomment-1374444083
 
 ## Publishing config
 
-Optionally, you can publish package's config file:
+Optionally, you can publish the package's config file:
 
 ```sh
 php artisan vendor:publish --provider="Dedoc\Scramble\ScrambleServiceProvider" --tag="scramble-config"
