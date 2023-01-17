@@ -67,7 +67,7 @@ class JsonResourceOpenApi extends TypeToSchemaExtension
 }
 ```
 
-Then, we can implement the method `toSchema` that will describe how the type should be rendered in the OpenAPI. When serializing a JsonResource to ab array, the `toArray` method call result is used. So the simplest implementation for JsonResource looks like this (in reality it is a bit more complex, as there are merge values being serialized):
+Then, we can implement the method `toSchema` that will describe how the type should be rendered in the OpenAPI. When serializing a JsonResource to an array, the `toArray` method call result is used. So the simplest implementation for JsonResource looks like this (in reality it is a bit more complex, as there are merge values being serialized):
 
 ```php
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
