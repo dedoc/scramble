@@ -3,14 +3,14 @@ title: Security
 weight: 4
 ---
 
-Most likely, your API is protected by some sort of the auth. OpenAPI have plenty of ways to describe the API (see full documentation of spec here https://spec.openapis.org/oas/v3.1.0#security-scheme-object).
+Most likely, your API is protected by some sort of authentication. OpenAPI has plenty of ways to describe the API (see full documentation of spec here https://spec.openapis.org/oas/v3.1.0#security-scheme-object).
 
 ## Adding security scheme
 Scramble allows you to document how your API is secured. To document this, you can use `Scramble::extendOpenApi` method and add security information to OpenAPI document using `secure` method.
 
-You should call `extendOpenApi` in `boot` method of some of your service providers. This method accepts a callback that accepts OpenAPI document as a first argument.
+You should call `extendOpenApi` in the `boot` method of some of your service providers. This method accepts a callback that accepts an OpenAPI document as a first argument.
 
-`secure` method on `OpenApi` object accepts security scheme as an argument. It makes the security scheme default for all endpoints.
+The `secure` method on `OpenApi` object accepts security scheme as an argument. It makes the security scheme default for all endpoints.
 
 ```php
 use Dedoc\Scramble\Scramble;
@@ -33,7 +33,7 @@ public function boot()
 ```
 
 ## Security scheme examples
-Here are some common examples of the security schemes object you may have in your API. For full list of available methods check implementation of `SecurityScheme` class.
+Here are some common examples of security schemes objects you may have in your API. For full list of available methods check implementation of `SecurityScheme` class.
 
 ### API Key
 ```php

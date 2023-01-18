@@ -9,7 +9,7 @@ Here is a brief description of how the docs are generated.
 ## Requests
 To generate docs for the requests, Scramble analyzes the rules used for validation of the request and route parameters. It can easily extract rules from `FormRequest` classes by looking at `rules` method. 
 
-If a custom request class is not used, the package will look a call to `validate` method in controller's method and will use rules from there **by evaluating** the rules array code.
+If a custom request class is not used, the package will look for a call to `validate` in a controller's method and will use rules from there **by evaluating** the rules array code.
 
 ## Responses
 When analyzing responses, Scramble tries to figure out the response type of your controller's method. It uses pretty naїve static code analysis to determine what is returned from the controller. In most cases it should get you covered. 

@@ -3,7 +3,7 @@ title: Servers (API domains)
 weight: 1
 ---
 
-OpenAPI standard allows you to specify few servers you API is available at. Scramble supports this feature and here is how you can use it.
+The OpenAPI standard allows you to specify multiple servers that your API is available at. Scramble supports this feature and here is how you can use it.
 
 ## Multiple servers
 
@@ -11,7 +11,7 @@ In the published Scramble's config file you can see a key called `servers`.
 
 By default, it is `null` which means that Scramble will automatically generate a server based on the current application's domain and config (`scramble.api_path`, `scramble.api_domain`).
 
-To specify servers manually, you can provide an array of available servers to the `scramble.server` config key. In this array a key is a server's description and value is server base URL. Value in array will be passed to `url()` helper to generate a final URL that will be used in OpenAPI document. So unless you use an absolute URL, your current domain will be used.
+To specify servers manually, you can provide an array of available servers to the `scramble.server` config key. In this array a key is a server's description and value is server base URL. A value in the array will be passed to `url()` helper to generate a final URL that will be used in the OpenAPI document. So unless you use an absolute URL, your current domain will be used.
 
 Here is an example of the config. Notice that if you use `scramble.servers` you MUST use either relative path or full absolute URL with protocol and path:
 
@@ -26,7 +26,7 @@ Here is an example of the config. Notice that if you use `scramble.servers` you 
 
 Scramble also supports server variables. This is useful when you use a part of your domain as a parameter. For example, `{subdomain}.application.com`. `subdomain` here is a server variable.
 
-So as an example, here are few routes defined as following:
+So as an example, here are a few routes defined as following:
 
 ```php
 Route::domain('{subdomain}.application.com')->group(function () {
@@ -63,4 +63,4 @@ public function boot()
 }
 ```
 
-> **Note** Please note that while Scramble will generate OpenAPI document, Stoplight Elements library that Scramble uses for UI doesn't give you an ability to change server variables to try things out. As a workaround, you can set meaningful default values for your variables until UI supports them properly.
+> **Note** Please note that while Scramble will generate an OpenAPI document, the Stoplight Elements library that Scramble uses for UI doesn't give you an ability to change server variables to try things out. As a workaround, you can set meaningful default values for your variables until the UI supports them properly.

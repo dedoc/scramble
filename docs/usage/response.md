@@ -3,7 +3,7 @@ title: Responses
 weight: 3
 ---
 
-Based on source code analysis, Scramble can generate endpoint responses documentation. Currently, these response types documentation is supported automatically:
+Based on source code analysis, Scramble can generate endpoint responses documentation. Currently, these response types support automatic documentation:
 
 - `JsonResource` response
 - `AnonymousResourceCollection` of `JsonResource` items
@@ -35,7 +35,7 @@ Scramble extracts controller’s method return type based on priority:
 2. Typehint
 3. Code return statements
 
-This is implemented in this way because by its nature PHP is very dynamic language and Laravel uses a lot of its magic. So it can be pretty challenging to figure out method’s response type reliably in 100% cases without developing another PhpStan library.
+This is implemented in this way because by its nature PHP is very dynamic language and Laravel uses a lot of its magic. So it can be pretty challenging to figure out a method’s response type reliably in 100% cases without developing another PhpStan library.
 
 So while Scramble ultimate goal is to handle all possible return types automatically, for now I’ve decided to build it for the most popular things first.
 
@@ -228,7 +228,7 @@ class TodoItemsController
 
 When you don't have a resource and simply return a model from controller's method, Scramble will be able to document that as well.
 
-When documenting models, Scramble will document what model's `toArray` return. So if `toArray` is overridden, it should return array to be properly analyzed.
+When documenting models, Scramble will document what the model's `toArray` returns. So if `toArray` is overridden, it should return an array to be properly analyzed.
 
 ```php
 public function show(Request $request, User $user)
@@ -238,7 +238,7 @@ public function show(Request $request, User $user)
 ```
 
 <aside>
-Please note that if you don't type annotate method's return type, model type should be specified in arguments list. Otherwise, Scramble won't be able to infer returned variable type and document it properly. Also, now only relations that always present on a model (`$with` property) are documented.
+Please note that if you don't type annotate a method's return type, the model type should be specified in arguments list. Otherwise, Scramble won't be able to infer the returned variable type and document it properly. Also, now only relations that are always present on a model (`$with` property) are documented.
 </aside> 
 
 ## LengthAwarePaginator response
@@ -276,7 +276,7 @@ Calls to `validate` and `authorize` will be documented as corresponding error re
 
 ### Model binding in route
 
-When model binding is used, Scramble adds possible `404` error response to the documentation. This is a case when model is not found. 
+When model binding is used, Scramble adds possible `404` error response to the documentation. This is the case when a model is not found. 
 
 ### Abort helpers 
 
