@@ -96,8 +96,9 @@ class ClassAstHelper
         $property = $reflection->getProperty('origAliases');
         $property->setAccessible(true);
         $value = $property->getValue($context);
-        $ns = count($fileAst) === 1 && $fileAst[0] instanceof Node\Stmt\Namespace_
-            ? $fileAst[0]->name->toString()
+
+        $ns = ($nsNode = (new NodeFinder)->findFirst($fileAst, fn ($n) => $n instanceof Node\Stmt\Namespace_))
+            ? $nsNode->name->toString()
             : '\\';
         $aliases = array_map(fn (Node\Name $n) => $n->toCodeString(), $value[1]);
 
