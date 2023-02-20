@@ -395,7 +395,6 @@ class ModelInfo
     /**
      * Qualify the given model class base name.
      *
-     * @param  string  $model
      * @return string
      *
      * @see \Illuminate\Console\GeneratorCommand
