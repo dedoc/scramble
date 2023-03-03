@@ -27,6 +27,23 @@ return [
         'description' => '',
     ],
 
+    'cache' => [
+        /*
+         * Enable caching of the docs/api.json route
+         */
+        'enabled' => env('SCRAMBLE_CACHE_ENABLED', false),
+
+        /*
+         * Specify the driver to use for caching, leave null to use default cache driver.
+         */
+        'driver' => env('SCRAMBLE_CACHE_DRIVER', null),
+
+        /*
+         * Specify the amount of time to cache the response for in seconds.
+         */
+        'ttl' => env('SCRAMBLE_CACHE_EXPIRY_SECONDS', 60 * 60)
+    ],
+
     /*
      * The list of servers of the API. By default (when `null`), server URL will be created from
      * `scramble.api_path` and `scramble.api_domain` config variables. When providing an array, you
