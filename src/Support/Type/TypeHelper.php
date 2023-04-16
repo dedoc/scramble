@@ -82,6 +82,33 @@ class TypeHelper
         return $matchingArg ? $scope->getType($matchingArg->value) : $default;
     }
 
+    public static function unpackIfArrayType($type)
+    {
+        if (! $type instanceof ArrayType) {
+            return $type;
+        }
+
+        $unpackedItems = collect($type->items)
+            ->flatMap(function (ArrayItemType_ $type) {
+                if ($type->shouldUnpack && $type->value instanceof ArrayType) {
+                    return $type->value->items;
+                }
+
+                return [$type];
+            })
+            ->reduce(function ($arrayItems, ArrayItemType_ $itemType) {
+                if (! $itemType->key) {
+                    $arrayItems[] = $itemType;
+                } else {
+                    $arrayItems[$itemType->key] = $itemType;
+                }
+
+                return $arrayItems;
+            }, []);
+
+        return new ArrayType(array_values($unpackedItems));
+    }
+
     /**
      * @param  Node\Arg[]  $args
      * @param  array{0: string, 1: int}  $parameterNameIndex

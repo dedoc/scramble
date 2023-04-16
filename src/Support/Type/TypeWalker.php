@@ -54,10 +54,10 @@ class TypeWalker
         foreach ($propertiesWithNodes as $propertyWithNode) {
             $node = $subject->$propertyWithNode;
             if (! is_array($node)) {
-                $subject->$propertyWithNode = static::replace($node, $search, $replace);
+                $subject->$propertyWithNode = TypeHelper::unpackIfArrayType(static::replace($node, $search, $replace));
             } else {
                 foreach ($node as $index => $item) {
-                    $subject->$propertyWithNode[$index] = static::replace($item, $search, $replace);
+                    $subject->$propertyWithNode[$index] = TypeHelper::unpackIfArrayType(static::replace($item, $search, $replace));
                 }
             }
         }
