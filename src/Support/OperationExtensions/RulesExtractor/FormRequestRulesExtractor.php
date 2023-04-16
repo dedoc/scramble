@@ -35,19 +35,10 @@ class FormRequestRulesExtractor
     {
         $requestClassName = $this->getFormRequestClassName();
 
-        $fileAst = resolve(FileParser::class)->parse((new ReflectionClass($requestClassName))->getFileName());
-
-        $classAst = (new NodeFinder())->findFirst(
-            $fileAst,
-            fn (Node $node) => $node instanceof Node\Stmt\Class_
-                && ($node->namespacedName ?? $node->name)->toString() === ltrim($requestClassName, '\\'),
-        );
+        $result = resolve(FileParser::class)->parse((new ReflectionClass($requestClassName))->getFileName());
 
         /** @var Node\Stmt\ClassMethod|null $rulesMethodNode */
-        $rulesMethodNode = (new NodeFinder())->findFirst(
-            $classAst,
-            fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === 'rules',
-        );
+        $rulesMethodNode = $result->findMethod("$requestClassName@rules");
 
         if (! $rulesMethodNode) {
             return null;

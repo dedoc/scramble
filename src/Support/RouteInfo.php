@@ -39,19 +39,16 @@ class RouteInfo
             return;
         }
 
-        $fileAst = $fileParser->parse($this->reflectionMethod()->getFileName());
+        /*
+         * This happens when the route is registered, but there is no method.
+         */
+        if (! $this->reflectionMethod()) {
+            return;
+        }
 
-        $classAst = (new NodeFinder())->findFirst(
-            $fileAst,
-            fn (Node $node) => $node instanceof Node\Stmt\Class_
-                && ($node->namespacedName ?? $node->name)->toString() === ltrim($this->reflectionMethod()->getDeclaringClass()->getName(), '\\'),
-        );
+        $result = $fileParser->parse($this->reflectionMethod()->getFileName());
 
-        $this->methodNode = (new NodeFinder())
-            ->findFirst(
-                $classAst,
-                fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $this->methodName(),
-            );
+        $this->methodNode = $result->findMethod($this->route->getAction('uses'));
 
         $this->methodType = $infer
                 ->analyzeClass($this->reflectionMethod()->getDeclaringClass()->getName())
@@ -81,6 +78,10 @@ class RouteInfo
     {
         if ($this->phpDoc) {
             return $this->phpDoc;
+        }
+
+        if (! $this->methodNode()) {
+            return new PhpDocNode([]);
         }
 
         $this->phpDoc = $this->methodNode()->getAttribute('parsedPhpDoc') ?: new PhpDocNode([]);

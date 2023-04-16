@@ -35,8 +35,15 @@ class TypeInferer extends NodeVisitorAbstract
 
     private array $handlers;
 
-    public function __construct(array $extensions = [], array $handlers = [])
+    /**
+     * @var callable(string): string
+     */
+    private $namesResolver;
+
+    public function __construct(callable $namesResolver, array $extensions = [], array $handlers = [])
     {
+        $this->namesResolver = $namesResolver;
+
         $this->handlers = [
             new FunctionLikeHandler(),
             new AssignHandler(),
@@ -136,6 +143,7 @@ class TypeInferer extends NodeVisitorAbstract
                 new NodeTypesResolver,
                 new PendingTypes,
                 new ScopeContext,
+                $this->namesResolver,
             );
         }
 

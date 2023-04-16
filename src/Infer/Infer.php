@@ -33,18 +33,12 @@ class Infer
 
     private function traverseClassAstAndInferType(string $class): ObjectType
     {
-        $fileAst = $this->parser->parse((new ReflectionClass($class))->getFileName());
+        $result = $this->parser->parse((new ReflectionClass($class))->getFileName());
 
         $traverser = new NodeTraverser;
-        $traverser->addVisitor($inferer = new TypeInferer($this->extensions, $this->handlers));
-        $traverser->traverse($fileAst);
+        $traverser->addVisitor($inferer = new TypeInferer($result->getNamesResolver(), $this->extensions, $this->handlers));
+        $traverser->traverse($result->getStatements());
 
-        $classAst = (new NodeFinder())->findFirst(
-            $fileAst,
-            fn (Node $node) => $node instanceof Node\Stmt\Class_
-                && ($node->namespacedName ?? $node->name)->toString() === ltrim($class, '\\'),
-        );
-
-        return $inferer->scope->getType($classAst);
+        return $inferer->scope->getType($result->findFirstClass($class));
     }
 }

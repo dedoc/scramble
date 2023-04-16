@@ -4,7 +4,7 @@ namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
 use Illuminate\Support\Arr;
-use PhpParser\Node\Stmt;
+use PhpParser\Node\Name;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
@@ -16,7 +16,7 @@ use PhpParser\Parser;
 class FileParser
 {
     /**
-     * @var array<string, Stmt[]>
+     * @var array<string, FileParserResult>
      */
     private array $cache = [];
 
@@ -27,22 +27,23 @@ class FileParser
         $this->parser = $parser;
     }
 
-    public function parse(string $path): array
+    public function parse(string $path): FileParserResult
     {
-        return $this->cache[$path] ??= $this->traverseWithNamesResolution(
-            $this->parser->parse(file_get_contents($path)),
+        return $this->cache[$path] ??= new FileParserResult(
+            $statements = Arr::wrap($this->parser->parse(file_get_contents($path))),
+            $this->resolveNames($statements),
         );
     }
 
-    private function traverseWithNamesResolution($statements)
+    private function resolveNames($statements)
     {
-        $statements = Arr::wrap($statements);
-
         $traverser = new NodeTraverser;
         $traverser->addVisitor($nameResolver = new NameResolver());
         $traverser->addVisitor(new PhpDocResolver($nameResolver->getNameContext()));
         $traverser->traverse($statements);
 
-        return $statements;
+        $context = $nameResolver->getNameContext();
+
+        return fn ($shortName) => $context->getResolvedName(new Name([$shortName]), 1)->toString();
     }
 }
