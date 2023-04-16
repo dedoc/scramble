@@ -13,11 +13,15 @@ use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ParamTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
@@ -190,8 +194,14 @@ class RequestEssentialsExtension extends OperationExtension
             ];
             $schemaType = $type ? ($schemaTypesMap[$type] ?? new IntegerType) : new StringType;
 
-            if ($type && ! isset($schemaTypesMap[$type]) && $description === '') {
-                $description = 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' ID';
+            $isModelId = $type && ! isset($schemaTypesMap[$type]);
+
+            if ($isModelId) {
+                $schemaType = $this->getModelIdType($schemaType, $type);
+
+                if ($description === '') {
+                    $description = 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' ID';
+                }
 
                 $schemaType->setAttribute('isModelId', true);
             }
@@ -202,5 +212,20 @@ class RequestEssentialsExtension extends OperationExtension
         }, array_values(array_diff($route->parameterNames(), $this->getParametersFromString($route->getDomain()))));
 
         return [$params, $aliases];
+    }
+
+    private function getModelIdType(Type $baseType, string $type)
+    {
+        if (! is_a($type, Model::class, true)) {
+            return $baseType;
+        }
+
+        $modelTraits = class_uses($type);
+
+        if (Arr::has($modelTraits, HasUuids::class)) {
+            return (new StringType)->format('uuid');
+        }
+
+        return $baseType;
     }
 }
