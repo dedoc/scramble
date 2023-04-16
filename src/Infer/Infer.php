@@ -7,9 +7,6 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 
 class Infer
 {
-    /** @var array<string, ObjectType> */
-    private $classesCache = [];
-
     private array $extensions;
 
     private array $handlers;
@@ -22,11 +19,7 @@ class Infer
 
     public function analyzeClass(string $class): ObjectType
     {
-        if (array_key_exists($class, $this->classesCache)) {
-            return $this->classesCache[$class];
-        }
-
-        return $this->classesCache[$class] = $this->traverseClassAstAndInferType($class);
+        return $this->traverseClassAstAndInferType($class);
     }
 
     private function traverseClassAstAndInferType(string $class): ObjectType
