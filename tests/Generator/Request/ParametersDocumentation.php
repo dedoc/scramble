@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route as RouteFacade;
 
 it('documents model keys uuid parameters as uuids', function () {
     $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test/{model}', [
-        DocumentsModelKeysUuidParametersAsUuids_Test::class, 'index'
+        DocumentsModelKeysUuidParametersAsUuids_Test::class, 'index',
     ]));
 
     expect($params = $openApiDocument['paths']['/test/{model}']['get']['parameters'])
@@ -18,7 +18,7 @@ it('documents model keys uuid parameters as uuids', function () {
             'schema' => [
                 'type' => 'string',
                 'format' => 'uuid',
-            ]
+            ],
         ]);
 });
 
@@ -30,6 +30,7 @@ class DocumentsModelKeysUuidParametersAsUuids_Test
     }
 }
 
-class DocumentsModelKeysUuidParametersAsUuids_Model extends \Illuminate\Database\Eloquent\Model {
+class DocumentsModelKeysUuidParametersAsUuids_Model extends \Illuminate\Database\Eloquent\Model
+{
     use HasUuids;
 }
