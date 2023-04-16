@@ -14,6 +14,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
+// @todo: move rules from here to Generator/Request/ValidationRulesDocumentation test
+
 it('extract rules from array like rules', function () {
     $rules = [
         'id' => 'int',

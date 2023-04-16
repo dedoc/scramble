@@ -65,6 +65,13 @@ class Parameter
         return $this;
     }
 
+    public function setName(string $name): self
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
     public function setSchema(?Schema $schema): self
     {
         $this->schema = $schema;
