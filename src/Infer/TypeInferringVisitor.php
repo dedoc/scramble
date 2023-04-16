@@ -24,6 +24,7 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\PendingReturnType;
+use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
@@ -111,7 +112,7 @@ class TypeInferringVisitor extends NodeVisitorAbstract
                     $type,
                     function ($pendingType, $resolvedPendingType) use ($type) {
                         $type->setReturnType(
-                            TypeWalker::replace($type->getReturnType(), $pendingType, $resolvedPendingType)
+                            TypeHelper::unpackIfArrayType(TypeWalker::replace($type->getReturnType(), $pendingType, $resolvedPendingType))
                         );
                     },
                     $pendingTypes,
