@@ -22,8 +22,12 @@ class ArrayHandler
                 /** @var ArrayItemType_ $type */
                 $type = $scope->getType($arrayItem);
 
-                if ($type->shouldUnpack) {
+                if ($type->shouldUnpack && $type->value instanceof ArrayType) {
                     return $type->value->items;
+                }
+
+                if ($type->shouldUnpack && ! $type->value instanceof ArrayType) {
+                    return [];
                 }
 
                 return [$type];
