@@ -13,14 +13,18 @@ class ArrayItemType_ extends AbstractType
 
     public bool $isOptional;
 
+    public bool $shouldUnpack;
+
     public function __construct(
         $key,
         Type $value,
-        bool $isOptional = false
+        bool $isOptional = false,
+        bool $shouldUnpack = false
     ) {
         $this->key = $key;
         $this->value = $value;
         $this->isOptional = $isOptional;
+        $this->shouldUnpack = $shouldUnpack;
     }
 
     public function children(): array

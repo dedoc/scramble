@@ -21,6 +21,7 @@ class ArrayItemHandler
                 $node->key->value ?? null,
                 $scope->getType($node->value),
                 $isOptional = false,
+                $shouldUnpack = $node->unpack,
             )
         );
     }

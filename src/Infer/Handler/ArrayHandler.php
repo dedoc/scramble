@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use PhpParser\Node;
 
@@ -17,9 +18,26 @@ class ArrayHandler
     {
         $arrayItems = collect($node->items)
             ->filter()
-            ->map(fn (Node\Expr\ArrayItem $arrayItem) => $scope->getType($arrayItem))
-            ->all();
+            ->flatMap(function (Node\Expr\ArrayItem $arrayItem) use ($scope) {
+                /** @var ArrayItemType_ $type */
+                $type = $scope->getType($arrayItem);
 
-        $scope->setType($node, new ArrayType($arrayItems));
+                if ($type->shouldUnpack) {
+                    return $type->value->items;
+                }
+
+                return [$type];
+            })
+            ->reduce(function ($arrayItems, ArrayItemType_ $itemType) {
+                if (! $itemType->key) {
+                    $arrayItems[] = $itemType;
+                } else {
+                    $arrayItems[$itemType->key] = $itemType;
+                }
+
+                return $arrayItems;
+            }, []);
+
+        $scope->setType($node, new ArrayType(array_values($arrayItems)));
     }
 }
