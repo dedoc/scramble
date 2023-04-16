@@ -29,18 +29,14 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 
-class TypeInferringVisitor extends NodeVisitorAbstract
+class TypeInferer extends NodeVisitorAbstract
 {
     public Scope $scope;
 
-    private $namesResolver;
-
     private array $handlers;
 
-    public function __construct(callable $namesResolver, array $extensions = [], array $handlers = [])
+    public function __construct(array $extensions = [], array $handlers = [])
     {
-        $this->namesResolver = $namesResolver;
-
         $this->handlers = [
             new FunctionLikeHandler(),
             new AssignHandler(),
@@ -140,7 +136,6 @@ class TypeInferringVisitor extends NodeVisitorAbstract
                 new NodeTypesResolver,
                 new PendingTypes,
                 new ScopeContext,
-                $this->namesResolver
             );
         }
 

@@ -55,7 +55,7 @@ class RequestEssentialsExtension extends OperationExtension
                 $routeInfo->route->uri,
             ))
             ->setTags([
-                ...$this->extractTagsForMethod($routeInfo->class->phpDoc()),
+                ...$this->extractTagsForMethod($routeInfo->phpDoc()),
                 Str::of(class_basename($routeInfo->className()))->replace('Controller', ''),
             ])
             ->servers($this->getAlternativeServers($routeInfo->route))

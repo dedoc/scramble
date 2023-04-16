@@ -221,12 +221,12 @@ class RulesToParameters
                     Arr::wrap($result->node),
                     fn (Node $node) => $node instanceof Node\Expr\ArrayItem
                         && $node->key instanceof Node\Scalar\String_
-                        && $result->scope->getType($node)->getAttribute('docNode')
+                        && $node->getAttribute('parsedPhpDoc')
                 );
 
                 return collect($arrayNodes)
                     ->mapWithKeys(fn (Node\Expr\ArrayItem $item) => [
-                        $item->key->value => $result->scope->getType($item)->getAttribute('docNode'),
+                        $item->key->value => $item->getAttribute('parsedPhpDoc'),
                     ])
                     ->toArray();
             })

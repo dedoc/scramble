@@ -2,15 +2,16 @@
 
 namespace Dedoc\Scramble\Support;
 
+use Dedoc\Scramble\Infer\Infer;
+use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
-use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Routing\Route;
 use PhpParser\Node;
 use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\NodeFinder;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionClass;
 use ReflectionMethod;
@@ -19,25 +20,42 @@ class RouteInfo
 {
     public Route $route;
 
-    public ?ClassAstHelper $class = null;
+    public ?FunctionType $methodType = null;
 
     private ?PhpDocNode $phpDoc = null;
 
     private ?ClassMethod $methodNode = null;
 
-    public function __construct(Route $route)
+    public function __construct(Route $route, FileParser $fileParser, Infer $infer)
     {
         $this->route = $route;
-        $this->initClassInfo();
+
+        $this->initClassInfo($fileParser, $infer);
     }
 
-    private function initClassInfo()
+    private function initClassInfo(FileParser $fileParser, Infer $infer)
     {
         if (! $this->isClassBased()) {
             return;
         }
 
-        $this->class = app()->make(ClassAstHelper::class, ['class' => $this->className()]);
+        $fileAst = $fileParser->parse($this->reflectionMethod()->getFileName());
+
+        $classAst = (new NodeFinder())->findFirst(
+            $fileAst,
+            fn (Node $node) => $node instanceof Node\Stmt\Class_
+                && ($node->namespacedName ?? $node->name)->toString() === ltrim($this->reflectionMethod()->getDeclaringClass()->getName(), '\\'),
+        );
+
+        $this->methodNode = (new NodeFinder())
+            ->findFirst(
+                $classAst,
+                fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $this->methodName(),
+            );
+
+        $this->methodType = $infer
+                ->analyzeClass($this->reflectionMethod()->getDeclaringClass()->getName())
+                ->getMethodType($this->methodName());
     }
 
     public function isClassBased(): bool
@@ -65,20 +83,7 @@ class RouteInfo
             return $this->phpDoc;
         }
 
-        $this->phpDoc = new PhpDocNode([]);
-
-        if ($docComment = optional($this->reflectionMethod())->getDocComment()) {
-            $this->phpDoc = PhpDoc::parse($docComment);
-        }
-
-        if (count($returnTagValues = $this->phpDoc->getReturnTagValues())) {
-            foreach ($returnTagValues as $returnTagValue) {
-                if (! $returnTagValue->type) {
-                    continue;
-                }
-                PhpDocTypeWalker::traverse($returnTagValue->type, [new ResolveFqnPhpDocTypeVisitor($this->class->namesResolver)]);
-            }
-        }
+        $this->phpDoc = $this->methodNode()->getAttribute('parsedPhpDoc') ?: new PhpDocNode([]);
 
         return $this->phpDoc;
     }
@@ -89,9 +94,17 @@ class RouteInfo
             return $this->methodNode;
         }
 
-        $this->methodNode = $this->class->findFirstNode(
-            fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $this->methodName(),
-        );
+//        $content = 'class Foo { '.implode("\n", array_slice(
+//            file($this->reflectionMethod()->getFileName()),
+//            $this->reflectionMethod()->getStartLine() - 1,
+//            $this->reflectionMethod()->getEndLine() - $this->reflectionMethod()->getStartLine() + 1,
+//        )).'}';
+//
+//        dd($content);
+
+//        $this->methodNode = $this->class->findFirstNode(
+//            fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $this->methodName(),
+//        );
 
         return $this->methodNode;
     }
@@ -156,6 +169,6 @@ class RouteInfo
             return null;
         }
 
-        return $this->class->scope->getType($this->methodNode());
+        return $this->methodType;
     }
 }

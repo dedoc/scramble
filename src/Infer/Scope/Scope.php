@@ -31,21 +31,17 @@ class Scope
      */
     public array $variables = [];
 
-    public $namesResolver;
-
     public function __construct(
         Index $index,
         NodeTypesResolver $nodeTypesResolver,
         PendingTypes $pending,
         ScopeContext $context,
-        callable $namesResolver,
         ?Scope $parentScope = null)
     {
         $this->index = $index;
         $this->nodeTypesResolver = $nodeTypesResolver;
         $this->pending = $pending;
         $this->context = $context;
-        $this->namesResolver = $namesResolver;
         $this->parentScope = $parentScope;
     }
 
@@ -171,7 +167,6 @@ class Scope
             $this->nodeTypesResolver,
             $this->pending,
             $context ?: $this->context,
-            $namesResolver ?: $this->namesResolver,
             $this,
         );
     }
@@ -198,7 +193,7 @@ class Scope
 
     public function resolveName(string $name)
     {
-        return ($this->namesResolver)($name);
+        return $name;
     }
 
     public function addVariableType(int $line, string $name, Type $type)

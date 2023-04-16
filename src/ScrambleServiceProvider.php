@@ -7,8 +7,8 @@ use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Extensions\InferExtension;
 use Dedoc\Scramble\Infer\Infer;
-use Dedoc\Scramble\Infer\TypeInferringVisitor;
-use Dedoc\Scramble\Support\ClassAstHelper;
+use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthorizationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\HttpExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\NotFoundExceptionToResponseExtension;
@@ -30,6 +30,8 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
+use PhpParser\Parser;
+use PhpParser\ParserFactory;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -43,7 +45,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->hasRoute('web')
             ->hasViews('scramble');
 
-        $this->app->when([Infer::class, ClassAstHelper::class, TypeInferringVisitor::class])
+        $this->app->when([Infer::class, TypeInferer::class])
             ->needs('$extensions')
             ->give(function () {
                 $extensions = config('scramble.extensions', []);
@@ -60,7 +62,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 return array_merge($inferExtensions, DefaultExtensions::infer());
             });
 
-        $this->app->when([Infer::class, ClassAstHelper::class, TypeInferringVisitor::class])
+        $this->app->when([Infer::class, TypeInferer::class])
             ->needs('$handlers')
             ->give(function () {
                 return [
@@ -87,7 +89,15 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ], $operationExtensions);
             });
 
+        $this->app->singleton(Infer::class);
+
         $this->app->singleton(ServerFactory::class);
+
+        $this->app->singleton(FileParser::class, function () {
+            return new FileParser(
+                (new ParserFactory)->create(ParserFactory::PREFER_PHP7)
+            );
+        });
 
         $this->app->singleton(TypeTransformer::class, function () {
             $extensions = config('scramble.extensions', []);

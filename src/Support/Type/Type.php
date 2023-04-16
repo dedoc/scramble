@@ -16,6 +16,8 @@ interface Type
 
     public function getMethodCallType(string $methodName): Type;
 
+    public function getMethodType(string $methodName): Type;
+
     public function nodes(): array;
 
     public function children(): array;

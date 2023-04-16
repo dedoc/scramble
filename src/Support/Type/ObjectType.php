@@ -55,6 +55,15 @@ class ObjectType extends AbstractType
         return $this->methods[$methodName]->getReturnType();
     }
 
+    public function getMethodType(string $methodName): Type
+    {
+        if (! array_key_exists($methodName, $this->methods)) {
+            return new UnknownType("Cannot get type of method [$methodName] on object [$this->name]");
+        }
+
+        return $this->methods[$methodName];
+    }
+
     public function isInstanceOf(string $className)
     {
         return is_a($this->name, $className, true);

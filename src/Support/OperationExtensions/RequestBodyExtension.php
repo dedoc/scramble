@@ -79,7 +79,7 @@ class RequestBodyExtension extends OperationExtension
             }
         }
 
-        if (($validateCallExtractor = new ValidateCallExtractor($methodNode, $this->routeInfo->class->scope))->shouldHandle()) {
+        if (($validateCallExtractor = new ValidateCallExtractor($methodNode))->shouldHandle()) {
             if ($validateCallRules = $validateCallExtractor->extract()) {
                 $rules = array_merge($rules, $validateCallRules);
                 $nodesResults[] = $validateCallExtractor->node();

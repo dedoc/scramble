@@ -1,6 +1,11 @@
 <?php
 
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
+use Illuminate\Support\Arr;
+use PhpParser\NodeFinder;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
+use PhpParser\ParserFactory;
 
 it('supports confirmed rule', function () {
     $rules = [
@@ -14,3 +19,12 @@ it('supports confirmed rule', function () {
         ->and($params[1])
         ->toMatchArray(['name' => 'password_confirmation']);
 });
+//
+//it('works', function () {
+//    dd(
+//        resolve(\Dedoc\Scramble\Infer\Services\FileParser::class)
+//            ->parse(
+//                (new ReflectionClass(\Dedoc\Scramble\Support\ClassAstHelper::class))->getFileName()
+//            )
+//    );
+//});

@@ -16,6 +16,11 @@ abstract class AbstractType implements Type
         return new UnknownType('Cannot find method call type.');
     }
 
+    public function getMethodType(string $methodName): Type
+    {
+        return new UnknownType('Cannot find method type.');
+    }
+
     public function nodes(): array
     {
         return [];

@@ -1,7 +1,7 @@
 <?php
 
 use Dedoc\Scramble\DefaultExtensions;
-use Dedoc\Scramble\Infer\TypeInferringVisitor;
+use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Tests\TestCase;
@@ -16,7 +16,7 @@ function analyzeFile(string $code, array $extensions = []): AnalysisResult
 {
     $fileAst = (new ParserFactoryAlias)->create(ParserFactoryAlias::PREFER_PHP7)->parse($code);
 
-    $infer = app()->make(TypeInferringVisitor::class, [
+    $infer = app()->make(TypeInferer::class, [
         'namesResolver' => fn ($s) => $s,
         'extensions' => [...$extensions, ...DefaultExtensions::infer()],
     ]);
