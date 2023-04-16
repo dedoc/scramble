@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use PhpParser\Node;
