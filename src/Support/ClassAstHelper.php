@@ -17,6 +17,8 @@ class ClassAstHelper
 {
     private string $class;
 
+    private static array $cache = [];
+
     public \ReflectionClass $classReflection;
 
     public Node\Stmt\Class_ $classAst;
@@ -44,20 +46,25 @@ class ClassAstHelper
     {
         $this->classReflection = new \ReflectionClass($this->class);
 
-        $fileAst = (new ParserFactory)->create(ParserFactory::PREFER_PHP7)->parse(file_get_contents($this->classReflection->getFileName()));
+        [$namesResolver, $classAst, $infer] = static::$cache[$this->classReflection->getFileName()] ??= (function () {
+            $fileAst = (new ParserFactory)->create(ParserFactory::PREFER_PHP7)->parse(file_get_contents($this->classReflection->getFileName()));
 
-        $this->namesResolver = $this->extractNamesResolver($fileAst);
+            $namesResolver = $this->extractNamesResolver($fileAst);
 
-        $classAst = (new NodeFinder())->findFirst(
-            $fileAst,
-            fn (Node $node) => $node instanceof Node\Stmt\Class_
-                && ($node->namespacedName ?? $node->name)->toString() === ltrim($this->class, '\\'),
-        );
+            $classAst = (new NodeFinder())->findFirst(
+                $fileAst,
+                fn (Node $node) => $node instanceof Node\Stmt\Class_
+                    && ($node->namespacedName ?? $node->name)->toString() === ltrim($this->class, '\\'),
+            );
 
-        $traverser = new NodeTraverser;
-        $traverser->addVisitor($infer = new TypeInferringVisitor($this->namesResolver, $this->extensions, $this->handlers));
-        $traverser->traverse([$classAst]);
+            $traverser = new NodeTraverser;
+            $traverser->addVisitor($infer = new TypeInferringVisitor($namesResolver, $this->extensions, $this->handlers));
+            $traverser->traverse([$classAst]);
 
+            return [$namesResolver, $classAst, $infer];
+        })();
+
+        $this->namesResolver = $namesResolver;
         $this->scope = $infer->scope;
 
         if (! $classAst) {
