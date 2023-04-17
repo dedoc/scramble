@@ -37,8 +37,7 @@ class Generator
         ServerFactory $serverFactory,
         FileParser $fileParser,
         Infer $infer
-    )
-    {
+    ) {
         $this->transformer = $transformer;
         $this->operationBuilder = $operationBuilder;
         $this->serverFactory = $serverFactory;

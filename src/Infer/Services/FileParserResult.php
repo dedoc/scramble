@@ -2,14 +2,9 @@
 
 namespace Dedoc\Scramble\Infer\Services;
 
-use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
 use Illuminate\Support\Arr;
 use PhpParser\Node;
-use PhpParser\Node\Stmt;
 use PhpParser\NodeFinder;
-use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\NameResolver;
-use PhpParser\Parser;
 
 class FileParserResult
 {

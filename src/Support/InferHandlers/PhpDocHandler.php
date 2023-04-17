@@ -27,7 +27,6 @@ class PhpDocHandler
             return null;
         }
         /** @var PhpDocNode $parsedPhpDoc */
-
         $scope->getType($node)->setAttribute('docNode', $parsedPhpDoc);
 
         if ($node instanceof Node\Stmt\Return_ && $node->expr) {

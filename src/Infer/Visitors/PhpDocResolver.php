@@ -9,8 +9,8 @@ use Dedoc\Scramble\Support\PhpDoc;
 use Illuminate\Support\Str;
 use PhpParser\Comment;
 use PhpParser\Comment\Doc;
-use PhpParser\Node\Expr;
 use PhpParser\Node;
+use PhpParser\Node\Expr;
 use PhpParser\NodeVisitorAbstract;
 
 class PhpDocResolver extends NodeVisitorAbstract
