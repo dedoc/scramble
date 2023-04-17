@@ -23,7 +23,6 @@ it('gets json resource type', function () {
     assertMatchesTextSnapshot($returnType->toString());
 });
 
-
 it('gets correct type of pending self reference and unknown', function () {
     /** @var ObjectType $type */
     $type = app(Infer::class)->analyzeClass(PendingUnknownWithSelfReference::class);
@@ -31,7 +30,7 @@ it('gets correct type of pending self reference and unknown', function () {
     expect($type->methods['returnSomeCall']->toString())
         ->toBe('(): unknown')
         ->and($type->methods['returnThis']->toString())
-        ->toBe("(): ".PendingUnknownWithSelfReference::class);
+        ->toBe('(): '.PendingUnknownWithSelfReference::class);
 });
 
 it('gets json resource type with enum', function () {

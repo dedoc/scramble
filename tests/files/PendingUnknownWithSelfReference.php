@@ -1,6 +1,7 @@
 <?php
 
 namespace Dedoc\Scramble\Tests\files;
+
 class PendingUnknownWithSelfReference
 {
     public function returnSomeCall()
