@@ -18,12 +18,8 @@ use Throwable;
 
 class RequestBodyExtension extends OperationExtension
 {
-    private RouteInfo $routeInfo;
-
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
-        $this->routeInfo = $routeInfo;
-
         $method = $operation->method;
 
         $description = Str::of($routeInfo->phpDoc()->getAttribute('description'));

@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
 use Illuminate\Support\Arr;
-use PhpParser\Node\Name;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;

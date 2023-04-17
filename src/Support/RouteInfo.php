@@ -26,33 +26,15 @@ class RouteInfo
 
     private ?ClassMethod $methodNode = null;
 
+    private FileParser $parser;
+
+    private Infer $infer;
+
     public function __construct(Route $route, FileParser $fileParser, Infer $infer)
     {
         $this->route = $route;
-
-        $this->initClassInfo($fileParser, $infer);
-    }
-
-    private function initClassInfo(FileParser $fileParser, Infer $infer)
-    {
-        if (! $this->isClassBased()) {
-            return;
-        }
-
-        /*
-         * This happens when the route is registered, but there is no method.
-         */
-        if (! $this->reflectionMethod()) {
-            return;
-        }
-
-        $result = $fileParser->parse($this->reflectionMethod()->getFileName());
-
-        $this->methodNode = $result->findMethod($this->route->getAction('uses'));
-
-        $this->methodType = $infer
-                ->analyzeClass($this->reflectionMethod()->getDeclaringClass()->getName())
-                ->getMethodType($this->methodName());
+        $this->parser = $fileParser;
+        $this->infer = $infer;
     }
 
     public function isClassBased(): bool
@@ -91,23 +73,13 @@ class RouteInfo
 
     public function methodNode(): ?ClassMethod
     {
-        if ($this->methodNode || ! $this->isClassBased()) {
+        if ($this->methodNode || ! $this->isClassBased() || ! $this->reflectionMethod()) {
             return $this->methodNode;
         }
 
-//        $content = 'class Foo { '.implode("\n", array_slice(
-//            file($this->reflectionMethod()->getFileName()),
-//            $this->reflectionMethod()->getStartLine() - 1,
-//            $this->reflectionMethod()->getEndLine() - $this->reflectionMethod()->getStartLine() + 1,
-//        )).'}';
-//
-//        dd($content);
+         $result = $this->parser->parse($this->reflectionMethod()->getFileName());
 
-//        $this->methodNode = $this->class->findFirstNode(
-//            fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $this->methodName(),
-//        );
-
-        return $this->methodNode;
+         return $this->methodNode = $result->findMethod($this->route->getAction('uses'));
     }
 
     public function reflectionMethod(): ?ReflectionMethod
@@ -168,6 +140,12 @@ class RouteInfo
     {
         if (! $this->isClassBased() || ! $this->methodNode()) {
             return null;
+        }
+
+        if (! $this->methodType) {
+            $this->methodType = $this->infer
+                ->analyzeClass($this->reflectionMethod()->getDeclaringClass()->getName())
+                ->getMethodType($this->methodName());
         }
 
         return $this->methodType;

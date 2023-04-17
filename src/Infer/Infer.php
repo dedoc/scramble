@@ -4,8 +4,6 @@ namespace Dedoc\Scramble\Infer;
 
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use PhpParser\Node;
-use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use ReflectionClass;
 
