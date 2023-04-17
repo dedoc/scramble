@@ -4,10 +4,6 @@ namespace Dedoc\Scramble\Support\Generator;
 
 class Operation
 {
-    public string $method;
-
-    public string $path = '';
-
     public ?string $operationId = null;
 
     public string $description = '';
@@ -29,16 +25,6 @@ class Operation
 
     /** @var Server[] */
     public array $servers = [];
-
-    public function __construct(string $method)
-    {
-        $this->method = $method;
-    }
-
-    public static function make(string $method)
-    {
-        return new self($method);
-    }
 
     public function addRequestBodyObject(RequestBodyObject $requestBodyObject)
     {
@@ -81,20 +67,6 @@ class Operation
         return $this;
     }
 
-    public function setMethod(string $method)
-    {
-        $this->method = $method;
-
-        return $this;
-    }
-
-    public function setPath(string $path)
-    {
-        $this->path = $path;
-
-        return $this;
-    }
-
     public function summary(string $summary)
     {
         $this->summary = $summary;
@@ -123,7 +95,7 @@ class Operation
         return $this;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
         $result = [];
 
@@ -144,22 +116,22 @@ class Operation
         }
 
         if (count($this->parameters)) {
-            $result['parameters'] = array_map(fn (Parameter $p) => $p->toArray(), $this->parameters);
+            $result['parameters'] = array_map(fn (Parameter $p) => $p->toArray($openApi), $this->parameters);
         }
 
         if ($this->requestBodyObject) {
-            $result['requestBody'] = $this->requestBodyObject->toArray();
+            $result['requestBody'] = $this->requestBodyObject->toArray($openApi);
         }
 
         if (count($this->responses)) {
             $responses = [];
             foreach ($this->responses as $response) {
                 if ($response instanceof Response) {
-                    $responses[$response->code ?: 'default'] = $response->toArray();
+                    $responses[$response->code ?: 'default'] = $response->toArray($openApi);
                 } elseif ($response instanceof Reference) {
-                    $referencedResponse = $response->resolve();
+                    $referencedResponse = $openApi->components->get($response);
 
-                    $responses[$referencedResponse->code ?: 'default'] = $response->toArray();
+                    $responses[$referencedResponse->code ?: 'default'] = $response->toArray($openApi);
                 }
             }
             $result['responses'] = $responses;
@@ -168,7 +140,7 @@ class Operation
         if (count($this->security)) {
             $securities = [];
             foreach ($this->security as $security) {
-                $securities[] = is_array($security) ? $security : $security->toArray();
+                $securities[] = is_array($security) ? $security : $security->toArray($openApi);
             }
             $result['security'] = $securities;
         }
@@ -176,7 +148,7 @@ class Operation
         if (count($this->servers)) {
             $servers = [];
             foreach ($this->servers as $server) {
-                $servers[] = $server->toArray();
+                $servers[] = $server->toArray($openApi);
             }
             $result['servers'] = $servers;
         }

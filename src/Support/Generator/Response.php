@@ -6,7 +6,9 @@ class Response
 {
     public ?int $code = null;
 
-    /** @var array<string, Schema|Reference|null> */
+    public ?Reference $reference = null;
+
+    /** @var array<string, Schema|null> */
     public array $content;
 
     public string $description = '';
@@ -22,7 +24,7 @@ class Response
     }
 
     /**
-     * @param  Schema|Reference|null  $schema
+     * @param  Schema|null  $schema
      */
     public function setContent(string $type, $schema)
     {
@@ -31,15 +33,26 @@ class Response
         return $this;
     }
 
-    public function toArray()
+    public function setReference(?Reference $reference)
     {
+        $this->reference = $reference;
+
+        return $this;
+    }
+
+    public function toArray(OpenApi $openApi)
+    {
+        if ($this->reference) {
+            return $this->reference->toArray($openApi);
+        }
+
         $result = [
             'description' => $this->description,
         ];
 
         $content = [];
         foreach ($this->content as $mediaType => $schema) {
-            $content[$mediaType] = $schema ? ['schema' => $schema->toArray()] : [];
+            $content[$mediaType] = $schema ? ['schema' => $schema->toArray($openApi)] : [];
         }
 
         $result['content'] = $content;

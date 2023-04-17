@@ -45,6 +45,16 @@ it('adds auth error response', function () {
     assertMatchesSnapshot($openApiDocument);
 });
 
+it('adds multiple error response', function () {
+    RouteFacade::get('api/test1', [ErrorsResponsesTest_Controller::class, 'adds_auth_error_response']);
+    RouteFacade::get('api/test2', [ErrorsResponsesTest_Controller::class, 'adds_errors_with_custom_request']);
+
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test1' || $r->uri === 'api/test2');
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    assertMatchesSnapshot($openApiDocument);
+});
+
 it('adds not found error response', function () {
     RouteFacade::get('api/test/{user}', [ErrorsResponsesTest_Controller::class, 'adds_not_found_error_response'])
         ->middleware('can:update,post');

@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator\SecuritySchemes;
 
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 
 class ApiKeySecurityScheme extends SecurityScheme
@@ -18,9 +19,9 @@ class ApiKeySecurityScheme extends SecurityScheme
         $this->name = $name;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
-        return array_merge(parent::toArray(), [
+        return array_merge(parent::toArray($openApi), [
             'in' => $this->in,
             'name' => $this->name,
         ]);

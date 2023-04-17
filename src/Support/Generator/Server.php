@@ -30,7 +30,7 @@ class Server
         return $this;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
         return array_filter([
             'url' => $this->url,

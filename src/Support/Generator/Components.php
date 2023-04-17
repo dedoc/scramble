@@ -19,6 +19,14 @@ class Components
     // @todo: figure out how to solve the problem of duplicating resource names better
     public array $tempNames = [];
 
+    public function merge(Components $components)
+    {
+        $this->schemas = array_merge($this->schemas, $components->schemas);
+        $this->responses = array_merge($this->responses, $components->responses);
+        $this->securitySchemes = array_merge($this->securitySchemes, $components->securitySchemes);
+        $this->tempNames = array_merge($this->tempNames, $components->tempNames);
+    }
+
     public function addSecurityScheme(string $name, SecurityScheme $securityScheme)
     {
         $this->securitySchemes[$name] = $securityScheme;
@@ -43,21 +51,21 @@ class Components
         unset($this->schemas[$schemaName]);
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
         $result = [];
 
         if (count($this->securitySchemes)) {
             $result['securitySchemes'] = collect($this->securitySchemes)
-                ->map(fn (SecurityScheme $s) => $s->toArray())
+                ->map(fn (SecurityScheme $s) => $s->toArray($openApi))
                 ->toArray();
         }
 
         if (count($this->schemas)) {
             $result['schemas'] = collect($this->schemas)
-                ->mapWithKeys(function (Schema $s, string $fullName) {
+                ->mapWithKeys(function (Schema $s, string $fullName) use ($openApi) {
                     return [
-                        $this->uniqueSchemaName($fullName) => $s->setTitle($this->uniqueSchemaName($fullName))->toArray(),
+                        $this->uniqueSchemaName($fullName) => $s->setTitle($this->uniqueSchemaName($fullName))->toArray($openApi),
                     ];
                 })
                 ->toArray();
@@ -65,9 +73,9 @@ class Components
 
         if (count($this->responses)) {
             $result['responses'] = collect($this->responses)
-                ->mapWithKeys(function (Response $r, string $fullName) {
+                ->mapWithKeys(function (Response $r, string $fullName) use ($openApi) {
                     return [
-                        $this->uniqueSchemaName($fullName) => $r->toArray(),
+                        $this->uniqueSchemaName($fullName) => $r->toArray($openApi),
                     ];
                 })
                 ->toArray();
@@ -90,11 +98,6 @@ class Components
         }
 
         return static::slug($fullName);
-    }
-
-    public function getSchemaReference(string $schemaName)
-    {
-        return new Reference('schemas', $schemaName, $this);
     }
 
     public function getSchema(string $schemaName)

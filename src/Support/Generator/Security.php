@@ -11,7 +11,7 @@ class Security
         $this->name = $name;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
         return [
             $this->name => [],

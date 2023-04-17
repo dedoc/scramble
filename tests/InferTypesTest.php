@@ -2,6 +2,7 @@
 
 use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
@@ -105,7 +106,7 @@ it('infers model type', function () {
     $openApiType = $extension->toSchema($type);
 
     expect($components->schemas)->toHaveLength(2)->toHaveKeys(['InferTypesTest_SamplePostModel', 'InferTypesTest_SampleModel']);
-    assertMatchesSnapshot($openApiType->toArray());
+    assertMatchesSnapshot($openApiType->toArray(new OpenApi('3.1.0')));
 });
 
 it('infers model type when toArray is implemented', function () {
@@ -119,7 +120,7 @@ it('infers model type when toArray is implemented', function () {
     $openApiType = $extension->toSchema($type);
 
     expect($components->schemas)->toHaveLength(2)->toHaveKeys(['InferTypesTest_SamplePostModelWithToArray', 'InferTypesTest_SampleModel']);
-    assertMatchesSnapshot($openApiType->toArray());
+    assertMatchesSnapshot($openApiType->toArray(new OpenApi('3.1.0')));
 });
 
 class FooSeven_SampleClass

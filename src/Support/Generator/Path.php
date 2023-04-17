@@ -32,25 +32,25 @@ class Path
         return $this;
     }
 
-    public function addOperation(Operation $operationBuilder)
+    public function addOperation(string $method, Operation $operationBuilder)
     {
-        $this->operations[$operationBuilder->method] = $operationBuilder;
+        $this->operations[$method] = $operationBuilder;
 
         return $this;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
         $result = [];
 
         foreach ($this->operations as $method => $operation) {
-            $result[$method] = $operation->toArray();
+            $result[$method] = $operation->toArray($openApi);
         }
 
         if (count($this->servers)) {
             $servers = [];
             foreach ($this->servers as $server) {
-                $servers[] = $server->toArray();
+                $servers[] = $server->toArray($openApi);
             }
             $result['servers'] = $servers;
         }

@@ -40,7 +40,7 @@ class Parameter
         return new static($name, $in);
     }
 
-    public function toArray(): array
+    public function toArray(OpenApi $openApi): array
     {
         $result = array_filter([
             'name' => $this->name,
@@ -52,7 +52,7 @@ class Parameter
         ]);
 
         if ($this->schema) {
-            $result['schema'] = $this->schema->toArray();
+            $result['schema'] = $this->schema->toArray($openApi);
         }
 
         return array_merge($result, $this->example instanceof MissingExample ? [] : ['example' => $this->example]);

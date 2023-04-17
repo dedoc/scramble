@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\Generator\Types;
 
 use Dedoc\Scramble\Support\Generator\MissingExample;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 
 abstract class Type
 {
@@ -53,7 +54,7 @@ abstract class Type
         return $this;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
         return array_merge(array_filter([
             'type' => $this->nullable ? [$this->type, 'null'] : $this->type,

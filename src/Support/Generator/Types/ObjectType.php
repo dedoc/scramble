@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Generator\Types;
 
+use Dedoc\Scramble\Support\Generator\OpenApi;
+
 class ObjectType extends Type
 {
     /** @var array<string, Type|null> */
@@ -51,14 +53,14 @@ class ObjectType extends Type
         return $this;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
-        $result = parent::toArray();
+        $result = parent::toArray($openApi);
 
         if (count($this->properties)) {
             $properties = [];
             foreach ($this->properties as $name => $property) {
-                $properties[$name] = $property ? $property->toArray() : ['type' => 'string'];
+                $properties[$name] = $property ? $property->toArray($openApi) : ['type' => 'string'];
             }
             $result['properties'] = $properties;
         }
@@ -68,7 +70,7 @@ class ObjectType extends Type
         }
 
         if ($this->additionalProperties) {
-            $result['additionalProperties'] = $this->additionalProperties->toArray();
+            $result['additionalProperties'] = $this->additionalProperties->toArray($openApi);
         }
 
         return $result;

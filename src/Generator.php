@@ -8,6 +8,7 @@ use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Path;
+use Dedoc\Scramble\Support\Generator\RouteDocumentation;
 use Dedoc\Scramble\Support\Generator\Server;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationBuilder;
@@ -52,7 +53,15 @@ class Generator
         $this->getRoutes()
             ->map(function (Route $route) use ($openApi) {
                 try {
-                    return $this->routeToOperation($openApi, $route);
+                    $routeDoc = $this->routeToOperation($openApi, $route);
+
+                    if (! $routeDoc) {
+                        return null;
+                    }
+
+                    $openApi->components->merge($routeDoc->components);
+
+                    return $routeDoc;
                 } catch (Throwable $e) {
                     if (config('app.debug', false)) {
                         $method = $route->methods()[0];
@@ -65,12 +74,12 @@ class Generator
                 }
             })
             ->filter() // Closure based routes are filtered out for now, right here
-            ->each(fn (Operation $operation) => $openApi->addPath(
+            ->each(fn ($routeDoc) => $openApi->addPath(
                 Path::make(
-                    (string) Str::of($operation->path)
+                    (string) Str::of($routeDoc->path)
                         ->replaceFirst(config('scramble.api_path', 'api'), '')
                         ->trim('/')
-                )->addOperation($operation)
+                )->addOperation($routeDoc->method, $routeDoc->operation)
             ))
             ->toArray();
 
@@ -147,7 +156,7 @@ class Generator
             ->values();
     }
 
-    private function routeToOperation(OpenApi $openApi, Route $route)
+    private function routeToOperation(OpenApi $openApi, Route $route): ?RouteDocumentation
     {
         $routeInfo = new RouteInfo($route, $this->fileParser, $this->infer);
 

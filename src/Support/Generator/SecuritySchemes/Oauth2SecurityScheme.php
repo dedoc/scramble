@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator\SecuritySchemes;
 
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 
 class Oauth2SecurityScheme extends SecurityScheme
@@ -32,10 +33,10 @@ class Oauth2SecurityScheme extends SecurityScheme
         });
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
-        return array_merge(parent::toArray(), [
-            'flows' => $this->oAuthFlows->toArray(),
+        return array_merge(parent::toArray($openApi), [
+            'flows' => $this->oAuthFlows->toArray($openApi),
         ]);
     }
 }

@@ -68,7 +68,7 @@ class SecurityScheme
         return $this;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
         return array_filter([
             'type' => $this->type,

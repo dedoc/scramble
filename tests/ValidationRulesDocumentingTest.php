@@ -26,7 +26,7 @@ it('extract rules from array like rules', function () {
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
-    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+    assertMatchesSnapshot(collect($params)->map->toArray(new OpenApi('3.1.0'))->all());
 });
 
 it('extract rules from array rules', function () {
@@ -37,7 +37,7 @@ it('extract rules from array rules', function () {
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
-    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+    assertMatchesSnapshot(collect($params)->map->toArray(new OpenApi('3.1.0'))->all());
 });
 
 it('supports array rule details', function () {
@@ -49,7 +49,7 @@ it('supports array rule details', function () {
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
-    assertMatchesSnapshot(json_encode(collect($params)->map->toArray()->all()));
+    assertMatchesSnapshot(json_encode(collect($params)->map->toArray(new OpenApi('3.1.0'))->all()));
 });
 
 it('supports array rule params', function () {
@@ -59,7 +59,7 @@ it('supports array rule params', function () {
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
-    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+    assertMatchesSnapshot(collect($params)->map->toArray(new OpenApi('3.1.0'))->all());
 });
 
 it('extract rules from enum rule', function () {
@@ -69,7 +69,7 @@ it('extract rules from enum rule', function () {
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
-    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+    assertMatchesSnapshot(collect($params)->map->toArray(new OpenApi('3.1.0'))->all());
 });
 
 it('extract rules from object like rules', function () {
@@ -81,7 +81,7 @@ it('extract rules from object like rules', function () {
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
-    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+    assertMatchesSnapshot(collect($params)->map->toArray(new OpenApi('3.1.0'))->all());
 });
 
 it('supports uuid', function () {
@@ -91,7 +91,7 @@ it('supports uuid', function () {
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
-    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+    assertMatchesSnapshot(collect($params)->map->toArray(new OpenApi('3.1.0'))->all());
 });
 
 it('extract rules from object like rules heavy case', function () {
@@ -108,7 +108,7 @@ it('extract rules from object like rules heavy case', function () {
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
-    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+    assertMatchesSnapshot(collect($params)->map->toArray(new OpenApi('3.1.0'))->all());
 });
 
 it('extract rules from object like rules with explicit array', function () {
@@ -119,7 +119,7 @@ it('extract rules from object like rules with explicit array', function () {
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
 
-    assertMatchesSnapshot(collect($params)->map->toArray()->all());
+    assertMatchesSnapshot(collect($params)->map->toArray(new OpenApi('3.1.0'))->all());
 });
 
 it('supports exists rule', function () {

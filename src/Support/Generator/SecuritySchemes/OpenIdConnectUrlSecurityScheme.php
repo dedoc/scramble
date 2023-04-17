@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator\SecuritySchemes;
 
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 
 class OpenIdConnectUrlSecurityScheme extends SecurityScheme
@@ -15,9 +16,9 @@ class OpenIdConnectUrlSecurityScheme extends SecurityScheme
         $this->openIdConnectUrl = $openIdConnectUrl;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
-        return array_merge(parent::toArray(), [
+        return array_merge(parent::toArray($openApi), [
             'openIdConnectUrl' => $this->openIdConnectUrl,
         ]);
     }

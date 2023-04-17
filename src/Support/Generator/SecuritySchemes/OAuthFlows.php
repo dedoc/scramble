@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Generator\SecuritySchemes;
 
+use Dedoc\Scramble\Support\Generator\OpenApi;
+
 class OAuthFlows
 {
     public ?OAuthFlow $implicit = null;
@@ -40,10 +42,10 @@ class OAuthFlows
         return $this;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
         return array_map(
-            fn ($f) => $f->toArray(),
+            fn ($f) => $f->toArray($openApi),
             array_filter([
                 'implicit' => $this->implicit,
                 'password' => $this->password,

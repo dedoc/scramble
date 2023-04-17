@@ -2,6 +2,7 @@
 
 use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
@@ -20,7 +21,7 @@ use function Spatie\Snapshots\assertMatchesSnapshot;
 it('transforms simple types', function ($type, $openApiArrayed) {
     $transformer = app(TypeTransformer::class);
 
-    expect($transformer->transform($type)->toArray())->toBe($openApiArrayed);
+    expect($transformer->transform($type)->toArray(new OpenApi('3.1.0')))->toBe($openApiArrayed);
 })->with([
     [new IntegerType(), ['type' => 'integer']],
     [new StringType(), ['type' => 'string']],
@@ -47,7 +48,7 @@ it('gets json resource type', function () {
 
     $type = new ObjectType(ComplexTypeHandlersTest_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->toArray(new OpenApi('3.1.0')));
 });
 
 it('gets enum with values type', function () {
@@ -56,7 +57,7 @@ it('gets enum with values type', function () {
 
     $type = new ObjectType(StatusTwo::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->toArray(new OpenApi('3.1.0')));
 });
 
 it('gets json resource type with nested merges', function () {
@@ -65,7 +66,7 @@ it('gets json resource type with nested merges', function () {
 
     $type = new ObjectType(ComplexTypeHandlersWithNestedTest_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->toArray(new OpenApi('3.1.0')));
 });
 
 it('gets json resource type with when', function () {
@@ -74,7 +75,7 @@ it('gets json resource type with when', function () {
 
     $type = new ObjectType(ComplexTypeHandlersWithWhen_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->toArray(new OpenApi('3.1.0')));
 });
 
 it('gets json resource type with when loaded', function () {
@@ -86,7 +87,7 @@ it('gets json resource type with when loaded', function () {
 
     $type = new ObjectType(ComplexTypeHandlersWithWhenLoaded_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->toArray(new OpenApi('3.1.0')));
 });
 
 it('gets json resource type reference', function () {
@@ -94,11 +95,11 @@ it('gets json resource type reference', function () {
 
     $type = new ObjectType(ComplexTypeHandlersTest_SampleType::class);
 
-    expect($transformer->transform($type)->toArray())->toBe([
+    expect($transformer->transform($type)->toArray(new OpenApi('3.1.0')))->toBe([
         '$ref' => '#/components/schemas/ComplexTypeHandlersTest_SampleType',
     ]);
 
-    assertMatchesSnapshot($components->getSchema(ComplexTypeHandlersTest_SampleType::class)->toArray());
+    assertMatchesSnapshot($components->getSchema(ComplexTypeHandlersTest_SampleType::class)->toArray(new OpenApi('3.1.0')));
 });
 
 it('gets nullable type reference', function () {
@@ -109,7 +110,7 @@ it('gets nullable type reference', function () {
         new NullType,
     ]);
 
-    expect($transformer->transform($type)->toArray())->toBe([
+    expect($transformer->transform($type)->toArray(new OpenApi('3.1.0')))->toBe([
         'anyOf' => [
             ['$ref' => '#/components/schemas/ComplexTypeHandlersTest_SampleType'],
             ['type' => 'null'],

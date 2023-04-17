@@ -90,18 +90,18 @@ class OpenApi
     {
         $result = [
             'openapi' => $this->version,
-            'info' => $this->info->toArray(),
+            'info' => $this->info->toArray($this),
         ];
 
         if (count($this->servers)) {
             $result['servers'] = array_map(
-                fn (Server $s) => $s->toArray(),
+                fn (Server $s) => $s->toArray($this),
                 $this->servers,
             );
         }
 
         if ($this->defaultSecurity) {
-            $result['security'] = [$this->defaultSecurity->toArray()];
+            $result['security'] = [$this->defaultSecurity->toArray($this)];
         }
 
         if (count($this->paths)) {
@@ -110,14 +110,14 @@ class OpenApi
             foreach ($this->paths as $pathBuilder) {
                 $paths['/'.$pathBuilder->path] = array_merge(
                     $paths['/'.$pathBuilder->path] ?? [],
-                    $pathBuilder->toArray(),
+                    $pathBuilder->toArray($this),
                 );
             }
 
             $result['paths'] = $paths;
         }
 
-        if (count($serializedComponents = $this->components->toArray())) {
+        if (count($serializedComponents = $this->components->toArray($this))) {
             $result['components'] = $serializedComponents;
         }
 

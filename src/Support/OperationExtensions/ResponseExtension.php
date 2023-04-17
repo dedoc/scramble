@@ -6,6 +6,7 @@ use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Response;
+use Dedoc\Scramble\Support\Generator\RouteDocumentation;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
 use Dedoc\Scramble\Support\RouteInfo;
@@ -14,7 +15,7 @@ use Illuminate\Support\Collection;
 
 class ResponseExtension extends OperationExtension
 {
-    public function handle(Operation $operation, RouteInfo $routeInfo)
+    public function handle(RouteDocumentation $documentation, RouteInfo $routeInfo)
     {
         $returnTypes = $routeInfo->getReturnTypes();
 
@@ -59,7 +60,7 @@ class ResponseExtension extends OperationExtension
             ->all();
 
         foreach ($responses as $response) {
-            $operation->addResponse($response);
+            $documentation->operation->addResponse($response);
         }
     }
 }

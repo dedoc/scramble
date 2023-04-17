@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Generator\SecuritySchemes;
 
+use Dedoc\Scramble\Support\Generator\OpenApi;
+
 class OAuthFlow
 {
     public string $authorizationUrl = '';
@@ -41,7 +43,7 @@ class OAuthFlow
         return $this;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
         return array_filter([
             'authorizationUrl' => $this->authorizationUrl,

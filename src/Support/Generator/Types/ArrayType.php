@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator\Types;
 
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Schema;
 
 class ArrayType extends Type
@@ -15,10 +16,10 @@ class ArrayType extends Type
         $this->items = new StringType;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
-        return array_merge(parent::toArray(), [
-            'items' => $this->items->toArray(),
+        return array_merge(parent::toArray($openApi), [
+            'items' => $this->items->toArray($openApi),
         ]);
     }
 

@@ -3,6 +3,7 @@
 use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
@@ -18,7 +19,7 @@ test('transforms collection with toArray only', function () {
 
     $type = new ObjectType(UserCollection_One::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->toArray(new OpenApi('3.1.0')));
 });
 class UserCollection_One extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
@@ -44,7 +45,7 @@ test('transforms collection with toArray and with', function () {
 
     $type = new ObjectType(UserCollection_Two::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->toArray(new OpenApi('3.1.0')));
 });
 class UserCollection_Two extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
@@ -78,8 +79,8 @@ test('transforms collection without proper toArray implementation', function () 
     $type = new ObjectType(UserCollection_Three::class);
 
     assertMatchesSnapshot([
-        'response' => $extension->toResponse($type)->toArray(),
-        'components' => $components->toArray(),
+        'response' => $extension->toResponse($type)->toArray(new OpenApi('3.1.0')),
+        'components' => $components->toArray(new OpenApi('3.1.0')),
     ]);
 });
 class UserCollection_Three extends \Illuminate\Http\Resources\Json\ResourceCollection
@@ -101,8 +102,8 @@ test('transforms collection without toArray implementation', function () {
     $type = new ObjectType(UserCollection_Four::class);
 
     assertMatchesSnapshot([
-        'response' => $extension->toResponse($type)->toArray(),
-        'components' => $components->toArray(),
+        'response' => $extension->toResponse($type)->toArray(new OpenApi('3.1.0')),
+        'components' => $components->toArray(new OpenApi('3.1.0')),
     ]);
 });
 class UserCollection_Four extends \Illuminate\Http\Resources\Json\ResourceCollection

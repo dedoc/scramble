@@ -12,29 +12,21 @@ class Reference extends Type
 
     public string $fullName;
 
-    private Components $components;
-
-    public function __construct(string $referenceType, string $fullName, Components $components)
+    public function __construct(string $referenceType, string $fullName)
     {
         $this->referenceType = $referenceType;
         $this->fullName = $fullName;
-        $this->components = $components;
     }
 
-    public function resolve()
-    {
-        return $this->components->get($this);
-    }
-
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
         if ($this->nullable) {
-            return (new AnyOf)->setItems([(clone $this)->nullable(false), new NullType])->toArray();
+            return (new AnyOf)->setItems([(clone $this)->nullable(false), new NullType])->toArray($openApi);
         }
 
         return array_filter([
             'description' => $this->description,
-            '$ref' => "#/components/{$this->referenceType}/{$this->components->uniqueSchemaName($this->fullName)}",
+            '$ref' => "#/components/{$this->referenceType}/{$openApi->components->uniqueSchemaName($this->fullName)}",
         ]);
     }
 }

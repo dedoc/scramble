@@ -3,8 +3,8 @@
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
-use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\RequestBodyObject;
+use Dedoc\Scramble\Support\Generator\RouteDocumentation;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\FormRequestRulesExtractor;
@@ -18,23 +18,23 @@ use Throwable;
 
 class RequestBodyExtension extends OperationExtension
 {
-    public function handle(Operation $operation, RouteInfo $routeInfo)
+    public function handle(RouteDocumentation $documentation, RouteInfo $routeInfo)
     {
-        $method = $operation->method;
+        $method = $documentation->method;
 
         $description = Str::of($routeInfo->phpDoc()->getAttribute('description'));
 
         try {
             if (count($bodyParams = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode()))) {
                 if ($method !== 'get') {
-                    $operation->addRequestBodyObject(
+                    $documentation->operation->addRequestBodyObject(
                         RequestBodyObject::make()->setContent('application/json', Schema::createFromParameters($bodyParams))
                     );
                 } else {
-                    $operation->addParameters($bodyParams);
+                    $documentation->operation->addParameters($bodyParams);
                 }
             } elseif ($method !== 'get') {
-                $operation
+                $documentation->operation
                     ->addRequestBodyObject(
                         RequestBodyObject::make()
                             ->setContent(
@@ -50,7 +50,7 @@ class RequestBodyExtension extends OperationExtension
             $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
         }
 
-        $operation
+        $documentation->operation
             ->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'))
             ->description($description);
     }

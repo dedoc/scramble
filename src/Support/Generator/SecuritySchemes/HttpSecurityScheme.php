@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator\SecuritySchemes;
 
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 
 class HttpSecurityScheme extends SecurityScheme
@@ -18,9 +19,9 @@ class HttpSecurityScheme extends SecurityScheme
         $this->bearerFormat = $bearerFormat;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
-        return array_merge(parent::toArray(), [
+        return array_merge(parent::toArray($openApi), [
             'scheme' => $this->scheme,
             'bearerFormat' => $this->bearerFormat,
         ]);

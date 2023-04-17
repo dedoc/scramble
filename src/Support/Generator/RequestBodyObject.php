@@ -19,14 +19,14 @@ class RequestBodyObject
         return $this;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
         $result = [];
 
         $content = [];
         foreach ($this->content as $mediaType => $schema) {
             $content[$mediaType] = [
-                'schema' => $schema->toArray(),
+                'schema' => $schema->toArray($openApi),
             ];
         }
 

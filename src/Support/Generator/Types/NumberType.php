@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Generator\Types;
 
+use Dedoc\Scramble\Support\Generator\OpenApi;
+
 class NumberType extends Type
 {
     private $min = null;
@@ -27,9 +29,9 @@ class NumberType extends Type
         return $this;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
-        return array_merge(parent::toArray(), array_filter([
+        return array_merge(parent::toArray($openApi), array_filter([
             'minimum' => $this->min,
             'maximum' => $this->max,
         ], fn ($v) => $v !== null));

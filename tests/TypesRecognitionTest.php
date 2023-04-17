@@ -6,6 +6,7 @@ use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -35,7 +36,7 @@ function getPhpTypeFromDoc(string $phpDoc)
 it('handles simple types', function ($phpDoc) {
     $result = getTypeFromDoc($phpDoc);
 
-    assertMatchesSnapshot($result ? $result->toArray() : null);
+    assertMatchesSnapshot($result ? $result->toArray(new OpenApi('3.1.0')) : null);
 })->with([
     '/** @var string */',
     '/** @var int */',
@@ -70,7 +71,7 @@ it('handles literal types', function ($phpDoc, $expectedType) {
 it('handles general arrays', function ($phpDoc) {
     $result = getTypeFromDoc($phpDoc);
 
-    assertMatchesSnapshot($result ? $result->toArray() : null);
+    assertMatchesSnapshot($result ? $result->toArray(new OpenApi('3.1.0')) : null);
 })->with([
     '/** @var string[] */',
     '/** @var array<string> */',
@@ -81,7 +82,7 @@ it('handles general arrays', function ($phpDoc) {
 it('handles shape arrays', function ($phpDoc) {
     $result = getTypeFromDoc($phpDoc);
 
-    assertMatchesSnapshot($result ? $result->toArray() : null);
+    assertMatchesSnapshot($result ? $result->toArray(new OpenApi('3.1.0')) : null);
 })->with([
     '/** @var array{string} */',
     '/** @var array{int, string} */',
@@ -95,14 +96,14 @@ it('handles intersection type', function () {
     $phpDoc = '/** @var array{test: string, wow?: string} & array{nice: bool} & array{kek: bool} */';
     $result = getTypeFromDoc($phpDoc);
 
-    assertMatchesSnapshot($result ? $result->toArray() : null);
+    assertMatchesSnapshot($result ? $result->toArray(new OpenApi('3.1.0')) : null);
 });
 
 it('handles union type', function () {
     $phpDoc = '/** @var array{test: string, wow?: string} | array{nice: bool} | array{kek: bool} */';
     $result = getTypeFromDoc($phpDoc);
 
-    assertMatchesSnapshot($result ? $result->toArray() : null);
+    assertMatchesSnapshot($result ? $result->toArray(new OpenApi('3.1.0')) : null);
 });
 
 class TestResource extends JsonResource

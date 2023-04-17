@@ -28,9 +28,9 @@ class Schema
         return $this;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
-        return array_merge($this->type->toArray(), array_filter([
+        return array_merge($this->type->toArray($openApi), array_filter([
             'title' => $this->title,
         ]));
     }

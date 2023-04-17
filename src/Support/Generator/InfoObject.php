@@ -35,7 +35,7 @@ class InfoObject
         return $this;
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
         return array_filter([
             'title' => $this->title,

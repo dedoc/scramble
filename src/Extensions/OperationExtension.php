@@ -3,7 +3,7 @@
 namespace Dedoc\Scramble\Extensions;
 
 use Dedoc\Scramble\Infer\Infer;
-use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\RouteDocumentation;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\RouteInfo;
 
@@ -19,5 +19,5 @@ abstract class OperationExtension
         $this->openApiTransformer = $openApiTransformer;
     }
 
-    abstract public function handle(Operation $operation, RouteInfo $routeInfo);
+    abstract public function handle(RouteDocumentation $documentation, RouteInfo $routeInfo);
 }

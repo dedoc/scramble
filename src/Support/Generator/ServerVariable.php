@@ -28,7 +28,7 @@ class ServerVariable
         return new self($default, $enum, $description);
     }
 
-    public function toArray()
+    public function toArray(OpenApi $openApi)
     {
         return array_filter([
             'default' => $this->default,

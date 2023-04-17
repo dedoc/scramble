@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
+use Dedoc\Scramble\Support\Generator\RouteDocumentation;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Server;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
@@ -44,17 +45,18 @@ class RequestEssentialsExtension extends OperationExtension
         $this->serverFactory = $serverFactory;
     }
 
-    public function handle(Operation $operation, RouteInfo $routeInfo)
+    public function handle(RouteDocumentation $documentation, RouteInfo $routeInfo)
     {
         [$pathParams, $pathAliases] = $this->getRoutePathParameters($routeInfo->route, $routeInfo->phpDoc());
 
-        $operation
-            ->setMethod(strtolower($routeInfo->route->methods()[0]))
-            ->setPath(Str::replace(
-                collect($pathAliases)->keys()->map(fn ($k) => '{'.$k.'}')->all(),
-                collect($pathAliases)->values()->map(fn ($v) => '{'.$v.'}')->all(),
-                $routeInfo->route->uri,
-            ))
+        $documentation->method = strtolower($routeInfo->route->methods()[0]);
+        $documentation->path = Str::replace(
+            collect($pathAliases)->keys()->map(fn ($k) => '{'.$k.'}')->all(),
+            collect($pathAliases)->values()->map(fn ($v) => '{'.$v.'}')->all(),
+            $routeInfo->route->uri,
+        );
+
+        $documentation->operation
             ->setTags(array_unique([
                 ...$this->extractTagsForMethod($routeInfo),
                 Str::of(class_basename($routeInfo->className()))->replace('Controller', ''),
@@ -63,7 +65,7 @@ class RequestEssentialsExtension extends OperationExtension
             ->addParameters($pathParams);
 
         if (count($routeInfo->phpDoc()->getTagsByName('@unauthenticated'))) {
-            $operation->addSecurity([]);
+            $documentation->operation->addSecurity([]);
         }
     }
 
