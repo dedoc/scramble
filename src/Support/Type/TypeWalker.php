@@ -15,7 +15,7 @@ class TypeWalker
 
         $foundTypes = $lookup($type) ? [$type] : [];
 
-        $children = $type instanceof ObjectType ? [] : $type->children();
+        $children = $type->children();
         foreach ($children as $child) {
             $foundTypes = array_merge($foundTypes, $this->find($child, $lookup));
         }
@@ -34,7 +34,7 @@ class TypeWalker
             return $type;
         }
 
-        $children = $type instanceof ObjectType ? [] : $type->children();
+        $children = $type->children();
         foreach ($children as $child) {
             if ($foundType = $this->first($child, $lookup)) {
                 return $foundType;
@@ -44,20 +44,25 @@ class TypeWalker
         return null;
     }
 
-    public static function replace(Type $subject, Type $search, Type $replace): Type
+    public function replace(Type $subject, Type $search, Type $replace): Type
     {
+        if (in_array($subject, $this->visitedNodes)) {
+            return $subject;
+        }
+        $this->visitedNodes[] = $subject;
+
         if ($subject === $search) {
             return $replace;
         }
 
-        $propertiesWithNodes = $subject instanceof ObjectType ? [] : $subject->nodes();
+        $propertiesWithNodes = $subject->nodes();
         foreach ($propertiesWithNodes as $propertyWithNode) {
             $node = $subject->$propertyWithNode;
             if (! is_array($node)) {
-                $subject->$propertyWithNode = TypeHelper::unpackIfArrayType(static::replace($node, $search, $replace));
+                $subject->$propertyWithNode = TypeHelper::unpackIfArrayType($this->replace($node, $search, $replace));
             } else {
                 foreach ($node as $index => $item) {
-                    $subject->$propertyWithNode[$index] = TypeHelper::unpackIfArrayType(static::replace($item, $search, $replace));
+                    $subject->$propertyWithNode[$index] = TypeHelper::unpackIfArrayType($this->replace($item, $search, $replace));
                 }
             }
         }

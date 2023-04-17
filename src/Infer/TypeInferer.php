@@ -106,14 +106,17 @@ class TypeInferer extends NodeVisitorAbstract
             /** @var FunctionType $type */
             $type = $this->scope->getType($node);
 
+            $selfReference = $node instanceof Node\Stmt\ClassMethod
+                && $this->scope->context->class === $type->getReturnType();
+
             // When there is a referenced type in fn return, we want to add it to the pending
             // resolution types, so it can be resolved later.
-            if (count($pendingTypes = (new TypeWalker)->find($type->getReturnType(), fn ($t) => $t instanceof PendingReturnType))) {
+            if (! $selfReference && count($pendingTypes = (new TypeWalker)->find($type->getReturnType(), fn ($t) => $t instanceof PendingReturnType))) {
                 $this->scope->pending->addReference(
                     $type,
                     function ($pendingType, $resolvedPendingType) use ($type) {
                         $type->setReturnType(
-                            TypeHelper::unpackIfArrayType(TypeWalker::replace($type->getReturnType(), $pendingType, $resolvedPendingType))
+                            TypeHelper::unpackIfArrayType((new TypeWalker)->replace($type->getReturnType(), $pendingType, $resolvedPendingType))
                         );
                     },
                     $pendingTypes,
