@@ -6,6 +6,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
+use Dedoc\Scramble\Tests\files\PendingUnknownWithSelfReference;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Resources\Json\JsonResource;
 use function Spatie\Snapshots\assertMatchesSnapshot;
@@ -20,6 +21,16 @@ it('gets json resource type', function () {
     $returnType = $type->getMethodCallType('toArray');
 
     assertMatchesTextSnapshot($returnType->toString());
+});
+
+it('gets correct type of pending self reference and unknown', function () {
+    /** @var ObjectType $type */
+    $type = app(Infer::class)->analyzeClass(PendingUnknownWithSelfReference::class);
+
+    expect($type->methods['returnSomeCall']->toString())
+        ->toBe('(): unknown')
+        ->and($type->methods['returnThis']->toString())
+        ->toBe('(): '.PendingUnknownWithSelfReference::class);
 });
 
 it('gets json resource type with enum', function () {
