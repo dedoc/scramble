@@ -2,14 +2,13 @@
 
 namespace Dedoc\Scramble\Support;
 
+use Dedoc\Scramble\Infer\Infer;
+use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
-use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Routing\Route;
-use PhpParser\Node;
 use PhpParser\Node\Stmt\ClassMethod;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionClass;
@@ -19,25 +18,21 @@ class RouteInfo
 {
     public Route $route;
 
-    public ?ClassAstHelper $class = null;
+    public ?FunctionType $methodType = null;
 
     private ?PhpDocNode $phpDoc = null;
 
     private ?ClassMethod $methodNode = null;
 
-    public function __construct(Route $route)
+    private FileParser $parser;
+
+    private Infer $infer;
+
+    public function __construct(Route $route, FileParser $fileParser, Infer $infer)
     {
         $this->route = $route;
-        $this->initClassInfo();
-    }
-
-    private function initClassInfo()
-    {
-        if (! $this->isClassBased()) {
-            return;
-        }
-
-        $this->class = app()->make(ClassAstHelper::class, ['class' => $this->className()]);
+        $this->parser = $fileParser;
+        $this->infer = $infer;
     }
 
     public function isClassBased(): bool
@@ -65,35 +60,24 @@ class RouteInfo
             return $this->phpDoc;
         }
 
-        $this->phpDoc = new PhpDocNode([]);
-
-        if ($docComment = optional($this->reflectionMethod())->getDocComment()) {
-            $this->phpDoc = PhpDoc::parse($docComment);
+        if (! $this->methodNode()) {
+            return new PhpDocNode([]);
         }
 
-        if (count($returnTagValues = $this->phpDoc->getReturnTagValues())) {
-            foreach ($returnTagValues as $returnTagValue) {
-                if (! $returnTagValue->type) {
-                    continue;
-                }
-                PhpDocTypeWalker::traverse($returnTagValue->type, [new ResolveFqnPhpDocTypeVisitor($this->class->namesResolver)]);
-            }
-        }
+        $this->phpDoc = $this->methodNode()->getAttribute('parsedPhpDoc') ?: new PhpDocNode([]);
 
         return $this->phpDoc;
     }
 
     public function methodNode(): ?ClassMethod
     {
-        if ($this->methodNode || ! $this->isClassBased()) {
+        if ($this->methodNode || ! $this->isClassBased() || ! $this->reflectionMethod()) {
             return $this->methodNode;
         }
 
-        $this->methodNode = $this->class->findFirstNode(
-            fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $this->methodName(),
-        );
+         $result = $this->parser->parse($this->reflectionMethod()->getFileName());
 
-        return $this->methodNode;
+         return $this->methodNode = $result->findMethod($this->route->getAction('uses'));
     }
 
     public function reflectionMethod(): ?ReflectionMethod
@@ -156,6 +140,12 @@ class RouteInfo
             return null;
         }
 
-        return $this->class->scope->getType($this->methodNode());
+        if (! $this->methodType) {
+            $this->methodType = $this->infer
+                ->analyzeClass($this->reflectionMethod()->getDeclaringClass()->getName())
+                ->getMethodType($this->methodName());
+        }
+
+        return $this->methodType;
     }
 }

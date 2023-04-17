@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Scope;
 
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\BooleanNotTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;
@@ -31,14 +32,14 @@ class Scope
      */
     public array $variables = [];
 
-    public $namesResolver;
+    private FileNameResolver $namesResolver;
 
     public function __construct(
         Index $index,
         NodeTypesResolver $nodeTypesResolver,
         PendingTypes $pending,
         ScopeContext $context,
-        callable $namesResolver,
+        FileNameResolver $namesResolver,
         ?Scope $parentScope = null)
     {
         $this->index = $index;

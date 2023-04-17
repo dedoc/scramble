@@ -18,12 +18,8 @@ use Throwable;
 
 class RequestBodyExtension extends OperationExtension
 {
-    private RouteInfo $routeInfo;
-
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
-        $this->routeInfo = $routeInfo;
-
         $method = $operation->method;
 
         $description = Str::of($routeInfo->phpDoc()->getAttribute('description'));
@@ -79,7 +75,7 @@ class RequestBodyExtension extends OperationExtension
             }
         }
 
-        if (($validateCallExtractor = new ValidateCallExtractor($methodNode, $this->routeInfo->class->scope))->shouldHandle()) {
+        if (($validateCallExtractor = new ValidateCallExtractor($methodNode))->shouldHandle()) {
             if ($validateCallRules = $validateCallExtractor->extract()) {
                 $rules = array_merge($rules, $validateCallRules);
                 $nodesResults[] = $validateCallExtractor->node();

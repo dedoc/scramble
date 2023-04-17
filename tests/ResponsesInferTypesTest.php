@@ -1,6 +1,6 @@
 <?php
 
-use Dedoc\Scramble\Infer\TypeInferringVisitor;
+use Dedoc\Scramble\Infer\TypeInferer;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
 
@@ -34,7 +34,7 @@ function getExpressionType(string $expression)
 
     $fileAst = (new ParserFactory)->create(ParserFactory::PREFER_PHP7)->parse($code);
 
-    $infer = app()->make(TypeInferringVisitor::class, ['namesResolver' => fn ($s) => $s]);
+    $infer = app()->make(TypeInferer::class, ['namesResolver' => new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing()))]);
     $traverser = new NodeTraverser;
     $traverser->addVisitor($infer);
     $traverser->traverse($fileAst);

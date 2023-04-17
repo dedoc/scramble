@@ -30,7 +30,7 @@ class ErrorResponsesExtension extends OperationExtension
 
         $this->attachNotFoundException($operation, $methodType);
         $this->attachAuthorizationException($routeInfo, $methodType);
-        $this->attachCustomRequestExceptions($operation, $routeInfo, $methodType);
+        $this->attachCustomRequestExceptions($methodType);
     }
 
     private function attachNotFoundException(Operation $operation, FunctionType $methodType)
@@ -67,7 +67,7 @@ class ErrorResponsesExtension extends OperationExtension
         ];
     }
 
-    private function attachCustomRequestExceptions(Operation $operation, RouteInfo $routeInfo, FunctionType $methodType)
+    private function attachCustomRequestExceptions(FunctionType $methodType)
     {
         if (! $formRequest = collect($methodType->arguments)->first(fn (Type $arg) => $arg instanceof ObjectType && $arg->isInstanceOf(FormRequest::class))) {
             return;

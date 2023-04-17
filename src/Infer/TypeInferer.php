@@ -22,6 +22,7 @@ use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\PendingTypes;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\PendingReturnType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
@@ -29,15 +30,15 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 
-class TypeInferringVisitor extends NodeVisitorAbstract
+class TypeInferer extends NodeVisitorAbstract
 {
     public Scope $scope;
 
-    private $namesResolver;
-
     private array $handlers;
 
-    public function __construct(callable $namesResolver, array $extensions = [], array $handlers = [])
+    private FileNameResolver $namesResolver;
+
+    public function __construct(FileNameResolver $namesResolver, array $extensions = [], array $handlers = [])
     {
         $this->namesResolver = $namesResolver;
 
@@ -140,7 +141,7 @@ class TypeInferringVisitor extends NodeVisitorAbstract
                 new NodeTypesResolver,
                 new PendingTypes,
                 new ScopeContext,
-                $this->namesResolver
+                $this->namesResolver,
             );
         }
 

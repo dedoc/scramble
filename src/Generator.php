@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Infer\Infer;
+use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
@@ -25,11 +27,22 @@ class Generator
 
     private ServerFactory $serverFactory;
 
-    public function __construct(TypeTransformer $transformer, OperationBuilder $operationBuilder, ServerFactory $serverFactory)
-    {
+    private FileParser $fileParser;
+
+    private Infer $infer;
+
+    public function __construct(
+        TypeTransformer $transformer,
+        OperationBuilder $operationBuilder,
+        ServerFactory $serverFactory,
+        FileParser $fileParser,
+        Infer $infer
+    ) {
         $this->transformer = $transformer;
         $this->operationBuilder = $operationBuilder;
         $this->serverFactory = $serverFactory;
+        $this->fileParser = $fileParser;
+        $this->infer = $infer;
     }
 
     public function __invoke()
@@ -136,7 +149,7 @@ class Generator
 
     private function routeToOperation(OpenApi $openApi, Route $route)
     {
-        $routeInfo = new RouteInfo($route);
+        $routeInfo = new RouteInfo($route, $this->fileParser, $this->infer);
 
         if (! $routeInfo->isClassBased()) {
             return null;

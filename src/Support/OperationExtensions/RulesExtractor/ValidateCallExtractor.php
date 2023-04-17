@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
-use Dedoc\Scramble\Infer\Scope\Scope;
 use Illuminate\Http\Request;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
@@ -12,12 +11,9 @@ class ValidateCallExtractor
 {
     private ?Node\FunctionLike $handle;
 
-    private Scope $scope;
-
-    public function __construct(?Node\FunctionLike $handle, Scope $scope)
+    public function __construct(?Node\FunctionLike $handle)
     {
         $this->handle = $handle;
-        $this->scope = $scope;
     }
 
     public function shouldHandle()
@@ -74,7 +70,6 @@ class ValidateCallExtractor
 
         return new ValidationNodesResult(
             $validationRules instanceof Node\Arg ? $validationRules->value : $validationRules,
-            $this->scope
         );
     }
 
