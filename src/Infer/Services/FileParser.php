@@ -35,15 +35,15 @@ class FileParser
         );
     }
 
-    private function resolveNames($statements)
+    private function resolveNames($statements): FileNameResolver
     {
         $traverser = new NodeTraverser;
         $traverser->addVisitor($nameResolver = new NameResolver());
-        $traverser->addVisitor(new PhpDocResolver($nameResolver->getNameContext()));
+        $traverser->addVisitor(new PhpDocResolver(
+            $fileNameResolver = new FileNameResolver($nameResolver->getNameContext()),
+        ));
         $traverser->traverse($statements);
 
-        $context = $nameResolver->getNameContext();
-
-        return fn ($shortName) => $context->getResolvedName(new Name([$shortName]), 1)->toString();
+        return $fileNameResolver;
     }
 }

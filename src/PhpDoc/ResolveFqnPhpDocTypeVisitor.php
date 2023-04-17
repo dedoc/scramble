@@ -2,24 +2,23 @@
 
 namespace Dedoc\Scramble\PhpDoc;
 
-use PhpParser\NameContext;
-use PhpParser\Node\Name;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 
 class ResolveFqnPhpDocTypeVisitor extends AbstractPhpDocTypeVisitor
 {
-    private NameContext $context;
+    private FileNameResolver $nameResolver;
 
-    public function __construct(NameContext $context)
+    public function __construct(FileNameResolver $nameResolver)
     {
-        $this->context = $context;
+        $this->nameResolver = $nameResolver;
     }
 
     public function enter(TypeNode $type): void
     {
         if ($type instanceof IdentifierTypeNode) {
-            $type->name = $this->context->getResolvedName(new Name([$type->name]), 1)->toString();
+            $type->name = ($this->nameResolver)($type->name);
         }
     }
 }

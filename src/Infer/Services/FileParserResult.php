@@ -15,29 +15,20 @@ class FileParserResult
 {
     private array $statements;
 
-    /**
-     * @var callable(string, string)
-     */
-    private $namesResolver;
+    private FileNameResolver $namesResolver;
 
-    public function __construct(array $statements, callable $namesResolver)
+    public function __construct(array $statements, FileNameResolver $namesResolver)
     {
         $this->statements = $statements;
         $this->namesResolver = $namesResolver;
     }
 
-    /**
-     * @return array
-     */
     public function getStatements(): array
     {
         return $this->statements;
     }
 
-    /**
-     * @return callable
-     */
-    public function getNamesResolver(): callable
+    public function getNamesResolver(): FileNameResolver
     {
         return $this->namesResolver;
     }

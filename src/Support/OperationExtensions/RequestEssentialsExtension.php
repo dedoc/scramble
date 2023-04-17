@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -54,10 +55,10 @@ class RequestEssentialsExtension extends OperationExtension
                 collect($pathAliases)->values()->map(fn ($v) => '{'.$v.'}')->all(),
                 $routeInfo->route->uri,
             ))
-            ->setTags([
-                ...$this->extractTagsForMethod($routeInfo->phpDoc()),
+            ->setTags(array_unique([
+                ...$this->extractTagsForMethod($routeInfo),
                 Str::of(class_basename($routeInfo->className()))->replace('Controller', ''),
-            ])
+            ]))
             ->servers($this->getAlternativeServers($routeInfo->route))
             ->addParameters($pathParams);
 
@@ -112,8 +113,14 @@ class RequestEssentialsExtension extends OperationExtension
         return $mask($expectedUrl) === $mask($actualUrl);
     }
 
-    private function extractTagsForMethod(PhpDocNode $classPhpDoc)
+    private function extractTagsForMethod(RouteInfo $routeInfo)
     {
+        $classPhpDoc = $routeInfo->reflectionMethod()
+            ? $routeInfo->reflectionMethod()->getDeclaringClass()->getDocComment()
+            : false;
+
+        $classPhpDoc = $classPhpDoc ? PhpDoc::parse($classPhpDoc) : new PhpDocNode([]);
+
         if (! count($tagNodes = $classPhpDoc->getTagsByName('@tags'))) {
             return [];
         }

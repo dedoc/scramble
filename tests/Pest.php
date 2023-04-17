@@ -17,7 +17,7 @@ function analyzeFile(string $code, array $extensions = []): AnalysisResult
     $fileAst = (new ParserFactoryAlias)->create(ParserFactoryAlias::PREFER_PHP7)->parse($code);
 
     $infer = app()->make(TypeInferer::class, [
-        'namesResolver' => fn ($s) => $s,
+        'namesResolver' => new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing())),
         'extensions' => [...$extensions, ...DefaultExtensions::infer()],
     ]);
     $traverser = new NodeTraverser;

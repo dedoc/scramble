@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Visitors;
 
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\PhpDoc;
@@ -9,17 +10,16 @@ use Illuminate\Support\Str;
 use PhpParser\Comment;
 use PhpParser\Comment\Doc;
 use PhpParser\Node\Expr;
-use PhpParser\NameContext;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 
 class PhpDocResolver extends NodeVisitorAbstract
 {
-    private NameContext $context;
+    private FileNameResolver $nameResolver;
 
-    public function __construct(NameContext $context)
+    public function __construct(FileNameResolver $nameResolver)
     {
-        $this->context = $context;
+        $this->nameResolver = $nameResolver;
     }
 
     public function enterNode(Node $node)
@@ -66,7 +66,7 @@ class PhpDocResolver extends NodeVisitorAbstract
                 continue;
             }
             PhpDocTypeWalker::traverse($tagValue->type, [
-                new ResolveFqnPhpDocTypeVisitor($this->context),
+                new ResolveFqnPhpDocTypeVisitor($this->nameResolver),
             ]);
         }
 
