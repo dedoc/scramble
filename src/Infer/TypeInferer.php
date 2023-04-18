@@ -24,6 +24,7 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\PendingReturnType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
@@ -106,12 +107,15 @@ class TypeInferer extends NodeVisitorAbstract
             /** @var FunctionType $type */
             $type = $this->scope->getType($node);
 
-            $selfReference = $node instanceof Node\Stmt\ClassMethod
-                && $this->scope->context->class === $type->getReturnType();
+            $pendingTypes = (new TypeWalker)->find(
+                $type->getReturnType(),
+                fn ($t) => $t instanceof PendingReturnType,
+                fn ($t) => ! ($t instanceof ObjectType && $t->name === $this->scope->context->class->name)
+            );
 
             // When there is a referenced type in fn return, we want to add it to the pending
             // resolution types, so it can be resolved later.
-            if (! $selfReference && count($pendingTypes = (new TypeWalker)->find($type->getReturnType(), fn ($t) => $t instanceof PendingReturnType))) {
+            if ($pendingTypes) {
                 $this->scope->pending->addReference(
                     $type,
                     function ($pendingType, $resolvedPendingType) use ($type) {
