@@ -6,8 +6,14 @@ class TypeWalker
 {
     private array $visitedNodes = [];
 
-    public function find(Type $type, callable $lookup): array
+    public function find(Type $type, callable $lookup, ?callable $shouldEnter = null): array
     {
+        $shouldEnter = $shouldEnter ?: fn ($t) => true;
+
+        if (! $shouldEnter($type)) {
+            return [];
+        }
+
         if (in_array($type, $this->visitedNodes)) {
             return [];
         }
@@ -17,7 +23,7 @@ class TypeWalker
 
         $children = $type->children();
         foreach ($children as $child) {
-            $foundTypes = array_merge($foundTypes, $this->find($child, $lookup));
+            $foundTypes = array_merge($foundTypes, $this->find($child, $lookup, $shouldEnter));
         }
 
         return $foundTypes;
