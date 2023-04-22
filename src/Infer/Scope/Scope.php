@@ -11,6 +11,7 @@ use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\PendingReturnType;
+use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -104,6 +105,7 @@ class Scope
 
             $objectType = $this->getType($node->var);
 
+            // Propagate thrown exceptions info from object method to the current context function.
             if ($this->isInFunction() && isset($objectType->methods[$node->name->name]) && count($objectType->methods[$node->name->name]->exceptions)) {
                 $this->context->function->exceptions = [
                     ...$this->context->function->exceptions,
@@ -119,13 +121,7 @@ class Scope
                 );
             }
 
-            $methodCallType = $objectType->getMethodCallType($node->name->name);
-
-            if ($methodCallType instanceof UnknownType && $type instanceof UnknownType) {
-                $methodCallType = $type;
-            }
-
-            $type = $this->setType($node, $methodCallType);
+            return $this->setType($node, $objectType->getMethodCallType($node->name->name));
         }
 
         if ($node instanceof Node\Expr\FuncCall) {
@@ -134,8 +130,9 @@ class Scope
                 return $type;
             }
 
-            $fnType = $this->index->getFunctionType($node->name->toString());
+            $fnType = $this->index->getFunctionType($fnName = $node->name->toString());
 
+            // Propagate thrown exceptions info from object method to the current context function.
             if ($this->isInFunction() && $fnType && count($fnType->exceptions)) {
                 $this->context->function->exceptions = [
                     ...$this->context->function->exceptions,
@@ -143,7 +140,10 @@ class Scope
                 ];
             }
 
-            $type = $this->setType($node, $fnType ? $fnType->getReturnType() : $type);
+            return $this->setType(
+                $node,
+                $fnType ? $fnType->getReturnType() : new CallableCallReferenceType($fnName, []),
+            );
         }
 
         return $type;

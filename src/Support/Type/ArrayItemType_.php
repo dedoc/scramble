@@ -37,6 +37,11 @@ class ArrayItemType_ extends AbstractType
         return ['value'];
     }
 
+    public function publicNodes(): array
+    {
+        return ['value'];
+    }
+
     public function isNumericKey()
     {
         return $this->key === null || is_numeric($this->key);

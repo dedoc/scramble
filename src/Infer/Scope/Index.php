@@ -15,12 +15,12 @@ class Index
     /**
      * @var array<string, FunctionType>
      */
-    private array $functions = [];
+    public array $functions = [];
 
     /**
      * @var array<string, ObjectType>
      */
-    private array $classes = [];
+    public array $classes = [];
 
     public function registerFunctionType(string $fnName, FunctionType $type): void
     {

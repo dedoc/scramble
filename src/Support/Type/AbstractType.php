@@ -26,6 +26,11 @@ abstract class AbstractType implements Type
         return [];
     }
 
+    public function publicNodes(): array
+    {
+        return [];
+    }
+
     public function children(): array
     {
         return [];

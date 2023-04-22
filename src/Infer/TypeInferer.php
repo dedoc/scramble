@@ -24,15 +24,10 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
-use Dedoc\Scramble\Support\Type\FunctionType;
-use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\PendingReturnType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
-use Dedoc\Scramble\Support\Type\TypeHelper;
-use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
-use PHPUnit\Util\Type;
 
 class TypeInferer extends NodeVisitorAbstract
 {
@@ -112,90 +107,52 @@ class TypeInferer extends NodeVisitorAbstract
             }
         }
 
-        if ($node instanceof Node\Stmt\Class_) {
-            $classType = $this->scope->getType($node);
-
-            $methodReturnReferences = collect($classType->methods)
-                ->map(function ($t) {
-                    return $t->getReturnType() instanceof AbstractReferenceType
-                        ? $t->getReturnType()
-                        : null;
-                })
-                ->filter()
-                ->all();
-
-            foreach ($methodReturnReferences as $methodName => $methodReturnReference) {
-                $classType->methods[$methodName]->setReturnType(
-                    $this->referenceTypeResolver->resolve($methodReturnReference),
-                );
-            }
-
-            // @todo deep types support
-            /* $referenceTypes = (new TypeWalker)->find(
-                $type->getReturnType(),
-                fn ($t) => $t instanceof AbstractReferenceType,
-                // ??
-            ); */
-//            dd('leaving a class', );
-        }
-
-        if (
-            false
-            && $node instanceof Node\FunctionLike
-            && !($node instanceof Node\Expr\ArrowFunction)
-        ) {
-            /** @var FunctionType $type */
-            $type = $this->scope->getType($node);
-
-            // When leaving a function,
-
-            // @todo deep types support
-            /* $referenceTypes = (new TypeWalker)->find(
-                $type->getReturnType(),
-                fn ($t) => $t instanceof AbstractReferenceType,
-                // ??
-            ); */
-            $referenceTypes = $type->getReturnType() instanceof AbstractReferenceType
-                ? [$type->getReturnType()]
-                : [];
-
-            if ($referenceTypes) {
-                dd($this->scope);
-            }
-
-            /*
-            $pendingTypes = (new TypeWalker)->find(
-                $type->getReturnType(),
-                fn ($t) => $t instanceof PendingReturnType,
-                fn ($t) => ! ($t instanceof ObjectType && $t->name === $this->scope->context->class->name)
-            );
-
-            // When there is a referenced type in fn return, we want to add it to the pending
-            // resolution types, so it can be resolved later.
-            if ($pendingTypes) {
-                $this->scope->pending->addReference(
-                    $type,
-                    function ($pendingType, $resolvedPendingType) use ($type) {
-                        $type->setReturnType(
-                            TypeHelper::unpackIfArrayType((new TypeWalker)->replace($type->getReturnType(), $pendingType, $resolvedPendingType))
-                        );
-                    },
-                    $pendingTypes,
-                );
-            }
-
-            // And in the end, after the function is analyzed, we try to resolve all pending types
-            // that exist in the current global check run.
-            $this->scope->pending->resolve();*/
-        }
-
         return null;
     }
 
     public function afterTraverse(array $nodes)
     {
-        // @todo: ideally, here using index you can resolve all the references.
-        $this->scope->pending->resolveAllPendingIntoUnknowns();
+        /*
+         * Now only one file a time gets traversed. So it is ok to simply take everything
+         * added to index and check for reference types.
+         *
+         * At this point, if the function return types are not resolved, they aren't resolveable at all,
+         * hence changed to the unknowns.
+         *
+         * When more files would be traversed in a single run (and index will be shared), this needs to
+         * be re-implemented (maybe not).
+         */
+        foreach ($this->index->functions as $functionType) {
+            $functionReturnReference = ReferenceTypeResolver::hasResolvableReferences($functionType->getReturnType())
+                ? $functionType->getReturnType()
+                : null;
+
+            if ($functionReturnReference) {
+                $resolvedReference = $this->referenceTypeResolver->resolve($functionReturnReference);
+
+                $functionType->setReturnType(
+                    $resolvedReference instanceof AbstractReferenceType
+                        ? new UnknownType('todo: make sure some context is here')
+                        : $resolvedReference,
+                );
+            }
+        }
+
+        foreach ($this->index->classes as $classType) {
+            $methodReturnReferences = collect($classType->methods)
+                ->map(fn ($t) => $t->getReturnType())
+                ->filter(ReferenceTypeResolver::hasResolvableReferences(...));
+
+            foreach ($methodReturnReferences as $methodName => $methodReturnReference) {
+                $resolvedReference = $this->referenceTypeResolver->resolve($methodReturnReference);
+
+                $classType->methods[$methodName]->setReturnType(
+                    $resolvedReference instanceof AbstractReferenceType
+                        ? new UnknownType('todo: make sure some context is here')
+                        : $resolvedReference,
+                );
+            }
+        }
     }
 
     private function getOrCreateScope()

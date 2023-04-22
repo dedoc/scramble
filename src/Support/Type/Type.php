@@ -20,6 +20,8 @@ interface Type
 
     public function nodes(): array;
 
+    public function publicNodes(): array;
+
     public function children(): array;
 
     public function isSame(self $type);

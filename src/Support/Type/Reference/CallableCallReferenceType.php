@@ -4,11 +4,10 @@ namespace Dedoc\Scramble\Support\Type\Reference;
 
 use Dedoc\Scramble\Support\Type\Type;
 
-class MethodCallReferenceType extends AbstractReferenceType
+class CallableCallReferenceType extends AbstractReferenceType
 {
     public function __construct(
-        public Type $callee,
-        public string $methodName,
+        public string $callee,
         /** @var Type[] $arguments */
         public array $arguments,
     ){}
@@ -20,6 +19,6 @@ class MethodCallReferenceType extends AbstractReferenceType
             array_map(fn ($t) => $t->toString(), $this->arguments),
         );
 
-        return "(#{$this->callee->toString()}).{$this->methodName}($argsTypes)";
+        return "(λ{$this->callee})($argsTypes)";
     }
 }
