@@ -52,11 +52,6 @@ class TypeWalker
 
     public function firstPublic(Type $type, callable $lookup): ?Type
     {
-//        if (in_array($type, $this->visitedNodes)) {
-//            return null;
-//        }
-//        $this->visitedNodes[] = $type;
-
         if ($lookup($type)) {
             return $type;
         }
@@ -75,11 +70,6 @@ class TypeWalker
 
     public function replacePublic(Type $subject, callable $replacer): Type
     {
-//        if (in_array($subject, $this->visitedNodes)) {
-//            return $subject;
-//        }
-//        $this->visitedNodes[] = $subject;
-
         if ($replaced = $replacer($subject)) {
             return $replaced;
         }
