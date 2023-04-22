@@ -19,7 +19,6 @@ use Dedoc\Scramble\Infer\Handler\ReturnHandler;
 use Dedoc\Scramble\Infer\Handler\ThrowHandler;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
-use Dedoc\Scramble\Infer\Scope\PendingTypes;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
@@ -164,7 +163,6 @@ class TypeInferer extends NodeVisitorAbstract
             $this->scope = new Scope(
                 $this->index,
                 new NodeTypesResolver,
-                new PendingTypes,
                 new ScopeContext,
                 $this->namesResolver,
             );
