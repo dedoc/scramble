@@ -8,6 +8,7 @@ use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\UnknownType;
 
 class ReferenceTypeResolver
 {
@@ -29,16 +30,32 @@ class ReferenceTypeResolver
     {
         return (new TypeWalker)->replacePublic(
             $type,
-            function (Type $t) {
-                if ($t instanceof MethodCallReferenceType) {
-                    return $this->resolveMethodCallReferenceType($t);
+            function (Type $t) use ($type) {
+                $resolver = function () use ($t) {
+                    if ($t instanceof MethodCallReferenceType) {
+                        return $this->resolveMethodCallReferenceType($t);
+                    }
+
+                    if ($t instanceof CallableCallReferenceType) {
+                        return $this->resolveCallableCallReferenceType($t);
+                    }
+
+                    return null;
+                };
+
+                if (! $resolved = $resolver()) {
+                    return null;
                 }
 
-                if ($t instanceof CallableCallReferenceType) {
-                    return $this->resolveCallableCallReferenceType($t);
+                if ($resolved instanceof AbstractReferenceType) {
+                    return $resolved;
                 }
 
-                return null;
+                if ($resolved === $type) {
+                    return new UnknownType('self reference');
+                }
+
+                return $resolved;
             },
         );
     }

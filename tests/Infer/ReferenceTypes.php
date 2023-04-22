@@ -27,6 +27,23 @@ EOD)->getClassType('Foo');
         ->toBe('(): int(2)');
 });
 
+it('resolves a cyclic reference safely', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public function foo () {
+        if (piu()) {
+            return 1;
+        }
+        return $this->foo();
+    }
+}
+EOD)->getClassType('Foo');
+
+    expect($type->getMethodType('foo')->toString())
+        ->toBe('(): unknown|int(1)');
+});
+
 it('resolves references in non-reference return types', function () {
     $type = analyzeFile(<<<'EOD'
 <?php
