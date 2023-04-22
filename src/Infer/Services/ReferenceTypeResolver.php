@@ -14,8 +14,7 @@ class ReferenceTypeResolver
 {
     public function __construct(
         private Index $index,
-    )
-    {
+    ) {
     }
 
     public static function hasResolvableReferences(Type $type): bool

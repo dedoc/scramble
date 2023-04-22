@@ -11,7 +11,8 @@ class MethodCallReferenceType extends AbstractReferenceType
         public string $methodName,
         /** @var Type[] $arguments */
         public array $arguments,
-    ){}
+    ) {
+    }
 
     public function toString(): string
     {

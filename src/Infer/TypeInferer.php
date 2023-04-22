@@ -43,8 +43,7 @@ class TypeInferer extends NodeVisitorAbstract
         array $handlers,
         private ReferenceTypeResolver $referenceTypeResolver,
         private Index $index,
-    )
-    {
+    ) {
         $this->namesResolver = $namesResolver;
 
         $this->handlers = [

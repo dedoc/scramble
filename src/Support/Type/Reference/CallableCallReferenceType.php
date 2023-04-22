@@ -10,7 +10,8 @@ class CallableCallReferenceType extends AbstractReferenceType
         public string $callee,
         /** @var Type[] $arguments */
         public array $arguments,
-    ){}
+    ) {
+    }
 
     public function toString(): string
     {
