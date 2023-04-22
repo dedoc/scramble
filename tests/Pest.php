@@ -1,6 +1,7 @@
 <?php
 
 use Dedoc\Scramble\DefaultExtensions;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type\Type;
@@ -16,9 +17,12 @@ function analyzeFile(string $code, array $extensions = []): AnalysisResult
 {
     $fileAst = (new ParserFactoryAlias)->create(ParserFactoryAlias::PREFER_PHP7)->parse($code);
 
+    $index = new Index();
     $infer = app()->make(TypeInferer::class, [
         'namesResolver' => new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing())),
         'extensions' => [...$extensions, ...DefaultExtensions::infer()],
+        'referenceTypeResolver' => new \Dedoc\Scramble\Infer\Services\ReferenceTypeResolver($index),
+        'index' => $index,
     ]);
     $traverser = new NodeTraverser;
     $traverser->addVisitor($infer);

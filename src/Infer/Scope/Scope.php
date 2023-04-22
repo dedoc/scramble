@@ -11,6 +11,7 @@ use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\PendingReturnType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
@@ -110,7 +111,16 @@ class Scope
                 ];
             }
 
+            // Callee type is not analyzed sufficiently.
+            if (! isset($objectType->methods[$methodName = $node->name->name])) {
+                return $this->setType(
+                    $node,
+                    new MethodCallReferenceType($objectType, $methodName, []),
+                );
+            }
+
             $methodCallType = $objectType->getMethodCallType($node->name->name);
+
             if ($methodCallType instanceof UnknownType && $type instanceof UnknownType) {
                 $methodCallType = $type;
             }
@@ -158,7 +168,8 @@ class Scope
                 $type = new PendingReturnType($node, $type, $this);
             }
         }
-        // Also, property fetch may be pending.
+
+        // @todo Also, property fetch may be pending.
 
         $this->nodeTypesResolver->setType($node, $type);
 

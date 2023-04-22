@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route as RouteFacade;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 test('transforms collection with toArray only', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+    $transformer = new TypeTransformer($infer = ap	p(Infer::class), $components = new Components, [
         JsonResourceTypeToSchema::class,
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);

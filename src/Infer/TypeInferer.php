@@ -23,13 +23,16 @@ use Dedoc\Scramble\Infer\Scope\PendingTypes;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\PendingReturnType;
+use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
+use PHPUnit\Util\Type;
 
 class TypeInferer extends NodeVisitorAbstract
 {
@@ -39,7 +42,13 @@ class TypeInferer extends NodeVisitorAbstract
 
     private FileNameResolver $namesResolver;
 
-    public function __construct(FileNameResolver $namesResolver, array $extensions = [], array $handlers = [])
+    public function __construct(
+        FileNameResolver $namesResolver,
+        array $extensions,
+        array $handlers,
+        private ReferenceTypeResolver $referenceTypeResolver,
+        private Index $index,
+    )
     {
         $this->namesResolver = $namesResolver;
 
@@ -103,10 +112,58 @@ class TypeInferer extends NodeVisitorAbstract
             }
         }
 
-        if ($node instanceof Node\FunctionLike) {
+        if ($node instanceof Node\Stmt\Class_) {
+            $classType = $this->scope->getType($node);
+
+            $methodReturnReferences = collect($classType->methods)
+                ->map(function ($t) {
+                    return $t->getReturnType() instanceof AbstractReferenceType
+                        ? $t->getReturnType()
+                        : null;
+                })
+                ->filter()
+                ->all();
+
+            foreach ($methodReturnReferences as $methodName => $methodReturnReference) {
+                $classType->methods[$methodName]->setReturnType(
+                    $this->referenceTypeResolver->resolve($methodReturnReference),
+                );
+            }
+
+            // @todo deep types support
+            /* $referenceTypes = (new TypeWalker)->find(
+                $type->getReturnType(),
+                fn ($t) => $t instanceof AbstractReferenceType,
+                // ??
+            ); */
+//            dd('leaving a class', );
+        }
+
+        if (
+            false
+            && $node instanceof Node\FunctionLike
+            && !($node instanceof Node\Expr\ArrowFunction)
+        ) {
             /** @var FunctionType $type */
             $type = $this->scope->getType($node);
 
+            // When leaving a function,
+
+            // @todo deep types support
+            /* $referenceTypes = (new TypeWalker)->find(
+                $type->getReturnType(),
+                fn ($t) => $t instanceof AbstractReferenceType,
+                // ??
+            ); */
+            $referenceTypes = $type->getReturnType() instanceof AbstractReferenceType
+                ? [$type->getReturnType()]
+                : [];
+
+            if ($referenceTypes) {
+                dd($this->scope);
+            }
+
+            /*
             $pendingTypes = (new TypeWalker)->find(
                 $type->getReturnType(),
                 fn ($t) => $t instanceof PendingReturnType,
@@ -129,7 +186,7 @@ class TypeInferer extends NodeVisitorAbstract
 
             // And in the end, after the function is analyzed, we try to resolve all pending types
             // that exist in the current global check run.
-            $this->scope->pending->resolve();
+            $this->scope->pending->resolve();*/
         }
 
         return null;
@@ -137,6 +194,7 @@ class TypeInferer extends NodeVisitorAbstract
 
     public function afterTraverse(array $nodes)
     {
+        // @todo: ideally, here using index you can resolve all the references.
         $this->scope->pending->resolveAllPendingIntoUnknowns();
     }
 
@@ -144,7 +202,7 @@ class TypeInferer extends NodeVisitorAbstract
     {
         if (! isset($this->scope)) {
             $this->scope = new Scope(
-                new Index,
+                $this->index,
                 new NodeTypesResolver,
                 new PendingTypes,
                 new ScopeContext,
