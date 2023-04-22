@@ -47,14 +47,14 @@ class ReferenceTypeResolver
                 }
 
                 if ($resolved instanceof AbstractReferenceType) {
-                    return $resolved;
+                    return $resolved->mergeAttributes($t->attributes());
                 }
 
                 if ($resolved === $type) {
                     return new UnknownType('self reference');
                 }
 
-                return $resolved;
+                return $resolved->mergeAttributes($t->attributes());
             },
         );
     }
