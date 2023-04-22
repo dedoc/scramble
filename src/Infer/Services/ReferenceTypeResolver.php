@@ -69,7 +69,11 @@ class ReferenceTypeResolver
         }
 
         // @todo: pass arguments
-        return $calleeType->getMethodCallType($type->methodName);
+        $result = $calleeType->getMethodCallType($type->methodName);
+
+        $result->setAttribute('exceptions', $calleeType->exceptions);
+
+        return $result;
     }
 
     private function resolveCallableCallReferenceType(CallableCallReferenceType $type)
@@ -88,6 +92,10 @@ class ReferenceTypeResolver
         //}
 
         // @todo: pass arguments
-        return $calleeType->getReturnType();
+        $result = $calleeType->getReturnType();
+
+        $result->setAttribute('exceptions', $calleeType->exceptions);
+
+        return $result;
     }
 }

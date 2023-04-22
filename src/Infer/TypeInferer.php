@@ -137,6 +137,13 @@ class TypeInferer extends NodeVisitorAbstract
                         ? new UnknownType('todo: make sure some context is here')
                         : $resolvedReference,
                 );
+
+                if ($thrownExceptions = $resolvedReference->getAttribute('exceptions')) {
+                    $functionType->exceptions = [
+                        ...$functionType->exceptions,
+                        ...$thrownExceptions,
+                    ];
+                }
             }
         }
 
@@ -153,6 +160,13 @@ class TypeInferer extends NodeVisitorAbstract
                         ? new UnknownType('todo: make sure some context is here')
                         : $resolvedReference,
                 );
+
+                if ($thrownExceptions = $resolvedReference->getAttribute('exceptions')) {
+                    $classType->methods[$methodName]->exceptions = [
+                        ...$classType->methods[$methodName]->exceptions,
+                        ...$thrownExceptions,
+                    ];
+                }
             }
         }
     }

@@ -60,6 +60,22 @@ EOD)->getClassType('Foo');
     expect($type->getMethodType('foo')->toString())->toBe('(): array{0: int(2), 1: int(2)}');
 });
 
+it('resolves unknown references to unknowns in non-reference return types', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public function foo () {
+        return [$this->two(), $this->three()];
+    }
+    public function two () {
+        return 2;
+    }
+}
+EOD)->getClassType('Foo');
+
+    expect($type->getMethodType('foo')->toString())->toBe('(): array{0: int(2), 1: unknown}');
+});
+
 it('resolves a deep reference when encountered in self class', function () {
     $type = analyzeFile(<<<'EOD'
 <?php
