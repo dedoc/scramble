@@ -121,6 +121,10 @@ class TypeInferer extends NodeVisitorAbstract
          *
          * When more files would be traversed in a single run (and index will be shared), this needs to
          * be re-implemented (maybe not).
+         *
+         * The intent here is to traverse symbols in index added through the file traversal. This logic
+         * may be not applicable when analyzing multiple files per index. Pay attention to this as it may
+         * hurt performance unless handled.
          */
         foreach ($this->index->functions as $functionType) {
             $functionReturnReference = ReferenceTypeResolver::hasResolvableReferences($functionType->getReturnType())

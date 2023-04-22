@@ -17,7 +17,7 @@ function getTypeFromDoc(string $phpDoc)
     $docNode = PhpDoc::parse($phpDoc);
     $varNode = $docNode->getVarTagValues()[0];
 
-    return (new TypeTransformer(new Infer(app(FileParser::class), new Index()), new Components))
+    return (new TypeTransformer(new Infer(app(FileParser::class)), new Components))
         ->transform(PhpDocTypeHelper::toType($varNode->type));
 }
 
