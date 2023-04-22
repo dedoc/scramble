@@ -71,7 +71,7 @@ class ReferenceTypeResolver
         // @todo: pass arguments
         $result = $calleeType->getMethodCallType($type->methodName);
 
-        $result->setAttribute('exceptions', $calleeType->exceptions);
+        $result->setAttribute('exceptions', $calleeType->methods[$type->methodName]->exceptions ?? []);
 
         return $result;
     }
