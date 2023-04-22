@@ -79,10 +79,10 @@ class TypeWalker
         foreach ($propertiesWithNodes as $propertyWithNode) {
             $node = $subject->$propertyWithNode;
             if (! is_array($node)) {
-                $subject->$propertyWithNode = $this->replacePublic($node, $replacer);
+                $subject->$propertyWithNode = TypeHelper::unpackIfArrayType($this->replacePublic($node, $replacer));
             } else {
                 foreach ($node as $index => $item) {
-                    $subject->$propertyWithNode[$index] = $this->replacePublic($item, $replacer);
+                    $subject->$propertyWithNode[$index] = TypeHelper::unpackIfArrayType($this->replacePublic($item, $replacer));
                 }
             }
         }
