@@ -131,3 +131,22 @@ EOD)->getClassType('PendingUnknownWithSelfReference');
         ->and($type->methods['returnThis']->toString())
         ->toBe('(): PendingUnknownWithSelfReference');
 });
+
+it('resolves deep references in unknowns after traversal', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo
+{
+    public function returnSomeCall()
+    {
+        if ($a) {
+            return call_user_func($erw);
+        }
+        return (new Bar)->some()->call();
+    }
+}
+EOD)->getClassType('Foo');
+
+    expect($type->methods['returnSomeCall']->toString())
+        ->toBe('(): unknown|unknown');
+});

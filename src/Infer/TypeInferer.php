@@ -23,8 +23,6 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
-use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 
@@ -124,49 +122,25 @@ class TypeInferer extends NodeVisitorAbstract
          * may be not applicable when analyzing multiple files per index. Pay attention to this as it may
          * hurt performance unless handled.
          */
-        foreach ($this->index->functions as $functionType) {
-            $functionReturnReference = ReferenceTypeResolver::hasResolvableReferences($functionType->getReturnType())
-                ? $functionType->getReturnType()
-                : null;
-
-            if ($functionReturnReference) {
-                $resolvedReference = $this->referenceTypeResolver->resolve($functionReturnReference);
-
-                $functionType->setReturnType(
-                    $resolvedReference instanceof AbstractReferenceType
-                        ? new UnknownType('todo: make sure some context is here')
-                        : $resolvedReference,
-                );
-
-                if ($thrownExceptions = $resolvedReference->getAttribute('exceptions')) {
-                    $functionType->exceptions = [
-                        ...$functionType->exceptions,
-                        ...$thrownExceptions,
-                    ];
-                }
+        $resolveReferencesInFunctionReturn = function ($functionType) {
+            if (! ReferenceTypeResolver::hasResolvableReferences($returnType = $functionType->getReturnType())) {
+                return;
             }
+
+            $resolvedReference = $this->referenceTypeResolver->resolve($returnType);
+
+            $functionType->setReturnType(
+                $resolvedReference->mergeAttributes($returnType->attributes())
+            );
+        };
+
+        foreach ($this->index->functions as $functionType) {
+            $resolveReferencesInFunctionReturn($functionType);
         }
 
         foreach ($this->index->classes as $classType) {
-            $methodReturnReferences = collect($classType->methods)
-                ->map(fn ($t) => $t->getReturnType())
-                ->filter(ReferenceTypeResolver::hasResolvableReferences(...));
-
-            foreach ($methodReturnReferences as $methodName => $methodReturnReference) {
-                $resolvedReference = $this->referenceTypeResolver->resolve($methodReturnReference);
-
-                $classType->methods[$methodName]->setReturnType(
-                    $resolvedReference instanceof AbstractReferenceType
-                        ? new UnknownType('todo: make sure some context is here')
-                        : $resolvedReference,
-                );
-
-                if ($thrownExceptions = $resolvedReference->getAttribute('exceptions')) {
-                    $classType->methods[$methodName]->exceptions = [
-                        ...$classType->methods[$methodName]->exceptions,
-                        ...$thrownExceptions,
-                    ];
-                }
+            foreach ($classType->methods as $methodType) {
+                $resolveReferencesInFunctionReturn($methodType);
             }
         }
     }

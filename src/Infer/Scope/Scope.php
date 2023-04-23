@@ -70,8 +70,7 @@ class Scope
         }
 
         if ($node instanceof Node\Expr\Variable && $node->name === 'this') {
-            // @todo: remove as this should not happen - class must be always there
-            return $this->context->class ?? new UnknownType;
+            return $this->context->class;
         }
 
         if ($node instanceof Node\Expr\Variable) {
@@ -94,25 +93,10 @@ class Scope
                 return $type;
             }
 
-            $objectType = $this->getType($node->var);
-
-            // Propagate thrown exceptions info from object method to the current context function.
-            if ($this->isInFunction() && isset($objectType->methods[$node->name->name]) && count($objectType->methods[$node->name->name]->exceptions)) {
-                $this->context->function->exceptions = [
-                    ...$this->context->function->exceptions,
-                    ...$objectType->methods[$node->name->name]->exceptions,
-                ];
-            }
-
-            // Callee type is not analyzed sufficiently.
-            if (! isset($objectType->methods[$methodName = $node->name->name])) {
-                return $this->setType(
-                    $node,
-                    new MethodCallReferenceType($objectType, $methodName, []),
-                );
-            }
-
-            return $this->setType($node, $objectType->getMethodCallType($node->name->name));
+            return $this->setType(
+                $node,
+                new MethodCallReferenceType($this->getType($node->var), $node->name->name, []),
+            );
         }
 
         if ($node instanceof Node\Expr\FuncCall) {
@@ -121,19 +105,9 @@ class Scope
                 return $type;
             }
 
-            $fnType = $this->index->getFunctionType($fnName = $node->name->toString());
-
-            // Propagate thrown exceptions info from object method to the current context function.
-            if ($this->isInFunction() && $fnType && count($fnType->exceptions)) {
-                $this->context->function->exceptions = [
-                    ...$this->context->function->exceptions,
-                    ...$fnType->exceptions,
-                ];
-            }
-
             return $this->setType(
                 $node,
-                $fnType ? $fnType->getReturnType() : new CallableCallReferenceType($fnName, []),
+                new CallableCallReferenceType($node->name->toString(), []),
             );
         }
 

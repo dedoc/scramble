@@ -117,10 +117,6 @@ class FunctionLikeHandler implements CreatesScope
         // In case of method in class being analyzed, we want to attach the method information
         // to the class so classes can be analyzed later.
         if ($node instanceof Node\Stmt\ClassMethod) {
-            // @todo: remove as this should not happen - class must be always there
-            if (! $scope->context->class) {
-                return;
-            }
             $scope->context->class->methods = array_merge(
                 $scope->context->class->methods,
                 [$node->name->name => $type],

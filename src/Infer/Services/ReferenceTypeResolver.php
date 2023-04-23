@@ -25,11 +25,11 @@ class ReferenceTypeResolver
         );
     }
 
-    public function resolve(Type $type): Type
+    public function resolve(Type $type, bool $resolveNested = false): Type
     {
         return (new TypeWalker)->replacePublic(
             $type,
-            function (Type $t) use ($type) {
+            function (Type $t) use ($type, $resolveNested) {
                 $resolver = function () use ($t) {
                     if ($t instanceof MethodCallReferenceType) {
                         return $this->resolveMethodCallReferenceType($t);
@@ -46,22 +46,22 @@ class ReferenceTypeResolver
                     return null;
                 }
 
-                if ($resolved instanceof AbstractReferenceType) {
-                    return $resolved->mergeAttributes($t->attributes());
-                }
-
                 if ($resolved === $type) {
                     return new UnknownType('self reference');
                 }
 
-                return $resolved->mergeAttributes($t->attributes());
+                if ($resolved instanceof AbstractReferenceType) {
+                    return $resolveNested ? $resolved : new UnknownType();
+                }
+
+                return $resolved;
             },
         );
     }
 
     private function resolveMethodCallReferenceType(MethodCallReferenceType $type)
     {
-        $calleeType = $this->resolve($type->callee);
+        $calleeType = $this->resolve($type->callee, resolveNested: true);
 
         if ($calleeType instanceof AbstractReferenceType) {
             // Callee cannot be resolved.
@@ -69,11 +69,7 @@ class ReferenceTypeResolver
         }
 
         // @todo: pass arguments
-        $result = $calleeType->getMethodCallType($type->methodName);
-
-        $result->setAttribute('exceptions', $calleeType->methods[$type->methodName]->exceptions ?? []);
-
-        return $result;
+        return $calleeType->getMethodCallType($type->methodName);
     }
 
     private function resolveCallableCallReferenceType(CallableCallReferenceType $type)
@@ -92,10 +88,6 @@ class ReferenceTypeResolver
         //}
 
         // @todo: pass arguments
-        $result = $calleeType->getReturnType();
-
-        $result->setAttribute('exceptions', $calleeType->exceptions);
-
-        return $result;
+        return $calleeType->getReturnType();
     }
 }
