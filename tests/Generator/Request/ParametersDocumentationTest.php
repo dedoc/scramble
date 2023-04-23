@@ -36,4 +36,3 @@ if (trait_exists(HasUuids::class)) {
         use HasUuids;
     }
 }
-
