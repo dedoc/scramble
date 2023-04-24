@@ -8,7 +8,6 @@ use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
-use Illuminate\Http\Resources\Json\JsonResource;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 function getTypeFromDoc(string $phpDoc)
