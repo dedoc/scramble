@@ -5,6 +5,6 @@ info:
 servers:
     - { url: 'http://localhost/api' }
 paths:
-    /test: { get: { tags: [ResourceCollectionResponseTest_], responses: { 200: { description: '`UserCollection_One`', content: { application/json: { schema: { type: object, properties: { data: { $ref: '#/components/schemas/UserCollection_One' }, something: { type: object, properties: { foo: { type: string } }, required: [foo] } }, required: [data, something] } } } } } } }
+    /test: { get: { tags: [ResourceCollectionResponseTest_], responses: { 200: { description: '`UserCollection_One`', content: { application/json: { schema: { type: object, properties: { data: { $ref: '#/components/schemas/UserCollection_One' }, something: { type: object, properties: { foo: { type: string, enum: [bar] } }, required: [foo] } }, required: [data, something] } } } } } } }
 components:
-    schemas: { UserCollection_One: { type: object, properties: { foo: { type: string }, users: { type: array, items: { $ref: '#/components/schemas/UserResource' } }, meta: { type: object, properties: { foo: { type: string } }, required: [foo] } }, required: [foo, users, meta], title: UserCollection_One }, UserResource: { type: object, properties: { id: { type: integer } }, required: [id], title: UserResource } }
+    schemas: { UserCollection_One: { type: object, properties: { foo: { type: string, enum: [bar] }, users: { type: array, items: { $ref: '#/components/schemas/UserResource' } }, meta: { type: object, properties: { foo: { type: string, enum: [bar] } }, required: [foo] } }, required: [foo, users, meta], title: UserCollection_One }, UserResource: { type: object, properties: { id: { type: integer } }, required: [id], title: UserResource } }

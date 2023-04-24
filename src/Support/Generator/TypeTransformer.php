@@ -124,11 +124,27 @@ class TypeTransformer
                     $openApiType = new NullType();
                 }
             } else {
-                $openApiType = (new AnyOf)->setItems(array_map(
-                    fn ($t) => $this->transform($t),
-                    $type->types,
-                ));
+                $items = array_map($this->transform(...), $type->types);
+
+                [$stringLiterals, $otherTypes] = collect($items)
+                    ->partition(fn ($t) => $t instanceof StringType && count($t->enum) === 1);
+
+                $items = $otherTypes->toArray();
+                if ($stringLiterals->count()) {
+                    $items[] = (new StringType())->enum(
+                        $stringLiterals->flatMap->enum->unique()->toArray()
+                    );
+                }
+                $items = array_values($items);
+
+                if (count($items) === 1) {
+                    $openApiType = $items[0];
+                } else {
+                    $openApiType = (new AnyOf)->setItems($items);
+                }
             }
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\Literal\LiteralStringType) {
+            $openApiType = (new StringType())->enum([$type->value]);
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\StringType) {
             $openApiType = new StringType();
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\FloatType) {
