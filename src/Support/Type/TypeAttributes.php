@@ -36,4 +36,11 @@ trait TypeAttributes
     {
         return $this->attributes;
     }
+
+    public function mergeAttributes($attributes)
+    {
+        $this->attributes = array_merge($this->attributes, $attributes);
+
+        return $this;
+    }
 }

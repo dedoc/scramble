@@ -50,25 +50,39 @@ class TypeWalker
         return null;
     }
 
-    public function replace(Type $subject, Type $search, Type $replace): Type
+    public function firstPublic(Type $type, callable $lookup): ?Type
     {
-        if (in_array($subject, $this->visitedNodes)) {
-            return $subject;
-        }
-        $this->visitedNodes[] = $subject;
-
-        if ($subject === $search) {
-            return $replace;
+        if ($lookup($type)) {
+            return $type;
         }
 
-        $propertiesWithNodes = $subject->nodes();
+        $publicChildren = collect($type->publicNodes())
+            ->flatMap(fn ($node) => is_array($type->$node) ? array_values($type->$node) : [$type->$node]);
+
+        foreach ($publicChildren as $child) {
+            if ($foundType = $this->firstPublic($child, $lookup)) {
+                return $foundType;
+            }
+        }
+
+        return null;
+    }
+
+    public function replacePublic(Type $subject, callable $replacer): Type
+    {
+        if ($replaced = $replacer($subject)) {
+            return $replaced;
+        }
+
+        $propertiesWithNodes = $subject->publicNodes();
+
         foreach ($propertiesWithNodes as $propertyWithNode) {
             $node = $subject->$propertyWithNode;
             if (! is_array($node)) {
-                $subject->$propertyWithNode = TypeHelper::unpackIfArrayType($this->replace($node, $search, $replace));
+                $subject->$propertyWithNode = TypeHelper::unpackIfArrayType($this->replacePublic($node, $replacer));
             } else {
                 foreach ($node as $index => $item) {
-                    $subject->$propertyWithNode[$index] = TypeHelper::unpackIfArrayType($this->replace($item, $search, $replace));
+                    $subject->$propertyWithNode[$index] = TypeHelper::unpackIfArrayType($this->replacePublic($item, $replacer));
                 }
             }
         }

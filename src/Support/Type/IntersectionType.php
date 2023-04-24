@@ -22,6 +22,11 @@ class IntersectionType extends AbstractType
         return ['types'];
     }
 
+    public function publicNodes(): array
+    {
+        return ['types'];
+    }
+
     public function isSame(Type $type)
     {
         return $type instanceof static

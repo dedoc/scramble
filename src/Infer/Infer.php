@@ -2,7 +2,9 @@
 
 namespace Dedoc\Scramble\Infer;
 
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use PhpParser\NodeTraverser;
 use ReflectionClass;
@@ -33,8 +35,10 @@ class Infer
     {
         $result = $this->parser->parse((new ReflectionClass($class))->getFileName());
 
+        $index = new Index;
+
         $traverser = new NodeTraverser;
-        $traverser->addVisitor($inferer = new TypeInferer($result->getNamesResolver(), $this->extensions, $this->handlers));
+        $traverser->addVisitor($inferer = new TypeInferer($result->getNamesResolver(), $this->extensions, $this->handlers, new ReferenceTypeResolver($index), $index));
         $traverser->traverse($result->getStatements());
 
         return $inferer->scope->getType($result->findFirstClass($class));

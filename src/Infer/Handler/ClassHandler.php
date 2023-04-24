@@ -24,6 +24,8 @@ class ClassHandler implements CreatesScope
             $classType = new ObjectType($node->name ? $scope->resolveName($node->name->toString()) : 'anonymous@class'),
         );
 
+        $scope->index->registerClassType($scope->resolveName($node->name->toString()), $classType);
+
         $scope->setType($node, $classType);
     }
 }

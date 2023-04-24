@@ -40,6 +40,11 @@ class FunctionType extends AbstractType implements FunctionLikeType
         return ['returnType', 'arguments'];
     }
 
+    public function publicNodes(): array
+    {
+        return ['returnType', 'arguments'];
+    }
+
     public function setReturnType(Type $type): self
     {
         $this->returnType = $type;

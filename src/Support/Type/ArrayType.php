@@ -19,6 +19,11 @@ class ArrayType extends AbstractType
         return ['items'];
     }
 
+    public function publicNodes(): array
+    {
+        return ['items'];
+    }
+
     public function children(): array
     {
         return $this->items;

@@ -44,7 +44,7 @@ class FunctionLikeHandler implements CreatesScope
         // Also, if here we add a reference to the function node type, it may allow us to
         // set function return types not in leave function, but in the return handlers.
         $scope->setType($node, $fnType = new FunctionType($node->name->name ?? 'anonymous'));
-        if (isset($node->name->name)) {
+        if (isset($node->name->name) && $node instanceof Node\Stmt\Function_) {
             $scope->index->registerFunctionType($node->name->toString(), $fnType);
         }
 
@@ -117,10 +117,6 @@ class FunctionLikeHandler implements CreatesScope
         // In case of method in class being analyzed, we want to attach the method information
         // to the class so classes can be analyzed later.
         if ($node instanceof Node\Stmt\ClassMethod) {
-            // @todo: remove as this should not happen - class must be always there
-            if (! $scope->context->class) {
-                return;
-            }
             $scope->context->class->methods = array_merge(
                 $scope->context->class->methods,
                 [$node->name->name => $type],

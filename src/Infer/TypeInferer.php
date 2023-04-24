@@ -19,15 +19,10 @@ use Dedoc\Scramble\Infer\Handler\ReturnHandler;
 use Dedoc\Scramble\Infer\Handler\ThrowHandler;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
-use Dedoc\Scramble\Infer\Scope\PendingTypes;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\Support\Type\FunctionType;
-use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\PendingReturnType;
-use Dedoc\Scramble\Support\Type\TypeHelper;
-use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 
@@ -39,8 +34,13 @@ class TypeInferer extends NodeVisitorAbstract
 
     private FileNameResolver $namesResolver;
 
-    public function __construct(FileNameResolver $namesResolver, array $extensions = [], array $handlers = [])
-    {
+    public function __construct(
+        FileNameResolver $namesResolver,
+        array $extensions,
+        array $handlers,
+        private ReferenceTypeResolver $referenceTypeResolver,
+        private Index $index,
+    ) {
         $this->namesResolver = $namesResolver;
 
         $this->handlers = [
@@ -103,50 +103,54 @@ class TypeInferer extends NodeVisitorAbstract
             }
         }
 
-        if ($node instanceof Node\FunctionLike) {
-            /** @var FunctionType $type */
-            $type = $this->scope->getType($node);
-
-            $pendingTypes = (new TypeWalker)->find(
-                $type->getReturnType(),
-                fn ($t) => $t instanceof PendingReturnType,
-                fn ($t) => ! ($t instanceof ObjectType && $t->name === $this->scope->context->class->name)
-            );
-
-            // When there is a referenced type in fn return, we want to add it to the pending
-            // resolution types, so it can be resolved later.
-            if ($pendingTypes) {
-                $this->scope->pending->addReference(
-                    $type,
-                    function ($pendingType, $resolvedPendingType) use ($type) {
-                        $type->setReturnType(
-                            TypeHelper::unpackIfArrayType((new TypeWalker)->replace($type->getReturnType(), $pendingType, $resolvedPendingType))
-                        );
-                    },
-                    $pendingTypes,
-                );
-            }
-
-            // And in the end, after the function is analyzed, we try to resolve all pending types
-            // that exist in the current global check run.
-            $this->scope->pending->resolve();
-        }
-
         return null;
     }
 
     public function afterTraverse(array $nodes)
     {
-        $this->scope->pending->resolveAllPendingIntoUnknowns();
+        /*
+         * Now only one file a time gets traversed. So it is ok to simply take everything
+         * added to index and check for reference types.
+         *
+         * At this point, if the function return types are not resolved, they aren't resolveable at all,
+         * hence changed to the unknowns.
+         *
+         * When more files would be traversed in a single run (and index will be shared), this needs to
+         * be re-implemented (maybe not).
+         *
+         * The intent here is to traverse symbols in index added through the file traversal. This logic
+         * may be not applicable when analyzing multiple files per index. Pay attention to this as it may
+         * hurt performance unless handled.
+         */
+        $resolveReferencesInFunctionReturn = function ($functionType) {
+            if (! ReferenceTypeResolver::hasResolvableReferences($returnType = $functionType->getReturnType())) {
+                return;
+            }
+
+            $resolvedReference = $this->referenceTypeResolver->resolve($returnType);
+
+            $functionType->setReturnType(
+                $resolvedReference->mergeAttributes($returnType->attributes())
+            );
+        };
+
+        foreach ($this->index->functions as $functionType) {
+            $resolveReferencesInFunctionReturn($functionType);
+        }
+
+        foreach ($this->index->classes as $classType) {
+            foreach ($classType->methods as $methodType) {
+                $resolveReferencesInFunctionReturn($methodType);
+            }
+        }
     }
 
     private function getOrCreateScope()
     {
         if (! isset($this->scope)) {
             $this->scope = new Scope(
-                new Index,
+                $this->index,
                 new NodeTypesResolver,
-                new PendingTypes,
                 new ScopeContext,
                 $this->namesResolver,
             );
