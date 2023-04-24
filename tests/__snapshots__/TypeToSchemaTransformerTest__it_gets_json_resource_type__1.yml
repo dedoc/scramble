@@ -1,8 +1,8 @@
 type: object
 properties:
     foo: { type: integer }
-    hey: { type: string }
-    bar: { type: string }
+    hey: { type: string, enum: [ho] }
+    bar: { type: string, enum: [foo] }
 required:
     - foo
     - bar

@@ -105,34 +105,11 @@ it('handles union type', function () {
     assertMatchesSnapshot($result ? $result->toArray() : null);
 });
 
-class TestResource extends JsonResource
-{
-    public function toArray($request)
-    {
-        return [
-            /** @var array<string, DestResource> */
-            'sample' => some_unparsable_method(),
-        ];
-    }
-}
+it('handles unions of string literals', function ($phpDoc) {
+    $result = getTypeFromDoc($phpDoc);
 
-class DestResource extends JsonResource
-{
-    public function toArray($request)
-    {
-        return [
-            'id' => 1,
-        ];
-    }
-}
-
-class SimpleTestResource extends JsonResource
-{
-    public function toArray($request)
-    {
-        return [
-            /** @var array<string> nice sample */
-            'sample' => some_unparsable_method(),
-        ];
-    }
-}
+    assertMatchesSnapshot($result ? $result->toArray() : null);
+})->with([
+    "/** @var 'foo'|'bar' */",
+    "/** @var 'foo'|'bar'|string */",
+]);
