@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support;
 
 use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TypeWalker;
@@ -144,6 +145,28 @@ class RouteInfo
             $this->methodType = $this->infer
                 ->analyzeClass($this->reflectionMethod()->getDeclaringClass()->getName())
                 ->getMethodType($this->methodName());
+
+            if (ReferenceTypeResolver::hasResolvableReferences($returnType = $this->methodType->getReturnType())) {
+                $this->methodType->setReturnType((new ReferenceTypeResolver($this->infer->index))->resolve(
+                    $returnType,
+                    unknownClassHandler: function (string $name) {
+//                        dump(['unknownClassHandler' => $name]);
+                        if (! class_exists($name)) {
+                            return;
+                        }
+
+                        $path = (new ReflectionClass($name))->getFileName();
+
+                        if (str_contains($path, '/vendor/')) {
+                            return;
+                        }
+
+                        return $this->infer->analyzeClass($name);
+                    },
+                ));
+            }
+
+//            dd(42, $returnType->toString());
         }
 
         return $this->methodType;

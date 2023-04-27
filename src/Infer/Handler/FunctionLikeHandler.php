@@ -7,9 +7,11 @@ use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
+use Illuminate\Support\Str;
 use PhpParser\Node;
 use PhpParser\Node\FunctionLike;
 
@@ -53,10 +55,12 @@ class FunctionLikeHandler implements CreatesScope
                 return $param->var instanceof Node\Expr\Variable ? [
                     $param->var->name => isset($param->type)
                         ? TypeHelper::createTypeFromTypeNode($param->type)
-                        : new UnknownType,
+                        : new TemplateType('T'.Str::studly($param->var->name)),
                 ] : [];
             })
             ->toArray();
+
+        $fnType->templates = array_values(array_filter($fnType->arguments, fn ($t) => $t instanceof TemplateType));
 
         foreach ($node->getParams() as $param) {
             if (! $param->var instanceof Node\Expr\Variable) {
@@ -65,12 +69,10 @@ class FunctionLikeHandler implements CreatesScope
 
             $scope->addVariableType(
                 $param->getAttribute('startLine'),
-                (string) $param->var->name,
+                $paramName = (string) $param->var->name,
                 isset($param->default)
                     ? $scope->getType($param->default)
-                    : (isset($param->type)
-                    ? TypeHelper::createTypeFromTypeNode($param->type)
-                    : new UnknownType),
+                    : $fnType->arguments[$paramName],
             );
         }
 

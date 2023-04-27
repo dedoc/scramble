@@ -95,7 +95,7 @@ class Scope
 
             return $this->setType(
                 $node,
-                new MethodCallReferenceType($this->getType($node->var), $node->name->name, []),
+                new MethodCallReferenceType($this->getType($node->var), $node->name->name, $this->getArgsTypes($node->args)),
             );
         }
 
@@ -107,11 +107,20 @@ class Scope
 
             return $this->setType(
                 $node,
-                new CallableCallReferenceType($node->name->toString(), []),
+                new CallableCallReferenceType($node->name->toString(), $this->getArgsTypes($node->args)),
             );
         }
 
         return $type;
+    }
+
+    private function getArgsTypes(array $args)
+    {
+        return collect($args)
+            ->filter(fn ($arg) => $arg instanceof Node\Arg)
+            ->keyBy(fn (Node\Arg $arg, $index) => $arg->name ? $arg->name->name : $index)
+            ->map(fn (Node\Arg $arg) => $this->getType($arg->value))
+            ->toArray();
     }
 
     public function setType(Node $node, Type $type)

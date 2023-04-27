@@ -19,11 +19,18 @@ class Infer
 
     private array $cache = [];
 
-    public function __construct(FileParser $parser, array $extensions = [], array $handlers = [])
+    public Index $index;
+
+    public function __construct(
+        FileParser $parser,
+        array $extensions = [],
+        array $handlers = [],
+    )
     {
         $this->parser = $parser;
         $this->extensions = $extensions;
         $this->handlers = $handlers;
+        $this->index = new Index;
     }
 
     public function analyzeClass(string $class): ObjectType
@@ -35,10 +42,16 @@ class Infer
     {
         $result = $this->parser->parse((new ReflectionClass($class))->getFileName());
 
-        $index = new Index;
+//        $index = new Index;
 
         $traverser = new NodeTraverser;
-        $traverser->addVisitor($inferer = new TypeInferer($result->getNamesResolver(), $this->extensions, $this->handlers, new ReferenceTypeResolver($index), $index));
+        $traverser->addVisitor($inferer = new TypeInferer(
+            $result->getNamesResolver(),
+            $this->extensions,
+            $this->handlers,
+            new ReferenceTypeResolver($this->index),
+            $this->index,
+        ));
         $traverser->traverse($result->getStatements());
 
         return $inferer->scope->getType($result->findFirstClass($class));

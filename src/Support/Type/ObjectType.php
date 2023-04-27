@@ -11,6 +11,8 @@ class ObjectType extends AbstractType
      */
     public array $properties = [];
 
+    public ?ObjectType $parent = null;
+
     /**
      * @var array<string, FunctionType>
      */
@@ -22,6 +24,13 @@ class ObjectType extends AbstractType
     ) {
         $this->name = $name;
         $this->properties = $properties;
+    }
+
+    public function setParent(?ObjectType $type)
+    {
+        $this->parent = $type;
+
+        return $this;
     }
 
     public function getPropertyFetchType(string $propertyName): Type
@@ -44,6 +53,11 @@ class ObjectType extends AbstractType
     public function nodes(): array
     {
         return ['methods', 'properties'];
+    }
+
+    public function publicNodes(): array
+    {
+        return ['properties'];
     }
 
     public function getMethodCallType(string $methodName): Type

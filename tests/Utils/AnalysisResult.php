@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Tests\Utils;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use PhpParser;
@@ -40,11 +41,11 @@ class AnalysisResult
 
     public function getVarType(string $varName, $line = INF)
     {
-        return $this->scope->getType(
+        return (new ReferenceTypeResolver($this->scope->index))->resolve($this->scope->getType(
             new Node\Expr\Variable($varName, [
                 'startLine' => $line,
             ]),
-        );
+        ));
     }
 
     public function getFunctionType(string $functionName): ?FunctionType

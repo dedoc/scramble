@@ -24,6 +24,18 @@ class ClassHandler implements CreatesScope
             $classType = new ObjectType($node->name ? $scope->resolveName($node->name->toString()) : 'anonymous@class'),
         );
 
+        if ($node->extends) {
+            $classType->setParent(
+                new ObjectType($scope->resolveName($node->extends->toString())),
+            );
+        }
+
+        if (str_contains($classType->name, 'Edge')) {
+//        dd($node);
+
+        }
+
+
         $scope->index->registerClassType($scope->resolveName($node->name->toString()), $classType);
 
         $scope->setType($node, $classType);
