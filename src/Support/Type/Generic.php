@@ -2,21 +2,19 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-class Generic extends AbstractType
+class Generic extends ObjectType
 {
-    public ObjectType $type;
+    /**
+     * The map of template type names to concrete types.
+     *
+     * @var array<string, Type>
+     */
+    public array $templateTypesMap;
 
-    public array $genericTypes;
-
-    public function __construct(ObjectType $type, array $genericTypes)
+    public function __construct(string $name, array $templateTypesMap)
     {
-        $this->type = $type;
-        $this->genericTypes = $genericTypes;
-    }
-
-    public function isInstanceOf(string $className)
-    {
-        return $this->type->isInstanceOf($className);
+        parent::__construct($name);
+        $this->templateTypesMap = $templateTypesMap;
     }
 
     public function getPropertyFetchType(string $propertyName): Type
@@ -26,35 +24,25 @@ class Generic extends AbstractType
 
     public function children(): array
     {
-        return [
-            $this->type,
-            ...$this->genericTypes,
-        ];
+        return $this->templateTypesMap;
     }
 
     public function nodes(): array
     {
-        return ['type', 'genericTypes'];
+        return ['templateTypesMap'];
     }
 
     public function publicNodes(): array
     {
-        return ['genericTypes'];
-    }
-
-    public function isSame(Type $type)
-    {
-        return $type instanceof static
-            && $this->type->isSame($type->type)
-            && collect($this->genericTypes)->every(fn (Type $t, $i) => $t->isSame($type->genericTypes[$i]));
+        return ['templateTypesMap'];
     }
 
     public function toString(): string
     {
         return sprintf(
             '%s<%s>',
-            $this->type->toString(),
-            implode(', ', array_map(fn ($t) => $t->toString(), $this->genericTypes))
+            $this->name,
+            implode(', ', array_map(fn ($t) => $t->toString(), $this->templateTypesMap))
         );
     }
 }

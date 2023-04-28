@@ -19,7 +19,7 @@ class ResourceCollectionTypeInfer implements ExpressionTypeInferExtension
 {
     public function getType(Expr $node, Scope $scope): ?Type
     {
-        if (! $scope->isInClass() || ! $scope->class()->isInstanceOf(ResourceCollection::class)) {
+        if (! $scope->isInClass() || ! $scope->class()?->isInstanceOf(ResourceCollection::class)) {
             return null;
         }
 

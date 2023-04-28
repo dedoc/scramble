@@ -2,14 +2,19 @@
 
 namespace Dedoc\Scramble\Infer\Services;
 
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Type\AssignmentInfo\AssignmentInfo;
 use Dedoc\Scramble\Support\Type\AssignmentInfo\SelfPropertyAssignmentInfo;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
+use Dedoc\Scramble\Support\Type\SelfType;
+use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
@@ -47,6 +52,10 @@ class ReferenceTypeResolver
                         return $this->resolveCallableCallReferenceType($t);
                     }
 
+                    if ($t instanceof NewCallReferenceType) {
+                        return $this->resolveNewCallReferenceType($t, $unknownClassHandler);
+                    }
+
                     return null;
                 };
 
@@ -72,9 +81,10 @@ class ReferenceTypeResolver
     {
         if (
             ($type->callee instanceof ObjectType)
-            && ! array_key_exists($type->callee->name, $this->index->classes)
+            && ! array_key_exists($type->callee->name, $this->index->classesDefinitions)
             && ! $unknownClassHandler($type->callee->name)
         ) {
+            // Class is not indexed, and we simply cannot get an info from it.
             return $type;
         }
 
@@ -97,18 +107,13 @@ class ReferenceTypeResolver
             return new UnknownType();
         }
 
-        if (
-            $calleeType instanceof ObjectType
-            && array_key_exists($calleeType->name, $this->index->classes)
-        ) {
-            $calleeType = $this->index->getClassType($calleeType->name);
-        }
+        $calleeDefinition = $this->index->getClassDefinition($calleeType->name);
 
-        if (! array_key_exists($type->methodName, $calleeType->methods)) {
+        if (! array_key_exists($type->methodName, $calleeDefinition->methods)) {
             return new UnknownType("Cannot get type of calling method [$type->methodName] on object [$calleeType->name]");
         }
 
-        return $this->getFunctionCallResult($calleeType->methods[$type->methodName], $type->arguments, $calleeType);
+        return $this->getFunctionCallResult($calleeDefinition->methods[$type->methodName], $type->arguments, $calleeType);
     }
 
     private function resolveCallableCallReferenceType(CallableCallReferenceType $type)
@@ -129,27 +134,63 @@ class ReferenceTypeResolver
         return $this->getFunctionCallResult($calleeType, $type->arguments);
     }
 
+    private function resolveNewCallReferenceType(NewCallReferenceType $type, callable $unknownClassHandler)
+    {
+        if (
+            ! array_key_exists($type->name, $this->index->classesDefinitions)
+            && ! $unknownClassHandler($type->name)
+        ) {
+            // Class is not indexed, and we simply cannot get an info from it.
+            return $type;
+        }
+
+        $classDefinition = $this->index->getClassDefinition($type->name);
+
+        if (! $classDefinition->templateTypes) {
+            return new ObjectType($type->name);
+        }
+
+        $inferredTemplates = collect($this->resolveTypesTemplatesFromArguments(
+            $classDefinition->templateTypes,
+            $classDefinition->methods['__construct']->type->arguments ?? [],
+            $type->arguments,
+        ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
+
+        return new Generic(
+            $classDefinition->name,
+            collect($classDefinition->templateTypes)->mapWithKeys(fn (TemplateType $t) => [
+                $t->name => $inferredTemplates->get($t->name, new UnknownType()),
+            ])->toArray(),
+        );
+    }
+
     private function getFunctionCallResult(
-        FunctionType $calleeType,
+        FunctionLikeDefinition $callee,
         array $arguments,
         /* When this is a handling for method call */
         ?ObjectType $calledOnType = null,
     )
     {
-        $returnType = $calleeType->getReturnType();
+        $returnType = $callee->type->getReturnType();
+        $isSelf = false;
+
+        if ($returnType instanceof SelfType && $calledOnType) {
+            $isSelf = true;
+            $returnType = $calledOnType;
+        }
 
         $inferredTemplates = [];
 
         if (
-            $calleeType->templates
+            $callee->type->templates
             && $shouldResolveTemplatesToActualTypes = (
-                (new TypeWalker)->firstPublic($returnType, fn (Type $t) => in_array($t, $calleeType->templates))
-                || collect($calleeType->propertyAssignments)->first(fn (AssignmentInfo $i) => (new TypeWalker)->firstPublic($i->getAssignedType(), fn (Type $t) => in_array($t, $calleeType->templates)))
+                (new TypeWalker)->firstPublic($returnType, fn (Type $t) => in_array($t, $callee->type->templates))
+                || collect($callee->sideEffects)->first(fn ($s) => $s instanceof SelfTemplateDefinition && (new TypeWalker)->firstPublic($s->type, fn (Type $t) => in_array($t, $callee->type->templates)))
             )
         ) {
             $inferredTemplates = $this->resolveTypesTemplatesFromArguments(
-                $calleeType->templates,
-                $calleeType->arguments,
+                $callee->type->templates,
+                $callee->type->arguments,
                 $arguments,
             );
 
@@ -162,27 +203,25 @@ class ReferenceTypeResolver
                 return null;
             });
 
-            if ((new TypeWalker)->firstPublic($returnType, fn (Type $t) => in_array($t, $calleeType->templates))) {
+            if ((new TypeWalker)->firstPublic($returnType, fn (Type $t) => in_array($t, $callee->type->templates))) {
                 throw new \LogicException("Couldn't replace a template for function and this should never happen.");
             }
         }
 
-        foreach ($calleeType->propertyAssignments as $assignment) {
+        $inferredTemplatesByTemplateName = collect($inferredTemplates)
+            ->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
+
+        foreach ($callee->sideEffects as $sideEffect) {
             if (
-                $assignment instanceof SelfPropertyAssignmentInfo
-                && $calledOnType
-                && $returnType instanceof ObjectType
-                && $returnType->name === $calledOnType->name
-                // && array_key_exists($assignment->property, $returnType->properties)
+                $sideEffect instanceof SelfTemplateDefinition
+                && $isSelf
+                && $returnType instanceof Generic
             ) {
-                $returnType->properties[$assignment->property] = (new TypeWalker)->replacePublic($assignment->getAssignedType(), function (Type $t) use ($inferredTemplates) {
-                    foreach ($inferredTemplates as [$search, $replace]) {
-                        if ($t === $search) {
-                            return $replace;
-                        }
-                    }
-                    return null;
-                });
+                $templateType = $sideEffect->type instanceof TemplateType
+                    ? $inferredTemplatesByTemplateName->get($sideEffect->type->name, new UnknownType())
+                    : $sideEffect->type;
+
+                $returnType->templateTypesMap[$sideEffect->definedTemplate] = $templateType;
             }
         }
 
@@ -191,7 +230,7 @@ class ReferenceTypeResolver
 
     private function resolveTypesTemplatesFromArguments($templates, $templatedArguments, $realArguments)
     {
-        return array_map(function (TemplateType $template) use ($templatedArguments, $realArguments) {
+        return array_values(array_filter(array_map(function (TemplateType $template) use ($templatedArguments, $realArguments) {
             $argumentIndexName = null;
             $index = 0;
             foreach ($templatedArguments as $name => $type) {
@@ -202,7 +241,7 @@ class ReferenceTypeResolver
                 $index++;
             }
             if (! $argumentIndexName) {
-                throw new \LogicException("Cannot infer type of template $template->name from arguments.");
+                return null;
             }
 
             $foundCorrespondingTemplateType = $realArguments[$argumentIndexName[1]]
@@ -217,6 +256,6 @@ class ReferenceTypeResolver
                 $template,
                 $foundCorrespondingTemplateType,
             ];
-        }, $templates);
+        }, $templates)));
     }
 }

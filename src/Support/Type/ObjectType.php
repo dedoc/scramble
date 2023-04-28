@@ -4,33 +4,9 @@ namespace Dedoc\Scramble\Support\Type;
 
 class ObjectType extends AbstractType
 {
-    public string $name;
-
-    /**
-     * @var array<string, Type>
-     */
-    public array $properties = [];
-
-    public ?ObjectType $parent = null;
-
-    /**
-     * @var array<string, FunctionType>
-     */
-    public array $methods = [];
-
     public function __construct(
-        string $name,
-        array $properties = []
+        public string $name,
     ) {
-        $this->name = $name;
-        $this->properties = $properties;
-    }
-
-    public function setParent(?ObjectType $type)
-    {
-        $this->parent = $type;
-
-        return $this;
     }
 
     public function getPropertyFetchType(string $propertyName): Type
@@ -48,16 +24,6 @@ class ObjectType extends AbstractType
             ...array_values($this->properties),
             ...array_values($this->methods),
         ];
-    }
-
-    public function nodes(): array
-    {
-        return ['methods', 'properties'];
-    }
-
-    public function publicNodes(): array
-    {
-        return ['properties'];
     }
 
     public function getMethodCallType(string $methodName): Type

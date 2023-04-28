@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Tests\Utils;
 
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -66,5 +67,10 @@ class AnalysisResult
     public function getAst()
     {
         return $this->ast;
+    }
+
+    public function getClassDefinition(string $string): ?ClassDefinition
+    {
+        return $this->scope->index->getClassDefinition($string);
     }
 }

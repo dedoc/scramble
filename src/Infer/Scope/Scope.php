@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Scope;
 
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\BooleanNotTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
@@ -12,6 +13,8 @@ use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
+use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
@@ -70,7 +73,7 @@ class Scope
         }
 
         if ($node instanceof Node\Expr\Variable && $node->name === 'this') {
-            return $this->context->class;
+            return new SelfType;
         }
 
         if ($node instanceof Node\Expr\Variable) {
@@ -85,6 +88,17 @@ class Scope
 
         if ($this->nodeTypesResolver->hasType($node)) { // For case when the unknown type was in node type resolver.
             return $type;
+        }
+
+        if ($node instanceof Node\Expr\New_) {
+            if (! $node->class instanceof Node\Name) {
+                return $type;
+            }
+
+            return $this->setType(
+                $node,
+                new NewCallReferenceType($node->class->toString(), $this->getArgsTypes($node->args)),
+            );
         }
 
         if ($node instanceof Node\Expr\MethodCall) {
@@ -143,7 +157,7 @@ class Scope
 
     public function isInClass()
     {
-        return (bool) $this->context->class;
+        return (bool) $this->context->classDefinition;
     }
 
     public function class(): ?ObjectType
@@ -151,9 +165,19 @@ class Scope
         return $this->context->class;
     }
 
+    public function classDefinition(): ?ClassDefinition
+    {
+        return $this->context->classDefinition;
+    }
+
+    public function functionDefinition()
+    {
+        return $this->context->functionDefinition;
+    }
+
     public function isInFunction()
     {
-        return (bool) $this->context->function;
+        return (bool) $this->context->functionDefinition;
     }
 
     public function function(): ?FunctionType

@@ -19,8 +19,10 @@ class PropertyFetchHandler
             return null;
         }
 
-        $type = $scope->getType($node->var);
+        // what?
 
-        $scope->setType($node, $type->getPropertyFetchType($name));
+//        $type = $scope->getType($node->var);
+//
+//        $scope->setType($node, $type->getPropertyFetchType($name));
     }
 }

@@ -112,7 +112,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
                     $item->value instanceof Generic
                     && $item->value->isInstanceOf(MergeValue::class)
                 ) {
-                    $arrayToMerge = $item->value->genericTypes[1];
+                    $arrayToMerge = $item->value->templateTypesMap[1];
 
                     // Second generic argument of the `MergeValue` class must be an array.
                     // Otherwise, we ignore it from the resulting array.
@@ -122,8 +122,8 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
                     $arrayToMergeItems = $this->flattenMergeValues($arrayToMerge->items);
 
-                    $mergingArrayValuesShouldBeRequired = $item->value->genericTypes[0] instanceof LiteralBooleanType
-                        && $item->value->genericTypes[0]->value === true;
+                    $mergingArrayValuesShouldBeRequired = $item->value->templateTypesMap[0] instanceof LiteralBooleanType
+                        && $item->value->templateTypesMap[0]->value === true;
 
                     if (! $mergingArrayValuesShouldBeRequired) {
                         foreach ($arrayToMergeItems as $mergingItem) {
@@ -214,7 +214,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     private function getResourceType(Type $type): Type
     {
         if ($type instanceof Generic) {
-            $type = $type->genericTypes[0] ?? new \Dedoc\Scramble\Support\Type\UnknownType();
+            $type = $type->templateTypesMap[0] ?? new \Dedoc\Scramble\Support\Type\UnknownType();
         }
 
         if ($type instanceof ObjectType) {

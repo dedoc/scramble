@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\Scope;
 
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 
@@ -22,6 +24,11 @@ class Index
      */
     public array $classes = [];
 
+    /**
+     * @var array<string, ClassDefinition>
+     */
+    public array $classesDefinitions = [];
+
     public function registerFunctionType(string $fnName, FunctionType $type): void
     {
         $this->functions[$fnName] = $type;
@@ -40,5 +47,20 @@ class Index
     public function getClassType(string $className): ?ObjectType
     {
         return $this->classes[$className] ?? null;
+    }
+
+    public function registerClassDefinition(ClassDefinition $classDefinition): void
+    {
+        $this->classesDefinitions[$classDefinition->name] = $classDefinition;
+    }
+
+    public function getClassDefinition(string $className): ?ClassDefinition
+    {
+        return $this->classesDefinitions[$className] ?? null;
+    }
+
+    public function registerFunctionDefinition(FunctionLikeDefinition $fnDefinition)
+    {
+        $this->functionsDefinitions[$fnDefinition->type->name] = $fnDefinition;
     }
 }

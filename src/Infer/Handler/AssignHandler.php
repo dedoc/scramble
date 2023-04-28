@@ -4,6 +4,10 @@ namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\AssignmentInfo\SelfPropertyAssignmentInfo;
+use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
+use Dedoc\Scramble\Support\Type\TemplateType;
+use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Support\Str;
 use PhpParser\Node;
 
 class AssignHandler
@@ -46,9 +50,35 @@ class AssignHandler
             return;
         }
 
-        $scope->function()->addPropertyAssignmentInfo(new SelfPropertyAssignmentInfo(
-            $propertyFetchNode->name->toString(),
+        if ($scope->functionDefinition()->type->name === '__construct') {
+            return;
+        }
+
+        if (! isset($scope->classDefinition()->properties[$propertyFetchNode->name->toString()]->type)) {
+            return;
+        }
+
+        if (! ($templateType = $scope->classDefinition()->properties[$propertyFetchNode->name->toString()]->type) instanceof TemplateType) {
+            return;
+        }
+
+        $scope->functionDefinition()->sideEffects[] = new SelfTemplateDefinition(
+            $templateType->name,
             $scope->getType($node->expr),
-        ));
+        );
+
+        /*
+         * If a thing that is being assigned to the property is a context function's parameter,
+         * and the function is we remove a
+         */
+
+//        dd(
+//            $scope->function()
+//        );
+
+//        $scope->function()->addPropertyAssignmentInfo(new SelfPropertyAssignmentInfo(
+//            $propertyFetchNode->name->toString(),
+//            $scope->getType($node->expr),
+//        ));
     }
 }

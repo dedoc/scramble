@@ -20,7 +20,7 @@ function analyzeFile(string $code, array $extensions = []): AnalysisResult
     $index = new Index();
     $infer = app()->make(TypeInferer::class, [
         'namesResolver' => new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing())),
-        'extensions' => [...$extensions, ...DefaultExtensions::infer()],
+        'extensions' => [/*...$extensions, ...DefaultExtensions::infer()*/],
         'referenceTypeResolver' => new \Dedoc\Scramble\Infer\Services\ReferenceTypeResolver($index),
         'index' => $index,
     ]);
