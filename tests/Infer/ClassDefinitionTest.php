@@ -110,3 +110,18 @@ it('infers templated property fetch type', function () {
 
     expect($type->methods['foo']->type->toString())->toBe('(): TProp');
 });
+
+it('generates template types without conflicts', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public $prop;
+    public function getPropGetter($prop) {
+        return fn ($prop, $q) => [$q, $prop, $this->prop];
+    }
+}
+EOD)->getClassDefinition('Foo');
+
+    expect($type->methods['getPropGetter']->type->toString())
+        ->toBe('<TProp1>(TProp1): <TProp2, TQ>(TProp2, TQ): array{0: TQ, 1: TProp2, 2: TProp}');
+});

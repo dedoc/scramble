@@ -7,7 +7,7 @@ use Dedoc\Scramble\Support\Type\Type;
 class CallableCallReferenceType extends AbstractReferenceType
 {
     public function __construct(
-        public string $callee,
+        public Type|string $callee,
         /** @var Type[] $arguments */
         public array $arguments,
     ) {
@@ -20,6 +20,8 @@ class CallableCallReferenceType extends AbstractReferenceType
             array_map(fn ($t) => $t->toString(), $this->arguments),
         );
 
-        return "(λ{$this->callee})($argsTypes)";
+        $calleeString = is_string($this->callee) ? $this->callee : $this->callee->toString();
+
+        return "(λ{$calleeString})($argsTypes)";
     }
 }

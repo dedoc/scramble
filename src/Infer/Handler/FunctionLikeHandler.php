@@ -51,10 +51,12 @@ class FunctionLikeHandler implements CreatesScope
             sideEffects: [],
         ));
 
-//        $scope->setType($node, $fnType = new FunctionType($node->name->name ?? 'anonymous'));
+        if ($node instanceof Node\Expr\ArrowFunction || $node instanceof Node\Expr\Closure) {
+            $scope->setType($node, $fnType);
+        }
+
         if (isset($node->name->name) && $node instanceof Node\Stmt\Function_) {
             $scope->index->registerFunctionDefinition($fnDefinition);
-//            $scope->index->registerFunctionType($node->name->toString(), $fnType);
         }
 
         // If the function is __construct and we're in the class context, we want to handle
@@ -64,7 +66,7 @@ class FunctionLikeHandler implements CreatesScope
 
         $localTemplates = [];
         $fnType->arguments = collect($node->getParams())
-            ->mapWithKeys(function (Node\Param $param) use ($classDefinitionTemplatesTypes, &$localTemplates) {
+            ->mapWithKeys(function (Node\Param $param) use ($scope, $classDefinitionTemplatesTypes, &$localTemplates) {
                 if (! $param->var instanceof Node\Expr\Variable) {
                     return [];
                 }
@@ -75,7 +77,7 @@ class FunctionLikeHandler implements CreatesScope
 
                 $type = isset($param->type)
                     ? TypeHelper::createTypeFromTypeNode($param->type)
-                    : new TemplateType('T'.Str::studly($param->var->name));
+                    : new TemplateType($scope->makeConflictFreeTemplateName('T'.Str::studly($param->var->name)));
 
                 if ($type instanceof TemplateType) {
                     $localTemplates[] = $type;
@@ -101,8 +103,6 @@ class FunctionLikeHandler implements CreatesScope
             );
         }
 
-//        $scope->context->setFunction($fnType);
-
         if ($scope->isInClass() && $node instanceof Node\Stmt\ClassMethod) {
             $scope->classDefinition()->methods[$fnType->name] = $fnDefinition;
         }
@@ -110,7 +110,7 @@ class FunctionLikeHandler implements CreatesScope
 
     public function leave(FunctionLike $node, Scope $scope)
     {
-        $type = $scope->context->function;
+        $fnDefinition = $scope->functionDefinition();
 
         /*
          * @todo
@@ -122,7 +122,7 @@ class FunctionLikeHandler implements CreatesScope
         if (
             ($returnTypeAnnotation = $node->getReturnType())
             && (
-                in_array(get_class($type->getReturnType()), [
+                in_array(get_class($fnDefinition->type->getReturnType()), [
                     UnknownType::class,
                     VoidType::class, // When fn is not analyzed (?)
                 ])
@@ -133,7 +133,7 @@ class FunctionLikeHandler implements CreatesScope
                 ])
             )
         ) {
-            $type->setReturnType(TypeHelper::createTypeFromTypeNode($returnTypeAnnotation) ?: new VoidType);
+            $fnDefinition->type->setReturnType(TypeHelper::createTypeFromTypeNode($returnTypeAnnotation) ?: new VoidType);
         }
 
         // Simple way of handling the arrow functions, as they do not have a return statement.
@@ -144,15 +144,6 @@ class FunctionLikeHandler implements CreatesScope
                 $scope,
             );
         }
-
-        // In case of method in class being analyzed, we want to attach the method information
-        // to the class so classes can be analyzed later.
-//        if ($node instanceof Node\Stmt\ClassMethod) {
-//            $scope->context->class->methods = array_merge(
-//                $scope->context->class->methods,
-//                [$node->name->name => $type],
-//            );
-//        }
     }
 
     private function findPropertyAssignedArgs(FunctionLike $node, Scope $scope, FunctionType $fnType)
@@ -182,7 +173,7 @@ class FunctionLikeHandler implements CreatesScope
                 && $s->expr->var->var->name === 'this'
                 && $s->expr->var->name instanceof Node\Identifier
                 && $s->expr->expr instanceof Node\Expr\Variable
-                && $argumentsByKeys[$s->expr->expr->name] ?? false,
+                && ($argumentsByKeys[$s->expr->expr->name] ?? false),
         );
 
         return array_reduce($assignPropertiesToThisNodes, function ($acc, Node\Stmt\Expression $s) use ($scope) {

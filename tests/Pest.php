@@ -13,7 +13,7 @@ use PhpParser\ParserFactory as ParserFactoryAlias;
 
 uses(TestCase::class)->in(__DIR__);
 
-function analyzeFile(string $code): AnalysisResult
+function analyzeFile(string $code, $extensions = [], bool $resolveReferences = true): AnalysisResult
 {
     if ($code[0] === '/') {
         $code = file_get_contents($code);
@@ -23,9 +23,10 @@ function analyzeFile(string $code): AnalysisResult
     $index = new Index();
     $infer = app()->make(TypeInferer::class, [
         'namesResolver' => new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing())),
-        'extensions' => [/*...$extensions, ...DefaultExtensions::infer()*/],
+        'extensions' => [...$extensions,/* ...DefaultExtensions::infer()*/],
         'referenceTypeResolver' => new \Dedoc\Scramble\Infer\Services\ReferenceTypeResolver($index),
         'index' => $index,
+        'resolveReferences' => $resolveReferences,
     ]);
     $traverser = new NodeTraverser;
     $traverser->addVisitor($infer);

@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Tests\Utils;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
@@ -74,6 +75,11 @@ class AnalysisResult
     public function getClassDefinition(string $string): ?ClassDefinition
     {
         return $this->scope->index->getClassDefinition($string);
+    }
+
+    public function getFunctionDefinition(string $string): ?FunctionLikeDefinition
+    {
+        return $this->scope->index->getFunctionDefinition($string);
     }
 
     public function getExpressionType(string $code)

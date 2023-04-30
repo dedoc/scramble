@@ -6,9 +6,9 @@ it('generates function type with generic correctly', function () {
 function foo ($a) {
     return $a;
 }
-EOD)->getFunctionType('foo');
+EOD)->getFunctionDefinition('foo');
 
-    expect($type->toString())->toBe('<TA>(TA): TA');
+    expect($type->type->toString())->toBe('<TA>(TA): TA');
 });
 
 it('gets a type of call of a function with generic correctly', function () {

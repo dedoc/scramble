@@ -51,7 +51,7 @@ class ReferenceTypeResolver
                     }
 
                     if ($t instanceof CallableCallReferenceType) {
-                        return $this->resolveCallableCallReferenceType($scope, $t);
+                        return $this->resolveCallableCallReferenceType($scope, $t, $unknownClassHandler);
                     }
 
                     if ($t instanceof NewCallReferenceType) {
@@ -118,26 +118,32 @@ class ReferenceTypeResolver
             : $this->index->getClassDefinition($calleeType->name);
 
         if (! array_key_exists($type->methodName, $calleeDefinition->methods)) {
-            return new UnknownType("Cannot get type of calling method [$type->methodName] on object [$calleeType->name]");
+            return new UnknownType("Cannot get type of calling method [$type->methodName] on object [$calleeDefinition->name]");
         }
 
         return $this->getFunctionCallResult($calleeDefinition->methods[$type->methodName], $type->arguments, $calleeType);
     }
 
-    private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)
+    private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type, callable $unknownClassHandler)
     {
-        $calleeType = $this->index->getFunctionType($type->callee);
+        $calleeType = is_string($type->callee)
+            ? $this->index->getFunctionDefinition($type->callee)
+            : $this->resolve($scope, $type->callee, $unknownClassHandler);
 
         if (! $calleeType) {
             // Callee cannot be resolved from index.
             return $type;
         }
 
+        if ($calleeType instanceof FunctionType) { // When resolving into a closure.
+            $calleeType = new FunctionLikeDefinition($calleeType);
+        }
+
         // @todo: callee now can be either in index or not, add support for other cases.
-        // if ($calleeType instanceof AbstractReferenceType) {
-        //    // Callee cannot be resolved.
-        //    return $type;
-        //}
+         if (! $calleeType instanceof FunctionLikeDefinition) {
+            // Callee cannot be resolved.
+            return $type;
+        }
 
         return $this->getFunctionCallResult($calleeType, $type->arguments);
     }

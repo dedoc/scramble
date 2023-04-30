@@ -25,7 +25,7 @@ class PropertyHandler
             $propertyDefinition = new ClassPropertyDefinition(
                 type: $node->type
                     ? TypeHelper::createTypeFromTypeNode($node->type)
-                    : new TemplateType('T'.Str::studly($prop->name->name)),
+                    : new TemplateType($scope->makeConflictFreeTemplateName('T'.Str::studly($prop->name->name))),
                 defaultType: $prop->default ? $scope->getType($prop->default) : null,
             );
 

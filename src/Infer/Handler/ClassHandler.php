@@ -30,15 +30,6 @@ class ClassHandler implements CreatesScope
         ));
 
         $scope->index->registerClassDefinition($classDefinition);
-
-        // REMOVE EVERYTHING ELSE BELLOW?
-//        $scope->context->setClass(
-//            $classType = new ObjectType($node->name ? $scope->resolveName($node->name->toString()) : 'anonymous@class'),
-//        );
-//
-//        $scope->index->registerClassType($scope->resolveName($node->name->toString()), $classType);
-//
-//        $scope->setType($node, $classType);
     }
 
     public function leave(Node\Stmt\Class_ $_, Scope $scope)

@@ -75,3 +75,41 @@ it('understands templated property fetch type value for property fetch called in
     expect($type->toString())->toBe('int(42)');
 });
 
+it('resolves nested templates', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public $prop;
+    public function __construct($prop)
+    {
+        $this->prop = $prop;
+    }
+    public function foo($prop, $a) {
+        return fn ($prop) => [$this->prop, $prop, $a];
+    }
+}
+EOD)->getExpressionType('(new Foo("wow"))->foo("prop", 42)(12)');
+
+    expect($type->toString())->toBe('array{0: string(wow), 1: int(12), 2: int(42)}');
+});
+
+it('doesnt resolve templates from not own definition', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public $a;
+    public $prop;
+    public function __construct($a, $prop)
+    {
+        $this->a = $a;
+        $this->prop = $prop;
+    }
+    public function getProp() {
+        return $this->prop;
+    }
+}
+EOD)->getExpressionType('(new Foo(1, fn ($a) => $a))->getProp()');
+
+    expect($type->toString())->toBe('<TA>(TA): TA');
+});
+

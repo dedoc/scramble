@@ -63,4 +63,9 @@ class Index
     {
         $this->functionsDefinitions[$fnDefinition->type->name] = $fnDefinition;
     }
+
+    public function getFunctionDefinition(string $fnName): ?FunctionLikeDefinition
+    {
+        return $this->functionsDefinitions[$fnName] ?? null;
+    }
 }

@@ -8,9 +8,9 @@ class Foo {
         return $a;
     }
 }
-EOD)->getClassType('Foo');
+EOD)->getClassDefinition('Foo');
 
-    expect($type->methods['foo']->toString())->toBe('<TA>(TA): TA');
+    expect($type->methods['foo']->type->toString())->toBe('<TA>(TA): TA');
 });
 
 it('gets a type of call of a function with generic correctly', function () {

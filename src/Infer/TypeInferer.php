@@ -33,11 +33,12 @@ class TypeInferer extends NodeVisitorAbstract
     private FileNameResolver $namesResolver;
 
     public function __construct(
-        FileNameResolver $namesResolver,
-        array $extensions,
-        array $handlers,
+        FileNameResolver              $namesResolver,
+        array                         $extensions,
+        array                         $handlers,
         private ReferenceTypeResolver $referenceTypeResolver,
-        private Index $index,
+        private Index                 $index,
+        private bool                  $shouldResolveReferences = true,
     ) {
         $this->namesResolver = $namesResolver;
 
@@ -141,6 +142,19 @@ class TypeInferer extends NodeVisitorAbstract
             }
         }
 
+    }
+
+    private function resolveReferencesInFunction(Scope $scope, $functionType): void
+    {
+        if (! ReferenceTypeResolver::hasResolvableReferences($returnType = $functionType->getReturnType())) {
+            return;
+        }
+
+        $resolvedReference = $this->referenceTypeResolver->resolve($scope, $returnType);
+
+        $functionType->setReturnType(
+            $resolvedReference->mergeAttributes($returnType->attributes())
+        );
     }
 
     private function getOrCreateScope()
