@@ -31,23 +31,4 @@ class ClassHandler implements CreatesScope
 
         $scope->index->registerClassDefinition($classDefinition);
     }
-
-    public function leave(Node\Stmt\Class_ $_, Scope $scope)
-    {
-        $resolveReferencesInFunctionReturn = function ($functionType) use ($scope) {
-            if (! ReferenceTypeResolver::hasResolvableReferences($returnType = $functionType->getReturnType())) {
-                return;
-            }
-
-            $resolvedReference = (new ReferenceTypeResolver($scope->index))->resolve($scope, $returnType);
-
-            $functionType->setReturnType(
-                $resolvedReference->mergeAttributes($returnType->attributes())
-            );
-        };
-
-        foreach ($scope->classDefinition()->methods as $methodDefinition) {
-            $resolveReferencesInFunctionReturn($methodDefinition->type);
-        }
-    }
 }

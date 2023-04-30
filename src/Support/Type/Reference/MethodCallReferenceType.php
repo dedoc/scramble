@@ -23,4 +23,12 @@ class MethodCallReferenceType extends AbstractReferenceType
 
         return "(#{$this->callee->toString()}).{$this->methodName}($argsTypes)";
     }
+
+    public function dependencies(): array
+    {
+        return static::getDependencies([
+            $this->callee,
+            ...$this->arguments,
+        ]);
+    }
 }

@@ -29,6 +29,11 @@ class Index
      */
     public array $classesDefinitions = [];
 
+    /**
+     * @var array<string, FunctionLikeDefinition>
+     */
+    public array $functionsDefinitions = [];
+
     public function registerFunctionType(string $fnName, FunctionType $type): void
     {
         $this->functions[$fnName] = $type;

@@ -24,4 +24,12 @@ class CallableCallReferenceType extends AbstractReferenceType
 
         return "(λ{$calleeString})($argsTypes)";
     }
+
+    public function dependencies(): array
+    {
+        return static::getDependencies([
+            $this->callee,
+            ...$this->arguments,
+        ]);
+    }
 }

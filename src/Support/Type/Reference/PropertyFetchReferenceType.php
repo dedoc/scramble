@@ -16,4 +16,9 @@ class PropertyFetchReferenceType extends AbstractReferenceType
     {
         return "(#{$this->object->toString()}).{$this->propertyName}";
     }
+
+    public function dependencies(): array
+    {
+        return static::getDependencies($this->object);
+    }
 }

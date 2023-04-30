@@ -129,7 +129,7 @@ EOD)->getClassDefinition('PendingUnknownWithSelfReference');
     expect($type->methods['returnSomeCall']->type->toString())
         ->toBe('(): unknown')
         ->and($type->methods['returnThis']->type->toString())
-        ->toBe('(): PendingUnknownWithSelfReference');
+        ->toBe('(): self');
 });
 
 it('resolves deep references in unknowns after traversal', function () {

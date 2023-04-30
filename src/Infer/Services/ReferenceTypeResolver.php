@@ -70,13 +70,8 @@ class ReferenceTypeResolver
                 }
 
                 if ($resolved === $type) {
-                    return $type;
                     return new UnknownType('self reference');
                 }
-
-//                if ($resolved instanceof AbstractReferenceType) {
-//                    return $resolveNested ? $resolved : new UnknownType();
-//                }
 
                 return $this->resolve($scope, $resolved, $unknownClassHandler);
             },

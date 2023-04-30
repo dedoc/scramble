@@ -9,13 +9,16 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 
 class ScopeContext
 {
-    public ?ClassDefinition $classDefinition = null;
-
-    public ?FunctionLikeDefinition $functionDefinition = null;
-
     public ?ObjectType $class = null;
 
     public ?FunctionType $function = null;
+
+    public function __construct(
+        public ?ClassDefinition $classDefinition = null,
+        public ?FunctionLikeDefinition $functionDefinition = null,
+    )
+    {
+    }
 
     public function setClass(?ObjectType $class): ScopeContext
     {

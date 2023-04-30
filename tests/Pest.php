@@ -26,7 +26,7 @@ function analyzeFile(string $code, $extensions = [], bool $resolveReferences = t
         'extensions' => [...$extensions,/* ...DefaultExtensions::infer()*/],
         'referenceTypeResolver' => new \Dedoc\Scramble\Infer\Services\ReferenceTypeResolver($index),
         'index' => $index,
-        'resolveReferences' => $resolveReferences,
+        'shouldResolveReferences' => $resolveReferences,
     ]);
     $traverser = new NodeTraverser;
     $traverser->addVisitor($infer);

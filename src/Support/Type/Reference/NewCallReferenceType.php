@@ -22,4 +22,12 @@ class NewCallReferenceType extends AbstractReferenceType
 
         return "(new {$this->name})($argsTypes)";
     }
+
+    public function dependencies(): array
+    {
+        return static::getDependencies([
+            $this->name,
+            ...$this->arguments,
+        ]);
+    }
 }

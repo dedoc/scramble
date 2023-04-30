@@ -21,6 +21,9 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
+use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 
@@ -105,7 +108,6 @@ class TypeInferer extends NodeVisitorAbstract
 
     public function afterTraverse(array $nodes)
     {
-        return;
         /*
          * Now only one file a time gets traversed. So it is ok to simply take everything
          * added to index and check for reference types.
@@ -120,41 +122,47 @@ class TypeInferer extends NodeVisitorAbstract
          * may be not applicable when analyzing multiple files per index. Pay attention to this as it may
          * hurt performance unless handled.
          */
-        $resolveReferencesInFunctionReturn = function ($functionType) {
+        $resolveReferencesInFunctionReturn = function ($scope, $functionType) {
             if (! ReferenceTypeResolver::hasResolvableReferences($returnType = $functionType->getReturnType())) {
                 return;
             }
 
-            $resolvedReference = $this->referenceTypeResolver->resolve($returnType);
+            $resolvedReference = $this->referenceTypeResolver->resolve($scope, $returnType);
+
+            if ($this->shouldResolveReferences && ReferenceTypeResolver::hasResolvableReferences($resolvedReference)) {
+                $resolvedReference = (new TypeWalker)->replacePublic($resolvedReference, fn ($t) => $t instanceof AbstractReferenceType ? new UnknownType() : null);
+            }
+
+            if ($resolvedReference instanceof AbstractReferenceType && $this->shouldResolveReferences) {
+                $resolvedReference = new UnknownType();
+            }
 
             $functionType->setReturnType(
                 $resolvedReference->mergeAttributes($returnType->attributes())
             );
         };
 
-        foreach ($this->index->functions as $functionType) {
-            $resolveReferencesInFunctionReturn($functionType);
+        foreach ($this->index->functionsDefinitions as $functionDefinition) {
+            $fnScope = new Scope(
+                $this->index,
+                new NodeTypesResolver,
+                new ScopeContext(functionDefinition: $functionDefinition),
+                $this->namesResolver,
+            );
+            $resolveReferencesInFunctionReturn($fnScope, $functionDefinition->type);
         }
 
         foreach ($this->index->classesDefinitions as $classDefinition) {
             foreach ($classDefinition->methods as $methodDefinition) {
-                $resolveReferencesInFunctionReturn($methodDefinition->type);
+                $methodScope = new Scope(
+                    $this->index,
+                    new NodeTypesResolver,
+                    new ScopeContext($classDefinition, $methodDefinition),
+                    $this->namesResolver,
+                );
+                $resolveReferencesInFunctionReturn($methodScope, $methodDefinition->type);
             }
         }
-
-    }
-
-    private function resolveReferencesInFunction(Scope $scope, $functionType): void
-    {
-        if (! ReferenceTypeResolver::hasResolvableReferences($returnType = $functionType->getReturnType())) {
-            return;
-        }
-
-        $resolvedReference = $this->referenceTypeResolver->resolve($scope, $returnType);
-
-        $functionType->setReturnType(
-            $resolvedReference->mergeAttributes($returnType->attributes())
-        );
     }
 
     private function getOrCreateScope()
