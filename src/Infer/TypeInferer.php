@@ -12,7 +12,6 @@ use Dedoc\Scramble\Infer\Handler\CreatesScope;
 use Dedoc\Scramble\Infer\Handler\ExceptionInferringExtensions;
 use Dedoc\Scramble\Infer\Handler\ExpressionTypeInferringExtensions;
 use Dedoc\Scramble\Infer\Handler\FunctionLikeHandler;
-use Dedoc\Scramble\Infer\Handler\PropertyFetchHandler;
 use Dedoc\Scramble\Infer\Handler\PropertyHandler;
 use Dedoc\Scramble\Infer\Handler\ReturnHandler;
 use Dedoc\Scramble\Infer\Handler\ThrowHandler;
@@ -47,7 +46,6 @@ class TypeInferer extends NodeVisitorAbstract
             new AssignHandler(),
             new ClassHandler(),
             new PropertyHandler(),
-            new PropertyFetchHandler(),
             new ArrayHandler(),
             new ArrayItemHandler(),
             new ReturnHandler(),
@@ -106,6 +104,7 @@ class TypeInferer extends NodeVisitorAbstract
 
     public function afterTraverse(array $nodes)
     {
+        return;
         /*
          * Now only one file a time gets traversed. So it is ok to simply take everything
          * added to index and check for reference types.
@@ -136,11 +135,12 @@ class TypeInferer extends NodeVisitorAbstract
             $resolveReferencesInFunctionReturn($functionType);
         }
 
-        foreach ($this->index->classes as $classType) {
-            foreach ($classType->methods as $methodType) {
-                $resolveReferencesInFunctionReturn($methodType);
+        foreach ($this->index->classesDefinitions as $classDefinition) {
+            foreach ($classDefinition->methods as $methodDefinition) {
+                $resolveReferencesInFunctionReturn($methodDefinition->type);
             }
         }
+
     }
 
     private function getOrCreateScope()

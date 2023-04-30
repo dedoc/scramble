@@ -14,6 +14,7 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -110,6 +111,18 @@ class Scope
             return $this->setType(
                 $node,
                 new MethodCallReferenceType($this->getType($node->var), $node->name->name, $this->getArgsTypes($node->args)),
+            );
+        }
+
+        if ($node instanceof Node\Expr\PropertyFetch) {
+            // Only string prop names support.
+            if (! $name = ($node->name->name ?? null)) {
+                return null;
+            }
+
+            return $this->setType(
+                $node,
+                new PropertyFetchReferenceType($this->getType($node->var), $name),
             );
         }
 

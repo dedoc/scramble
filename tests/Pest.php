@@ -13,8 +13,11 @@ use PhpParser\ParserFactory as ParserFactoryAlias;
 
 uses(TestCase::class)->in(__DIR__);
 
-function analyzeFile(string $code, array $extensions = []): AnalysisResult
+function analyzeFile(string $code): AnalysisResult
 {
+    if ($code[0] === '/') {
+        $code = file_get_contents($code);
+    }
     $fileAst = (new ParserFactoryAlias)->create(ParserFactoryAlias::PREFER_PHP7)->parse($code);
 
     $index = new Index();

@@ -4,7 +4,7 @@ namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use PhpParser\Node;
 
 class ClassHandler implements CreatesScope
@@ -39,5 +39,24 @@ class ClassHandler implements CreatesScope
 //        $scope->index->registerClassType($scope->resolveName($node->name->toString()), $classType);
 //
 //        $scope->setType($node, $classType);
+    }
+
+    public function leave(Node\Stmt\Class_ $_, Scope $scope)
+    {
+        $resolveReferencesInFunctionReturn = function ($functionType) use ($scope) {
+            if (! ReferenceTypeResolver::hasResolvableReferences($returnType = $functionType->getReturnType())) {
+                return;
+            }
+
+            $resolvedReference = (new ReferenceTypeResolver($scope->index))->resolve($scope, $returnType);
+
+            $functionType->setReturnType(
+                $resolvedReference->mergeAttributes($returnType->attributes())
+            );
+        };
+
+        foreach ($scope->classDefinition()->methods as $methodDefinition) {
+            $resolveReferencesInFunctionReturn($methodDefinition->type);
+        }
     }
 }
