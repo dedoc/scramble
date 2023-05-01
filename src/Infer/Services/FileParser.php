@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
 use Illuminate\Support\Arr;
+use PhpParser\Node\Stmt;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
@@ -15,7 +16,7 @@ use PhpParser\Parser;
 class FileParser
 {
     /**
-     * @var array<string, FileParserResult>
+     * @var array<string, Stmt[]>
      */
     private array $cache = [];
 
@@ -26,31 +27,31 @@ class FileParser
         $this->parser = $parser;
     }
 
-    public function parse(string $path): FileParserResult
+    public function parse(string $path): array
     {
-        return $this->cache[$path] ??= new FileParserResult(
-            $statements = Arr::wrap($this->parser->parse(file_get_contents($path))),
-            $this->resolveNames($statements),
+        return $this->cache[$path] ??= $this->resolveNames(
+            $this->parser->parse(file_get_contents($path)),
         );
     }
 
-    public function parseContent(string $content): FileParserResult
+    public function parseContent(string $content): array
     {
-        return $this->cache[md5($content)] ??= new FileParserResult(
-            $statements = Arr::wrap($this->parser->parse($content)),
-            $this->resolveNames($statements),
+        return $this->cache[md5($content)] ??= $this->resolveNames(
+            $this->parser->parse($content),
         );
     }
 
-    private function resolveNames($statements): FileNameResolver
+    private function resolveNames($statements): array
     {
+        $statements = Arr::wrap($statements);
+
         $traverser = new NodeTraverser;
         $traverser->addVisitor($nameResolver = new NameResolver());
         $traverser->addVisitor(new PhpDocResolver(
-            $fileNameResolver = new FileNameResolver($nameResolver->getNameContext()),
+            new FileNameResolver($nameResolver->getNameContext()),
         ));
         $traverser->traverse($statements);
 
-        return $fileNameResolver;
+        return $statements;
     }
 }

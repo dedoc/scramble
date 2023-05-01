@@ -41,13 +41,11 @@ class Scope
         Index $index,
         NodeTypesResolver $nodeTypesResolver,
         ScopeContext $context,
-        FileNameResolver $namesResolver,
         ?Scope $parentScope = null)
     {
         $this->index = $index;
         $this->nodeTypesResolver = $nodeTypesResolver;
         $this->context = $context;
-        $this->namesResolver = $namesResolver;
         $this->parentScope = $parentScope;
     }
 
@@ -159,13 +157,12 @@ class Scope
         return $type;
     }
 
-    public function createChildScope(?ScopeContext $context = null, ?callable $namesResolver = null)
+    public function createChildScope(?ScopeContext $context = null)
     {
         return new Scope(
             $this->index,
             $this->nodeTypesResolver,
             $context ?: $this->context,
-            $namesResolver ?: $this->namesResolver,
             $this,
         );
     }
@@ -196,11 +193,6 @@ class Scope
         return (bool) $this->context->classDefinition;
     }
 
-    public function class(): ?ObjectType
-    {
-        return $this->context->class;
-    }
-
     public function classDefinition(): ?ClassDefinition
     {
         return $this->context->classDefinition;
@@ -214,16 +206,6 @@ class Scope
     public function isInFunction()
     {
         return (bool) $this->context->functionDefinition;
-    }
-
-    public function function(): ?FunctionType
-    {
-        return $this->context->function;
-    }
-
-    public function resolveName(string $name)
-    {
-        return ($this->namesResolver)($name);
     }
 
     public function addVariableType(int $line, string $name, Type $type)
