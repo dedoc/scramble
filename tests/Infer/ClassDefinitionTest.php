@@ -154,7 +154,5 @@ class Bar {
 }
 EOD)->getClassDefinition('Foo');
 
-    dd($type);
-
     expect($type->parentFqn)->toBe('Bar');
-})->skip('not implemented');
+});

@@ -34,6 +34,14 @@ class FileParser
         );
     }
 
+    public function parseContent(string $content): FileParserResult
+    {
+        return $this->cache[md5($content)] ??= new FileParserResult(
+            $statements = Arr::wrap($this->parser->parse($content)),
+            $this->resolveNames($statements),
+        );
+    }
+
     private function resolveNames($statements): FileNameResolver
     {
         $traverser = new NodeTraverser;

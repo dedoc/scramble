@@ -17,9 +17,7 @@ it('gets a type of call of a function with generic correctly', function () {
 function foo ($a) {
     return $a;
 }
-
-$b = foo('wow');
-EOD)->getVarType('b');
+EOD)->getExpressionType("foo('wow')");
 
     expect($type->toString())->toBe('string(wow)');
 });

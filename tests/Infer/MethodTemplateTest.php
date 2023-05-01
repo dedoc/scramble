@@ -21,9 +21,7 @@ class Foo {
         return $a;
     }
 }
-
-$b = (new Foo)->foo('wow');
-EOD)->getVarType('b');
+EOD)->getExpressionType("(new Foo)->foo('wow')");
 
     expect($type->toString())->toBe('string(wow)');
 });

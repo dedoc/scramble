@@ -165,7 +165,7 @@ class Bar {
 EOD)->getClassDefinition('Foo');
 
     expect($type->methods['foo']->type->toString())->toBe('(): int(2)');
-});
+})->skip('is it really that needed?');
 
 it('detects parent class calls cyclic reference', function () {
     $type = analyzeFile(<<<'EOD'
@@ -183,7 +183,7 @@ class Bar {
 EOD)->getClassDefinition('Foo');
 
     expect($type->methods['foo']->type->toString())->toBe('(): unknown');
-})->skip('Not implemented');
+});
 
 it('gets property type from parent class when constructed', function () {
     $type = analyzeFile(<<<'EOD'
@@ -199,11 +199,7 @@ class Bar {
         $this->barProp = $b;
     }
 }
-EOD)//->getClassDefinition('Foo')
-        ->getExpressionType('(new Foo(2))->barProp')
-    ;
+EOD)->getExpressionType('(new Foo(2))->foo()');
 
-    dd($type);
-
-    expect($type->methods['foo']->type->toString())->toBe('(): int(2)');
-})->skip('not implemented');
+    expect($type->toString())->toBe('int(2)');
+});

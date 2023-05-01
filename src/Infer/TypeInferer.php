@@ -36,6 +36,7 @@ class TypeInferer extends NodeVisitorAbstract
     private FileNameResolver $namesResolver;
 
     public function __construct(
+        private ProjectAnalyzer $projectAnalyzer,
         FileNameResolver              $namesResolver,
         array                         $extensions,
         array                         $handlers,
@@ -69,6 +70,10 @@ class TypeInferer extends NodeVisitorAbstract
     public function enterNode(Node $node)
     {
         $scope = $this->getOrCreateScope();
+
+        if ($node instanceof Node\Stmt\Class_) {
+            $this->projectAnalyzer->ensureParentDependenciesInIndex($node);
+        }
 
         foreach ($this->handlers as $handler) {
             if (! $handler->shouldHandle($node)) {
@@ -104,65 +109,6 @@ class TypeInferer extends NodeVisitorAbstract
         }
 
         return null;
-    }
-
-    public function afterTraverse(array $nodes)
-    {
-        /*
-         * Now only one file a time gets traversed. So it is ok to simply take everything
-         * added to index and check for reference types.
-         *
-         * At this point, if the function return types are not resolved, they aren't resolveable at all,
-         * hence changed to the unknowns.
-         *
-         * When more files would be traversed in a single run (and index will be shared), this needs to
-         * be re-implemented (maybe not).
-         *
-         * The intent here is to traverse symbols in index added through the file traversal. This logic
-         * may be not applicable when analyzing multiple files per index. Pay attention to this as it may
-         * hurt performance unless handled.
-         */
-        $resolveReferencesInFunctionReturn = function ($scope, $functionType) {
-            if (! ReferenceTypeResolver::hasResolvableReferences($returnType = $functionType->getReturnType())) {
-                return;
-            }
-
-            $resolvedReference = $this->referenceTypeResolver->resolve($scope, $returnType);
-
-            if ($this->shouldResolveReferences && ReferenceTypeResolver::hasResolvableReferences($resolvedReference)) {
-                $resolvedReference = (new TypeWalker)->replacePublic($resolvedReference, fn ($t) => $t instanceof AbstractReferenceType ? new UnknownType() : null);
-            }
-
-            if ($resolvedReference instanceof AbstractReferenceType && $this->shouldResolveReferences) {
-                $resolvedReference = new UnknownType();
-            }
-
-            $functionType->setReturnType(
-                $resolvedReference->mergeAttributes($returnType->attributes())
-            );
-        };
-
-        foreach ($this->index->functionsDefinitions as $functionDefinition) {
-            $fnScope = new Scope(
-                $this->index,
-                new NodeTypesResolver,
-                new ScopeContext(functionDefinition: $functionDefinition),
-                $this->namesResolver,
-            );
-            $resolveReferencesInFunctionReturn($fnScope, $functionDefinition->type);
-        }
-
-        foreach ($this->index->classesDefinitions as $classDefinition) {
-            foreach ($classDefinition->methods as $methodDefinition) {
-                $methodScope = new Scope(
-                    $this->index,
-                    new NodeTypesResolver,
-                    new ScopeContext($classDefinition, $methodDefinition),
-                    $this->namesResolver,
-                );
-                $resolveReferencesInFunctionReturn($methodScope, $methodDefinition->type);
-            }
-        }
     }
 
     private function getOrCreateScope()

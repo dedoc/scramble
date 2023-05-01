@@ -62,6 +62,7 @@ class FunctionLikeHandler implements CreatesScope
         // If the function is __construct and we're in the class context, we want to handle
         // simple assigning of args to props ("simple" - assigning is in the fn's statements, means
         // it is not in if or other block) by setting args types to be prop's ones.
+        // Also, here we find calls to `parent::__construct` and infer args class' templates types from there.
         $classDefinitionTemplatesTypes = $this->findPropertyAssignedArgs($node, $scope, $fnType);
 
         $localTemplates = [];
@@ -164,6 +165,42 @@ class FunctionLikeHandler implements CreatesScope
             })
             ->toArray();
 
+        $argumentsAssignedToProperties = [];
+
+        $callToParentConstruct = $scope->classDefinition()->parentFqn ? array_filter(
+            $node->getStmts() ?: [],
+            fn (Node\Stmt $s) => $s instanceof Node\Stmt\Expression
+                && $s->expr instanceof Node\Expr\StaticCall
+                && $s->expr->class instanceof Node\Name
+                && $s->expr->class->toString() === 'parent'
+                && $s->expr->name instanceof Node\Identifier
+                && $s->expr->name->toString() === '__construct',
+        )[0] ?? null : null;
+
+        if (
+            $callToParentConstruct
+            && ($parentDefinition = $scope->index->getClassDefinition($scope->classDefinition()->parentFqn))
+            && ($parentConstructorDefinition = $parentDefinition->methods['__construct'] ?? null)
+        ) {
+            $parentConstructorArguments = $parentConstructorDefinition->type->arguments;
+
+            foreach ($callToParentConstruct->expr->args as $index => $arg) {
+                if (! $arg->value instanceof Node\Expr\Variable) {
+                    continue;
+                }
+
+                $correspondingParentArgumentType = $arg->name
+                    ? ($parentConstructorArguments[$arg->name->toString()] ?? null)
+                    : (array_values($parentConstructorArguments)[$index] ?? null);
+
+                if (! $correspondingParentArgumentType) {
+                    continue;
+                }
+
+                $argumentsAssignedToProperties[$arg->value->name] = $correspondingParentArgumentType;
+            }
+        }
+
         $assignPropertiesToThisNodes = array_filter(
             $node->getStmts() ?: [],
             fn (Node\Stmt $s) => $s instanceof Node\Stmt\Expression
@@ -186,6 +223,6 @@ class FunctionLikeHandler implements CreatesScope
             $acc[$s->expr->expr->name] = $scope->classDefinition()->properties[$propName]->type;
 
             return $acc;
-        }, []);
+        }, $argumentsAssignedToProperties);
     }
 }

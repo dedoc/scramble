@@ -1,6 +1,5 @@
 <?php
 
-use Dedoc\Scramble\DefaultExtensions;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Scramble;
@@ -10,6 +9,9 @@ use Dedoc\Scramble\Tests\Utils\AnalysisResult;
 use Illuminate\Routing\Route;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory as ParserFactoryAlias;
+use Dedoc\Scramble\Infer\ProjectAnalyzer;
+use Dedoc\Scramble\Infer\Services\FileParser;
+use PhpParser\ParserFactory;
 
 uses(TestCase::class)->in(__DIR__);
 
@@ -19,11 +21,16 @@ function analyzeFile(string $code, $extensions = [], bool $resolveReferences = t
         $code = file_get_contents($code);
     }
 
-//    $projectAnalyzer = app()->make(ProjectAnalyzer::class);
-//
-//    $projectAnalyzer->addFile('virtual.php', $code);
+    $projectAnalyzer = new ProjectAnalyzer(
+        parser: new FileParser((new ParserFactory)->create(ParserFactory::PREFER_PHP7)),
+        extensions: $extensions,
+    );
 
+    $projectAnalyzer->addFile('virtual.php', $code);
 
+    $projectAnalyzer->analyze();
+
+    return new AnalysisResult($projectAnalyzer->index);
 
 
 
@@ -42,17 +49,12 @@ function analyzeFile(string $code, $extensions = [], bool $resolveReferences = t
     $traverser->addVisitor($infer);
     $traverser->traverse($fileAst);
 
-    return new AnalysisResult($infer->scope, $fileAst);
+    return new AnalysisResult($infer->scope);
 }
 
 function getStatementType(string $statement): ?Type
 {
-    $code = <<<EOD
-<?php
-\$a = $statement;
-EOD;
-
-    return analyzeFile($code)->getVarType('a');
+    return analyzeFile('<?php')->getExpressionType($statement);
 }
 
 function generateForRoute(Closure $param)

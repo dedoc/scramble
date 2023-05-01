@@ -70,6 +70,7 @@ class ReferenceTypeResolver
                 }
 
                 if ($resolved === $type) {
+                    return null;
                     return new UnknownType('self reference');
                 }
 
@@ -246,7 +247,7 @@ class ReferenceTypeResolver
             : $this->index->getClassDefinition($objectType->name);
 
         if (! $propertyDefinition = $this->getPropertyDefinition($classDefinition, $type->propertyName, $unknownClassHandler)) {
-            return new UnknownType("Cannot get property [$type->propertyName] type on [$objectType->name]");
+            return new UnknownType("Cannot get property [$type->propertyName] type on [$classDefinition->name]");
         }
 
         if ($objectType instanceof SelfType && $scope->isInClass()) {
