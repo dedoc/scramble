@@ -126,9 +126,11 @@ class ProjectAnalyzer
     private function processQueue(array &$queue)
     {
         foreach ($queue as $i => [$type, $name]) {
-            if (! array_key_exists(implode('.', [$type, $name]), $this->analyzedSymbols)) {
+            if (
+                ! array_key_exists(implode('.', [$type, $name]), $this->analyzedSymbols)
+                && isset($this->files[$this->symbols[$type][$name]])
+            ) {
                 // dump("Processing $type [$name]");
-
                 $content = $this->files[$this->symbols[$type][$name]];
 
                 $this->analyzeFileSymbol($content, [$type, $name]);
@@ -182,6 +184,14 @@ class ProjectAnalyzer
             $classNode->extends instanceof Node\Name ? $classNode->extends->toString() : null,
             // TODO: Traits,
         ]));
+
+        foreach ($dependencies as $className) {
+            if (! isset($this->symbols['class'][$className]) && class_exists($className)) {
+                $fileName = $this->symbols['class'][$className] = (new \ReflectionClass($className))->getFileName();
+
+                $this->files[$fileName] ??= file_get_contents($fileName);
+            }
+        }
 
         $queue = array_map(fn ($n) => ['class', $n], $dependencies);
 
