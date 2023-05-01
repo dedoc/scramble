@@ -6,8 +6,6 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\AssignmentInfo\SelfPropertyAssignmentInfo;
 use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
 use Dedoc\Scramble\Support\Type\TemplateType;
-use Dedoc\Scramble\Support\Type\UnknownType;
-use Illuminate\Support\Str;
 use PhpParser\Node;
 
 class AssignHandler
@@ -72,13 +70,13 @@ class AssignHandler
          * and the function is we remove a
          */
 
-//        dd(
-//            $scope->function()
-//        );
+        //        dd(
+        //            $scope->function()
+        //        );
 
-//        $scope->function()->addPropertyAssignmentInfo(new SelfPropertyAssignmentInfo(
-//            $propertyFetchNode->name->toString(),
-//            $scope->getType($node->expr),
-//        ));
+        //        $scope->function()->addPropertyAssignmentInfo(new SelfPropertyAssignmentInfo(
+        //            $propertyFetchNode->name->toString(),
+        //            $scope->getType($node->expr),
+        //        ));
     }
 }

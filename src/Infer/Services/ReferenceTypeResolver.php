@@ -6,8 +6,6 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\AssignmentInfo\AssignmentInfo;
-use Dedoc\Scramble\Support\Type\AssignmentInfo\SelfPropertyAssignmentInfo;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -71,6 +69,7 @@ class ReferenceTypeResolver
 
                 if ($resolved === $type) {
                     return null;
+
                     return new UnknownType('self reference');
                 }
 
@@ -179,7 +178,7 @@ class ReferenceTypeResolver
         }
 
         // @todo: callee now can be either in index or not, add support for other cases.
-         if (! $calleeType instanceof FunctionLikeDefinition) {
+        if (! $calleeType instanceof FunctionLikeDefinition) {
             // Callee cannot be resolved.
             return $type;
         }
@@ -256,7 +255,7 @@ class ReferenceTypeResolver
             return $propertyDefinition->type;
         }
 
-//        dd($objectType, $propertyDefinition, $type->toString());
+        //        dd($objectType, $propertyDefinition, $type->toString());
 
         $propertyType = $propertyDefinition->type;
 
@@ -282,8 +281,7 @@ class ReferenceTypeResolver
         array $arguments,
         /* When this is a handling for method call */
         ObjectType|SelfType|null $calledOnType = null,
-    )
-    {
+    ) {
         $returnType = $callee->type->getReturnType();
         $isSelf = false;
 
@@ -325,6 +323,7 @@ class ReferenceTypeResolver
                         return $replace;
                     }
                 }
+
                 return null;
             });
 

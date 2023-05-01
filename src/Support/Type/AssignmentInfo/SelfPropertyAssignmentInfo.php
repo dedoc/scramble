@@ -9,8 +9,7 @@ class SelfPropertyAssignmentInfo implements AssignmentInfo
     public function __construct(
         public string $property,
         public Type $type,
-    )
-    {
+    ) {
     }
 
     public function getAssignedType(): Type

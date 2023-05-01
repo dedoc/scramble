@@ -25,8 +25,7 @@ class Infer
         FileParser $parser,
         array $extensions = [],
         array $handlers = [],
-    )
-    {
+    ) {
         $this->parser = $parser;
         $this->extensions = $extensions;
         $this->handlers = $handlers;
@@ -42,7 +41,7 @@ class Infer
     {
         $result = $this->parser->parse((new ReflectionClass($class))->getFileName());
 
-//        $index = new Index;
+        //        $index = new Index;
 
         $traverser = new NodeTraverser;
         $traverser->addVisitor($inferer = new TypeInferer(

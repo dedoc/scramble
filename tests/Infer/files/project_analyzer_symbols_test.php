@@ -1,5 +1,9 @@
 <?php
 
-function foo () {};
+function foo()
+{
+}
 
-class Bar {}
+class Bar
+{
+}

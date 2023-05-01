@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Infer\SimpleTypeGetters;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;

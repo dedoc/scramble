@@ -76,9 +76,9 @@ class RouteInfo
             return $this->methodNode;
         }
 
-         $result = $this->parser->parse($this->reflectionMethod()->getFileName());
+        $result = $this->parser->parse($this->reflectionMethod()->getFileName());
 
-         return $this->methodNode = $result->findMethod($this->route->getAction('uses'));
+        return $this->methodNode = $result->findMethod($this->route->getAction('uses'));
     }
 
     public function reflectionMethod(): ?ReflectionMethod
@@ -150,7 +150,7 @@ class RouteInfo
                 $this->methodType->setReturnType((new ReferenceTypeResolver($this->infer->index))->resolve(
                     $returnType,
                     unknownClassHandler: function (string $name) {
-//                        dump(['unknownClassHandler' => $name]);
+                        //                        dump(['unknownClassHandler' => $name]);
                         if (! class_exists($name)) {
                             return;
                         }
@@ -166,7 +166,7 @@ class RouteInfo
                 ));
             }
 
-//            dd(42, $returnType->toString());
+            //            dd(42, $returnType->toString());
         }
 
         return $this->methodType;

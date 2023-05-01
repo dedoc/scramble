@@ -21,9 +21,6 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
-use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
-use Dedoc\Scramble\Support\Type\TypeWalker;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 
@@ -37,12 +34,12 @@ class TypeInferer extends NodeVisitorAbstract
 
     public function __construct(
         private ProjectAnalyzer $projectAnalyzer,
-        FileNameResolver              $namesResolver,
-        array                         $extensions,
-        array                         $handlers,
+        FileNameResolver $namesResolver,
+        array $extensions,
+        array $handlers,
         private ReferenceTypeResolver $referenceTypeResolver,
-        private Index                 $index,
-        private bool                  $shouldResolveReferences = true,
+        private Index $index,
+        private bool $shouldResolveReferences = true,
     ) {
         $this->namesResolver = $namesResolver;
 

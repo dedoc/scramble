@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Tests\Utils;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\Index;
-use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
 use PhpParser;

@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node;

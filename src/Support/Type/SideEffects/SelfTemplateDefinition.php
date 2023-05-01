@@ -9,7 +9,6 @@ class SelfTemplateDefinition
     public function __construct(
         public string $definedTemplate,
         public Type $type,
-    )
-    {
+    ) {
     }
 }

@@ -48,7 +48,7 @@ EOD)->getExpressionType('(new Foo)->setProp(123)');
 });
 
 it('evaluates self type', function () {
-    $type = analyzeFile(__DIR__ . '/files/class_with_method_that_returns_self.php')
+    $type = analyzeFile(__DIR__.'/files/class_with_method_that_returns_self.php')
         ->getExpressionType('(new Foo)->foo()');
 
     expect($type->toString())->toBe('Foo');
@@ -62,14 +62,14 @@ it('understands method calls type', function () {
 });
 
 it('understands templated property fetch type value for property fetch', function () {
-    $type = analyzeFile(__DIR__ . '/files/class_with_property_fetch_in_method.php')
+    $type = analyzeFile(__DIR__.'/files/class_with_property_fetch_in_method.php')
         ->getExpressionType('(new Foo(42))->prop');
 
     expect($type->toString())->toBe('int(42)');
 });
 
 it('understands templated property fetch type value for property fetch called in method', function () {
-    $type = analyzeFile(__DIR__ . '/files/class_with_property_fetch_in_method.php')
+    $type = analyzeFile(__DIR__.'/files/class_with_property_fetch_in_method.php')
         ->getExpressionType('(new Foo(42))->foo()');
 
     expect($type->toString())->toBe('int(42)');

@@ -36,8 +36,8 @@ class TestCase extends Orchestra
     {
         config()->set('database.default', 'testing');
 
-//        $migration = include __DIR__.'/migrations/create_documentor_table.php.stub';
-//        $migration->up();
+        //        $migration = include __DIR__.'/migrations/create_documentor_table.php.stub';
+        //        $migration->up();
     }
 
     protected function defineDatabaseMigrations()

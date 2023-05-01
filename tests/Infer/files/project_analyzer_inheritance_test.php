@@ -2,7 +2,8 @@
 
 namespace App;
 
-class Foo extends Bar {
+class Foo extends Bar
+{
     public $fooProp;
 
     public function __construct($fooProp, $barProp)
@@ -17,14 +18,14 @@ class Foo extends Bar {
     }
 }
 
-class Bar {
+class Bar
+{
     public $barProp;
 
     public function __construct($barProp)
     {
         $this->barProp = $barProp;
     }
-
 }
 
 //

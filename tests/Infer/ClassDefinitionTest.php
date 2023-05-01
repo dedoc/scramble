@@ -91,7 +91,7 @@ EOD)->getClassDefinition('Foo');
 });
 
 it('understands self type', function () {
-    $type = analyzeFile(__DIR__ . '/files/class_with_method_that_returns_self.php')
+    $type = analyzeFile(__DIR__.'/files/class_with_method_that_returns_self.php')
         ->getClassDefinition('Foo');
 
     expect($type->methods['foo']->type->toString())->toBe('(): self');
@@ -105,7 +105,7 @@ it('understands method calls type', function () {
 });
 
 it('infers templated property fetch type', function () {
-    $type = analyzeFile(__DIR__ . '/files/class_with_property_fetch_in_method.php')
+    $type = analyzeFile(__DIR__.'/files/class_with_property_fetch_in_method.php')
         ->getClassDefinition('Foo');
 
     expect($type->methods['foo']->type->toString())->toBe('(): TProp');

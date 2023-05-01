@@ -9,7 +9,6 @@ class FunctionLikeDefinition
     public function __construct(
         public FunctionType $type,
         public array $sideEffects = [],
-    )
-    {
+    ) {
     }
 }

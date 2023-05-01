@@ -18,7 +18,7 @@ class ResponseExtension extends OperationExtension
     {
         $returnTypes = $routeInfo->getReturnTypes();
 
-//        dd($returnTypes[0]->properties['retrieveCallback']->toString());
+        //        dd($returnTypes[0]->properties['retrieveCallback']->toString());
 
         if (! $returnTypes = $returnTypes[0] ?? null) {
             return [];

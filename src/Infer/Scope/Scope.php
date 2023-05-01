@@ -38,11 +38,11 @@ class Scope
     private FileNameResolver $namesResolver;
 
     public function __construct(
-        Index             $index,
+        Index $index,
         NodeTypesResolver $nodeTypesResolver,
-        ScopeContext      $context,
-        FileNameResolver  $namesResolver,
-        ?Scope            $parentScope = null)
+        ScopeContext $context,
+        FileNameResolver $namesResolver,
+        ?Scope $parentScope = null)
     {
         $this->index = $index;
         $this->nodeTypesResolver = $nodeTypesResolver;
@@ -83,7 +83,7 @@ class Scope
 
         $type = $this->nodeTypesResolver->getType($node);
 
-        if (!$type instanceof UnknownType) {
+        if (! $type instanceof UnknownType) {
             return $type;
         }
 
@@ -92,7 +92,7 @@ class Scope
         }
 
         if ($node instanceof Node\Expr\New_) {
-            if (!$node->class instanceof Node\Name) {
+            if (! $node->class instanceof Node\Name) {
                 return $type;
             }
 
@@ -104,7 +104,7 @@ class Scope
 
         if ($node instanceof Node\Expr\MethodCall) {
             // Only string method names support.
-            if (!$node->name instanceof Node\Identifier) {
+            if (! $node->name instanceof Node\Identifier) {
                 return $type;
             }
 
@@ -116,7 +116,7 @@ class Scope
 
         if ($node instanceof Node\Expr\PropertyFetch) {
             // Only string prop names support.
-            if (!$name = ($node->name->name ?? null)) {
+            if (! $name = ($node->name->name ?? null)) {
                 return null;
             }
 
@@ -146,9 +146,9 @@ class Scope
     private function getArgsTypes(array $args)
     {
         return collect($args)
-            ->filter(fn($arg) => $arg instanceof Node\Arg)
-            ->keyBy(fn(Node\Arg $arg, $index) => $arg->name ? $arg->name->name : $index)
-            ->map(fn(Node\Arg $arg) => $this->getType($arg->value))
+            ->filter(fn ($arg) => $arg instanceof Node\Arg)
+            ->keyBy(fn (Node\Arg $arg, $index) => $arg->name ? $arg->name->name : $index)
+            ->map(fn (Node\Arg $arg) => $this->getType($arg->value))
             ->toArray();
     }
 
@@ -188,7 +188,7 @@ class Scope
             ->filter(fn ($n) => preg_match('/^'.$name.'(\d*)?$/m', $n) === 1)
             ->all();
 
-        return $name . ($scopeDuplicateTemplates ? count($scopeDuplicateTemplates) : '');
+        return $name.($scopeDuplicateTemplates ? count($scopeDuplicateTemplates) : '');
     }
 
     public function isInClass()

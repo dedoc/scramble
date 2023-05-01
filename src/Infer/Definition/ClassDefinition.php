@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
-use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 
 class ClassDefinition
@@ -10,14 +9,13 @@ class ClassDefinition
     public function __construct(
         // FQ name
         public string $name,
-        /** @var TemplateType[] $templateTypes  */
+        /** @var TemplateType[] $templateTypes */
         public array $templateTypes = [],
         /** @var array<string, ClassPropertyDefinition> $properties */
         public array $properties = [],
         /** @var array<string, FunctionLikeDefinition> $methods */
         public array $methods = [],
         public ?string $parentFqn = null,
-    )
-    {
+    ) {
     }
 }

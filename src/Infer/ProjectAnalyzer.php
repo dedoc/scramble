@@ -14,9 +14,9 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\ErrorHandler\Throwing;
 use PhpParser\NameContext;
+use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
-use PhpParser\Node;
 
 class ProjectAnalyzer
 {
@@ -40,8 +40,7 @@ class ProjectAnalyzer
         private array $handlers = [],
         public Index $index = new Index,
         private bool $shouldResolveReferences = true,
-    )
-    {
+    ) {
     }
 
     public function files()
@@ -87,7 +86,7 @@ class ProjectAnalyzer
                 $namespace = $token[1];
             }
 
-            if ($curlyCount === 0 && $hasEnteredInsideSymbolDefinition && !! $currentSymbolName && !! $currentSymbolType) {
+            if ($curlyCount === 0 && $hasEnteredInsideSymbolDefinition && (bool) $currentSymbolName && (bool) $currentSymbolType) {
                 $this->symbols[$currentSymbolType][$name = ltrim($namespace.'\\'.$currentSymbolName, '\\')] = $path;
                 $this->queue[] = [$currentSymbolType, $name];
 
@@ -147,7 +146,7 @@ class ProjectAnalyzer
         [$type, $name] = $symbol;
         $result = $this->parser->parseContent($content);
 
-        $symbolDefinitionNode = (new NodeFinder)->findFirst($result->getStatements(), function (Node $node) use ($type, $name, $result) {
+        $symbolDefinitionNode = (new NodeFinder)->findFirst($result->getStatements(), function (Node $node) use ($type, $name) {
             if ($type === 'function') {
                 return $node instanceof Node\Stmt\Function_
                     && $node->namespacedName->toString() === $name;
@@ -255,5 +254,4 @@ class ProjectAnalyzer
             }
         }
     }
-
 }

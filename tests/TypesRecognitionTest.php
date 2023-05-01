@@ -25,7 +25,7 @@ function getPhpTypeFromDoc(string $phpDoc)
     $varNode = $docNode->getVarTagValues()[0];
 
     PhpDocTypeWalker::traverse($varNode->type, [new ResolveFqnPhpDocTypeVisitor(
-            new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing())),
+        new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing())),
     )]);
 
     return PhpDocTypeHelper::toType($varNode->type);

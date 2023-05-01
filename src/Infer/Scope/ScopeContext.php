@@ -16,8 +16,7 @@ class ScopeContext
     public function __construct(
         public ?ClassDefinition $classDefinition = null,
         public ?FunctionLikeDefinition $functionDefinition = null,
-    )
-    {
+    ) {
     }
 
     public function setClass(?ObjectType $class): ScopeContext

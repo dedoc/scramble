@@ -1,6 +1,8 @@
 <?php
 
+use Dedoc\Scramble\Infer\ProjectAnalyzer;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type\Type;
@@ -8,10 +10,8 @@ use Dedoc\Scramble\Tests\TestCase;
 use Dedoc\Scramble\Tests\Utils\AnalysisResult;
 use Illuminate\Routing\Route;
 use PhpParser\NodeTraverser;
-use PhpParser\ParserFactory as ParserFactoryAlias;
-use Dedoc\Scramble\Infer\ProjectAnalyzer;
-use Dedoc\Scramble\Infer\Services\FileParser;
 use PhpParser\ParserFactory;
+use PhpParser\ParserFactory as ParserFactoryAlias;
 
 uses(TestCase::class)->in(__DIR__);
 
@@ -32,15 +32,12 @@ function analyzeFile(string $code, $extensions = [], bool $resolveReferences = t
 
     return new AnalysisResult($projectAnalyzer->index);
 
-
-
-
     $fileAst = (new ParserFactoryAlias)->create(ParserFactoryAlias::PREFER_PHP7)->parse($code);
 
     $index = new Index();
     $infer = app()->make(TypeInferer::class, [
         'namesResolver' => new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing())),
-        'extensions' => [...$extensions,/* ...DefaultExtensions::infer()*/],
+        'extensions' => [...$extensions/* ...DefaultExtensions::infer()*/],
         'referenceTypeResolver' => new \Dedoc\Scramble\Infer\Services\ReferenceTypeResolver($index),
         'index' => $index,
         'shouldResolveReferences' => $resolveReferences,

@@ -1,7 +1,9 @@
 <?php
 
-class Foo {
-    public function foo () {
+class Foo
+{
+    public function foo()
+    {
         return $this;
     }
 }
