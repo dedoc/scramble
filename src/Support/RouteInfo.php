@@ -165,8 +165,6 @@ class RouteInfo
                     },
                 ));
             }
-
-            //            dd(42, $returnType->toString());
         }
 
         return $this->methodType;

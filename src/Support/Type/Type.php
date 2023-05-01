@@ -12,17 +12,7 @@ interface Type
 
     public function isInstanceOf(string $className);
 
-    public function getPropertyFetchType(string $propertyName): Type;
-
-    public function getMethodCallType(string $methodName): Type;
-
-    public function getMethodType(string $methodName): Type;
-
     public function nodes(): array;
-
-    public function publicNodes(): array;
-
-    public function children(): array;
 
     public function isSame(self $type);
 

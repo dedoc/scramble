@@ -6,32 +6,7 @@ abstract class AbstractType implements Type
 {
     use TypeAttributes;
 
-    public function getPropertyFetchType(string $propertyName): Type
-    {
-        return new UnknownType('Cannot find property fetch type.');
-    }
-
-    public function getMethodCallType(string $methodName): Type
-    {
-        return new UnknownType('Cannot find method call type.');
-    }
-
-    public function getMethodType(string $methodName): Type
-    {
-        return new UnknownType('Cannot find method type.');
-    }
-
     public function nodes(): array
-    {
-        return [];
-    }
-
-    public function publicNodes(): array
-    {
-        return [];
-    }
-
-    public function children(): array
     {
         return [];
     }

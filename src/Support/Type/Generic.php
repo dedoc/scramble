@@ -17,22 +17,7 @@ class Generic extends ObjectType
         $this->templateTypesMap = $templateTypesMap;
     }
 
-    public function getPropertyFetchType(string $propertyName): Type
-    {
-        return $this->type->getPropertyFetchType($propertyName);
-    }
-
-    public function children(): array
-    {
-        return $this->templateTypesMap;
-    }
-
     public function nodes(): array
-    {
-        return ['templateTypesMap'];
-    }
-
-    public function publicNodes(): array
     {
         return ['templateTypesMap'];
     }

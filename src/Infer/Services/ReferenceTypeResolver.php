@@ -30,7 +30,7 @@ class ReferenceTypeResolver
 
     public static function hasResolvableReferences(Type $type): bool
     {
-        return (bool) (new TypeWalker)->firstPublic(
+        return (bool) (new TypeWalker)->first(
             $type,
             fn (Type $t) => $t instanceof AbstractReferenceType,
         );
@@ -40,7 +40,7 @@ class ReferenceTypeResolver
     {
         $unknownClassHandler = $unknownClassHandler ?: fn () => null;
 
-        return (new TypeWalker)->replacePublic(
+        return (new TypeWalker)->replace(
             $type,
             function (Type $t) use ($type, $unknownClassHandler, $scope) {
                 $resolver = function () use ($t, $unknownClassHandler, $scope) {
@@ -255,15 +255,13 @@ class ReferenceTypeResolver
             return $propertyDefinition->type;
         }
 
-        //        dd($objectType, $propertyDefinition, $type->toString());
-
         $propertyType = $propertyDefinition->type;
 
         if (! $objectType instanceof Generic) {
             return $propertyType;
         }
 
-        return (new TypeWalker)->replacePublic($propertyType, function (Type $t) use ($objectType) {
+        return (new TypeWalker)->replace($propertyType, function (Type $t) use ($objectType) {
             if (! $t instanceof TemplateType) {
                 return null;
             }
@@ -307,8 +305,8 @@ class ReferenceTypeResolver
         if (
             ($inferredTemplates || $callee->type->templates)
             && $shouldResolveTemplatesToActualTypes = (
-                (new TypeWalker)->firstPublic($returnType, $isTemplateForResolution)
-                || collect($callee->sideEffects)->first(fn ($s) => $s instanceof SelfTemplateDefinition && (new TypeWalker)->firstPublic($s->type, $isTemplateForResolution))
+                (new TypeWalker)->first($returnType, $isTemplateForResolution)
+                || collect($callee->sideEffects)->first(fn ($s) => $s instanceof SelfTemplateDefinition && (new TypeWalker)->first($s->type, $isTemplateForResolution))
             )
         ) {
             $inferredTemplates = array_merge($inferredTemplates, collect($this->resolveTypesTemplatesFromArguments(
@@ -317,7 +315,7 @@ class ReferenceTypeResolver
                 $arguments,
             ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray());
 
-            $returnType = (new TypeWalker)->replacePublic($returnType, function (Type $t) use ($inferredTemplates) {
+            $returnType = (new TypeWalker)->replace($returnType, function (Type $t) use ($inferredTemplates) {
                 foreach ($inferredTemplates as $searchName => $replace) {
                     if ($t instanceof TemplateType && ($t->name === $searchName)) {
                         return $replace;
@@ -327,7 +325,7 @@ class ReferenceTypeResolver
                 return null;
             });
 
-            if ((new TypeWalker)->firstPublic($returnType, fn (Type $t) => in_array($t, $callee->type->templates))) {
+            if ((new TypeWalker)->first($returnType, fn (Type $t) => in_array($t, $callee->type->templates))) {
                 throw new \LogicException("Couldn't replace a template for function and this should never happen.");
             }
         }

@@ -216,7 +216,7 @@ class ProjectAnalyzer
             $resolvedReference = (new ReferenceTypeResolver($this->index))->resolve($scope, $returnType);
 
             if ($this->shouldResolveReferences && ReferenceTypeResolver::hasResolvableReferences($resolvedReference)) {
-                $resolvedReference = (new TypeWalker)->replacePublic($resolvedReference, fn ($t) => $t instanceof AbstractReferenceType ? new UnknownType() : null);
+                $resolvedReference = (new TypeWalker)->replace($resolvedReference, fn ($t) => $t instanceof AbstractReferenceType ? new UnknownType() : null);
             }
             if ($resolvedReference instanceof AbstractReferenceType && $this->shouldResolveReferences) {
                 $resolvedReference = new UnknownType();

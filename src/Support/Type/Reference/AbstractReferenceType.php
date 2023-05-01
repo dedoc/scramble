@@ -18,15 +18,6 @@ abstract class AbstractReferenceType extends AbstractType
         return $type->toString() === $this->toString();
     }
 
-    public function getMethodCallType(string $methodName): Type
-    {
-        return new MethodCallReferenceType(
-            $this,
-            $methodName,
-            [],
-        );
-    }
-
     /**
      * This is the list of class names and functions (or 'self') that are dependencies for
      * the given reference. The reference can be resolved after these dependencies are analyzed.

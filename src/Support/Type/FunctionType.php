@@ -2,8 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-use Dedoc\Scramble\Support\Type\AssignmentInfo\AssignmentInfo;
-
 class FunctionType extends AbstractType implements FunctionLikeType
 {
     public string $name;
@@ -13,8 +11,6 @@ class FunctionType extends AbstractType implements FunctionLikeType
     public Type $returnType;
 
     public array $templates = [];
-
-    public array $propertyAssignments = [];
 
     /**
      * @var array<ObjectType|Generic>
@@ -33,20 +29,7 @@ class FunctionType extends AbstractType implements FunctionLikeType
         $this->exceptions = $exceptions;
     }
 
-    public function children(): array
-    {
-        return [
-            ...array_values($this->arguments),
-            $this->returnType,
-        ];
-    }
-
     public function nodes(): array
-    {
-        return ['returnType', 'arguments'];
-    }
-
-    public function publicNodes(): array
     {
         return ['returnType', 'arguments'];
     }
@@ -78,12 +61,5 @@ class FunctionType extends AbstractType implements FunctionLikeType
             implode(', ', array_map(fn ($t) => $t->toString(), $this->arguments)),
             $this->returnType->toString(),
         );
-    }
-
-    public function addPropertyAssignmentInfo(AssignmentInfo $assignmentInfo)
-    {
-        $this->propertyAssignments[] = $assignmentInfo;
-
-        return $this;
     }
 }

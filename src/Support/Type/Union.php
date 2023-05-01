@@ -14,17 +14,7 @@ class Union extends AbstractType
         $this->types = $types;
     }
 
-    public function children(): array
-    {
-        return $this->types;
-    }
-
     public function nodes(): array
-    {
-        return ['types'];
-    }
-
-    public function publicNodes(): array
     {
         return ['types'];
     }
