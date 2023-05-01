@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Services;
 
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -21,7 +22,6 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use function Pest\Laravel\instance;
 
 class ReferenceTypeResolver
 {
@@ -100,7 +100,6 @@ class ReferenceTypeResolver
         }
 
         if ($calleeType instanceof UnknownType) {
-            // This unknown is legit. On line 97 should be processed correctly.
             return new UnknownType();
         }
 
@@ -112,11 +111,55 @@ class ReferenceTypeResolver
             ? $scope->classDefinition()
             : $this->index->getClassDefinition($calleeType->name);
 
-        if (! array_key_exists($type->methodName, $calleeDefinition->methods)) {
+        if (! $methodDefinition = $this->getMethodDefinition($calleeDefinition, $type->methodName, $unknownClassHandler)) {
             return new UnknownType("Cannot get type of calling method [$type->methodName] on object [$calleeDefinition->name]");
         }
 
-        return $this->getFunctionCallResult($calleeDefinition->methods[$type->methodName], $type->arguments, $calleeType);
+        return $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType);
+    }
+
+    private function getMethodDefinition(ClassDefinition $calleeDefinition, string $methodName, callable $unknownClassHandler)
+    {
+        if (array_key_exists($methodName, $calleeDefinition->methods)) {
+            return $calleeDefinition->methods[$methodName];
+        }
+
+        if (! $calleeDefinition->parentFqn) {
+            return null;
+        }
+
+        if (
+            ! array_key_exists($calleeDefinition->parentFqn, $this->index->classesDefinitions)
+            && ! $unknownClassHandler($calleeDefinition->parentFqn)
+        ) {
+            return null;
+        }
+
+        $parentDefinition = $this->index->classesDefinitions[$calleeDefinition->parentFqn];
+
+        return $this->getMethodDefinition($parentDefinition, $methodName, $unknownClassHandler);
+    }
+
+    private function getPropertyDefinition(ClassDefinition $calleeDefinition, string $propertyName, callable $unknownClassHandler)
+    {
+        if (array_key_exists($propertyName, $calleeDefinition->properties)) {
+            return $calleeDefinition->properties[$propertyName];
+        }
+
+        if (! $calleeDefinition->parentFqn) {
+            return null;
+        }
+
+        if (
+            ! array_key_exists($calleeDefinition->parentFqn, $this->index->classesDefinitions)
+            && ! $unknownClassHandler($calleeDefinition->parentFqn)
+        ) {
+            return null;
+        }
+
+        $parentDefinition = $this->index->classesDefinitions[$calleeDefinition->parentFqn];
+
+        return $this->getPropertyDefinition($parentDefinition, $propertyName, $unknownClassHandler);
     }
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type, callable $unknownClassHandler)
@@ -186,18 +229,6 @@ class ReferenceTypeResolver
 
         $objectType = $this->resolve($scope, $type->object);
 
-        if ($objectType instanceof SelfType && $scope->isInClass()) {
-            // This actually means that we're in the class' definition context, and
-            // templates should not be resolved. Probably the proper way to impletent
-            // it is to pass a scope when a resolution attempt is made.
-
-            if (! array_key_exists($type->propertyName, $scope->classDefinition()->properties)) {
-                return new UnknownType();
-            }
-
-            return $scope->classDefinition()->properties[$type->propertyName]->type;
-        }
-
         if (
             $objectType instanceof AbstractReferenceType
             || $objectType instanceof TemplateType
@@ -206,17 +237,27 @@ class ReferenceTypeResolver
             return $type;
         }
 
-        if (! $objectType instanceof ObjectType) {
+        if (! $objectType instanceof ObjectType && ! $objectType instanceof SelfType) {
             return new UnknownType();
         }
 
-        $classDefinition = $this->index->getClassDefinition($objectType->name);
+        $classDefinition = $objectType instanceof SelfType && $scope->isInClass()
+            ? $scope->classDefinition()
+            : $this->index->getClassDefinition($objectType->name);
 
-        if (! array_key_exists($type->propertyName, $classDefinition->properties)) {
+        if (! $propertyDefinition = $this->getPropertyDefinition($classDefinition, $type->propertyName, $unknownClassHandler)) {
             return new UnknownType("Cannot get property [$type->propertyName] type on [$objectType->name]");
         }
 
-        $propertyType = $classDefinition->properties[$type->propertyName]->type;
+        if ($objectType instanceof SelfType && $scope->isInClass()) {
+            // This actually means that we're in the class' definition context, and
+            // templates should not be resolved.
+            return $propertyDefinition->type;
+        }
+
+//        dd($objectType, $propertyDefinition, $type->toString());
+
+        $propertyType = $propertyDefinition->type;
 
         if (! $objectType instanceof Generic) {
             return $propertyType;

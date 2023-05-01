@@ -113,3 +113,97 @@ EOD)->getExpressionType('(new Foo(1, fn ($a) => $a))->getProp()');
     expect($type->toString())->toBe('<TA>(TA): TA');
 });
 
+it('resolves method call from parent class', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo extends Bar {
+}
+class Bar {
+    public function foo () {
+        return 2;
+    }
+}
+EOD)->getExpressionType('(new Foo)->foo()');
+
+    expect($type->toString())->toBe('int(2)');
+});
+
+it('resolves call to parent class', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo extends Bar {
+    public function foo () {
+        return $this->two();
+    }
+}
+class Bar {
+    public function two () {
+        return 2;
+    }
+}
+EOD)->getClassDefinition('Foo');
+
+    expect($type->methods['foo']->type->toString())->toBe('(): int(2)');
+});
+
+it('resolves polymorphic call from parent class', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo extends Bar {
+    public function foo () {
+        return $this->bar();
+    }
+    public function two () {
+        return 2;
+    }
+}
+class Bar {
+    public function bar () {
+        return $this->two();
+    }
+}
+EOD)->getClassDefinition('Foo');
+
+    expect($type->methods['foo']->type->toString())->toBe('(): int(2)');
+});
+
+it('detects parent class calls cyclic reference', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo extends Bar {
+    public function foo () {
+        return $this->bar();
+    }
+}
+class Bar {
+    public function bar () {
+        return $this->foo();
+    }
+}
+EOD)->getClassDefinition('Foo');
+
+    expect($type->methods['foo']->type->toString())->toBe('(): unknown');
+})->skip('Not implemented');
+
+it('gets property type from parent class when constructed', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo extends Bar {
+    public function foo () {
+        return $this->barProp;
+    }
+}
+class Bar {
+    public $barProp;
+    public function __construct($b) {
+        $this->barProp = $b;
+    }
+}
+EOD)//->getClassDefinition('Foo')
+        ->getExpressionType('(new Foo(2))->barProp')
+    ;
+
+    dd($type);
+
+    expect($type->methods['foo']->type->toString())->toBe('(): int(2)');
+})->skip('not implemented');

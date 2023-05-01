@@ -125,3 +125,36 @@ EOD)->getClassDefinition('Foo');
     expect($type->methods['getPropGetter']->type->toString())
         ->toBe('<TProp1>(TProp1): <TProp2, TQ>(TProp2, TQ): array{0: TQ, 1: TProp2, 2: TProp}');
 });
+
+it('generates definition for inheritance', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo extends Bar {
+}
+class Bar {
+}
+EOD)->getClassDefinition('Foo');
+
+    expect($type->parentFqn)->toBe('Bar');
+});
+
+it('generates definition based on parent when analyzing inheritance', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo extends Bar {
+    public function foo () {
+        return $this->barProp;
+    }
+}
+class Bar {
+    public $barProp;
+    public function __construct($b) {
+        $this->barProp = $b;
+    }
+}
+EOD)->getClassDefinition('Foo');
+
+    dd($type);
+
+    expect($type->parentFqn)->toBe('Bar');
+})->skip('not implemented');

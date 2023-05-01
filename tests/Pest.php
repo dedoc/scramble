@@ -18,6 +18,16 @@ function analyzeFile(string $code, $extensions = [], bool $resolveReferences = t
     if ($code[0] === '/') {
         $code = file_get_contents($code);
     }
+
+//    $projectAnalyzer = app()->make(ProjectAnalyzer::class);
+//
+//    $projectAnalyzer->addFile('virtual.php', $code);
+
+
+
+
+
+
     $fileAst = (new ParserFactoryAlias)->create(ParserFactoryAlias::PREFER_PHP7)->parse($code);
 
     $index = new Index();
