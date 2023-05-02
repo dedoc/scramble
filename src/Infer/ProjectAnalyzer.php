@@ -37,8 +37,8 @@ class ProjectAnalyzer
 
     public function __construct(
         private FileParser $parser,
-        private array $extensions = [],
-        private array $handlers = [],
+        public array $extensions = [],
+        public array $handlers = [],
         public Index $index = new Index,
         private bool $shouldResolveReferences = true,
     ) {

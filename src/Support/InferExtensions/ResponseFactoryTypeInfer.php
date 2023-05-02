@@ -29,11 +29,11 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
         ) {
             if (count($node->args)) {
                 return new Generic(
-                    new ObjectType(Response::class),
+                    Response::class,
                     [
-                        TypeHelper::getArgType($scope, $node->args, ['content', 0], new LiteralStringType('')),
-                        TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
-                        TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
+                        'TContent' => TypeHelper::getArgType($scope, $node->args, ['content', 0], new LiteralStringType('')),
+                        'TCodeStatus' => TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
+                        'THeaders' => TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
                     ],
                 );
             }
@@ -84,7 +84,6 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
         // call Response and JsonResponse constructors
         if (
             $node instanceof Expr\New_
-            && $scope->getType($node) instanceof ObjectType
             && (
                 $scope->getType($node)->isInstanceOf(JsonResponse::class)
                 || $scope->getType($node)->isInstanceOf(Response::class)
@@ -96,11 +95,11 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
                 : new LiteralStringType('');
 
             return new Generic(
-                $scope->getType($node),
+                $scope->getType($node)->name,
                 [
-                    TypeHelper::getArgType($scope, $node->args, [$contentName, 0], $contentDefaultType),
-                    TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
-                    TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
+                    'TContent' => TypeHelper::getArgType($scope, $node->args, [$contentName, 0], $contentDefaultType),
+                    'TCodeStatus' => TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
+                    'THeaders' => TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
                 ],
             );
         }

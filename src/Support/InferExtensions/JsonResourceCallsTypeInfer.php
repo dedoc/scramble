@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
@@ -26,16 +27,12 @@ class JsonResourceCallsTypeInfer implements ExpressionTypeInferExtension
         if ($node->name->toString() === 'additional' && isset($node->args[0])) {
             $type = $scope->getType($node->var);
 
-            $objectType = $type instanceof ObjectType
-                ? $type
-                : $type->type ?? null; // the case then type is Generic. This is the documented case of resources.
-
-            if (! $objectType instanceof ObjectType) {
+            if (! $type instanceof Generic) {
                 return null;
             }
 
-            $objectType->properties = array_merge($objectType->properties, [
-                'additional' => TypeHelper::getArgType($scope, $node->args, ['data', 0]),
+            $type->templateTypesMap = array_merge($type->templateTypesMap, [
+                'TAdditional' => TypeHelper::getArgType($scope, $node->args, ['data', 0]),
             ]);
 
             return $type;

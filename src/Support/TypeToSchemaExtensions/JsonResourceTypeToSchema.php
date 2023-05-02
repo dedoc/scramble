@@ -43,7 +43,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
         if (! $array instanceof ArrayType) {
             if ($type->isInstanceOf(ResourceCollection::class)) {
-                $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($type);
+                $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($definition);
             } else {
                 return new UnknownType();
             }
@@ -141,17 +141,17 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     }
 
     /**
-     * @param  ObjectType  $type
+     * @param  Generic  $type
      */
     public function toResponse(Type $type)
     {
-        $additional = $type->getPropertyFetchType('additional');
+        $definition = $this->infer->analyzeClass($type->name);
 
-        $type = $this->infer->analyzeClass($type->name);
+        $additional = $type->templateTypesMap['TAdditional'] ?? new UnknownType();
 
         $openApiType = $this->openApiTransformer->transform($type);
 
-        if (($withArray = $type->getMethodCallType('with')) instanceof ArrayType) {
+        if (($withArray = $definition->getMethodCallType('with')) instanceof ArrayType) {
             $withArray->items = $this->flattenMergeValues($withArray->items);
         }
         if ($additional instanceof ArrayType) {

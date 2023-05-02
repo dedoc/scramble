@@ -23,7 +23,7 @@ function analyzeFile(string $code, $extensions = [], bool $resolveReferences = t
 
     $projectAnalyzer = new ProjectAnalyzer(
         parser: new FileParser((new ParserFactory)->create(ParserFactory::PREFER_PHP7)),
-        extensions: $extensions,
+         extensions: $extensions,
     );
 
     $projectAnalyzer->addFile('virtual.php', $code);
@@ -31,27 +31,11 @@ function analyzeFile(string $code, $extensions = [], bool $resolveReferences = t
     $projectAnalyzer->analyze();
 
     return new AnalysisResult($projectAnalyzer->index);
-
-    $fileAst = (new ParserFactoryAlias)->create(ParserFactoryAlias::PREFER_PHP7)->parse($code);
-
-    $index = new Index();
-    $infer = app()->make(TypeInferer::class, [
-        'namesResolver' => new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing())),
-        'extensions' => [...$extensions/* ...DefaultExtensions::infer()*/],
-        'referenceTypeResolver' => new \Dedoc\Scramble\Infer\Services\ReferenceTypeResolver($index),
-        'index' => $index,
-        'shouldResolveReferences' => $resolveReferences,
-    ]);
-    $traverser = new NodeTraverser;
-    $traverser->addVisitor($infer);
-    $traverser->traverse($fileAst);
-
-    return new AnalysisResult($infer->scope);
 }
 
-function getStatementType(string $statement): ?Type
+function getStatementType(string $statement, array $extensions = []): ?Type
 {
-    return analyzeFile('<?php')->getExpressionType($statement);
+    return analyzeFile('<?php', $extensions)->getExpressionType($statement);
 }
 
 dataset('extendableTemplateTypes', [

@@ -10,7 +10,7 @@ EOD;
 
     $result = analyzeFile($code);
 
-    expect($result->getFunctionType('foo')->getReturnType()->toString())->toBe('int(4)');
+    expect($result->getFunctionDefinition('foo')->type->getReturnType()->toString())->toBe('int(4)');
 });
 
 it('infers type from assignment', function () {
@@ -64,7 +64,7 @@ EOD;
 
     $result = analyzeFile($code);
 
-    expect($result->getClassType('Foo')->getMethodCallType('toArray')->toString())
+    expect($result->getClassDefinition('Foo')->getMethodCallType('toArray')->toString())
         ->toBe('array{foo: string(bar)}');
 });
 
@@ -86,6 +86,6 @@ EOD;
 
     $result = analyzeFile($code);
 
-    expect($result->getClassType('Foo')->getMethodCallType('bar')->toString())
+    expect($result->getClassDefinition('Foo')->getMethodCallType('bar')->toString())
         ->toBe('int');
 });

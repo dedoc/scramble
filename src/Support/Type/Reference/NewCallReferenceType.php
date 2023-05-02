@@ -13,6 +13,11 @@ class NewCallReferenceType extends AbstractReferenceType
     ) {
     }
 
+    public function isInstanceOf(string $className)
+    {
+        return is_a($this->name, $className, true);
+    }
+
     public function toString(): string
     {
         $argsTypes = implode(

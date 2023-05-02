@@ -38,8 +38,8 @@ class AnalysisResult
         $index = $this->index;
         $infer = new TypeInferer(
             $projectAnalyzer = app()->make(ProjectAnalyzer::class, ['index' => $this->index]),
-            [],
-            [],
+            $projectAnalyzer->extensions,
+            $projectAnalyzer->handlers,
             $index,
             new FileNameResolver(new PhpParser\NameContext(new PhpParser\ErrorHandler\Throwing()))
         );

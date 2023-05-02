@@ -45,7 +45,7 @@ class ClassDefinition
         $type = $propertyDefinition->type;
 
         if (! $calledOn instanceof Generic) {
-            return $type;
+            return $propertyDefinition->defaultType ?: $type;
         }
 
         return $this->replaceTemplateInType($type, $calledOn->templateTypesMap);
