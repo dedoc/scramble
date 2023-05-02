@@ -105,7 +105,9 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
     private static function modelType(ClassDefinition $jsonClass, Scope $scope): ?Type
     {
         if ([$cachedModelType, $cachedModelDefinition] = static::$jsonResourcesModelTypesCache[$jsonClass->name] ?? null) {
-            $scope->index->registerClassDefinition($cachedModelDefinition);
+            if ($cachedModelDefinition) {
+                $scope->index->registerClassDefinition($cachedModelDefinition);
+            }
 
             return $cachedModelType;
         }
@@ -117,6 +119,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         );
 
         $modelType = new UnknownType("Cannot resolve [$modelClass] model type.");
+        $modelClassDefinition = null;
         if ($modelClass && is_a($modelClass, Model::class, true)) {
             try {
                 $modelClassDefinition = (new ModelInfo($modelClass))->type();

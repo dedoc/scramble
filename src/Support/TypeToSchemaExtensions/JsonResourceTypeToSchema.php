@@ -37,9 +37,9 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        $type = $this->infer->analyzeClass($type->name);
+        $definition = $this->infer->analyzeClass($type->name);
 
-        $array = $type->getMethodCallType('toArray');
+        $array = $definition->getMethodCallType('toArray');
 
         if (! $array instanceof ArrayType) {
             if ($type->isInstanceOf(ResourceCollection::class)) {
@@ -112,7 +112,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
                     $item->value instanceof Generic
                     && $item->value->isInstanceOf(MergeValue::class)
                 ) {
-                    $arrayToMerge = $item->value->templateTypesMap[1];
+                    $arrayToMerge = $item->value->templateTypesMap['TData'];
 
                     // Second generic argument of the `MergeValue` class must be an array.
                     // Otherwise, we ignore it from the resulting array.
@@ -122,8 +122,8 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
                     $arrayToMergeItems = $this->flattenMergeValues($arrayToMerge->items);
 
-                    $mergingArrayValuesShouldBeRequired = $item->value->templateTypesMap[0] instanceof LiteralBooleanType
-                        && $item->value->templateTypesMap[0]->value === true;
+                    $mergingArrayValuesShouldBeRequired = $item->value->templateTypesMap['TCondition'] instanceof LiteralBooleanType
+                        && $item->value->templateTypesMap['TCondition']->value === true;
 
                     if (! $mergingArrayValuesShouldBeRequired) {
                         foreach ($arrayToMergeItems as $mergingItem) {
@@ -213,12 +213,17 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
     private function getResourceType(Type $type): Type
     {
-        if ($type instanceof Generic) {
-            $type = $type->templateTypesMap[0] ?? new \Dedoc\Scramble\Support\Type\UnknownType();
+        if (! $type instanceof Generic) {
+            return new \Dedoc\Scramble\Support\Type\UnknownType();
         }
 
-        if ($type instanceof ObjectType) {
-            return $type->properties['resource'] ?? new \Dedoc\Scramble\Support\Type\UnknownType();
+        if ($type->isInstanceOf(ResourceCollection::class)) {
+            return $type->templateTypesMap['TCollects']->templateTypesMap['TResource']
+                ?? new \Dedoc\Scramble\Support\Type\UnknownType();
+        }
+
+        if ($type->isInstanceOf(JsonResource::class)) {
+            return $type->templateTypesMap['TResource'];
         }
 
         return new \Dedoc\Scramble\Support\Type\UnknownType();

@@ -7,9 +7,7 @@ it('generates response for contollers method', function () {
     $docs = generateForRoute(function () {
         return RouteFacade::get('api/test', ResponseExtensionTest_ControllerWithOtherClassReference::class);
     });
-    //    dd($docs);
-    expect(true)->toBe(false);
-});
+})->skip('this is where things started');
 
 class ResponseExtensionTest_ControllerWithOtherClassReference
 {

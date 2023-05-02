@@ -51,6 +51,23 @@ class ClassDefinition
         return $this->replaceTemplateInType($type, $calledOn->templateTypesMap);
     }
 
+    public function getMethodCallType(string $name, ObjectType $calledOn = null)
+    {
+        $methodDefinition = $this->methods[$name] ?? null;
+
+        if (! $methodDefinition) {
+            return new UnknownType("Cannot get type of calling method [$name] on object [$this->name]");
+        }
+
+        $type = $methodDefinition->type;
+
+        if (! $calledOn instanceof Generic) {
+            return $type->getReturnType();
+        }
+
+        return $this->replaceTemplateInType($type, $calledOn->templateTypesMap)->getReturnType();
+    }
+
     private function replaceTemplateInType(Type $type, array $templateTypesMap)
     {
         $type = clone $type;

@@ -68,7 +68,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     {
         // In case of paginated resource, we still want to get to the underlying JsonResource.
         return (new TypeWalker)->first(
-            $type->templateTypesMap[0],
+            $type->templateTypesMap['TCollects'],
             fn (Type $t) => $t->isInstanceOf(JsonResource::class),
         );
     }
