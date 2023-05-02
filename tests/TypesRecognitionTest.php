@@ -1,7 +1,7 @@
 <?php
 
-use Dedoc\Scramble\Infer\Infer;
-use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Infer\ProjectAnalyzer;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
@@ -15,7 +15,7 @@ function getTypeFromDoc(string $phpDoc)
     $docNode = PhpDoc::parse($phpDoc);
     $varNode = $docNode->getVarTagValues()[0];
 
-    return (new TypeTransformer(new Infer(app(FileParser::class)), new Components))
+    return (new TypeTransformer(new Infer(app(ProjectAnalyzer::class)), new Components))
         ->transform(PhpDocTypeHelper::toType($varNode->type));
 }
 
