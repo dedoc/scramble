@@ -21,3 +21,15 @@ EOD)->getExpressionType("foo('wow')");
 
     expect($type->toString())->toBe('string(wow)');
 });
+
+it('adds a type constraint onto template type for some types', function ($paramType, $expectedParamType, $expectedTemplateDefinitionType = '') {
+    $def = analyzeFile("<?php function foo ($paramType \$a) {}")->getFunctionDefinition('foo');
+
+    expect($def->type->arguments['a']->toString())->toBe($expectedParamType);
+
+    if (! $expectedTemplateDefinitionType) {
+        expect($def->type->templates)->toBeEmpty();
+    } else {
+        expect($def->type->templates[0]->toDefinitionString())->toBe($expectedTemplateDefinitionType);
+    }
+})->with('extendableTemplateTypes');

@@ -4,7 +4,10 @@ namespace Dedoc\Scramble\Support\Type;
 
 class TemplateType extends AbstractType
 {
-    public function __construct(public string $name)
+    public function __construct(
+        public string $name,
+        public ?Type $is = null,
+    )
     {
     }
 
@@ -16,5 +19,13 @@ class TemplateType extends AbstractType
     public function toString(): string
     {
         return $this->name;
+    }
+
+    public function toDefinitionString(): string
+    {
+        if (! $this->is) {
+            return $this->name;
+        }
+        return sprintf('%s is %s', $this->name, $this->is->toString());
     }
 }

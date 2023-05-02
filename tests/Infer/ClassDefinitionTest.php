@@ -43,18 +43,17 @@ EOD)->getClassDefinition('Foo');
     expect($type->properties['prop']->defaultType->toString())->toBe('int(42)');
 });
 
-it('infers properties types from typehints', function () {
-    $type = analyzeFile(<<<'EOD'
-<?php
-class Foo {
-    public int $prop;
-}
-EOD)->getClassDefinition('Foo');
+it('infers properties types from typehints', function ($paramType, $expectedParamType, $expectedTemplateDefinitionType = '') {
+    $def = analyzeFile("<?php class Foo { public $paramType \$a; }")->getClassDefinition('Foo');
 
-    expect($type->templateTypes)->toHaveCount(0);
-    expect($type->properties['prop']->type->toString())->toBe('int');
-    expect($type->properties['prop']->defaultType)->toBeNull();
-});
+    expect($def->properties['a']->type->toString())->toBe($expectedParamType);
+
+    if (! $expectedTemplateDefinitionType) {
+        expect($def->templateTypes)->toBeEmpty();
+    } else {
+        expect($def->templateTypes[0]->toDefinitionString())->toBe($expectedTemplateDefinitionType);
+    }
+})->with('extendableTemplateTypes');
 
 it('setting a parameter to property in constructor makes it template type', function () {
     $type = analyzeFile(__DIR__.'/files/class_with_simple_constructor_and_property.php')

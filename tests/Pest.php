@@ -54,6 +54,16 @@ function getStatementType(string $statement): ?Type
     return analyzeFile('<?php')->getExpressionType($statement);
 }
 
+dataset('extendableTemplateTypes', [
+    ['int', 'int'],
+    ['bool', 'boolean'],
+    ['float', 'float'],
+    ['', 'TA', 'TA'],
+    ['string', 'TA', 'TA is string'],
+    ['SomeClass', 'TA', 'TA is SomeClass'],
+    ['callable', 'TA', 'TA is callable'],
+]);
+
 function generateForRoute(Closure $param)
 {
     $route = $param();
@@ -62,3 +72,4 @@ function generateForRoute(Closure $param)
 
     return app()->make(\Dedoc\Scramble\Generator::class)();
 }
+

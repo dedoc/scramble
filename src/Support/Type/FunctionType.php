@@ -57,7 +57,7 @@ class FunctionType extends AbstractType implements FunctionLikeType
     {
         return sprintf(
             '%s(%s): %s',
-            $this->templates ? sprintf('<%s>', implode(', ', array_map(fn ($t) => $t->toString(), $this->templates))) : '',
+            $this->templates ? sprintf('<%s>', implode(', ', array_map(fn ($t) => $t->toDefinitionString(), $this->templates))) : '',
             implode(', ', array_map(fn ($t) => $t->toString(), $this->arguments)),
             $this->returnType->toString(),
         );
