@@ -3,6 +3,8 @@
 namespace Dedoc\Scramble\Support\InferHandlers;
 
 use Carbon\Carbon;
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
@@ -25,46 +27,48 @@ class ModelClassHandler
 
     public function enter(Node $node, Scope $scope)
     {
-        $type = $scope->getType($node);
+        $definition = $scope->classDefinition();
 
-        if (! $type->isInstanceOf(Model::class)) {
+        if (! $definition->isChildOf(Model::class)) {
             return;
         }
 
         try {
-            app()->make($type->name);
+            app()->make($definition->name);
         } catch (BindingResolutionException $e) {
             return;
         }
 
-        $modelType = (new ModelInfo($type->name))->type();
+        $modelDefinition = (new ModelInfo($definition->name))->type();
 
-        $type->properties = array_merge($modelType->properties, $type->properties);
+        $definition->properties = array_merge($definition->properties, $modelDefinition->properties);
     }
 
     public function leave(Node $node, Scope $scope)
     {
-        $type = $scope->getType($node);
+        $definition = $scope->classDefinition();
 
-        if (! $type->isInstanceOf(Model::class)) {
+        if (! $definition->isChildOf(Model::class)) {
             return;
         }
 
-        if (array_key_exists('toArray', $type->methods)) {
+        if (array_key_exists('toArray', $definition->methods)) {
             return;
         }
 
         try {
-            app()->make($type->name);
+            app()->make($definition->name);
         } catch (BindingResolutionException $e) {
             return;
         }
 
-        $type->methods['toArray'] = (new FunctionType('toArray'))
-            ->setReturnType($this->getDefaultToArrayType($type, $type->name));
+        $definition->methods['toArray'] = new FunctionLikeDefinition(
+            type: (new FunctionType('toArray'))
+                ->setReturnType($this->getDefaultToArrayType($definition, $definition->name))
+        );
     }
 
-    private function getDefaultToArrayType(ObjectType $type, string $modelName)
+    private function getDefaultToArrayType(ClassDefinition $definition, string $modelName)
     {
         $modelInfo = new ModelInfo($modelName);
 
@@ -76,8 +80,8 @@ class ModelClassHandler
             ->when($instance->getVisible(), fn ($c, $visible) => $c->only($visible))
             ->when($instance->getHidden(), fn ($c, $visible) => $c->except($visible))
             ->filter(fn ($attr) => $attr['appended'] !== false)
-            ->map(function ($_, $name) use ($type) {
-                $attrType = $type->getPropertyFetchType($name);
+            ->map(function ($_, $name) use ($definition) {
+                $attrType = $definition->getPropertyFetchType($name);
                 if (
                     $attrType instanceof Union
                     && count($attrType->types) === 2
@@ -90,15 +94,15 @@ class ModelClassHandler
                     return Union::wrap([new NullType(), $dateStringType]);
                 }
 
-                return $type->getPropertyFetchType($name);
+                return $attrType;
             });
 
         $arrayableRelationsTypes = $info->get('relations', collect())
             ->only($this->getProtectedValue($instance, 'with'))
             ->when($instance->getVisible(), fn ($c, $visible) => $c->only($visible))
             ->when($instance->getHidden(), fn ($c, $visible) => $c->except($visible))
-            ->map(function ($_, $name) use ($type) {
-                return $type->getPropertyFetchType($name);
+            ->map(function ($_, $name) use ($definition) {
+                return $definition->getPropertyFetchType($name);
             });
 
         return new ArrayType([

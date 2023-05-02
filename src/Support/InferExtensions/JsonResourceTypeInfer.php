@@ -2,8 +2,10 @@
 
 namespace Dedoc\Scramble\Support\InferExtensions;
 
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -28,22 +30,25 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
 
     public function getType(Expr $node, Scope $scope): ?Type
     {
-        if (! $scope->classDefinition()?->isInstanceOf(JsonResource::class)) {
+        if (
+            ! $scope->classDefinition()?->isInstanceOf(JsonResource::class)
+            || $scope->classDefinition()?->name === JsonResource::class
+        ) {
             return null;
         }
 
         /** $this->resource */
         if ($node instanceof Node\Expr\PropertyFetch && ($node->var->name ?? null) === 'this' && ($node->name->name ?? null) === 'resource') {
-            return static::modelType($scope->class(), $scope);
+            return static::modelType($scope->classDefinition(), $scope);
         }
 
         /** $this->? */
         if (
             $node instanceof Node\Expr\PropertyFetch && ($node->var->name ?? null) === 'this'
             && is_string($node->name->name ?? null)
-            && ($type = static::modelType($scope->class(), $scope))
+            && ($type = static::modelType($scope->classDefinition(), $scope))
         ) {
-            return $type->getPropertyFetchType($node->name->name);
+            return $scope->getPropertyFetchType($type, $node->name->name);
         }
 
         /*
@@ -58,10 +63,10 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
             }
 
             return new Generic(
-                new ObjectType(MergeValue::class),
+                MergeValue::class,
                 [
-                    $node->name->name === 'merge' ? new LiteralBooleanType(true) : new BooleanType(),
-                    $type,
+                    'TCondition' => $node->name->name === 'merge' ? new LiteralBooleanType(true) : new BooleanType(),
+                    'TData' => $type,
                 ],
             );
         }
@@ -97,32 +102,41 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         return null;
     }
 
-    private static function modelType(ObjectType $jsonClass, Scope $scope): ?Type
+    private static function modelType(ClassDefinition $jsonClass, Scope $scope): ?Type
     {
-        if ($cachedModelType = static::$jsonResourcesModelTypesCache[$jsonClass->name] ?? null) {
+        if ([$cachedModelType, $cachedModelDefinition] = static::$jsonResourcesModelTypesCache[$jsonClass->name] ?? null) {
+            $scope->index->registerClassDefinition($cachedModelDefinition);
+
             return $cachedModelType;
         }
 
         $modelClass = static::getModelName(
             $jsonClass->name,
             new \ReflectionClass($jsonClass->name),
-            fn ($n) => $scope->resolveName($n)
+            $scope->nameResolver,
         );
 
         $modelType = new UnknownType("Cannot resolve [$modelClass] model type.");
         if ($modelClass && is_a($modelClass, Model::class, true)) {
             try {
-                $modelType = (new ModelInfo($modelClass))->type();
+                $modelClassDefinition = (new ModelInfo($modelClass))->type();
+
+                $scope->index->registerClassDefinition($modelClassDefinition);
+
+                $modelType = new ObjectType($modelClassDefinition->name);
             } catch (\LogicException $e) {
                 // Here doctrine/dbal is not installed.
                 $modelType = null;
+                $modelClassDefinition = null;
             }
         }
 
-        return static::$jsonResourcesModelTypesCache[$jsonClass->name] = $modelType;
+        static::$jsonResourcesModelTypesCache[$jsonClass->name] = [$modelType, $modelClassDefinition];
+
+        return $modelType;
     }
 
-    private static function getModelName(string $jsonResourceClassName, \ReflectionClass $reflectionClass, callable $getFqName)
+    private static function getModelName(string $jsonResourceClassName, \ReflectionClass $reflectionClass, FileNameResolver $getFqName)
     {
         $phpDoc = $reflectionClass->getDocComment() ?: '';
 

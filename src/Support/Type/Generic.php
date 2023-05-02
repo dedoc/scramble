@@ -11,7 +11,7 @@ class Generic extends ObjectType
      */
     public array $templateTypesMap;
 
-    public function __construct(string $name, array $templateTypesMap)
+    public function __construct(string $name, array $templateTypesMap = [])
     {
         parent::__construct($name);
         $this->templateTypesMap = $templateTypesMap;

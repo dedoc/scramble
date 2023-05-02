@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\ResponseExtractor;
 
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
@@ -10,7 +12,6 @@ use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
-use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Doctrine\DBAL\Schema\Column;
@@ -130,17 +131,19 @@ class ModelInfo
             ->map(function ($relation) {
                 if ($isManyRelation = Str::contains($relation['type'], 'Many')) {
                     return new Generic(
-                        new ObjectType(\Illuminate\Database\Eloquent\Collection::class),
-                        [new ObjectType($relation['related'])]
+                        \Illuminate\Database\Eloquent\Collection::class,
+                        [
+                            'TModel' => new ObjectType($relation['related'])
+                        ]
                     );
                 }
 
                 return new ObjectType($relation['related']);
             });
 
-        return static::$cache[$this->class] = new ObjectType(
-            $modelInfo->get('class'),
-            $properties->merge($relations)->all(),
+        return static::$cache[$this->class] = new ClassDefinition(
+            name: $modelInfo->get('class'),
+            properties: $properties->merge($relations)->map(fn ($t) => new ClassPropertyDefinition($t))->all(),
         );
     }
 

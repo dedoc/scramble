@@ -8,8 +8,16 @@ use PhpParser\NodeFinder;
 
 class FileParserResult
 {
-    public function __construct(private array $statements)
+    public function __construct(
+        private array $statements,
+        private FileNameResolver $nameResolver,
+    )
     {
+    }
+
+    public function getNameResolver()
+    {
+        return $this->nameResolver;
     }
 
     public function getStatements(): array

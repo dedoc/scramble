@@ -19,6 +19,7 @@ use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 
@@ -33,6 +34,7 @@ class TypeInferer extends NodeVisitorAbstract
         array $extensions,
         array $handlers,
         private Index $index,
+        private FileNameResolver $nameResolver,
     ) {
         $this->handlers = [
             new FunctionLikeHandler(),
@@ -82,6 +84,8 @@ class TypeInferer extends NodeVisitorAbstract
 
     public function leaveNode(Node $node)
     {
+        $shouldLeaveScope = false;
+
         foreach ($this->handlers as $handler) {
             if (! $handler->shouldHandle($node)) {
                 continue;
@@ -92,8 +96,12 @@ class TypeInferer extends NodeVisitorAbstract
             }
 
             if ($handler instanceof CreatesScope) {
-                $this->scope = $this->scope->parentScope;
+                $shouldLeaveScope = true;
             }
+        }
+
+        if ($shouldLeaveScope) {
+            $this->scope = $this->scope->parentScope;
         }
 
         return null;
@@ -106,6 +114,7 @@ class TypeInferer extends NodeVisitorAbstract
                 $this->index,
                 new NodeTypesResolver,
                 new ScopeContext,
+                $this->nameResolver,
             );
         }
 

@@ -28,29 +28,29 @@ class FileParser
 
     public function parse(string $path): FileParserResult
     {
-        return $this->cache[$path] ??= new FileParserResult($this->resolveNames(
-            $this->parser->parse(file_get_contents($path)),
-        ));
+        return $this->cache[$path] ??= new FileParserResult(
+            $statements = Arr::wrap($this->parser->parse(file_get_contents($path))),
+            $this->resolveNames($statements),
+        );
     }
 
     public function parseContent(string $content): FileParserResult
     {
-        return $this->cache[md5($content)] ??= new FileParserResult($this->resolveNames(
-            $this->parser->parse($content),
-        ));
+        return $this->cache[md5($content)] ??= new FileParserResult(
+            $statements = Arr::wrap($this->parser->parse($content)),
+            $this->resolveNames($statements),
+        );
     }
 
-    private function resolveNames($statements): array
+    private function resolveNames($statements): FileNameResolver
     {
-        $statements = Arr::wrap($statements);
-
         $traverser = new NodeTraverser;
         $traverser->addVisitor($nameResolver = new NameResolver());
         $traverser->addVisitor(new PhpDocResolver(
-            new FileNameResolver($nameResolver->getNameContext()),
+            $nameResolver = new FileNameResolver($nameResolver->getNameContext()),
         ));
         $traverser->traverse($statements);
 
-        return $statements;
+        return $nameResolver;
     }
 }

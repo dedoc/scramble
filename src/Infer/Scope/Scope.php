@@ -4,11 +4,13 @@ namespace Dedoc\Scramble\Infer\Scope;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\BooleanNotTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
@@ -20,31 +22,19 @@ use PhpParser\Node;
 
 class Scope
 {
-    public Index $index;
-
-    public NodeTypesResolver $nodeTypesResolver;
-
-    public ScopeContext $context;
-
-    public ?Scope $parentScope;
-
     /**
      * @var array<string, array{line: int, type: Type}[]>
      */
     public array $variables = [];
 
-    private FileNameResolver $namesResolver;
-
     public function __construct(
-        Index $index,
-        NodeTypesResolver $nodeTypesResolver,
-        ScopeContext $context,
-        ?Scope $parentScope = null)
+        public Index $index,
+        public NodeTypesResolver $nodeTypesResolver,
+        public ScopeContext $context,
+        public FileNameResolver $nameResolver,
+        public ?Scope $parentScope = null,
+    )
     {
-        $this->index = $index;
-        $this->nodeTypesResolver = $nodeTypesResolver;
-        $this->context = $context;
-        $this->parentScope = $parentScope;
     }
 
     public function getType(Node $node)
@@ -161,6 +151,7 @@ class Scope
             $this->index,
             $this->nodeTypesResolver,
             $context ?: $this->context,
+            $this->nameResolver,
             $this,
         );
     }
@@ -231,5 +222,15 @@ class Scope
         }
 
         return $type;
+    }
+
+    public function getMethodCallType(Type $calledOn, string $methodName, array $arguments = []): Type
+    {
+
+    }
+
+    public function getPropertyFetchType(Type $calledOn, string $propertyName): Type
+    {
+        return (new ReferenceTypeResolver($this->index))->resolve($this, new PropertyFetchReferenceType($calledOn, $propertyName));
     }
 }

@@ -6,11 +6,15 @@ use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Support\Str;
+use PhpParser\ErrorHandler\Throwing;
+use PhpParser\NameContext;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
@@ -98,11 +102,13 @@ class ProjectAnalyzer
             }
 
             if (! $isInUseExpression && $curlyCount === 0) {
-                if (! $currentSymbolType && is_array($token) && isset($token[1]) && $token[1] === 'function') {
+                if (is_array($token) && isset($token[1]) && $token[1] === 'function') {
+                    $currentSymbolName = null;
                     $currentSymbolType = 'function';
                 }
 
-                if (! $currentSymbolType && is_array($token) && isset($token[1]) && $token[1] === 'class') {
+                if (is_array($token) && isset($token[1]) && $token[1] === 'class') {
+                    $currentSymbolName = null;
                     $currentSymbolType = 'class';
                 }
 
@@ -173,6 +179,7 @@ class ProjectAnalyzer
             $this->extensions,
             $this->handlers,
             $this->index,
+            $result->getNameResolver(),
         ));
 
         $traverser->traverse([$symbolDefinitionNode]);
@@ -185,15 +192,24 @@ class ProjectAnalyzer
             // TODO: Traits,
         ]));
 
+        $queue = [];
+
         foreach ($dependencies as $className) {
             if (! isset($this->symbols['class'][$className]) && class_exists($className)) {
-                $fileName = $this->symbols['class'][$className] = (new \ReflectionClass($className))->getFileName();
+                $fileName = (new \ReflectionClass($className))->getFileName();
+
+                // Not analyzing vendor deps.
+                if (Str::contains($fileName, '/vendor/')) {
+                    continue;
+                }
+
+                $this->symbols['class'][$className] = $fileName;
 
                 $this->files[$fileName] ??= file_get_contents($fileName);
             }
-        }
 
-        $queue = array_map(fn ($n) => ['class', $n], $dependencies);
+            $queue[] = ['class', $className];
+        }
 
         $this->processQueue($queue);
     }
@@ -238,6 +254,7 @@ class ProjectAnalyzer
                 $this->index,
                 new NodeTypesResolver,
                 new ScopeContext(functionDefinition: $functionDefinition),
+                new FileNameResolver(new NameContext(new Throwing())),
             );
             $resolveReferencesInFunctionReturn($fnScope, $functionDefinition->type);
         }
@@ -248,6 +265,7 @@ class ProjectAnalyzer
                     $this->index,
                     new NodeTypesResolver,
                     new ScopeContext($classDefinition, $methodDefinition),
+                    new FileNameResolver(new NameContext(new Throwing())),
                 );
                 $resolveReferencesInFunctionReturn($methodScope, $methodDefinition->type);
             }

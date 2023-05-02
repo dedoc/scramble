@@ -1,9 +1,9 @@
 type: object
 properties:
     id: { type: integer }
-    children: { type: array, items: { $ref: '#/components/schemas/InferTypesTest_SamplePostModelWithToArray' } }
+    children: { type: array, items: { $ref: '#/components/schemas/SamplePostModelWithToArray' } }
     read_time: { type: string }
-    user: { $ref: '#/components/schemas/InferTypesTest_SampleModel' }
+    user: { $ref: '#/components/schemas/SampleUserModel' }
     created_at: { type: [object, 'null'] }
 required:
     - id

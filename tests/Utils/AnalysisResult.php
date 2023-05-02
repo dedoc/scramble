@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\ProjectAnalyzer;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
 use PhpParser;
@@ -40,6 +41,7 @@ class AnalysisResult
             [],
             [],
             $index,
+            new FileNameResolver(new PhpParser\NameContext(new PhpParser\ErrorHandler\Throwing()))
         );
         $traverser = new NodeTraverser;
         $traverser->addVisitor($infer);

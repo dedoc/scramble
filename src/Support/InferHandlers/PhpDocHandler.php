@@ -33,7 +33,7 @@ class PhpDocHandler
             $scope->getType($node->expr)->setAttribute('docNode', $parsedPhpDoc);
         }
 
-        if ($node instanceof Node\Stmt\ClassMethod && ($methodType = $scope->getType($node))) {
+        if ($node instanceof Node\Stmt\ClassMethod && ($methodType = $scope->functionDefinition()?->type)) {
             $thrownExceptions = collect($parsedPhpDoc->getThrowsTagValues())
                 ->flatMap(function (ThrowsTagValueNode $t) {
                     $type = PhpDocTypeHelper::toType($t->type);
