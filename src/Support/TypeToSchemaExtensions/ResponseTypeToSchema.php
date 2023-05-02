@@ -26,19 +26,19 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
-        if (! $type->templateTypesMap[1] instanceof LiteralIntegerType) {
+        if (! $type->templateTypesMap['TCodeStatus'] instanceof LiteralIntegerType) {
             return null;
         }
 
-        $emptyContent = ($type->templateTypesMap[0]->value ?? null) === '';
+        $emptyContent = ($type->templateTypesMap['TContent']->value ?? null) === '';
 
-        return Response::make($code = $type->templateTypesMap[1]->value)
+        return Response::make($code = $type->templateTypesMap['TCodeStatus']->value)
             ->description($code === 204 ? 'No content' : '')
             ->setContent(
                 'application/json', // @todo: Some other response types are possible as well
                 $emptyContent
                     ? null
-                    : Schema::fromType($this->openApiTransformer->transform($type->templateTypesMap[0])),
+                    : Schema::fromType($this->openApiTransformer->transform($type->templateTypesMap['TContent'])),
             );
     }
 }

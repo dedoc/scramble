@@ -59,6 +59,11 @@ class ProjectAnalyzer
         foreach (token_get_all($content) as $token) {
             if ($token === '{') {
                 $hasEnteredInsideSymbolDefinition = true;
+
+                if ($currentSymbolType && ! $currentSymbolName) {
+                    $currentSymbolType = null;
+                }
+
                 $curlyCount++;
             }
 
@@ -92,7 +97,7 @@ class ProjectAnalyzer
                 $currentSymbolType = null;
             }
 
-            if (! $isInUseExpression) {
+            if (! $isInUseExpression && $curlyCount === 0) {
                 if (! $currentSymbolType && is_array($token) && isset($token[1]) && $token[1] === 'function') {
                     $currentSymbolType = 'function';
                 }
@@ -138,12 +143,13 @@ class ProjectAnalyzer
 
     private function analyzeFileSymbol(string $content, array $symbol): void
     {
+        // dump(['analyzeFileSymbol' => $symbol]);
         $this->analyzedSymbols[implode('.', $symbol)] = true;
 
         [$type, $name] = $symbol;
-        $statements = $this->parser->parseContent($content);
+        $result = $this->parser->parseContent($content);
 
-        $symbolDefinitionNode = (new NodeFinder)->findFirst($statements, function (Node $node) use ($type, $name) {
+        $symbolDefinitionNode = (new NodeFinder)->findFirst($result->getStatements(), function (Node $node) use ($type, $name) {
             if ($type === 'function') {
                 return $node instanceof Node\Stmt\Function_
                     && $node->namespacedName->toString() === $name;

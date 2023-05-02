@@ -21,7 +21,7 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
     public function shouldHandle(Type $type)
     {
         return $type instanceof Generic
-            && $type->type->name === LengthAwarePaginator::class
+            && $type->name === LengthAwarePaginator::class
             && count($type->templateTypesMap) === 1
             && $type->templateTypesMap[0] instanceof ObjectType;
     }

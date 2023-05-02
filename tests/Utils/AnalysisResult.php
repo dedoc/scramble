@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Tests\Utils;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\ProjectAnalyzer;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
@@ -34,12 +35,12 @@ class AnalysisResult
         $fileAst = (new PhpParser\ParserFactory)->create(PhpParser\ParserFactory::PREFER_PHP7)->parse($code);
 
         $index = $this->index;
-        $infer = app()->make(TypeInferer::class, [
-            'namesResolver' => new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing())),
-            'extensions' => [/*...$extensions, ...DefaultExtensions::infer()*/],
-            'referenceTypeResolver' => new \Dedoc\Scramble\Infer\Services\ReferenceTypeResolver($index),
-            'index' => $index,
-        ]);
+        $infer = new TypeInferer(
+            $projectAnalyzer = app()->make(ProjectAnalyzer::class, ['index' => $this->index]),
+            [],
+            [],
+            $index,
+        );
         $traverser = new NodeTraverser;
         $traverser->addVisitor($infer);
         $traverser->traverse($fileAst);

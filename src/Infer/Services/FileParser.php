@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
 use Illuminate\Support\Arr;
-use PhpParser\Node\Stmt;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
@@ -16,7 +15,7 @@ use PhpParser\Parser;
 class FileParser
 {
     /**
-     * @var array<string, Stmt[]>
+     * @var array<string, FileParserResult>
      */
     private array $cache = [];
 
@@ -27,18 +26,18 @@ class FileParser
         $this->parser = $parser;
     }
 
-    public function parse(string $path): array
+    public function parse(string $path): FileParserResult
     {
-        return $this->cache[$path] ??= $this->resolveNames(
+        return $this->cache[$path] ??= new FileParserResult($this->resolveNames(
             $this->parser->parse(file_get_contents($path)),
-        );
+        ));
     }
 
-    public function parseContent(string $content): array
+    public function parseContent(string $content): FileParserResult
     {
-        return $this->cache[md5($content)] ??= $this->resolveNames(
+        return $this->cache[md5($content)] ??= new FileParserResult($this->resolveNames(
             $this->parser->parse($content),
-        );
+        ));
     }
 
     private function resolveNames($statements): array

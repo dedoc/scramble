@@ -28,7 +28,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
 
     public function getType(Expr $node, Scope $scope): ?Type
     {
-        if (! optional($scope->class())->isInstanceOf(JsonResource::class)) {
+        if (! $scope->classDefinition()?->isInstanceOf(JsonResource::class)) {
             return null;
         }
 

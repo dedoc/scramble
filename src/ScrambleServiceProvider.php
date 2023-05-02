@@ -6,9 +6,9 @@ use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Extensions\InferExtension;
-use Dedoc\Scramble\Infer\Infer;
+use Dedoc\Scramble\Infer\ProjectAnalyzer;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\FileParser;
-use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthorizationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\HttpExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\NotFoundExceptionToResponseExtension;
@@ -44,31 +44,24 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->hasRoute('web')
             ->hasViews('scramble');
 
-        $this->app->when([Infer::class, TypeInferer::class])
-            ->needs('$extensions')
-            ->give(function () {
-                $extensions = config('scramble.extensions', []);
+        $this->app->singleton(FileParser::class, function () {
+            return new FileParser(
+                (new ParserFactory)->create(ParserFactory::PREFER_PHP7)
+            );
+        });
 
-                $inferExtensionsClasses = array_values(array_filter(
-                    $extensions,
-                    fn ($e) => is_a($e, InferExtension::class, true),
-                ));
-                $inferExtensions = array_map(
-                    fn ($inferExtensionClass) => new $inferExtensionClass(),
-                    $inferExtensionsClasses,
-                );
+        $this->app->singleton(ProjectAnalyzer::class, function () {
+            return new ProjectAnalyzer(
+                $this->app->make(FileParser::class),
+                extensions: $this->getInferExtensions(),
+                handlers: [new PhpDocHandler(), new ModelClassHandler()],
+                index: new Index,
+            );
+        });
 
-                return array_merge($inferExtensions, DefaultExtensions::infer());
-            });
-
-        $this->app->when([Infer::class, TypeInferer::class])
-            ->needs('$handlers')
-            ->give(function () {
-                return [
-                    new PhpDocHandler(),
-                    new ModelClassHandler(),
-                ];
-            });
+        $this->app->singleton(Infer::class, function () {
+            return new Infer($this->app->make(ProjectAnalyzer::class));
+        });
 
         $this->app->when(OperationBuilder::class)
             ->needs('$extensionsClasses')
@@ -88,15 +81,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ], $operationExtensions);
             });
 
-        $this->app->singleton(Infer::class);
-
         $this->app->singleton(ServerFactory::class);
-
-        $this->app->singleton(FileParser::class, function () {
-            return new FileParser(
-                (new ParserFactory)->create(ParserFactory::PREFER_PHP7)
-            );
-        });
 
         $this->app->singleton(TypeTransformer::class, function () {
             $extensions = config('scramble.extensions', []);
@@ -131,5 +116,21 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ]),
             );
         });
+    }
+
+    private function getInferExtensions()
+    {
+        $extensions = config('scramble.extensions', []);
+
+        $inferExtensionsClasses = array_values(array_filter(
+            $extensions,
+            fn ($e) => is_a($e, InferExtension::class, true),
+        ));
+        $inferExtensions = array_map(
+            fn ($inferExtensionClass) => new $inferExtensionClass(),
+            $inferExtensionsClasses,
+        );
+
+        return array_merge($inferExtensions, DefaultExtensions::infer());
     }
 }

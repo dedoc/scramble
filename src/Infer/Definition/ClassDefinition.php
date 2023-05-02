@@ -18,4 +18,9 @@ class ClassDefinition
         public ?string $parentFqn = null,
     ) {
     }
+
+    public function isInstanceOf(string $className)
+    {
+        return is_a($this->name, $className, true);
+    }
 }
