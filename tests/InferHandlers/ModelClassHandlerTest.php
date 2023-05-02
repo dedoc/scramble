@@ -25,10 +25,10 @@ it('adds models attributes to the model class definition as properties', functio
             /* Appended attributes */
             'read_time',
             /* Relations */
-            'parent', 'children', 'user'
+            'parent', 'children', 'user',
             /* other properties from model class are ommited here but exist on type */
         ])
-        ->and(collect($definition->properties)->map(fn($p) => Str::replace('Dedoc\\Scramble\\Tests\\Files\\', '', $p->type->toString())))
+        ->and(collect($definition->properties)->map(fn ($p) => Str::replace('Dedoc\\Scramble\\Tests\\Files\\', '', $p->type->toString())))
         ->toMatchArray([
             'id' => 'int',
             'status' => 'Status',
@@ -49,7 +49,7 @@ it('adds toArray method type the model class without defined toArray class', fun
 
     $toArrayReturnType = $definition->methods['toArray']->type->getReturnType();
 
-    expect(collect($toArrayReturnType->items)->mapWithKeys(fn (ArrayItemType_ $t) => [$t->key.($t->isOptional?'?':'') => $t->value->toString()]))
+    expect(collect($toArrayReturnType->items)->mapWithKeys(fn (ArrayItemType_ $t) => [$t->key.($t->isOptional ? '?' : '') => $t->value->toString()]))
         ->toMatchArray([
             'id' => 'int',
             'name' => 'string',

@@ -7,8 +7,7 @@ class TemplateType extends AbstractType
     public function __construct(
         public string $name,
         public ?Type $is = null,
-    )
-    {
+    ) {
     }
 
     public function isSame(Type $type)
@@ -26,6 +25,7 @@ class TemplateType extends AbstractType
         if (! $this->is) {
             return $this->name;
         }
+
         return sprintf('%s is %s', $this->name, $this->is->toString());
     }
 }

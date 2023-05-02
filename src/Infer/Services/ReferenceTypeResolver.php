@@ -369,7 +369,7 @@ class ReferenceTypeResolver
 
             if (! $foundCorrespondingTemplateType) {
                 $foundCorrespondingTemplateType = new UnknownType();
-//                throw new \LogicException("Cannot infer type of template $template->name from arguments.");
+                //                throw new \LogicException("Cannot infer type of template $template->name from arguments.");
             }
 
             return [

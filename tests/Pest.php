@@ -72,4 +72,3 @@ function generateForRoute(Closure $param)
 
     return app()->make(\Dedoc\Scramble\Generator::class)();
 }
-

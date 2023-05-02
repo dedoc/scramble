@@ -133,7 +133,7 @@ class ModelInfo
                     return new Generic(
                         \Illuminate\Database\Eloquent\Collection::class,
                         [
-                            'TModel' => new ObjectType($relation['related'])
+                            'TModel' => new ObjectType($relation['related']),
                         ]
                     );
                 }

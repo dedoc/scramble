@@ -146,25 +146,25 @@ class RouteInfo
                 ->analyzeClass($this->reflectionMethod()->getDeclaringClass()->getName())
                 ->methods[$this->methodName()]
                 ->type;
-//            if (ReferenceTypeResolver::hasResolvableReferences($returnType = $this->methodType->getReturnType())) {
-//                $this->methodType->setReturnType((new ReferenceTypeResolver($this->infer->index))->resolve(
-//                    $returnType,
-//                    unknownClassHandler: function (string $name) {
-//                        //                        dump(['unknownClassHandler' => $name]);
-//                        if (! class_exists($name)) {
-//                            return;
-//                        }
-//
-//                        $path = (new ReflectionClass($name))->getFileName();
-//
-//                        if (str_contains($path, '/vendor/')) {
-//                            return;
-//                        }
-//
-//                        return $this->infer->analyzeClass($name);
-//                    },
-//                ));
-//            }
+            //            if (ReferenceTypeResolver::hasResolvableReferences($returnType = $this->methodType->getReturnType())) {
+            //                $this->methodType->setReturnType((new ReferenceTypeResolver($this->infer->index))->resolve(
+            //                    $returnType,
+            //                    unknownClassHandler: function (string $name) {
+            //                        //                        dump(['unknownClassHandler' => $name]);
+            //                        if (! class_exists($name)) {
+            //                            return;
+            //                        }
+            //
+            //                        $path = (new ReflectionClass($name))->getFileName();
+            //
+            //                        if (str_contains($path, '/vendor/')) {
+            //                            return;
+            //                        }
+            //
+            //                        return $this->infer->analyzeClass($name);
+            //                    },
+            //                ));
+            //            }
         }
 
         return $this->methodType;
