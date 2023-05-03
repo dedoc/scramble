@@ -31,9 +31,9 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
                 return new Generic(
                     Response::class,
                     [
-                        'TContent' => TypeHelper::getArgType($scope, $node->args, ['content', 0], new LiteralStringType('')),
-                        'TCodeStatus' => TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
-                        'THeaders' => TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
+                        TypeHelper::getArgType($scope, $node->args, ['content', 0], new LiteralStringType('')),
+                        TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
+                        TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
                     ],
                 );
             }
@@ -51,9 +51,9 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
                 return new Generic(
                     Response::class,
                     [
-                        'TContent' => new LiteralStringType(''),
-                        'TCodeStatus' => TypeHelper::getArgType($scope, $node->args, ['status', 0], new LiteralIntegerType(204)),
-                        'THeaders' => TypeHelper::getArgType($scope, $node->args, ['headers', 1], new ArrayType),
+                        new LiteralStringType(''),
+                        TypeHelper::getArgType($scope, $node->args, ['status', 0], new LiteralIntegerType(204)),
+                        TypeHelper::getArgType($scope, $node->args, ['headers', 1], new ArrayType),
                     ],
                 );
             }
@@ -62,9 +62,9 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
                 return new Generic(
                     JsonResponse::class,
                     [
-                        'TContent' => TypeHelper::getArgType($scope, $node->args, ['data', 0], new ArrayType),
-                        'TCodeStatus' => TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
-                        'THeaders' => TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
+                        TypeHelper::getArgType($scope, $node->args, ['data', 0], new ArrayType),
+                        TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
+                        TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
                     ],
                 );
             }
@@ -73,9 +73,9 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
                 return new Generic(
                     Response::class,
                     [
-                        'TContent' => TypeHelper::getArgType($scope, $node->args, ['content', 0], new LiteralStringType('')),
-                        'TCodeStatus' => TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
-                        'THeaders' => TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
+                        TypeHelper::getArgType($scope, $node->args, ['content', 0], new LiteralStringType('')),
+                        TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
+                        TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
                     ],
                 );
             }
@@ -97,9 +97,9 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
             return new Generic(
                 $scope->getType($node)->name,
                 [
-                    'TContent' => TypeHelper::getArgType($scope, $node->args, [$contentName, 0], $contentDefaultType),
-                    'TCodeStatus' => TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
-                    'THeaders' => TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
+                    TypeHelper::getArgType($scope, $node->args, [$contentName, 0], $contentDefaultType),
+                    TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
+                    TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),
                 ],
             );
         }

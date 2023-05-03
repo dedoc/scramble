@@ -4,6 +4,8 @@ namespace Dedoc\Scramble\Support\Type;
 
 class TypeWalker
 {
+    private array $visitedNodes = [];
+
     public function find(Type $type, callable $lookup): array
     {
         if ($lookup($type)) {
@@ -47,6 +49,11 @@ class TypeWalker
         if ($replaced = $replacer($subject)) {
             return $replaced;
         }
+
+        if (in_array($subject, $this->visitedNodes)) {
+            return $subject;
+        }
+        $this->visitedNodes[] = $subject;
 
         $propertiesWithNodes = $subject->nodes();
 

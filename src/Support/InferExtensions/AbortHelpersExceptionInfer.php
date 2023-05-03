@@ -48,9 +48,9 @@ class AbortHelpersExceptionInfer implements ExpressionExceptionExtension
 
         return [
             new Generic(HttpException::class, [
-                'TStatusCode' => $codeType,
-                'TMessage' => $messageType,
-                'THeaders' => $headersType,
+                $codeType,
+                $messageType,
+                $headersType,
             ])
         ];
     }

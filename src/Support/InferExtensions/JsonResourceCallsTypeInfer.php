@@ -31,8 +31,8 @@ class JsonResourceCallsTypeInfer implements ExpressionTypeInferExtension
                 return null;
             }
 
-            $type->templateTypesMap = array_merge($type->templateTypesMap, [
-                'TAdditional' => TypeHelper::getArgType($scope, $node->args, ['data', 0]),
+            $type->templateTypes = array_merge($type->templateTypes, [
+                /* TAdditional */ 1 => TypeHelper::getArgType($scope, $node->args, ['data', 0]),
             ]);
 
             return $type;

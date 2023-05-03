@@ -17,8 +17,8 @@ EOD
     expect($type)->toBeInstanceOf(Generic::class)
         ->and($type->name)->toBe('Foo')
         ->and($type->toString())->toBe('Foo<unknown>')
-        ->and($type->templateTypesMap)->toHaveKeys(['TProp'])
-        ->and($type->templateTypesMap['TProp'])->toBeInstanceOf(UnknownType::class);
+        ->and($type->templateTypes)->toHaveCount(1)
+        ->and($type->templateTypes[0])->toBeInstanceOf(UnknownType::class);
 });
 
 it('supports creating an object with a constructor', function () {
@@ -27,8 +27,8 @@ it('supports creating an object with a constructor', function () {
 
     expect($type)->toBeInstanceOf(Generic::class)
         ->and($type->name)->toBe('Foo')
-        ->and($type->templateTypesMap)->toHaveKeys(['TProp'])
-        ->and($type->templateTypesMap['TProp']->toString())->toBe('int(132)')
+        ->and($type->templateTypes)->toHaveCount(1)
+        ->and($type->templateTypes[0]->toString())->toBe('int(132)')
         ->and($type->toString())->toBe('Foo<int(132)>');
 });
 

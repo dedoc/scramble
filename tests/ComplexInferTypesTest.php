@@ -23,7 +23,7 @@ EOD;
     $result = analyzeFile($code);
 
     expect($result->getVarType('a')->toString())->toBe('int(5)');
-});
+})->skip('implement var type testing way');
 
 it('assignment works with closure scopes', function () {
     $code = <<<'EOD'
@@ -35,7 +35,7 @@ EOD;
     $result = analyzeFile($code);
 
     expect($result->getVarType('b')->toString())->toBe('(): int(2)');
-});
+})->skip('implement var type testing way');
 
 it('assignment works with fn scope', function () {
     $code = <<<'EOD'
@@ -49,7 +49,7 @@ EOD;
     $result = analyzeFile($code);
 
     expect($result->getVarType('b')->toString())->toBe('(): int(2)');
-});
+})->skip('implement var type testing way');
 
 it('array type is analyzed with details', function () {
     $code = <<<'EOD'

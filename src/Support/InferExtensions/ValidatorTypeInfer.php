@@ -23,7 +23,7 @@ class ValidatorTypeInfer implements ExpressionTypeInferExtension
             && ($node->class instanceof Node\Name && is_a($node->class->toString(), ValidatorFacade::class, true))
         ) {
             return new Generic(Validator::class, [
-                'TRules' => TypeHelper::getArgType($scope, $node->args, ['rules', 1]),
+                TypeHelper::getArgType($scope, $node->args, ['rules', 1]),
             ]);
         }
 

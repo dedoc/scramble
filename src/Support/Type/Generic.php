@@ -5,21 +5,27 @@ namespace Dedoc\Scramble\Support\Type;
 class Generic extends ObjectType
 {
     /**
-     * The map of template type names to concrete types.
+     * The list of concrete types for this generic.
      *
-     * @var array<string, Type>
+     * @var array<int, Type>
      */
-    public array $templateTypesMap;
+    public array $templateTypes = [];
 
-    public function __construct(string $name, array $templateTypesMap = [])
+    public function __construct(
+        string $name,
+        array $templateTypes = []
+    )
     {
         parent::__construct($name);
-        $this->templateTypesMap = $templateTypesMap;
+        if (! array_is_list($templateTypes)) {
+            throw new \InvalidArgumentException('[$templateTypes] for Generic must be a list.');
+        }
+        $this->templateTypes = $templateTypes;
     }
 
     public function nodes(): array
     {
-        return ['templateTypesMap'];
+        return ['templateTypes'];
     }
 
     public function toString(): string
@@ -27,7 +33,7 @@ class Generic extends ObjectType
         return sprintf(
             '%s<%s>',
             $this->name,
-            implode(', ', array_map(fn ($t) => $t->toString(), $this->templateTypesMap))
+            implode(', ', array_map(fn ($t) => $t->toString(), $this->templateTypes))
         );
     }
 }

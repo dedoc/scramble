@@ -65,8 +65,8 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
             return new Generic(
                 MergeValue::class,
                 [
-                    'TCondition' => $node->name->name === 'merge' ? new LiteralBooleanType(true) : new BooleanType(),
-                    'TData' => $type,
+                    $node->name->name === 'merge' ? new LiteralBooleanType(true) : new BooleanType(),
+                    $type,
                 ],
             );
         }

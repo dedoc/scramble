@@ -10,6 +10,8 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
+// @todo move all tests into PhpDoc/PhpDocTypeHelperTest
+
 function getTypeFromDoc(string $phpDoc)
 {
     $docNode = PhpDoc::parse($phpDoc);
@@ -23,10 +25,6 @@ function getPhpTypeFromDoc(string $phpDoc)
 {
     $docNode = PhpDoc::parse($phpDoc);
     $varNode = $docNode->getVarTagValues()[0];
-
-    PhpDocTypeWalker::traverse($varNode->type, [new ResolveFqnPhpDocTypeVisitor(
-        new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing())),
-    )]);
 
     return PhpDocTypeHelper::toType($varNode->type);
 }

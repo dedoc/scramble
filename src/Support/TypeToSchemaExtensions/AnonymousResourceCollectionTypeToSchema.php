@@ -20,7 +20,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     {
         return $type instanceof Generic
             && $type->isInstanceOf(AnonymousResourceCollection::class)
-            && count($type->templateTypesMap) === 1;
+            && count($type->templateTypes) === 1;
     }
 
     /**
@@ -42,8 +42,8 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     public function toResponse(Type $type)
     {
         // In case of paginated resource, we want to get pagination response.
-        if ($type->templateTypesMap[0] instanceof Generic) {
-            return $this->openApiTransformer->toResponse($type->templateTypesMap[0]);
+        if ($type->templateTypes[0] instanceof Generic) {
+            return $this->openApiTransformer->toResponse($type->templateTypes[0]);
         }
 
         if (! $collectingResourceType = $this->getCollectingResourceType($type)) {
@@ -68,7 +68,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     {
         // In case of paginated resource, we still want to get to the underlying JsonResource.
         return (new TypeWalker)->first(
-            $type->templateTypesMap['TCollects'],
+            $type->templateTypes[0],
             fn (Type $t) => $t->isInstanceOf(JsonResource::class),
         );
     }

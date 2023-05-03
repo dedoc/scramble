@@ -40,7 +40,7 @@ class ReferenceTypeResolver
     {
         $unknownClassHandler = $unknownClassHandler ?: fn () => null;
 
-        return (new TypeWalker)->replace(
+        return (new TypeWalker($type))->replace(
             $type,
             function (Type $t) use ($type, $unknownClassHandler, $scope) {
                 $resolver = function () use ($t, $unknownClassHandler, $scope) {
@@ -110,6 +110,12 @@ class ReferenceTypeResolver
         $calleeDefinition = $calleeType instanceof SelfType
             ? $scope->classDefinition()
             : $this->index->getClassDefinition($calleeType->name);
+
+        if (! $calleeDefinition) {
+            $name = $calleeType instanceof SelfType ? 'self' : $calleeType->name;
+
+            return new UnknownType("Cannot get type of calling method [$type->methodName] on object [$name]");
+        }
 
         if (! $methodDefinition = $this->getMethodDefinition($calleeDefinition, $type->methodName, $unknownClassHandler)) {
             return new UnknownType("Cannot get type of calling method [$type->methodName] on object [$calleeDefinition->name]");
@@ -210,9 +216,9 @@ class ReferenceTypeResolver
 
         return new Generic(
             $classDefinition->name,
-            collect($classDefinition->templateTypes)->mapWithKeys(fn (TemplateType $t) => [
-                $t->name => $inferredTemplates->get($t->name, new UnknownType()),
-            ])->toArray(),
+            collect($classDefinition->templateTypes)
+                ->map(fn (TemplateType $t) => $inferredTemplates->get($t->name, new UnknownType()))
+                ->toArray(),
         );
     }
 
@@ -243,7 +249,15 @@ class ReferenceTypeResolver
 
         $classDefinition = $objectType instanceof SelfType && $scope->isInClass()
             ? $scope->classDefinition()
-            : $this->index->getClassDefinition($objectType->name);
+            : ($objectType instanceof ObjectType
+                ? $this->index->getClassDefinition($objectType->name)
+                : null);
+
+        if (! $classDefinition) {
+            $name = $objectType instanceof SelfType ? 'self' : $objectType->name;
+
+            return new UnknownType("Cannot get property [$type->propertyName] type on [$name]");
+        }
 
         if (! $propertyDefinition = $this->getPropertyDefinition($classDefinition, $type->propertyName, $unknownClassHandler)) {
             return new UnknownType("Cannot get property [$type->propertyName] type on [$classDefinition->name]");
@@ -261,13 +275,21 @@ class ReferenceTypeResolver
             return $propertyType;
         }
 
-        return (new TypeWalker)->replace($propertyType, function (Type $t) use ($objectType) {
+        $templateNameToIndexMap = $this->index->getClassDefinition($objectType->name)
+            ? array_flip(array_map(fn ($t) => $t->name, $classDefinition->templateTypes))
+            : [];
+        /** @var array<string, Type> $inferredTemplates */
+        $inferredTemplates = collect($templateNameToIndexMap)
+            ->mapWithKeys(fn ($i, $name) => [$name => $objectType->templateTypes[$i] ?? new UnknownType()])
+            ->toArray();
+
+        return (new TypeWalker)->replace($propertyType, function (Type $t) use ($objectType, $inferredTemplates) {
             if (! $t instanceof TemplateType) {
                 return null;
             }
 
-            if (array_key_exists($t->name, $objectType->templateTypesMap)) {
-                return $objectType->templateTypesMap[$t->name];
+            if (array_key_exists($t->name, $inferredTemplates)) {
+                return $inferredTemplates[$t->name];
             }
 
             return null;
@@ -288,7 +310,13 @@ class ReferenceTypeResolver
             $returnType = $calledOnType;
         }
 
-        $inferredTemplates = $calledOnType->templateTypesMap ?? [];
+        $templateNameToIndexMap = $calledOnType instanceof Generic && ($classDefinition = $this->index->getClassDefinition($calledOnType->name))
+            ? array_flip(array_map(fn ($t) => $t->name, $classDefinition->templateTypes))
+            : [];
+        /** @var array<string, Type> $inferredTemplates */
+        $inferredTemplates = $calledOnType instanceof Generic
+            ? collect($templateNameToIndexMap)->mapWithKeys(fn ($i, $name) => [$name => $calledOnType->templateTypes[$i] ?? new UnknownType()])->toArray()
+            : [];
 
         $isTemplateForResolution = function (Type $t) use ($callee, $inferredTemplates) {
             if (! $t instanceof TemplateType) {
@@ -340,7 +368,13 @@ class ReferenceTypeResolver
                     ? collect($inferredTemplates)->get($sideEffect->type->name, new UnknownType())
                     : $sideEffect->type;
 
-                $returnType->templateTypesMap[$sideEffect->definedTemplate] = $templateType;
+                if (! isset($templateNameToIndexMap[$sideEffect->definedTemplate])) {
+                    throw new \LogicException('Should not happen');
+                }
+
+                $templateIndex = $templateNameToIndexMap[$sideEffect->definedTemplate];
+
+                $returnType->templateTypes[$templateIndex] = $templateType;
             }
         }
 

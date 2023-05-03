@@ -53,69 +53,33 @@ class ProjectAnalyzer
     {
         $content = $content ?: file_get_contents($path);
 
-        $isInUseExpression = false;
-        $isExpectingNsName = false;
-        $namespace = '';
-        $currentSymbolType = null;
-        $currentSymbolName = null;
-        $hasEnteredInsideSymbolDefinition = false;
-        $curlyCount = 0;
-        foreach (token_get_all($content) as $token) {
-            if ($token === '{') {
-                $hasEnteredInsideSymbolDefinition = true;
+        $result = $this->parser->parseContent($content);
 
-                if ($currentSymbolType && ! $currentSymbolName) {
-                    $currentSymbolType = null;
-                }
-
-                $curlyCount++;
+        $definitionNodes = (new NodeFinder)->find($result->getStatements(), function (Node $node) {
+            if (
+                $node instanceof Node\Stmt\Function_
+                && $node->namespacedName->toString()
+            ) {
+                return true;
             }
 
-            if ($token === '}') {
-                $curlyCount--;
+            if (
+                $node instanceof Node\Stmt\ClassLike
+                && $node->namespacedName->toString()
+            ) {
+                return true;
             }
 
-            if (is_array($token) && $token[0] === T_NAMESPACE) {
-                $isExpectingNsName = true;
-            }
+            return false;
+        });
 
-            if (is_array($token) && $token[0] === T_USE) {
-                $isInUseExpression = true;
-            }
+        foreach ($definitionNodes as $definitionNode) {
+            $symbolType = $definitionNode instanceof Node\Stmt\Function_
+                ? 'function'
+                : 'class';
 
-            if ($isInUseExpression && is_string($token) && $token === ';') {
-                $isInUseExpression = false;
-            }
-
-            if (is_array($token) && ($token[0] === T_NAME_QUALIFIED || $token[0] === T_STRING) && $isExpectingNsName) {
-                $isExpectingNsName = false;
-                $namespace = $token[1];
-            }
-
-            if ($curlyCount === 0 && $hasEnteredInsideSymbolDefinition && (bool) $currentSymbolName && (bool) $currentSymbolType) {
-                $this->symbols[$currentSymbolType][$name = ltrim($namespace.'\\'.$currentSymbolName, '\\')] = $path;
-                $this->queue[] = [$currentSymbolType, $name];
-
-                $hasEnteredInsideSymbolDefinition = false;
-                $currentSymbolName = null;
-                $currentSymbolType = null;
-            }
-
-            if (! $isInUseExpression && $curlyCount === 0) {
-                if (is_array($token) && isset($token[1]) && $token[1] === 'function') {
-                    $currentSymbolName = null;
-                    $currentSymbolType = 'function';
-                }
-
-                if (is_array($token) && isset($token[1]) && $token[1] === 'class') {
-                    $currentSymbolName = null;
-                    $currentSymbolType = 'class';
-                }
-
-                if ($currentSymbolType && ! $currentSymbolName && is_array($token) && $token[0] === T_STRING && isset($token[1])) {
-                    $currentSymbolName = $token[1];
-                }
-            }
+            $this->symbols[$symbolType][$name = $definitionNode->namespacedName->toString()] = $path;
+            $this->queue[] = [$symbolType, $name];
         }
 
         $this->files[$path] = $content;
@@ -260,7 +224,7 @@ class ProjectAnalyzer
         }
 
         foreach ($this->index->classesDefinitions as $classDefinition) {
-            foreach ($classDefinition->methods as $methodDefinition) {
+            foreach ($classDefinition->methods as $name => $methodDefinition) {
                 $methodScope = new Scope(
                     $this->index,
                     new NodeTypesResolver,

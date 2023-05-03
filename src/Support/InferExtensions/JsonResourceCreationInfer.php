@@ -42,7 +42,7 @@ class JsonResourceCreationInfer implements ExpressionTypeInferExtension
                 return new Generic(
                     AnonymousResourceCollection::class,
                     [
-                        'TCollects' => $this->setResourceType(new Generic($node->class->toString()), $scope, $node->args),
+                        $this->setResourceType(new Generic($node->class->toString()), $scope, $node->args),
                     ],
                 );
             }
@@ -60,7 +60,7 @@ class JsonResourceCreationInfer implements ExpressionTypeInferExtension
      */
     private function setResourceType(Generic $obj, Scope $scope, array $args)
     {
-        $obj->templateTypesMap['TResource'] = TypeHelper::getArgType($scope, $args, ['resource', 0]);
+        $obj->templateTypes[0] = TypeHelper::getArgType($scope, $args, ['resource', 0]);
 
         return $obj;
     }

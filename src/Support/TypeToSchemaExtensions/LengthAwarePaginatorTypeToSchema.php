@@ -22,8 +22,8 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
     {
         return $type instanceof Generic
             && $type->name === LengthAwarePaginator::class
-            && count($type->templateTypesMap) === 1
-            && $type->templateTypesMap[0] instanceof ObjectType;
+            && count($type->templateTypes) === 1
+            && $type->templateTypes[0] instanceof ObjectType;
     }
 
     /**
@@ -31,7 +31,7 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
-        $collectingClassType = $type->templateTypesMap[0];
+        $collectingClassType = $type->templateTypes[0];
 
         if (! $collectingClassType->isInstanceOf(JsonResource::class)) {
             return null;
