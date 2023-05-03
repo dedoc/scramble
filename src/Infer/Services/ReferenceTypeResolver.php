@@ -283,7 +283,7 @@ class ReferenceTypeResolver
             ->mapWithKeys(fn ($i, $name) => [$name => $objectType->templateTypes[$i] ?? new UnknownType()])
             ->toArray();
 
-        return (new TypeWalker)->replace($propertyType, function (Type $t) use ($objectType, $inferredTemplates) {
+        return (new TypeWalker)->replace($propertyType, function (Type $t) use ($inferredTemplates) {
             if (! $t instanceof TemplateType) {
                 return null;
             }

@@ -1,17 +1,13 @@
 <?php
 
 use Dedoc\Scramble\Infer\ProjectAnalyzer;
-use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\FileParser;
-use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Tests\TestCase;
 use Dedoc\Scramble\Tests\Utils\AnalysisResult;
 use Illuminate\Routing\Route;
-use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
-use PhpParser\ParserFactory as ParserFactoryAlias;
 
 uses(TestCase::class)->in(__DIR__);
 
@@ -23,7 +19,7 @@ function analyzeFile(string $code, $extensions = [], bool $resolveReferences = t
 
     $projectAnalyzer = new ProjectAnalyzer(
         parser: new FileParser((new ParserFactory)->create(ParserFactory::PREFER_PHP7)),
-         extensions: $extensions,
+        extensions: $extensions,
     );
 
     $projectAnalyzer->addFile('virtual.php', $code);

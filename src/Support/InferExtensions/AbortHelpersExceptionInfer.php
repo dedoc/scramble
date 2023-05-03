@@ -51,7 +51,7 @@ class AbortHelpersExceptionInfer implements ExpressionExceptionExtension
                 $codeType,
                 $messageType,
                 $headersType,
-            ])
+            ]),
         ];
     }
 }

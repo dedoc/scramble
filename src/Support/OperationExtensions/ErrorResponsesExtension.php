@@ -78,7 +78,7 @@ class ErrorResponsesExtension extends OperationExtension
             ? $formRequest
             : ($formRequest instanceof TemplateType ? $formRequest->is : null);
 
-        if(! $formRequest) {
+        if (! $formRequest) {
             return;
         }
 

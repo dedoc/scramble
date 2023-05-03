@@ -150,29 +150,29 @@ class RouteInfo
                 ->methods[$this->methodName()]
                 ->type;
 
-//                        if (ReferenceTypeResolver::hasResolvableReferences($returnType = $this->methodType->getReturnType())) {
-//                            $this->methodType->setReturnType((new ReferenceTypeResolver($this->infer->getIndex()))->resolve(
-//                                new Infer\Scope\Scope($this->infer->getIndex(), new NodeTypesResolver, new Infer\Scope\ScopeContext(), new Infer\Services\FileNameResolver(new NameContext(new Throwing()))),
-//                                $returnType,
-//                                unknownClassHandler: function (string $name) {
-//                                    // dump(['unknownClassHandler' => $name]);
-//                                    if (! class_exists($name)) {
-//                                        return;
-//                                    }
-//
-//                                    $path = (new ReflectionClass($name))->getFileName();
-//
-//                                    if (str_contains($path, '/vendor/')) {
-//                                        return;
-//                                    }
-//
-//                                    return $this->infer->analyzeClass($name);
-//                                },
-//                            ));
-//                        }
-//
-//                        dump($this->methodType);
-//                        dd($this->infer->getIndex()->getClassDefinition(''));
+            //                        if (ReferenceTypeResolver::hasResolvableReferences($returnType = $this->methodType->getReturnType())) {
+            //                            $this->methodType->setReturnType((new ReferenceTypeResolver($this->infer->getIndex()))->resolve(
+            //                                new Infer\Scope\Scope($this->infer->getIndex(), new NodeTypesResolver, new Infer\Scope\ScopeContext(), new Infer\Services\FileNameResolver(new NameContext(new Throwing()))),
+            //                                $returnType,
+            //                                unknownClassHandler: function (string $name) {
+            //                                    // dump(['unknownClassHandler' => $name]);
+            //                                    if (! class_exists($name)) {
+            //                                        return;
+            //                                    }
+            //
+            //                                    $path = (new ReflectionClass($name))->getFileName();
+            //
+            //                                    if (str_contains($path, '/vendor/')) {
+            //                                        return;
+            //                                    }
+            //
+            //                                    return $this->infer->analyzeClass($name);
+            //                                },
+            //                            ));
+            //                        }
+            //
+            //                        dump($this->methodType);
+            //                        dd($this->infer->getIndex()->getClassDefinition(''));
         }
 
         return $this->methodType;

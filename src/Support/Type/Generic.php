@@ -14,8 +14,7 @@ class Generic extends ObjectType
     public function __construct(
         string $name,
         array $templateTypes = []
-    )
-    {
+    ) {
         parent::__construct($name);
         if (! array_is_list($templateTypes)) {
             throw new \InvalidArgumentException('[$templateTypes] for Generic must be a list.');
