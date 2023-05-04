@@ -53,20 +53,11 @@ class ClassHandler implements CreatesScope
 
             $hasSelfReferences = collect($dependencies)->some(fn ($d) => in_array($d, ['self', $classDefinition->name]));
 
-            $methRet = $methodDefinition->type->toString();
-            $ret = $returnType->toString();
-
             $returnType = $hasSelfReferences
                 ? (new ReferenceTypeResolver($scope->index))->resolve($scope, $returnType)
                 : $returnType;
 
             $methodDefinition->type->setReturnType($returnType);
-
-//            dump([$name => [
-//                ...compact('hasSelfReferences', 'dependencies', 'ret', 'methRet'),
-//                'resolvedReturnType' => $returnType->toString(),
-//                'methodType' => $methodDefinition->type->toString(),
-//            ]]);
         }
     }
 }

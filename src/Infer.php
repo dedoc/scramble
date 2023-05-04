@@ -31,7 +31,6 @@ class Infer
             $projectAnalyzer->index,
             ReferenceResolutionOptions::make()
                 ->resolveUnknownClassesUsing(function (string $name) {
-                    // dump(['unknownClassHandler' => $name]);
                     if (!class_exists($name)) {
                         return null;
                     }
@@ -41,6 +40,7 @@ class Infer
                     if (str_contains($path, '/vendor/')) {
                         return null;
                     }
+                    // dump(['unknownClassHandler' => $name]);
 
                     $this->projectAnalyzer->addFile($path)->analyze();
 

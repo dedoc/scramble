@@ -43,7 +43,7 @@ class ReferenceTypeResolver
     public function resolve(Scope $scope, Type $type): Type
     {
         return $this->recursionGuard->call(
-            $type->toString(),
+            spl_object_id($type),//->toString(),
             fn () => (new TypeWalker)->replace(
                 $type,
                 fn (Type $t) => $this->doResolve($t, $type, $scope),

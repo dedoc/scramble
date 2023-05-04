@@ -40,7 +40,6 @@ class ProjectAnalyzer
         public array $extensions = [],
         public array $handlers = [],
         public Index $index = new Index,
-        private bool $shouldResolveReferences = true,
     ) {
     }
 
@@ -111,7 +110,7 @@ class ProjectAnalyzer
 
     private function analyzeFileSymbol(string $content, array $symbol): void
     {
-        // dump(['analyzeFileSymbol' => $symbol]);
+//         dump(['analyzeFileSymbol' => $symbol]);
         $this->analyzedSymbols[implode('.', $symbol)] = true;
 
         [$type, $name] = $symbol;

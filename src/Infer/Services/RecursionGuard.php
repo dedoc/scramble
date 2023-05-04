@@ -8,9 +8,6 @@ class RecursionGuard
 
     public function call(string $id, callable $callback, callable $onInfiniteRecursion)
     {
-
-        // dump("recursion safe call, current calls history: ".implode(', ', array_keys($this->callIdsMap))."; current call ID: {$id}");
-
         if (array_key_exists($id, $this->callIdsMap)) {
             return $onInfiniteRecursion();
         }
