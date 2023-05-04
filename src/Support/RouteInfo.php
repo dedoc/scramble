@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Routing\Route;
@@ -145,34 +146,14 @@ class RouteInfo
         }
 
         if (! $this->methodType) {
-            $this->methodType = $this->infer
-                ->analyzeClass($this->reflectionMethod()->getDeclaringClass()->getName())
-                ->methods[$this->methodName()]
-                ->type;
+            $this->infer->analyzeClass($className = $this->reflectionMethod()->getDeclaringClass()->getName());
 
-            //                        if (ReferenceTypeResolver::hasResolvableReferences($returnType = $this->methodType->getReturnType())) {
-            //                            $this->methodType->setReturnType((new ReferenceTypeResolver($this->infer->getIndex()))->resolve(
-            //                                new Infer\Scope\Scope($this->infer->getIndex(), new NodeTypesResolver, new Infer\Scope\ScopeContext(), new Infer\Services\FileNameResolver(new NameContext(new Throwing()))),
-            //                                $returnType,
-            //                                unknownClassHandler: function (string $name) {
-            //                                    // dump(['unknownClassHandler' => $name]);
-            //                                    if (! class_exists($name)) {
-            //                                        return;
-            //                                    }
-            //
-            //                                    $path = (new ReflectionClass($name))->getFileName();
-            //
-            //                                    if (str_contains($path, '/vendor/')) {
-            //                                        return;
-            //                                    }
-            //
-            //                                    return $this->infer->analyzeClass($name);
-            //                                },
-            //                            ));
-            //                        }
-            //
-            //                        dump($this->methodType);
-            //                        dd($this->infer->getIndex()->getClassDefinition(''));
+            /*
+             * Here the final resolution of the method types may happen.
+             */
+            $this->methodType = (new ObjectType($className))
+                ->getMethodDefinition($this->methodName())
+                ->type;
         }
 
         return $this->methodType;

@@ -31,7 +31,7 @@ class Infer
             $projectAnalyzer->index,
             ReferenceResolutionOptions::make()
                 ->resolveUnknownClassesUsing(function (string $name) {
-                    dump(['unknownClassHandler' => $name]);
+                    // dump(['unknownClassHandler' => $name]);
                     if (!class_exists($name)) {
                         return null;
                     }

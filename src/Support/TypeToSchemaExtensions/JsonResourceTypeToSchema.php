@@ -39,7 +39,9 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     {
         $definition = $this->infer->analyzeClass($type->name);
 
-        $array = $definition->getMethodCallType('toArray');
+        $array = ($def = $type->getMethodDefinition('toArray'))
+            ? $def->type->getReturnType()
+            : new \Dedoc\Scramble\Support\Type\UnknownType();
 
         if (! $array instanceof ArrayType) {
             if ($type->isInstanceOf(ResourceCollection::class)) {

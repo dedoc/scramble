@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Scope;
 
 abstract class AbstractType implements Type
@@ -25,7 +26,7 @@ abstract class AbstractType implements Type
         return new UnknownType("Cannot get a property type [$propertyName] on type [{$className}]");
     }
 
-    public function getMethodDefinition(string $methodName, Scope $scope): ?FunctionLikeDefinition
+    public function getMethodDefinition(string $methodName, Scope $scope = new GlobalScope): ?FunctionLikeDefinition
     {
         return null;
     }

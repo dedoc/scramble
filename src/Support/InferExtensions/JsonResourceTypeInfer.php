@@ -46,6 +46,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         if (
             $node instanceof Node\Expr\PropertyFetch && ($node->var->name ?? null) === 'this'
             && is_string($node->name->name ?? null)
+            && ! array_key_exists($node->name->name, $scope->classDefinition()->properties)
             && ($type = static::modelType($scope->classDefinition(), $scope))
         ) {
             return $scope->getPropertyFetchType($type, $node->name->name);
