@@ -12,6 +12,11 @@ class PropertyFetchReferenceType extends AbstractReferenceType
     ) {
     }
 
+    public function nodes(): array
+    {
+        return ['object'];
+    }
+
     public function toString(): string
     {
         return "(#{$this->object->toString()}).{$this->propertyName}";

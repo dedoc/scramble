@@ -90,8 +90,6 @@ class ProjectAnalyzer
     public function analyze()
     {
         $this->processQueue($this->queue);
-
-        $this->resolveReferencesInIndex();
     }
 
     private function processQueue(array &$queue)
@@ -176,63 +174,5 @@ class ProjectAnalyzer
         }
 
         $this->processQueue($queue);
-    }
-
-    public function resolveReferencesInIndex()
-    {
-        /*
-         * Now only one file a time gets traversed. So it is ok to simply take everything
-         * added to index and check for reference types.
-         *
-         * At this point, if the function return types are not resolved, they aren't resolveable at all,
-         * hence changed to the unknowns.
-         *
-         * When more files would be traversed in a single run (and index will be shared), this needs to
-         * be re-implemented (maybe not).
-         *
-         * The intent here is to traverse symbols in index added through the file traversal. This logic
-         * may be not applicable when analyzing multiple files per index. Pay attention to this as it may
-         * hurt performance unless handled.
-         */
-        $resolveReferencesInFunctionReturn = function ($scope, $functionType) {
-            if (! ReferenceTypeResolver::hasResolvableReferences($returnType = $functionType->getReturnType())) {
-                return;
-            }
-
-            $resolvedReference = (new ReferenceTypeResolver($this->index))->resolve($scope, $returnType);
-
-            if ($this->shouldResolveReferences && ReferenceTypeResolver::hasResolvableReferences($resolvedReference)) {
-                $resolvedReference = (new TypeWalker)->replace($resolvedReference, fn ($t) => $t instanceof AbstractReferenceType ? new UnknownType() : null);
-            }
-            if ($resolvedReference instanceof AbstractReferenceType && $this->shouldResolveReferences) {
-                $resolvedReference = new UnknownType();
-            }
-
-            $functionType->setReturnType(
-                $resolvedReference->mergeAttributes($returnType->attributes())
-            );
-        };
-
-        foreach ($this->index->functionsDefinitions as $functionDefinition) {
-            $fnScope = new Scope(
-                $this->index,
-                new NodeTypesResolver,
-                new ScopeContext(functionDefinition: $functionDefinition),
-                new FileNameResolver(new NameContext(new Throwing())),
-            );
-            $resolveReferencesInFunctionReturn($fnScope, $functionDefinition->type);
-        }
-
-        foreach ($this->index->classesDefinitions as $classDefinition) {
-            foreach ($classDefinition->methods as $name => $methodDefinition) {
-                $methodScope = new Scope(
-                    $this->index,
-                    new NodeTypesResolver,
-                    new ScopeContext($classDefinition, $methodDefinition),
-                    new FileNameResolver(new NameContext(new Throwing())),
-                );
-                $resolveReferencesInFunctionReturn($methodScope, $methodDefinition->type);
-            }
-        }
     }
 }

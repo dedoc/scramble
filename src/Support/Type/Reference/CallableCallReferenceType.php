@@ -7,10 +7,15 @@ use Dedoc\Scramble\Support\Type\Type;
 class CallableCallReferenceType extends AbstractReferenceType
 {
     public function __construct(
-        public Type|string $callee,
+        public Type $callee,
         /** @var Type[] $arguments */
         public array $arguments,
     ) {
+    }
+
+    public function nodes(): array
+    {
+        return ['callee', 'arguments'];
     }
 
     public function toString(): string

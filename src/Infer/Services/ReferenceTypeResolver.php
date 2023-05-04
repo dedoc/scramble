@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -25,128 +26,127 @@ class ReferenceTypeResolver
 {
     public function __construct(
         private Index $index,
-    ) {
+        private ReferenceResolutionOptions $options = new ReferenceResolutionOptions,
+        private RecursionGuard $recursionGuard = new RecursionGuard,
+    )
+    {
     }
 
     public static function hasResolvableReferences(Type $type): bool
     {
-        return (bool) (new TypeWalker)->first(
+        return (bool)(new TypeWalker)->first(
             $type,
-            fn (Type $t) => $t instanceof AbstractReferenceType,
+            fn(Type $t) => $t instanceof AbstractReferenceType,
         );
     }
 
-    public function resolve(Scope $scope, Type $type, callable $unknownClassHandler = null): Type
+    public function resolve(Scope $scope, Type $type): Type
     {
-        $unknownClassHandler = $unknownClassHandler ?: fn () => null;
-
-        return (new TypeWalker($type))->replace(
-            $type,
-            function (Type $t) use ($type, $unknownClassHandler, $scope) {
-                $resolver = function () use ($t, $unknownClassHandler, $scope) {
-                    if ($t instanceof MethodCallReferenceType) {
-                        return $this->resolveMethodCallReferenceType($scope, $t, $unknownClassHandler);
-                    }
-
-                    if ($t instanceof CallableCallReferenceType) {
-                        return $this->resolveCallableCallReferenceType($scope, $t, $unknownClassHandler);
-                    }
-
-                    if ($t instanceof NewCallReferenceType) {
-                        return $this->resolveNewCallReferenceType($scope, $t, $unknownClassHandler);
-                    }
-
-                    if ($t instanceof PropertyFetchReferenceType) {
-                        return $this->resolvePropertyFetchReferenceType($scope, $t, $unknownClassHandler);
-                    }
-
-                    return null;
-                };
-
-                if (! $resolved = $resolver()) {
-                    return null;
-                }
-
-                if ($resolved === $type) {
-                    return null;
-
-                    return new UnknownType('self reference');
-                }
-
-                return $this->resolve($scope, $resolved, $unknownClassHandler);
-            },
+        return $this->recursionGuard->call(
+            $type->toString(),
+            fn () => (new TypeWalker)->replace(
+                $type,
+                fn (Type $t) => $this->doResolve($t, $type, $scope),
+            ),
+            onInfiniteRecursion: fn () =>  new UnknownType('really bad self reference'),
         );
     }
 
-    private function resolveMethodCallReferenceType(Scope $scope, MethodCallReferenceType $type, callable $unknownClassHandler)
+    private function doResolve(Type $t, Type $type, Scope $scope)
     {
-        if (
-            ($type->callee instanceof ObjectType)
-            && ! array_key_exists($type->callee->name, $this->index->classesDefinitions)
-            && ! $unknownClassHandler($type->callee->name)
-        ) {
-            // Class is not indexed, and we simply cannot get an info from it.
+        $resolver = function () use ($t, $scope) {
+            if ($t instanceof MethodCallReferenceType) {
+                return $this->resolveMethodCallReferenceType($scope, $t);
+            }
+
+            if ($t instanceof CallableCallReferenceType) {
+                return $this->resolveCallableCallReferenceType($scope, $t);
+            }
+
+            if ($t instanceof NewCallReferenceType) {
+                return $this->resolveNewCallReferenceType($scope, $t);
+            }
+
+            if ($t instanceof PropertyFetchReferenceType) {
+                return $this->resolvePropertyFetchReferenceType($scope, $t);
+            }
+
+            return null;
+        };
+
+        if (!$resolved = $resolver()) {
+            return null;
+        }
+
+        if ($resolved === $type) {
+            return $this->options->shouldResolveResultingReferencesIntoUnknowns
+                ? new UnknownType('self reference')
+                : null;
+        }
+
+        return $this->resolve($scope, $resolved);
+    }
+
+    private function resolveMethodCallReferenceType(Scope $scope, MethodCallReferenceType $type)
+    {
+        // (#self).listTableDetails()
+        // (#Doctrine\DBAL\Schema\Table).listTableDetails()
+        // (#TName).listTableDetails()
+
+        $type->arguments = array_map(
+            fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
+            $type->arguments,
+        );
+
+        $calleeType = $type->callee instanceof AbstractReferenceType
+            ? $this->resolve($scope, $type->callee)
+            : $type->callee;
+
+        $type->callee = $calleeType;
+
+        if ($calleeType instanceof AbstractReferenceType) {
+            return $this->resolvedReference($type);
+        }
+
+        // (#TName).listTableDetails()
+        if ($calleeType instanceof TemplateType) {
+            // This maybe is not a good idea as it make references bleed into the fully analyzed
+            // codebase, while at the moment of final reference resolution, we should've got either
+            // a resolved type, or an unknown type.
             return $type;
         }
 
-        $calleeType = $this->resolve($scope, $type->callee, $unknownClassHandler);
-
         if (
-            $calleeType instanceof AbstractReferenceType
-            || $calleeType instanceof TemplateType
+            ($calleeType instanceof ObjectType)
+            && ! array_key_exists($calleeType->name, $this->index->classesDefinitions)
+            && ! ($this->options->unknownClassResolver)($calleeType->name)
         ) {
-            // Callee cannot be resolved.
-            return $type;
+            return $this->resolvedReference($type);
         }
 
-        if ($calleeType instanceof UnknownType) {
-            return new UnknownType();
-        }
+        if (! $methodDefinition = $calleeType->getMethodDefinition($type->methodName, $scope)) {
+            if ($calleeType instanceof SelfType) {
+                return $this->resolvedReference($type);
+            }
 
-        if (! $calleeType instanceof ObjectType && ! $calleeType instanceof SelfType) {
-            return new UnknownType();
-        }
+            $name = $calleeType instanceof ObjectType ? $calleeType->name : $calleeType::class;
 
-        $calleeDefinition = $calleeType instanceof SelfType
-            ? $scope->classDefinition()
-            : $this->index->getClassDefinition($calleeType->name);
-
-        if (! $calleeDefinition) {
-            $name = $calleeType instanceof SelfType ? 'self' : $calleeType->name;
-
-            return new UnknownType("Cannot get type of calling method [$type->methodName] on object [$name]");
-        }
-
-        if (! $methodDefinition = $this->getMethodDefinition($calleeDefinition, $type->methodName, $unknownClassHandler)) {
-            return new UnknownType("Cannot get type of calling method [$type->methodName] on object [$calleeDefinition->name]");
+            return new UnknownType("Cannot get a method type [$type->methodName] on type [$name]");
         }
 
         return $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType);
     }
 
-    private function getMethodDefinition(ClassDefinition $calleeDefinition, string $methodName, callable $unknownClassHandler)
+    private function resolvedReference(Type $type)
     {
-        if (array_key_exists($methodName, $calleeDefinition->methods)) {
-            return $calleeDefinition->methods[$methodName];
+        if (! $this->options->shouldResolveResultingReferencesIntoUnknowns) {
+            return $type;
         }
 
-        if (! $calleeDefinition->parentFqn) {
-            return null;
-        }
-
-        if (
-            ! array_key_exists($calleeDefinition->parentFqn, $this->index->classesDefinitions)
-            && ! $unknownClassHandler($calleeDefinition->parentFqn)
-        ) {
-            return null;
-        }
-
-        $parentDefinition = $this->index->classesDefinitions[$calleeDefinition->parentFqn];
-
-        return $this->getMethodDefinition($parentDefinition, $methodName, $unknownClassHandler);
+        return new UnknownType();
     }
 
-    private function getPropertyDefinition(ClassDefinition $calleeDefinition, string $propertyName, callable $unknownClassHandler)
+    private function getPropertyDefinition(ClassDefinition $calleeDefinition, string $propertyName)
     {
         if (array_key_exists($propertyName, $calleeDefinition->properties)) {
             return $calleeDefinition->properties[$propertyName];
@@ -158,25 +158,25 @@ class ReferenceTypeResolver
 
         if (
             ! array_key_exists($calleeDefinition->parentFqn, $this->index->classesDefinitions)
-            && ! $unknownClassHandler($calleeDefinition->parentFqn)
+            && ! ($this->options->unknownClassResolver)($calleeDefinition->parentFqn)
         ) {
             return null;
         }
 
         $parentDefinition = $this->index->classesDefinitions[$calleeDefinition->parentFqn];
 
-        return $this->getPropertyDefinition($parentDefinition, $propertyName, $unknownClassHandler);
+        return $this->getPropertyDefinition($parentDefinition, $propertyName);
     }
 
-    private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type, callable $unknownClassHandler)
+    private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)
     {
-        $calleeType = is_string($type->callee)
-            ? $this->index->getFunctionDefinition($type->callee)
-            : $this->resolve($scope, $type->callee, $unknownClassHandler);
+        $calleeType = $type->callee instanceof CallableStringType
+            ? $this->index->getFunctionDefinition($type->callee->name)
+            : $this->resolve($scope, $type->callee);
 
         if (! $calleeType) {
             // Callee cannot be resolved from index.
-            return $type;
+            return $this->resolvedReference($type);
         }
 
         if ($calleeType instanceof FunctionType) { // When resolving into a closure.
@@ -186,17 +186,22 @@ class ReferenceTypeResolver
         // @todo: callee now can be either in index or not, add support for other cases.
         if (! $calleeType instanceof FunctionLikeDefinition) {
             // Callee cannot be resolved.
-            return $type;
+            return $this->resolvedReference($type);
         }
 
         return $this->getFunctionCallResult($calleeType, $type->arguments);
     }
 
-    private function resolveNewCallReferenceType(Scope $scope, NewCallReferenceType $type, callable $unknownClassHandler)
+    private function resolveNewCallReferenceType(Scope $scope, NewCallReferenceType $type)
     {
+        $type->arguments = array_map(
+            fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
+            $type->arguments,
+        );
+
         if (
             ! array_key_exists($type->name, $this->index->classesDefinitions)
-            && ! $unknownClassHandler($type->name)
+            && ! ($this->options->unknownClassResolver)($type->name)
         ) {
             // Class is not indexed, and we simply cannot get an info from it.
             return $type;
@@ -222,12 +227,12 @@ class ReferenceTypeResolver
         );
     }
 
-    private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type, callable $unknownClassHandler)
+    private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type)
     {
         if (
             ($type->object instanceof ObjectType)
             && ! array_key_exists($type->object->name, $this->index->classesDefinitions)
-            && ! $unknownClassHandler($type->object->name)
+            && ! ($this->options->unknownClassResolver)($type->object->name)
         ) {
             // Class is not indexed, and we simply cannot get an info from it.
             return $type;
@@ -259,7 +264,7 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get property [$type->propertyName] type on [$name]");
         }
 
-        if (! $propertyDefinition = $this->getPropertyDefinition($classDefinition, $type->propertyName, $unknownClassHandler)) {
+        if (! $propertyDefinition = $this->getPropertyDefinition($classDefinition, $type->propertyName)) {
             return new UnknownType("Cannot get property [$type->propertyName] type on [$classDefinition->name]");
         }
 
@@ -344,8 +349,11 @@ class ReferenceTypeResolver
             ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray());
 
             $returnType = (new TypeWalker)->replace($returnType, function (Type $t) use ($inferredTemplates) {
+                if (! $t instanceof TemplateType) {
+                    return null;
+                }
                 foreach ($inferredTemplates as $searchName => $replace) {
-                    if ($t instanceof TemplateType && ($t->name === $searchName)) {
+                    if ($t->name === $searchName) {
                         return $replace;
                     }
                 }

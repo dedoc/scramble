@@ -2,6 +2,9 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Scope\Scope;
+
 interface Type
 {
     public function setAttribute(string $key, $value): void;
@@ -13,6 +16,10 @@ interface Type
     public function isInstanceOf(string $className);
 
     public function nodes(): array;
+
+    public function getPropertyType(string $propertyName, Scope $scope): Type;
+
+    public function getMethodDefinition(string $methodName, Scope $scope): ?FunctionLikeDefinition;
 
     public function isSame(self $type);
 
