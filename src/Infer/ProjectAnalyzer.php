@@ -26,7 +26,7 @@ class ProjectAnalyzer
     private array $analyzedSymbols = [];
 
     public function __construct(
-        private FileParser $parser,
+        public FileParser $parser,
         public array $extensions = [],
         public array $handlers = [],
         public Index $index = new Index,

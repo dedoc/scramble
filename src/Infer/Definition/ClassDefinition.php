@@ -2,15 +2,22 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
+use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
+use Dedoc\Scramble\Infer\ProjectAnalyzer;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use PhpParser\NameContext;
 
 class ClassDefinition
 {
+    private \ReflectionClass $reflection; // @todo: not serialize
+
+    private ?NameContext $nameContext = null; // @todo: not serialize
+
     public function __construct(
         // FQ name
         public string $name,
@@ -24,6 +31,14 @@ class ClassDefinition
     ) {
     }
 
+    public function getReflection(): \ReflectionClass
+    {
+        if (! isset($this->reflection)) {
+            $this->reflection = new \ReflectionClass($this->name);
+        }
+        return $this->reflection;
+    }
+
     public function isInstanceOf(string $className)
     {
         return is_a($this->name, $className, true);
@@ -32,6 +47,24 @@ class ClassDefinition
     public function isChildOf(string $className)
     {
         return $this->isInstanceOf($className) && $this->name !== $className;
+    }
+
+    public function getMethodDefinition(string $name)
+    {
+        if (! array_key_exists($name, $this->methods)) {
+            return null;
+        }
+
+        $methodDefinition = $this->methods[$name];
+
+        if (! $methodDefinition->isFullyAnalyzed()) {
+            (new MethodAnalyzer(
+                app(ProjectAnalyzer::class),
+                $this
+            ))->analyze($methodDefinition);
+        }
+
+        return $this->methods[$name];
     }
 
     public function getPropertyFetchType($name, ObjectType $calledOn = null)

@@ -30,7 +30,7 @@ class Infer
         $this->referenceTypeResolver = new ReferenceTypeResolver(
             $projectAnalyzer->index,
             ReferenceResolutionOptions::make()
-                ->resolveUnknownClassesUsing(function (string $name) {
+                /*->resolveUnknownClassesUsing(function (string $name) {
                     if (! class_exists($name)) {
                         return null;
                     }
@@ -47,7 +47,7 @@ class Infer
                     $res = $this->getIndex()->getClassDefinition($name);
 
                     return $res;
-                })
+                })*/
                 ->resolveResultingReferencesIntoUnknown(true)
         );
     }

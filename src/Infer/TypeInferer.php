@@ -25,7 +25,7 @@ use PhpParser\NodeVisitorAbstract;
 
 class TypeInferer extends NodeVisitorAbstract
 {
-    public Scope $scope;
+//    public Scope $scope;
 
     private array $handlers;
 
@@ -35,6 +35,7 @@ class TypeInferer extends NodeVisitorAbstract
         array $handlers,
         private Index $index,
         private FileNameResolver $nameResolver,
+        public ?Scope $scope = null,
     ) {
         $this->handlers = [
             new FunctionLikeHandler(),
