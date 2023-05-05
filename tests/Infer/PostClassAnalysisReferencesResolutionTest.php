@@ -39,7 +39,9 @@ EOD, $expression, $barFn), shouldResolveReferences: false)->getClassDefinition('
     ['$this->wow()', '(#self).wow()'],
     ['$this->bar()->wow()', '(#self).wow()', 'bar() { return $this; }'],
     ['$this->bar(new Baz())', '(new Baz)()', 'bar($a) { return $a; }'],
+    ['$this->bar()->baz()', '(#(new Baz)()).baz()', 'bar() { return new Baz; }'],
     // Doesn't resolve as no need in resolution
+    ['$this->wow($this->bar())', '(#self).wow((#self).bar())'],
     ['new Baz($this->bar())', '(new Baz)((#self).bar())'],
 ]);
 
