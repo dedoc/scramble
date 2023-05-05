@@ -32,15 +32,14 @@ class ReferenceTypeResolver
         private Index $index,
         private ReferenceResolutionOptions $options = new ReferenceResolutionOptions,
         private RecursionGuard $recursionGuard = new RecursionGuard,
-    )
-    {
+    ) {
     }
 
     public static function hasResolvableReferences(Type $type): bool
     {
-        return (bool)(new TypeWalker)->first(
+        return (bool) (new TypeWalker)->first(
             $type,
-            fn(Type $t) => $t instanceof AbstractReferenceType,
+            fn (Type $t) => $t instanceof AbstractReferenceType,
         );
     }
 
@@ -60,7 +59,7 @@ class ReferenceTypeResolver
                 $type,
                 fn (Type $t) => $this->doResolve($t, $type, $scope),
             ),
-            onInfiniteRecursion: fn () =>  new UnknownType('really bad self reference'),
+            onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );
     }
 
@@ -95,7 +94,7 @@ class ReferenceTypeResolver
             }
         }
 
-        throw new \LogicException("There are unhandled dependencies. This should not happen.");
+        throw new \LogicException('There are unhandled dependencies. This should not happen.');
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope)
@@ -120,7 +119,7 @@ class ReferenceTypeResolver
             return null;
         };
 
-        if (!$resolved = $resolver()) {
+        if (! $resolved = $resolver()) {
             return null;
         }
 
@@ -408,7 +407,7 @@ class ReferenceTypeResolver
             });
 
             if ((new TypeWalker)->first($returnType, fn (Type $t) => in_array($t, $callee->type->templates))) {
-//                throw new \LogicException("Couldn't replace a template for function and this should never happen.");
+                //                throw new \LogicException("Couldn't replace a template for function and this should never happen.");
             }
         }
 

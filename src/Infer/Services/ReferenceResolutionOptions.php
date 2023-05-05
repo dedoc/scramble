@@ -10,8 +10,7 @@ class ReferenceResolutionOptions
         $unknownClassResolver = null,
         public bool $shouldResolveResultingReferencesIntoUnknowns = false,
         public bool $hasUnknownResolver = false,
-    )
-    {
+    ) {
         $this->unknownClassResolver = $unknownClassResolver ?: fn () => null;
     }
 

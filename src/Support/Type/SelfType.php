@@ -20,6 +20,7 @@ class SelfType extends AbstractType
     public function getPropertyType(string $propertyName, Scope $scope): Type
     {
         $className = $this::class;
+
         return new UnknownType("Cannot get a property type [$propertyName] on type [{$className}]");
     }
 

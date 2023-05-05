@@ -14,6 +14,7 @@ class RecursionGuard
 
         try {
             $this->callIdsMap[$id] = true;
+
             return $callback();
         } finally {
             unset($this->callIdsMap[$id]);

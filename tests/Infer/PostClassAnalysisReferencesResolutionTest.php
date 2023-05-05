@@ -45,7 +45,6 @@ EOD, $expression, $barFn), shouldResolveReferences: false)->getClassDefinition('
     ['new Baz($this->bar())', '(new Baz)((#self).bar())'],
 ]);
 
-
 it('resolves all pending self references after sdf', function () {
     $type = /*analyzeFile(<<<'EOD'
 <?php
@@ -57,7 +56,7 @@ class Foo {
         return 1;
     }
 }
-EOD)*/analyzeFile((new ReflectionClass(\Illuminate\Database\Eloquent\Model::class))->getFileName())->getClassDefinition('Foo');
+EOD)*/ analyzeFile((new ReflectionClass(\Illuminate\Database\Eloquent\Model::class))->getFileName())->getClassDefinition('Foo');
 
     dd($type);
 

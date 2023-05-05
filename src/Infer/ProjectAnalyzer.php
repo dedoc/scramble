@@ -3,18 +3,8 @@
 namespace Dedoc\Scramble\Infer;
 
 use Dedoc\Scramble\Infer\Scope\Index;
-use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
-use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Infer\Scope\ScopeContext;
-use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
-use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
-use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
-use Dedoc\Scramble\Support\Type\TypeWalker;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
-use PhpParser\ErrorHandler\Throwing;
-use PhpParser\NameContext;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
@@ -110,7 +100,7 @@ class ProjectAnalyzer
 
     private function analyzeFileSymbol(string $content, array $symbol): void
     {
-//         dump(['analyzeFileSymbol' => $symbol]);
+        //         dump(['analyzeFileSymbol' => $symbol]);
         $this->analyzedSymbols[implode('.', $symbol)] = true;
 
         [$type, $name] = $symbol;

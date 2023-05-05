@@ -31,7 +31,7 @@ class Infer
             $projectAnalyzer->index,
             ReferenceResolutionOptions::make()
                 ->resolveUnknownClassesUsing(function (string $name) {
-                    if (!class_exists($name)) {
+                    if (! class_exists($name)) {
                         return null;
                     }
 
@@ -68,7 +68,7 @@ class Infer
         $definition = $this->getIndex()->getClassDefinition($class);
 
         foreach ($definition->methods as $name => $methodDefinition) {
-            if ($methodsToResolve !== null && !in_array($name, $methodsToResolve)) {
+            if ($methodsToResolve !== null && ! in_array($name, $methodsToResolve)) {
                 continue;
             }
 

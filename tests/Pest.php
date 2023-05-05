@@ -23,8 +23,7 @@ function analyzeFile(
     string $code,
     $extensions = [],
     bool $shouldResolveReferences = true,
-): AnalysisResult
-{
+): AnalysisResult {
     if ($code[0] === '/') {
         $code = file_get_contents($code);
     }

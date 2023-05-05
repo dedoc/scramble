@@ -18,7 +18,7 @@ class ResponseExtension extends OperationExtension
     {
         $returnTypes = $routeInfo->getReturnTypes();
 
-//        dd($returnTypes);
+        //        dd($returnTypes);
 
         if (! $returnTypes = $returnTypes[0] ?? null) {
             return [];

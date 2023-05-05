@@ -6,7 +6,6 @@ class ClassDependency implements Dependency
 {
     public function __construct(
         public string $class,
-    )
-    {
+    ) {
     }
 }
