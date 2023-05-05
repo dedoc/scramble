@@ -17,7 +17,7 @@ class ResponseExtension extends OperationExtension
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
         $returnTypes = $routeInfo->getReturnTypes();
-        
+
         if (! $returnTypes = $returnTypes[0] ?? null) {
             return [];
         }

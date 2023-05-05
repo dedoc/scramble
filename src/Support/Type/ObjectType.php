@@ -34,11 +34,11 @@ class ObjectType extends AbstractType
     {
         $classDefinition = $scope->index->getClassDefinition($this->name);
 
-        if (! $classDefinition || ! array_key_exists($methodName, $classDefinition->methods)) {
-            return null;
-        }
+//        if (! $classDefinition || ! array_key_exists($methodName, $classDefinition->methods)) {
+//            return null;
+//        }
 
-        return $classDefinition->methods[$methodName];
+        return $classDefinition?->getMethodDefinition($methodName);
     }
 
     public function toString(): string

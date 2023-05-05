@@ -76,9 +76,9 @@ class RouteInfo
             return $this->methodNode;
         }
 
-        $result = $this->parser->parse($this->reflectionMethod()->getFileName());
+//        $result = $this->parser->parse($this->reflectionMethod()->getFileName());
 
-        return $this->methodNode = $result->findMethod($this->route->getAction('uses'));
+        return $this->methodNode = null;//$result->findMethod($this->route->getAction('uses'));
     }
 
     public function reflectionMethod(): ?ReflectionMethod
@@ -137,21 +137,19 @@ class RouteInfo
 
     public function getMethodType(): ?FunctionType
     {
-        if (! $this->isClassBased() || ! $this->methodNode()) {
+        if (! $this->isClassBased() || ! $this->reflectionMethod()) {// || ! $this->methodNode()) {
             return null;
         }
 
         if (! $this->methodType) {
-            $this->infer->analyzeClass($className = $this->reflectionMethod()->getDeclaringClass()->getName(), [
+            $def = $this->infer->analyzeClass($className = $this->reflectionMethod()->getDeclaringClass()->getName(), [
                 $this->methodName(),
             ]);
 
             /*
              * Here the final resolution of the method types may happen.
              */
-            $this->methodType = (new ObjectType($className))
-                ->getMethodDefinition($this->methodName())
-                ->type;
+            $this->methodType = $def->getMethodDefinition($this->methodName())->type;
         }
 
         return $this->methodType;

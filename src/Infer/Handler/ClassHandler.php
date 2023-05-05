@@ -43,6 +43,7 @@ class ClassHandler implements CreatesScope
 
     public function leave(Node\Stmt\Class_ $node, Scope $scope)
     {
+        return;
         $classDefinition = $scope->classDefinition();
 
         // Resolving all self reference returns from methods

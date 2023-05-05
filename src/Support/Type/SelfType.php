@@ -28,11 +28,7 @@ class SelfType extends AbstractType
     {
         $classDefinition = $scope->classDefinition();
 
-        if (! array_key_exists($methodName, $classDefinition->methods)) {
-            return null;
-        }
-
-        return $classDefinition->methods[$methodName];
+        return $classDefinition->getMethodDefinition($methodName);
     }
 
     public function toString(): string

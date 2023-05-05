@@ -14,7 +14,7 @@ use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
  * Infer class is a convenient wrapper around Infer\ProjectAnalyzer class that allows
  * to get type information about AST on demand in a sane manner.
  */
-class Infer
+class InferLazy
 {
     private ReferenceTypeResolver $referenceTypeResolver;
 
@@ -59,5 +59,20 @@ class Infer
         return $this->getIndex()
             ->getClassDefinition($class)
             ->setReferenceTypeResolver($this->referenceTypeResolver);
+
+        return $definition;
+
+        $def = new AutoresolvingClassDefinition(
+            $this->referenceTypeResolver,
+            $definition->name,
+            $definition->templateTypes,
+            $definition->properties,
+            $definition->methods,
+            $definition->parentFqn,
+        );
+        $def->nameContext = $definition->nameContext;
+        $def->reflection = $definition->reflection;
+
+        return $def;
     }
 }

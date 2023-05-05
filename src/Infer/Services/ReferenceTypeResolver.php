@@ -50,10 +50,10 @@ class ReferenceTypeResolver
             && ! $this->checkDependencies($type)
             && ! $this->options->hasUnknownResolver
         ) {
-            return $this->resolvedReference($type); // Not entirely correct to do this?
+            return $this->resolvedReference($type);
         }
 
-        return $this->recursionGuard->call(
+        $res =  $this->recursionGuard->call(
             spl_object_id($type),//->toString(),
             fn () => (new TypeWalker)->replace(
                 $type,
@@ -61,6 +61,8 @@ class ReferenceTypeResolver
             ),
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );
+
+        return $res;
     }
 
     private function checkDependencies(AbstractReferenceType $type)
@@ -139,6 +141,7 @@ class ReferenceTypeResolver
         // (#TName).listTableDetails()
 
         $type->arguments = array_map(
+            // @todo: fix resolving arguments when deep arg is reference
             fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
             $type->arguments,
         );
@@ -260,7 +263,7 @@ class ReferenceTypeResolver
 
         $inferredTemplates = collect($this->resolveTypesTemplatesFromArguments(
             $classDefinition->templateTypes,
-            $classDefinition->methods['__construct']->type->arguments ?? [],
+            $classDefinition->getMethodDefinition('__construct')->type->arguments ?? [],
             $type->arguments,
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
 

@@ -10,12 +10,13 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
+use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
 use Illuminate\Support\Arr;
-use PhpParser\ErrorHandler\Throwing;
-use PhpParser\NameContext;
+use Illuminate\Support\Str;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
 
 class MethodAnalyzer
 {
@@ -28,6 +29,8 @@ class MethodAnalyzer
 
     public function analyze(FunctionLikeDefinition $methodDefinition)
     {
+        // dump("analyze {$methodDefinition->type->name}");
+
         $methodReflection = $this->classDefinition
             ->getReflection()
             ->getMethod($methodDefinition->type->name);
@@ -42,33 +45,76 @@ class MethodAnalyzer
 
         $partialClass = "<?php\nclass $className {\n$methodContent\n}";
 
-        $this->traverseClassMethod(
+        $methodNode = $this->traverseClassMethod(
             $this->projectAnalyzer->parser->parseContentNew($partialClass)->getStatements(),
             $methodDefinition,
         );
 
+        $methodDefinition = $this->projectAnalyzer->index
+            ->getClassDefinition($this->classDefinition->name)
+            ->methods[$methodDefinition->type->name];
+
         $methodDefinition->isFullyAnalyzed = true;
+
+        return $methodDefinition;
     }
 
-    private function traverseClassMethod(array $nodes, FunctionLikeDefinition $methodDefinition)
+    private function traverseClassMethod(array $nodes, FunctionLikeDefinition &$methodDefinition)
     {
         $traverser = new NodeTraverser;
+
+        $traverser->addVisitor(new class ($this->getNameContext()) extends NameResolver {
+            public function __construct($nameContext){parent::__construct();$this->nameContext = $nameContext;}
+            public function beforeTraverse(array $nodes) { return null; }
+        });
+        $traverser->addVisitor(new PhpDocResolver(
+            $nameResolver = new FileNameResolver($this->getNameContext()),
+        ));
 
         $traverser->addVisitor(new TypeInferer(
             $this->projectAnalyzer,
             $this->projectAnalyzer->extensions,
             $this->projectAnalyzer->handlers,
             $this->projectAnalyzer->index,
-            $nr = new FileNameResolver(new NameContext(new Throwing())),
-            new Scope($this->projectAnalyzer->index, new NodeTypesResolver(), new ScopeContext($this->classDefinition), $nr)
+            $nameResolver,
+            new Scope($this->projectAnalyzer->index, new NodeTypesResolver(), new ScopeContext($this->classDefinition), $nameResolver)
         ));
 
-        $traverser->traverse(Arr::wrap(
-            (new NodeFinder())
-                ->findFirst(
-                    $nodes,
-                    fn ($n) => $n instanceof ClassMethod && $n->name->toString() === $methodDefinition->type->name
-                )
-        ));
+        $node = (new NodeFinder())
+            ->findFirst(
+                $nodes,
+                fn ($n) => $n instanceof ClassMethod && $n->name->toString() === $methodDefinition->type->name
+            );
+
+        $traverser->traverse(Arr::wrap($node));
+
+        return $node;
+    }
+
+    private function getNameContext()
+    {
+        if (! $this->classDefinition->nameContext) {
+            $shortName = $this->classDefinition->getReflection()->getShortName();
+
+            $code = Str::before(
+                file_get_contents($this->classDefinition->getReflection()->getFileName()),
+                "class $shortName"
+            );
+
+            $re = '/(namespace|use) ([.\s\S]*?);/m';
+            preg_match_all($re, $code, $matches);
+
+            $code = "<?php\n".implode("\n", $matches[0]);
+
+            $nodes = $this->projectAnalyzer->parser->parseContentNew($code)->getStatements();
+
+            $traverser = new NodeTraverser;
+            $traverser->addVisitor($nameResolver = new NameResolver);
+            $traverser->traverse($nodes);
+
+            $this->classDefinition->nameContext = $nameResolver->getNameContext();
+        }
+
+        return $this->classDefinition->nameContext;
     }
 }

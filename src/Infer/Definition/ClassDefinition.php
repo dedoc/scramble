@@ -4,19 +4,28 @@ namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
 use Dedoc\Scramble\Infer\ProjectAnalyzer;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
+use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Scope\ScopeContext;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use PhpParser\ErrorHandler\Throwing;
 use PhpParser\NameContext;
 
 class ClassDefinition
 {
-    private \ReflectionClass $reflection; // @todo: not serialize
+    public ?\ReflectionClass $reflection = null; // @todo: not serialize
 
-    private ?NameContext $nameContext = null; // @todo: not serialize
+    public ?NameContext $nameContext = null; // @todo: not serialize
+
+    public ?ReferenceTypeResolver $referenceTypeResolver = null; // @todo: not serialize
 
     public function __construct(
         // FQ name
@@ -64,6 +73,22 @@ class ClassDefinition
             ))->analyze($methodDefinition);
         }
 
+        if ($this->referenceTypeResolver) {
+            $methodScope = new Scope(
+                app(ProjectAnalyzer::class)->index,
+                new NodeTypesResolver,
+                new ScopeContext($this, $methodDefinition),
+                new FileNameResolver(new NameContext(new Throwing())),
+            );
+
+            $this->methods[$name]->type->setReturnType(
+                $this->referenceTypeResolver->resolve(
+                    $methodScope,
+                    $this->methods[$name]->type->getReturnType()
+                ),
+            );
+        }
+
         return $this->methods[$name];
     }
 
@@ -92,7 +117,7 @@ class ClassDefinition
             return new UnknownType("Cannot get type of calling method [$name] on object [$this->name]");
         }
 
-        $type = $methodDefinition->type;
+        $type = $this->getMethodDefinition($name)->type;
 
         if (! $calledOn instanceof Generic) {
             return $type->getReturnType();
@@ -113,5 +138,15 @@ class ClassDefinition
         }
 
         return $type;
+    }
+
+    /**
+     * @param ReferenceTypeResolver|null $referenceTypeResolver
+     * @return ClassDefinition
+     */
+    public function setReferenceTypeResolver(?ReferenceTypeResolver $referenceTypeResolver): ClassDefinition
+    {
+        $this->referenceTypeResolver = $referenceTypeResolver;
+        return $this;
     }
 }

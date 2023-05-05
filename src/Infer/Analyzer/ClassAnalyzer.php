@@ -48,8 +48,10 @@ class ClassAnalyzer
             }
 
             $classDefinition->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
-                type: new TemplateType('T'.Str::studly($reflectionProperty->name)),
+                type: $t = new TemplateType('T'.Str::studly($reflectionProperty->name)),
             );
+
+            $classDefinition->templateTypes[] = $t;
         }
 
         foreach ($classReflection->getMethods() as $reflectionMethod) {
