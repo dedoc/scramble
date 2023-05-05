@@ -1,26 +1,5 @@
 <?php
 
-it('adfasdf pending self reference after analysis', function () {
-    $type = analyzeFile(<<<'EOD'
-<?php
-class Bar {
-    public function bar() {
-        return $this;
-    }
-}
-class Foo {
-    public function foo() {
-        return (new Bar)->bar();
-    }
-}
-EOD, shouldResolveReferences: false)->getClassDefinition('Foo');
-
-    expect($type->methods['foo']->type->toString())
-        ->toBe('(): int(1)')
-        ->and($type->methods['bar']->type->toString())
-        ->toBe('(): int(1)');
-})->skip('asdf');
-
 it('resolves not ready self references after analysis', function (string $expression, string $expectedType, string $barFn = 'bar() { return 1; }') {
     $type = analyzeFile(sprintf(<<<'EOD'
 <?php
@@ -45,20 +24,18 @@ EOD, $expression, $barFn), shouldResolveReferences: false)->getClassDefinition('
     ['new Baz($this->bar())', '(new Baz)((#self).bar())'],
 ]);
 
-it('resolves all pending self references after sdf', function () {
-    $type = /*analyzeFile(<<<'EOD'
+it('resolves templates templates', function () {
+    $type = analyzeFile(<<<'EOD'
 <?php
 class Foo {
-    public function foo() {
-        return $this->bar();
+    public function foo($q) {
+        return $q;
     }
     public function bar() {
-        return 1;
+        return $this->foo(fn ($q) => $q);
     }
 }
-EOD)*/ analyzeFile((new ReflectionClass(\Illuminate\Database\Eloquent\Model::class))->getFileName())->getClassDefinition('Foo');
+EOD)->getClassDefinition('Foo');
 
-    dd($type);
-
-    expect($type->methods['foo']->type->toString())->toBe('(): self');
-})->skip('af');
+    expect($type->methods['bar']->type->toString())->toBe('(): <TQ>(TQ): TQ');
+});

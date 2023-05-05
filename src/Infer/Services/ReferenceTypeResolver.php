@@ -406,8 +406,9 @@ class ReferenceTypeResolver
                 return null;
             });
 
-            if ((new TypeWalker)->first($returnType, fn (Type $t) => in_array($t, $callee->type->templates))) {
-                //                throw new \LogicException("Couldn't replace a template for function and this should never happen.");
+
+            if ((new TypeWalker)->first($returnType, fn (Type $t) => in_array($t, $callee->type->templates, true))) {
+                throw new \LogicException("Couldn't replace a template for function and this should never happen.");
             }
         }
 

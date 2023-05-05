@@ -54,6 +54,7 @@ class ProjectAnalyzer
 
             if (
                 $node instanceof Node\Stmt\ClassLike
+                && $node->namespacedName
                 && $node->namespacedName->toString()
             ) {
                 return true;
@@ -147,7 +148,9 @@ class ProjectAnalyzer
 
         foreach ($dependencies as $className) {
             if (! isset($this->symbols['class'][$className]) && class_exists($className)) {
-                $fileName = (new \ReflectionClass($className))->getFileName();
+                if (! $fileName = (new \ReflectionClass($className))->getFileName()) {
+                    continue;
+                }
 
                 // Not analyzing vendor deps.
                 if (Str::contains($fileName, '/vendor/')) {

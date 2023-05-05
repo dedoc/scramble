@@ -82,7 +82,10 @@ class FunctionLikeHandler implements CreatesScope
 
                 $type = ($annotatedType instanceof BooleanType || $annotatedType instanceof IntegerType || $annotatedType instanceof FloatType)
                     ? $annotatedType
-                    : new TemplateType($scope->makeConflictFreeTemplateName('T'.Str::studly($param->var->name)), $annotatedType);
+                    : new TemplateType(
+                        $scope->makeConflictFreeTemplateName('T'.Str::studly($param->var->name)),
+                        $annotatedType,
+                    );
 
                 if ($type instanceof TemplateType) {
                     $localTemplates[] = $type;

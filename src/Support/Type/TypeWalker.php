@@ -2,46 +2,52 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+use Dedoc\Scramble\Infer\Services\RecursionGuard;
+
 class TypeWalker
 {
     private array $visitedNodes = [];
 
     public function find(Type $type, callable $lookup): array
     {
-        if ($lookup($type)) {
-            return [$type];
-        }
-
-        $foundTypes = [];
-
-        $publicChildren = collect($type->nodes())
-            ->flatMap(fn ($node) => is_array($type->$node) ? array_values($type->$node) : [$type->$node]);
-
-        foreach ($publicChildren as $child) {
-            if ($foundTypesInChildren = $this->find($child, $lookup)) {
-                $foundTypes = array_merge($foundTypes, $foundTypesInChildren);
+        return RecursionGuard::run($type, function () use ($type, $lookup) {
+            if ($lookup($type)) {
+                return [$type];
             }
-        }
 
-        return $foundTypes;
+            $foundTypes = [];
+
+            $publicChildren = collect($type->nodes())
+                ->flatMap(fn ($node) => is_array($type->$node) ? array_values($type->$node) : [$type->$node]);
+
+            foreach ($publicChildren as $child) {
+                if ($foundTypesInChildren = $this->find($child, $lookup)) {
+                    $foundTypes = array_merge($foundTypes, $foundTypesInChildren);
+                }
+            }
+
+            return $foundTypes;
+        }, fn () => []);
     }
 
     public function first(Type $type, callable $lookup): ?Type
     {
-        if ($lookup($type)) {
-            return $type;
-        }
-
-        $publicChildren = collect($type->nodes())
-            ->flatMap(fn ($node) => is_array($type->$node) ? array_values($type->$node) : [$type->$node]);
-
-        foreach ($publicChildren as $child) {
-            if ($foundType = $this->first($child, $lookup)) {
-                return $foundType;
+        return RecursionGuard::run($type, function () use ($type, $lookup) {
+            if ($lookup($type)) {
+                return $type;
             }
-        }
 
-        return null;
+            $publicChildren = collect($type->nodes())
+                ->flatMap(fn ($node) => is_array($type->$node) ? array_values($type->$node) : [$type->$node]);
+
+            foreach ($publicChildren as $child) {
+                if ($foundType = $this->first($child, $lookup)) {
+                    return $foundType;
+                }
+            }
+
+            return null;
+        }, fn () => null);
     }
 
     public function replace(Type $subject, callable $replacer): Type

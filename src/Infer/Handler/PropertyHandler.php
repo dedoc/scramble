@@ -21,7 +21,10 @@ class PropertyHandler
 
     public function leave(Node\Stmt\Property $node, Scope $scope)
     {
-        $classDefinition = $scope->classDefinition();
+        if (! $classDefinition = $scope->classDefinition()) {
+            // Anonymous class - not implemented yet.
+            return;
+        }
 
         $ownProperties = [];
         foreach ($node->props as $prop) {

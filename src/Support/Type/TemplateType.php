@@ -6,6 +6,10 @@ class TemplateType extends AbstractType
 {
     public function __construct(
         public string $name,
+        /**
+         * The name of a class/method/function this template is declared.
+         */
+//        public string $parentName,
         public ?Type $is = null,
     ) {
     }
