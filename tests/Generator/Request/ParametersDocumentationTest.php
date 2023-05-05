@@ -22,17 +22,17 @@ if (trait_exists(HasUuids::class)) {
                 ],
             ]);
     });
-}
 
-class DocumentsModelKeysUuidParametersAsUuids_Test
-{
-    public function index(DocumentsModelKeysUuidParametersAsUuids_Model $model)
+    class DocumentsModelKeysUuidParametersAsUuids_Test
     {
-        return response()->json();
+        public function index(DocumentsModelKeysUuidParametersAsUuids_Model $model)
+        {
+            return response()->json();
+        }
     }
-}
 
-class DocumentsModelKeysUuidParametersAsUuids_Model extends \Illuminate\Database\Eloquent\Model
-{
-    use HasUuids;
+    class DocumentsModelKeysUuidParametersAsUuids_Model extends \Illuminate\Database\Eloquent\Model
+    {
+        use HasUuids;
+    }
 }
