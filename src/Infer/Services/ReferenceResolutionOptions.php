@@ -9,6 +9,7 @@ class ReferenceResolutionOptions
     public function __construct(
         $unknownClassResolver = null,
         public bool $shouldResolveResultingReferencesIntoUnknowns = false,
+        public bool $hasUnknownResolver = false,
     )
     {
         $this->unknownClassResolver = $unknownClassResolver ?: fn () => null;
@@ -22,6 +23,7 @@ class ReferenceResolutionOptions
     public function resolveUnknownClassesUsing(callable $unknownClassResolver)
     {
         $this->unknownClassResolver = $unknownClassResolver;
+        $this->hasUnknownResolver = true;
 
         return $this;
     }

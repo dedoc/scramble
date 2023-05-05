@@ -6,6 +6,9 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\Dependency\ClassDependency;
+use Dedoc\Scramble\Support\Type\Reference\Dependency\MethodDependency;
+use Dedoc\Scramble\Support\Type\Reference\Dependency\PropertyDependency;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use PhpParser\Node;
 
@@ -49,9 +52,16 @@ class ClassHandler implements CreatesScope
                 fn ($t) => $t instanceof AbstractReferenceType,
             );
 
-            $dependencies = array_unique(array_merge(...array_map(fn ($r) => $r->dependencies(), $references)));
+            if (! $references) {
+                continue;
+            }
 
-            $hasSelfReferences = collect($dependencies)->some(fn ($d) => in_array($d, ['self', $classDefinition->name]));
+            $dependencies = array_merge(...array_map(fn ($r) => $r->dependencies(), $references));
+
+            $hasSelfReferences = collect($dependencies)->some(function ($d) use ($classDefinition) {
+                return ($d instanceof PropertyDependency || $d instanceof MethodDependency || $d instanceof ClassDependency)
+                    && $d->class === $classDefinition->name;
+            });
 
             $returnType = $hasSelfReferences
                 ? (new ReferenceTypeResolver($scope->index))->resolve($scope, $returnType)

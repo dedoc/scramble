@@ -146,7 +146,9 @@ class RouteInfo
         }
 
         if (! $this->methodType) {
-            $this->infer->analyzeClass($className = $this->reflectionMethod()->getDeclaringClass()->getName());
+            $this->infer->analyzeClass($className = $this->reflectionMethod()->getDeclaringClass()->getName(), [
+                $this->methodName(),
+            ]);
 
             /*
              * Here the final resolution of the method types may happen.

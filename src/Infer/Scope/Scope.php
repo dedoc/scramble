@@ -11,11 +11,13 @@ use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
 use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
@@ -59,7 +61,7 @@ class Scope
         }
 
         if ($node instanceof Node\Expr\Variable && $node->name === 'this') {
-            return new SelfType;
+            return new SelfType($this->classDefinition()?->name ?: 'unknown');
         }
 
         if ($node instanceof Node\Expr\Variable) {
@@ -93,9 +95,18 @@ class Scope
                 return $type;
             }
 
+            $calleeType = $this->getType($node->var);
+            if ($calleeType instanceof TemplateType) {
+                // @todo
+                // if ($calleeType->is instanceof ObjectType) {
+                //     $calleeType = $calleeType->is;
+                // }
+                return $this->setType($node, new UnknownType("Cannot infer type of method [{$node->name->name}] call on template type: not supported yet."));
+            }
+
             return $this->setType(
                 $node,
-                new MethodCallReferenceType($this->getType($node->var), $node->name->name, $this->getArgsTypes($node->args)),
+                new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args)),
             );
         }
 
@@ -103,6 +114,15 @@ class Scope
             // Only string prop names support.
             if (! $name = ($node->name->name ?? null)) {
                 return null;
+            }
+
+            $calleeType = $this->getType($node->var);
+            if ($calleeType instanceof TemplateType) {
+                // @todo
+                // if ($calleeType->is instanceof ObjectType) {
+                //     $calleeType = $calleeType->is;
+                // }
+                return $this->setType($node, new UnknownType("Cannot infer type of property [{$name}] call on template type: not supported yet."));
             }
 
             return $this->setType(

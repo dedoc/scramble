@@ -2,6 +2,9 @@
 
 namespace Dedoc\Scramble\Support\Type\Reference;
 
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\Dependency\PropertyDependency;
+use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\Type;
 
 class PropertyFetchReferenceType extends AbstractReferenceType
@@ -12,7 +15,7 @@ class PropertyFetchReferenceType extends AbstractReferenceType
     ) {
     }
 
-    public function nodes(): array
+    public function nodesNah(): array
     {
         return ['object'];
     }
@@ -24,6 +27,16 @@ class PropertyFetchReferenceType extends AbstractReferenceType
 
     public function dependencies(): array
     {
-        return static::getDependencies($this->object);
+        if ($this->object instanceof AbstractReferenceType) {
+            return $this->object->dependencies();
+        }
+
+        if (! $this->object instanceof ObjectType && ! $this->object instanceof SelfType) {
+            return [];
+        }
+
+        return [
+            new PropertyDependency($this->object->name, $this->propertyName),
+        ];
     }
 }

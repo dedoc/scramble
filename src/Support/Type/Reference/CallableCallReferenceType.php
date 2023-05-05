@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Type\Reference;
 
+use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Support\Type\Reference\Dependency\FunctionDependency;
 use Dedoc\Scramble\Support\Type\Type;
 
 class CallableCallReferenceType extends AbstractReferenceType
@@ -11,11 +13,6 @@ class CallableCallReferenceType extends AbstractReferenceType
         /** @var Type[] $arguments */
         public array $arguments,
     ) {
-    }
-
-    public function nodes(): array
-    {
-        return ['callee', 'arguments'];
     }
 
     public function toString(): string
@@ -32,9 +29,16 @@ class CallableCallReferenceType extends AbstractReferenceType
 
     public function dependencies(): array
     {
-        return static::getDependencies([
-            $this->callee,
-            ...$this->arguments,
-        ]);
+        if ($this->callee instanceof AbstractReferenceType) {
+            return $this->callee->dependencies();
+        }
+
+        if (! $this->callee instanceof CallableStringType) {
+            return [];
+        }
+
+        return [
+            new FunctionDependency($this->callee->name),
+        ];
     }
 }

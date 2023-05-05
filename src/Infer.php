@@ -44,7 +44,9 @@ class Infer
 
                     $this->projectAnalyzer->addFile($path)->analyze();
 
-                    return $this->getIndex()->getClassDefinition($name);
+                    $res = $this->getIndex()->getClassDefinition($name);
+
+                    return $res;
                 })
                 ->resolveResultingReferencesIntoUnknown(true)
         );

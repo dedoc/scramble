@@ -12,6 +12,10 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\Dependency\ClassDependency;
+use Dedoc\Scramble\Support\Type\Reference\Dependency\FunctionDependency;
+use Dedoc\Scramble\Support\Type\Reference\Dependency\MethodDependency;
+use Dedoc\Scramble\Support\Type\Reference\Dependency\PropertyDependency;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
@@ -42,6 +46,14 @@ class ReferenceTypeResolver
 
     public function resolve(Scope $scope, Type $type): Type
     {
+        if (
+            $type instanceof AbstractReferenceType
+            && ! $this->checkDependencies($type)
+            && ! $this->options->hasUnknownResolver
+        ) {
+            return $this->resolvedReference($type); // Not entirely correct to do this?
+        }
+
         return $this->recursionGuard->call(
             spl_object_id($type),//->toString(),
             fn () => (new TypeWalker)->replace(
@@ -50,6 +62,40 @@ class ReferenceTypeResolver
             ),
             onInfiniteRecursion: fn () =>  new UnknownType('really bad self reference'),
         );
+    }
+
+    private function checkDependencies(AbstractReferenceType $type)
+    {
+        if (! $dependencies = $type->dependencies()) {
+            return true;
+        }
+
+        foreach ($dependencies as $dependency) {
+            if ($dependency instanceof FunctionDependency) {
+                return (bool) $this->index->getFunctionDefinition($dependency->name);
+            }
+
+            if ($dependency instanceof PropertyDependency || $dependency instanceof MethodDependency || $dependency instanceof ClassDependency) {
+                if (! $classDefinition = $this->index->getClassDefinition($dependency->class)) {
+                    // Maybe here the resolution can happen
+                    return false;
+                }
+
+                if ($dependency instanceof PropertyDependency) {
+                    return array_key_exists($dependency->name, $classDefinition->properties);
+                }
+
+                if ($dependency instanceof MethodDependency) {
+                    return array_key_exists($dependency->name, $classDefinition->methods);
+                }
+
+                if ($dependency instanceof ClassDependency) {
+                    return true;
+                }
+            }
+        }
+
+        throw new \LogicException("There are unhandled dependencies. This should not happen.");
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope)
@@ -362,7 +408,7 @@ class ReferenceTypeResolver
             });
 
             if ((new TypeWalker)->first($returnType, fn (Type $t) => in_array($t, $callee->type->templates))) {
-                throw new \LogicException("Couldn't replace a template for function and this should never happen.");
+//                throw new \LogicException("Couldn't replace a template for function and this should never happen.");
             }
         }
 

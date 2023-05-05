@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\Type\Reference;
 
 use Dedoc\Scramble\Support\Type\AbstractType;
+use Dedoc\Scramble\Support\Type\Reference\Dependency\Dependency;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\Type;
 
@@ -22,7 +23,7 @@ abstract class AbstractReferenceType extends AbstractType
      * This is the list of class names and functions (or 'self') that are dependencies for
      * the given reference. The reference can be resolved after these dependencies are analyzed.
      *
-     * @return string[]
+     * @return Dependency[]
      */
     abstract public function dependencies(): array;
 
@@ -39,7 +40,7 @@ abstract class AbstractReferenceType extends AbstractType
                 }
 
                 if ($type instanceof SelfType) {
-                    return ['self'];
+                    return [$type->name];
                 }
 
                 if ($type instanceof AbstractReferenceType) {

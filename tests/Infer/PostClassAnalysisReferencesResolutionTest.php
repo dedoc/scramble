@@ -34,12 +34,13 @@ EOD, $expression, $barFn), shouldResolveReferences: false)->getClassDefinition('
 
     expect($type->methods['foo']->type->toString())->toBe('(): '.$expectedType);
 })->with([
+    // Resolves
     ['$this->bar()', 'int(1)'],
-    ['new Baz($this->bar())', '(new Baz)(int(1))'],
     ['$this->wow()', '(#self).wow()'],
     ['$this->bar()->wow()', '(#self).wow()', 'bar() { return $this; }'],
     ['$this->bar(new Baz())', '(new Baz)()', 'bar($a) { return $a; }'],
-    ['$this->bar(new Baz())', '(#(new Baz)()).wow()', 'bar($a) { return $a->wow(); }'],
+    // Doesn't resolve as no need in resolution
+    ['new Baz($this->bar())', '(new Baz)((#self).bar())'],
 ]);
 
 

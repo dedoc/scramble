@@ -8,6 +8,10 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 
 class SelfType extends AbstractType
 {
+    public function __construct(public string $name)
+    {
+    }
+
     public function isSame(Type $type)
     {
         return false;

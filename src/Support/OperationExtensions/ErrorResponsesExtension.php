@@ -87,7 +87,7 @@ class ErrorResponsesExtension extends OperationExtension
             new ObjectType(ValidationException::class),
         ];
 
-        $formRequest = $this->infer->analyzeClass($formRequest->name);
+        $formRequest = $this->infer->analyzeClass($formRequest->name, ['authorize']);
 
         $authorizeReturnType = $formRequest->getMethodCallType('authorize');
         if (

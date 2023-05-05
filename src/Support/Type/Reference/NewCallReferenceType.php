@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type\Reference;
 
+use Dedoc\Scramble\Support\Type\Reference\Dependency\ClassDependency;
 use Dedoc\Scramble\Support\Type\Type;
 
 class NewCallReferenceType extends AbstractReferenceType
@@ -13,7 +14,7 @@ class NewCallReferenceType extends AbstractReferenceType
     ) {
     }
 
-    public function nodes(): array
+    public function nodesNah(): array
     {
         return ['arguments'];
     }
@@ -35,9 +36,8 @@ class NewCallReferenceType extends AbstractReferenceType
 
     public function dependencies(): array
     {
-        return static::getDependencies([
-            $this->name,
-            ...$this->arguments,
-        ]);
+        return [
+            new ClassDependency($this->name),
+        ];
     }
 }
