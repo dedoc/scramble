@@ -4,12 +4,6 @@ namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
-use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
-use Dedoc\Scramble\Support\Type\Reference\Dependency\ClassDependency;
-use Dedoc\Scramble\Support\Type\Reference\Dependency\MethodDependency;
-use Dedoc\Scramble\Support\Type\Reference\Dependency\PropertyDependency;
-use Dedoc\Scramble\Support\Type\TypeWalker;
 use PhpParser\Node;
 
 class ClassHandler implements CreatesScope

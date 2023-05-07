@@ -21,8 +21,7 @@ class MethodAnalyzer
     public function __construct(
         private ProjectAnalyzer $projectAnalyzer,
         private ClassDefinition $classDefinition,
-    )
-    {
+    ) {
     }
 
     public function analyze(FunctionLikeDefinition $methodDefinition)

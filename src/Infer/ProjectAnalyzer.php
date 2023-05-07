@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Infer;
 
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\FileParser;
-use Illuminate\Support\Str;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;

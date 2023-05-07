@@ -2,8 +2,6 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
-use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
-use Dedoc\Scramble\Infer\ProjectAnalyzer;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 
@@ -16,8 +14,7 @@ class AutoresolvingClassDefinition extends ClassDefinition
         array $properties = [],
         array $methods = [],
         ?string $parentFqn = null,
-    )
-    {
+    ) {
         parent::__construct($name, $templateTypes, $properties, $methods, $parentFqn);
     }
 

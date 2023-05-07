@@ -9,7 +9,7 @@ class TemplateType extends AbstractType
         /**
          * The name of a class/method/function this template is declared.
          */
-//        public string $parentName,
+        //        public string $parentName,
         public ?Type $is = null,
     ) {
     }

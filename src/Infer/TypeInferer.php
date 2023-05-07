@@ -25,7 +25,7 @@ use PhpParser\NodeVisitorAbstract;
 
 class TypeInferer extends NodeVisitorAbstract
 {
-//    public Scope $scope;
+    //    public Scope $scope;
 
     private array $handlers;
 

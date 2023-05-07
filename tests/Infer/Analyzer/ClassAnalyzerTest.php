@@ -8,8 +8,8 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
-use Dedoc\Scramble\Tests\Infer\stubs\Foo;
 use Dedoc\Scramble\Tests\Infer\stubs\Bar;
+use Dedoc\Scramble\Tests\Infer\stubs\Foo;
 use PhpParser\ParserFactory;
 
 beforeEach(closure: function () {

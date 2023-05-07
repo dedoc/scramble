@@ -53,7 +53,7 @@ class ReferenceTypeResolver
             return $this->resolvedReference($type);
         }
 
-        $res =  $this->recursionGuard->call(
+        $res = $this->recursionGuard->call(
             spl_object_id($type),//->toString(),
             fn () => (new TypeWalker)->replace(
                 $type,
@@ -408,7 +408,6 @@ class ReferenceTypeResolver
 
                 return null;
             });
-
 
             if ((new TypeWalker)->first($returnType, fn (Type $t) => in_array($t, $callee->type->templates, true))) {
                 throw new \LogicException("Couldn't replace a template for function and this should never happen.");

@@ -34,9 +34,9 @@ class ObjectType extends AbstractType
     {
         $classDefinition = $scope->index->getClassDefinition($this->name);
 
-//        if (! $classDefinition || ! array_key_exists($methodName, $classDefinition->methods)) {
-//            return null;
-//        }
+        //        if (! $classDefinition || ! array_key_exists($methodName, $classDefinition->methods)) {
+        //            return null;
+        //        }
 
         return $classDefinition?->getMethodDefinition($methodName);
     }

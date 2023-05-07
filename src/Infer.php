@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble;
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
-use Dedoc\Scramble\Infer\Definition\AutoresolvingClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\ProjectAnalyzer;
 use Dedoc\Scramble\Infer\Scope\Index;

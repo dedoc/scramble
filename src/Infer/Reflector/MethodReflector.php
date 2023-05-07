@@ -2,14 +2,9 @@
 
 namespace Dedoc\Scramble\Infer\Reflector;
 
-use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
-use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
-use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
-use Illuminate\Support\Arr;
 use PhpParser\Node;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeFinder;
@@ -69,9 +64,18 @@ class MethodReflector
 
             $traverser = new NodeTraverser;
 
-            $traverser->addVisitor(new class ($this->getClassReflector()->getNameContext()) extends NameResolver {
-                public function __construct($nameContext){parent::__construct();$this->nameContext = $nameContext;}
-                public function beforeTraverse(array $nodes) { return null; }
+            $traverser->addVisitor(new class($this->getClassReflector()->getNameContext()) extends NameResolver
+            {
+                public function __construct($nameContext)
+                {
+                    parent::__construct();
+                    $this->nameContext = $nameContext;
+                }
+
+                public function beforeTraverse(array $nodes)
+                {
+                    return null;
+                }
             });
             $traverser->addVisitor(new PhpDocResolver(
                 $nameResolver = new FileNameResolver($this->getClassReflector()->getNameContext()),

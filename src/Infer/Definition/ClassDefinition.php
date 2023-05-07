@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
 use Dedoc\Scramble\Infer\ProjectAnalyzer;
-use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
@@ -43,6 +42,7 @@ class ClassDefinition
         if (! isset($this->reflection)) {
             $this->reflection = new \ReflectionClass($this->name);
         }
+
         return $this->reflection;
     }
 
@@ -138,13 +138,10 @@ class ClassDefinition
         return $type;
     }
 
-    /**
-     * @param ReferenceTypeResolver|null $referenceTypeResolver
-     * @return ClassDefinition
-     */
     public function setReferenceTypeResolver(?ReferenceTypeResolver $referenceTypeResolver): ClassDefinition
     {
         $this->referenceTypeResolver = $referenceTypeResolver;
+
         return $this;
     }
 }
