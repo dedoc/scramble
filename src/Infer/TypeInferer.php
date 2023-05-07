@@ -62,10 +62,6 @@ class TypeInferer extends NodeVisitorAbstract
     {
         $scope = $this->getOrCreateScope();
 
-        if ($node instanceof Node\Stmt\Class_) {
-            $this->projectAnalyzer->ensureParentDependenciesInIndex($node);
-        }
-
         foreach ($this->handlers as $handler) {
             if (! $handler->shouldHandle($node)) {
                 continue;

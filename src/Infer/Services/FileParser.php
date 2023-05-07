@@ -30,13 +30,8 @@ class FileParser
 
     public function parse(string $path): FileParserResult
     {
-        return $this->cache[$path] ??= $this->parseContent(file_get_contents($path));
-    }
-
-    public function parseContent(string $content): FileParserResult
-    {
-        return $this->cache[md5($content)] ??= new FileParserResult(
-            $statements = Arr::wrap($this->parser->parse($content)),
+        return $this->cache[$path] ??= new FileParserResult(
+            $statements = Arr::wrap($this->parser->parse(file_get_contents($path))),
             $this->resolveNames($statements),
         );
     }

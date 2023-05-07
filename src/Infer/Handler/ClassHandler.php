@@ -40,35 +40,4 @@ class ClassHandler implements CreatesScope
 
         $scope->index->registerClassDefinition($classDefinition);
     }
-
-    public function leave(Node\Stmt\Class_ $node, Scope $scope)
-    {
-        return;
-        $classDefinition = $scope->classDefinition();
-
-        // Resolving all self reference returns from methods
-        foreach ($classDefinition->methods as $name => $methodDefinition) {
-            $references = (new TypeWalker)->find(
-                $returnType = $methodDefinition->type->getReturnType(),
-                fn ($t) => $t instanceof AbstractReferenceType,
-            );
-
-            if (! $references) {
-                continue;
-            }
-
-            $dependencies = array_merge(...array_map(fn ($r) => $r->dependencies(), $references));
-
-            $hasSelfReferences = collect($dependencies)->some(function ($d) use ($classDefinition) {
-                return ($d instanceof PropertyDependency || $d instanceof MethodDependency || $d instanceof ClassDependency)
-                    && $d->class === $classDefinition->name;
-            });
-
-            $returnType = $hasSelfReferences
-                ? (new ReferenceTypeResolver($scope->index))->resolve($scope, $returnType)
-                : $returnType;
-
-            $methodDefinition->type->setReturnType($returnType);
-        }
-    }
 }

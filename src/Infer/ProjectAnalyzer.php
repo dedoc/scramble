@@ -136,35 +136,4 @@ class ProjectAnalyzer
 
         $traverser->traverse([$symbolDefinitionNode]);
     }
-
-    public function ensureParentDependenciesInIndex(Node\Stmt\Class_ $classNode)
-    {
-        $dependencies = array_values(array_filter([
-            $classNode->extends instanceof Node\Name ? $classNode->extends->toString() : null,
-            // TODO: Traits,
-        ]));
-
-        $queue = [];
-
-        foreach ($dependencies as $className) {
-            if (! isset($this->symbols['class'][$className]) && class_exists($className)) {
-                if (! $fileName = (new \ReflectionClass($className))->getFileName()) {
-                    continue;
-                }
-
-                // Not analyzing vendor deps.
-                if (Str::contains($fileName, '/vendor/')) {
-                    continue;
-                }
-
-                $this->symbols['class'][$className] = $fileName;
-
-                $this->files[$fileName] ??= file_get_contents($fileName);
-            }
-
-            $queue[] = ['class', $className];
-        }
-
-        $this->processQueue($queue);
-    }
 }

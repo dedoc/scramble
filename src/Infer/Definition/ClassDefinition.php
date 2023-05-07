@@ -23,8 +23,6 @@ class ClassDefinition
 {
     public ?\ReflectionClass $reflection = null; // @todo: not serialize
 
-    public ?NameContext $nameContext = null; // @todo: not serialize
-
     public ?ReferenceTypeResolver $referenceTypeResolver = null; // @todo: not serialize
 
     public function __construct(
@@ -67,7 +65,7 @@ class ClassDefinition
         $methodDefinition = $this->methods[$name];
 
         if (! $methodDefinition->isFullyAnalyzed()) {
-            (new MethodAnalyzer(
+            $this->methods[$name] = (new MethodAnalyzer(
                 app(ProjectAnalyzer::class),
                 $this
             ))->analyze($methodDefinition);

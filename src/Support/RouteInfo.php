@@ -3,10 +3,10 @@
 namespace Dedoc\Scramble\Support;
 
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Type\FunctionType;
-use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Routing\Route;
@@ -76,9 +76,8 @@ class RouteInfo
             return $this->methodNode;
         }
 
-//        $result = $this->parser->parse($this->reflectionMethod()->getFileName());
-
-        return $this->methodNode = null;//$result->findMethod($this->route->getAction('uses'));
+        return $this->methodNode = MethodReflector::make(...explode('@', $this->route->getAction('uses')))
+            ->getAstNode();
     }
 
     public function reflectionMethod(): ?ReflectionMethod
