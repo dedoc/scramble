@@ -31,15 +31,19 @@ class FormRequestRulesExtractor
             ->contains(\Closure::fromCallable([$this, 'findCustomRequestParam']));
     }
 
-    public function node()
+    public function node(Route $route)
     {
         $requestClassName = $this->getFormRequestClassName();
 
-        $result = resolve(FileParser::class)->parse((new ReflectionClass($requestClassName))->getFileName());
+        if ($requestClassName === 'Lorisleiva\Actions\ActionRequest') {
 
-        /** @var Node\Stmt\ClassMethod|null $rulesMethodNode */
-        $rulesMethodNode = $result->findMethod("$requestClassName@rules");
-
+            $actionClassName = explode('@', $route->action['controller'])[0];
+            $result = resolve(FileParser::class)->parse((new ReflectionClass($actionClassName))->getFileName());
+            $rulesMethodNode = $result->findMethod("$actionClassName@rules");
+        } else {
+            $result = resolve(FileParser::class)->parse((new ReflectionClass($requestClassName))->getFileName());
+            $rulesMethodNode = $result->findMethod("$requestClassName@rules");
+        }
         if (! $rulesMethodNode) {
             return null;
         }
