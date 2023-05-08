@@ -56,11 +56,18 @@ class FormRequestRulesExtractor
     {
         $requestClassName = $this->getFormRequestClassName();
 
-        /** @var Request $request */
-        $request = (new $requestClassName);
-        $request->setMethod($route->methods()[0]);
+        if ($requestClassName === 'Lorisleiva\Actions\ActionRequest') {
+            $actionClassName = explode('@', $route->action['controller'])[0];
+            $action = (new $actionClassName);
+            return $action->rules();
+        } else {
+            /** @var Request $request */
+            $request = (new $requestClassName);
 
-        return $request->rules();
+            $request->setMethod($route->methods()[0]);
+
+            return $request->rules();
+        }
     }
 
     private function findCustomRequestParam(Param $param)
