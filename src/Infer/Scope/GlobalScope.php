@@ -12,7 +12,7 @@ class GlobalScope extends Scope
     public function __construct()
     {
         parent::__construct(
-            app()->make(ProjectAnalyzer::class)->index, // ???
+            app()->make(Index::class), // ???
             new NodeTypesResolver(),
             new ScopeContext(),
             new FileNameResolver(new NameContext(new Throwing())),

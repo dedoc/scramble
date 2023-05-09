@@ -29,7 +29,7 @@ class ClassReflector
     public static function make(string $className): static
     {
         return static::$cache[$className] ??= new static(
-            app(FileParser::class), // ?
+            FileParser::getInstance(),
             $className,
         );
     }

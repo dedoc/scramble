@@ -2,6 +2,7 @@
 
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\ProjectAnalyzer;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -15,7 +16,7 @@ function getTypeFromDoc(string $phpDoc)
     $docNode = PhpDoc::parse($phpDoc);
     $varNode = $docNode->getVarTagValues()[0];
 
-    return (new TypeTransformer(new Infer(app(ProjectAnalyzer::class)), new Components))
+    return (new TypeTransformer(new Infer(new Index), new Components))
         ->transform(PhpDocTypeHelper::toType($varNode->type));
 }
 

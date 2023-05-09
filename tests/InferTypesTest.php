@@ -1,6 +1,7 @@
 <?php
 
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -17,13 +18,13 @@ use function Spatie\Snapshots\assertMatchesTextSnapshot;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->infer = new Infer(app()->make(Infer\ProjectAnalyzer::class));
+    $this->infer = app(Infer::class);
 });
 
 it('gets json resource type', function () {
     $def = $this->infer->analyzeClass(InferTypesTest_SampleJsonResource::class);
 
-    $returnType = $def->methods['toArray']->type->getReturnType();
+    $returnType = $def->getMethodDefinition('toArray')->type->getReturnType();
 
     assertMatchesTextSnapshot($returnType->toString());
 });
@@ -31,7 +32,7 @@ it('gets json resource type', function () {
 it('gets json resource type with enum', function () {
     $def = $this->infer->analyzeClass(InferTypesTest_SampleTwoPostJsonResource::class);
 
-    $returnType = $def->methods['toArray']->type->getReturnType();
+    $returnType = $def->getMethodDefinition('toArray')->type->getReturnType();
 
     assertMatchesTextSnapshot($returnType->toString());
 });

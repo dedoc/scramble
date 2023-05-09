@@ -1,26 +1,18 @@
 <?php
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
-use Dedoc\Scramble\Infer\ProjectAnalyzer;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
-use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Tests\Infer\stubs\Bar;
 use Dedoc\Scramble\Tests\Infer\stubs\Foo;
-use PhpParser\ParserFactory;
 
 beforeEach(closure: function () {
-    $this->index = new Index;
+    $this->index = app(Index::class);
 
-    $this->app->singleton(ProjectAnalyzer::class, fn () => new ProjectAnalyzer(
-        parser: new FileParser((new ParserFactory)->create(ParserFactory::PREFER_PHP7)),
-        index: $this->index,
-    ));
-
-    $this->classAnalyzer = new ClassAnalyzer(app(ProjectAnalyzer::class));
+    $this->classAnalyzer = new ClassAnalyzer($this->index);
 
     $this->resolver = new ReferenceTypeResolver($this->index);
 });
@@ -38,7 +30,7 @@ it('creates a definition from the given class', function () {
 it('resolves function return type after explicitly requested', function () {
     $fooDef = $this->classAnalyzer
         ->analyze(Foo::class)
-        ->getMethodDefinition('foo');
+        ->getMethodDefinition('bar');
 
     expect($fooDef->type->getReturnType()->toString())->toBe('int(243)');
 });

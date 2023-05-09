@@ -25,37 +25,12 @@ use PhpParser\NodeVisitorAbstract;
 
 class TypeInferer extends NodeVisitorAbstract
 {
-    //    public Scope $scope;
-
-    private array $handlers;
-
     public function __construct(
-        private ProjectAnalyzer $projectAnalyzer,
-        array $extensions,
-        array $handlers,
+        private array $handlers,
         private Index $index,
         private FileNameResolver $nameResolver,
-        public ?Scope $scope = null,
+        private ?Scope $scope = null,
     ) {
-        $this->handlers = [
-            new FunctionLikeHandler(),
-            new AssignHandler(),
-            new ClassHandler(),
-            new PropertyHandler(),
-            new ArrayHandler(),
-            new ArrayItemHandler(),
-            new ReturnHandler(),
-            new ThrowHandler(),
-            new ExpressionTypeInferringExtensions(array_values(array_filter(
-                $extensions,
-                fn ($ext) => $ext instanceof ExpressionTypeInferExtension,
-            ))),
-            new ExceptionInferringExtensions(array_values(array_filter(
-                $extensions,
-                fn ($ext) => $ext instanceof ExpressionExceptionExtension,
-            ))),
-            ...$handlers,
-        ];
     }
 
     public function enterNode(Node $node)

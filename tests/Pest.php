@@ -1,6 +1,9 @@
 <?php
 
+use Dedoc\Scramble\Extensions;
+use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\ProjectAnalyzer;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
@@ -8,6 +11,8 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Services\ReferenceResolutionOptions;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Infer\TypeInferer;
+use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Tests\TestCase;
@@ -15,6 +20,8 @@ use Dedoc\Scramble\Tests\Utils\AnalysisResult;
 use Illuminate\Routing\Route;
 use PhpParser\ErrorHandler\Throwing;
 use PhpParser\NameContext;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
 
 uses(TestCase::class)->in(__DIR__);
@@ -28,28 +35,38 @@ function analyzeFile(
         $code = file_get_contents($code);
     }
 
-    $projectAnalyzer = new ProjectAnalyzer(
-        parser: new FileParser((new ParserFactory)->create(ParserFactory::PREFER_PHP7)),
-        extensions: $extensions,
+    $index = new Index;
+
+    $traverser = new NodeTraverser;
+    $traverser->addVisitor($nameResolver = new NameResolver());
+    $traverser->addVisitor(new PhpDocResolver(
+        $nameResolver = new FileNameResolver($nameResolver->getNameContext()),
+    ));
+    $traverser->addVisitor(new TypeInferer(
+        Extensions::makeInferHandlers(),
+        $index,
+        $nameResolver,
+        new Scope($index, new NodeTypesResolver(), new ScopeContext(), $nameResolver)
+    ));
+    $traverser->traverse(
+        FileParser::getInstance()->parseContentNew($code)->getStatements(),
     );
-    $projectAnalyzer->addFile('virtual.php', $code);
-    $projectAnalyzer->analyze();
 
-    if ($shouldResolveReferences) {
-        $referenceResolver = new ReferenceTypeResolver(
-            $projectAnalyzer->index,
-            ReferenceResolutionOptions::make()
-                ->resolveUnknownClassesUsing(fn () => null)
-                ->resolveResultingReferencesIntoUnknown(true)
-        );
+    resolveReferences($index, new ReferenceTypeResolver($index));
 
-        resolveReferences($projectAnalyzer, $referenceResolver);
-    }
-
-    return new AnalysisResult($projectAnalyzer->index);
+    return new AnalysisResult($index);
 }
 
-function resolveReferences(ProjectAnalyzer $projectAnalyzer, ReferenceTypeResolver $referenceResolver)
+function analyzeClass(string $className): AnalysisResult
+{
+    $infer = app(Infer::class);
+
+    $infer->analyzeClass($className);
+
+    return new AnalysisResult($infer->index);
+}
+
+function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolver)
 {
     $resolveReferencesInFunctionReturn = function ($scope, $functionType) use ($referenceResolver) {
         if (! ReferenceTypeResolver::hasResolvableReferences($returnType = $functionType->getReturnType())) {
@@ -61,9 +78,9 @@ function resolveReferences(ProjectAnalyzer $projectAnalyzer, ReferenceTypeResolv
         $functionType->setReturnType($resolvedReference);
     };
 
-    foreach ($projectAnalyzer->index->functionsDefinitions as $functionDefinition) {
+    foreach ($index->functionsDefinitions as $functionDefinition) {
         $fnScope = new Scope(
-            $projectAnalyzer->index,
+            $index,
             new NodeTypesResolver,
             new ScopeContext(functionDefinition: $functionDefinition),
             new FileNameResolver(new NameContext(new Throwing())),
@@ -71,10 +88,10 @@ function resolveReferences(ProjectAnalyzer $projectAnalyzer, ReferenceTypeResolv
         $resolveReferencesInFunctionReturn($fnScope, $functionDefinition->type);
     }
 
-    foreach ($projectAnalyzer->index->classesDefinitions as $classDefinition) {
+    foreach ($index->classesDefinitions as $classDefinition) {
         foreach ($classDefinition->methods as $name => $methodDefinition) {
             $methodScope = new Scope(
-                $projectAnalyzer->index,
+                $index,
                 new NodeTypesResolver,
                 new ScopeContext($classDefinition, $methodDefinition),
                 new FileNameResolver(new NameContext(new Throwing())),

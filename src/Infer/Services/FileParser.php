@@ -28,6 +28,11 @@ class FileParser
         $this->parser = $parser;
     }
 
+    public static function getInstance(): static
+    {
+        return app(static::class);
+    }
+
     public function parse(string $path): FileParserResult
     {
         return $this->cache[$path] ??= new FileParserResult(

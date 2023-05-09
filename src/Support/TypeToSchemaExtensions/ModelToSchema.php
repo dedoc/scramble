@@ -24,7 +24,7 @@ class ModelToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        $classDefinition = $this->infer->analyzeClass($type->name, ['toArray']);
+        $classDefinition = $this->infer->analyzeClass($type->name);
 
         $toArrayReturnType = isset($classDefinition->methods['toArray'])
             ? $classDefinition->getMethodDefinition('toArray')->type->getReturnType()

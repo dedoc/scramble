@@ -3,7 +3,8 @@
 namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
-use Dedoc\Scramble\Infer\ProjectAnalyzer;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
@@ -20,10 +21,6 @@ use PhpParser\NameContext;
 
 class ClassDefinition
 {
-    public ?\ReflectionClass $reflection = null; // @todo: not serialize
-
-    public ?ReferenceTypeResolver $referenceTypeResolver = null; // @todo: not serialize
-
     public function __construct(
         // FQ name
         public string $name,
@@ -37,15 +34,6 @@ class ClassDefinition
     ) {
     }
 
-    public function getReflection(): \ReflectionClass
-    {
-        if (! isset($this->reflection)) {
-            $this->reflection = new \ReflectionClass($this->name);
-        }
-
-        return $this->reflection;
-    }
-
     public function isInstanceOf(string $className)
     {
         return is_a($this->name, $className, true);
@@ -56,7 +44,7 @@ class ClassDefinition
         return $this->isInstanceOf($className) && $this->name !== $className;
     }
 
-    public function getMethodDefinition(string $name)
+    public function getMethodDefinition(string $name, Scope $scope = new GlobalScope)
     {
         if (! array_key_exists($name, $this->methods)) {
             return null;
@@ -66,24 +54,21 @@ class ClassDefinition
 
         if (! $methodDefinition->isFullyAnalyzed()) {
             $this->methods[$name] = (new MethodAnalyzer(
-                app(ProjectAnalyzer::class),
+                $scope->index,
                 $this
             ))->analyze($methodDefinition);
         }
 
-        if ($this->referenceTypeResolver) {
-            $methodScope = new Scope(
-                app(ProjectAnalyzer::class)->index,
-                new NodeTypesResolver,
-                new ScopeContext($this, $methodDefinition),
-                new FileNameResolver(new NameContext(new Throwing())),
-            );
+        $methodScope = new Scope(
+            $scope->index,
+            new NodeTypesResolver,
+            new ScopeContext($this, $methodDefinition),
+            new FileNameResolver(new NameContext(new Throwing())),
+        );
 
+        if (ReferenceTypeResolver::hasResolvableReferences($returnType = $this->methods[$name]->type->getReturnType())) {
             $this->methods[$name]->type->setReturnType(
-                $this->referenceTypeResolver->resolve(
-                    $methodScope,
-                    $this->methods[$name]->type->getReturnType()
-                ),
+                (new ReferenceTypeResolver($scope->index))->resolve($methodScope, $returnType),
             );
         }
 
@@ -136,12 +121,5 @@ class ClassDefinition
         }
 
         return $type;
-    }
-
-    public function setReferenceTypeResolver(?ReferenceTypeResolver $referenceTypeResolver): ClassDefinition
-    {
-        $this->referenceTypeResolver = $referenceTypeResolver;
-
-        return $this;
     }
 }

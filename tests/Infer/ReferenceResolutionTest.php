@@ -114,37 +114,32 @@ EOD)->getExpressionType('(new Foo(1, fn ($a) => $a))->getProp()');
 });
 
 it('resolves method call from parent class', function () {
-    $type = analyzeFile(<<<'EOD'
-<?php
-class Foo extends Bar {
-}
-class Bar {
+    $type = analyzeClass(Mc_Foo::class)->getExpressionType('(new Mc_Foo)->foo()');
+
+    expect($type->toString())->toBe('int(2)');
+});
+class Mc_Foo extends Mc_Bar {}
+class Mc_Bar {
     public function foo () {
         return 2;
     }
 }
-EOD)->getExpressionType('(new Foo)->foo()');
-
-    expect($type->toString())->toBe('int(2)');
-});
 
 it('resolves call to parent class', function () {
-    $type = analyzeFile(<<<'EOD'
-<?php
-class Foo extends Bar {
+    $type = analyzeClass(Cp_Foo::class)->getClassDefinition('Cp_Foo');
+
+    expect($type->getMethodDefinition('foo')->type->toString())->toBe('(): int(2)');
+});
+class Cp_Foo extends Cp_Bar {
     public function foo () {
         return $this->two();
     }
 }
-class Bar {
+class Cp_Bar {
     public function two () {
         return 2;
     }
 }
-EOD)->getClassDefinition('Foo');
-
-    expect($type->methods['foo']->type->toString())->toBe('(): int(2)');
-});
 
 it('resolves polymorphic call from parent class', function () {
     $type = analyzeFile(<<<'EOD'
@@ -186,20 +181,19 @@ EOD)->getClassDefinition('Foo');
 });
 
 it('gets property type from parent class when constructed', function () {
-    $type = analyzeFile(<<<'EOD'
-<?php
-class Foo extends Bar {
+    $type = analyzeClass(Pt_Foo::class)
+        ->getExpressionType('(new Pt_Foo(2))->foo()');
+
+    expect($type->toString())->toBe('int(2)');
+});
+class Pt_Foo extends Pt_Bar {
     public function foo () {
         return $this->barProp;
     }
 }
-class Bar {
+class Pt_Bar {
     public $barProp;
     public function __construct($b) {
         $this->barProp = $b;
     }
 }
-EOD)->getExpressionType('(new Foo(2))->foo()');
-
-    expect($type->toString())->toBe('int(2)');
-});

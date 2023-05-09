@@ -2,10 +2,12 @@
 
 namespace Dedoc\Scramble\Infer\Analyzer;
 
+use Dedoc\Scramble\Extensions;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\ProjectAnalyzer;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
@@ -19,7 +21,7 @@ use PhpParser\NodeTraverser;
 class MethodAnalyzer
 {
     public function __construct(
-        private ProjectAnalyzer $projectAnalyzer,
+        private Index $index,
         private ClassDefinition $classDefinition,
     ) {
     }
@@ -27,16 +29,17 @@ class MethodAnalyzer
     public function analyze(FunctionLikeDefinition $methodDefinition)
     {
         // dump("analyze {$this->classDefinition->name}@{$methodDefinition->type->name}");
-        $methodReflection = $this->classDefinition
-            ->getReflection()
-            ->getMethod($methodDefinition->type->name);
-
         $this->traverseClassMethod(
             [$this->getClassReflector()->getMethod($methodDefinition->type->name)->getAstNode()],
             $methodDefinition,
         );
 
-        $methodDefinition = $this->projectAnalyzer->index
+//        if (! $this->index
+//            ->getClassDefinition($this->classDefinition->name)) {
+//            dd($this->classDefinition, $this->index);
+//        }
+
+        $methodDefinition = $this->index
             ->getClassDefinition($this->classDefinition->name)
             ->methods[$methodDefinition->type->name];
 
@@ -50,19 +53,17 @@ class MethodAnalyzer
         return ClassReflector::make($this->classDefinition->name);
     }
 
-    private function traverseClassMethod(array $nodes, FunctionLikeDefinition &$methodDefinition)
+    private function traverseClassMethod(array $nodes, FunctionLikeDefinition $methodDefinition)
     {
         $traverser = new NodeTraverser;
 
         $nameResolver = new FileNameResolver($this->getClassReflector()->getNameContext());
 
         $traverser->addVisitor(new TypeInferer(
-            $this->projectAnalyzer,
-            $this->projectAnalyzer->extensions,
-            $this->projectAnalyzer->handlers,
-            $this->projectAnalyzer->index,
+            Extensions::makeInferHandlers(),
+            $this->index,
             $nameResolver,
-            new Scope($this->projectAnalyzer->index, new NodeTypesResolver(), new ScopeContext($this->classDefinition), $nameResolver)
+            new Scope($this->index, new NodeTypesResolver(), new ScopeContext($this->classDefinition), $nameResolver)
         ));
 
         $node = (new NodeFinder())

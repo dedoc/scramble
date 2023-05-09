@@ -50,18 +50,9 @@ class ScrambleServiceProvider extends PackageServiceProvider
             );
         });
 
-        $this->app->singleton(ProjectAnalyzer::class, function () {
-            return new ProjectAnalyzer(
-                $this->app->make(FileParser::class),
-                extensions: $this->getInferExtensions(),
-                handlers: [new PhpDocHandler(), new ModelClassHandler()],
-                index: new Index,
-            );
-        });
+        $this->app->singleton(Index::class);
 
-        $this->app->singleton(Infer::class, function () {
-            return new Infer($this->app->make(ProjectAnalyzer::class));
-        });
+        $this->app->singleton(Infer::class);
 
         $this->app->when(OperationBuilder::class)
             ->needs('$extensionsClasses')
@@ -116,21 +107,5 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ]),
             );
         });
-    }
-
-    private function getInferExtensions()
-    {
-        $extensions = config('scramble.extensions', []);
-
-        $inferExtensionsClasses = array_values(array_filter(
-            $extensions,
-            fn ($e) => is_a($e, InferExtension::class, true),
-        ));
-        $inferExtensions = array_map(
-            fn ($inferExtensionClass) => new $inferExtensionClass(),
-            $inferExtensionsClasses,
-        );
-
-        return array_merge($inferExtensions, DefaultExtensions::infer());
     }
 }

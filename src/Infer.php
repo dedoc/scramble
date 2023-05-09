@@ -9,54 +9,21 @@ use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\ReferenceResolutionOptions;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 
-/**
- * Infer class is a convenient wrapper around Infer\ProjectAnalyzer class that allows
- * to get type information about AST on demand in a sane manner.
- */
 class Infer
 {
-    private ReferenceTypeResolver $referenceTypeResolver;
+    public function __construct(
+        public Index $index
+    )
+    {}
 
-    public function __construct(private ProjectAnalyzer $projectAnalyzer)
+    public function analyzeClass(string $class): ClassDefinition
     {
-        $this->referenceTypeResolver = new ReferenceTypeResolver(
-            $projectAnalyzer->index,
-            ReferenceResolutionOptions::make()
-                ->resolveUnknownClassesUsing(function (string $name) {
-                    if (! class_exists($name)) {
-                        return null;
-                    }
-
-                    $path = (new \ReflectionClass($name))->getFileName();
-
-                    if (str_contains($path, '/vendor/')) {
-                        return null;
-                    }
-                    // dump(['unknownClassHandler' => $name]);
-
-                    (new ClassAnalyzer($this->projectAnalyzer))->analyze($name);
-
-                    return $this->getIndex()->getClassDefinition($name);
-                })
-                ->resolveResultingReferencesIntoUnknown(true)
-        );
-    }
-
-    public function getIndex(): Index
-    {
-        return $this->projectAnalyzer->index;
-    }
-
-    public function analyzeClass(string $class, $methodsToResolve = null): ClassDefinition
-    {
-        if (! $this->getIndex()->getClassDefinition($class)) {
-            $this->getIndex()->registerClassDefinition(
-                (new ClassAnalyzer($this->projectAnalyzer))->analyze($class)
+        if (! $this->index->getClassDefinition($class)) {
+            $this->index->registerClassDefinition(
+                (new ClassAnalyzer($this->index))->analyze($class)
             );
         }
 
-        return $this->getIndex()
-            ->getClassDefinition($class)
-            ->setReferenceTypeResolver($this->referenceTypeResolver);
+        return $this->index->getClassDefinition($class);
     }
 }

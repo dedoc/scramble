@@ -50,6 +50,7 @@ class FunctionLikeHandler implements CreatesScope
             type: $fnType = new FunctionType($node->name->name ?? 'anonymous'),
             sideEffects: [],
         ));
+        $fnDefinition->isFullyAnalyzed = true;
 
         if ($node instanceof Node\Expr\ArrowFunction || $node instanceof Node\Expr\Closure) {
             $scope->setType($node, $fnType);
