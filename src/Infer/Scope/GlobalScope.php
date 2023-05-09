@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Infer\Scope;
 
-use Dedoc\Scramble\Infer\ProjectAnalyzer;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use PhpParser\ErrorHandler\Throwing;
 use PhpParser\NameContext;

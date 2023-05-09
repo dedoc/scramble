@@ -1,7 +1,6 @@
 <?php
 
 use Dedoc\Scramble\Infer;
-use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;

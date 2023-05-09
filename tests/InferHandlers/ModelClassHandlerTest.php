@@ -1,7 +1,6 @@
 <?php
 
 use Dedoc\Scramble\Infer;
-use Dedoc\Scramble\Support\InferHandlers\ModelClassHandler;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Tests\Files\SamplePostModelWithToArray;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;

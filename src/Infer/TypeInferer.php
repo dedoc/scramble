@@ -2,19 +2,7 @@
 
 namespace Dedoc\Scramble\Infer;
 
-use Dedoc\Scramble\Infer\Extensions\ExpressionExceptionExtension;
-use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
-use Dedoc\Scramble\Infer\Handler\ArrayHandler;
-use Dedoc\Scramble\Infer\Handler\ArrayItemHandler;
-use Dedoc\Scramble\Infer\Handler\AssignHandler;
-use Dedoc\Scramble\Infer\Handler\ClassHandler;
 use Dedoc\Scramble\Infer\Handler\CreatesScope;
-use Dedoc\Scramble\Infer\Handler\ExceptionInferringExtensions;
-use Dedoc\Scramble\Infer\Handler\ExpressionTypeInferringExtensions;
-use Dedoc\Scramble\Infer\Handler\FunctionLikeHandler;
-use Dedoc\Scramble\Infer\Handler\PropertyHandler;
-use Dedoc\Scramble\Infer\Handler\ReturnHandler;
-use Dedoc\Scramble\Infer\Handler\ThrowHandler;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;

@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Infer\Analyzer;
 use Dedoc\Scramble\Extensions;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
-use Dedoc\Scramble\Infer\ProjectAnalyzer;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
@@ -34,10 +33,10 @@ class MethodAnalyzer
             $methodDefinition,
         );
 
-//        if (! $this->index
-//            ->getClassDefinition($this->classDefinition->name)) {
-//            dd($this->classDefinition, $this->index);
-//        }
+        //        if (! $this->index
+        //            ->getClassDefinition($this->classDefinition->name)) {
+        //            dd($this->classDefinition, $this->index);
+        //        }
 
         $methodDefinition = $this->index
             ->getClassDefinition($this->classDefinition->name)
