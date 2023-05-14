@@ -53,7 +53,8 @@ class MethodReflector
         if (! $this->methodNode) {
             $className = class_basename($this->className);
 
-            $partialClass = "<?php\nclass $className {\n".$this->getMethodCode()."\n}";
+            $methodDoc = $this->getReflection()->getDocComment() ?: '';
+            $partialClass = "<?php\nclass $className {\n".$methodDoc."\n".$this->getMethodCode()."\n}";
 
             $statements = $this->parser->parseContentNew($partialClass)->getStatements();
             $node = (new NodeFinder())

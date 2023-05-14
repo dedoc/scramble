@@ -22,7 +22,6 @@ use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
-use Dedoc\Scramble\Support\InferHandlers\ModelClassHandler;
 use Dedoc\Scramble\Support\InferHandlers\PhpDocHandler;
 
 class Extensions
@@ -30,7 +29,7 @@ class Extensions
     public static function makeInferHandlers()
     {
         $extensions = static::defaultInferExtensions();
-        $handlers = [new PhpDocHandler(), new ModelClassHandler()];
+        $handlers = [new PhpDocHandler()];
 
         return [
             new FunctionLikeHandler(),

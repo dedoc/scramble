@@ -5,6 +5,8 @@ namespace Dedoc\Scramble;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
+use Dedoc\Scramble\Infer\Extensions\InferExtension;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthorizationExceptionToResponseExtension;
@@ -13,6 +15,7 @@ use Dedoc\Scramble\Support\ExceptionToResponseExtensions\NotFoundExceptionToResp
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\ValidationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\OperationExtensions\ErrorResponsesExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
@@ -49,6 +52,25 @@ class ScrambleServiceProvider extends PackageServiceProvider
         $this->app->singleton(Index::class);
 
         $this->app->singleton(Infer::class);
+
+        $this->app->when(ExtensionsBroker::class)
+            ->needs('$extensions')
+            ->give(function () {
+                $extensions = config('scramble.extensions', []);
+
+                $inferExtensionsClasses = array_values(array_filter(
+                    $extensions,
+                    fn ($e) => is_a($e, InferExtension::class, true),
+                ));
+
+                $inferExtensionsClasses = array_merge([
+                    ModelExtension::class,
+                ], $inferExtensionsClasses);
+
+                return array_map(function ($class) {
+                    return app($class);
+                }, $inferExtensionsClasses);
+            });
 
         $this->app->when(OperationBuilder::class)
             ->needs('$extensionsClasses')

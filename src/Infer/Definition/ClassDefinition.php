@@ -67,28 +67,18 @@ class ClassDefinition
 
         if (ReferenceTypeResolver::hasResolvableReferences($returnType = $this->methods[$name]->type->getReturnType())) {
             $this->methods[$name]->type->setReturnType(
-                (new ReferenceTypeResolver($scope->index))->resolve($methodScope, $returnType),
+                (new ReferenceTypeResolver($scope->index))
+                    ->resolve($methodScope, $returnType)
+                    ->mergeAttributes($returnType->attributes())
             );
         }
 
         return $this->methods[$name];
     }
 
-    public function getPropertyFetchType($name, ObjectType $calledOn = null)
+    public function getPropertyDefinition($name)
     {
-        $propertyDefinition = $this->properties[$name] ?? null;
-
-        if (! $propertyDefinition) {
-            return new UnknownType("Cannot get property [$name] type on [$this->name]");
-        }
-
-        $type = $propertyDefinition->type;
-
-        if (! $calledOn instanceof Generic) {
-            return $propertyDefinition->defaultType ?: $type;
-        }
-
-        return $this->replaceTemplateInType($type, $calledOn->templateTypesMap);
+        return $this->properties[$name] ?? null;
     }
 
     public function getMethodCallType(string $name, ObjectType $calledOn = null)

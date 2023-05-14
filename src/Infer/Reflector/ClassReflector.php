@@ -42,12 +42,17 @@ class ClassReflector
     public function getNameContext(): NameContext
     {
         if (! $this->nameContext) {
-            $shortName = $this->getReflection()->getShortName();
+            $content = file_get_contents($this->getReflection()->getFileName());
 
-            $code = Str::before(
-                file_get_contents($this->getReflection()->getFileName()),
-                "class $shortName"
+            preg_match(
+                '/(class|enum|interface|trait)\s+?(.*?)\s+?{/m',
+                $content,
+                $matches,
             );
+
+            $firstMatchedClassLikeString = $matches[0] ?? '';
+
+            $code = Str::before($content, $firstMatchedClassLikeString);
 
             $re = '/(namespace|use) ([.\s\S]*?);/m';
             preg_match_all($re, $code, $matches);

@@ -49,6 +49,7 @@ function analyzeFile(
         FileParser::getInstance()->parseContentNew($code)->getStatements(),
     );
 
+    // Should this be here? Index must be global?
     resolveReferences($index, new ReferenceTypeResolver($index));
 
     return new AnalysisResult($index);
