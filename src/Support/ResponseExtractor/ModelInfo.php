@@ -58,6 +58,7 @@ class ModelInfo
         $model = app()->make($class);
 
         return $this->displayJson(
+            $model,
             $class,
             $this->getAttributes($model),
             $this->getRelations($model),
@@ -281,9 +282,10 @@ class ModelInfo
     /**
      * Render the model information as JSON.
      */
-    protected function displayJson($class, $attributes, $relations)
+    protected function displayJson($model, $class, $attributes, $relations)
     {
         return collect([
+            'instance' => $model,
             'class' => $class,
             'attributes' => $attributes,
             'relations' => $relations,

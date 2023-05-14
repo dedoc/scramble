@@ -4,12 +4,6 @@ namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
-use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
-use Dedoc\Scramble\Support\Type\Reference\Dependency\ClassDependency;
-use Dedoc\Scramble\Support\Type\Reference\Dependency\MethodDependency;
-use Dedoc\Scramble\Support\Type\Reference\Dependency\PropertyDependency;
-use Dedoc\Scramble\Support\Type\TypeWalker;
 use PhpParser\Node;
 
 class ClassHandler implements CreatesScope
@@ -39,35 +33,5 @@ class ClassHandler implements CreatesScope
         ));
 
         $scope->index->registerClassDefinition($classDefinition);
-    }
-
-    public function leave(Node\Stmt\Class_ $node, Scope $scope)
-    {
-        $classDefinition = $scope->classDefinition();
-
-        // Resolving all self reference returns from methods
-        foreach ($classDefinition->methods as $name => $methodDefinition) {
-            $references = (new TypeWalker)->find(
-                $returnType = $methodDefinition->type->getReturnType(),
-                fn ($t) => $t instanceof AbstractReferenceType,
-            );
-
-            if (! $references) {
-                continue;
-            }
-
-            $dependencies = array_merge(...array_map(fn ($r) => $r->dependencies(), $references));
-
-            $hasSelfReferences = collect($dependencies)->some(function ($d) use ($classDefinition) {
-                return ($d instanceof PropertyDependency || $d instanceof MethodDependency || $d instanceof ClassDependency)
-                    && $d->class === $classDefinition->name;
-            });
-
-            $returnType = $hasSelfReferences
-                ? (new ReferenceTypeResolver($scope->index))->resolve($scope, $returnType)
-                : $returnType;
-
-            $methodDefinition->type->setReturnType($returnType);
-        }
     }
 }

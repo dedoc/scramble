@@ -8,7 +8,6 @@ use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
 
 class ModelToSchema extends TypeToSchemaExtension
@@ -24,11 +23,9 @@ class ModelToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        $classDefinition = $this->infer->analyzeClass($type->name, ['toArray']);
+        $this->infer->analyzeClass($type->name);
 
-        $toArrayReturnType = isset($classDefinition->methods['toArray'])
-            ? $classDefinition->methods['toArray']->type->getReturnType()
-            : new UnknownType();
+        $toArrayReturnType = $type->getMethodReturnType('toArray');
 
         return $this->openApiTransformer->transform($toArrayReturnType);
     }

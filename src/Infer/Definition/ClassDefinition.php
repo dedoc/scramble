@@ -2,12 +2,21 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
+use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
+use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Scope\ScopeContext;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use PhpParser\ErrorHandler\Throwing;
+use PhpParser\NameContext;
 
 class ClassDefinition
 {
@@ -34,21 +43,42 @@ class ClassDefinition
         return $this->isInstanceOf($className) && $this->name !== $className;
     }
 
-    public function getPropertyFetchType($name, ObjectType $calledOn = null)
+    public function getMethodDefinition(string $name, Scope $scope = new GlobalScope)
     {
-        $propertyDefinition = $this->properties[$name] ?? null;
-
-        if (! $propertyDefinition) {
-            return new UnknownType("Cannot get property [$name] type on [$this->name]");
+        if (! array_key_exists($name, $this->methods)) {
+            return null;
         }
 
-        $type = $propertyDefinition->type;
+        $methodDefinition = $this->methods[$name];
 
-        if (! $calledOn instanceof Generic) {
-            return $propertyDefinition->defaultType ?: $type;
+        if (! $methodDefinition->isFullyAnalyzed()) {
+            $this->methods[$name] = (new MethodAnalyzer(
+                $scope->index,
+                $this
+            ))->analyze($methodDefinition);
         }
 
-        return $this->replaceTemplateInType($type, $calledOn->templateTypesMap);
+        $methodScope = new Scope(
+            $scope->index,
+            new NodeTypesResolver,
+            new ScopeContext($this, $methodDefinition),
+            new FileNameResolver(new NameContext(new Throwing())),
+        );
+
+        if (ReferenceTypeResolver::hasResolvableReferences($returnType = $this->methods[$name]->type->getReturnType())) {
+            $this->methods[$name]->type->setReturnType(
+                (new ReferenceTypeResolver($scope->index))
+                    ->resolve($methodScope, $returnType)
+                    ->mergeAttributes($returnType->attributes())
+            );
+        }
+
+        return $this->methods[$name];
+    }
+
+    public function getPropertyDefinition($name)
+    {
+        return $this->properties[$name] ?? null;
     }
 
     public function getMethodCallType(string $name, ObjectType $calledOn = null)
@@ -59,7 +89,7 @@ class ClassDefinition
             return new UnknownType("Cannot get type of calling method [$name] on object [$this->name]");
         }
 
-        $type = $methodDefinition->type;
+        $type = $this->getMethodDefinition($name)->type;
 
         if (! $calledOn instanceof Generic) {
             return $type->getReturnType();

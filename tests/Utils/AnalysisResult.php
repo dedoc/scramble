@@ -2,10 +2,13 @@
 
 namespace Dedoc\Scramble\Tests\Utils;
 
+use Dedoc\Scramble\Extensions;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
-use Dedoc\Scramble\Infer\ProjectAnalyzer;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
+use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
@@ -37,17 +40,16 @@ class AnalysisResult
 
         $index = $this->index;
         $infer = new TypeInferer(
-            $projectAnalyzer = app()->make(ProjectAnalyzer::class, ['index' => $this->index]),
-            $projectAnalyzer->extensions,
-            $projectAnalyzer->handlers,
+            Extensions::makeInferHandlers(),
             $index,
-            new FileNameResolver(new PhpParser\NameContext(new PhpParser\ErrorHandler\Throwing()))
+            $nameResolver = new FileNameResolver(new PhpParser\NameContext(new PhpParser\ErrorHandler\Throwing())),
+            $scope = new Scope($index, new NodeTypesResolver(), new ScopeContext(), $nameResolver)
         );
         $traverser = new NodeTraverser;
         $traverser->addVisitor($infer);
         $traverser->traverse($fileAst);
 
-        return (new ReferenceTypeResolver($this->index))->resolve($infer->scope, $infer->scope->getType(
+        return (new ReferenceTypeResolver($this->index))->resolve($scope, $scope->getType(
             new Node\Expr\Variable('a', [
                 'startLine' => INF,
             ]),

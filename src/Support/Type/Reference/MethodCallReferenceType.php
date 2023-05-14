@@ -17,11 +17,6 @@ class MethodCallReferenceType extends AbstractReferenceType
     ) {
     }
 
-    public function nodesNah(): array
-    {
-        return ['callee', 'arguments'];
-    }
-
     public function toString(): string
     {
         $argsTypes = implode(

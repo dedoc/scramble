@@ -37,7 +37,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        $definition = $this->infer->analyzeClass($type->name, ['toArray']);
+        $definition = $this->infer->analyzeClass($type->name);
 
         $array = ($def = $type->getMethodDefinition('toArray'))
             ? $def->type->getReturnType()

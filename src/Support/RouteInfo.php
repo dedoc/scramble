@@ -3,10 +3,10 @@
 namespace Dedoc\Scramble\Support;
 
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Type\FunctionType;
-use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Routing\Route;
@@ -76,9 +76,8 @@ class RouteInfo
             return $this->methodNode;
         }
 
-        $result = $this->parser->parse($this->reflectionMethod()->getFileName());
-
-        return $this->methodNode = $result->findMethod($this->route->getAction('uses'));
+        return $this->methodNode = MethodReflector::make(...explode('@', $this->route->getAction('uses')))
+            ->getAstNode();
     }
 
     public function reflectionMethod(): ?ReflectionMethod
@@ -137,21 +136,19 @@ class RouteInfo
 
     public function getMethodType(): ?FunctionType
     {
-        if (! $this->isClassBased() || ! $this->methodNode()) {
+        if (! $this->isClassBased() || ! $this->reflectionMethod()) {// || ! $this->methodNode()) {
             return null;
         }
 
         if (! $this->methodType) {
-            $this->infer->analyzeClass($className = $this->reflectionMethod()->getDeclaringClass()->getName(), [
+            $def = $this->infer->analyzeClass($className = $this->reflectionMethod()->getDeclaringClass()->getName(), [
                 $this->methodName(),
             ]);
 
             /*
              * Here the final resolution of the method types may happen.
              */
-            $this->methodType = (new ObjectType($className))
-                ->getMethodDefinition($this->methodName())
-                ->type;
+            $this->methodType = $def->getMethodDefinition($this->methodName())->type;
         }
 
         return $this->methodType;

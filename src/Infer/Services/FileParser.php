@@ -4,6 +4,8 @@ namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
 use Illuminate\Support\Arr;
+use PhpParser\ErrorHandler\Throwing;
+use PhpParser\NameContext;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
@@ -26,16 +28,24 @@ class FileParser
         $this->parser = $parser;
     }
 
-    public function parse(string $path): FileParserResult
+    public static function getInstance(): static
     {
-        return $this->cache[$path] ??= $this->parseContent(file_get_contents($path));
+        return app(static::class);
     }
 
-    public function parseContent(string $content): FileParserResult
+    public function parse(string $path): FileParserResult
     {
-        return $this->cache[md5($content)] ??= new FileParserResult(
-            $statements = Arr::wrap($this->parser->parse($content)),
+        return $this->cache[$path] ??= new FileParserResult(
+            $statements = Arr::wrap($this->parser->parse(file_get_contents($path))),
             $this->resolveNames($statements),
+        );
+    }
+
+    public function parseContentNew(string $content): FileParserResult
+    {
+        return $this->cache[md5($content).'23'] ??= new FileParserResult(
+            $statements = Arr::wrap($this->parser->parse($content)),
+            new FileNameResolver(new NameContext(new Throwing()))
         );
     }
 

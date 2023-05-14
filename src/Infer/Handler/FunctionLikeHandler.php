@@ -50,6 +50,7 @@ class FunctionLikeHandler implements CreatesScope
             type: $fnType = new FunctionType($node->name->name ?? 'anonymous'),
             sideEffects: [],
         ));
+        $fnDefinition->isFullyAnalyzed = true;
 
         if ($node instanceof Node\Expr\ArrowFunction || $node instanceof Node\Expr\Closure) {
             $scope->setType($node, $fnType);
@@ -187,7 +188,7 @@ class FunctionLikeHandler implements CreatesScope
         if (
             $callToParentConstruct
             && ($parentDefinition = $scope->index->getClassDefinition($scope->classDefinition()->parentFqn))
-            && ($parentConstructorDefinition = $parentDefinition->methods['__construct'] ?? null)
+            && ($parentConstructorDefinition = $parentDefinition->getMethodDefinition('__construct'))
         ) {
             $parentConstructorArguments = $parentConstructorDefinition->type->arguments;
 

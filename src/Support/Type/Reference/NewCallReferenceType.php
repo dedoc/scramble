@@ -14,11 +14,6 @@ class NewCallReferenceType extends AbstractReferenceType
     ) {
     }
 
-    public function nodesNah(): array
-    {
-        return ['arguments'];
-    }
-
     public function isInstanceOf(string $className)
     {
         return is_a($this->name, $className, true);
