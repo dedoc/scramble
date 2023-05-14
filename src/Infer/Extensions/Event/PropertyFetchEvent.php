@@ -11,8 +11,7 @@ class PropertyFetchEvent
         public readonly ObjectType $instance,
         public readonly string $name,
         public readonly Scope $scope,
-    )
-    {
+    ) {
     }
 
     public function getDefinition()
