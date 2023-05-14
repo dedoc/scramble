@@ -297,6 +297,8 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get property [$type->propertyName] type on [$name]");
         }
 
+        return $objectType->getPropertyType($type->propertyName);
+
         if (! $propertyDefinition = $this->getPropertyDefinition($classDefinition, $type->propertyName)) {
             return new UnknownType("Cannot get property [$type->propertyName] type on [$classDefinition->name]");
         }

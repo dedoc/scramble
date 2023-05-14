@@ -26,9 +26,9 @@ use Dedoc\Scramble\Support\InferHandlers\PhpDocHandler;
 
 class Extensions
 {
-    public static function makeInferHandlers()
+    public static function makeInferHandlers(array $extensions = [])
     {
-        $extensions = static::defaultInferExtensions();
+        $extensions = $extensions ?: static::defaultInferExtensions();
         $handlers = [new PhpDocHandler()];
 
         return [

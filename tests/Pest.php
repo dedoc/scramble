@@ -32,7 +32,7 @@ function analyzeFile(
         $code = file_get_contents($code);
     }
 
-    $index = new Index;
+    $index = app(Index::class);//new Index;
 
     $traverser = new NodeTraverser;
     $traverser->addVisitor($nameResolver = new NameResolver());
@@ -40,7 +40,7 @@ function analyzeFile(
         $nameResolver = new FileNameResolver($nameResolver->getNameContext()),
     ));
     $traverser->addVisitor(new TypeInferer(
-        Extensions::makeInferHandlers(),
+        Extensions::makeInferHandlers($extensions),
         $index,
         $nameResolver,
         new Scope($index, new NodeTypesResolver(), new ScopeContext(), $nameResolver)
