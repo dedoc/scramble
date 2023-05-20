@@ -16,15 +16,15 @@ class ResponseExtension extends OperationExtension
 {
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
-        $returnTypes = $routeInfo->getReturnTypes();
+        $returnType = $routeInfo->getReturnType();
 
-        if (! $returnTypes = $returnTypes[0] ?? null) {
+        if (! $returnType) {
             return [];
         }
 
-        $returnTypes = $returnTypes instanceof Union
-            ? $returnTypes->types
-            : [$returnTypes];
+        $returnTypes = $returnType instanceof Union
+            ? $returnType->types
+            : [$returnType];
 
         $responses = collect($returnTypes)
             ->merge(optional($routeInfo->getMethodType())->exceptions ?: [])

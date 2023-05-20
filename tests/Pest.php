@@ -46,7 +46,7 @@ function analyzeFile(
         new Scope($index, new NodeTypesResolver(), new ScopeContext(), $nameResolver)
     ));
     $traverser->traverse(
-        FileParser::getInstance()->parseContentNew($code)->getStatements(),
+        FileParser::getInstance()->parseContent($code)->getStatements(),
     );
 
     // Should this be here? Index must be global?

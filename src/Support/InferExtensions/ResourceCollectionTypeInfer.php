@@ -62,7 +62,7 @@ class ResourceCollectionTypeInfer implements ExpressionTypeInferExtension
     {
         $collectingClassDefinition = $classDefinition->getPropertyDefinition('collects');
 
-        $collectingClassType = $collectingClassDefinition->defaultType;
+        $collectingClassType = $collectingClassDefinition?->defaultType;
 
         if (! $collectingClassType instanceof LiteralStringType) {
             if (

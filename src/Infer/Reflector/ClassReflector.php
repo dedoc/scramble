@@ -59,7 +59,7 @@ class ClassReflector
 
             $code = "<?php\n".implode("\n", $matches[0]);
 
-            $nodes = $this->parser->parseContentNew($code)->getStatements();
+            $nodes = $this->parser->parseContent($code)->getStatements();
 
             $traverser = new NodeTraverser;
             $traverser->addVisitor($nameResolver = new NameResolver);

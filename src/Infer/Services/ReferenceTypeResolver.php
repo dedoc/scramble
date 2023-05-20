@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Services;
 
+use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\Index;
@@ -25,6 +26,7 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Support\Str;
 
 class ReferenceTypeResolver
 {
@@ -52,7 +54,7 @@ class ReferenceTypeResolver
             $type instanceof AbstractReferenceType
             && ! $this->checkDependencies($type)
         ) {
-            return new UnknownType();
+//            return new UnknownType();
         }
 
         return RecursionGuard::run(
@@ -165,7 +167,7 @@ class ReferenceTypeResolver
         if (
             ($calleeType instanceof ObjectType)
             && ! array_key_exists($calleeType->name, $this->index->classesDefinitions)
-            && ! ($this->options->unknownClassResolver)($calleeType->name)
+            && ! $this->resolveUnknownClassResolver($calleeType->name)
         ) {
             return new UnknownType();
         }
@@ -179,26 +181,19 @@ class ReferenceTypeResolver
         return $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType);
     }
 
-    private function getPropertyDefinition(ClassDefinition $calleeDefinition, string $propertyName)
+    private function resolveUnknownClassResolver(string $className): ?ClassDefinition
     {
-        if (array_key_exists($propertyName, $calleeDefinition->properties)) {
-            return $calleeDefinition->properties[$propertyName];
-        }
+        try {
+            $reflection = new \ReflectionClass($className);
 
-        if (! $calleeDefinition->parentFqn) {
-            return null;
-        }
+            if (Str::contains($reflection->getFileName(), '/vendor/')) {
+                return null;
+            }
 
-        if (
-            ! array_key_exists($calleeDefinition->parentFqn, $this->index->classesDefinitions)
-            && ! ($this->options->unknownClassResolver)($calleeDefinition->parentFqn)
-        ) {
-            return null;
-        }
+            return (new ClassAnalyzer($this->index))->analyze($className);
+        } catch (\ReflectionException) {}
 
-        $parentDefinition = $this->index->classesDefinitions[$calleeDefinition->parentFqn];
-
-        return $this->getPropertyDefinition($parentDefinition, $propertyName);
+        return null;
     }
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)
@@ -234,7 +229,7 @@ class ReferenceTypeResolver
 
         if (
             ! array_key_exists($type->name, $this->index->classesDefinitions)
-            && ! ($this->options->unknownClassResolver)($type->name)
+            && ! $this->resolveUnknownClassResolver($type->name)
         ) {
             // Class is not indexed, and we simply cannot get an info from it.
             return $type;
@@ -265,7 +260,7 @@ class ReferenceTypeResolver
         if (
             ($type->object instanceof ObjectType)
             && ! array_key_exists($type->object->name, $this->index->classesDefinitions)
-            && ! ($this->options->unknownClassResolver)($type->object->name)
+            && ! $this->resolveUnknownClassResolver($type->object->name)
         ) {
             // Class is not indexed, and we simply cannot get an info from it.
             return $type;
@@ -298,42 +293,6 @@ class ReferenceTypeResolver
         }
 
         return $objectType->getPropertyType($type->propertyName);
-
-        if (! $propertyDefinition = $this->getPropertyDefinition($classDefinition, $type->propertyName)) {
-            return new UnknownType("Cannot get property [$type->propertyName] type on [$classDefinition->name]");
-        }
-
-        if ($objectType instanceof SelfType && $scope->isInClass()) {
-            // This actually means that we're in the class' definition context, and
-            // templates should not be resolved.
-            return $propertyDefinition->type;
-        }
-
-        $propertyType = $propertyDefinition->type;
-
-        if (! $objectType instanceof Generic) {
-            return $propertyType;
-        }
-
-        $templateNameToIndexMap = $this->index->getClassDefinition($objectType->name)
-            ? array_flip(array_map(fn ($t) => $t->name, $classDefinition->templateTypes))
-            : [];
-        /** @var array<string, Type> $inferredTemplates */
-        $inferredTemplates = collect($templateNameToIndexMap)
-            ->mapWithKeys(fn ($i, $name) => [$name => $objectType->templateTypes[$i] ?? new UnknownType()])
-            ->toArray();
-
-        return (new TypeWalker)->replace($propertyType, function (Type $t) use ($inferredTemplates) {
-            if (! $t instanceof TemplateType) {
-                return null;
-            }
-
-            if (array_key_exists($t->name, $inferredTemplates)) {
-                return $inferredTemplates[$t->name];
-            }
-
-            return null;
-        });
     }
 
     private function getFunctionCallResult(

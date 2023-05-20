@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
-use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\Infer;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
@@ -10,7 +10,6 @@ use PhpParser\Node;
 use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Param;
 use PhpParser\NodeFinder;
-use ReflectionClass;
 
 class FormRequestRulesExtractor
 {
@@ -35,14 +34,9 @@ class FormRequestRulesExtractor
     {
         $requestClassName = $this->getFormRequestClassName();
 
-        $result = resolve(FileParser::class)->parse((new ReflectionClass($requestClassName))->getFileName());
+        $method = Infer\Reflector\ClassReflector::make($requestClassName)->getMethod('rules');
 
-        /** @var Node\Stmt\ClassMethod|null $rulesMethodNode */
-        $rulesMethodNode = $result->findMethod("$requestClassName@rules");
-
-        if (! $rulesMethodNode) {
-            return null;
-        }
+        $rulesMethodNode = $method->getAstNode();
 
         return new ValidationNodesResult((new NodeFinder())->find(
             Arr::wrap($rulesMethodNode->stmts),

@@ -7,8 +7,11 @@ use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Route;
 use PhpParser\Node\Stmt\ClassMethod;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
@@ -109,11 +112,31 @@ class RouteInfo
 
     public function getReturnType()
     {
-        if ($phpDocType = $this->getDocReturnType()) {
-            return $phpDocType;
+        /*
+         * PHP Doc return type is considered only if the code return type is
+         * unknown, or if there is a generic in PHP Doc type, that has some JsonResource in it.
+         */
+        $phpDocReturnType = ($phpDocType = $this->getDocReturnType()) ? PhpDocTypeHelper::toType($phpDocType) : null;
+        $inferredReturnType = $this->getCodeReturnType();
+
+        $phpDocReturnType?->setAttribute('fromPhpDoc', true);
+
+        if (! $phpDocReturnType) {
+            return $inferredReturnType;
         }
 
-        return $this->getCodeReturnType();
+        if ($inferredReturnType instanceof UnknownType) {
+            return $phpDocReturnType;
+        }
+
+        if (
+            $phpDocReturnType instanceof Generic
+            && (new TypeWalker)->first($phpDocReturnType, fn (Type $t) => $t->isInstanceOf(JsonResource::class))
+        ) {
+            return $phpDocReturnType;
+        }
+
+        return $inferredReturnType;
     }
 
     public function getDocReturnType()
@@ -136,14 +159,12 @@ class RouteInfo
 
     public function getMethodType(): ?FunctionType
     {
-        if (! $this->isClassBased() || ! $this->reflectionMethod()) {// || ! $this->methodNode()) {
+        if (! $this->isClassBased() || ! $this->reflectionMethod()) {
             return null;
         }
 
         if (! $this->methodType) {
-            $def = $this->infer->analyzeClass($className = $this->reflectionMethod()->getDeclaringClass()->getName(), [
-                $this->methodName(),
-            ]);
+            $def = $this->infer->analyzeClass($this->reflectionMethod()->getDeclaringClass()->getName());
 
             /*
              * Here the final resolution of the method types may happen.

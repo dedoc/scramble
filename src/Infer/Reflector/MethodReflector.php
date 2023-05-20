@@ -56,7 +56,7 @@ class MethodReflector
             $methodDoc = $this->getReflection()->getDocComment() ?: '';
             $partialClass = "<?php\nclass $className {\n".$methodDoc."\n".$this->getMethodCode()."\n}";
 
-            $statements = $this->parser->parseContentNew($partialClass)->getStatements();
+            $statements = $this->parser->parseContent($partialClass)->getStatements();
             $node = (new NodeFinder())
                 ->findFirst(
                     $statements,
