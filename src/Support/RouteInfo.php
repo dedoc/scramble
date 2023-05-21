@@ -105,19 +105,6 @@ class RouteInfo
             ->getMethod($this->methodName());
     }
 
-    public function getReturnTypes()
-    {
-        return collect([
-            ($phpDocType = $this->getDocReturnType()) ? PhpDocTypeHelper::toType($phpDocType) : null,
-            $this->getCodeReturnType(),
-        ])
-            ->filter()
-            // Make sure the type with more leafs is first one.
-            ->sortByDesc(fn ($type) => count((new TypeWalker)->find($type, fn ($t) => ! $t instanceof UnknownType)))
-            ->values()
-            ->all();
-    }
-
     public function getReturnType()
     {
         /*

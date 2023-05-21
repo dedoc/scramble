@@ -8,28 +8,6 @@ class TypeWalker
 {
     private array $visitedNodes = [];
 
-    public function find(Type $type, callable $lookup): array
-    {
-        return RecursionGuard::run($type, function () use ($type, $lookup) {
-            if ($lookup($type)) {
-                return [$type];
-            }
-
-            $foundTypes = [];
-
-            $publicChildren = collect($type->nodes())
-                ->flatMap(fn ($node) => is_array($type->$node) ? array_values($type->$node) : [$type->$node]);
-
-            foreach ($publicChildren as $child) {
-                if ($foundTypesInChildren = $this->find($child, $lookup)) {
-                    $foundTypes = array_merge($foundTypes, $foundTypesInChildren);
-                }
-            }
-
-            return $foundTypes;
-        }, fn () => []);
-    }
-
     public function first(Type $type, callable $lookup): ?Type
     {
         return RecursionGuard::run($type, function () use ($type, $lookup) {
