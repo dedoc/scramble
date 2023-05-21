@@ -148,5 +148,5 @@ class Foo
 EOD)->getClassDefinition('Foo');
 
     expect($type->methods['returnSomeCall']->type->toString())
-        ->toBe('(): unknown|unknown');
+        ->toBe('(): unknown');
 });

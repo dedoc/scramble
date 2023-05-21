@@ -24,7 +24,9 @@ use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
 
@@ -54,14 +56,25 @@ class ReferenceTypeResolver
             $type instanceof AbstractReferenceType
             && ! $this->checkDependencies($type)
         ) {
-            //            return new UnknownType();
+            //      ????      return new UnknownType();
         }
 
-        return RecursionGuard::run(
+        $resultingType = RecursionGuard::run(
             $type,//->toString(),
             fn () => (new TypeWalker)->replace(
                 $type,
                 fn (Type $t) => $this->doResolve($t, $type, $scope),
+            ),
+            onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
+        );
+
+        return RecursionGuard::run(
+            $resultingType,//->toString(),
+            fn () => (new TypeWalker)->replace(
+                $resultingType,
+                fn (Type $t) => $t instanceof Union
+                    ? TypeHelper::mergeTypes(...$t->types)
+                    : null,
             ),
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );

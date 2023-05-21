@@ -210,3 +210,29 @@ class Pt_Bar
         $this->barProp = $b;
     }
 }
+
+it('collapses the same types in union', function () {
+    $type = analyzeClass(SameUnionTypes_Foo::class)
+        ->getExpressionType('(new SameUnionTypes_Foo(2))->foo()');
+
+    expect($type->toString())->toBe('int(1)');
+});
+class SameUnionTypes_Foo
+{
+    public function foo()
+    {
+        if (rand()) {
+            return $this->bar();
+        }
+
+        return $this->car();
+    }
+    public function bar()
+    {
+        return 1;
+    }
+    public function car()
+    {
+        return 1;
+    }
+}

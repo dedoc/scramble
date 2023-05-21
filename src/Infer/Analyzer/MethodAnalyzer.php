@@ -27,16 +27,10 @@ class MethodAnalyzer
 
     public function analyze(FunctionLikeDefinition $methodDefinition)
     {
-        // dump("analyze {$this->classDefinition->name}@{$methodDefinition->type->name}");
         $this->traverseClassMethod(
             [$this->getClassReflector()->getMethod($methodDefinition->type->name)->getAstNode()],
             $methodDefinition,
         );
-
-        //        if (! $this->index
-        //            ->getClassDefinition($this->classDefinition->name)) {
-        //            dd($this->classDefinition, $this->index);
-        //        }
 
         $methodDefinition = $this->index
             ->getClassDefinition($this->classDefinition->name)

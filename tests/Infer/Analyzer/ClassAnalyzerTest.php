@@ -9,7 +9,7 @@ use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Tests\Infer\stubs\Bar;
 use Dedoc\Scramble\Tests\Infer\stubs\Foo;
 
-beforeEach(closure: function () {
+beforeEach(function () {
     $this->index = app(Index::class);
 
     $this->classAnalyzer = new ClassAnalyzer($this->index);
