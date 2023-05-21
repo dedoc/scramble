@@ -227,10 +227,12 @@ class SameUnionTypes_Foo
 
         return $this->car();
     }
+
     public function bar()
     {
         return 1;
     }
+
     public function car()
     {
         return 1;
