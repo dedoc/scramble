@@ -6,10 +6,18 @@ use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
+use Dedoc\Scramble\Support\Type\BooleanType;
+use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\NullType;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeTraverser;
 use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -18,6 +26,7 @@ use PhpParser\Node\Stmt\ClassMethod;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionClass;
 use ReflectionMethod;
+use WeakMap;
 
 class RouteInfo
 {
@@ -137,7 +146,39 @@ class RouteInfo
             return $phpDocReturnType;
         }
 
+        $phpDocReturnTypeWeight =  $phpDocReturnType ? $this->countKnownTypes($phpDocReturnType) : 0;
+        $inferredReturnTypeWeight =  $this->countKnownTypes($inferredReturnType);
+        if ($phpDocReturnTypeWeight > $inferredReturnTypeWeight) {
+            return $phpDocReturnType;
+        }
+
         return $inferredReturnType;
+    }
+
+    private function countKnownTypes(Type $type)
+    {
+        $counterVisitor = new class {
+            public int $count = 0;
+
+            public function enter(Type $type) {}
+
+            public function leave(Type $type) {
+                if (
+                    $type instanceof ObjectType
+                    || $type instanceof StringType
+                    || $type instanceof IntegerType
+                    || $type instanceof FloatType
+                    || $type instanceof BooleanType
+                    || $type instanceof NullType
+                ) {
+                    $this->count++;
+                }
+            }
+        };
+
+        (new TypeTraverser([$counterVisitor]))->traverse($type);
+
+        return $counterVisitor->count;
     }
 
     public function getDocReturnType()
@@ -151,11 +192,12 @@ class RouteInfo
 
     public function getCodeReturnType()
     {
-        if (! $methodType = $this->getMethodType()) {
+        if (! $this->getMethodType()) {
             return null;
         }
 
-        return $methodType->getReturnType();
+        return (new ObjectType($this->reflectionMethod()->getDeclaringClass()->getName()))
+            ->getMethodReturnType($this->methodName());
     }
 
     public function getMethodType(): ?FunctionType

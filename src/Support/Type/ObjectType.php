@@ -63,8 +63,16 @@ class ObjectType extends AbstractType
             return $returnType;
         }
 
+        if (! $methodDefinition = $this->getMethodDefinition($methodName)) {
+            return null;
+        }
+
+        $returnType = $methodDefinition->type->getReturnType();
+
         // Here templates should be replaced for generics and arguments should be taken into account.
-        return $this->getMethodDefinition($methodName)?->type->getReturnType();
+        return $returnType instanceof TemplateType && $returnType->is
+            ? $returnType->is
+            : $returnType;
     }
 
     public function toString(): string
