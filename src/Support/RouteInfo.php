@@ -17,7 +17,6 @@ use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeTraverser;
 use Dedoc\Scramble\Support\Type\TypeWalker;
-use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -26,7 +25,6 @@ use PhpParser\Node\Stmt\ClassMethod;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionClass;
 use ReflectionMethod;
-use WeakMap;
 
 class RouteInfo
 {
@@ -146,8 +144,8 @@ class RouteInfo
             return $phpDocReturnType;
         }
 
-        $phpDocReturnTypeWeight =  $phpDocReturnType ? $this->countKnownTypes($phpDocReturnType) : 0;
-        $inferredReturnTypeWeight =  $this->countKnownTypes($inferredReturnType);
+        $phpDocReturnTypeWeight = $phpDocReturnType ? $this->countKnownTypes($phpDocReturnType) : 0;
+        $inferredReturnTypeWeight = $this->countKnownTypes($inferredReturnType);
         if ($phpDocReturnTypeWeight > $inferredReturnTypeWeight) {
             return $phpDocReturnType;
         }
@@ -157,12 +155,16 @@ class RouteInfo
 
     private function countKnownTypes(Type $type)
     {
-        $counterVisitor = new class {
+        $counterVisitor = new class
+        {
             public int $count = 0;
 
-            public function enter(Type $type) {}
+            public function enter(Type $type)
+            {
+            }
 
-            public function leave(Type $type) {
+            public function leave(Type $type)
+            {
                 if (
                     $type instanceof ObjectType
                     || $type instanceof StringType
