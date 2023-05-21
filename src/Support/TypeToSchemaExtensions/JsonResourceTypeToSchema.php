@@ -102,12 +102,12 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
                     if (count($newType) === 1) {
                         $item->value = $newType[0];
 
-                        return [$item];
+                        return $this->flattenMergeValues([$item]);
                     }
 
                     $item->value = new Union($newType);
 
-                    return [$item];
+                    return $this->flattenMergeValues([$item]);
                 }
 
                 if (
@@ -127,7 +127,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
                     $mergingArrayValuesShouldBeRequired = $item->value->templateTypes[0] instanceof LiteralBooleanType
                         && $item->value->templateTypes[0]->value === true;
 
-                    if (! $mergingArrayValuesShouldBeRequired) {
+                    if (! $mergingArrayValuesShouldBeRequired || $item->isOptional) {
                         foreach ($arrayToMergeItems as $mergingItem) {
                             $mergingItem->isOptional = true;
                         }
@@ -219,7 +219,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             return new \Dedoc\Scramble\Support\Type\UnknownType();
         }
 
-        if ($type->isInstanceOf(ResourceCollection::class)) {
+        if ($type->isInstanceOf(AnonymousResourceCollection::class)) {
             return $type->templateTypes[0]->templateTypes[0]
                 ?? new \Dedoc\Scramble\Support\Type\UnknownType();
         }

@@ -73,6 +73,13 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         }
 
         /*
+         * new MissingValue
+         */
+        if ($scope->getType($node)->isInstanceOf(MissingValue::class)) {
+            return new ObjectType(MissingValue::class);
+        }
+
+        /*
          * $this->when()
          */
         if ($this->isMethodCallToThis($node, ['when'])) {

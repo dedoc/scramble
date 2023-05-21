@@ -55,7 +55,7 @@ class ClassAnalyzer
         }
 
         foreach ($classReflection->getMethods() as $reflectionMethod) {
-            if ($reflectionMethod->class !== $name) {
+            if ($reflectionMethod->getFileName() !== $classReflection->getFileName()) {
                 continue;
             }
 
