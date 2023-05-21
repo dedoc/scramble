@@ -30,7 +30,7 @@ class TypeInferer extends NodeVisitorAbstract
     private array $handlers;
 
     /**
-     * @param InferExtension[] $extensions
+     * @param  InferExtension[]  $extensions
      */
     public function __construct(
         private Index $index,

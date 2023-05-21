@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Infer\Analyzer;
 
-use Dedoc\Scramble\Extensions;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;

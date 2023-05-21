@@ -7,12 +7,14 @@ use Dedoc\Scramble\Support\Type\Type;
 use PhpParser\Node\Expr;
 
 it('uses expression type infer extension', function () {
-    $extension = new class implements ExpressionTypeInferExtension {
+    $extension = new class implements ExpressionTypeInferExtension
+    {
         public function getType(Expr $node, Scope $scope): ?Type
         {
             if ($node instanceof Expr\MethodCall && $node->name->toString() === 'callWow') {
                 return new LiteralStringType('wow');
             }
+
             return null;
         }
     };
@@ -25,8 +27,10 @@ it('uses expression type infer extension', function () {
     expect($type->toString())->toBe('string(wow)');
 });
 
-class ExpressionTypeInferExtensionTest_Test {
-    public function foo () {
+class ExpressionTypeInferExtensionTest_Test
+{
+    public function foo()
+    {
         return $this->callWow();
     }
 }

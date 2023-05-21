@@ -1,6 +1,5 @@
 <?php
 
-use Dedoc\Scramble\Extensions;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;

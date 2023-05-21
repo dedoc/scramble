@@ -10,14 +10,12 @@ class Context
 
     public function __construct(
         public readonly ExtensionsBroker $extensionsBroker,
-    )
-    {
+    ) {
     }
 
     public static function configure(
         ExtensionsBroker $extensionsBroker,
-    )
-    {
+    ) {
         if (static::$instance) {
             throw new \LogicException('Context is already configured.');
         }
@@ -34,6 +32,7 @@ class Context
                 app(ExtensionsBroker::class),
             );
         }
+
         return static::$instance;
     }
 

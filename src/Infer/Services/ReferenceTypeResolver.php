@@ -54,7 +54,7 @@ class ReferenceTypeResolver
             $type instanceof AbstractReferenceType
             && ! $this->checkDependencies($type)
         ) {
-//            return new UnknownType();
+            //            return new UnknownType();
         }
 
         return RecursionGuard::run(
@@ -191,7 +191,8 @@ class ReferenceTypeResolver
             }
 
             return (new ClassAnalyzer($this->index))->analyze($className);
-        } catch (\ReflectionException) {}
+        } catch (\ReflectionException) {
+        }
 
         return null;
     }
