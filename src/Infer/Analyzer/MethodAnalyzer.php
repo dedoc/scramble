@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Analyzer;
 
 use Dedoc\Scramble\Extensions;
+use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
@@ -59,10 +60,10 @@ class MethodAnalyzer
         $nameResolver = new FileNameResolver($this->getClassReflector()->getNameContext());
 
         $traverser->addVisitor(new TypeInferer(
-            Extensions::makeInferHandlers(),
             $this->index,
             $nameResolver,
-            new Scope($this->index, new NodeTypesResolver(), new ScopeContext($this->classDefinition), $nameResolver)
+            new Scope($this->index, new NodeTypesResolver(), new ScopeContext($this->classDefinition), $nameResolver),
+            Context::getInstance()->extensionsBroker->extensions,
         ));
 
         $node = (new NodeFinder())

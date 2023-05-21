@@ -231,8 +231,7 @@ class ReferenceTypeResolver
             ! array_key_exists($type->name, $this->index->classesDefinitions)
             && ! $this->resolveUnknownClassResolver($type->name)
         ) {
-            // Class is not indexed, and we simply cannot get an info from it.
-            return $type;
+            return new UnknownType();
         }
 
         $classDefinition = $this->index->getClassDefinition($type->name);

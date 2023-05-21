@@ -26,10 +26,15 @@ uses(TestCase::class)->in(__DIR__);
 function analyzeFile(
     string $code,
     $extensions = [],
-    bool $shouldResolveReferences = true,
 ): AnalysisResult {
     if ($code[0] === '/') {
         $code = file_get_contents($code);
+    }
+
+    if (count($extensions)) {
+        Infer\Context::configure(
+            new Infer\Extensions\ExtensionsBroker($extensions),
+        );
     }
 
     $index = app(Index::class); //new Index;
@@ -40,10 +45,10 @@ function analyzeFile(
         $nameResolver = new FileNameResolver($nameResolver->getNameContext()),
     ));
     $traverser->addVisitor(new TypeInferer(
-        Extensions::makeInferHandlers($extensions),
         $index,
         $nameResolver,
-        new Scope($index, new NodeTypesResolver(), new ScopeContext(), $nameResolver)
+        new Scope($index, new NodeTypesResolver(), new ScopeContext(), $nameResolver),
+        Infer\Context::getInstance()->extensionsBroker->extensions,
     ));
     $traverser->traverse(
         FileParser::getInstance()->parseContent($code)->getStatements(),
@@ -55,8 +60,11 @@ function analyzeFile(
     return new AnalysisResult($index);
 }
 
-function analyzeClass(string $className): AnalysisResult
+function analyzeClass(string $className, array $extensions = []): AnalysisResult
 {
+    Infer\Context::configure(
+        new Infer\Extensions\ExtensionsBroker($extensions),
+    );
     $infer = app(Infer::class);
 
     $infer->analyzeClass($className);

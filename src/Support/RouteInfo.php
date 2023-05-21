@@ -11,6 +11,7 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Route;
 use PhpParser\Node\Stmt\ClassMethod;
@@ -131,7 +132,7 @@ class RouteInfo
 
         if (
             $phpDocReturnType instanceof Generic
-            && (new TypeWalker)->first($phpDocReturnType, fn (Type $t) => $t->isInstanceOf(JsonResource::class))
+            && (new TypeWalker)->first($phpDocReturnType, fn (Type $t) => $t->isInstanceOf(JsonResource::class) || $t->isInstanceOf(Model::class))
         ) {
             return $phpDocReturnType;
         }

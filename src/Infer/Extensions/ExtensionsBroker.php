@@ -5,7 +5,7 @@ namespace Dedoc\Scramble\Infer\Extensions;
 class ExtensionsBroker
 {
     public function __construct(
-        private array $extensions,
+        public readonly array $extensions,
     ) {
     }
 

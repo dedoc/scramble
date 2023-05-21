@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Tests\Utils;
 
 use Dedoc\Scramble\Extensions;
+use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\Index;
@@ -40,10 +41,10 @@ class AnalysisResult
 
         $index = $this->index;
         $infer = new TypeInferer(
-            Extensions::makeInferHandlers(),
             $index,
             $nameResolver = new FileNameResolver(new PhpParser\NameContext(new PhpParser\ErrorHandler\Throwing())),
-            $scope = new Scope($index, new NodeTypesResolver(), new ScopeContext(), $nameResolver)
+            $scope = new Scope($index, new NodeTypesResolver(), new ScopeContext(), $nameResolver),
+            Context::getInstance()->extensionsBroker->extensions,
         );
         $traverser = new NodeTraverser;
         $traverser->addVisitor($infer);

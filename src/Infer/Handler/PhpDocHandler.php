@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support\InferHandlers;
+namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;

@@ -15,7 +15,15 @@ use Dedoc\Scramble\Support\ExceptionToResponseExtensions\NotFoundExceptionToResp
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\ValidationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
+use Dedoc\Scramble\Support\InferExtensions\JsonResourceCallsTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\JsonResourceCreationInfer;
+use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
+use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
+use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\OperationExtensions\ErrorResponsesExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
@@ -67,9 +75,22 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ModelExtension::class,
                 ], $inferExtensionsClasses);
 
-                return array_map(function ($class) {
-                    return app($class);
-                }, $inferExtensionsClasses);
+                return array_merge(
+                    [
+                        new PossibleExceptionInfer(),
+                        new AbortHelpersExceptionInfer(),
+
+                        new JsonResourceCallsTypeInfer(),
+                        new JsonResourceCreationInfer(),
+                        new JsonResourceTypeInfer(),
+                        new ValidatorTypeInfer(),
+                        new ResourceCollectionTypeInfer(),
+                        new ResponseFactoryTypeInfer(),
+                    ],
+                    array_map(function ($class) {
+                        return app($class);
+                    }, $inferExtensionsClasses)
+                );
             });
 
         $this->app->when(OperationBuilder::class)

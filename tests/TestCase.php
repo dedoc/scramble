@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Tests;
 
+use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\ScrambleServiceProvider;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
@@ -23,6 +24,8 @@ class TestCase extends Orchestra
         );
 
         Scramble::$openApiExtender = null;
+
+        Context::reset();
     }
 
     protected function getPackageProviders($app)
