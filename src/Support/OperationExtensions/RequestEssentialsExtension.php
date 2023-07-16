@@ -65,6 +65,9 @@ class RequestEssentialsExtension extends OperationExtension
         if (count($routeInfo->phpDoc()->getTagsByName('@unauthenticated'))) {
             $operation->addSecurity([]);
         }
+
+        $operation->setOperationId($this->getOperationId($routeInfo));
+
     }
 
     /**
@@ -234,5 +237,25 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         return $baseType;
+    }
+
+    private function getOperationId(RouteInfo $routeInfo)
+    {
+        // Manual operation ID setting.
+        if (
+            ($operationId = $routeInfo->phpDoc()->getTagsByName('@operationId'))
+            && ($value = trim(Arr::first($operationId)?->value?->value))
+        ) {
+            return $value;
+        }
+
+        // Using route name as operation ID if set.
+        if ($name = $routeInfo->route->getName()) {
+            return $name;
+        }
+
+        return Str::camel(Str::replaceLast('Controller', '', $routeInfo->className() ?: ''))
+            . '.'
+            . $routeInfo->methodName();
     }
 }

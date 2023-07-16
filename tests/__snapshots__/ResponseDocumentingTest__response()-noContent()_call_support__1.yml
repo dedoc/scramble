@@ -5,4 +5,4 @@ info:
 servers:
     - { url: 'http://localhost/api' }
 paths:
-    /test: { get: { tags: [Foo_Test], responses: { 204: { description: 'No content', content: { application/json: {  } } } } } }
+    /test: { get: { operationId: fooTest.index, tags: [Foo_Test], responses: { 204: { description: 'No content', content: { application/json: {  } } } } } }
