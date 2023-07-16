@@ -65,6 +65,7 @@ class Generator
                 }
             })
             ->filter() // Closure based routes are filtered out for now, right here
+            ->sortBy(fn (Operation $o) => $o->tags[0] ?? $o->description)
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
                     (string) Str::of($operation->path)
