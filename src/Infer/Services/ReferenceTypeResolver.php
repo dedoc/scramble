@@ -257,7 +257,7 @@ class ReferenceTypeResolver
         $inferredTemplates = collect($this->resolveTypesTemplatesFromArguments(
             $classDefinition->templateTypes,
             $classDefinition->getMethodDefinition('__construct', $scope)->type->arguments ?? [],
-            $type->arguments,
+            $this->prepareArguments($classDefinition->getMethodDefinition('__construct', $scope), $type->arguments),
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
 
         return new Generic(
@@ -400,13 +400,17 @@ class ReferenceTypeResolver
      * Prepares the actual arguments list with which a function is going to be executed, taking into consideration
      * arguments defaults.
      *
-     * @param FunctionLikeDefinition $callee
+     * @param ?FunctionLikeDefinition $callee
      * @param array $realArguments The list of arguments a function has been called with.
      *
      * @return array The actual list of arguments where not passed arguments replaced with default values.
      */
-    private function prepareArguments(FunctionLikeDefinition $callee, array $realArguments)
+    private function prepareArguments(?FunctionLikeDefinition $callee, array $realArguments)
     {
+        if (! $callee) {
+            return $realArguments;
+        }
+
         /*
          * @todo $realArguments for now is considered only by index, not by names.
          */
