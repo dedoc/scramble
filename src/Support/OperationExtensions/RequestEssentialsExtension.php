@@ -254,6 +254,7 @@ class RequestEssentialsExtension extends OperationExtension
             return $name;
         }
 
+        // If no name and no operationId manually set, falling back to controller and method name.
         return Str::camel(Str::replaceLast('Controller', '', $routeInfo->className() ?: ''))
             .'.'
             .$routeInfo->methodName();
