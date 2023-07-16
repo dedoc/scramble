@@ -16,3 +16,7 @@ it(
     ['! $some', 'boolean'],
     ['!! $some', 'boolean'],
 ]);
+
+// @todo
+// casts test (int, float, bool, string)
+// array with literals test (int, float, bool, string)

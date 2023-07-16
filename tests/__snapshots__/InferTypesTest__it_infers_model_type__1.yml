@@ -7,9 +7,9 @@ properties:
     body: { type: string }
     created_at: { type: [string, 'null'], format: date-time }
     updated_at: { type: [string, 'null'], format: date-time }
-    parent: { $ref: '#/components/schemas/InferTypesTest_SamplePostModel' }
-    children: { type: array, items: { $ref: '#/components/schemas/InferTypesTest_SamplePostModel' } }
-    user: { $ref: '#/components/schemas/InferTypesTest_SampleModel' }
+    parent: { $ref: '#/components/schemas/SamplePostModel' }
+    children: { type: array, items: { $ref: '#/components/schemas/SamplePostModel' } }
+    user: { $ref: '#/components/schemas/SampleUserModel' }
 required:
     - id
     - status

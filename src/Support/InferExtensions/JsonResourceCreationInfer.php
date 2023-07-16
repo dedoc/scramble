@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -24,7 +23,7 @@ class JsonResourceCreationInfer implements ExpressionTypeInferExtension
             $node instanceof Expr\New_
             && ($node->class instanceof Node\Name && is_a($node->class->toString(), JsonResource::class, true))
         ) {
-            return $this->setResourceProperty(new ObjectType($node->class->toString()), $scope, $node->args);
+            return $this->setResourceType(new Generic($node->class->toString()), $scope, $node->args);
         }
         /*
          * JsonResource::make
@@ -41,15 +40,15 @@ class JsonResourceCreationInfer implements ExpressionTypeInferExtension
 
             if ($node->name->toString() === 'collection') {
                 return new Generic(
-                    new ObjectType(AnonymousResourceCollection::class),
+                    AnonymousResourceCollection::class,
                     [
-                        $this->setResourceProperty(new ObjectType($node->class->toString()), $scope, $node->args),
+                        $this->setResourceType(new Generic($node->class->toString()), $scope, $node->args),
                     ],
                 );
             }
 
             if ($node->name->toString() === 'make') {
-                return $this->setResourceProperty(new ObjectType($node->class->toString()), $scope, $node->args);
+                return $this->setResourceType(new Generic($node->class->toString()), $scope, $node->args);
             }
         }
 
@@ -59,11 +58,9 @@ class JsonResourceCreationInfer implements ExpressionTypeInferExtension
     /**
      * @param  Node\Arg[]  $args
      */
-    private function setResourceProperty(ObjectType $obj, Scope $scope, array $args)
+    private function setResourceType(Generic $obj, Scope $scope, array $args)
     {
-        $obj->properties = array_merge($obj->properties, [
-            'resource' => TypeHelper::getArgType($scope, $args, ['resource', 0]),
-        ]);
+        $obj->templateTypes[0] = TypeHelper::getArgType($scope, $args, ['resource', 0]);
 
         return $obj;
     }

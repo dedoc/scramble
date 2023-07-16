@@ -1,21 +1,21 @@
 <?php
 
-use Dedoc\Scramble\Infer\Infer;
-use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
-use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
 use function Spatie\Snapshots\assertMatchesSnapshot;
+
+// @todo move all tests into PhpDoc/PhpDocTypeHelperTest
 
 function getTypeFromDoc(string $phpDoc)
 {
     $docNode = PhpDoc::parse($phpDoc);
     $varNode = $docNode->getVarTagValues()[0];
 
-    return (new TypeTransformer(new Infer(app(FileParser::class)), new Components))
+    return (new TypeTransformer(new Infer(new Index), new Components))
         ->transform(PhpDocTypeHelper::toType($varNode->type));
 }
 
@@ -23,10 +23,6 @@ function getPhpTypeFromDoc(string $phpDoc)
 {
     $docNode = PhpDoc::parse($phpDoc);
     $varNode = $docNode->getVarTagValues()[0];
-
-    PhpDocTypeWalker::traverse($varNode->type, [new ResolveFqnPhpDocTypeVisitor(
-            new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing())),
-    )]);
 
     return PhpDocTypeHelper::toType($varNode->type);
 }

@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node;
@@ -17,16 +16,16 @@ class ReturnHandler
 
     public function leave(Node\Stmt\Return_ $node, Scope $scope)
     {
-        $fnType = $scope->context->function;
-
-        if (! $fnType instanceof FunctionType) {
+        if (! $scope->isInFunction()) {
             return;
         }
 
-        $fnType->setReturnType(
+        $fnDefinition = $scope->functionDefinition();
+
+        $fnDefinition->type->setReturnType(
             TypeHelper::mergeTypes(
                 $node->expr ? $scope->getType($node->expr) : new VoidType,
-                $fnType->getReturnType(),
+                $fnDefinition->type->getReturnType(),
             )
         );
     }

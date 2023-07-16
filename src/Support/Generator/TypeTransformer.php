@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-use Dedoc\Scramble\Infer\Infer;
+use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;

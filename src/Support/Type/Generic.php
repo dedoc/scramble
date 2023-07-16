@@ -2,59 +2,66 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-class Generic extends AbstractType
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Scope\Scope;
+
+class Generic extends ObjectType
 {
-    public ObjectType $type;
+    /**
+     * The list of concrete types for this generic.
+     *
+     * @var array<int, Type>
+     */
+    public array $templateTypes = [];
 
-    public array $genericTypes;
-
-    public function __construct(ObjectType $type, array $genericTypes)
-    {
-        $this->type = $type;
-        $this->genericTypes = $genericTypes;
-    }
-
-    public function isInstanceOf(string $className)
-    {
-        return $this->type->isInstanceOf($className);
-    }
-
-    public function getPropertyFetchType(string $propertyName): Type
-    {
-        return $this->type->getPropertyFetchType($propertyName);
-    }
-
-    public function children(): array
-    {
-        return [
-            $this->type,
-            ...$this->genericTypes,
-        ];
+    public function __construct(
+        string $name,
+        array $templateTypes = []
+    ) {
+        parent::__construct($name);
+        if (! array_is_list($templateTypes)) {
+            throw new \InvalidArgumentException('[$templateTypes] for Generic must be a list.');
+        }
+        $this->templateTypes = $templateTypes;
     }
 
     public function nodes(): array
     {
-        return ['type', 'genericTypes'];
+        return ['templateTypes'];
     }
 
-    public function publicNodes(): array
+    public function getPropertyType(string $propertyName, Scope $scope = new GlobalScope): Type
     {
-        return ['genericTypes'];
-    }
+        $propertyType = parent::getPropertyType($propertyName, $scope);
 
-    public function isSame(Type $type)
-    {
-        return $type instanceof static
-            && $this->type->isSame($type->type)
-            && collect($this->genericTypes)->every(fn (Type $t, $i) => $t->isSame($type->genericTypes[$i]));
+        $templateNameToIndexMap = ($classDefinition = $scope->index->getClassDefinition($this->name))
+            ? array_flip(array_map(fn ($t) => $t->name, $classDefinition->templateTypes))
+            : [];
+
+        /** @var array<string, Type> $inferredTemplates */
+        $inferredTemplates = collect($templateNameToIndexMap)
+            ->mapWithKeys(fn ($i, $name) => [$name => $this->templateTypes[$i] ?? new UnknownType()])
+            ->toArray();
+
+        return (new TypeWalker)->replace($propertyType, function (Type $t) use ($inferredTemplates) {
+            if (! $t instanceof TemplateType) {
+                return null;
+            }
+
+            if (array_key_exists($t->name, $inferredTemplates)) {
+                return $inferredTemplates[$t->name];
+            }
+
+            return null;
+        });
     }
 
     public function toString(): string
     {
         return sprintf(
             '%s<%s>',
-            $this->type->toString(),
-            implode(', ', array_map(fn ($t) => $t->toString(), $this->genericTypes))
+            $this->name,
+            implode(', ', array_map(fn ($t) => $t->toString(), $this->templateTypes))
         );
     }
 }

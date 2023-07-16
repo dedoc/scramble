@@ -16,8 +16,8 @@ class Foo {
         return ['a' => 123];
     }
 }
-EOD)->getClassType('Foo');
+EOD)->getClassDefinition('Foo');
 
-    expect($type->methods['foo']->toString())
+    expect($type->methods['foo']->type->toString())
         ->toBe('(): array{b: string(foo), 0: array{c: string(w), a: int(123)}}');
 });

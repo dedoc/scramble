@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\InferExtensions;
 
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
@@ -19,18 +20,18 @@ class ResourceCollectionTypeInfer implements ExpressionTypeInferExtension
 {
     public function getType(Expr $node, Scope $scope): ?Type
     {
-        if (! $scope->isInClass() || ! $scope->class()->isInstanceOf(ResourceCollection::class)) {
+        if (! $scope->classDefinition()?->isInstanceOf(ResourceCollection::class)) {
             return null;
         }
 
         /** parent::toArray() in `toArray` */
         if (
-            ($scope->isInFunction() && $scope->function()->name === 'toArray')
+            ($scope->isInFunction() && $scope->functionDefinition()->type->name === 'toArray')
             && $node instanceof Node\Expr\StaticCall
             && ($node->class instanceof Node\Name && $node->class->toString() === 'parent')
             && ($node->name->name ?? null) === 'toArray'
         ) {
-            return $this->getBasicCollectionType($scope->class());
+            return $this->getBasicCollectionType($scope->classDefinition());
         }
 
         /** $this->collection */
@@ -38,15 +39,15 @@ class ResourceCollectionTypeInfer implements ExpressionTypeInferExtension
             $node instanceof Node\Expr\PropertyFetch
             && ($node->var->name ?? null) === 'this' && ($node->name->name ?? null) === 'collection'
         ) {
-            return $this->getBasicCollectionType($scope->class());
+            return $this->getBasicCollectionType($scope->classDefinition());
         }
 
         return null;
     }
 
-    public function getBasicCollectionType(ObjectType $classType)
+    public function getBasicCollectionType(ClassDefinition $classDefinition)
     {
-        $collectingClassType = $this->getCollectingClassType($classType);
+        $collectingClassType = $this->getCollectingClassType($classDefinition);
 
         if (! $collectingClassType) {
             return new UnknownType('Cannot find a type of the collecting class.');
@@ -57,15 +58,17 @@ class ResourceCollectionTypeInfer implements ExpressionTypeInferExtension
         ]);
     }
 
-    private function getCollectingClassType(ObjectType $classType): ?LiteralStringType
+    private function getCollectingClassType(ClassDefinition $classDefinition): ?LiteralStringType
     {
-        $collectingClassType = $classType->getPropertyFetchType('collects');
+        $collectingClassDefinition = $classDefinition->getPropertyDefinition('collects');
+
+        $collectingClassType = $collectingClassDefinition?->defaultType;
 
         if (! $collectingClassType instanceof LiteralStringType) {
             if (
-                str_ends_with($classType->name, 'Collection') &&
-                (class_exists($class = Str::replaceLast('Collection', '', $classType->name)) ||
-                    class_exists($class = Str::replaceLast('Collection', 'Resource', $classType->name)))
+                str_ends_with($classDefinition->name, 'Collection') &&
+                (class_exists($class = Str::replaceLast('Collection', '', $classDefinition->name)) ||
+                    class_exists($class = Str::replaceLast('Collection', 'Resource', $classDefinition->name)))
             ) {
                 $collectingClassType = new LiteralStringType($class);
             } else {

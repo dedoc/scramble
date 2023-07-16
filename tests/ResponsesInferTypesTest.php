@@ -1,9 +1,5 @@
 <?php
 
-use Dedoc\Scramble\Infer\TypeInferer;
-use PhpParser\NodeTraverser;
-use PhpParser\ParserFactory;
-
 it('infers response factory expressions', function (string $expression, string $expectedType) {
     $type = getExpressionType($expression);
 
@@ -30,14 +26,5 @@ it('infers response creation', function (string $expression, string $expectedTyp
 
 function getExpressionType(string $expression)
 {
-    $code = "<?php $expression;";
-
-    $fileAst = (new ParserFactory)->create(ParserFactory::PREFER_PHP7)->parse($code);
-
-    $infer = app()->make(TypeInferer::class, ['namesResolver' => new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing()))]);
-    $traverser = new NodeTraverser;
-    $traverser->addVisitor($infer);
-    $traverser->traverse($fileAst);
-
-    return $infer->scope->getType($fileAst[0]->expr);
+    return getStatementType($expression);
 }

@@ -25,7 +25,7 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
      */
     public function toResponse(Type $type)
     {
-        if (! $codeType = $type->properties['statusCode'] ?? null) {
+        if (! $codeType = $type->templateTypes[0] ?? null) {
             return null;
         }
 
@@ -37,7 +37,7 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
             ->addProperty(
                 'message',
                 tap((new OpenApiTypes\StringType())->setDescription('Error overview.'), function (OpenApiTypes\StringType $t) use ($type) {
-                    $messageType = $type->properties['message'] ?? null;
+                    $messageType = $type->templateTypes[1] ?? null;
                     if (! $messageType instanceof LiteralStringType) {
                         return;
                     }

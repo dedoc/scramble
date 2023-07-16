@@ -43,7 +43,7 @@ class PhpDoc
             ->trim()
             ->explode("\n\n", 2);
 
-        $phpDoc->setAttribute('summary', $text[0] ?? '');
-        $phpDoc->setAttribute('description', $text[1] ?? '');
+        $phpDoc->setAttribute('summary', trim($text[0] ?? ''));
+        $phpDoc->setAttribute('description', trim($text[1] ?? ''));
     }
 }

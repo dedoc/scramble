@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -69,7 +70,15 @@ class ErrorResponsesExtension extends OperationExtension
 
     private function attachCustomRequestExceptions(FunctionType $methodType)
     {
-        if (! $formRequest = collect($methodType->arguments)->first(fn (Type $arg) => $arg instanceof ObjectType && $arg->isInstanceOf(FormRequest::class))) {
+        if (! $formRequest = collect($methodType->arguments)->first(fn (Type $arg) => $arg->isInstanceOf(FormRequest::class))) {
+            return;
+        }
+
+        $formRequest = $formRequest instanceof ObjectType
+            ? $formRequest
+            : ($formRequest instanceof TemplateType ? $formRequest->is : null);
+
+        if (! $formRequest) {
             return;
         }
 
@@ -78,7 +87,7 @@ class ErrorResponsesExtension extends OperationExtension
             new ObjectType(ValidationException::class),
         ];
 
-        $formRequest = $this->infer->analyzeClass($formRequest->name);
+        $formRequest = $this->infer->analyzeClass($formRequest->name, ['authorize']);
 
         $authorizeReturnType = $formRequest->getMethodCallType('authorize');
         if (

@@ -8,24 +8,20 @@ use PhpParser\NodeFinder;
 
 class FileParserResult
 {
-    private array $statements;
+    public function __construct(
+        private array $statements,
+        private FileNameResolver $nameResolver,
+    ) {
+    }
 
-    private FileNameResolver $namesResolver;
-
-    public function __construct(array $statements, FileNameResolver $namesResolver)
+    public function getNameResolver()
     {
-        $this->statements = $statements;
-        $this->namesResolver = $namesResolver;
+        return $this->nameResolver;
     }
 
     public function getStatements(): array
     {
         return $this->statements;
-    }
-
-    public function getNamesResolver(): FileNameResolver
-    {
-        return $this->namesResolver;
     }
 
     public function findFirstClass(string $class)

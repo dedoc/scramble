@@ -2,49 +2,40 @@
 
 namespace Dedoc\Scramble\Infer\Scope;
 
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\BooleanNotTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
-use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
+use Dedoc\Scramble\Support\Type\SelfType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
 
 class Scope
 {
-    public Index $index;
-
-    public NodeTypesResolver $nodeTypesResolver;
-
-    public ScopeContext $context;
-
-    public ?Scope $parentScope;
-
     /**
      * @var array<string, array{line: int, type: Type}[]>
      */
     public array $variables = [];
 
-    private FileNameResolver $namesResolver;
-
     public function __construct(
-        Index $index,
-        NodeTypesResolver $nodeTypesResolver,
-        ScopeContext $context,
-        FileNameResolver $namesResolver,
-        ?Scope $parentScope = null)
-    {
-        $this->index = $index;
-        $this->nodeTypesResolver = $nodeTypesResolver;
-        $this->context = $context;
-        $this->namesResolver = $namesResolver;
-        $this->parentScope = $parentScope;
+        public Index $index,
+        public NodeTypesResolver $nodeTypesResolver,
+        public ScopeContext $context,
+        public FileNameResolver $nameResolver,
+        public ?Scope $parentScope = null,
+    ) {
     }
 
     public function getType(Node $node)
@@ -70,7 +61,7 @@ class Scope
         }
 
         if ($node instanceof Node\Expr\Variable && $node->name === 'this') {
-            return $this->context->class;
+            return new SelfType($this->classDefinition()?->name ?: 'unknown');
         }
 
         if ($node instanceof Node\Expr\Variable) {
@@ -87,31 +78,83 @@ class Scope
             return $type;
         }
 
+        if ($node instanceof Node\Expr\New_) {
+            if (! $node->class instanceof Node\Name) {
+                return $type;
+            }
+
+            return $this->setType(
+                $node,
+                new NewCallReferenceType($node->class->toString(), $this->getArgsTypes($node->args)),
+            );
+        }
+
         if ($node instanceof Node\Expr\MethodCall) {
             // Only string method names support.
             if (! $node->name instanceof Node\Identifier) {
                 return $type;
             }
 
-            return $this->setType(
-                $node,
-                new MethodCallReferenceType($this->getType($node->var), $node->name->name, []),
-            );
-        }
-
-        if ($node instanceof Node\Expr\FuncCall) {
-            // Only string func names support.
-            if (! $node->name instanceof Node\Name) {
-                return $type;
+            $calleeType = $this->getType($node->var);
+            if ($calleeType instanceof TemplateType) {
+                // @todo
+                // if ($calleeType->is instanceof ObjectType) {
+                //     $calleeType = $calleeType->is;
+                // }
+                return $this->setType($node, new UnknownType("Cannot infer type of method [{$node->name->name}] call on template type: not supported yet."));
             }
 
             return $this->setType(
                 $node,
-                new CallableCallReferenceType($node->name->toString(), []),
+                new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args)),
+            );
+        }
+
+        if ($node instanceof Node\Expr\PropertyFetch) {
+            // Only string prop names support.
+            if (! $name = ($node->name->name ?? null)) {
+                return null;
+            }
+
+            $calleeType = $this->getType($node->var);
+            if ($calleeType instanceof TemplateType) {
+                // @todo
+                // if ($calleeType->is instanceof ObjectType) {
+                //     $calleeType = $calleeType->is;
+                // }
+                return $this->setType($node, new UnknownType("Cannot infer type of property [{$name}] call on template type: not supported yet."));
+            }
+
+            return $this->setType(
+                $node,
+                new PropertyFetchReferenceType($this->getType($node->var), $name),
+            );
+        }
+
+        if ($node instanceof Node\Expr\FuncCall) {
+            if ($node->name instanceof Node\Name) {
+                return $this->setType(
+                    $node,
+                    new CallableCallReferenceType(new CallableStringType($node->name->toString()), $this->getArgsTypes($node->args)),
+                );
+            }
+
+            return $this->setType(
+                $node,
+                new CallableCallReferenceType($this->getType($node->name), $this->getArgsTypes($node->args)),
             );
         }
 
         return $type;
+    }
+
+    private function getArgsTypes(array $args)
+    {
+        return collect($args)
+            ->filter(fn ($arg) => $arg instanceof Node\Arg)
+            ->keyBy(fn (Node\Arg $arg, $index) => $arg->name ? $arg->name->name : $index)
+            ->map(fn (Node\Arg $arg) => $this->getType($arg->value))
+            ->toArray();
     }
 
     public function setType(Node $node, Type $type)
@@ -121,40 +164,56 @@ class Scope
         return $type;
     }
 
-    public function createChildScope(?ScopeContext $context = null, ?callable $namesResolver = null)
+    public function createChildScope(ScopeContext $context = null)
     {
         return new Scope(
             $this->index,
             $this->nodeTypesResolver,
             $context ?: $this->context,
-            $namesResolver ?: $this->namesResolver,
+            $this->nameResolver,
             $this,
         );
     }
 
-    public function isInClass()
+    public function getContextTemplates()
     {
-        return (bool) $this->context->class;
+        return [
+            ...($this->classDefinition()?->templateTypes ?: []),
+            ...($this->functionDefinition()?->type->templates ?: []),
+            ...($this->parentScope?->getContextTemplates() ?: []),
+        ];
     }
 
-    public function class(): ?ObjectType
+    public function makeConflictFreeTemplateName(string $name): string
     {
-        return $this->context->class;
+        $scopeDuplicateTemplates = collect($this->getContextTemplates())
+            ->pluck('name')
+            ->unique()
+            ->values()
+            ->filter(fn ($n) => preg_match('/^'.$name.'(\d*)?$/m', $n) === 1)
+            ->all();
+
+        return $name.($scopeDuplicateTemplates ? count($scopeDuplicateTemplates) : '');
+    }
+
+    public function isInClass()
+    {
+        return (bool) $this->context->classDefinition;
+    }
+
+    public function classDefinition(): ?ClassDefinition
+    {
+        return $this->context->classDefinition;
+    }
+
+    public function functionDefinition()
+    {
+        return $this->context->functionDefinition;
     }
 
     public function isInFunction()
     {
-        return (bool) $this->context->function;
-    }
-
-    public function function(): ?FunctionType
-    {
-        return $this->context->function;
-    }
-
-    public function resolveName(string $name)
-    {
-        return ($this->namesResolver)($name);
+        return (bool) $this->context->functionDefinition;
     }
 
     public function addVariableType(int $line, string $name, Type $type)
@@ -182,5 +241,15 @@ class Scope
         }
 
         return $type;
+    }
+
+    public function getMethodCallType(Type $calledOn, string $methodName, array $arguments = []): Type
+    {
+
+    }
+
+    public function getPropertyFetchType(Type $calledOn, string $propertyName): Type
+    {
+        return (new ReferenceTypeResolver($this->index))->resolve($this, new PropertyFetchReferenceType($calledOn, $propertyName));
     }
 }

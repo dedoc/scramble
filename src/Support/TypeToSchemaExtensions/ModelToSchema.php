@@ -23,11 +23,11 @@ class ModelToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        $type = $this->infer->analyzeClass($type->name);
+        $this->infer->analyzeClass($type->name);
 
-        return $this->openApiTransformer->transform(
-            $type->getMethodCallType('toArray')
-        );
+        $toArrayReturnType = $type->getMethodReturnType('toArray');
+
+        return $this->openApiTransformer->transform($toArrayReturnType);
     }
 
     /**

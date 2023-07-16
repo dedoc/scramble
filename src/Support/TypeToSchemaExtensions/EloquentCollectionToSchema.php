@@ -15,9 +15,9 @@ class EloquentCollectionToSchema extends TypeToSchemaExtension
     public function shouldHandle(Type $type)
     {
         return $type instanceof Generic
-            && count($type->genericTypes) === 1
+            && count($type->templateTypes) === 1
             && $type->isInstanceOf(Collection::class)
-            && $type->genericTypes[0]->isInstanceOf(Model::class);
+            && $type->templateTypes[0]->isInstanceOf(Model::class);
     }
 
     /**
@@ -26,7 +26,7 @@ class EloquentCollectionToSchema extends TypeToSchemaExtension
     public function toSchema(Type $type)
     {
         $type = new ArrayType([
-            new ArrayItemType_(0, $type->genericTypes[0]),
+            new ArrayItemType_(0, $type->templateTypes[0]),
         ]);
 
         return $this->openApiTransformer->transform($type);

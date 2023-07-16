@@ -76,7 +76,7 @@ class PhpDocTypeHelper
             }
 
             return new Generic(
-                $typeObject,
+                $typeObject->name,
                 array_map(
                     fn ($type) => static::toType($type),
                     $type->genericTypes,

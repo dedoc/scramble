@@ -2,25 +2,27 @@
 
 namespace Dedoc\Scramble\Infer\Scope;
 
-use Dedoc\Scramble\Support\Type\FunctionType;
-use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 
 class ScopeContext
 {
-    public ?ObjectType $class = null;
+    public function __construct(
+        public ?ClassDefinition $classDefinition = null,
+        public ?FunctionLikeDefinition $functionDefinition = null,
+    ) {
+    }
 
-    public ?FunctionType $function = null;
-
-    public function setClass(?ObjectType $class): ScopeContext
+    public function setClassDefinition(ClassDefinition $classDefinition): ScopeContext
     {
-        $this->class = $class;
+        $this->classDefinition = $classDefinition;
 
         return $this;
     }
 
-    public function setFunction(?FunctionType $function): ScopeContext
+    public function setFunctionDefinition(FunctionLikeDefinition $functionDefinition)
     {
-        $this->function = $function;
+        $this->functionDefinition = $functionDefinition;
 
         return $this;
     }

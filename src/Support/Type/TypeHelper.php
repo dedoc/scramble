@@ -3,6 +3,9 @@
 namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Illuminate\Support\Collection;
 use PhpParser\Node;
 use PhpParser\PrettyPrinter\Standard;
@@ -73,7 +76,7 @@ class TypeHelper
      * @param  Node\Arg[]  $args
      * @param  array{0: string, 1: int}  $parameterNameIndex
      */
-    public static function getArgType(Scope $scope, array $args, array $parameterNameIndex, ?Type $default = null)
+    public static function getArgType(Scope $scope, array $args, array $parameterNameIndex, Type $default = null)
     {
         $default = $default ?: new UnknownType("Cannot get a type of the arg #{$parameterNameIndex[1]}($parameterNameIndex[0])");
 
@@ -121,5 +124,26 @@ class TypeHelper
             fn ($arg) => ($arg->name->name ?? '') === $name,
             fn () => empty($args[$index]->name->name) ? ($args[$index] ?? null) : null,
         );
+    }
+
+    public static function createTypeFromValue(mixed $value)
+    {
+        if (is_string($value)) {
+            return new LiteralStringType($value);
+        }
+
+        if (is_int($value)) {
+            return new LiteralIntegerType($value);
+        }
+
+        if (is_float($value)) {
+            return new FloatType();
+        }
+
+        if (is_bool($value)) {
+            return new LiteralBooleanType($value);
+        }
+
+        return null; // @todo: object
     }
 }

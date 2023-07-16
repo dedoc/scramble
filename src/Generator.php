@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble;
 
-use Dedoc\Scramble\Infer\Infer;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
@@ -58,6 +57,7 @@ class Generator
                         $method = $route->methods()[0];
                         $action = $route->getAction('uses');
 
+                        dump("Error when analyzing route '$method $route->uri' ($action): {$e->getMessage()} – ".($e->getFile().' on line '.$e->getLine()));
                         logger()->error("Error when analyzing route '$method $route->uri' ($action): {$e->getMessage()} – ".($e->getFile().' on line '.$e->getLine()));
                     }
 
