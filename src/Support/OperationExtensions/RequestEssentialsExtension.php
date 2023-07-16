@@ -67,7 +67,6 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         $operation->setOperationId($this->getOperationId($routeInfo));
-
     }
 
     /**
