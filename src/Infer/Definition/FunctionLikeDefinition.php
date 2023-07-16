@@ -10,9 +10,7 @@ class FunctionLikeDefinition
     public bool $isFullyAnalyzed = false;
 
     /**
-     * @param FunctionType $type
-     * @param array $sideEffects
-     * @param array<string, Type> $argumentsDefaults A map where the key is arg name and value it a default type.
+     * @param  array<string, Type>  $argumentsDefaults A map where the key is arg name and value it a default type.
      */
     public function __construct(
         public FunctionType $type,

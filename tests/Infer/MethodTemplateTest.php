@@ -53,7 +53,7 @@ class Foo {
 }
 EOD);
 
-    expect($file->getExpressionType("(new Foo)->foo()")->toString())
+    expect($file->getExpressionType('(new Foo)->foo()')->toString())
         ->toBe('string(wow)')
         ->and($file->getExpressionType("(new Foo)->foo('bar')")->toString())
         ->toBe('string(bar)');
