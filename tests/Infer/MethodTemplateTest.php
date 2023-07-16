@@ -71,6 +71,8 @@ class Foo {
 }
 EOD);
 
-    expect($file->getExpressionType('new Foo')->toString())->toBe('Foo<string(wow)>');
-    expect($file->getExpressionType('new Foo("foo")')->toString())->toBe('Foo<string(foo)>');
+    expect($file->getExpressionType('new Foo')->toString())
+        ->toBe('Foo<string(wow)>')
+        ->and($file->getExpressionType('new Foo("foo")')->toString())
+        ->toBe('Foo<string(foo)>');
 });
