@@ -106,10 +106,12 @@ class FunctionLikeHandler implements CreatesScope
             $scope->addVariableType(
                 $param->getAttribute('startLine'),
                 $paramName = (string) $param->var->name,
-                isset($param->default)
-                    ? $scope->getType($param->default)
-                    : $fnType->arguments[$paramName],
+                $fnType->arguments[$paramName],
             );
+
+            if (isset($param->default)) {
+                $fnDefinition->addArgumentDefault($paramName, $scope->getType($param->default));
+            }
         }
 
         if ($scope->isInClass() && $node instanceof Node\Stmt\ClassMethod) {

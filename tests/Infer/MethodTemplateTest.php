@@ -42,3 +42,18 @@ EOD);
 
     expect($type->getMethodReturnType('foo')->toString())->toBe('Foo');
 });
+
+it('gets a type of call of a function with generic if parameter is passed and has default value', function () {
+    $file = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public function foo ($a = 'wow') {
+        return $a;
+    }
+}
+EOD);
+
+    expect($file->getExpressionType("(new Foo)->foo()")->toString())->toBe('string(wow)');
+
+    expect($file->getExpressionType("(new Foo)->foo('bar')")->toString())->toBe('string(bar)');
+});

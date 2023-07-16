@@ -352,7 +352,7 @@ class ReferenceTypeResolver
             $inferredTemplates = array_merge($inferredTemplates, collect($this->resolveTypesTemplatesFromArguments(
                 $callee->type->templates,
                 $callee->type->arguments,
-                $arguments,
+                $this->prepareArguments($callee, $arguments),
             ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray());
 
             $returnType = (new TypeWalker)->replace($returnType, function (Type $t) use ($inferredTemplates) {
@@ -396,6 +396,30 @@ class ReferenceTypeResolver
         return $returnType;
     }
 
+    /**
+     * Prepares the actual arguments list with which a function is going to be executed, taking into consideration
+     * arguments defaults.
+     *
+     * @param FunctionLikeDefinition $callee
+     * @param array $realArguments The list of arguments a function has been called with.
+     *
+     * @return array The actual list of arguments where not passed arguments replaced with default values.
+     */
+    private function prepareArguments(FunctionLikeDefinition $callee, array $realArguments)
+    {
+        /*
+         * @todo $realArguments for now is considered only by index, not by names.
+         */
+        return collect($callee->type->arguments)
+            ->keys()
+            ->map(function (string $name, int $index) use ($callee, $realArguments) {
+                return $realArguments[$index] ?? $callee->argumentsDefaults[$name] ?? null;
+            })
+            ->filter()
+            ->values()
+            ->toArray();
+    }
+
     private function resolveTypesTemplatesFromArguments($templates, $templatedArguments, $realArguments)
     {
         return array_values(array_filter(array_map(function (TemplateType $template) use ($templatedArguments, $realArguments) {
@@ -418,7 +442,7 @@ class ReferenceTypeResolver
 
             if (! $foundCorrespondingTemplateType) {
                 $foundCorrespondingTemplateType = new UnknownType();
-                //                throw new \LogicException("Cannot infer type of template $template->name from arguments.");
+                // throw new \LogicException("Cannot infer type of template $template->name from arguments.");
             }
 
             return [
