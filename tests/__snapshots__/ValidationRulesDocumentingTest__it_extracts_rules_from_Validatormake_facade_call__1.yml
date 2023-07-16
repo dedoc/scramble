@@ -5,4 +5,4 @@ info:
 servers:
     - { url: 'http://localhost/api' }
 paths:
-    /test: { get: { tags: [ValidationFacadeRulesDocumenting_Test], parameters: [{ name: content, in: query, required: true, schema: { type: string, enum: [wow] } }], responses: { 200: { description: '', content: { application/json: { schema: { type: string } } } } } } }
+    /test: { get: { operationId: validationFacadeRulesDocumentingTest.index, tags: [ValidationFacadeRulesDocumenting_Test], parameters: [{ name: content, in: query, required: true, schema: { type: string, enum: [wow] } }], responses: { 200: { description: '', content: { application/json: { schema: { type: string } } } } } } }

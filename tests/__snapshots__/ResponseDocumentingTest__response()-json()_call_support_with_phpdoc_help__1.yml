@@ -5,4 +5,4 @@ info:
 servers:
     - { url: 'http://localhost/api' }
 paths:
-    /test: { get: { tags: [Foo_TestTwo], responses: { 500: { description: '', content: { application/json: { schema: { type: object, properties: { error: { type: object, properties: { msg: { type: string }, code: { type: integer } }, required: [msg, code] } }, required: [error] } } } } } } }
+    /test: { get: { operationId: fooTestTwo.index, tags: [Foo_TestTwo], responses: { 500: { description: '', content: { application/json: { schema: { type: object, properties: { error: { type: object, properties: { msg: { type: string }, code: { type: integer } }, required: [msg, code] } }, required: [error] } } } } } } }

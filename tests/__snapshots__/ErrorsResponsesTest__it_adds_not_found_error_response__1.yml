@@ -5,6 +5,6 @@ info:
 servers:
     - { url: 'http://localhost/api' }
 paths:
-    '/test/{user}': { get: { tags: [ErrorsResponsesTest_], parameters: [{ name: user, in: path, required: true, description: 'The user ID', schema: { type: integer } }], responses: { 200: { description: '', content: { application/json: { schema: { type: string } } } }, 404: { $ref: '#/components/responses/ModelNotFoundException' }, 403: { $ref: '#/components/responses/AuthorizationException' } } } }
+    '/test/{user}': { get: { operationId: errorsResponsesTest.addsNotFoundErrorResponse, tags: [ErrorsResponsesTest_], parameters: [{ name: user, in: path, required: true, description: 'The user ID', schema: { type: integer } }], responses: { 200: { description: '', content: { application/json: { schema: { type: string } } } }, 404: { $ref: '#/components/responses/ModelNotFoundException' }, 403: { $ref: '#/components/responses/AuthorizationException' } } } }
 components:
     responses: { ModelNotFoundException: { description: 'Not found', content: { application/json: { schema: { type: object, properties: { message: { type: string, description: 'Error overview.' } }, required: [message] } } } }, AuthorizationException: { description: 'Authorization error', content: { application/json: { schema: { type: object, properties: { message: { type: string, description: 'Error overview.' } }, required: [message] } } } } }

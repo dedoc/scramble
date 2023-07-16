@@ -5,6 +5,6 @@ info:
 servers:
     - { url: 'http://localhost/api' }
 paths:
-    /test: { get: { tags: [ErrorsResponsesTest_], parameters: [{ name: foo, in: query, required: true, schema: { type: string } }], responses: { 200: { description: '', content: { application/json: { schema: { type: string } } } }, 422: { $ref: '#/components/responses/ValidationException' } } } }
+    /test: { get: { operationId: errorsResponsesTest.addsValidationErrorResponse, tags: [ErrorsResponsesTest_], parameters: [{ name: foo, in: query, required: true, schema: { type: string } }], responses: { 200: { description: '', content: { application/json: { schema: { type: string } } } }, 422: { $ref: '#/components/responses/ValidationException' } } } }
 components:
     responses: { ValidationException: { description: 'Validation error', content: { application/json: { schema: { type: object, properties: { message: { type: string, description: 'Errors overview.' }, errors: { type: object, description: 'A detailed description of each field that failed validation.', additionalProperties: { type: array, items: { type: string } } } }, required: [message, errors] } } } } }
