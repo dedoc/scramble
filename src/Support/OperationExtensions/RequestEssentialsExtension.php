@@ -255,7 +255,7 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         return Str::camel(Str::replaceLast('Controller', '', $routeInfo->className() ?: ''))
-            . '.'
-            . $routeInfo->methodName();
+            .'.'
+            .$routeInfo->methodName();
     }
 }
