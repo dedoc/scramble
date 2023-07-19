@@ -1,8 +1,8 @@
 <?php
 
-namespace Dedoc\Scramble\Support\Generator\Types;
+namespace Dedoc\Scramble\Support\Generator;
 
-trait TypeAttributes
+trait WithAttributes
 {
     /** @var array<string, mixed> */
     private $attributes = [];

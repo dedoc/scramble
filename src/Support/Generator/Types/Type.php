@@ -3,10 +3,11 @@
 namespace Dedoc\Scramble\Support\Generator\Types;
 
 use Dedoc\Scramble\Support\Generator\MissingExample;
+use Dedoc\Scramble\Support\Generator\WithAttributes;
 
 abstract class Type
 {
-    use TypeAttributes;
+    use WithAttributes;
 
     protected string $type;
 

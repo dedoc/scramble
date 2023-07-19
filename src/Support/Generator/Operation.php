@@ -4,6 +4,8 @@ namespace Dedoc\Scramble\Support\Generator;
 
 class Operation
 {
+    use WithAttributes;
+
     public string $method;
 
     public string $path = '';
