@@ -9,8 +9,7 @@ class UniqueNameOptions
         public readonly array $unique,
         public readonly string $separator = '.',
         public readonly int $fallbackEloquentPartsCount = 2,
-    )
-    {
+    ) {
     }
 
     public function getFallbackEloquent(): string
@@ -22,6 +21,6 @@ class UniqueNameOptions
 
     public function getFallback(): string
     {
-        return join($this->separator, $this->unique);
+        return implode($this->separator, $this->unique);
     }
 }

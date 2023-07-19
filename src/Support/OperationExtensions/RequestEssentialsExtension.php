@@ -268,6 +268,7 @@ class RequestEssentialsExtension extends OperationExtension
                     if ($part === Str::upper($part)) {
                         return Str::lower($part);
                     }
+
                     return Str::camel($part);
                 })
                 ->reject(fn ($p) => in_array(Str::lower($p), ['app', 'http', 'api', 'controllers', 'invoke']))

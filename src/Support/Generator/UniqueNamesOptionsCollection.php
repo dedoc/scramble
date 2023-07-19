@@ -23,8 +23,7 @@ class UniqueNamesOptionsCollection
 
     public function __construct(
         private Collection $names = new Collection,
-    )
-    {
+    ) {
     }
 
     public function push(UniqueNameOptions $name)
@@ -43,7 +42,7 @@ class UniqueNamesOptionsCollection
         return $this;
     }
 
-    public function getUniqueName(UniqueNameOptions $name, ?callable $onNotUniqueFallback = null): string
+    public function getUniqueName(UniqueNameOptions $name, callable $onNotUniqueFallback = null): string
     {
         if ($name->eloquent && count($this->eloquentNames[$name->eloquent]) === 1) {
             return $name->eloquent;
