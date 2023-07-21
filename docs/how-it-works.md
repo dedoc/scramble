@@ -2,22 +2,50 @@
 title: How it works
 weight: 2
 ---
-The package uses static code analysis and existing Laravel conventions to generate API documentation without forcing you to write annotations. Annotations are still useful where you want to add some descriptions, or you see that Scramble cannot infer types fully – you can help it as well.
+Scramble is a package for Laravel that generates API documentation using static code analysis and Laravel conventions.
 
-Here is a brief description of how the docs are generated.
+Other packages usually require you to write PHPDoc annotations in your code, which is not always convenient. It may result in:
 
-## Requests
-To generate docs for the requests, Scramble analyzes the rules used for validation of the request and route parameters. It can easily extract rules from `FormRequest` classes by looking at `rules` method. 
+- More work to keep annotations up to date with code changes.
+- Code duplication, where information is redundantly stated in annotations and the code itself.
+- Challenges during code refactoring, potentially leading to outdated documentation if annotations are not updated accordingly.
 
-If a custom request class is not used, the package will look for a call to `validate` in a controller's method and will use rules from there **by evaluating** the rules array code.
+Scramble gives you the power to use annotations only when you want more control over your docs' generation. You can add descriptions to parameters or tweak response types for your API routes, etc.
 
-## Responses
-When analyzing responses, Scramble tries to figure out the response type of your controller's method. It uses pretty naїve static code analysis to determine what is returned from the controller. In most cases it should get you covered. 
+After installation, Scramble adds two routes to your application. `/docs/api` route is the UI. It triggers `/docs/api.json` route and shows the documentation in a nice UI.
 
-Especially in cases you could've directly seen in Laravel documentation (here comes "convention" part of "how):
+The `/docs/api.json` route generates the OpenAPI document describing your API. Here is what happens behind the scenes.
 
-- `JsonResource` (`return new TodoItemResource($item);`)
-- `AnonymousResourceCollection` of `JsonResource` items (`return TodoItemResource::collection($items);`)
-- `LengthAwarePaginator` of `JsonResource` items (this need to be manually typehinted in PhpDoc for now)
+## Gathering API Routes
+First of all, Scramble gathers your API routes by retrieving all routes from the application and then filtering them using `api` middleware.
 
-`doctrine/dbal` package allows to get the types of model attributes, so `JsonResource` based responses are properly documented.
+You can customize this behavior by either publishing the package's configuration file or providing your own route filter function.
+
+Next, Scramble analyzes each API route's corresponding controller method. It aims to determine both the request type and response type for the route.
+
+## Route to Request Documentation
+To describe the request, Scramble analyzes validation rules and route parameters. 
+
+When `FormRequest` is used for the request, Scramble will analyze `rules` method. 
+
+If a custom request class is not used, Scramble will look for a call to `validate` in a controller's method and will use rules from there **by evaluating** the rules' array code.
+
+## Route's Responses Documentation
+To document responses, Scramble analyzes the return type of the controller's method using static code analysis.
+
+It then proceeds to document the controller's method return type as a route's response. Thanks to being in Laravel context, Scramble does a lot of things automatically, such as documenting JSON API resources, resources collections, etc.
+
+For instance, if you return a `PostResource` (a JSON API resource) from your controller's method, Scramble performs the following actions:
+
+- Identifies the return type of your method as `PostResource`.
+- Analyzes the `toArray` method of the `PostResource` class and documents its attributes as response fields.
+
+Scramble takes into consideration other scenarios to cover not only successful responses:
+
+- It accounts for cases when `validate` or `FormRequest` is used, which may result in a 422 response.
+- It handles situations where `authorize` or `Gate` is used, leading to a possible 403 response.
+- Scramble also considers the usage of `abort`, `abort_if`, and `abort_unless`, which could lead to 4xx or 5xx responses.
+- Furthermore, any exceptions thrown during the process are accounted for, which may also result in 4xx or 5xx responses.
+
+## Putting It All Together
+After analyzing all routes, Scramble merges all gathered information into a single OpenAPI document.

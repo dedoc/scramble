@@ -2,13 +2,18 @@
 title: Installation & setup
 weight: 1
 ---
-You can install the package via composer:
+
+Scramble requires:
+- PHP 8.1 or higher
+- Laravel 8.x or higher
+
+You can install Scramble via composer:
 
 ```shell
 composer require dedoc/scramble
 ```
 
-When the package is installed, 2 routes are added to your application:
+When Scramble is installed, 2 routes are added to your application:
 
 - `/docs/api` - UI viewer for your documentation
 - `/docs/api.json` - Open API document in JSON format describing your API.
