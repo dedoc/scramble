@@ -3,19 +3,6 @@ title: Request body and params
 weight: 2
 ---
 
-### General documentation
-Scramble can get endpoint docs from PhpDoc comment of the route's method.
-
-`summary` is the first row of the doc. `description` is the other text in doc. When there is only one line of text in PhpDoc it is treated as `summary`, as you can expect.
-
-```php
-/**
- * This is summary.
- * 
- * This is a description. In can be as large as needed and contain `markdown`.
- */
-```
-
 ## Route params
 All the params from the route are added to the docs.
 
@@ -164,6 +151,20 @@ Declaring local variable in method before calling `validate` and using it there 
 - `min` (numeric types only)
 - `max` (numeric types only)
 - `Enum`
+
+## Adding Title and Description
+
+Scramble can get endpoint docs from PhpDoc comment of the route's method.
+
+`summary` is the first row of the doc. `description` is the other text in doc. When there is only one line of text in PhpDoc it is treated as `summary`, as you can expect.
+
+```php
+/**
+ * This is summary.
+ * 
+ * This is a description. In can be as large as needed and contain `markdown`.
+ */
+```
 
 ## Organizing by Folders
 All the endpoints are organized in folders by controller name. Endpoint organization in rendered docs is based on OpenAPI operation's tags.

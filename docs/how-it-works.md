@@ -17,7 +17,7 @@ After installation, Scramble adds two routes to your application. `/docs/api` ro
 The `/docs/api.json` route generates the OpenAPI document describing your API. Here is what happens behind the scenes.
 
 ## Gathering API Routes
-First of all, Scramble gathers your API routes by retrieving all routes from the application and then filtering them using `api` middleware.
+First of all, Scramble gathers your API routes by retrieving all routes from the application and then filtering them using `api` route prefix.
 
 You can customize this behavior by either publishing the package's configuration file or providing your own route filter function.
 
