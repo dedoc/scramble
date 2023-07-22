@@ -16,22 +16,22 @@ After installation, Scramble adds two routes to your application. `/docs/api` ro
 
 The `/docs/api.json` route generates the OpenAPI document describing your API. Here is what happens behind the scenes.
 
-## Gathering API Routes
+## Gathering API routes
 First of all, Scramble gathers your API routes by retrieving all routes from the application and then filtering them using `api` route prefix.
 
 You can customize this behavior by either publishing the package's configuration file or providing your own route filter function.
 
 Next, Scramble analyzes each API route's corresponding controller method. It aims to determine both the request type and response type for the route.
 
-## Route to Request Documentation
+## Route to request documentation
 To describe the request, Scramble analyzes validation rules and route parameters. 
 
 When `FormRequest` is used for the request, Scramble will analyze `rules` method. 
 
 If a custom request class is not used, Scramble will look for a call to `validate` in a controller's method and will use rules from there **by evaluating** the rules' array code.
 
-## Route's Responses Documentation
-To document responses, Scramble analyzes the return type of the controller's method using static code analysis.
+## Route's responses documentation
+To document responses, Scramble analyzes the return type of the controller's method using static code analysis. To make the most correct assumption, Scramble first tries to infer the return type, and if it cannot, it uses the declared return type in the type hint.
 
 It then proceeds to document the controller's method return type as a route's response. Thanks to being in Laravel context, Scramble does a lot of things automatically, such as documenting JSON API resources, resources collections, etc.
 
@@ -47,5 +47,5 @@ Scramble takes into consideration other scenarios to cover not only successful r
 - Scramble also considers the usage of `abort`, `abort_if`, and `abort_unless`, which could lead to 4xx or 5xx responses.
 - Furthermore, any exceptions thrown during the process are accounted for, which may also result in 4xx or 5xx responses.
 
-## Putting It All Together
+## Putting it all together
 After analyzing all routes, Scramble merges all gathered information into a single OpenAPI document.

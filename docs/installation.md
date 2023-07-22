@@ -18,6 +18,8 @@ When Scramble is installed, 2 routes are added to your application:
 - `/docs/api` - UI viewer for your documentation
 - `/docs/api.json` - Open API document in JSON format describing your API.
 
+And that's it! You can now visit `/docs/api` to see your API documentation.
+
 ## Models attributes support
 
 To support model attributes/relations types in JSON resources you need to have the `doctrine/dbal` package installed.
@@ -43,10 +45,6 @@ php artisan vendor:publish --provider="Dedoc\Scramble\ScrambleServiceProvider" -
 ```
 
 This will allow you to customize API routes resolution and OpenAPI document's details.
-
-```sh
-php artisan vendor:publish --provider="Dedoc\Scramble\ScrambleServiceProvider" --tag="scramble-config"
-```
 
 The content of `scramble` config:
 

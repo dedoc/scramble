@@ -3,7 +3,9 @@ title: Getting started
 weight: 1
 ---
 
-Now, after you have Scramble installed, it is time to ensure that all the API routes will be added to the docs.
+Now, after you have Scramble installed, first thing to do is to ensure that all the API routes are added to the docs.
+
+## Routes resolution
 
 By default, all routes starting with `api` are added to the documentation. For example, `yoursite.com/api/users` will be added to the docs. This can be customized by modifying `scramble.api_path` config value. For example, if you want to add all routes starting with `api/v1`, you should set `scramble.api_path` to `api/v1`. Make sure you publish the config file first.
 
@@ -36,7 +38,9 @@ At this point your docs should be available at `/docs/api` URI.
 
 By default, you will only be able to access `/docs/api` route in the `local` environment.
 
-Define `viewApiDocs` gate if you need to allow access in other environments:
+Define `viewApiDocs` gate if you need to allow access in other environments. 
+
+For example, to allow access to the docs in the `production` environment but only for the user with email `admin@app.com`, the gate would look like this:
 
 ```php
 Gate::define('viewApiDocs', function (User $user) {

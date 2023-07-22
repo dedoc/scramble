@@ -152,7 +152,7 @@ Declaring local variable in method before calling `validate` and using it there 
 - `max` (numeric types only)
 - `Enum`
 
-## Adding Title and Description
+## Adding title and description
 
 Scramble can get endpoint docs from PhpDoc comment of the route's method.
 
@@ -166,7 +166,7 @@ Scramble can get endpoint docs from PhpDoc comment of the route's method.
  */
 ```
 
-## Organizing by Folders
+## Organizing in folders
 All the endpoints are organized in folders by controller name. Endpoint organization in rendered docs is based on OpenAPI operation's tags.
 
 When there are a lot of controllers in your application, you will have a ton of folders, and it may be hard to navigate through that list of folders.
