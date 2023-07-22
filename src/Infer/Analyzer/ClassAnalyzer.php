@@ -39,6 +39,11 @@ class ClassAnalyzer
             parentFqn: $parentName ?? null,
         );
 
+        /*
+         * Traits get analyzed by embracing default behavior of PHP reflection: reflection properties and
+         * reflection methods get copied into the class that uses the trait.
+         */
+
         foreach ($classReflection->getProperties() as $reflectionProperty) {
             if ($reflectionProperty->class !== $name) {
                 continue;
@@ -55,7 +60,7 @@ class ClassAnalyzer
         }
 
         foreach ($classReflection->getMethods() as $reflectionMethod) {
-            if ($reflectionMethod->getFileName() !== $classReflection->getFileName()) {
+            if ($reflectionMethod->class !== $name) {
                 continue;
             }
 

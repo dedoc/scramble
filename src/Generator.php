@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Path;
 use Dedoc\Scramble\Support\Generator\Server;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
@@ -74,6 +75,8 @@ class Generator
                 )->addOperation($operation)
             ))
             ->toArray();
+
+        $this->setUniqueOperationId($openApi);
 
         $this->moveSameAlternativeServersToPath($openApi);
 
@@ -167,6 +170,7 @@ class Generator
             }
 
             $operations = collect($pathsGroup->pluck('operations')->flatten());
+
             $operationsHaveSameAlternativeServers = $operations->count()
                 && $operations->every(fn (Operation $o) => count($o->servers))
                 && $operations->unique(function (Operation $o) {
@@ -181,6 +185,38 @@ class Generator
 
             foreach ($operations as $operation) {
                 $operation->servers([]);
+            }
+        }
+    }
+
+    private function setUniqueOperationId(OpenApi $openApi)
+    {
+        $names = new UniqueNamesOptionsCollection();
+
+        $this->foreachOperation($openApi, function (Operation $operation) use ($names) {
+            $names->push($operation->getAttribute('operationId'));
+        });
+
+        $this->foreachOperation($openApi, function (Operation $operation, $index) use ($names) {
+            $name = $operation->getAttribute('operationId');
+
+            $operation->setOperationId($names->getUniqueName($name, function (string $fallback) use ($index) {
+                return "{$fallback}_{$index}";
+            }));
+        });
+    }
+
+    private function foreachOperation(OpenApi $openApi, callable $callback)
+    {
+        foreach (collect($openApi->paths)->groupBy('path') as $pathsGroup) {
+            if ($pathsGroup->isEmpty()) {
+                continue;
+            }
+
+            $operations = collect($pathsGroup->pluck('operations')->flatten());
+
+            foreach ($operations as $index => $operation) {
+                $callback($operation, $index);
             }
         }
     }

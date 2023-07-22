@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Tests\Infer\stubs\Bar;
 use Dedoc\Scramble\Tests\Infer\stubs\Foo;
+use Dedoc\Scramble\Tests\Infer\stubs\FooWithTrait;
 
 beforeEach(function () {
     $this->index = app(Index::class);
@@ -53,4 +54,17 @@ it('resolves pending returns lazily', function () {
     );
 
     expect($barReturnType->toString())->toBe('int(243)');
+});
+
+it('analyzes traits', function () {
+    $classDef = $this->classAnalyzer->analyze(FooWithTrait::class);
+
+    expect($classDef->properties)->toHaveCount(1)->toHaveKeys([
+        'propBaz',
+    ]);
+    expect($classDef->methods)->toHaveCount(3)->toHaveKeys([
+        'something',
+        'methodBaz',
+        'methodInvokingFooTraitMethod',
+    ]);
 });

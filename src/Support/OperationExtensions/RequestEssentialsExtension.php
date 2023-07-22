@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Generator\UniqueNameOptions;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
@@ -66,7 +67,7 @@ class RequestEssentialsExtension extends OperationExtension
             $operation->addSecurity([]);
         }
 
-        $operation->setOperationId($this->getOperationId($routeInfo));
+        $operation->setAttribute('operationId', $this->getOperationId($routeInfo));
     }
 
     /**
@@ -240,22 +241,39 @@ class RequestEssentialsExtension extends OperationExtension
 
     private function getOperationId(RouteInfo $routeInfo)
     {
-        // Manual operation ID setting.
-        if (
-            ($operationId = $routeInfo->phpDoc()->getTagsByName('@operationId'))
-            && ($value = trim(Arr::first($operationId)?->value?->value))
-        ) {
-            return $value;
-        }
+        $routeClassName = $routeInfo->className() ?: '';
 
-        // Using route name as operation ID if set.
-        if ($name = $routeInfo->route->getName()) {
-            return $name;
-        }
+        return new UniqueNameOptions(
+            eloquent: (function () use ($routeInfo) {
+                // Manual operation ID setting.
+                if (
+                    ($operationId = $routeInfo->phpDoc()->getTagsByName('@operationId'))
+                    && ($value = trim(Arr::first($operationId)?->value?->value))
+                ) {
+                    return $value;
+                }
 
-        // If no name and no operationId manually set, falling back to controller and method name.
-        return Str::camel(Str::replaceLast('Controller', '', $routeInfo->className() ?: ''))
-            .'.'
-            .Str::camel($routeInfo->methodName());
+                // Using route name as operation ID if set.
+                if ($name = $routeInfo->route->getName()) {
+                    return Str::startsWith($name, 'api.') ? Str::replaceFirst('api.', '', $name) : $name;
+                }
+
+                // If no name and no operationId manually set, falling back to controller and method name (unique implementation).
+                return null;
+            })(),
+            unique: collect(explode('\\', Str::endsWith($routeClassName, 'Controller') ? Str::replaceLast('Controller', '', $routeClassName) : $routeClassName))
+                ->filter()
+                ->push($routeInfo->methodName())
+                ->map(function ($part) {
+                    if ($part === Str::upper($part)) {
+                        return Str::lower($part);
+                    }
+
+                    return Str::camel($part);
+                })
+                ->reject(fn ($p) => in_array(Str::lower($p), ['app', 'http', 'api', 'controllers', 'invoke']))
+                ->values()
+                ->toArray(),
+        );
     }
 }
