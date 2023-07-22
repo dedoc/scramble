@@ -1,7 +1,47 @@
 ---
-title: Documentation config
-weight: 5
+title: Getting started
+weight: 1
 ---
+
+## Endpoint documentation
+
+By default, all routes starting with `api` are added to the documentation.
+
+To customize which routes are documented, you can either modify `scramble.api_path` config value, or you may provide your own route resolver function using `Scramble::route` in the `boot` method of a service provider. For example, in your `AppServiceProvider`:
+
+```php
+use Dedoc\Scramble\Scramble;
+use Illuminate\Routing\Route;
+use Illuminate\Support\Str;
+
+/**
+ * Bootstrap any application services.
+ *
+ * @return void
+ */
+public function boot()
+{
+    Scramble::routes(function (Route $route) {
+        return Str::startsWith($route->uri, 'api/');
+    });
+}
+```
+
+Route resolver function accepts a route and return `bool` determining if the route should be added to docs or not.
+
+## Docs authorization
+
+Scramble exposes docs at the `/docs/api` URI. By default, you will only be able to access this route in the `local` environment.
+
+Define `viewApiDocs` gate if you need to allow access in other environments:
+
+```php
+Gate::define('viewApiDocs', function (User $user) {
+    return in_array($user->email, ['admin@app.com']);
+});
+```
+
+## Documentation config
 
 Scramble allows you to customize API path and OpenAPI document's `info` block by publishing a config file.
 

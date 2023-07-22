@@ -2,6 +2,20 @@
 title: Request body and params
 weight: 2
 ---
+
+### General documentation
+Scramble can get endpoint docs from PhpDoc comment of the route's method.
+
+`summary` is the first row of the doc. `description` is the other text in doc. When there is only one line of text in PhpDoc it is treated as `summary`, as you can expect.
+
+```php
+/**
+ * This is summary.
+ * 
+ * This is a description. In can be as large as needed and contain `markdown`.
+ */
+```
+
 ## Route params
 All the params from the route are added to the docs.
 
@@ -150,3 +164,27 @@ Declaring local variable in method before calling `validate` and using it there 
 - `min` (numeric types only)
 - `max` (numeric types only)
 - `Enum`
+
+## Organizing by Folders
+All the endpoints are organized in folders by controller name. Endpoint organization in rendered docs is based on OpenAPI operation's tags.
+
+When there are a lot of controllers in your application, you will have a ton of folders, and it may be hard to navigate through that list of folders.
+
+You can add your own tags on the controller's level using `@tags` in PhpDoc. This will put all the routes from that controller in this folder. It allows you to reduce the amount of folders in rendered docs and organize the docs in a way that makes more sense.
+
+Multiple tags are supported: simply write them in one line separated via comma.
+
+> **Note** Please note that the UI Scramble uses for rendering docs doesn't support nested folders. It uses the first tag as a folder. Other tags will still be there in OpenAPI documentation but won't be shown in the UI.
+
+```php
+/**
+ * @tags Media
+ */
+class DownloadMediaController
+{
+   public function show(Media $mediaItem)
+   {
+      return $mediaItem;
+   }
+}
+```
