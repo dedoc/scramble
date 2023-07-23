@@ -1,6 +1,6 @@
 ---
 title: Servers (API domains)
-weight: 1
+weight: 5
 ---
 
 The OpenAPI standard allows you to specify multiple servers that your API is available at. Scramble supports this feature and here is how you can use it.

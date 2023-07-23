@@ -47,11 +47,13 @@ You can add information to the operation by mutating the object (see methods on 
 
 The example of such an extension is an ability to add 403 response, if there is a call to `$this->authorize` in the controller’s method. To implement it, you need to get method’s AST from route info and look for this call there. If it is there, there might be possible 403 response, so it can be added to the operation (see available methods on `RouteInfo` class).
 
+Here is the real example of such an extension that documents response type of the route: https://github.com/dedoc/scramble/blob/main/src/Support/OperationExtensions/ResponseExtension.php
+
 ## Type to schema extension
 
 These extensions are needed to tell the Scramble how different types look like when represented in JSON/OpenAPI schema. For example, PHP’s type `int` is represented in JSON schema like `{"type": "integer"}`. To have this logic in place, type to schema extension is used.
 
-To create this type of extension, create a class extending the class `Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension`. Then, you need to implement a method `shouldHandle` that will decide if the extension should handle the `Type`.
+To create this type of extension, create a class extending the class `Dedoc\Scramble\Extensions\TypeToOpenApiSchemaExtension`. Then, you need to implement a method `shouldHandle` that decides if the extension should handle the given type.
 
 In the extension, you can use `$this->infer`, `$this->openApiTransformer`, and `$this->components` to analyze the types.
 
@@ -89,9 +91,11 @@ class JsonResourceOpenApi extends TypeToSchemaExtension
     
     public function toSchema(ObjectType $type)
     {
-        $type = $this->infer->analyzeClass($type->name);
+        $this->infer->analyzeClass($type->name);
         
-        $array = $type->getMethodCallType('toArray');
+        $array = $type->getMethodDefinition('toArray')
+            ->type
+            ->getReturnType();
         
         return $this->openApiTransformer->transform($array);
     }
@@ -102,14 +106,17 @@ Also, when a type should be used as an OpenAPI reference, you can implement `ref
 
 To implement how types look like when they are returned as responses, `toResponse` method can be implemented.
 
+Here is the real implementation of the type to schema extension that adds support for `JsonResource`: https://github.com/dedoc/scramble/blob/main/src/Support/TypeToSchemaExtensions/JsonResourceTypeToSchema.php
+
 ## Type inferring extension
+These extensions can be used to help Scramble type inference system to understand a type of expression node in AST.
 
-The power of Scramble is that it can generate OpenAPI docs without forcing you to annotate everything. It simply allows you to focus on code and not on the annotations.
+Scramble comes with type inference system that is responsible for inferring types in the codebase for every variable, function, method, etc. Inferred types are used to generate API documentation. For example, the return type of the controller’s method is inferred and then used as a response type in the OpenAPI document.
 
-The system powering this idea is the types inferrer that comes with Scramble. It can resolve types in code so they can be represented in the documentation.
+Because of PHP and Laravel being very dynamic, the type inference system may need help to correctly get the type. Or to have a type with some extra information added.
 
-Because of PHP and Laravel being very dynamic (and type inferrer young), the inferring system may need help to correctly get the type. Or to have a type with some extra information added.
-
-For example, consider the `optional` helper. It accepts any nullable object and allows you to call any method or property on it. If it was `null`, any call will return `null` as well. But if it wasn’t, the result of the method call/property fetch on the original object will be returned. This is pretty dynamic behavior, so to help type inferrer to analyze and understand it correctly, we will need to add an extension.
+For example, consider the `optional` helper. It accepts any nullable object and allows you to call any method or property on it. If it was `null`, any call will return `null` as well. But if it wasn't, the result of the method call/property fetch on the original object will be returned. This is pretty dynamic behavior, so to help Scramble to analyze and understand it correctly, we will need to add an extension.
 
 Type inferring extension functions accept 2 arguments — the AST node being analyzed and the scope the node is currently in. The function should return `null`, if the extension shouldn’t handle the type. Otherwise, it should return the resulting type for this node. For example, if node is `1`, the resulting type for it is `int`.
+
+Here is the real implementation of the type inferring extension that adds support for `response()->json(...)` and other `ResponseFactory` functions: https://github.com/dedoc/scramble/blob/main/src/Support/InferExtensions/ResponseFactoryTypeInfer.php

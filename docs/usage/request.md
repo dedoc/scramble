@@ -1,5 +1,5 @@
 ---
-title: Request body and params
+title: Requests
 weight: 2
 ---
 
@@ -11,7 +11,7 @@ For example, when you have this route:
 PUT /todo-items/{todoItem}
 ```
 
-`todoItem` is added to the docs as a route parameter. When `todoItem` is a route parameter that uses model binding, Scramble will automatically set a type to `integer` and a description will be added in format `The todo item ID`.
+`todoItem` is added to the docs as a route parameter. When `todoItem` is a route parameter that uses model binding, Scramble will automatically set a type to `integer` (or `string`, if UUID is used as a key) and a description will be added in format `The todo item ID`.
 
 You can override the parameter type and description in docs by providing a PhpDoc comment to the controller's method.
 ```php
@@ -151,6 +151,7 @@ Declaring local variable in method before calling `validate` and using it there 
 - `min` (numeric types only)
 - `max` (numeric types only)
 - `Enum`
+- `confirmed`
 
 ## Adding title and description
 

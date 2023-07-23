@@ -11,8 +11,9 @@ Based on source code analysis, Scramble can generate endpoint responses document
 - Manually constructed `JsonResponse` and `Response` (using `new`)
 - `LengthAwarePaginator` of `JsonResource` items
 - Models
+- Simple typed: arrays, strings, numbers, etc.
 
-First three can be understood automatically from the code. The latest one needs to be documented in PhpDoc for now.
+Paginated responses needs to be documented in PhpDoc for now.
 
 ```php
 use App\Models\TodoItem;
@@ -37,16 +38,24 @@ Scramble extracts controller’s method return type based on priority:
 
 This is implemented in this way because by its nature PHP is very dynamic language and Laravel uses a lot of its magic. So it can be pretty challenging to figure out a method’s response type reliably in 100% cases without developing another PhpStan library.
 
-So while Scramble ultimate goal is to handle all possible return types automatically, for now I’ve decided to build it for the most popular things first.
-
-Automatic response definition from code return statements for now are limited to these 2 cases:
-
-1. `return new JsonResource(...);` statement
-2. `return JsonResource::collection(...);` statement
-
 ### Manual hinting in PhpDocs
 
-Also, return type of the method (and hence response type) can be written in PhpDoc `@return` tag with various response types including arbitrary array shape.
+Also, the response can be documented in PhpDoc using `@response` tag with various response types including arbitrary array shape.
+
+```php
+use App\Models\TodoItem;
+
+class TodoItemsController
+{
+    /**
+     * @response TodoItemResource
+     */
+    public function update(Request $request, TodoItem $item)
+    {
+        return app(TodoItemsService::class)->update($item, $request->all());
+    }
+}
+```
 
 ## JsonResource
 
@@ -82,11 +91,13 @@ class TodoItemResource extends JsonResource
 
 ### Model resolution
 
-All resource property types that are accessed on `$this` or `$this->resource` are trying to be resolved from the corresponding model attributes.
+All resource property types that are accessed on `$this` or `$this->resource` will be resolved from the corresponding model attributes.
 
-<aside>
-💡 You need to have `doctrine/dbal` package installed for this to work.
-</aside>
+<x-alert>
+<x-slot:icon><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M10 1a6 6 0 00-3.815 10.631C7.237 12.5 8 13.443 8 14.456v.644a.75.75 0 00.572.729 6.016 6.016 0 002.856 0A.75.75 0 0012 15.1v-.644c0-1.013.762-1.957 1.815-2.825A6 6 0 0010 1zM8.863 17.414a.75.75 0 00-.226 1.483 9.066 9.066 0 002.726 0 .75.75 0 00-.226-1.483 7.553 7.553 0 01-2.274 0z" /></svg>
+</x-slot:icon>
+You need to have `doctrine/dbal` package installed for this to work.
+</x-alert>
 
 By default, Scramble tries to find a model in `App\\Models\\` namespace, based on resource name. Before the lookup resource name is converted to singular form (`TodoItemsResource` → `TodoItem`).
 
@@ -224,6 +235,25 @@ class TodoItemsController
 }
 ```
 
+### Additional collection's data
+Scramble will automatically document additional data that is added to the collection using `additional` method.
+
+```php
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use App\Models\TodoItem;
+use Illuminate\Pagination\LengthAwarePaginator;
+
+class TodoItemsController
+{
+    public function index(Request $request)
+    {
+        return TodoItemResource::collection(TodoItem::all())
+            ->additional(['permissions' => true]);
+    }
+}
+```
+
+
 ## Models
 
 When you don't have a resource and simply return a model from controller's method, Scramble will be able to document that as well.
@@ -294,7 +324,7 @@ Corresponds to the error response in documentation with code `400` and `message`
 
 ## Arbitrary responses
 
-If nothing from above works, and something custom needed, you can use PhpStan PhpDoc format and document return type of the method:
+If nothing from above works, and you need something custom, you can use PhpStan's type documenting format and document response type of the endpoint using `@response` PhpDoc tag.
 
 ```php
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -306,7 +336,7 @@ class TodoItemsController
     /**
      * List available todo items.
      *
-     * @return array{data: TodoItemResource[], meta: array{permissions: bool}}
+     * @response array{data: TodoItemResource[], meta: array{permissions: bool}}
      */
     public function index(Request $request)
     {

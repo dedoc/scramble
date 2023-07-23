@@ -1,4 +1,4 @@
 ---
-title: Usage
+title: Documenting API
 weight: 1
 ---
