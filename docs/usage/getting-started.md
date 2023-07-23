@@ -40,10 +40,26 @@ By default, you will only be able to access `/docs/api` route in the `local` env
 
 Define `viewApiDocs` gate if you need to allow access in other environments. 
 
-For example, to allow access to the docs in the `production` environment but only for the user with email `admin@app.com`, the gate would look like this:
+For example, to allow access to the docs in the `production` environment only for the user with email `admin@app.com`, the gate would look like this:
 
 ```php
 Gate::define('viewApiDocs', function (User $user) {
     return in_array($user->email, ['admin@app.com']);
 });
+```
+
+## Customizing API overview page
+When you visit `/docs/api` first time, the page itself is almost empty. 
+
+You can add some content there by publishing the config file and setting `scramble.info.description` config value. Content can be as long as you want. Also, you can use markdown there, it will be rendered as HTML.
+
+```php
+return [
+    // ...
+    'info' => [
+        // ...
+        'description' => 'This is my **API** description',
+    ],
+    // ...
+];
 ```
