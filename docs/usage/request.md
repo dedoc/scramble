@@ -193,3 +193,21 @@ class DownloadMediaController
    }
 }
 ```
+
+## Manually providing operation ID
+Scramble generates unique operation ID for your endpoints. It is based on the route name. If route name is not unique, Scramble will use controller and method name and will create a unique ID based on that.
+
+You always can override operation ID by adding `@operationId` to the route's method PhpDoc.
+
+```php
+class DownloadMediaController
+{
+    /**
+     * @operationId getMediaItem
+     */
+     public function show(Media $mediaItem)
+     {
+         return $mediaItem;
+     }
+}
+```

@@ -3,17 +3,33 @@ title: Responses
 weight: 3
 ---
 
-Based on source code analysis, Scramble can generate endpoint responses documentation. Currently, these response types support automatic documentation:
+Scramble generates documentation for endpoint responses by analyzing the source code of the controller's method. It examines the inferred return type, calls to various methods (e.g., `validate` or `authorize`), and other statements to identify the different types of responses that an endpoint may produce.
 
-- `JsonResource` response
-- `AnonymousResourceCollection` of `JsonResource` items
+Currently, these types will be automatically documented as responses:
+
+- API resources (instances of classes extending `JsonResource`)
+- Collections of API resources (both anonymous collections and dedicated classes)
 - Some `response()` (`ResponseFactory`) support: `response()->make(...)`, `response()->json(...)`, `response()->noContent()`
-- Manually constructed `JsonResponse` and `Response` (using `new`)
-- `LengthAwarePaginator` of `JsonResource` items
+- `JsonResponse` and `Response` instances
 - Models
-- Simple typed: arrays, strings, numbers, etc.
+- Simple types: arrays, strings, numbers, etc.
 
-Paginated responses needs to be documented in PhpDoc for now.
+Paginated responses (`LengthAwarePaginator`) are also supported, but they need to be documented in PhpDoc for now.
+
+## On type inference
+Scramble uses type inference based on source code analysis to automatically determine the data types of variables and expressions in the source code without explicitly specifying them. This means that Scramble can understand what type of data (e.g., strings, numbers, objects) each part of the code is working with, even if the code does not explicitly declare it.
+
+With this technique, Scramble can figure out the likely data types that a controller's method will return without needing extra explanations. It looks at how the method processes data, the methods it uses, and other hints to infer the possible return types.
+
+This process allows Scramble to generate comprehensive and accurate documentation for the API. It also reduces the need to manually document the responses, making the documentation process more efficient and less error-prone.
+
+### Types priority
+
+Scramble extracts controller’s method return type based on the following priority:
+
+1. PhpDoc comment (`@response` tag) - gives ability to document arbitrary response types
+2. Typehint - if the method has a typehint and doesn't have a PhpDoc comment, the typehint will be used
+3. Code return statements - if the method doesn't have a PhpDoc `@response` tag, and inferred return type is more specific than typehint, the inferred type will be used
 
 ```php
 use App\Models\TodoItem;
@@ -21,26 +37,22 @@ use App\Models\TodoItem;
 class TodoItemsController
 {
     /**
-     * @return TodoItemResource // 1 - PhpDoc
+     * @response TodoItemResource // 1 - PhpDoc
      */
     public function update(Request $request, TodoItem $item): TodoItemResource // 2 - typehint
     {
-        return new TodoItemResource($item); // 3 - code inferring
+        return new TodoItemResource($item); // 3 - code inference
     }
 }
 ```
 
-Scramble extracts controller’s method return type based on priority:
+This is implemented in this way so if needed, you can override the inferred type with a typehint or PhpDoc comment.
 
-1. PhpDoc comment
-2. Typehint
-3. Code return statements
+## Manual hinting in PhpDoc
 
-This is implemented in this way because by its nature PHP is very dynamic language and Laravel uses a lot of its magic. So it can be pretty challenging to figure out a method’s response type reliably in 100% cases without developing another PhpStan library.
+Also, the response can be documented in PhpDoc using `@response` tag. This is useful when you notice that the inferred type is not correct or you want to document a custom response type.
 
-### Manual hinting in PhpDocs
-
-Also, the response can be documented in PhpDoc using `@response` tag with various response types including arbitrary array shape.
+Read more about the proper PhpDoc type syntax in [PhpStan docs](https://phpstan.org/writing-php-code/phpdoc-types).
 
 ```php
 use App\Models\TodoItem;
@@ -48,18 +60,20 @@ use App\Models\TodoItem;
 class TodoItemsController
 {
     /**
-     * @response TodoItemResource
+     * List available todo items.
+     *
+     * @response array{data: TodoItemResource[], meta: array{permissions: bool}}
      */
-    public function update(Request $request, TodoItem $item)
+    public function index(Request $request)
     {
-        return app(TodoItemsService::class)->update($item, $request->all());
+        return app(TodoService::class)->listAll();
     }
 }
 ```
 
-## JsonResource
+## API resources
 
-To be properly analyzable JsonResources must return an array **node** from `toArray` method.
+To be properly analyzable API resource classes must return an array **node** from `toArray` method.
 
 This will work:
 
@@ -134,8 +148,10 @@ class TodoItemResource extends JsonResource
     }
 }
 ```
-
+<x-alert>
+<x-slot:icon><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg></x-slot>
 If model for resource is not found, all the fields will have `string` type in docs.
+</x-alert>
 
 ### Automatically supported fields types
 
@@ -148,7 +164,7 @@ return [
 ];
 ```
 
-- Nested JsonResource
+- Nested API resources
 
 ```php
 return [
@@ -156,7 +172,7 @@ return [
 ];
 ```
 
-- Conditional merging of nested JsonResource
+- Conditional merging of nested API resources
 
 ```php
 return [
@@ -181,11 +197,11 @@ return [
 
 All the conditional fields will be marked as optional in resulting docs.
 
-Also, `JsonResource` is stored in OpenAPI docs as reference and usage of the resources across the resources will be rendered as using schema reference in docs.
+Also, API resources are stored in OpenAPI docs as reference and usage of the resources across other resources will be rendered as using schema reference in docs.
 
 ### Manually describing the fields
 
-For the cases when automatic field type resolution is not working or you need to add a description to the field, you can add PhpDoc comment:
+For the cases when automatic field type resolution is not working, or you need to add a description to the field, you can add PhpDoc comment:
 
 ```php
 return [
@@ -207,9 +223,9 @@ return [
 ];
 ```
 
-This is the format of type annotations used by PhpStan. You can read more about it here: [https://phpstan.org/writing-php-code/phpdoc-types](https://phpstan.org/writing-php-code/phpdoc-types)
+This is the format of type annotations used by PhpStan. You can read more about it here: https://phpstan.org/writing-php-code/phpdoc-types.
 
-## AnonymousResourceCollection
+## API resources collection
 
 This sort of response can be automatically analyzed from code return statement.
 
@@ -226,7 +242,7 @@ class TodoItemsController
     /**
      * List available todo items.
      *
-     * @return AnonymousResourceCollection<TodoItemResource>
+     * @response AnonymousResourceCollection<TodoItemResource>
      */
     public function index(Request $request)
     {
@@ -266,12 +282,12 @@ public function show(Request $request, User $user)
     return $user;
 }
 ```
-
-<aside>
+<x-alert>
+<x-slot:icon><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg></x-slot>
 Please note that if you don't type annotate a method's return type, the model type should be specified in arguments list. Otherwise, Scramble won't be able to infer the returned variable type and document it properly. Also, now only relations that are always present on a model (`$with` property) are documented.
-</aside> 
+</x-alert>
 
-## LengthAwarePaginator response
+## Paginated responses
 
 Paginated response cannot be inferred from code automatically so you need to typehint it manually in PhpDoc like so:
 
@@ -320,31 +336,7 @@ For example, this line of code:
 abort(400, 'This case is not supported'); 
 ```
 
-Corresponds to the error response in documentation with code `400` and `message` property with an example (`This case is not supported`). 
-
-## Arbitrary responses
-
-If nothing from above works, and you need something custom, you can use PhpStan's type documenting format and document response type of the endpoint using `@response` PhpDoc tag.
-
-```php
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use App\Models\TodoItem;
-use Illuminate\Pagination\LengthAwarePaginator;
-
-class TodoItemsController
-{
-    /**
-     * List available todo items.
-     *
-     * @response array{data: TodoItemResource[], meta: array{permissions: bool}}
-     */
-    public function index(Request $request)
-    {
-        return TodoItemResource::collection(TodoItem::all())
-            ->additional(['permissions' => true]);
-    }
-}
-```
+Corresponds to the error response in documentation with code `400` and `message` property with an example (`This case is not supported`).
 
 ## Response description
 

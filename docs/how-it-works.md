@@ -48,4 +48,6 @@ Scramble takes into consideration other scenarios to cover not only successful r
 - Furthermore, any exceptions thrown during the process are accounted for, which may also result in 4xx or 5xx responses.
 
 ## Putting it all together
-After analyzing all routes, Scramble merges all gathered information into a single OpenAPI document.
+After analyzing all routes, Scramble merges all gathered information into a single OpenAPI document. 
+
+All the endpoints (operations) are sorted alphabetically by their paths. Schema definitions are also sorted alphabetically by their names.
