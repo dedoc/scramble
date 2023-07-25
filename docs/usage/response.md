@@ -17,7 +17,7 @@ Currently, these types will be automatically documented as responses:
 Paginated responses (`LengthAwarePaginator`) are also supported, but they need to be documented in PhpDoc for now.
 
 ## On type inference
-Scramble uses type inference based on source code analysis to automatically determine the data types of variables and expressions in the source code without explicitly specifying them. This means that Scramble can understand what type of data (e.g., strings, numbers, objects) each part of the code is working with, even if the code does not explicitly declare it.
+Scramble uses type inference based on source code analysis to automatically determine the types of variables and expressions. This means that Scramble can understand what type of data (e.g., strings, numbers, objects) each part of the code is working with, even if the code does not explicitly declare it.
 
 With this technique, Scramble can figure out the likely data types that a controller's method will return without needing extra explanations. It looks at how the method processes data, the methods it uses, and other hints to infer the possible return types.
 
@@ -113,7 +113,7 @@ All resource property types that are accessed on `$this` or `$this->resource` wi
 You need to have `doctrine/dbal` package installed for this to work.
 </x-alert>
 
-By default, Scramble tries to find a model in `App\\Models\\` namespace, based on resource name. Before the lookup resource name is converted to singular form (`TodoItemsResource` → `TodoItem`).
+By default, Scramble tries to find a model in `App\Models` namespace, based on resource name. Before the lookup resource name is converted to singular form (`TodoItemsResource` → `TodoItem`).
 
 You can provide the name of the model manually in case you have your custom models namespaces by adding PhpDoc to the resource class. You can either document `$resource` property type, or define the model as a `@mixin`:
 

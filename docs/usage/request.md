@@ -3,6 +3,8 @@ title: Requests
 weight: 2
 ---
 
+Scramble documents request part of endpoints by automatically extracting route parameters and generating parameter types and descriptions based on route model binding. Query parameters or request body parameters are documented based on validation rules. 
+
 ## Route params
 All the params from the route are added to the docs.
 
