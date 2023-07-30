@@ -18,7 +18,9 @@ When Scramble is installed, 2 routes are added to your application:
 - `/docs/api` - UI viewer for your documentation
 - `/docs/api.json` - Open API document in JSON format describing your API.
 
-And that's it! You can now visit `/docs/api` to see your API documentation.
+And that's it! You can now visit `/docs/api` to see your API documentation. 
+
+By default, these routes are available only in `local` environment. You can change this behavior by defining `viewApiDocs` gate.
 
 ## Models attributes support
 
