@@ -321,6 +321,7 @@ class ModelInfo
     protected function getCastsWithDates($model)
     {
         return collect($model->getDates())
+            ->filter()
             ->flip()
             ->map(fn () => 'datetime')
             ->merge($model->getCasts());
