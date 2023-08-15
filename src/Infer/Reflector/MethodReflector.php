@@ -65,8 +65,7 @@ class MethodReflector
 
             $traverser = new NodeTraverser;
 
-            $traverser->addVisitor(new class($this->getClassReflector()->getNameContext()) extends NameResolver
-            {
+            $traverser->addVisitor(new class($this->getClassReflector()->getNameContext()) extends NameResolver {
                 public function __construct($nameContext)
                 {
                     parent::__construct();
@@ -79,7 +78,7 @@ class MethodReflector
                 }
             });
             $traverser->addVisitor(new PhpDocResolver(
-                $nameResolver = new FileNameResolver($this->getClassReflector()->getNameContext()),
+                new FileNameResolver($this->getClassReflector()->getNameContext()),
             ));
 
             $traverser->traverse([$node]);
