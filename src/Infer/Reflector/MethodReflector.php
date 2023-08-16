@@ -37,7 +37,7 @@ class MethodReflector
         $reflection = $this->getReflection();
 
         return implode("\n", array_slice(
-            file($reflection->getFileName()),
+            preg_split('/\r\n|\r|\n/', file_get_contents($reflection->getFileName())),
             $reflection->getStartLine() - 1,
             max($reflection->getEndLine() - $reflection->getStartLine(), 1) + 1,
         ));
@@ -79,7 +79,7 @@ class MethodReflector
                 }
             });
             $traverser->addVisitor(new PhpDocResolver(
-                $nameResolver = new FileNameResolver($this->getClassReflector()->getNameContext()),
+                new FileNameResolver($this->getClassReflector()->getNameContext()),
             ));
 
             $traverser->traverse([$node]);

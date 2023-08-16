@@ -16,6 +16,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTyp
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Illuminate\Http\Resources\Json\JsonResource;
+
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 it('transforms simple types', function ($type, $openApiArrayed) {

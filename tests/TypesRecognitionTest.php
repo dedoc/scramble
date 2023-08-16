@@ -6,6 +6,7 @@ use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
+
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 // @todo move all tests into PhpDoc/PhpDocTypeHelperTest
