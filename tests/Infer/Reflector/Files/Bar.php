@@ -8,5 +8,4 @@ abstract class Bar
     {
         return 1;
     }
-
 }
