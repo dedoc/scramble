@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -33,7 +34,7 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
     {
         $collectingClassType = $type->templateTypes[0];
 
-        if (! $collectingClassType->isInstanceOf(JsonResource::class)) {
+        if (! $collectingClassType->isInstanceOf(JsonResource::class) && ! $collectingClassType->isInstanceOf(Model::class)) {
             return null;
         }
 
