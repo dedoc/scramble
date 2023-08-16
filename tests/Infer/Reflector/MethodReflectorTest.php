@@ -1,9 +1,7 @@
 <?php
 
-use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Tests\Infer\Reflector\Files\Foo;
-use Dedoc\Scramble\Tests\Infer\Reflector\Files\PostController;
 
 it('gets method code from parent declaration', function () {
     $reflector = MethodReflector::make(Foo::class, 'foo');
@@ -11,8 +9,8 @@ it('gets method code from parent declaration', function () {
     expect($reflector->getMethodCode())->toContain('return 1;');
 });
 
-it('gets method ast from parent declaration', function () {
-    $reflector = ClassReflector::make(PostController::class)->getMethod('index');
+it('gets method ast from declaration if line separator is cr', function () {
+    $reflector = MethodReflector::make(Foo::class, 'foo');
 
-    dd($reflector->getAstNode())->not->toBeNull();
+    expect($reflector->getAstNode())->not->toBeNull();
 });
