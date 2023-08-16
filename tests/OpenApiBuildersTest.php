@@ -4,6 +4,7 @@ use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\OAuthFlow;
+
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 it('builds security scheme', function () {

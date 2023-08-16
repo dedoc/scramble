@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Routing\Route;
+
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 test('response()->noContent() call support', function () {
