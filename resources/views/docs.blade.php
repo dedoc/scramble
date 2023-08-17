@@ -12,6 +12,8 @@
 <elements-api
     apiDescriptionUrl="{{ route('scramble.docs.index') }}"
     router="hash"
+    @if(config('scramble.ui.hide_try_it')) hideTryIt="true" @endif
+    logo="{{ config('scramble.ui.logo') }}"
 />
 </body>
 </html>
