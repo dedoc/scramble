@@ -28,6 +28,21 @@ return [
     ],
 
     /*
+     * Customize Stoplight Elements UI
+     */
+    'ui' => [
+        /*
+         * Hide the `Try It` feature. Enabled by default.
+         */
+        'hide_try_it' => false,
+
+        /*
+         * URL to an image that displays as a small square logo next to the title, above the table of contents.
+         */
+        'logo' => '',
+    ],
+
+    /*
      * The list of servers of the API. By default, when `null`, server URL will be created from
      * `scramble.api_path` and `scramble.api_domain` config variables. When providing an array, you
      * will need to specify the local server URL manually (if needed).
