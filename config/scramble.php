@@ -40,6 +40,21 @@ return [
          * URL to an image that displays as a small square logo next to the title, above the table of contents.
          */
         'logo' => '',
+
+        /*
+         * Configuration to enable Subresource Integrity (SRI)
+         * https://developer.mozilla.org/fr/docs/Web/Security/Subresource_Integrity
+         */
+        'sri' => [
+            'enabled' => true,
+            'version' => '@7.9.0',
+            'hash' => [
+                // https://unpkg.com/@stoplight/elements@7.9.0/web-components.min.js?meta
+                'script' => 'sha384-lBoWYy+Eptz3g7n79Y4x0OKeG7AeE+wpQjji/y2F5LlyYXEKG672w06xkyGwRCin',
+                // https://unpkg.com/@stoplight/elements@7.9.0/styles.min.css?meta
+                'style' => 'sha384-1lLf7J28IOR7k5RlItk6Y+G3hDgVB3y4RCgWNq6ZSwjYfvJXPtZAdW0uklsAZbGW',
+            ],
+        ],
     ],
 
     /*
