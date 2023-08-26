@@ -120,6 +120,10 @@ class RouteInfo
             return $inferredReturnType;
         }
 
+        if ($phpDocType->getAttribute('source') === 'response') {
+            return $phpDocReturnType;
+        }
+
         if ($inferredReturnType instanceof UnknownType) {
             return $phpDocReturnType;
         }
@@ -172,7 +176,17 @@ class RouteInfo
 
     public function getDocReturnType()
     {
-        if ($this->phpDoc() && ($returnType = $this->phpDoc()->getReturnTagValues()[0] ?? null) && optional($returnType)->type) {
+        if (! $this->phpDoc()) {
+            return null;
+        }
+
+        if(($responseType = $this->phpDoc()->getReturnTagValues('@response')[0] ?? null) && optional($responseType)->type) {
+            $responseType->type->setAttribute('source', 'response');
+
+            return $responseType->type;
+        }
+
+        if (($returnType = $this->phpDoc()->getReturnTagValues()[0] ?? null) && optional($returnType)->type) {
             return $returnType->type;
         }
 
