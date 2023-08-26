@@ -231,16 +231,18 @@ class RequestEssentialsExtension extends OperationExtension
             return $baseType;
         }
 
-        $modelTraits = class_uses($type);
-
-        if (Arr::has($modelTraits, HasUuids::class)) {
-            return (new StringType)->format('uuid');
-        }
-
         $this->infer->analyzeClass($type);
 
+        /** @var Model $modelInstance */
         $modelInstance = resolve($type);
+
+        $modelKeyName = $modelInstance->getKeyName();
         $routeKeyName = $modelInstance->getRouteKeyName();
+
+        $modelTraits = class_uses($type);
+        if ($routeKeyName === $modelKeyName && Arr::has($modelTraits, HasUuids::class)) {
+            return (new StringType)->format('uuid');
+        }
 
         return $this->openApiTransformer->transform(
             (new ObjectType($type))->getPropertyType($routeKeyName),
