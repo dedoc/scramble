@@ -227,8 +227,7 @@ class RequestEssentialsExtension extends OperationExtension
         string $paramName,
         string $description,
         ?string $bindingField,
-    ): array
-    {
+    ): array {
         if (! is_a($type, Model::class, true)) {
             return [
                 $baseType,

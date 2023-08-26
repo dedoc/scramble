@@ -23,7 +23,9 @@ class ModelWithCustomRouteKeyName extends \Illuminate\Database\Eloquent\Model
 }
 class Foo_RequestEssentialsExtensionTest_Controller
 {
-    public function foo(ModelWithCustomRouteKeyName $model) {}
+    public function foo(ModelWithCustomRouteKeyName $model)
+    {
+    }
 }
 
 it('handles custom key from route to determine model route key type', function () {
@@ -47,5 +49,7 @@ it('determines default model route key type', function () {
 });
 class CustomKey_RequestEssentialsExtensionTest_Controller
 {
-    public function foo(SampleUserModel $user) {}
+    public function foo(SampleUserModel $user)
+    {
+    }
 }
