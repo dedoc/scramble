@@ -19,6 +19,7 @@ use Dedoc\Scramble\Support\Generator\UniqueNameOptions;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -170,7 +171,7 @@ class RequestEssentialsExtension extends OperationExtension
          * 2. PhpDoc Typehint
          * 3. String (?)
          */
-        $params = array_map(function (string $paramName) use ($aliases, $reflectionParamsByKeys, $phpDocTypehintParam) {
+        $params = array_map(function (string $paramName) use ($route, $aliases, $reflectionParamsByKeys, $phpDocTypehintParam) {
             $paramName = $aliases[$paramName];
 
             $description = '';
@@ -207,11 +208,7 @@ class RequestEssentialsExtension extends OperationExtension
             $isModelId = $type && ! isset($schemaTypesMap[$type]);
 
             if ($isModelId) {
-                $schemaType = $this->getModelIdType($schemaType, $type);
-
-                if ($description === '') {
-                    $description = 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' ID';
-                }
+                [$schemaType, $description] = $this->getModelIdTypeAndDescription($schemaType, $type, $paramName, $description, $route->bindingFields()[$paramName] ?? null);
 
                 $schemaType->setAttribute('isModelId', true);
             }
@@ -224,19 +221,44 @@ class RequestEssentialsExtension extends OperationExtension
         return [$params, $aliases];
     }
 
-    private function getModelIdType(Type $baseType, string $type)
-    {
+    private function getModelIdTypeAndDescription(
+        Type $baseType,
+        string $type,
+        string $paramName,
+        string $description,
+        ?string $bindingField,
+    ): array {
         if (! is_a($type, Model::class, true)) {
-            return $baseType;
+            return [
+                $baseType,
+                $description ?: 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' ID',
+            ];
+        }
+
+        $this->infer->analyzeClass($type);
+
+        /** @var Model $modelInstance */
+        $modelInstance = resolve($type);
+
+        $modelKeyName = $modelInstance->getKeyName();
+        $routeKeyName = $bindingField ?: $modelInstance->getRouteKeyName();
+
+        if ($description === '') {
+            $keyDescriptionName = in_array($routeKeyName, ['id', 'uuid'])
+                ? Str::upper($routeKeyName)
+                : Str::of($routeKeyName)->lower()->kebab()->replace(['-', '_'], ' ')->toString();
+
+            $description = 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' '.$keyDescriptionName;
         }
 
         $modelTraits = class_uses($type);
-
-        if (Arr::has($modelTraits, HasUuids::class)) {
-            return (new StringType)->format('uuid');
+        if ($routeKeyName === $modelKeyName && Arr::has($modelTraits, HasUuids::class)) {
+            return [(new StringType)->format('uuid'), $description];
         }
 
-        return $baseType;
+        return [$this->openApiTransformer->transform(
+            (new ObjectType($type))->getPropertyType($routeKeyName),
+        ), $description];
     }
 
     private function getOperationId(RouteInfo $routeInfo)
