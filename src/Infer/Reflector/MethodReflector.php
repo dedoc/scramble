@@ -39,7 +39,7 @@ class MethodReflector
         return implode("\n", array_slice(
             preg_split('/\r\n|\r|\n/', file_get_contents($reflection->getFileName())),
             $reflection->getStartLine() - 1,
-            max($reflection->getEndLine() - $reflection->getStartLine(), 1) + 1,
+            $reflection->getStartLine() === $reflection->getEndLine() ? 1 : max($reflection->getEndLine() - $reflection->getStartLine(), 1) + 1,
         ));
     }
 
