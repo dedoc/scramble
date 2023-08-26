@@ -253,8 +253,9 @@ class RequestEssentialsExtension extends OperationExtension
                     return $value;
                 }
 
-                // Using route name as operation ID if set.
-                if ($name = $routeInfo->route->getName()) {
+                // Using route name as operation ID if set. We need to avoid using generated route names as this
+                // will result gibberish operation IDs when routes without names are cached.
+                if (($name = $routeInfo->route->getName()) && ! Str::startsWith($name, 'generated::')) {
                     return Str::startsWith($name, 'api.') ? Str::replaceFirst('api.', '', $name) : $name;
                 }
 
