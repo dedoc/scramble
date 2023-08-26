@@ -17,7 +17,8 @@ class Foo_ResponseExtensionTest_Controller
     /**
      * @response array{"foo": "bar"}
      */
-    public function foo() {
+    public function foo()
+    {
         return 42;
     }
 }

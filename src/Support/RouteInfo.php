@@ -180,7 +180,7 @@ class RouteInfo
             return null;
         }
 
-        if(($responseType = $this->phpDoc()->getReturnTagValues('@response')[0] ?? null) && optional($responseType)->type) {
+        if (($responseType = $this->phpDoc()->getReturnTagValues('@response')[0] ?? null) && optional($responseType)->type) {
             $responseType->type->setAttribute('source', 'response');
 
             return $responseType->type;
