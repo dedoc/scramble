@@ -19,6 +19,7 @@ use Dedoc\Scramble\Support\Generator\UniqueNameOptions;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -236,7 +237,14 @@ class RequestEssentialsExtension extends OperationExtension
             return (new StringType)->format('uuid');
         }
 
-        return $baseType;
+        $this->infer->analyzeClass($type);
+
+        $modelInstance = resolve($type);
+        $routeKeyName = $modelInstance->getRouteKeyName();
+
+        return $this->openApiTransformer->transform(
+            (new ObjectType($type))->getPropertyType($routeKeyName),
+        );
     }
 
     private function getOperationId(RouteInfo $routeInfo)
