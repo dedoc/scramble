@@ -246,7 +246,7 @@ class RequestEssentialsExtension extends OperationExtension
         if ($description === '') {
             $keyDescriptionName = in_array($routeKeyName, ['id', 'uuid'])
                 ? Str::upper($routeKeyName)
-                : (string)Str::of($routeKeyName)->lower()->kebab()->replace(['-', '_'], ' ');
+                : (string) Str::of($routeKeyName)->lower()->kebab()->replace(['-', '_'], ' ');
 
             $description = 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' '.$keyDescriptionName;
         }
