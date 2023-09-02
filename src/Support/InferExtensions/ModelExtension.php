@@ -25,7 +25,7 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class ModelExtension implements PropertyTypeExtension, MethodReturnTypeExtension
+class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 {
     private static $cache;
 
