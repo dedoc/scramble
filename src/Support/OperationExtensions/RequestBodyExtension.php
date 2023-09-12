@@ -12,6 +12,7 @@ use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ValidateCallExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use PhpParser\Node\Stmt\ClassMethod;
 use Throwable;
@@ -24,11 +25,16 @@ class RequestBodyExtension extends OperationExtension
 
         $description = Str::of($routeInfo->phpDoc()->getAttribute('description'));
 
+        $mediaType = 'application/json';
+        if ($mediaTags = $routeInfo->phpDoc()->getTagsByName('@mediaType')) {
+            $mediaType = trim(Arr::first($mediaTags)?->value?->value);
+        }
+
         try {
             if (count($bodyParams = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode()))) {
                 if ($method !== 'get') {
                     $operation->addRequestBodyObject(
-                        RequestBodyObject::make()->setContent('application/json', Schema::createFromParameters($bodyParams))
+                        RequestBodyObject::make()->setContent($mediaType, Schema::createFromParameters($bodyParams))
                     );
                 } else {
                     $operation->addParameters($bodyParams);
@@ -38,7 +44,7 @@ class RequestBodyExtension extends OperationExtension
                     ->addRequestBodyObject(
                         RequestBodyObject::make()
                             ->setContent(
-                                'application/json',
+                                $mediaType,
                                 Schema::fromType(new ObjectType)
                             )
                     );
