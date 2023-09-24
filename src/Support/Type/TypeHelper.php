@@ -146,4 +146,15 @@ class TypeHelper
 
         return null; // @todo: object
     }
+
+    /**
+     * @param Type[] $parts
+     */
+    public static function flattenStringConcatTypes(array $parts): array
+    {
+        return collect($parts)
+            ->flatMap(fn ($t) => $t instanceof ConcatenatedStringType ? $t->parts : [$t])
+            ->values()
+            ->all();
+    }
 }
