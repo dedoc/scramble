@@ -13,7 +13,7 @@ it('uses application/json media type as a default request media type', function 
 });
 class RequestBodyExtensionTest__uses_application_json_as_default
 {
-    public function index(\Illuminate\Http\Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         $request->validate(['foo' => 'string']);
     }
@@ -33,7 +33,7 @@ class RequestBodyExtensionTest__allows_manual_request_media_type
     /**
      * @requestMediaType application/xml
      */
-    public function index(\Illuminate\Http\Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         $request->validate(['foo' => 'string']);
     }
@@ -50,7 +50,7 @@ it('automatically infers multipart/form-data as request media type when some of 
 });
 class RequestBodyExtensionTest__automaticall_infers_form_data
 {
-    public function index(\Illuminate\Http\Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         $request->validate(['foo' => 'file']);
     }
