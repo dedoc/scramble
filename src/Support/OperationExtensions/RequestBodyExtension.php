@@ -61,14 +61,14 @@ class RequestBodyExtension extends OperationExtension
 
     protected function getMediaType(Operation $operation, RouteInfo $routeInfo, array $bodyParams): string
     {
-        $jsonMediaType = 'application/json';
-
         if (
             ($mediaTags = $routeInfo->phpDoc()->getTagsByName('@requestMediaType'))
             && ($mediaType = trim(Arr::first($mediaTags)?->value?->value))
         ) {
             return $mediaType;
         }
+
+        $jsonMediaType = 'application/json';
 
         if ($operation->method === 'get') {
             return $jsonMediaType;
