@@ -23,7 +23,7 @@ class RulesToParameter
     private ?PhpDocNode $docNode;
 
     const RULES_PRIORITY = [
-        'bool', 'boolean', 'numeric', 'int', 'integer', 'string', 'array', 'exists',
+        'bool', 'boolean', 'numeric', 'int', 'integer', 'file', 'image', 'string', 'array', 'exists',
     ];
 
     public function __construct(string $name, $rules, ?PhpDocNode $docNode, TypeTransformer $openApiTransformer)

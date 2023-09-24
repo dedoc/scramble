@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\RequestBodyObject;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
@@ -33,8 +34,10 @@ class RequestBodyExtension extends OperationExtension
         try {
             if (count($bodyParams = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode()))) {
                 if ($method !== 'get') {
+                    $contentType = $this->hasBinary($bodyParams) ? 'multipart/form-data' : 'application/json';
+
                     $operation->addRequestBodyObject(
-                        RequestBodyObject::make()->setContent($mediaType, Schema::createFromParameters($bodyParams))
+                        RequestBodyObject::make()->setContent($contentType, Schema::createFromParameters($bodyParams))
                     );
                 } else {
                     $operation->addParameters($bodyParams);
@@ -59,6 +62,17 @@ class RequestBodyExtension extends OperationExtension
         $operation
             ->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'))
             ->description($description);
+    }
+
+    private function hasBinary($bodyParams): bool
+    {
+        return collect($bodyParams)->contains(function (Parameter $parameter) {
+            if (property_exists($parameter?->schema?->type, 'format')) {
+                return $parameter->schema->type->format === 'binary';
+            }
+
+            return false;
+        });
     }
 
     private function extractParamsFromRequestValidationRules(Route $route, ?ClassMethod $methodNode)
