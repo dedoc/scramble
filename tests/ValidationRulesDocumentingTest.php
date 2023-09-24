@@ -134,6 +134,28 @@ it('supports exists rule', function () {
         ->and($type->format)->toBe('email');
 });
 
+it('supports image rule', function () {
+    $rules = [
+        'image' => 'required|image',
+    ];
+
+    $type = app()->make(RulesToParameters::class, ['rules' => $rules])->handle()[0]->schema->type;
+
+    expect($type)->toBeInstanceOf(StringType::class)
+        ->and($type->format)->toBe('binary');
+});
+
+it('supports file rule', function () {
+    $rules = [
+        'file' => 'required|file',
+    ];
+
+    $type = app()->make(RulesToParameters::class, ['rules' => $rules])->handle()[0]->schema->type;
+
+    expect($type)->toBeInstanceOf(StringType::class)
+        ->and($type->format)->toBe('binary');
+});
+
 it('extracts rules from request->validate call', function () {
     RouteFacade::get('api/test', [ValidationRulesDocumenting_Test::class, 'index']);
 

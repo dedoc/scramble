@@ -20,6 +20,7 @@ use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -228,17 +229,23 @@ class RequestEssentialsExtension extends OperationExtension
         string $description,
         ?string $bindingField,
     ): array {
+        $defaults = [
+            $baseType,
+            $description ?: 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' ID',
+        ];
+
         if (! is_a($type, Model::class, true)) {
-            return [
-                $baseType,
-                $description ?: 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' ID',
-            ];
+            return $defaults;
+        }
+
+        try {
+            /** @var Model $modelInstance */
+            $modelInstance = resolve($type);
+        } catch (BindingResolutionException) {
+            return $defaults;
         }
 
         $this->infer->analyzeClass($type);
-
-        /** @var Model $modelInstance */
-        $modelInstance = resolve($type);
 
         $modelKeyName = $modelInstance->getKeyName();
         $routeKeyName = $bindingField ?: $modelInstance->getRouteKeyName();

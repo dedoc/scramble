@@ -57,6 +57,7 @@ class PhpDocResolver extends NodeVisitorAbstract
 
         $tagValues = [
             ...$docNode->getReturnTagValues(),
+            ...$docNode->getReturnTagValues('@response'),
             ...$docNode->getVarTagValues(),
             ...$docNode->getThrowsTagValues(),
         ];
