@@ -157,4 +157,18 @@ class RulesMapper
             new ObjectType($enumName)
         );
     }
+
+    public function image(Type $type)
+    {
+        return $this->file($type);
+    }
+
+    public function file(Type $type)
+    {
+        if ($type instanceof UnknownType) {
+            $type = $this->string($type);
+        }
+
+        return $type->format('binary');
+    }
 }
