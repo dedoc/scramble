@@ -22,27 +22,22 @@ class RequestBodyExtension extends OperationExtension
 {
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
-        $method = $operation->method;
-
         $description = Str::of($routeInfo->phpDoc()->getAttribute('description'));
 
-        $mediaType = 'application/json';
-        if ($mediaTags = $routeInfo->phpDoc()->getTagsByName('@mediaType')) {
-            $mediaType = trim(Arr::first($mediaTags)?->value?->value);
-        }
-
         try {
-            if (count($bodyParams = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode()))) {
-                if ($method !== 'get') {
-                    $contentType = $this->hasBinary($bodyParams) ? 'multipart/form-data' : 'application/json';
+            $bodyParams = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode());
 
+            $mediaType = $this->getMediaType($operation, $routeInfo, $bodyParams);
+
+            if (count($bodyParams)) {
+                if ($operation->method !== 'get') {
                     $operation->addRequestBodyObject(
-                        RequestBodyObject::make()->setContent($contentType, Schema::createFromParameters($bodyParams))
+                        RequestBodyObject::make()->setContent($mediaType, Schema::createFromParameters($bodyParams))
                     );
                 } else {
                     $operation->addParameters($bodyParams);
                 }
-            } elseif ($method !== 'get') {
+            } elseif ($operation->method !== 'get') {
                 $operation
                     ->addRequestBodyObject(
                         RequestBodyObject::make()
@@ -64,7 +59,25 @@ class RequestBodyExtension extends OperationExtension
             ->description($description);
     }
 
-    private function hasBinary($bodyParams): bool
+    protected function getMediaType(Operation $operation, RouteInfo $routeInfo, array $bodyParams): string
+    {
+        $jsonMediaType = 'application/json';
+
+        if (
+            ($mediaTags = $routeInfo->phpDoc()->getTagsByName('@requestMediaType'))
+            && ($mediaType = trim(Arr::first($mediaTags)?->value?->value))
+        ) {
+            return $mediaType;
+        }
+
+        if ($operation->method === 'get') {
+            return $jsonMediaType;
+        }
+
+        return $this->hasBinary($bodyParams) ? 'multipart/form-data' : $jsonMediaType;
+    }
+
+    protected function hasBinary($bodyParams): bool
     {
         return collect($bodyParams)->contains(function (Parameter $parameter) {
             if (property_exists($parameter?->schema?->type, 'format')) {
@@ -75,14 +88,14 @@ class RequestBodyExtension extends OperationExtension
         });
     }
 
-    private function extractParamsFromRequestValidationRules(Route $route, ?ClassMethod $methodNode)
+    protected function extractParamsFromRequestValidationRules(Route $route, ?ClassMethod $methodNode)
     {
         [$rules, $nodesResults] = $this->extractRouteRequestValidationRules($route, $methodNode);
 
         return (new RulesToParameters($rules, $nodesResults, $this->openApiTransformer))->handle();
     }
 
-    private function extractRouteRequestValidationRules(Route $route, $methodNode)
+    protected function extractRouteRequestValidationRules(Route $route, $methodNode)
     {
         $rules = [];
         $nodesResults = [];

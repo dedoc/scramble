@@ -92,24 +92,6 @@ class RulesMapper
         return $type->format('email');
     }
 
-    public function image(Type $type)
-    {
-        if ($type instanceof UnknownType) {
-            $type = $this->string($type);
-        }
-
-        return $type->format('binary');
-    }
-
-    public function file(Type $type)
-    {
-        if ($type instanceof UnknownType) {
-            $type = $this->string($type);
-        }
-
-        return $type->format('binary');
-    }
-
     public function uuid(Type $type)
     {
         if ($type instanceof UnknownType) {
