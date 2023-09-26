@@ -34,7 +34,7 @@ class EnumRule implements TypeBasedRule
     {
         $enumTypePropertyType = $rule->getPropertyType('type');
 
-        if (!$enumTypePropertyType instanceof LiteralStringType) {
+        if (! $enumTypePropertyType instanceof LiteralStringType) {
             throw new \RuntimeException('Unexpected enum value type');
         }
 

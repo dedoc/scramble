@@ -148,7 +148,7 @@ class TypeHelper
     }
 
     /**
-     * @param Type[] $parts
+     * @param  Type[]  $parts
      */
     public static function flattenStringConcatTypes(array $parts): array
     {

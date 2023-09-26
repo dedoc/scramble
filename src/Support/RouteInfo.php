@@ -230,7 +230,7 @@ class RouteInfo
      */
     public function getMethodScopeTypeResolver(): ?ScopeTypeResolver
     {
-        if (!$this->isClassBased() || !$this->getMethodType()) {
+        if (! $this->isClassBased() || ! $this->getMethodType()) {
             return null;
         }
 

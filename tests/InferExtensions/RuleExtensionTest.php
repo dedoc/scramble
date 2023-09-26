@@ -1,11 +1,11 @@
 <?php
 
 it('infers different rules types', function (string $statement, $expectedType) {
-//    $a = function ($values) {
-//        dd(func_get_args());
-//    };
-//
-//    $a(["foo", "bar"], ...["a"]);
+    //    $a = function ($values) {
+    //        dd(func_get_args());
+    //    };
+    //
+    //    $a(["foo", "bar"], ...["a"]);
 
     $type = getStatementType($statement);
 

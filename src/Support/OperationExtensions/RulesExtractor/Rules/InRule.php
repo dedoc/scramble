@@ -43,7 +43,7 @@ class InRule implements StringBasedRule, TypeBasedRule
         }
 
         $valueType = $rule->getPropertyType('value');
-        if (!$valueType instanceof ArrayType) {
+        if (! $valueType instanceof ArrayType) {
             throw new \RuntimeException('Invalid value type');
         }
 

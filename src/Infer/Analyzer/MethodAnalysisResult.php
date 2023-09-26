@@ -10,7 +10,6 @@ class MethodAnalysisResult
     public function __construct(
         public Scope $scope,
         public FunctionLikeDefinition $definition,
-    )
-    {
+    ) {
     }
 }
