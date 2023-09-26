@@ -23,6 +23,7 @@ use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\RuleExtension;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\OperationExtensions\ErrorResponsesExtension;
@@ -73,6 +74,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                 $inferExtensionsClasses = array_merge([
                     ModelExtension::class,
+                    RuleExtension::class,
                 ], $inferExtensionsClasses);
 
                 return array_merge(
