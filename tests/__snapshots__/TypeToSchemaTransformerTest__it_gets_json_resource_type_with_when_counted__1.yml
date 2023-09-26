@@ -1,0 +1,12 @@
+type: object
+properties:
+    bar_single: { type: integer }
+    bar_fake_count: { type: integer }
+    bar_default: { anyOf: [{ type: integer }, { type: integer }] }
+    bar_string: { type: string, example: '2' }
+    bar_int: { type: integer }
+    bar_useless: { type: 'null' }
+    bar_nullable: { type: [integer, 'null'] }
+required:
+    - bar_default
+    - bar_nullable

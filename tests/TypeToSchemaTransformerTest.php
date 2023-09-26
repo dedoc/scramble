@@ -92,6 +92,18 @@ it('gets json resource type with when loaded', function () {
     assertMatchesSnapshot($extension->toSchema($type)->toArray());
 });
 
+it('gets json resource type with when counted', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+        JsonResourceTypeToSchema::class,
+        AnonymousResourceCollectionTypeToSchema::class,
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+
+    $type = new ObjectType(ComplexTypeHandlersWithWhenCounted_SampleType::class);
+
+    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+});
+
 it('gets json resource type reference', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
 
@@ -187,6 +199,22 @@ class ComplexTypeHandlersWithWhenLoaded_SampleType extends JsonResource
             'foo_collection' => ComplexTypeHandlersWithWhen_SampleType::collection($this->foo),
             'bar' => $this->whenLoaded('bar', fn () => 1),
             'bar_nullable' => $this->whenLoaded('bar', fn () => 's', null),
+        ];
+    }
+}
+
+class ComplexTypeHandlersWithWhenCounted_SampleType extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'bar_single' => $this->whenCounted('bar'),
+            'bar_fake_count' => $this->whenCounted('bar', 1),
+            'bar_default' => $this->whenCounted('bar', fn () => 1, 5),
+            'bar_string' => $this->whenCounted('bar', fn () => '2'),
+            'bar_int' => $this->whenCounted('bar', fn () => 1),
+            'bar_useless' => $this->whenCounted('bar', null),
+            'bar_nullable' => $this->whenCounted('bar', fn () => 3, null),
         ];
     }
 }
