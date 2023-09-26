@@ -84,7 +84,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
          * $this->when()
          */
         if ($this->isMethodCallToThis($node, ['when'])) {
-            return new Union([
+            return Union::wrap([
                 $this->value(TypeHelper::getArgType($scope, $node->args, ['value', 1])),
                 $this->value(TypeHelper::getArgType($scope, $node->args, ['default', 2], new ObjectType(MissingValue::class))),
             ]);
@@ -102,7 +102,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
                 ]);
             }
 
-            return new Union([
+            return Union::wrap([
                 $this->value(TypeHelper::getArgType($scope, $node->args, ['value', 1])),
                 $this->value(TypeHelper::getArgType($scope, $node->args, ['default', 2], new ObjectType(MissingValue::class))),
             ]);
@@ -119,7 +119,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
                 ]);
             }
 
-            return new Union([
+            return Union::wrap([
                 $this->value(TypeHelper::getArgType($scope, $node->args, ['value', 1])),
                 $this->value(TypeHelper::getArgType($scope, $node->args, ['default', 2], new ObjectType(MissingValue::class))),
             ]);

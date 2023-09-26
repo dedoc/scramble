@@ -210,7 +210,8 @@ class ComplexTypeHandlersWithWhenCounted_SampleType extends JsonResource
         return [
             'bar_single' => $this->whenCounted('bar'),
             'bar_fake_count' => $this->whenCounted('bar', 1),
-            'bar_default' => $this->whenCounted('bar', fn () => 1, 5),
+            'bar_different_literal_types' => $this->whenCounted('bar', fn () => 1, 5),
+            'bar_identical_literal_types' => $this->whenCounted('bar', fn () => 1, 1),
             'bar_string' => $this->whenCounted('bar', fn () => '2'),
             'bar_int' => $this->whenCounted('bar', fn () => 1),
             'bar_useless' => $this->whenCounted('bar', null),
