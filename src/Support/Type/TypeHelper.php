@@ -144,6 +144,20 @@ class TypeHelper
             return new LiteralBooleanType($value);
         }
 
+        if (is_array($value)) {
+            return new ArrayType(
+                collect($value)
+                    ->map(function ($value, $key) {
+                        return new ArrayItemType_(
+                            is_string($key) ? $key : null,
+                            static::createTypeFromValue($value),
+                        );
+                    })
+                    ->values()
+                    ->all()
+            );
+        }
+
         return null; // @todo: object
     }
 

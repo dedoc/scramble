@@ -318,6 +318,13 @@ class ReferenceTypeResolver
             $type->arguments,
         );
 
+        $contextualClassName = $this->resolveClassName($scope, $type->name);
+        if (! $contextualClassName) {
+            return new UnknownType();
+        }
+
+        $type->name = $contextualClassName;
+
         if (
             ! array_key_exists($type->name, $this->index->classesDefinitions)
             && ! $this->resolveUnknownClassResolver($type->name)
@@ -527,5 +534,18 @@ class ReferenceTypeResolver
                 $foundCorrespondingTemplateType,
             ];
         }, $templates)));
+    }
+
+    private function resolveClassName(Scope $scope, string $name): ?string
+    {
+        if (!in_array($name, StaticReference::KEYWORDS)) {
+            return $name;
+        }
+
+        return match ($name) {
+            StaticReference::SELF => $scope->context->functionDefinition?->definingClassName,
+            StaticReference::STATIC => $scope->context->classDefinition?->name,
+            StaticReference::PARENT => $scope->context->classDefinition?->parentFqn,
+        };
     }
 }

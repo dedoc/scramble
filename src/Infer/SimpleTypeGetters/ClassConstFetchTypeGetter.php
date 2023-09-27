@@ -15,27 +15,31 @@ use PhpParser\Node;
 
 class ClassConstFetchTypeGetter
 {
-    const STATIC_KEYWORDS = ['self', 'static', 'parent'];
-
     public function __invoke(Node\Expr\ClassConstFetch $node, Scope $scope): Type
     {
+        if (
+            $node->class instanceof Node\Name
+            && $node->name instanceof Node\Identifier
+        ) {
+            $className = in_array($node->class->toString(), StaticReference::KEYWORDS)
+                ? new StaticReference($node->class->toString())
+                : $node->class->toString();
+
+            return new ConstFetchReferenceType(
+                $className,
+                $node->name->toString(),
+            );
+        }
+
         if ($node->name->toString() === 'class') {
-            if ($node->class instanceof Node\Name && in_array($node->class->toString(), static::STATIC_KEYWORDS)) {
-                return new ConstFetchReferenceType(
-                    new StaticReference($node->class->toString()),
-                    'class',
-                );
-            }
-
-            if ($node->class instanceof Node\Name) {
-                return new LiteralStringType($node->class->toString());
-            }
-
             $type = $scope->getType($node->class);
 
             if ($type instanceof ObjectType || $type instanceof NewCallReferenceType) {
                 return new LiteralStringType($type->name);
             }
+
+            // @todo Should be totally possible to return ConstFetchReferenceType here so any reference types can be
+            // resolved and the most accurate type retrieved.
 
             return new StringType();
         }
