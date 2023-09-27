@@ -9,12 +9,14 @@ use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\Dependency\ClassDependency;
 use Dedoc\Scramble\Support\Type\Reference\Dependency\FunctionDependency;
 use Dedoc\Scramble\Support\Type\Reference\Dependency\MethodDependency;
@@ -23,6 +25,7 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -120,6 +123,10 @@ class ReferenceTypeResolver
     private function doResolve(Type $t, Type $type, Scope $scope)
     {
         $resolver = function () use ($t, $scope) {
+            if ($t instanceof ConstFetchReferenceType) {
+                return $this->resolveConstFetchReferenceType($scope, $t);
+            }
+
             if ($t instanceof MethodCallReferenceType) {
                 return $this->resolveMethodCallReferenceType($scope, $t);
             }
@@ -152,6 +159,28 @@ class ReferenceTypeResolver
         }
 
         return $this->resolve($scope, $resolved);
+    }
+
+    private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type)
+    {
+        $analyzedType = clone $type;
+
+        if ($type->callee instanceof StaticReference) {
+            $contextualCalleeName = match ($type->callee->keyword) {
+                StaticReference::SELF => $scope->context->functionDefinition?->definingClassName,
+                StaticReference::STATIC => $scope->context->classDefinition?->name,
+                StaticReference::PARENT => $scope->context->classDefinition?->parentFqn,
+            };
+
+            // This can only happen if any of static reserved keyword used in non-class context – hence considering not possible for now.
+            if (! $contextualCalleeName) {
+                return new UnknownType("Cannot properly analyze [{$type->toString()}] reference type as static keyword used in non-class context, or current class scope has no parent.");
+            }
+
+            $analyzedType->callee = $contextualCalleeName;
+        }
+
+        return (new ConstFetchTypeGetter)($scope, $analyzedType->callee, $analyzedType->constName);
     }
 
     private function resolveMethodCallReferenceType(Scope $scope, MethodCallReferenceType $type)

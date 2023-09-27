@@ -14,6 +14,7 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
@@ -52,11 +53,23 @@ class Scope
         }
 
         if ($node instanceof Node\Expr\ConstFetch) {
-            return (new ConstFetchTypeGetter)($node);
+            $type = (new ConstFetchTypeGetter)($node);
+
+            if (! $type instanceof AbstractReferenceType) {
+                return $type;
+            }
+
+            return $this->setType($node, $type);
         }
 
         if ($node instanceof Node\Expr\ClassConstFetch) {
-            return (new ClassConstFetchTypeGetter)($node, $this);
+            $type = (new ClassConstFetchTypeGetter)($node, $this);
+
+            if (! $type instanceof AbstractReferenceType) {
+                return $type;
+            }
+
+            return $this->setType($node, $type);
         }
 
         if ($node instanceof Node\Expr\BooleanNot) {

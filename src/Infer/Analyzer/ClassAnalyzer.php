@@ -69,7 +69,8 @@ class ClassAnalyzer
                     $reflectionMethod->name,
                     arguments: [],
                     returnType: new UnknownType,
-                )
+                ),
+                definingClassName: $name,
             );
         }
 
