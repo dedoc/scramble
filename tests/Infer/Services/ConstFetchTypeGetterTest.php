@@ -8,6 +8,7 @@ it('gets const type from array value', function () {
 
     expect($type->toString())->toBe('array{0: string(foo), 1: string(bar)}');
 });
-class ConstFetchTypeGetterTest_Foo {
+class ConstFetchTypeGetterTest_Foo
+{
     const ARRAY = ['foo', 'bar'];
 }

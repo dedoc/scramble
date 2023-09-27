@@ -88,7 +88,6 @@ it('infers new calls on child class', function (string $method, string $expected
     ['newParentCall', 'Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo'],
 ]);
 
-
 it('complex static call and property fetch', function () {
     $type = getStatementType('Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::wow()');
 

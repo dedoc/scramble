@@ -35,7 +35,6 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
-use function Pest\Laravel\instance;
 
 class ReferenceTypeResolver
 {
@@ -341,7 +340,7 @@ class ReferenceTypeResolver
         }
 
         $propertyDefaultTemplateTypes = collect($classDefinition->properties)
-            ->filter(fn (ClassPropertyDefinition $definition) => $definition->type instanceof TemplateType && !! $definition->defaultType)
+            ->filter(fn (ClassPropertyDefinition $definition) => $definition->type instanceof TemplateType && (bool) $definition->defaultType)
             ->mapWithKeys(fn (ClassPropertyDefinition $definition) => [
                 $definition->type->name => $definition->defaultType,
             ]);
@@ -549,7 +548,7 @@ class ReferenceTypeResolver
 
     private function resolveClassName(Scope $scope, string $name): ?string
     {
-        if (!in_array($name, StaticReference::KEYWORDS)) {
+        if (! in_array($name, StaticReference::KEYWORDS)) {
             return $name;
         }
 
