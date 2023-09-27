@@ -1,5 +1,7 @@
 <?php
 
+use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
+
 function getStatementTypeForScopeTest(string $statement, array $extensions = [])
 {
     return analyzeFile('<?php', $extensions)->getExpressionType($statement);
@@ -22,3 +24,23 @@ it('infers concat string type with unknowns', function ($code, $expectedTypeStri
 })->with([
     ['"a"."b".auth()->user()->id', 'string(string(a), string(b), unknown)'],
 ]);
+
+it('analyzes call type of param properly', function () {
+    $foo = app(ClassAnalyzer::class)
+        ->analyze(ScopeTest_Foo::class)
+        ->getMethodDefinition('foo');
+
+    expect($foo->type->getReturnType()->toString())->toBe('int(42)');
+});
+class ScopeTest_Foo {
+    public function foo(ScopeTest_Bar $bar)
+    {
+        return $bar->getAnswer();
+    }
+}
+class ScopeTest_Bar {
+    public function getAnswer()
+    {
+        return 42;
+    }
+}
