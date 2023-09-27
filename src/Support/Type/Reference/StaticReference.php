@@ -14,7 +14,7 @@ class StaticReference
 
     public function __construct(public readonly string $keyword)
     {
-        if (!in_array($this->keyword, self::KEYWORDS)) {
+        if (! in_array($this->keyword, self::KEYWORDS)) {
             throw new \InvalidArgumentException("[$this->keyword] keyword must be one of possible values.");
         }
     }
