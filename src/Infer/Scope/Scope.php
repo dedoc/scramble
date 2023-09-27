@@ -113,11 +113,11 @@ class Scope
 
             $calleeType = $this->getType($node->var);
             if ($calleeType instanceof TemplateType) {
-                // @todo
-                // if ($calleeType->is instanceof ObjectType) {
-                //     $calleeType = $calleeType->is;
-                // }
-                return $this->setType($node, new UnknownType("Cannot infer type of method [{$node->name->name}] call on template type: not supported yet."));
+                if ($calleeType->is instanceof ObjectType) {
+                    $calleeType = $calleeType->is;
+                } else {
+                    return $this->setType($node, new UnknownType("Cannot infer type of method [{$node->name->name}] call on template type: not supported yet."));
+                }
             }
 
             return $this->setType(
