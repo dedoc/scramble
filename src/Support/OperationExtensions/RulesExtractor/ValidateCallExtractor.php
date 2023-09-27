@@ -81,9 +81,9 @@ class ValidateCallExtractor
 
         if ($validationRules) {
             $type = $routeInfo->getMethodScopeTypeResolver()->getType($validationRules);
-            //            dump([
-            //                $routeInfo->className().'@'.$routeInfo->methodName() => $type->toString(),
-            //            ]);
+//                        dump([
+//                            $routeInfo->className().'@'.$routeInfo->methodName() => $type->toString(),
+//                        ]);
         }
 
         if ($validationRules) {

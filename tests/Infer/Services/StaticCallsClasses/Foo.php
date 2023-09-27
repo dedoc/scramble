@@ -40,4 +40,9 @@ class Foo
     {
         return new static;
     }
+
+    public function wow()
+    {
+        return (new static)->prop;
+    }
 }

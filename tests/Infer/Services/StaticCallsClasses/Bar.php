@@ -6,6 +6,8 @@ class Bar extends Foo
 {
     const SOME = 21;
 
+    public string $prop = 'foo';
+
     public function parentClassFetch()
     {
         return parent::class;

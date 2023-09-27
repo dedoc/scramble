@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
@@ -34,6 +35,7 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
+use function Pest\Laravel\instance;
 
 class ReferenceTypeResolver
 {
@@ -338,11 +340,20 @@ class ReferenceTypeResolver
             return new ObjectType($type->name);
         }
 
-        $inferredTemplates = collect($this->resolveTypesTemplatesFromArguments(
+        $propertyDefaultTemplateTypes = collect($classDefinition->properties)
+            ->filter(fn (ClassPropertyDefinition $definition) => $definition->type instanceof TemplateType && !! $definition->defaultType)
+            ->mapWithKeys(fn (ClassPropertyDefinition $definition) => [
+                $definition->type->name => $definition->defaultType,
+            ]);
+
+        $inferredConstructorParamTemplates = collect($this->resolveTypesTemplatesFromArguments(
             $classDefinition->templateTypes,
             $classDefinition->getMethodDefinition('__construct', $scope)->type->arguments ?? [],
             $this->prepareArguments($classDefinition->getMethodDefinition('__construct', $scope), $type->arguments),
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
+
+        $inferredTemplates = $propertyDefaultTemplateTypes
+            ->merge($inferredConstructorParamTemplates);
 
         return new Generic(
             $classDefinition->name,

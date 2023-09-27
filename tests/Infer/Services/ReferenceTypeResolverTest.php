@@ -84,9 +84,16 @@ it('infers new calls on child class', function (string $method, string $expected
     expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
 })->with([
     ['newSelfCall', 'Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo'],
-    ['newStaticCall', 'Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar'],
+    ['newStaticCall', 'Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar<string(foo)>'],
     ['newParentCall', 'Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo'],
 ]);
+
+
+it('complex static call and property fetch', function () {
+    $type = getStatementType('Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::wow()');
+
+    expect($type->toString())->toBe('string(foo)');
+});
 
 /*
  * Static method calls
