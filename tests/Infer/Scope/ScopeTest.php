@@ -32,13 +32,15 @@ it('analyzes call type of param properly', function () {
 
     expect($foo->type->getReturnType()->toString())->toBe('int(42)');
 });
-class ScopeTest_Foo {
+class ScopeTest_Foo
+{
     public function foo(ScopeTest_Bar $bar)
     {
         return $bar->getAnswer();
     }
 }
-class ScopeTest_Bar {
+class ScopeTest_Bar
+{
     public function getAnswer()
     {
         return 42;
