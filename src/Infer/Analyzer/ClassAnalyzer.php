@@ -49,14 +49,21 @@ class ClassAnalyzer
                 continue;
             }
 
-            $classDefinition->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
-                type: $t = new TemplateType('T'.Str::studly($reflectionProperty->name)),
-                defaultType: $reflectionProperty->hasDefaultValue()
-                    ? TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue())
-                    : null,
-            );
-
-            $classDefinition->templateTypes[] = $t;
+            if ($reflectionProperty->isStatic()) {
+                $classDefinition->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
+                    type: $reflectionProperty->hasDefaultValue()
+                        ? (TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue()) ?: new UnknownType)
+                        : new UnknownType,
+                );
+            } else {
+                $classDefinition->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
+                    type: $t = new TemplateType('T'.Str::studly($reflectionProperty->name)),
+                    defaultType: $reflectionProperty->hasDefaultValue()
+                        ? TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue())
+                        : null,
+                );
+                $classDefinition->templateTypes[] = $t;
+            }
         }
 
         foreach ($classReflection->getMethods() as $reflectionMethod) {

@@ -20,6 +20,7 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticPropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -140,6 +141,23 @@ class Scope
             return $this->setType(
                 $node,
                 new StaticMethodCallReferenceType($node->class->toString(), $node->name->name, $this->getArgsTypes($node->args)),
+            );
+        }
+
+        if ($node instanceof Node\Expr\StaticPropertyFetch) {
+            // Only string method names support.
+            if (! $node->name instanceof Node\Identifier) {
+                return $type;
+            }
+
+            // Only string class names support.
+            if (! $node->class instanceof Node\Name) {
+                return $type;
+            }
+
+            return $this->setType(
+                $node,
+                new StaticPropertyFetchReferenceType($node->class->toString(), $node->name->name),
             );
         }
 
@@ -289,11 +307,6 @@ class Scope
         }
 
         return $type;
-    }
-
-    public function getMethodCallType(Type $calledOn, string $methodName, array $arguments = []): Type
-    {
-
     }
 
     public function getPropertyFetchType(Type $calledOn, string $propertyName): Type

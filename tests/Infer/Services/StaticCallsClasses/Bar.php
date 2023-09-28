@@ -8,6 +8,8 @@ class Bar extends Foo
 
     public string $prop = 'foo';
 
+    public static $staticProp = 'bar';
+
     public function parentClassFetch()
     {
         return parent::class;
@@ -21,5 +23,20 @@ class Bar extends Foo
     public function newParentCall()
     {
         return new parent;
+    }
+
+    public function someMethod()
+    {
+        return 'bar';
+    }
+
+    public function parentMethodCall()
+    {
+        return parent::someMethod();
+    }
+
+    public function parentPropertyFetch()
+    {
+        return parent::$staticProp;
     }
 }

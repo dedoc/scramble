@@ -14,6 +14,12 @@ it('infers property fetch nodes types', function ($code, $expectedTypeString) {
     ['$foo->bar->{"baz"}', 'unknown'],
 ]);
 
+it('infers static property fetch nodes types', function ($code, $expectedTypeString) {
+    expect(getStatementType($code)->toString())->toBe($expectedTypeString);
+})->with([
+    ['parent::$bar', 'unknown'],
+]);
+
 it('infers concat string type', function ($code, $expectedTypeString) {
     expect(getStatementTypeForScopeTest($code)->toString())->toBe($expectedTypeString);
 })->with([

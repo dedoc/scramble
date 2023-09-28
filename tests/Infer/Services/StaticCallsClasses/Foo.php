@@ -6,6 +6,8 @@ class Foo
 {
     const SOME = 42;
 
+    public static $staticProp = 'foo';
+
     public function selfClassFetch()
     {
         return self::class;
@@ -44,5 +46,30 @@ class Foo
     public function wow()
     {
         return (new static)->prop;
+    }
+
+    public function someMethod()
+    {
+        return 'foo';
+    }
+
+    public function selfMethodCall()
+    {
+        return self::someMethod();
+    }
+
+    public function staticMethodCall()
+    {
+        return static::someMethod();
+    }
+
+    public function selfPropertyFetch()
+    {
+        return self::$staticProp;
+    }
+
+    public function staticPropertyFetch()
+    {
+        return static::$staticProp;
     }
 }

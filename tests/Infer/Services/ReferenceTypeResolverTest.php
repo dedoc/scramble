@@ -88,6 +88,84 @@ it('infers new calls on child class', function (string $method, string $expected
     ['newParentCall', 'Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo'],
 ]);
 
+/*
+ * Static method calls (should work the same for both static and non-static methods)
+ */
+it('infers static method calls on parent class', function (string $method, string $expectedType) {
+    $methodDef = $this->classAnalyzer
+        ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo::class)
+        ->getMethodDefinition($method);
+    expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
+})->with([
+    ['selfMethodCall', 'string(foo)'],
+    ['staticMethodCall', 'string(foo)'],
+]);
+
+it('infers static method calls on child class', function (string $method, string $expectedType) {
+    $methodDef = $this->classAnalyzer
+        ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class)
+        ->getMethodDefinition($method);
+    expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
+})->with([
+    ['selfMethodCall', 'string(foo)'],
+    ['staticMethodCall', 'string(bar)'],
+    ['parentMethodCall', 'string(foo)'],
+]);
+
+/*
+ * Property fetches
+ */
+it('infers property fetches on parent class', function (string $method, string $expectedType) {
+    $methodDef = $this->classAnalyzer
+        ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo::class)
+        ->getMethodDefinition($method);
+    expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
+})->with([
+    ['selfPropertyFetch', 'string(foo)'],
+    ['staticPropertyFetch', 'string(foo)'],
+]);
+
+it('infers property fetches on child class', function (string $method, string $expectedType) {
+    $methodDef = $this->classAnalyzer
+        ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class)
+        ->getMethodDefinition($method);
+    expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
+})->with([
+    ['selfPropertyFetch', 'string(foo)'],
+    ['staticPropertyFetch', 'string(bar)'],
+    ['parentPropertyFetch', 'string(foo)'],
+]);
+
+/*
+ * Complex static calls
+ */
+
+it('infers type of static method call and instance property fetch', function () {
+    $this->classAnalyzer->analyze(ReferenceTypeResolverTest_Foo::class);
+    $this->classAnalyzer->analyze(ReferenceTypeResolverTest_Bar::class);
+
+    $type = getStatementType('(new ReferenceTypeResolverTest_Bar)->test()');
+
+    expect($type->toString())->toBe('array{0: array{0: string(bar), 1: int(21)}, 1: array{0: string(foo), 1: int(21)}}');
+});
+class ReferenceTypeResolverTest_Foo {
+    public $prop = 42;
+    public function oreo() {
+        return ['foo', $this->prop];
+    }
+    public function test() {
+        return [static::oreo(), self::oreo()];
+    }
+}
+class ReferenceTypeResolverTest_Bar extends ReferenceTypeResolverTest_Foo {
+    public $prop = 21;
+    public function oreo() {
+        return ['bar', $this->prop];
+    }
+}
+$a = (new ReferenceTypeResolverTest_Bar)->test();
+
+
 it('complex static call and property fetch', function () {
     $type = getStatementType('Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::wow()');
 

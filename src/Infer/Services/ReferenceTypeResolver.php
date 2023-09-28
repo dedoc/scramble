@@ -25,6 +25,7 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticPropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
@@ -135,6 +136,10 @@ class ReferenceTypeResolver
                 return $this->resolveStaticMethodCallReferenceType($scope, $t);
             }
 
+            if ($t instanceof StaticPropertyFetchReferenceType) {
+                return $this->resolveStaticPropertyFetchReferenceType($scope, $t);
+            }
+
             if ($t instanceof CallableCallReferenceType) {
                 return $this->resolveCallableCallReferenceType($scope, $t);
             }
@@ -181,6 +186,38 @@ class ReferenceTypeResolver
         }
 
         return (new ConstFetchTypeGetter)($scope, $analyzedType->callee, $analyzedType->constName);
+    }
+
+    private function resolveStaticPropertyFetchReferenceType(Scope $scope, StaticPropertyFetchReferenceType $type)
+    {
+        $analyzedType = clone $type;
+
+        $contextualClassName = $this->resolveClassName($scope, $type->callee);
+        if (! $contextualClassName) {
+            return new UnknownType("Cannot properly analyze [{$type->toString()}] reference type as static keyword used in non-class context, or current class scope has no parent.");
+        }
+        $type->callee = $contextualClassName;
+
+        if (
+            ! array_key_exists($type->callee, $this->index->classesDefinitions)
+            && ! $this->resolveUnknownClassResolver($type->callee)
+        ) {
+            return new UnknownType();
+        }
+
+        /** @var ClassDefinition $calleeDefinition */
+        $calleeDefinition = $this->index->getClassDefinition($type->callee);
+
+        if (! $propertyDefinition = $calleeDefinition->getPropertyDefinition($type->propertyName)) {
+            return new UnknownType("Cannot get a static property type [$type->propertyName] on type [$type->callee]");
+        }
+
+        $propertyType = $propertyDefinition->type;
+        if (! $propertyType || $propertyType instanceof TemplateType) {
+            return new UnknownType("Cannot get a static property type [$type->propertyName] on type [$type->callee]");
+        }
+
+        return $propertyType;
     }
 
     private function resolveMethodCallReferenceType(Scope $scope, MethodCallReferenceType $type)
@@ -241,6 +278,12 @@ class ReferenceTypeResolver
             fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
             $type->arguments,
         );
+
+        $contextualClassName = $this->resolveClassName($scope, $type->callee);
+        if (! $contextualClassName) {
+            return new UnknownType();
+        }
+        $type->callee = $contextualClassName;
 
         // Assuming callee here can be only string of known name. Reality is more complex than
         // that, but it is fine for now.
@@ -323,7 +366,6 @@ class ReferenceTypeResolver
         if (! $contextualClassName) {
             return new UnknownType();
         }
-
         $type->name = $contextualClassName;
 
         if (
