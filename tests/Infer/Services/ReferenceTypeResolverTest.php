@@ -148,23 +148,30 @@ it('infers type of static method call and instance property fetch', function () 
 
     expect($type->toString())->toBe('array{0: array{0: string(bar), 1: int(21)}, 1: array{0: string(foo), 1: int(21)}}');
 });
-class ReferenceTypeResolverTest_Foo {
+class ReferenceTypeResolverTest_Foo
+{
     public $prop = 42;
-    public function oreo() {
+
+    public function oreo()
+    {
         return ['foo', $this->prop];
     }
-    public function test() {
+
+    public function test()
+    {
         return [static::oreo(), self::oreo()];
     }
 }
-class ReferenceTypeResolverTest_Bar extends ReferenceTypeResolverTest_Foo {
+class ReferenceTypeResolverTest_Bar extends ReferenceTypeResolverTest_Foo
+{
     public $prop = 21;
-    public function oreo() {
+
+    public function oreo()
+    {
         return ['bar', $this->prop];
     }
 }
 $a = (new ReferenceTypeResolverTest_Bar)->test();
-
 
 it('complex static call and property fetch', function () {
     $type = getStatementType('Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::wow()');

@@ -2,9 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type\Reference;
 
-use Dedoc\Scramble\Support\Type\Reference\Dependency\MethodDependency;
 use Dedoc\Scramble\Support\Type\Reference\Dependency\PropertyDependency;
-use Dedoc\Scramble\Support\Type\Type;
 
 class StaticPropertyFetchReferenceType extends AbstractReferenceType
 {
