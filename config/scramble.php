@@ -42,9 +42,9 @@ return [
         'logo' => '',
 
         /*
-         * Use to fetch the credential policy for the Try It feature. Options are: omit (default), include, and same-origin
+         * Use to fetch the credential policy for the Try It feature. Options are: omit, include (default), and same-origin
          */
-        'try_it_credentials_policy' => 'omit'
+        'try_it_credentials_policy' => 'include',
     ],
 
     /*
