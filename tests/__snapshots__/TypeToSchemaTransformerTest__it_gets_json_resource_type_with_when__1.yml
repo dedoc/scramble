@@ -1,6 +1,6 @@
 type: object
 properties:
-    foo: { type: integer }
+    foo: { type: integer, example: 1 }
     bar: { type: [string, 'null'], example: b }
 required:
     - bar
