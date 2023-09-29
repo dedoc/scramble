@@ -2,4 +2,4 @@ response:
     description: '`UserCollection_Four`'
     content: { application/json: { schema: { type: object, properties: { data: { $ref: '#/components/schemas/UserCollection_Four' } }, required: [data] } } }
 components:
-    schemas: { UserCollection_Four: { type: array, items: { $ref: '#/components/schemas/UserResource' }, title: UserCollection_Four }, UserResource: { type: object, properties: { id: { type: integer } }, required: [id], title: UserResource } }
+    schemas: { UserCollection_Four: { type: array, items: { $ref: '#/components/schemas/UserResource' }, title: UserCollection_Four }, UserResource: { type: object, properties: { id: { type: integer, example: 1 } }, required: [id], title: UserResource } }
