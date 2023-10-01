@@ -141,7 +141,10 @@ class Generator
                 $routeResolver = Scramble::$routeResolver ?? function (Route $route) {
                     $expectedDomain = config('scramble.api_domain');
 
-                    return Str::startsWith($route->uri, config('scramble.api_path', 'api'))
+                    $routePrefix = trim(config('scramble.api_path', 'api'), '/');
+                    $routeRegex = '/^' . preg_quote($routePrefix, '/') . '((\/.+)|$)/';
+
+                    return preg_match($routeRegex, $route->uri)
                         && (! $expectedDomain || $route->getDomain() === $expectedDomain);
                 };
 
