@@ -158,7 +158,7 @@ it('supports file rule', function () {
 
 it('converts min rule into "minimum" for numeric fields', function () {
     $rules = [
-        'num' => ['int', 'min:8',],
+        'num' => ['int', 'min:8'],
     ];
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
@@ -172,7 +172,7 @@ it('converts min rule into "minimum" for numeric fields', function () {
 
 it('converts max rule into "maximum" for numeric fields', function () {
     $rules = [
-        'num' => ['int', 'max:8',],
+        'num' => ['int', 'max:8'],
     ];
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
@@ -186,7 +186,7 @@ it('converts max rule into "maximum" for numeric fields', function () {
 
 it('converts min rule into "minItems" for array fields', function () {
     $rules = [
-        'num' => ['array', 'min:8',],
+        'num' => ['array', 'min:8'],
     ];
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
@@ -200,7 +200,7 @@ it('converts min rule into "minItems" for array fields', function () {
 
 it('converts max rule into "maxItems" for array fields', function () {
     $rules = [
-        'num' => ['array', 'max:8',],
+        'num' => ['array', 'max:8'],
     ];
 
     $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
