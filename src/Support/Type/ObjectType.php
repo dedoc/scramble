@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
@@ -54,7 +55,7 @@ class ObjectType extends AbstractType
 
     public function getMethodReturnType(string $methodName, array $arguments = [], Scope $scope = new GlobalScope): ?Type
     {
-        if ($returnType = app(ExtensionsBroker::class)->getMethodReturnType(new MethodCallEvent(
+        if ($returnType = Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
             instance: $this,
             name: $methodName,
             scope: $scope,

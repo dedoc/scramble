@@ -16,6 +16,7 @@ use Dedoc\Scramble\Support\ExceptionToResponseExtensions\ValidationExceptionToRe
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
+use Dedoc\Scramble\Support\InferExtensions\ArrayKeysReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCallsTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCreationInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
@@ -75,6 +76,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 $inferExtensionsClasses = array_merge([
                     ModelExtension::class,
                     RuleExtension::class,
+                    ArrayKeysReturnTypeExtension::class,
                 ], $inferExtensionsClasses);
 
                 return array_merge(

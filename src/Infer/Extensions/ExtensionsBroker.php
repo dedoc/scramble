@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\Extensions;
 
+use Dedoc\Scramble\Support\Type\FunctionType;
+
 class ExtensionsBroker
 {
     public function __construct(
@@ -34,6 +36,22 @@ class ExtensionsBroker
 
         foreach ($extensions as $extension) {
             if ($propertyType = $extension->getMethodReturnType($event)) {
+                return $propertyType;
+            }
+        }
+
+        return null;
+    }
+
+    public function getFunctionReturnType($event)
+    {
+        $extensions = array_filter($this->extensions, function ($e) use ($event) {
+            return $e instanceof FunctionReturnTypeExtension
+                && $e->shouldHandle($event->getName());
+        });
+
+        foreach ($extensions as $extension) {
+            if ($propertyType = $extension->getFunctionReturnType($event)) {
                 return $propertyType;
             }
         }

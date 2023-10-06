@@ -3,9 +3,11 @@
 namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
+use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Dedoc\Scramble\Infer\Scope\Index;
@@ -289,7 +291,7 @@ class ReferenceTypeResolver
         // that, but it is fine for now.
 
         // Attempting extensions broker before potentially giving up on type inference
-        if ($returnType = app(ExtensionsBroker::class)->getStaticMethodReturnType(new StaticMethodCallEvent(
+        if ($returnType = Context::getInstance()->extensionsBroker->getStaticMethodReturnType(new StaticMethodCallEvent(
             callee: $type->callee,
             name: $type->methodName,
             scope: $scope,
@@ -333,6 +335,26 @@ class ReferenceTypeResolver
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)
     {
+        if ($type->callee instanceof CallableStringType) {
+            $analyzedType = clone $type;
+
+            $analyzedType->arguments = array_map(
+                // @todo: fix resolving arguments when deep arg is reference
+                fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
+                $type->arguments,
+            );
+
+            $returnType = Context::getInstance()->extensionsBroker->getFunctionReturnType(new FunctionCallEvent(
+                name: $analyzedType->callee->name,
+                scope: $scope,
+                arguments: $analyzedType->arguments,
+            ));
+
+            if ($returnType) {
+                return $returnType;
+            }
+        }
+
         $calleeType = $type->callee instanceof CallableStringType
             ? $this->index->getFunctionDefinition($type->callee->name)
             : $this->resolve($scope, $type->callee);
