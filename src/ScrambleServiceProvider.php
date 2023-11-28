@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Console\Commands\ExportSpecifications;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
@@ -49,6 +50,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->name('scramble')
             ->hasConfigFile()
             ->hasRoute('web')
+            ->hasCommand(ExportSpecifications::class)
             ->hasViews('scramble');
 
         $this->app->singleton(FileParser::class, function () {

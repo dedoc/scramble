@@ -15,6 +15,11 @@ return [
      */
     'api_domain' => null,
 
+    /**
+     * The path where your OpenAPI specification will be exported.
+     */
+    'export_path' => 'api.json',
+
     'info' => [
         /*
          * API version.
