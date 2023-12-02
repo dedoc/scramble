@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Infer\Extensions\Event;
 
 use Dedoc\Scramble\Infer\Extensions\Event\Concerns\ArgumentTypesAware;
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\ObjectType;
 
 class FunctionCallEvent
 {

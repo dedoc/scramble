@@ -23,7 +23,7 @@ class ArrayKeysReturnTypeExtension implements FunctionReturnTypeExtension
     {
         $argType = $event->getArg('array', 0);
 
-        if (!$argType instanceof ArrayType) {
+        if (! $argType instanceof ArrayType) {
             return null;
         }
 
@@ -38,11 +38,12 @@ class ArrayKeysReturnTypeExtension implements FunctionReturnTypeExtension
                         new StringType(),
                         new IntegerType(),
                     ])
-                )
+                ),
             ]);
         }
 
         $numIndex = 0;
+
         return new ArrayType(
             array_map(function ($key) use (&$numIndex) {
                 if ($key === null || is_numeric($key)) {

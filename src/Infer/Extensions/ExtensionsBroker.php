@@ -2,8 +2,6 @@
 
 namespace Dedoc\Scramble\Infer\Extensions;
 
-use Dedoc\Scramble\Support\Type\FunctionType;
-
 class ExtensionsBroker
 {
     public function __construct(
