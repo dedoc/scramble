@@ -29,7 +29,7 @@ class ObjectType extends AbstractType
 
     public function getPropertyType(string $propertyName, Scope $scope = new GlobalScope): Type
     {
-        if ($propertyType = app(ExtensionsBroker::class)->getPropertyType(new PropertyFetchEvent(
+        if ($propertyType = Context::getInstance()->extensionsBroker->getPropertyType(new PropertyFetchEvent(
             instance: $this,
             name: $propertyName,
             scope: $scope,
