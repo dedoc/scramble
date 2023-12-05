@@ -148,7 +148,9 @@ class OpenApi
             );
         }
 
-        $result['tags'] = $tags;
+        if (count($tags = array_filter($tags))) {
+            $result['tags'] = array_filter($tags);
+        }
 
         if (count($serializedComponents = $this->components->toArray())) {
             $result['components'] = $serializedComponents;

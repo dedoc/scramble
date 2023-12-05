@@ -7,6 +7,6 @@ servers:
 security:
     - { apiKey: {  } }
 paths:
-    /test: { get: { operationId: controllerWithoutSecurity.index, tags: [WithoutSecurity], responses: { 200: { description: '', content: { application/json: { schema: { type: string } } } } }, security: [{  }] } }
+    /test: { get: { operationId: controllerWithoutSecurity.index, responses: { 200: { description: '', content: { application/json: { schema: { type: string } } } } }, security: [{  }] } }
 components:
     securitySchemes: { apiKey: { type: apiKey, in: query, name: api_token } }
