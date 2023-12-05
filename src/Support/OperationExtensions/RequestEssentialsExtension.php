@@ -70,6 +70,10 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         $operation->setAttribute('operationId', $this->getOperationId($routeInfo));
+
+        if ($tags = $routeInfo->phpDoc()->getTagsByName('@tag')) {
+            $operation->setTags([...Arr::map($tags, fn ($tag) => trim($tag?->value?->value))]);
+        }
     }
 
     /**

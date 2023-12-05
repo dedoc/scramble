@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Illuminate\Support\Facades\Log;
+
 class OpenApi
 {
     public string $version;
@@ -15,6 +17,9 @@ class OpenApi
 
     /** @var Path[] */
     public array $paths = [];
+
+    /** @var string[] */
+    public array $tags = [];
 
     private ?Security $defaultSecurity = null;
 
@@ -72,6 +77,23 @@ class OpenApi
         return $this;
     }
 
+    /**
+     * @param  string[]  $tags
+     */
+    public function tags(array $tags)
+    {
+        $this->tags = $tags;
+
+        return $this;
+    }
+
+    public function addTag(string $tag)
+    {
+        $this->tags[] = $tag;
+
+        return $this;
+    }
+
     public function addServer(Server $server)
     {
         $this->servers[] = $server;
@@ -116,6 +138,19 @@ class OpenApi
 
             $result['paths'] = $paths;
         }
+
+        $tags = [];
+
+        if (count($this->tags)) {
+            $tags = $this->tags;
+        }
+
+        $result['tags'] = array_merge(
+            $tags,
+            collect($result['paths'])->pluck('*.tags')->flatten()->unique()->toArray(),
+        );
+
+        Log::debug($result['paths']);
 
         if (count($serializedComponents = $this->components->toArray())) {
             $result['components'] = $serializedComponents;
