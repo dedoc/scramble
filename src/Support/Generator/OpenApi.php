@@ -2,8 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-use Illuminate\Support\Facades\Log;
-
 class OpenApi
 {
     public string $version;
@@ -126,6 +124,12 @@ class OpenApi
             $result['security'] = [$this->defaultSecurity->toArray()];
         }
 
+        $tags = [];
+
+        if (count($this->tags)) {
+            $tags = $this->tags;
+        }
+
         if (count($this->paths)) {
             $paths = [];
 
@@ -137,20 +141,14 @@ class OpenApi
             }
 
             $result['paths'] = $paths;
+
+            $tags = array_merge(
+                $tags,
+                collect($paths)->pluck('*.tags')->flatten()->unique()->toArray(),
+            );
         }
 
-        $tags = [];
-
-        if (count($this->tags)) {
-            $tags = $this->tags;
-        }
-
-        $result['tags'] = array_merge(
-            $tags,
-            collect($result['paths'])->pluck('*.tags')->flatten()->unique()->toArray(),
-        );
-
-        Log::debug($result['paths']);
+        $result['tags'] = $tags;
 
         if (count($serializedComponents = $this->components->toArray())) {
             $result['components'] = $serializedComponents;

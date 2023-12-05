@@ -58,10 +58,6 @@ class RequestEssentialsExtension extends OperationExtension
                 collect($pathAliases)->values()->map(fn ($v) => '{'.$v.'}')->all(),
                 $routeInfo->route->uri,
             ))
-            ->setTags(array_unique([
-                ...$this->extractTagsForMethod($routeInfo),
-                Str::of(class_basename($routeInfo->className()))->replace('Controller', ''),
-            ]))
             ->servers($this->getAlternativeServers($routeInfo->route))
             ->addParameters($pathParams);
 
@@ -71,8 +67,14 @@ class RequestEssentialsExtension extends OperationExtension
 
         $operation->setAttribute('operationId', $this->getOperationId($routeInfo));
 
-        if ($tags = $routeInfo->phpDoc()->getTagsByName('@tag')) {
-            $operation->setTags([...Arr::map($tags, fn ($tag) => trim($tag?->value?->value))]);
+        if (count($tags = $routeInfo->phpDoc()->getTagsByName('@tags'))) {
+            $operation->setTags(
+                collect($tags)
+                    ->flatMap(fn (\PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTagNode $tag) => explode(',', $tag?->value))
+                    ->map(fn ($tag) => trim($tag))
+                    ->unique()
+                    ->toArray()
+            );
         }
     }
 
@@ -120,21 +122,6 @@ class RequestEssentialsExtension extends OperationExtension
         };
 
         return $mask($expectedUrl) === $mask($actualUrl);
-    }
-
-    private function extractTagsForMethod(RouteInfo $routeInfo)
-    {
-        $classPhpDoc = $routeInfo->reflectionMethod()
-            ? $routeInfo->reflectionMethod()->getDeclaringClass()->getDocComment()
-            : false;
-
-        $classPhpDoc = $classPhpDoc ? PhpDoc::parse($classPhpDoc) : new PhpDocNode([]);
-
-        if (! count($tagNodes = $classPhpDoc->getTagsByName('@tags'))) {
-            return [];
-        }
-
-        return explode(',', array_values($tagNodes)[0]->value->value);
     }
 
     private function getParametersFromString(?string $str)
