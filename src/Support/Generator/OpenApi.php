@@ -2,8 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-use Illuminate\Support\Arr;
-
 class OpenApi
 {
     public string $version;
@@ -151,9 +149,10 @@ class OpenApi
         }
 
         if (count($tags = array_filter($tags))) {
-            $result['tags'] = Arr::map($tags, fn ($tag) => [
+            $keys = array_keys($tags);
+            $result['tags'] = array_map(fn ($tag) => [
                 'name' => $tag,
-            ]);
+            ], $tags, $keys);
         }
 
         if (count($serializedComponents = $this->components->toArray())) {
