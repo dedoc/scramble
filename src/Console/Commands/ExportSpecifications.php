@@ -33,9 +33,7 @@ class ExportSpecifications extends Command
         $specifications = json_encode($generator());
 
         /** @var string filename */
-        $filename = $this->hasOption('path')
-            ? $this->option('path')
-            : config('scramble.export_path', 'api.json');
+        $filename = $this->option('path') ?? config('scramble.export_path', 'api.json');
 
         File::put($filename, $specifications);
 
