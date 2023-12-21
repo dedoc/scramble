@@ -33,6 +33,7 @@ use Dedoc\Scramble\Support\ServerFactory;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\FormatExtractorExtension;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
@@ -137,6 +138,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     AnonymousResourceCollectionTypeToSchema::class,
                     LengthAwarePaginatorTypeToSchema::class,
                     ResponseTypeToSchema::class,
+                    FormatExtractorExtension::class
                 ]),
                 array_merge($exceptionToResponseExtensions, [
                     ValidationExceptionToResponseExtension::class,
