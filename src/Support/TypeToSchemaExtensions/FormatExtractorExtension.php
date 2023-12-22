@@ -4,39 +4,42 @@ namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Support\Str;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTagNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\VarTagValueNode;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 
 class FormatExtractorExtension extends TypeToSchemaExtension
 {
-    public function getDescription(Type $type)
+    public function shouldHandle(Type $type): bool
     {
         $docNode = $type->getAttribute("docNode");
         if(!$docNode) return false;
+        $varNode = $docNode->getTagsByName("@var")[0];
+        if(!($varNode instanceof PhpDocTagNode)) return false;
+        if(!($varNode->value instanceof VarTagValueNode)) return false;
+        if(!($varNode->value->type instanceof IdentifierTypeNode)) return false;
+        if(!Str::contains($varNode->value->type->name, "string")) return false;
 
-        $vars = $docNode->getTagsByName("@var");
+        $vars = $docNode->getTagsByName("@format");
         foreach($vars as $var) {
-            $value = $var->value;
-            if(!($value instanceof VarTagValueNode)) return false;
-
-            return $value->description;
+            if(!($var instanceof PhpDocTagNode)) return false;
         }
+        return count($vars) > 0;
     }
 
-    public function shouldHandle(Type $type): bool
+    public function toSchema(Type $type) : StringType
     {
-        $description = $this->getDescription($type);
-        if(!$description) return false;
-        return Str::of($description)->contains('@format');
-    }
-
-    public function toSchema(Type $type): StringType
-    {
-        $description = $this->getDescription($type);
-        $parts = explode('@format', $description);
-        $format = trim($parts[1]);
-        $description = trim($parts[0]);
-        return (new StringType)->format($format)->setDescription($description);
+        $docNode = $type->getAttribute("docNode");
+        $vars = $docNode->getTagsByName("@format");
+        $format = $vars[1]->value->value;
+        if(Str::contains($format, "|")) {
+            $format = explode("|", $format)[0];
+        }
+        if(Str::contains($format, ",")) {
+            $format = explode(",", $format)[0];
+        }
+        return (new StringType())->format($format);
     }
 }
