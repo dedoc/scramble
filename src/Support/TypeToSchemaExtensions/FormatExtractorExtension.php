@@ -16,7 +16,10 @@ class FormatExtractorExtension extends TypeToSchemaExtension
     {
         $docNode = $type->getAttribute("docNode");
         if(!$docNode) return false;
-        $varNode = $docNode->getTagsByName("@var")[0];
+        $varNode = $docNode->getTagsByName("@var");
+        if(count($varNode) === 0) return false;
+        $varNode = reset($varNode);
+
         if(!($varNode instanceof PhpDocTagNode)) return false;
         if(!($varNode->value instanceof VarTagValueNode)) return false;
         if(!($varNode->value->type instanceof IdentifierTypeNode)) return false;
@@ -33,9 +36,9 @@ class FormatExtractorExtension extends TypeToSchemaExtension
     {
         $docNode = $type->getAttribute("docNode");
         $vars = $docNode->getTagsByName("@format");
-        $format = $vars[1]->value->value;
+        $format = reset($vars)->value->value;
         if(Str::contains($format, "|")) {
-            $format = explode("|", $format)[0];
+            $format = explode("|", $format);
         }
         if(Str::contains($format, ",")) {
             $format = explode(",", $format)[0];
