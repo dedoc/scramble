@@ -81,7 +81,7 @@ class ClassDefinition
         return $this->properties[$name] ?? null;
     }
 
-    public function getMethodCallType(string $name, ObjectType $calledOn = null)
+    public function getMethodCallType(string $name, ?ObjectType $calledOn = null)
     {
         $methodDefinition = $this->methods[$name] ?? null;
 
