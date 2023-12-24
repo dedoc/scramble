@@ -312,7 +312,7 @@ class ReferenceTypeResolver
         FunctionLikeDefinition $callee,
         array $arguments,
         /* When this is a handling for method call */
-        ObjectType|SelfType $calledOnType = null,
+        ObjectType|SelfType|null $calledOnType = null,
     ) {
         $returnType = $callee->type->getReturnType();
         $isSelf = false;
