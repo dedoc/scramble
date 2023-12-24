@@ -164,7 +164,7 @@ class Scope
         return $type;
     }
 
-    public function createChildScope(ScopeContext $context = null)
+    public function createChildScope(?ScopeContext $context = null)
     {
         return new Scope(
             $this->index,
