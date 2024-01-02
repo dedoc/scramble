@@ -15,6 +15,11 @@ return [
      */
     'api_domain' => null,
 
+    /**
+     * Home page path
+     */
+    'doc_path' => 'docs/api',
+
     'info' => [
         /*
          * API version.
