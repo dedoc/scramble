@@ -208,12 +208,9 @@ class RequestEssentialsExtension extends OperationExtension
 
             $isModelId = $type && !isset($schemaTypesMap[$type]);
 
-            if (enum_exists($type)) {
-                return $this->getRouterEnum($schemaType, $type, $paramName, $description, $route->bindingFields()[$paramName] ?? null);
-            }
-
             if ($isModelId) {
                 [$schemaType, $description] = $this->getModelIdTypeAndDescription($schemaType, $type, $paramName, $description, $route->bindingFields()[$paramName] ?? null);
+
                 $schemaType->setAttribute('isModelId', true);
             }
 
@@ -223,16 +220,6 @@ class RequestEssentialsExtension extends OperationExtension
         }, array_values(array_diff($route->parameterNames(), $this->getParametersFromString($route->getDomain()))));
 
         return [$params, $aliases];
-    }
-
-    private function getRouterEnum(
-        Type $baseType,
-        string $type,
-        string $paramName,
-        string $description,
-        ?string $bindingField,
-    ): array {
-        return [(new \Dedoc\Scramble\Support\Generator\Types\StringType($type))->enum($type::values()), $description];
     }
 
     private function getModelIdTypeAndDescription(
