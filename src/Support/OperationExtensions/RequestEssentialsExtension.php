@@ -54,8 +54,8 @@ class RequestEssentialsExtension extends OperationExtension
         $operation
             ->setMethod(strtolower($routeInfo->route->methods()[0]))
             ->setPath(Str::replace(
-                collect($pathAliases)->keys()->map(fn ($k) => '{'.$k.'}')->all(),
-                collect($pathAliases)->values()->map(fn ($v) => '{'.$v.'}')->all(),
+                collect($pathAliases)->keys()->map(fn ($k) => '{' . $k . '}')->all(),
+                collect($pathAliases)->values()->map(fn ($v) => '{' . $v . '}')->all(),
                 $routeInfo->route->uri,
             ))
             ->setTags(array_unique([
@@ -80,12 +80,12 @@ class RequestEssentialsExtension extends OperationExtension
      */
     private function getAlternativeServers(Route $route)
     {
-        if (! $route->getDomain()) {
+        if (!$route->getDomain()) {
             return [];
         }
 
         [$protocol] = explode('://', url('/'));
-        $expectedServer = $this->serverFactory->make($protocol.'://'.$route->getDomain().'/'.config('scramble.api_path', 'api'));
+        $expectedServer = $this->serverFactory->make($protocol . '://' . $route->getDomain() . '/' . config('scramble.api_path', 'api'));
 
         if ($this->isServerMatchesAllGivenServers($expectedServer, $this->openApi->servers)) {
             return [];
@@ -112,7 +112,7 @@ class RequestEssentialsExtension extends OperationExtension
 
             $params = Str::of($domain)->matchAll('/\{(.*?)\}/');
 
-            return $params->join('.').'/'.$path;
+            return $params->join('.') . '/' . $path;
         };
 
         return $mask($expectedUrl) === $mask($actualUrl);
@@ -126,7 +126,7 @@ class RequestEssentialsExtension extends OperationExtension
 
         $classPhpDoc = $classPhpDoc ? PhpDoc::parse($classPhpDoc) : new PhpDocNode([]);
 
-        if (! count($tagNodes = $classPhpDoc->getTagsByName('@tags'))) {
+        if (!count($tagNodes = $classPhpDoc->getTagsByName('@tags'))) {
             return [];
         }
 
@@ -206,11 +206,14 @@ class RequestEssentialsExtension extends OperationExtension
             ];
             $schemaType = $type ? ($schemaTypesMap[$type] ?? new IntegerType) : new StringType;
 
-            $isModelId = $type && ! isset($schemaTypesMap[$type]);
+            $isModelId = $type && !isset($schemaTypesMap[$type]);
+
+            if (enum_exists($type)) {
+                return $this->getRouterEnum($schemaType, $type, $paramName, $description, $route->bindingFields()[$paramName] ?? null);
+            }
 
             if ($isModelId) {
                 [$schemaType, $description] = $this->getModelIdTypeAndDescription($schemaType, $type, $paramName, $description, $route->bindingFields()[$paramName] ?? null);
-
                 $schemaType->setAttribute('isModelId', true);
             }
 
@@ -222,6 +225,16 @@ class RequestEssentialsExtension extends OperationExtension
         return [$params, $aliases];
     }
 
+    private function getRouterEnum(
+        Type $baseType,
+        string $type,
+        string $paramName,
+        string $description,
+        ?string $bindingField,
+    ): array {
+        return [(new \Dedoc\Scramble\Support\Generator\Types\StringType($type))->enum($type::values()), $description];
+    }
+
     private function getModelIdTypeAndDescription(
         Type $baseType,
         string $type,
@@ -231,10 +244,10 @@ class RequestEssentialsExtension extends OperationExtension
     ): array {
         $defaults = [
             $baseType,
-            $description ?: 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' ID',
+            $description ?: 'The ' . Str::of($paramName)->kebab()->replace(['-', '_'], ' ') . ' ID',
         ];
 
-        if (! is_a($type, Model::class, true)) {
+        if (!is_a($type, Model::class, true)) {
             return $defaults;
         }
 
@@ -255,7 +268,7 @@ class RequestEssentialsExtension extends OperationExtension
                 ? Str::upper($routeKeyName)
                 : (string) Str::of($routeKeyName)->lower()->kebab()->replace(['-', '_'], ' ');
 
-            $description = 'The '.Str::of($paramName)->kebab()->replace(['-', '_'], ' ').' '.$keyDescriptionName;
+            $description = 'The ' . Str::of($paramName)->kebab()->replace(['-', '_'], ' ') . ' ' . $keyDescriptionName;
         }
 
         $modelTraits = class_uses($type);
@@ -284,7 +297,7 @@ class RequestEssentialsExtension extends OperationExtension
 
                 // Using route name as operation ID if set. We need to avoid using generated route names as this
                 // will result gibberish operation IDs when routes without names are cached.
-                if (($name = $routeInfo->route->getName()) && ! Str::startsWith($name, 'generated::')) {
+                if (($name = $routeInfo->route->getName()) && !Str::startsWith($name, 'generated::')) {
                     return Str::startsWith($name, 'api.') ? Str::replaceFirst('api.', '', $name) : $name;
                 }
 
