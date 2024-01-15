@@ -1,5 +1,5 @@
 {
-    "name": "dedoc/scramble",
+    "name": "wibesoft-company/laravel-openapi-document",
     "description": "Automatic generation of API documentation for Laravel applications.",
     "keywords": [
         "laravel",
