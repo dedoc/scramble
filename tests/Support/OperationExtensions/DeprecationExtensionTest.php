@@ -51,7 +51,7 @@ it('deprecated class with description sets keys', function () {
     });
 
     expect($openApiDocument['paths']['/test']['get'])
-        ->toHaveKey('description', 'Class description' . "\n\n" . 'Deprecation description')
+        ->toHaveKey('description', 'Class description'."\n\n".'Deprecation description')
         ->toHaveKey('deprecated', true);
 });
 

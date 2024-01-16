@@ -20,7 +20,7 @@ class DeprecationExtension extends OperationExtension
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
         // Skip if method is not deprecated
-        if (!$routeInfo->reflectionMethod() || $routeInfo->phpDoc()->getTagsByName('@not-deprecated')) {
+        if (! $routeInfo->reflectionMethod() || $routeInfo->phpDoc()->getTagsByName('@not-deprecated')) {
             return;
         }
 
@@ -29,7 +29,7 @@ class DeprecationExtension extends OperationExtension
         $deprecatedTags = $routeInfo->phpDoc()->getDeprecatedTagValues();
 
         // Skip if no deprecations found
-        if (!$deprecatedClass && !$deprecatedTags) {
+        if (! $deprecatedClass && ! $deprecatedTags) {
             return;
         }
 
@@ -66,6 +66,6 @@ class DeprecationExtension extends OperationExtension
      */
     private function generateDescription(array $deprecation)
     {
-        return implode("\n", array_map(fn($tag) => $tag->description, $deprecation));
+        return implode("\n", array_map(fn ($tag) => $tag->description, $deprecation));
     }
 }
