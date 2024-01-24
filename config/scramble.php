@@ -15,6 +15,12 @@ return [
      */
     'api_domain' => null,
 
+    /*
+     * Define the theme of the documentation.
+     * Available options are `light` and `dark`.
+     */
+    'theme' => 'dark',
+
     'info' => [
         /*
          * API version.

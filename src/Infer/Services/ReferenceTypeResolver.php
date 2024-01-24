@@ -401,7 +401,7 @@ class ReferenceTypeResolver
      * arguments defaults.
      *
      * @param  ?FunctionLikeDefinition  $callee
-     * @param  array  $realArguments The list of arguments a function has been called with.
+     * @param  array  $realArguments  The list of arguments a function has been called with.
      * @return array The actual list of arguments where not passed arguments replaced with default values.
      */
     private function prepareArguments(?FunctionLikeDefinition $callee, array $realArguments)

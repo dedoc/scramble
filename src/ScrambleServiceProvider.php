@@ -25,6 +25,7 @@ use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\OperationBuilder;
+use Dedoc\Scramble\Support\OperationExtensions\DeprecationExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ErrorResponsesExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
@@ -108,6 +109,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     RequestBodyExtension::class,
                     ErrorResponsesExtension::class,
                     ResponseExtension::class,
+                    DeprecationExtension::class,
                 ], $operationExtensions);
             });
 
