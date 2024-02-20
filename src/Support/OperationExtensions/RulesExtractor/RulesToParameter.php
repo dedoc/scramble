@@ -90,6 +90,8 @@ class RulesToParameter
                     $exampleValue = null;
                 } elseif (in_array($exampleValue, ['true', 'false'])) {
                     $exampleValue = $exampleValue === 'true';
+                } elseif (str_starts_with($exampleValue, 'tel:')) {
+                    $exampleValue = explode('tel:', $exampleValue)[1] ?? '';
                 } elseif (is_numeric($exampleValue)) {
                     $exampleValue = floatval($exampleValue);
                 }
