@@ -74,5 +74,7 @@ return [
         RestrictedDocsAccess::class,
     ],
 
+    'disable_model_attributes' => false,
+
     'extensions' => [],
 ];

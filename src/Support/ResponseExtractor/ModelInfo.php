@@ -156,6 +156,10 @@ class ModelInfo
      */
     protected function getAttributes($model)
     {
+        if (config('scramble.disable_model_attributes')) {
+            return collect();
+        }
+
         $schema = $model->getConnection()->getDoctrineSchemaManager();
         $table = $model->getConnection()->getTablePrefix().$model->getTable();
 
