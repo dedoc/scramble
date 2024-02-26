@@ -43,11 +43,13 @@ class OAuthFlow
 
     public function toArray()
     {
-        return array_filter([
-            'authorizationUrl' => $this->authorizationUrl,
-            'tokenUrl' => $this->tokenUrl,
-            'refreshUrl' => $this->refreshUrl,
+        return [
+            ...array_filter([
+                'authorizationUrl' => $this->authorizationUrl,
+                'tokenUrl' => $this->tokenUrl,
+                'refreshUrl' => $this->refreshUrl,
+            ]),
             'scopes' => $this->scopes,
-        ]);
+        ];
     }
 }

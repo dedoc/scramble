@@ -1,0 +1,8 @@
+openapi: 3.1.0
+info:
+    title: API
+    version: 0.0.1
+security:
+    - { oauth2: {  } }
+components:
+    securitySchemes: { oauth2: { type: oauth2, flows: { implicit: { tokenUrl: 'https://test.com/token', refreshUrl: 'https://test.com', scopes: {  } } } } }
