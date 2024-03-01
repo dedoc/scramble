@@ -49,7 +49,8 @@ class OAuthFlow
                 'tokenUrl' => $this->tokenUrl,
                 'refreshUrl' => $this->refreshUrl,
             ]),
-            'scopes' => $this->scopes,
+            // Never filter 'scopes' as it is allowed to be empty. If empty it must be an object
+            'scopes' => empty($this->scopes) ? new \stdClass() : $this->scopes,
         ];
     }
 }
