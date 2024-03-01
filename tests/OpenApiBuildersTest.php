@@ -56,5 +56,5 @@ it('builds oauth2 security scheme with empty scope map', function () {
     $document = $openApi->toArray();
 
     expect($document['components']['securitySchemes']['oauth2']['flows']['implicit']['scopes'])
-        ->toBe([]);
+        ->toBeObject();
 });
