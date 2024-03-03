@@ -8,5 +8,7 @@ security:
     - { apiKey: {  } }
 paths:
     /test: { get: { operationId: controllerWithoutSecurity.index, tags: [WithoutSecurity], responses: { 200: { description: '', content: { application/json: { schema: { type: string } } } } }, security: [{  }] } }
+tags:
+    - { name: WithoutSecurity }
 components:
     securitySchemes: { apiKey: { type: apiKey, in: query, name: api_token } }

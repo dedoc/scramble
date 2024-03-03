@@ -6,3 +6,5 @@ servers:
     - { url: 'http://localhost/api' }
 paths:
     /test: { get: { operationId: fooTestFour.index, tags: [Foo_TestFour], responses: { 200: { description: 'Simple comment.', content: { application/json: { schema: { type: object, properties: { foo: { type: string, example: bar } }, required: [foo] } } } }, 201: { description: "Advanced comment.\n\nWith more description.", content: { application/json: { schema: { type: object, properties: { foo: { type: string } }, required: [foo] } } } } } } }
+tags:
+    - { name: Foo_TestFour }
