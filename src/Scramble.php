@@ -11,6 +11,8 @@ class Scramble
 
     public static $routeResolver;
 
+    public static $tagResolver;
+
     /**
      * Update open api document before finally rendering it.
      */
@@ -22,6 +24,11 @@ class Scramble
     public static function routes(callable $routeResolver)
     {
         static::$routeResolver = $routeResolver;
+    }
+
+    public static function tags(callable $tagResolver)
+    {
+        static::$tagResolver = $tagResolver;
     }
 
     /**

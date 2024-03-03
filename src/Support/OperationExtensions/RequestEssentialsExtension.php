@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
@@ -51,6 +52,13 @@ class RequestEssentialsExtension extends OperationExtension
     {
         [$pathParams, $pathAliases] = $this->getRoutePathParameters($routeInfo->route, $routeInfo->phpDoc());
 
+        $tagResolver = Scramble::$tagResolver ?? function (RouteInfo $routeInfo) {
+            return array_unique([
+                ...$this->extractTagsForMethod($routeInfo),
+                Str::of(class_basename($routeInfo->className()))->replace('Controller', ''),
+            ]);
+        };
+
         $operation
             ->setMethod(strtolower($routeInfo->route->methods()[0]))
             ->setPath(Str::replace(
@@ -58,10 +66,7 @@ class RequestEssentialsExtension extends OperationExtension
                 collect($pathAliases)->values()->map(fn ($v) => '{'.$v.'}')->all(),
                 $routeInfo->route->uri,
             ))
-            ->setTags(array_unique([
-                ...$this->extractTagsForMethod($routeInfo),
-                Str::of(class_basename($routeInfo->className()))->replace('Controller', ''),
-            ]))
+            ->setTags($tagResolver($routeInfo))
             ->servers($this->getAlternativeServers($routeInfo->route))
             ->addParameters($pathParams);
 
