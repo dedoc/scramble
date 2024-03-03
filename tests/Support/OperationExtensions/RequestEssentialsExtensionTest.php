@@ -28,6 +28,31 @@ class Foo_RequestEssentialsExtensionTest_Controller
     }
 }
 
+it('correctly handles not request class with rules method', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test/{model}', [Foo_RequestRulesTest_Controller::class, 'foo']);
+    });
+
+    expect($openApiDocument['paths']['/test/{model}']['get']['parameters'][0])
+        ->toHaveKey('schema.type', 'integer')
+        ->toHaveKey('description', 'The model ID');
+});
+class ModelWithRulesMethod extends \Illuminate\Database\Eloquent\Model
+{
+    protected $table = 'users';
+
+    public function rules()
+    {
+        return [];
+    }
+}
+class Foo_RequestRulesTest_Controller
+{
+    public function foo(ModelWithRulesMethod $model)
+    {
+    }
+}
+
 it('handles custom key from route to determine model route key type', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::get('api/test/{user:name}', [CustomKey_RequestEssentialsExtensionTest_Controller::class, 'foo']);
