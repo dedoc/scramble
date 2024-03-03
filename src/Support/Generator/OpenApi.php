@@ -16,6 +16,9 @@ class OpenApi
     /** @var Path[] */
     public array $paths = [];
 
+    /** @var string[] */
+    public array $tags = [];
+
     private ?Security $defaultSecurity = null;
 
     public function __construct(string $version)
@@ -72,6 +75,23 @@ class OpenApi
         return $this;
     }
 
+    /**
+     * @param  string[]  $tags
+     */
+    public function tags(array $tags)
+    {
+        $this->tags = $tags;
+
+        return $this;
+    }
+
+    public function addTag(string $tag)
+    {
+        $this->tags[] = $tag;
+
+        return $this;
+    }
+
     public function addServer(Server $server)
     {
         $this->servers[] = $server;
@@ -104,6 +124,12 @@ class OpenApi
             $result['security'] = [$this->defaultSecurity->toArray()];
         }
 
+        $tags = [];
+
+        if (count($this->tags)) {
+            $tags = $this->tags;
+        }
+
         if (count($this->paths)) {
             $paths = [];
 
@@ -115,6 +141,18 @@ class OpenApi
             }
 
             $result['paths'] = $paths;
+
+            $tags = array_merge(
+                $tags,
+                collect($paths)->pluck('*.tags')->flatten()->unique()->toArray(),
+            );
+        }
+
+        if (count($tags = array_filter($tags))) {
+            $keys = array_keys($tags);
+            $result['tags'] = array_map(fn ($tag) => [
+                'name' => $tag,
+            ], $tags, $keys);
         }
 
         if (count($serializedComponents = $this->components->toArray())) {
