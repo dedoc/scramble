@@ -6,5 +6,3 @@ servers:
     - { url: 'http://localhost/api' }
 paths:
     /test: { get: { operationId: fooTest.index, tags: [Foo_Test], responses: { 204: { description: 'No content', content: { application/json: {  } } } } } }
-tags:
-    - { name: Foo_Test }
