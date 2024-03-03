@@ -91,7 +91,7 @@ class RulesToParameter
                     $exampleValue = null;
                 } elseif (in_array($exampleValue, ['true', 'false'])) {
                     $exampleValue = $exampleValue === 'true';
-                } elseif (is_numeric($exampleValue) && !($parameter->schema->type instanceof StringType)) {
+                } elseif (is_numeric($exampleValue) && ! ($parameter->schema->type instanceof StringType)) {
                     $exampleValue = floatval($exampleValue);
                 }
 
