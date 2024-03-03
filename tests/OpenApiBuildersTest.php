@@ -40,3 +40,21 @@ it('builds oauth2 security scheme', function () {
 
     assertMatchesSnapshot($openApi->toArray());
 });
+
+it('builds oauth2 security scheme with empty scope map', function () {
+    $openApi = (new OpenApi('3.1.0'))
+        ->setInfo(InfoObject::make('API')->setVersion('0.0.1'));
+
+    $openApi->secure(
+        SecurityScheme::oauth2()
+            ->flow('implicit', function (OAuthFlow $flow) {
+                $flow
+                    ->refreshUrl('https://test.com')
+                    ->tokenUrl('https://test.com/token');
+            })
+    );
+    $document = $openApi->toArray();
+
+    expect($document['components']['securitySchemes']['oauth2']['flows']['implicit']['scopes'])
+        ->toBeObject();
+});
