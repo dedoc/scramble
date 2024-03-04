@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
@@ -125,7 +126,10 @@ class TypeTransformer
                     $openApiType = new NullType();
                 }
             } else {
-                [$stringLiterals, $otherTypes] = collect($type->types)
+                [$literals, $otherTypes] = collect($type->types)
+                    ->partition(fn ($t) => $t instanceof LiteralStringType || $t instanceof LiteralIntegerType);
+
+                [$stringLiterals, $integerLiterals] = collect($literals)
                     ->partition(fn ($t) => $t instanceof LiteralStringType);
 
                 $items = array_map($this->transform(...), $otherTypes->values()->toArray());
@@ -136,10 +140,18 @@ class TypeTransformer
                     );
                 }
 
+                if ($integerLiterals->count()) {
+                    $items[] = (new IntegerType())->enum(
+                        $integerLiterals->map->value->unique()->toArray()
+                    );
+                }
+
                 $openApiType = count($items) === 1 ? $items[0] : (new AnyOf)->setItems($items);
             }
         } elseif ($type instanceof LiteralStringType) {
             $openApiType = (new StringType())->example($type->value);
+        } elseif ($type instanceof LiteralIntegerType) {
+            $openApiType = (new IntegerType())->example($type->value);
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\StringType) {
             $openApiType = new StringType();
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\FloatType) {

@@ -13,7 +13,7 @@ class ServerVariable
     public function __construct(
         string $default,
         array $enum = [],
-        string $description = null
+        ?string $description = null
     ) {
         $this->default = $default;
         $this->enum = $enum;
@@ -23,7 +23,7 @@ class ServerVariable
     public static function make(
         string $default,
         array $enum = [],
-        string $description = null
+        ?string $description = null
     ) {
         return new self($default, $enum, $description);
     }

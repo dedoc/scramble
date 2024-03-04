@@ -52,6 +52,11 @@ class FormRequestRulesExtractor
 
         /** @var Request $request */
         $request = (new $requestClassName);
+
+        if (! method_exists($request, 'setMethod')) {
+            return [];
+        }
+
         $request->setMethod($route->methods()[0]);
 
         return $request->rules();

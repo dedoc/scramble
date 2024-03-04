@@ -6,7 +6,7 @@ properties:
     foo_new: { $ref: '#/components/schemas/ComplexTypeHandlersWithWhen_SampleType' }
     foo_make: { $ref: '#/components/schemas/ComplexTypeHandlersWithWhen_SampleType' }
     foo_collection: { type: array, items: { $ref: '#/components/schemas/ComplexTypeHandlersWithWhen_SampleType' } }
-    bar: { type: integer }
+    bar: { type: integer, example: 1 }
     bar_nullable: { type: [string, 'null'], example: s }
 required:
     - foo_new

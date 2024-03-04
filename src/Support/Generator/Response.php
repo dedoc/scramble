@@ -39,7 +39,7 @@ class Response
 
         $content = [];
         foreach ($this->content as $mediaType => $schema) {
-            $content[$mediaType] = $schema ? ['schema' => $schema->toArray()] : [];
+            $content[$mediaType] = $schema ? ['schema' => $schema->toArray()] : (object) [];
         }
 
         $result['content'] = $content;

@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -83,7 +84,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
          * $this->when()
          */
         if ($this->isMethodCallToThis($node, ['when'])) {
-            return new Union([
+            return Union::wrap([
                 $this->value(TypeHelper::getArgType($scope, $node->args, ['value', 1])),
                 $this->value(TypeHelper::getArgType($scope, $node->args, ['default', 2], new ObjectType(MissingValue::class))),
             ]);
@@ -101,7 +102,24 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
                 ]);
             }
 
-            return new Union([
+            return Union::wrap([
+                $this->value(TypeHelper::getArgType($scope, $node->args, ['value', 1])),
+                $this->value(TypeHelper::getArgType($scope, $node->args, ['default', 2], new ObjectType(MissingValue::class))),
+            ]);
+        }
+
+        /*
+         * $this->whenCounted()
+         */
+        if ($this->isMethodCallToThis($node, ['whenCounted'])) {
+            if (count($node->args) === 1) {
+                return new Union([
+                    new IntegerType(),
+                    new ObjectType(MissingValue::class),
+                ]);
+            }
+
+            return Union::wrap([
                 $this->value(TypeHelper::getArgType($scope, $node->args, ['value', 1])),
                 $this->value(TypeHelper::getArgType($scope, $node->args, ['default', 2], new ObjectType(MissingValue::class))),
             ]);

@@ -1,0 +1,14 @@
+type: object
+properties:
+    bar_single: { type: integer }
+    bar_fake_count: { type: integer, example: 1 }
+    bar_different_literal_types: { type: integer, enum: [1, 5] }
+    bar_identical_literal_types: { type: integer, example: 1 }
+    bar_string: { type: string, example: '2' }
+    bar_int: { type: integer, example: 1 }
+    bar_useless: { type: 'null' }
+    bar_nullable: { type: [integer, 'null'], example: 3 }
+required:
+    - bar_different_literal_types
+    - bar_identical_literal_types
+    - bar_nullable

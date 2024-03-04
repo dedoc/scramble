@@ -76,7 +76,7 @@ class TypeHelper
      * @param  Node\Arg[]  $args
      * @param  array{0: string, 1: int}  $parameterNameIndex
      */
-    public static function getArgType(Scope $scope, array $args, array $parameterNameIndex, Type $default = null)
+    public static function getArgType(Scope $scope, array $args, array $parameterNameIndex, ?Type $default = null)
     {
         $default = $default ?: new UnknownType("Cannot get a type of the arg #{$parameterNameIndex[1]}($parameterNameIndex[0])");
 
