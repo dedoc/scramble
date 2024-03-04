@@ -5,7 +5,7 @@ namespace Dedoc\Scramble\Support\Type;
 class ConcatenatedStringType extends StringType
 {
     /**
-     * @param  Type[]  $parts Types of parts being concatenated.
+     * @param  Type[]  $parts  Types of parts being concatenated.
      */
     public function __construct(public array $parts)
     {
