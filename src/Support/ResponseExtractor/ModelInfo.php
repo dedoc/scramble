@@ -4,6 +4,9 @@ namespace Dedoc\Scramble\Support\ResponseExtractor;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
+use Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders\DoctrineProvider;
+use Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders\ModelAttribute;
+use Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders\ModelInfoProvider;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
@@ -43,11 +46,10 @@ class ModelInfo
         'morphedByMany',
     ];
 
-    private string $class;
-
-    public function __construct(string $class)
+    public function __construct(
+        private string $class
+    )
     {
-        $this->class = $class;
     }
 
     public function handle()
@@ -156,47 +158,48 @@ class ModelInfo
      */
     protected function getAttributes($model)
     {
-        $schema = $model->getConnection()->getDoctrineSchemaManager();
-        $table = $model->getConnection()->getTablePrefix().$model->getTable();
+        $driver = $this->makeDriver($model);
 
-        $platform = $model->getConnection()
-            ->getDoctrineConnection()
-            ->getDatabasePlatform();
+        $attributes = collect($driver->getAttributes($model))
+            ->map(function (array $attribute) use ($model) {
+                $attribute['hidden'] = $this->attributeIsHidden($attribute['name'], $model);
+                $attribute['cast'] = $this->getCastType($attribute['name'], $model);
 
-        $platform->registerDoctrineTypeMapping('enum', 'string');
-        $platform->registerDoctrineTypeMapping('geometry', 'string');
+                return $attribute;
+            })
+            ->toArray();
 
-        $columns = $schema->listTableColumns($table);
-        $indexes = $schema->listTableIndexes($table);
-
-        return collect($columns)
-            ->values()
-            ->map(fn (Column $column) => [
-                'name' => $column->getName(),
-                'type' => $this->getColumnType($column),
-                'increments' => $column->getAutoincrement(),
-                'nullable' => ! $column->getNotnull(),
-                'default' => $this->getColumnDefault($column, $model),
-                'unique' => $this->columnIsUnique($column->getName(), $indexes),
-                'fillable' => $model->isFillable($column->getName()),
-                'hidden' => $this->attributeIsHidden($column->getName(), $model),
-                'appended' => null,
-                'cast' => $this->getCastType($column->getName(), $model),
-            ])
-            ->merge($this->getVirtualAttributes($model, $columns))
+        return collect($attributes)
+            ->merge($this->getVirtualAttributes($model, $attributes))
             ->keyBy('name');
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     */
+    private function makeDriver($model): ModelInfoProvider
+    {
+        $schema = $model->getConnection()->getSchemaBuilder();
+
+        if (method_exists($schema, 'getColumns')) {
+            // @todo
+        }
+
+        return new DoctrineProvider();
     }
 
     /**
      * Get the virtual (non-column) attributes for the given model.
      *
      * @param  \Illuminate\Database\Eloquent\Model  $model
-     * @param  \Doctrine\DBAL\Schema\Column[]  $columns
+     * @param  array[]  $attributes
      * @return \Illuminate\Support\Collection
      */
-    protected function getVirtualAttributes($model, $columns)
+    protected function getVirtualAttributes($model, $attributes)
     {
         $class = new ReflectionClass($model);
+
+        $keyedAttributes = collect($attributes)->keyBy('name');
 
         return collect($class->getMethods())
             ->reject(
@@ -213,7 +216,7 @@ class ModelInfo
                     return [];
                 }
             })
-            ->reject(fn ($cast, $name) => collect($columns)->has($name))
+            ->reject(fn ($cast, $name) => $keyedAttributes->has($name))
             ->map(fn ($cast, $name) => [
                 'name' => $name,
                 'type' => null,
@@ -328,43 +331,6 @@ class ModelInfo
     }
 
     /**
-     * Get the type of the given column.
-     *
-     * @param  \Doctrine\DBAL\Schema\Column  $column
-     * @return string
-     */
-    protected function getColumnType($column)
-    {
-        $name = $column->getType()->getName();
-
-        $unsigned = $column->getUnsigned() ? ' unsigned' : '';
-
-        $details = get_class($column->getType()) === DecimalType::class
-            ? $column->getPrecision().','.$column->getScale()
-            : $column->getLength();
-
-        if ($details) {
-            return sprintf('%s(%s)%s', $name, $details, $unsigned);
-        }
-
-        return sprintf('%s%s', $name, $unsigned);
-    }
-
-    /**
-     * Get the default value for the given column.
-     *
-     * @param  \Doctrine\DBAL\Schema\Column  $column
-     * @param  \Illuminate\Database\Eloquent\Model  $model
-     * @return mixed|null
-     */
-    protected function getColumnDefault($column, $model)
-    {
-        $attributeDefault = $model->getAttributes()[$column->getName()] ?? null;
-
-        return $attributeDefault ?? $column->getDefault();
-    }
-
-    /**
      * Determine if the given attribute is hidden.
      *
      * @param  string  $attribute
@@ -382,20 +348,6 @@ class ModelInfo
         }
 
         return false;
-    }
-
-    /**
-     * Determine if the given attribute is unique.
-     *
-     * @param  string  $column
-     * @param  \Doctrine\DBAL\Schema\Index[]  $indexes
-     * @return bool
-     */
-    protected function columnIsUnique($column, $indexes)
-    {
-        return collect($indexes)
-            ->filter(fn (Index $index) => count($index->getColumns()) === 1 && $index->getColumns()[0] === $column)
-            ->contains(fn (Index $index) => $index->isUnique());
     }
 
     /**
