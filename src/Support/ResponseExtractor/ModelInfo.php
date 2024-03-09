@@ -4,8 +4,6 @@ namespace Dedoc\Scramble\Support\ResponseExtractor;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
-use Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders\DoctrineProvider;
-use Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders\ModelInfoProvider;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders\NativeProvider;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
@@ -17,7 +15,6 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Doctrine\DBAL\Schema\Column;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
@@ -68,10 +65,6 @@ class ModelInfo
     {
         if (isset(static::$cache[$this->class])) {
             return static::$cache[$this->class];
-        }
-
-        if (! class_exists(Column::class)) {
-            throw new \LogicException('`doctrine/dbal` package is not installed. It is needed to get model attribute types.');
         }
 
         $modelInfo = $this->handle();
