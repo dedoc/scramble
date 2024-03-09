@@ -2,9 +2,9 @@
 
 namespace Dedoc\Scramble\Support\ResponseExtractor;
 
+use BackedEnum;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
-use Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders\NativeProvider;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
@@ -22,7 +22,11 @@ use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionMethod;
 use SplFileObject;
+use UnitEnum;
 
+/**
+ * All the code here was written by the great Laravel team and community. Cudos to them.
+ */
 class ModelInfo
 {
     public static array $cache = [];
@@ -150,34 +154,60 @@ class ModelInfo
      */
     protected function getAttributes($model)
     {
-        $provider = new NativeProvider();
+        $connection = $model->getConnection();
+        $schema = $connection->getSchemaBuilder();
+        $table = $model->getTable();
+        $columns = $schema->getColumns($table);
+        $indexes = $schema->getIndexes($table);
 
-        $attributes = collect($provider->getAttributes($model))
-            ->map(function (array $attribute) use ($model) {
-                $attribute['hidden'] = $this->attributeIsHidden($attribute['name'], $model);
-                $attribute['cast'] = $this->getCastType($attribute['name'], $model);
-
-                return $attribute;
-            })
-            ->toArray();
-
-        return collect($attributes)
-            ->merge($this->getVirtualAttributes($model, $attributes))
+        return collect($columns)
+            ->values()
+            ->map(fn ($column) => [
+                'name' => $column['name'],
+                'type' => $column['type'],
+                'increments' => $column['auto_increment'],
+                'nullable' => $column['nullable'],
+                'default' => $this->getColumnDefault($column, $model),
+                'unique' => $this->columnIsUnique($column['name'], $indexes),
+                'fillable' => $model->isFillable($column['name']),
+                'appended' => null,
+                'hidden' => $this->attributeIsHidden($column['name'], $model),
+                'cast' => $this->getCastType($column['name'], $model),
+            ])
+            ->merge($this->getVirtualAttributes($model, $columns))
             ->keyBy('name');
+    }
+
+    private function getColumnDefault($column, Model $model)
+    {
+        $attributeDefault = $model->getAttributes()[$column['name']] ?? null;
+
+        return match (true) {
+            $attributeDefault instanceof BackedEnum => $attributeDefault->value,
+            $attributeDefault instanceof UnitEnum => $attributeDefault->name,
+            default => $attributeDefault ?? $column['default'],
+        };
+    }
+
+    private function columnIsUnique($column, array $indexes)
+    {
+        return collect($indexes)->contains(
+            fn ($index) => count($index['columns']) === 1 && $index['columns'][0] === $column && $index['unique']
+        );
     }
 
     /**
      * Get the virtual (non-column) attributes for the given model.
      *
      * @param  \Illuminate\Database\Eloquent\Model  $model
-     * @param  array[]  $attributes
+     * @param  array[]  $columns
      * @return \Illuminate\Support\Collection
      */
-    protected function getVirtualAttributes($model, $attributes)
+    protected function getVirtualAttributes($model, $columns)
     {
         $class = new ReflectionClass($model);
 
-        $keyedAttributes = collect($attributes)->keyBy('name');
+        $keyedColumns = collect($columns)->keyBy('name');
 
         return collect($class->getMethods())
             ->reject(
@@ -194,7 +224,7 @@ class ModelInfo
                     return [];
                 }
             })
-            ->reject(fn ($cast, $name) => $keyedAttributes->has($name))
+            ->reject(fn ($cast, $name) => $keyedColumns->has($name))
             ->map(fn ($cast, $name) => [
                 'name' => $name,
                 'type' => null,
