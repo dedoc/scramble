@@ -54,7 +54,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(FileParser::class, function () {
             return new FileParser(
-                (new ParserFactory)->create(ParserFactory::PREFER_PHP7)
+                (new ParserFactory)->createForHostVersion()
             );
         });
 

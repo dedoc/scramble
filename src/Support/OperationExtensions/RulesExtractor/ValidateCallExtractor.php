@@ -123,7 +123,7 @@ class ValidateCallExtractor
             ->mapWithKeys(function (Node\Param $param) {
                 try {
                     return [
-                        $param->var->name => implode('\\', $param->type->parts ?? []),
+                        $param->var->name => $param->type->name,
                     ];
                 } catch (\Throwable $exception) {
                     throw $exception;

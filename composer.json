@@ -18,7 +18,7 @@
     "require": {
         "php": "^8.1",
         "illuminate/contracts": "^8.0.0|^9.0.0|^10.0.0",
-        "nikic/php-parser": "^4.0",
+        "nikic/php-parser": "^5.0",
         "phpstan/phpdoc-parser": "^1.0",
         "spatie/laravel-package-tools": "^1.9.2"
     },
