@@ -155,9 +155,9 @@ class ModelInfo
      */
     protected function getAttributes($model)
     {
-        $driver = $this->makeDriver($model);
+        $provider = new NativeProvider();
 
-        $attributes = collect($driver->getAttributes($model))
+        $attributes = collect($provider->getAttributes($model))
             ->map(function (array $attribute) use ($model) {
                 $attribute['hidden'] = $this->attributeIsHidden($attribute['name'], $model);
                 $attribute['cast'] = $this->getCastType($attribute['name'], $model);
@@ -169,20 +169,6 @@ class ModelInfo
         return collect($attributes)
             ->merge($this->getVirtualAttributes($model, $attributes))
             ->keyBy('name');
-    }
-
-    /**
-     * @param  \Illuminate\Database\Eloquent\Model  $model
-     */
-    private function makeDriver($model): ModelInfoProvider
-    {
-        $schema = $model->getConnection()->getSchemaBuilder();
-
-        if (method_exists($schema, 'getColumns')) {
-            return new NativeProvider();
-        }
-
-        return new DoctrineProvider();
     }
 
     /**
