@@ -1,0 +1,11 @@
+openapi: 3.1.0
+info:
+    title: Laravel
+    version: 0.0.1
+servers:
+    - { url: 'http://localhost/api' }
+paths:
+    /test: { get: { operationId: validationRulesDocumentingTest.index, tags: [ValidationRulesDocumenting_Test], parameters: [{ name: content, in: query, required: true, schema: { type: string, enum: [wow] } }], responses: { 200: { description: '`ValidationRulesDocumenting_TestResource`', content: { application/json: { schema: { type: object, properties: { data: { $ref: '#/components/schemas/ValidationRulesDocumenting_TestResource' } }, required: [data] } } } }, 422: { $ref: '#/components/responses/ValidationException' } } } }
+components:
+    schemas: { ValidationRulesDocumenting_TestResource: { type: object, properties: { id: { type: integer, example: 1 } }, required: [id], title: ValidationRulesDocumenting_TestResource } }
+    responses: { ValidationException: { description: 'Validation error', content: { application/json: { schema: { type: object, properties: { message: { type: string, description: 'Errors overview.' }, errors: { type: object, description: 'A detailed description of each field that failed validation.', additionalProperties: { type: array, items: { type: string } } } }, required: [message, errors] } } } } }
