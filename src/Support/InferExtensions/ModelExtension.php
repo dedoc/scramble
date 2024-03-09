@@ -71,7 +71,10 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         $type = explode(' ', $value['type']);
         $typeName = explode('(', $type[0])[0];
 
-        if (in_array($key, $model->getDates())) {
+        if (
+            ($model->getCasts()[$key] ?? null) === 'datetime'
+            || in_array($key, $model->getDates())
+        ) {
             return new ObjectType(Carbon::class);
         }
 
@@ -79,8 +82,8 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         $attributeType = match ($typeName) {
             'int', 'integer', 'bigint' => new IntegerType(),
             'float', 'double', 'decimal' => new FloatType(),
-            'string', 'varchar', 'text', 'datetime' => new StringType(),
-            'bool', 'boolean' => new BooleanType(),
+            'varchar', 'string', 'text', 'datetime' => new StringType(), // string, text - needed?
+            'tinyint', 'bool', 'boolean' => new BooleanType(), // bool, boolean - needed?
             'json', 'array' => new ArrayType(),
             default => new UnknownType("unimplemented DB column type [$type[0]]"),
         };
