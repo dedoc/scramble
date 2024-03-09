@@ -75,6 +75,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             return new ObjectType(Carbon::class);
         }
 
+        // @todo Fix to native types
         $attributeType = match ($typeName) {
             'int', 'integer', 'bigint' => new IntegerType(),
             'float', 'double', 'decimal' => new FloatType(),
