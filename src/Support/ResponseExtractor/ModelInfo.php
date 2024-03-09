@@ -4,8 +4,6 @@ namespace Dedoc\Scramble\Support\ResponseExtractor;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
-use Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders\DoctrineProvider;
-use Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders\ModelInfoProvider;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders\NativeProvider;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
