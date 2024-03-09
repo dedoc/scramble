@@ -84,8 +84,8 @@ class ModelInfo
                     ? Union::wrap([new NullType(), $t])
                     : $t;
 
-                $type = explode(' ', $value['type']);
-                $typeName = explode('(', $type[0])[0];
+                $type = explode(' ', $value['type'] ?? '');
+                $typeName = explode('(', $type[0] ?? '')[0];
 
                 if (in_array($key, $model->getDates())) {
                     return $createType(new ObjectType('\\Carbon\\Carbon'));

@@ -68,8 +68,8 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     private function getBaseAttributeType(Model $model, string $key, array $value)
     {
-        $type = explode(' ', $value['type']);
-        $typeName = explode('(', $type[0])[0];
+        $type = explode(' ', $value['type'] ?? '');
+        $typeName = explode('(', $type[0] ?? '')[0];
 
         if (
             ($model->getCasts()[$key] ?? null) === 'datetime'
