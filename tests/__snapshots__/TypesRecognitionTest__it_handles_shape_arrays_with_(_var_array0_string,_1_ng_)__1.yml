@@ -1,7 +1,0 @@
-type: object
-properties:
-    - { type: string }
-    - { type: string }
-required:
-    - '0'
-    - '1'
