@@ -17,7 +17,7 @@
     ],
     "require": {
         "php": "^8.1",
-        "illuminate/contracts": "^8.0.0|^9.0.0|^10.0.0",
+        "illuminate/contracts": "^8.0.0|^9.0.0|^10.0.0|^11.0",
         "nikic/php-parser": "^5.0",
         "phpstan/phpdoc-parser": "^1.0",
         "spatie/laravel-package-tools": "^1.9.2"
@@ -25,12 +25,12 @@
     "require-dev": {
         "doctrine/dbal": "^3.4",
         "laravel/pint": "^v1.1.0",
-        "nunomaduro/collision": "^5.0|^v6.0",
-        "orchestra/testbench": "^6.0|^7.0|^8.0",
-        "pestphp/pest": "^1.21",
-        "pestphp/pest-plugin-laravel": "^1.2",
-        "phpunit/phpunit": "^9.5",
-        "spatie/pest-plugin-snapshots": "^1.1"
+        "nunomaduro/collision": "^5.0|^v6.0|^7.0|^8.0",
+        "orchestra/testbench": "^6.0|^7.0|^8.0|^9.0",
+        "pestphp/pest": "^2.34",
+        "pestphp/pest-plugin-laravel": "^2.3",
+        "phpunit/phpunit": "^10.5",
+        "spatie/pest-plugin-snapshots": "^2.1"
     },
     "autoload": {
         "psr-4": {
