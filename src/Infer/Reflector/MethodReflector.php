@@ -73,7 +73,7 @@ class MethodReflector
                     $this->nameContext = $nameContext;
                 }
 
-                public function beforeTraverse(array $nodes)
+                public function beforeTraverse(array $nodes): ?array
                 {
                     return null;
                 }
