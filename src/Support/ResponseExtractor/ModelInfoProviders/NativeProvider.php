@@ -2,9 +2,9 @@
 
 namespace Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders;
 
+use BackedEnum;
 use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
-use BackedEnum;
 
 /**
  * All the code here was written by the great Laravel team and community. Cudos to them.
