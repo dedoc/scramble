@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Support\ResponseExtractor;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders\DoctrineProvider;
-use Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders\ModelAttribute;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfoProviders\ModelInfoProvider;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
@@ -18,8 +17,6 @@ use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Doctrine\DBAL\Schema\Column;
-use Doctrine\DBAL\Schema\Index;
-use Doctrine\DBAL\Types\DecimalType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
@@ -48,8 +45,7 @@ class ModelInfo
 
     public function __construct(
         private string $class
-    )
-    {
+    ) {
     }
 
     public function handle()
