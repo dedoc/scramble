@@ -121,7 +121,7 @@ class ValidateCallExtractor
     {
         $paramsMap = collect($methodNode->getParams())
             ->mapWithKeys(function (Node\Param $param) {
-                if (!$param->type) {
+                if (! $param->type) {
                     return [];
                 }
 
