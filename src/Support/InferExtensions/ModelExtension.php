@@ -78,7 +78,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         $attributeType = match ($typeName) {
             'int', 'integer', 'bigint' => new IntegerType(),
             'float', 'double', 'decimal' => new FloatType(),
-            'string', 'text', 'datetime' => new StringType(),
+            'string', 'varchar', 'text', 'datetime' => new StringType(),
             'bool', 'boolean' => new BooleanType(),
             'json', 'array' => new ArrayType(),
             default => new UnknownType("unimplemented DB column type [$type[0]]"),
