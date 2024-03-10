@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -90,7 +91,7 @@ class RulesToParameter
                     $exampleValue = null;
                 } elseif (in_array($exampleValue, ['true', 'false'])) {
                     $exampleValue = $exampleValue === 'true';
-                } elseif (is_numeric($exampleValue)) {
+                } elseif (is_numeric($exampleValue) && ! ($parameter->schema->type instanceof StringType)) {
                     $exampleValue = floatval($exampleValue);
                 }
 

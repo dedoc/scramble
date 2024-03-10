@@ -16,6 +16,8 @@ class Operation
 
     public string $summary = '';
 
+    public bool $deprecated = false;
+
     /** @var array<Security|array> */
     public array $security = [];
 
@@ -111,6 +113,13 @@ class Operation
         return $this;
     }
 
+    public function deprecated(bool $deprecated)
+    {
+        $this->deprecated = $deprecated;
+
+        return $this;
+    }
+
     public function setTags(array $tags)
     {
         $this->tags = array_map(fn ($t) => (string) $t, $tags);
@@ -139,6 +148,10 @@ class Operation
 
         if ($this->summary) {
             $result['summary'] = $this->summary;
+        }
+
+        if ($this->deprecated) {
+            $result['deprecated'] = $this->deprecated;
         }
 
         if (count($this->tags)) {

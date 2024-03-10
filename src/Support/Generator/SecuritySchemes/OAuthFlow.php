@@ -43,11 +43,14 @@ class OAuthFlow
 
     public function toArray()
     {
-        return array_filter([
-            'authorizationUrl' => $this->authorizationUrl,
-            'tokenUrl' => $this->tokenUrl,
-            'refreshUrl' => $this->refreshUrl,
-            'scopes' => $this->scopes,
-        ]);
+        return [
+            ...array_filter([
+                'authorizationUrl' => $this->authorizationUrl,
+                'tokenUrl' => $this->tokenUrl,
+                'refreshUrl' => $this->refreshUrl,
+            ]),
+            // Never filter 'scopes' as it is allowed to be empty. If empty it must be an object
+            'scopes' => empty($this->scopes) ? new \stdClass() : $this->scopes,
+        ];
     }
 }

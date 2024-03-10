@@ -312,7 +312,7 @@ class ReferenceTypeResolver
         FunctionLikeDefinition $callee,
         array $arguments,
         /* When this is a handling for method call */
-        ObjectType|SelfType $calledOnType = null,
+        ObjectType|SelfType|null $calledOnType = null,
     ) {
         $returnType = $callee->type->getReturnType();
         $isSelf = false;
@@ -401,7 +401,7 @@ class ReferenceTypeResolver
      * arguments defaults.
      *
      * @param  ?FunctionLikeDefinition  $callee
-     * @param  array  $realArguments The list of arguments a function has been called with.
+     * @param  array  $realArguments  The list of arguments a function has been called with.
      * @return array The actual list of arguments where not passed arguments replaced with default values.
      */
     private function prepareArguments(?FunctionLikeDefinition $callee, array $realArguments)

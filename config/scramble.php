@@ -20,6 +20,12 @@ return [
      */
     'export_path' => 'api.json',
 
+    /*
+     * Define the theme of the documentation.
+     * Available options are `light` and `dark`.
+     */
+    'theme' => 'dark',
+
     'info' => [
         /*
          * API version.

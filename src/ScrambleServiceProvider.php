@@ -26,6 +26,7 @@ use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\OperationBuilder;
+use Dedoc\Scramble\Support\OperationExtensions\DeprecationExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ErrorResponsesExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
@@ -55,7 +56,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(FileParser::class, function () {
             return new FileParser(
-                (new ParserFactory)->create(ParserFactory::PREFER_PHP7)
+                (new ParserFactory)->createForHostVersion()
             );
         });
 
@@ -110,6 +111,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     RequestBodyExtension::class,
                     ErrorResponsesExtension::class,
                     ResponseExtension::class,
+                    DeprecationExtension::class,
                 ], $operationExtensions);
             });
 
