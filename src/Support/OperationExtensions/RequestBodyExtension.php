@@ -17,6 +17,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use PhpParser\Node\Stmt\ClassMethod;
 use Throwable;
+use function in_array;
 
 class RequestBodyExtension extends OperationExtension
 {
@@ -30,14 +31,14 @@ class RequestBodyExtension extends OperationExtension
             $mediaType = $this->getMediaType($operation, $routeInfo, $bodyParams);
 
             if (count($bodyParams)) {
-                if ($operation->method !== 'get') {
+                if (! in_array($operation->method, ['get', 'head', 'delete'])) {
                     $operation->addRequestBodyObject(
                         RequestBodyObject::make()->setContent($mediaType, Schema::createFromParameters($bodyParams))
                     );
                 } else {
                     $operation->addParameters($bodyParams);
                 }
-            } elseif ($operation->method !== 'get') {
+            } elseif (! in_array($operation->method, ['get', 'head', 'delete'])) {
                 $operation
                     ->addRequestBodyObject(
                         RequestBodyObject::make()
