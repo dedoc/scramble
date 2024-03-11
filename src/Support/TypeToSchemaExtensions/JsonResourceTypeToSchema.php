@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
+use Carbon\Carbon;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
@@ -14,6 +15,7 @@ use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
@@ -66,6 +68,19 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             ->flatMap(function (ArrayItemType_ $item) {
                 if ($item->value instanceof ArrayType) {
                     $item->value->items = $this->flattenMergeValues($item->value->items);
+
+                    return [$item];
+                }
+
+                if (
+                    $item->value instanceof Union
+                    && (new TypeWalker)->first($item->value, fn (Type $t) => $t->isInstanceOf(Carbon::class))
+                ) {
+                    (new TypeWalker)->replace($item->value, function (Type $t) {
+                        return $t->isInstanceOf(Carbon::class)
+                            ? tap(new StringType, fn ($t) => $t->setAttribute('format', 'date-time'))
+                            : null;
+                    });
 
                     return [$item];
                 }
