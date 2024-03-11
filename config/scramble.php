@@ -24,7 +24,7 @@ return [
      * Define the theme of the documentation.
      * Available options are `light` and `dark`.
      */
-    'theme' => 'dark',
+    'theme' => 'light',
 
     'info' => [
         /*
