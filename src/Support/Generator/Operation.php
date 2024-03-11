@@ -183,7 +183,7 @@ class Operation
         if (count($this->security)) {
             $securities = [];
             foreach ($this->security as $security) {
-                $securities[] = is_array($security) ? $security : $security->toArray();
+                $securities[] = (object) (is_array($security) ? $security : $security->toArray());
             }
             $result['security'] = $securities;
         }
