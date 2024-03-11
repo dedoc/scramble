@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
+use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
@@ -132,6 +133,21 @@ it('gets nullable type reference', function () {
     ]);
 });
 
+it('infers date column directly referenced in json as date-time', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(InferTypesTest_JsonResourceWithCarbonAttribute::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/InferTypesTest_JsonResourceWithCarbonAttribute',
+    ]);
+
+    expect($components->getSchema(InferTypesTest_JsonResourceWithCarbonAttribute::class)->toArray()['properties']['created_at'])->toBe([
+        'type' => ['string', 'null'],
+        'format' => 'date-time',
+    ]);
+});
+
 class ComplexTypeHandlersTest_SampleType extends JsonResource
 {
     public function toArray($request)
@@ -216,6 +232,21 @@ class ComplexTypeHandlersWithWhenCounted_SampleType extends JsonResource
             'bar_int' => $this->whenCounted('bar', fn () => 1),
             'bar_useless' => $this->whenCounted('bar', null),
             'bar_nullable' => $this->whenCounted('bar', fn () => 3, null),
+        ];
+    }
+}
+
+/**
+ * @property SamplePostModel $resource
+ */
+class InferTypesTest_JsonResourceWithCarbonAttribute extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'id' => $this->id,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }
