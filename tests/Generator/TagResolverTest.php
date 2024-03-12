@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route as RouteFacade;
 it('documents tags based resolveTagsUsing', function () {
     Scramble::resolveTagsUsing(function (RouteInfo $routeInfo) {
         return array_values(array_unique(
-            Arr::map($routeInfo->phpDoc()->getTagsByName('@tags'), fn($tag) => trim($tag?->value?->value))
+            Arr::map($routeInfo->phpDoc()->getTagsByName('@tags'), fn ($tag) => trim($tag?->value?->value))
         ));
     });
 
