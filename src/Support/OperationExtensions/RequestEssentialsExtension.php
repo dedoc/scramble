@@ -204,9 +204,13 @@ class RequestEssentialsExtension extends OperationExtension
                 'string' => new StringType(),
                 'bool' => new BooleanType(),
             ];
-            $schemaType = $type ? ($schemaTypesMap[$type] ?? new IntegerType) : new StringType;
 
-            $isModelId = $type && ! isset($schemaTypesMap[$type]);
+            $isEnum = function_exists('enum_exists') && enum_exists($type);
+            $schemaType = $isEnum
+                ? $this->openApiTransformer->transform(new ObjectType($type))
+                : ($type ? ($schemaTypesMap[$type] ?? new IntegerType) : new StringType);
+
+            $isModelId = $type && !$isEnum && !isset($schemaTypesMap[$type]);
 
             if ($isModelId) {
                 [$schemaType, $description] = $this->getModelIdTypeAndDescription($schemaType, $type, $paramName, $description, $route->bindingFields()[$paramName] ?? null);
