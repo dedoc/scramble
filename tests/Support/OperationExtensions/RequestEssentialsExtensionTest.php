@@ -1,6 +1,7 @@
 <?php
 
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
+use Dedoc\Scramble\Tests\Files\Status;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 it('uses getRouteKeyName to determine model route key type', function () {
@@ -75,6 +76,20 @@ it('determines default model route key type', function () {
 class CustomKey_RequestEssentialsExtensionTest_Controller
 {
     public function foo(SampleUserModel $user)
+    {
+    }
+}
+it('handles enum in route parameter', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test/{status}', [EnumParameter_RequestEssentialsExtensionTest_Controller::class, 'foo']);
+    });
+
+    expect($openApiDocument['paths']['/test/{status}']['get']['parameters'][0])
+        ->toHaveKey('schema.$ref', '#/components/schemas/Status');
+});
+class EnumParameter_RequestEssentialsExtensionTest_Controller
+{
+    public function foo(Status $status)
     {
     }
 }
