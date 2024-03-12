@@ -26,7 +26,10 @@ class Scramble
         static::$routeResolver = $routeResolver;
     }
 
-    public static function tags(callable $tagResolver)
+    /**
+     * Modify scramble's tag behaviour
+     */
+    public static function resolveTagsUsing(callable $tagResolver)
     {
         static::$tagResolver = $tagResolver;
     }
