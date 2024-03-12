@@ -25,8 +25,7 @@ class ResolveTagDocumentationTestController extends \Illuminate\Routing\Controll
     /**
      * @tags testTag
      */
-    public function a(): Illuminate\Http\Resources\Json\JsonResource
+    public function a()
     {
-        return $this->unknown_fn();
     }
 }
