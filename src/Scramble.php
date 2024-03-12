@@ -2,7 +2,9 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
+use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
 
 class Scramble
@@ -27,7 +29,9 @@ class Scramble
     }
 
     /**
-     * Modify scramble's tag behaviour
+     * Modify tag generation behaviour
+     *
+     * @param  callable(RouteInfo, Operation): string[]  $tagResolver
      */
     public static function resolveTagsUsing(callable $tagResolver)
     {

@@ -25,6 +25,8 @@ class TestCase extends Orchestra
 
         Scramble::$openApiExtender = null;
 
+        Scramble::$tagResolver = null;
+
         Context::reset();
     }
 

@@ -66,7 +66,7 @@ class RequestEssentialsExtension extends OperationExtension
                 collect($pathAliases)->values()->map(fn ($v) => '{'.$v.'}')->all(),
                 $routeInfo->route->uri,
             ))
-            ->setTags($tagResolver($routeInfo))
+            ->setTags($tagResolver($routeInfo, $operation))
             ->servers($this->getAlternativeServers($routeInfo->route))
             ->addParameters($pathParams);
 
