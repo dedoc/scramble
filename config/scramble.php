@@ -4,6 +4,11 @@ use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 
 return [
     /*
+     * Your API Documents Url in this section are customizable.
+     */
+    'docs_api_url' => 'docs/api',
+
+    /*
      * Your API path. By default, all routes starting with this path will be added to the docs.
      * If you need to change this behavior, you can add your custom routes resolver using `Scramble::routes()`.
      */

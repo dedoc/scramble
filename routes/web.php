@@ -8,5 +8,5 @@ Route::middleware(config('scramble.middleware', [RestrictedDocsAccess::class]))-
         return $generator();
     })->name('scramble.docs.index');
 
-    Route::view('docs/api', 'scramble::docs')->name('scramble.docs.api');
+    Route::view(config('scramble.docs_api_url'), 'scramble::docs')->name('scramble.docs.api');
 });
