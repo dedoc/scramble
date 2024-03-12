@@ -6,7 +6,7 @@ return [
     /*
      * Your API Documents Url in this section are customizable.
      */
-    'docs_api_url' => 'docs/api',
+    'docs_url' => 'docs/api',
 
     /*
      * Your API path. By default, all routes starting with this path will be added to the docs.
