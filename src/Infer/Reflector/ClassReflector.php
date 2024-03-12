@@ -15,6 +15,8 @@ class ClassReflector
 
     private ?NameContext $nameContext = null;
 
+    private array $methods = [];
+
     private function __construct(
         private FileParser $parser,
         private string $className,

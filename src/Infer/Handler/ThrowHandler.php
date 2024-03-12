@@ -12,10 +12,10 @@ class ThrowHandler
 {
     public function shouldHandle($node)
     {
-        return $node instanceof Node\Stmt\Throw_;
+        return $node instanceof Node\Expr\Throw_;
     }
 
-    public function leave(Node\Stmt\Throw_ $node, Scope $scope)
+    public function leave(Node\Expr\Throw_ $node, Scope $scope)
     {
         if (! $scope->isInFunction()) {
             return;

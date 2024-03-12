@@ -36,7 +36,7 @@ class AnalysisResult
     {
         $code = '<?php $a = '.$code.';';
 
-        $fileAst = (new PhpParser\ParserFactory)->create(PhpParser\ParserFactory::PREFER_PHP7)->parse($code);
+        $fileAst = (new PhpParser\ParserFactory)->createForHostVersion()->parse($code);
 
         $index = $this->index;
         $infer = new TypeInferer(
