@@ -133,6 +133,15 @@ it('gets nullable type reference', function () {
     ]);
 });
 
+it('gets json resource type with ternary value type', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+
+    $type = new ObjectType(ComplexTypeHandlersWithTernaryTypeTest_SampleType::class);
+
+    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+});
+
 it('infers date column directly referenced in json as date-time', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
 
@@ -232,6 +241,16 @@ class ComplexTypeHandlersWithWhenCounted_SampleType extends JsonResource
             'bar_int' => $this->whenCounted('bar', fn () => 1),
             'bar_useless' => $this->whenCounted('bar', null),
             'bar_nullable' => $this->whenCounted('bar', fn () => 3, null),
+        ];
+    }
+}
+
+class ComplexTypeHandlersWithTernaryTypeTest_SampleType extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'maybeOne' => true ? 1 : null,
         ];
     }
 }
