@@ -161,7 +161,7 @@ it('supports @example tag in api resource', function () {
         'type' => 'integer',
         'examples' => [
             'Foo',
-            'Multiword example'
+            'Multiword example',
         ],
     ]);
 });
