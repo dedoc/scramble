@@ -1,0 +1,60 @@
+<?php
+
+namespace Dedoc\Scramble\Support\Helpers;
+
+use Dedoc\Scramble\Support\Generator\MissingExample;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+
+/**
+ * Extracts `@example` value from PHPDoc node.
+ */
+class ExamplesExtractor
+{
+    public function __construct(
+        private ?PhpDocNode $docNode
+    )
+    {
+    }
+
+    public static function make(?PhpDocNode $docNode)
+    {
+        return new self($docNode);
+    }
+
+    public function extract(bool $preferString = false)
+    {
+        if (! count($examples = $this->docNode->getTagsByName('@example'))) {
+            return [];
+        }
+
+        return array_map(
+            fn ($example) => $this->getTypedExampleValue($example->value->value ?? null, $preferString),
+            array_values($examples),
+        );
+    }
+
+    private function getTypedExampleValue($exampleValue, bool $preferString = false)
+    {
+        if (! is_string($exampleValue)) {
+            return new MissingExample;
+        }
+
+        if (function_exists('json_decode')) {
+            $json = json_decode($exampleValue, true);
+
+            $exampleValue = $json === null || $json == $exampleValue
+                ? $exampleValue
+                : $json;
+        }
+
+        if ($exampleValue === 'null') {
+            $exampleValue = null;
+        } elseif (in_array($exampleValue, ['true', 'false'])) {
+            $exampleValue = $exampleValue === 'true';
+        } elseif (is_numeric($exampleValue) && ! $preferString) {
+            $exampleValue = floatval($exampleValue);
+        }
+
+        return $exampleValue;
+    }
+}
