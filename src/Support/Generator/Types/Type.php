@@ -18,6 +18,9 @@ abstract class Type
     /** @var array|scalar|null|MissingExample */
     public $example;
 
+    /** @var array<array|scalar|null|MissingExample> */
+    public $examples = [];
+
     public array $enum = [];
 
     public bool $nullable = false;
@@ -56,12 +59,21 @@ abstract class Type
 
     public function toArray()
     {
-        return array_merge(array_filter([
-            'type' => $this->nullable ? [$this->type, 'null'] : $this->type,
-            'format' => $this->format,
-            'description' => $this->description,
-            'enum' => count($this->enum) ? $this->enum : null,
-        ]), $this->example instanceof MissingExample ? [] : ['example' => $this->example]);
+        return array_merge(
+            array_filter([
+                'type' => $this->nullable ? [$this->type, 'null'] : $this->type,
+                'format' => $this->format,
+                'description' => $this->description,
+                'enum' => count($this->enum) ? $this->enum : null,
+            ]),
+            $this->example instanceof MissingExample ? [] : ['example' => $this->example],
+            count(
+                $examples = collect($this->examples)
+                    ->reject(fn ($example) => $example instanceof MissingExample)
+                    ->values()
+                    ->toArray()
+            ) ? ['examples' => $examples] : [],
+        );
     }
 
     public function setDescription(string $description): Type
@@ -84,6 +96,16 @@ abstract class Type
     public function example($example)
     {
         $this->example = $example;
+
+        return $this;
+    }
+
+    /**
+     * @param  array<array|scalar|null|MissingExample>  $examples
+     */
+    public function examples(array $examples)
+    {
+        $this->examples = $examples;
 
         return $this;
     }
