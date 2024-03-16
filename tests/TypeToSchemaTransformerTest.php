@@ -148,6 +148,24 @@ it('infers date column directly referenced in json as date-time', function () {
     ]);
 });
 
+it('supports @example tag in api resource', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(ApiResourceTest_ResourceWithExamples::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithExamples',
+    ]);
+
+    expect($components->getSchema(ApiResourceTest_ResourceWithExamples::class)->toArray()['properties']['id'])->toBe([
+        'type' => 'integer',
+        'examples' => [
+            'Foo',
+            'Multiword example'
+        ],
+    ]);
+});
+
 class ComplexTypeHandlersTest_SampleType extends JsonResource
 {
     public function toArray($request)
@@ -247,6 +265,23 @@ class InferTypesTest_JsonResourceWithCarbonAttribute extends JsonResource
             'id' => $this->id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+        ];
+    }
+}
+
+/**
+ * @property SamplePostModel $resource
+ */
+class ApiResourceTest_ResourceWithExamples extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            /**
+             * @example Foo
+             * @example Multiword example
+             */
+            'id' => $this->id,
         ];
     }
 }
