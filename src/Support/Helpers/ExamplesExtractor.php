@@ -12,8 +12,7 @@ class ExamplesExtractor
 {
     public function __construct(
         private ?PhpDocNode $docNode
-    )
-    {
+    ) {
     }
 
     public static function make(?PhpDocNode $docNode)
