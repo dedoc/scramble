@@ -43,6 +43,21 @@ it('transforms simple types', function ($type, $openApiArrayed) {
         ],
         'required' => ['key'],
     ]],
+    [new ArrayType([
+        new ArrayItemType_(null, new IntegerType()),
+        new ArrayItemType_(null, new IntegerType()),
+        new ArrayItemType_(null, new IntegerType()),
+    ]), [
+        'type' => 'array',
+        'prefixItems' => [
+            ['type' => 'integer'],
+            ['type' => 'integer'],
+            ['type' => 'integer'],
+        ],
+        'minItems' => 3,
+        'maxItems' => 3,
+        'additionalItems' => false,
+    ]],
 ]);
 
 it('gets json resource type', function () {

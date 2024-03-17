@@ -65,9 +65,24 @@ class TypeTransformer
             )
         ) {
             $isMap = collect($type->items)->every(fn ($t) => $t->key === null)
-                && count($type->items) === 2;
+                && count($type->items) === 2; // ??????
 
-            if ($isMap) {
+            $isList = collect($type->items)->every(fn ($t) => $t->key === null)
+                || collect($type->items)->every(fn ($t) => is_numeric($t->key));
+
+            if ($isList) {
+                /** @see https://stackoverflow.com/questions/57464633/how-to-define-a-json-array-with-concrete-item-definition-for-every-index-i-e-a */
+                $openApiType = (new ArrayType)
+                    ->setMin(count($type->items))
+                    ->setMax(count($type->items))
+                    ->setPrefixItems(
+                        array_map(
+                            fn ($item) => $this->transform($item->value),
+                            $type->items
+                        )
+                    )
+                    ->setAdditionalItems(false);
+            } elseif ($isMap) {
                 $keyType = $this->transform($type->items[0]->value);
 
                 if ($keyType instanceof IntegerType) {
