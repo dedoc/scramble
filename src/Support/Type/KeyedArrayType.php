@@ -10,13 +10,12 @@ class KeyedArrayType extends AbstractType
     public bool $isList = false;
 
     /**
-     * @param ArrayItemType_[] $items
+     * @param  ArrayItemType_[]  $items
      */
     public function __construct(
         public array $items = [],
         ?bool $isList = null
-    )
-    {
+    ) {
         if ($isList === null) {
             $this->isList = static::checkIsList($items);
         } else {
@@ -26,7 +25,7 @@ class KeyedArrayType extends AbstractType
 
     public static function checkIsList(array $items): bool
     {
-        return  collect($items)->every(fn (ArrayItemType_ $item) => $item->key === null)
+        return collect($items)->every(fn (ArrayItemType_ $item) => $item->key === null)
             || collect($items)->every(fn (ArrayItemType_ $item) => is_numeric($item->key)); // @todo add consecutive check to be sure it is really a list
     }
 
