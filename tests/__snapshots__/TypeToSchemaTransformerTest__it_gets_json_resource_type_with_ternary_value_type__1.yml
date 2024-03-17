@@ -1,5 +1,0 @@
-type: object
-properties:
-    maybeOne: { type: [integer, 'null'], example: 1 }
-required:
-    - maybeOne

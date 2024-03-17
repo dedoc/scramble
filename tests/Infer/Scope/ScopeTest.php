@@ -10,4 +10,5 @@ it('infers property fetch nodes types', function ($code, $expectedTypeString) {
 })->with([
     ['$foo->bar', 'unknown'],
     ['$foo->bar->{"baz"}', 'unknown'],
+    ['true ? 1 : null', 'int(1)|null']
 ]);
