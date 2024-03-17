@@ -90,7 +90,7 @@ class Foo {
 }
 EOD)->getExpressionType('(new Foo("wow"))->foo("prop", 42)(12)');
 
-    expect($type->toString())->toBe('array{0: string(wow), 1: int(12), 2: int(42)}');
+    expect($type->toString())->toBe('list{string(wow), int(12), int(42)}');
 });
 
 it('doesnt resolve templates from not own definition', function () {

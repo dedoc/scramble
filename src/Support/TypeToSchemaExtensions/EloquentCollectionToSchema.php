@@ -25,9 +25,7 @@ class EloquentCollectionToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        $type = new ArrayType([
-            new ArrayItemType_(0, $type->templateTypes[0]),
-        ]);
+        $type = new ArrayType(value: $type->templateTypes[0]);
 
         return $this->openApiTransformer->transform($type);
     }

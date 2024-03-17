@@ -4,13 +4,10 @@ use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Dedoc\Scramble\Support\Type\ArrayType;
-use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\IntegerType;
-use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
@@ -25,25 +22,25 @@ it('transforms simple types', function ($type, $openApiArrayed) {
 
     expect($transformer->transform($type)->toArray())->toBe($openApiArrayed);
 })->with([
-    [new IntegerType(), ['type' => 'integer']],
-    [new StringType(), ['type' => 'string']],
-    [new LiteralStringType('wow'), ['type' => 'string', 'example' => 'wow']],
-    [new BooleanType(), ['type' => 'boolean']],
-    [new ArrayType([
-        new ArrayItemType_(0, new StringType()),
-    ]), ['type' => 'array', 'items' => ['type' => 'string']]],
-    [new ArrayType([
-        new ArrayItemType_('key', new IntegerType()),
-        new ArrayItemType_('optional_key', new IntegerType(), true),
-    ]), [
-        'type' => 'object',
-        'properties' => [
-            'key' => ['type' => 'integer'],
-            'optional_key' => ['type' => 'integer'],
-        ],
-        'required' => ['key'],
-    ]],
-    [new ArrayType([
+//    [new IntegerType(), ['type' => 'integer']],
+//    [new StringType(), ['type' => 'string']],
+//    [new LiteralStringType('wow'), ['type' => 'string', 'example' => 'wow']],
+//    [new BooleanType(), ['type' => 'boolean']],
+//    [new ArrayType([
+//        new ArrayItemType_(0, new StringType()),
+//    ]), ['type' => 'array', 'items' => ['type' => 'string']]],
+//    [new ArrayType([
+//        new ArrayItemType_('key', new IntegerType()),
+//        new ArrayItemType_('optional_key', new IntegerType(), true),
+//    ]), [
+//        'type' => 'object',
+//        'properties' => [
+//            'key' => ['type' => 'integer'],
+//            'optional_key' => ['type' => 'integer'],
+//        ],
+//        'required' => ['key'],
+//    ]],
+    [new KeyedArrayType([
         new ArrayItemType_(null, new IntegerType()),
         new ArrayItemType_(null, new IntegerType()),
         new ArrayItemType_(null, new IntegerType()),

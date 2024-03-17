@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\IntersectionType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -39,7 +40,7 @@ class PhpDocTypeHelper
         }
 
         if ($type instanceof ArrayShapeNode) {
-            return new ArrayType(array_map(
+            return new KeyedArrayType(array_map(
                 function (ArrayShapeItemNode $t) {
                     $keyName = $t->keyName instanceof IdentifierTypeNode
                         ? $t->keyName->name
@@ -56,19 +57,23 @@ class PhpDocTypeHelper
         }
 
         if ($type instanceof ArrayTypeNode) {
-            return new ArrayType([
-                new ArrayItemType_(0, static::toType($type->type)),
-            ]);
+            return new ArrayType(
+                value: static::toType($type->type),
+            );
         }
 
         if ($type instanceof GenericTypeNode) {
             if ($type->type->name === 'array') {
-                return static::toType(new ArrayShapeNode(
-                    array_map(
-                        fn ($type) => new ArrayShapeItemNode(null, false, $type),
-                        $type->genericTypes,
-                    )
-                ));
+                if (count($type->genericTypes) === 1) {
+                    return new ArrayType(
+                        value: static::toType($type->genericTypes[0]),
+                    );
+                }
+
+                return new ArrayType(
+                    value: static::toType($type->genericTypes[1]),
+                    key: static::toType($type->genericTypes[0]),
+                );
             }
 
             if (! ($typeObject = static::toType($type->type)) instanceof ObjectType) {

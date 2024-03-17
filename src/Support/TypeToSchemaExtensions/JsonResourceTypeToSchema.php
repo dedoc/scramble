@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
@@ -45,7 +46,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             ? $def->type->getReturnType()
             : new \Dedoc\Scramble\Support\Type\UnknownType();
 
-        if (! $array instanceof ArrayType) {
+        if (! $array instanceof KeyedArrayType) {
             if ($type->isInstanceOf(ResourceCollection::class)) {
                 $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($definition);
             } else {
@@ -53,11 +54,16 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             }
         }
 
-        if (! $array instanceof ArrayType) {
+        if (
+            ! $array instanceof KeyedArrayType
+            && ! $array instanceof ArrayType
+        ) {
             return new UnknownType();
         }
 
-        $array->items = $this->flattenMergeValues($array->items);
+        $array->items = $this->flattenMergeValues(
+            $array instanceof KeyedArrayType ? $array->items : [new ArrayItemType_(null, $array->value)],
+        );
 
         return $this->openApiTransformer->transform($array);
     }
@@ -66,8 +72,9 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     {
         return collect($items)
             ->flatMap(function (ArrayItemType_ $item) {
-                if ($item->value instanceof ArrayType) {
+                if ($item->value instanceof KeyedArrayType) {
                     $item->value->items = $this->flattenMergeValues($item->value->items);
+                    $item->value->isList = KeyedArrayType::checkIsList($item->value->items);
 
                     return [$item];
                 }
@@ -131,9 +138,9 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
                 ) {
                     $arrayToMerge = $item->value->templateTypes[1];
 
-                    // Second generic argument of the `MergeValue` class must be an array.
+                    // Second generic argument of the `MergeValue` class must be a keyed array.
                     // Otherwise, we ignore it from the resulting array.
-                    if (! $arrayToMerge instanceof ArrayType) {
+                    if (! $arrayToMerge instanceof KeyedArrayType) {
                         return [];
                     }
 
@@ -168,16 +175,16 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
         $openApiType = $this->openApiTransformer->transform($type);
 
-        if (($withArray = $definition->getMethodCallType('with')) instanceof ArrayType) {
+        if (($withArray = $definition->getMethodCallType('with')) instanceof KeyedArrayType) {
             $withArray->items = $this->flattenMergeValues($withArray->items);
         }
-        if ($additional instanceof ArrayType) {
+        if ($additional instanceof KeyedArrayType) {
             $additional->items = $this->flattenMergeValues($additional->items);
         }
 
         $shouldWrap = ($wrapKey = $type->name::$wrap ?? null) !== null
-            || $withArray instanceof ArrayType
-            || $additional instanceof ArrayType;
+            || $withArray instanceof KeyedArrayType
+            || $additional instanceof KeyedArrayType;
         $wrapKey = $wrapKey ?: 'data';
 
         if ($shouldWrap) {
@@ -185,11 +192,11 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
                 ->addProperty($wrapKey, $openApiType)
                 ->setRequired([$wrapKey]);
 
-            if ($withArray instanceof ArrayType) {
+            if ($withArray instanceof KeyedArrayType) {
                 $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($withArray));
             }
 
-            if ($additional instanceof ArrayType) {
+            if ($additional instanceof KeyedArrayType) {
                 $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));
             }
         }

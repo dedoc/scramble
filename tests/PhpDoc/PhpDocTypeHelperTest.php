@@ -25,5 +25,5 @@ it('parses tuple', function (string $phpDocType, string $expectedTypeString) {
         getPhpTypeFromDoc_Copy($phpDocType)->toString()
     )->toBe($expectedTypeString);
 })->with([
-    ['/** @var array{float, float} */', 'array{0: float, 1: float}'],
+    ['/** @var array{float, float} */', 'list{float, float}'],
 ]);
