@@ -54,16 +54,17 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             }
         }
 
-        if (
-            ! $array instanceof KeyedArrayType
-            && ! $array instanceof ArrayType
-        ) {
+        // The case when `toArray` is not defined.
+        if ($array instanceof ArrayType) {
+            return $this->openApiTransformer->transform($array);
+        }
+
+        if (! $array instanceof KeyedArrayType) {
             return new UnknownType();
         }
 
-        $array->items = $this->flattenMergeValues(
-            $array instanceof KeyedArrayType ? $array->items : [new ArrayItemType_(null, $array->value)],
-        );
+        $array->items = $this->flattenMergeValues($array->items);
+        $array->isList = KeyedArrayType::checkIsList($array->items);
 
         return $this->openApiTransformer->transform($array);
     }
