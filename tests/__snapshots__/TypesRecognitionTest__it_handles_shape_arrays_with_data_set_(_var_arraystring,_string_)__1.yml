@@ -1,3 +1,7 @@
-type: object
-additionalProperties:
-    type: string
+type: array
+prefixItems:
+    - { type: string }
+    - { type: string }
+minItems: 2
+maxItems: 2
+additionalItems: false

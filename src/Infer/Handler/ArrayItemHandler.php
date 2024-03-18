@@ -20,8 +20,8 @@ class ArrayItemHandler
             new ArrayItemType_(
                 $node->key->value ?? null,
                 $scope->getType($node->value),
-                $isOptional = false,
-                $shouldUnpack = $node->unpack,
+                isOptional: false,
+                shouldUnpack: $node->unpack,
             )
         );
     }

@@ -19,3 +19,11 @@ it('parses php doc into type correctly', function (string $phpDocType, string $e
     ['/** @var Foo */', 'Foo'],
     ['/** @var Foo<Bar, Baz> */', 'Foo<Bar, Baz>'],
 ]);
+
+it('parses tuple', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    ['/** @var array{float, float} */', 'list{float, float}'],
+]);

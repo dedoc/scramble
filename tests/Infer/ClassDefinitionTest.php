@@ -122,7 +122,7 @@ class Foo {
 EOD)->getClassDefinition('Foo');
 
     expect($type->methods['getPropGetter']->type->toString())
-        ->toBe('<TProp1>(TProp1): <TProp2, TQ>(TProp2, TQ): array{0: TQ, 1: TProp2, 2: TProp}');
+        ->toBe('<TProp1>(TProp1): <TProp2, TQ>(TProp2, TQ): list{TQ, TProp2, TProp}');
 });
 
 it('generates definition for inheritance', function () {

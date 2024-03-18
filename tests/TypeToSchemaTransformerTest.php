@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -29,10 +30,8 @@ it('transforms simple types', function ($type, $openApiArrayed) {
     [new StringType(), ['type' => 'string']],
     [new LiteralStringType('wow'), ['type' => 'string', 'example' => 'wow']],
     [new BooleanType(), ['type' => 'boolean']],
-    [new ArrayType([
-        new ArrayItemType_(0, new StringType()),
-    ]), ['type' => 'array', 'items' => ['type' => 'string']]],
-    [new ArrayType([
+    [new ArrayType(value: new StringType), ['type' => 'array', 'items' => ['type' => 'string']]],
+    [new KeyedArrayType([
         new ArrayItemType_('key', new IntegerType()),
         new ArrayItemType_('optional_key', new IntegerType(), true),
     ]), [
@@ -42,6 +41,21 @@ it('transforms simple types', function ($type, $openApiArrayed) {
             'optional_key' => ['type' => 'integer'],
         ],
         'required' => ['key'],
+    ]],
+    [new KeyedArrayType([
+        new ArrayItemType_(null, new IntegerType()),
+        new ArrayItemType_(null, new IntegerType()),
+        new ArrayItemType_(null, new IntegerType()),
+    ]), [
+        'type' => 'array',
+        'prefixItems' => [
+            ['type' => 'integer'],
+            ['type' => 'integer'],
+            ['type' => 'integer'],
+        ],
+        'minItems' => 3,
+        'maxItems' => 3,
+        'additionalItems' => false,
     ]],
 ]);
 
