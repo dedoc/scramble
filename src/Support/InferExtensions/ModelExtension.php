@@ -10,6 +10,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
+use Dedoc\Scramble\Support\Type\AbstractType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
@@ -53,7 +54,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         $info = $this->getModelInfo($event->getInstance());
 
         if ($attribute = $info->get('attributes')->get($event->getName())) {
-            $baseType = $this->getBaseAttributeType($info->get('instance'), $event->getName(), $attribute);
+            $baseType = $this->getBaseAttributeType($attribute);
 
             if ($attribute['nullable']) {
                 return Union::wrap([$baseType, new NullType()]);
@@ -69,17 +70,10 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         throw new \LogicException('Should not happen');
     }
 
-    private function getBaseAttributeType(Model $model, string $key, array $value)
+    private function getBaseAttributeType(array $attributeInfo)
     {
-        $type = explode(' ', $value['type'] ?? '');
+        $type = explode(' ', $attributeInfo['type'] ?? '');
         $typeName = explode('(', $type[0] ?? '')[0];
-
-        if (
-            ($model->getCasts()[$key] ?? null) === 'datetime'
-            || in_array($key, $model->getDates())
-        ) {
-            return new ObjectType(Carbon::class);
-        }
 
         // @todo Fix to native types
         $attributeType = match ($typeName) {
@@ -91,19 +85,22 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             default => new UnknownType("unimplemented DB column type [$type[0]]"),
         };
 
-        if ($value['cast'] && function_exists('enum_exists') && enum_exists($value['cast'])) {
-            if (! isset($value['cast']::cases()[0]->value)) {
-                return $attributeType;
-            }
+        $castedType = $this->getEloquentCastAsType($attributeInfo);
 
-            return new ObjectType($value['cast']);
+        return $castedType ?? $attributeType;
+    }
+
+    private function getEloquentCastAsType(array $attributeInfo): ?AbstractType
+    {
+        if ($attributeInfo['cast'] && enum_exists($attributeInfo['cast'])) {
+            return new ObjectType($attributeInfo['cast']);
         }
 
-        $castAs = str($value['cast'])
+        $castAs = str($attributeInfo['cast'])
             ->before(':')
             ->toString();
 
-        $castedType = match ($castAs) {
+        return match ($castAs) {
             'array',
             'json' => new ArrayType(),
             'real',
@@ -126,8 +123,6 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             'immutable_custom_datetime' => new ObjectType(CarbonImmutable::class),
             default => null,
         };
-
-        return $castedType ?? $attributeType;
     }
 
     private function getRelationType(array $relation)
