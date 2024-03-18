@@ -10,5 +10,11 @@ it('infers property fetch nodes types', function ($code, $expectedTypeString) {
 })->with([
     ['$foo->bar', 'unknown'],
     ['$foo->bar->{"baz"}', 'unknown'],
-    ['true ? 1 : null', 'int(1)|null']
+]);
+
+it('infers ternary expressions nodes types', function ($code, $expectedTypeString) {
+    expect(getStatementTypeForScopeTest($code)->toString())->toBe($expectedTypeString);
+})->with([
+    ['unknown() ? 1 : null', 'int(1)|null'],
+    ['unknown() ? 1 : 1', 'int(1)'],
 ]);
