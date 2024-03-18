@@ -55,7 +55,8 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         $info = $this->getModelInfo($event->getInstance());
 
         if ($attribute = $info->get('attributes')->get($event->getName())) {
-            $baseType = $this->getBaseAttributeType($attribute);
+            $baseType = $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '')
+                ?? $this->getAttributeTypeFromDbColumnType($attribute['type'] ?? '');
 
             if ($attribute['nullable']) {
                 return Union::wrap([$baseType, new NullType()]);
@@ -71,10 +72,10 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         throw new \LogicException('Should not happen');
     }
 
-    private function getBaseAttributeType(array $attributeInfo)
+    private function getAttributeTypeFromDbColumnType(string $columnType): AbstractType
     {
-        $type = explode(' ', $attributeInfo['type'] ?? '');
-        $typeName = explode('(', $type[0] ?? '')[0];
+        $type = Str::before($columnType, ' ');
+        $typeName = Str::before($type, '(');
 
         // @todo Fix to native types
         $attributeType = match ($typeName) {
@@ -83,27 +84,25 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             'varchar', 'string', 'text', 'datetime' => new StringType(), // string, text - needed?
             'tinyint', 'bool', 'boolean' => new BooleanType(), // bool, boolean - needed?
             'json', 'array' => new ArrayType(),
-            default => new UnknownType("unimplemented DB column type [$type[0]]"),
+            default => new UnknownType("unimplemented DB column type [$type]"),
         };
 
-        $castedType = $this->getEloquentCastAsType($attributeInfo);
-
-        return $castedType ?? $attributeType;
+        return $attributeType;
     }
 
     /**
      * @todo Add support for custom castables.
      */
-    private function getEloquentCastAsType(array $attributeInfo): ?AbstractType
+    private function getAttributeTypeFromEloquentCasts(string $cast): ?AbstractType
     {
-        if ($attributeInfo['cast'] && enum_exists($attributeInfo['cast'])) {
-            return new ObjectType($attributeInfo['cast']);
+        if ($cast && enum_exists($cast)) {
+            return new ObjectType($cast);
         }
 
-        $castAsType = Str::before($attributeInfo['cast'], ':');
-        $castAsParameters = str($attributeInfo['cast'])->after("{$castAsType}:")->explode(',');
+        $castAsType = Str::before($cast, ':');
+        $castAsParameters = str($cast)->after("{$castAsType}:")->explode(',');
 
-        if ($castAsType === 'encrypted') {
+        if (Str::startsWith($castAsType, 'encrypted:')) {
             $castAsType = $castAsParameters->first(); // array, collection, json, object
         }
 
