@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\InferExtensions;
 
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
@@ -24,6 +25,7 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
@@ -97,7 +99,35 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             return new ObjectType($value['cast']);
         }
 
-        return $attributeType;
+        $castAs = str($value['cast'])
+            ->before(':')
+            ->toString();
+
+        $castedType = match ($castAs) {
+            'array',
+            'json' => new ArrayType(),
+            'real',
+            'float',
+            'double' => new FloatType(),
+            'int',
+            'integer',
+            'timestamp' => new IntegerType(),
+            'bool',
+            'boolean' => new BooleanType(),
+            'string',
+            'decimal' => new StringType(),
+            'object' => new ObjectType('\stdClass'),
+            'collection' => new ObjectType(Collection::class),
+            'date',
+            'datetime',
+            'custom_datetime' => new ObjectType(Carbon::class),
+            'immutable_date',
+            'immutable_datetime',
+            'immutable_custom_datetime' => new ObjectType(CarbonImmutable::class),
+            default => null,
+        };
+
+        return $castedType ?? $attributeType;
     }
 
     private function getRelationType(array $relation)

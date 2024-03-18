@@ -3,7 +3,7 @@
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Tests\Files\SamplePostModelWithToArray;
+use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -14,9 +14,9 @@ beforeEach(function () {
 });
 
 it('adds models attributes to the model class definition as properties', function () {
-    $this->infer->analyzeClass(SamplePostModelWithToArray::class);
+    $this->infer->analyzeClass(SamplePostModel::class);
 
-    $object = new ObjectType(SamplePostModelWithToArray::class);
+    $object = new ObjectType(SamplePostModel::class);
 
     $expectedPropertiesTypes = [
         /* Attributes from the DB */
@@ -24,6 +24,7 @@ it('adds models attributes to the model class definition as properties', functio
         'status' => 'Status',
         'user_id' => 'int',
         'title' => 'string',
+        'settings' => 'array<mixed>|null',
         'body' => 'string',
         'created_at' => 'Carbon\Carbon|null',
         'updated_at' => 'Carbon\Carbon|null',
@@ -31,8 +32,8 @@ it('adds models attributes to the model class definition as properties', functio
         'read_time' => 'unknown',
         /* Relations */
         'user' => 'SampleUserModel',
-        'parent' => 'SamplePostModelWithToArray',
-        'children' => 'Illuminate\Database\Eloquent\Collection<SamplePostModelWithToArray>',
+        'parent' => 'SamplePostModel',
+        'children' => 'Illuminate\Database\Eloquent\Collection<SamplePostModel>',
         /* other properties from model class are ommited here but exist on type */
     ];
 
