@@ -91,15 +91,21 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         return $castedType ?? $attributeType;
     }
 
+    /**
+     * @todo Add support for custom castables.
+     */
     private function getEloquentCastAsType(array $attributeInfo): ?AbstractType
     {
         if ($attributeInfo['cast'] && enum_exists($attributeInfo['cast'])) {
             return new ObjectType($attributeInfo['cast']);
         }
 
-        $castAs = str($attributeInfo['cast']);
-        $castAsType = $castAs->before(':')->toString();
-        $castAsParameters = $castAs->after(':')->explode(',');
+        $castAsType = Str::before($attributeInfo['cast'], ':');
+        $castAsParameters = str($attributeInfo['cast'])->after("{$castAsType}:")->explode(',');
+
+        if ($castAsType === 'encrypted') {
+            $castAsType = $castAsParameters->first(); // array, collection, json, object
+        }
 
         return match ($castAsType) {
             'array',
