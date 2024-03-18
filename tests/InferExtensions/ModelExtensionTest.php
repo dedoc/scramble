@@ -62,3 +62,21 @@ it('adds toArray method type the model class without defined toArray class', fun
             'updated_at' => 'string|null',
         ]);
 });
+
+it('casts generic enum collections', function () {
+    $this->infer->analyzeClass(SampleUserModel::class);
+
+    $object = new ObjectType(SampleUserModel::class);
+
+    $expectedPropertiesTypes = [
+        'roles' => 'Illuminate\Support\Collection<Role>'
+        // other properties omitted for brevity
+    ];
+
+    foreach ($expectedPropertiesTypes as $name => $type) {
+        $propertyType = $object->getPropertyType($name);
+
+        expect(Str::replace('Dedoc\\Scramble\\Tests\\Files\\', '', $propertyType->toString()))
+            ->toBe($type);
+    }
+});

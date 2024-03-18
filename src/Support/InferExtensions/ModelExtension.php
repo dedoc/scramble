@@ -21,6 +21,7 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
@@ -96,11 +97,11 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             return new ObjectType($attributeInfo['cast']);
         }
 
-        $castAs = str($attributeInfo['cast'])
-            ->before(':')
-            ->toString();
+        $castAs = str($attributeInfo['cast']);
+        $castAsType = $castAs->before(':')->toString();
+        $castAsParameters = $castAs->after(':')->explode(',');
 
-        return match ($castAs) {
+        return match ($castAsType) {
             'array',
             'json' => new ArrayType(),
             'real',
@@ -115,6 +116,9 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             'decimal' => new StringType(),
             'object' => new ObjectType('\stdClass'),
             'collection' => new ObjectType(Collection::class),
+            'Illuminate\Database\Eloquent\Casts\AsEnumCollection' => new Generic(Collection::class, [
+                new TemplateType($castAsParameters->first())
+            ]),
             'date',
             'datetime',
             'custom_datetime' => new ObjectType(Carbon::class),
