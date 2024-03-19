@@ -3,8 +3,12 @@
 namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
+use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
@@ -13,6 +17,7 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\Dependency\ClassDependency;
 use Dedoc\Scramble\Support\Type\Reference\Dependency\FunctionDependency;
 use Dedoc\Scramble\Support\Type\Reference\Dependency\MethodDependency;
@@ -20,6 +25,9 @@ use Dedoc\Scramble\Support\Type\Reference\Dependency\PropertyDependency;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticPropertyFetchReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -117,8 +125,20 @@ class ReferenceTypeResolver
     private function doResolve(Type $t, Type $type, Scope $scope)
     {
         $resolver = function () use ($t, $scope) {
+            if ($t instanceof ConstFetchReferenceType) {
+                return $this->resolveConstFetchReferenceType($scope, $t);
+            }
+
             if ($t instanceof MethodCallReferenceType) {
                 return $this->resolveMethodCallReferenceType($scope, $t);
+            }
+
+            if ($t instanceof StaticMethodCallReferenceType) {
+                return $this->resolveStaticMethodCallReferenceType($scope, $t);
+            }
+
+            if ($t instanceof StaticPropertyFetchReferenceType) {
+                return $this->resolveStaticPropertyFetchReferenceType($scope, $t);
             }
 
             if ($t instanceof CallableCallReferenceType) {
@@ -145,6 +165,60 @@ class ReferenceTypeResolver
         }
 
         return $this->resolve($scope, $resolved);
+    }
+
+    private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type)
+    {
+        $analyzedType = clone $type;
+
+        if ($type->callee instanceof StaticReference) {
+            $contextualCalleeName = match ($type->callee->keyword) {
+                StaticReference::SELF => $scope->context->functionDefinition?->definingClassName,
+                StaticReference::STATIC => $scope->context->classDefinition?->name,
+                StaticReference::PARENT => $scope->context->classDefinition?->parentFqn,
+            };
+
+            // This can only happen if any of static reserved keyword used in non-class context – hence considering not possible for now.
+            if (! $contextualCalleeName) {
+                return new UnknownType("Cannot properly analyze [{$type->toString()}] reference type as static keyword used in non-class context, or current class scope has no parent.");
+            }
+
+            $analyzedType->callee = $contextualCalleeName;
+        }
+
+        return (new ConstFetchTypeGetter)($scope, $analyzedType->callee, $analyzedType->constName);
+    }
+
+    private function resolveStaticPropertyFetchReferenceType(Scope $scope, StaticPropertyFetchReferenceType $type)
+    {
+        $analyzedType = clone $type;
+
+        $contextualClassName = $this->resolveClassName($scope, $type->callee);
+        if (! $contextualClassName) {
+            return new UnknownType("Cannot properly analyze [{$type->toString()}] reference type as static keyword used in non-class context, or current class scope has no parent.");
+        }
+        $type->callee = $contextualClassName;
+
+        if (
+            ! array_key_exists($type->callee, $this->index->classesDefinitions)
+            && ! $this->resolveUnknownClassResolver($type->callee)
+        ) {
+            return new UnknownType();
+        }
+
+        /** @var ClassDefinition $calleeDefinition */
+        $calleeDefinition = $this->index->getClassDefinition($type->callee);
+
+        if (! $propertyDefinition = $calleeDefinition->getPropertyDefinition($type->propertyName)) {
+            return new UnknownType("Cannot get a static property type [$type->propertyName] on type [$type->callee]");
+        }
+
+        $propertyType = $propertyDefinition->type;
+        if (! $propertyType || $propertyType instanceof TemplateType) {
+            return new UnknownType("Cannot get a static property type [$type->propertyName] on type [$type->callee]");
+        }
+
+        return $propertyType;
     }
 
     private function resolveMethodCallReferenceType(Scope $scope, MethodCallReferenceType $type)
@@ -194,6 +268,54 @@ class ReferenceTypeResolver
         return $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType);
     }
 
+    private function resolveStaticMethodCallReferenceType(Scope $scope, StaticMethodCallReferenceType $type)
+    {
+        // (#self).listTableDetails()
+        // (#Doctrine\DBAL\Schema\Table).listTableDetails()
+        // (#TName).listTableDetails()
+
+        $type->arguments = array_map(
+            // @todo: fix resolving arguments when deep arg is reference
+            fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
+            $type->arguments,
+        );
+
+        $contextualClassName = $this->resolveClassName($scope, $type->callee);
+        if (! $contextualClassName) {
+            return new UnknownType();
+        }
+        $type->callee = $contextualClassName;
+
+        // Assuming callee here can be only string of known name. Reality is more complex than
+        // that, but it is fine for now.
+
+        // Attempting extensions broker before potentially giving up on type inference
+        if ($returnType = Context::getInstance()->extensionsBroker->getStaticMethodReturnType(new StaticMethodCallEvent(
+            callee: $type->callee,
+            name: $type->methodName,
+            scope: $scope,
+            arguments: $type->arguments,
+        ))) {
+            return $returnType;
+        }
+
+        if (
+            ! array_key_exists($type->callee, $this->index->classesDefinitions)
+            && ! $this->resolveUnknownClassResolver($type->callee)
+        ) {
+            return new UnknownType();
+        }
+
+        /** @var ClassDefinition $calleeDefinition */
+        $calleeDefinition = $this->index->getClassDefinition($type->callee);
+
+        if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
+            return new UnknownType("Cannot get a method type [$type->methodName] on type [$type->callee]");
+        }
+
+        return $this->getFunctionCallResult($methodDefinition, $type->arguments);
+    }
+
     private function resolveUnknownClassResolver(string $className): ?ClassDefinition
     {
         try {
@@ -212,6 +334,26 @@ class ReferenceTypeResolver
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)
     {
+        if ($type->callee instanceof CallableStringType) {
+            $analyzedType = clone $type;
+
+            $analyzedType->arguments = array_map(
+                // @todo: fix resolving arguments when deep arg is reference
+                fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
+                $type->arguments,
+            );
+
+            $returnType = Context::getInstance()->extensionsBroker->getFunctionReturnType(new FunctionCallEvent(
+                name: $analyzedType->callee->name,
+                scope: $scope,
+                arguments: $analyzedType->arguments,
+            ));
+
+            if ($returnType) {
+                return $returnType;
+            }
+        }
+
         $calleeType = $type->callee instanceof CallableStringType
             ? $this->index->getFunctionDefinition($type->callee->name)
             : $this->resolve($scope, $type->callee);
@@ -241,6 +383,12 @@ class ReferenceTypeResolver
             $type->arguments,
         );
 
+        $contextualClassName = $this->resolveClassName($scope, $type->name);
+        if (! $contextualClassName) {
+            return new UnknownType();
+        }
+        $type->name = $contextualClassName;
+
         if (
             ! array_key_exists($type->name, $this->index->classesDefinitions)
             && ! $this->resolveUnknownClassResolver($type->name)
@@ -254,11 +402,20 @@ class ReferenceTypeResolver
             return new ObjectType($type->name);
         }
 
-        $inferredTemplates = collect($this->resolveTypesTemplatesFromArguments(
+        $propertyDefaultTemplateTypes = collect($classDefinition->properties)
+            ->filter(fn (ClassPropertyDefinition $definition) => $definition->type instanceof TemplateType && (bool) $definition->defaultType)
+            ->mapWithKeys(fn (ClassPropertyDefinition $definition) => [
+                $definition->type->name => $definition->defaultType,
+            ]);
+
+        $inferredConstructorParamTemplates = collect($this->resolveTypesTemplatesFromArguments(
             $classDefinition->templateTypes,
             $classDefinition->getMethodDefinition('__construct', $scope)->type->arguments ?? [],
             $this->prepareArguments($classDefinition->getMethodDefinition('__construct', $scope), $type->arguments),
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
+
+        $inferredTemplates = $propertyDefaultTemplateTypes
+            ->merge($inferredConstructorParamTemplates);
 
         return new Generic(
             $classDefinition->name,
@@ -311,7 +468,7 @@ class ReferenceTypeResolver
     private function getFunctionCallResult(
         FunctionLikeDefinition $callee,
         array $arguments,
-        /* When this is a handling for method call */
+        /* When this is a handling for non-static method call */
         ObjectType|SelfType|null $calledOnType = null,
     ) {
         $returnType = $callee->type->getReturnType();
@@ -410,13 +567,10 @@ class ReferenceTypeResolver
             return $realArguments;
         }
 
-        /*
-         * @todo $realArguments for now is considered only by index, not by names.
-         */
         return collect($callee->type->arguments)
             ->keys()
             ->map(function (string $name, int $index) use ($callee, $realArguments) {
-                return $realArguments[$index] ?? $callee->argumentsDefaults[$name] ?? null;
+                return $realArguments[$name] ?? $realArguments[$index] ?? $callee->argumentsDefaults[$name] ?? null;
             })
             ->filter()
             ->values()
@@ -453,5 +607,18 @@ class ReferenceTypeResolver
                 $foundCorrespondingTemplateType,
             ];
         }, $templates)));
+    }
+
+    private function resolveClassName(Scope $scope, string $name): ?string
+    {
+        if (! in_array($name, StaticReference::KEYWORDS)) {
+            return $name;
+        }
+
+        return match ($name) {
+            StaticReference::SELF => $scope->context->functionDefinition?->definingClassName,
+            StaticReference::STATIC => $scope->context->classDefinition?->name,
+            StaticReference::PARENT => $scope->context->classDefinition?->parentFqn,
+        };
     }
 }

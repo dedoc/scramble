@@ -144,6 +144,31 @@ class TypeHelper
             return new LiteralBooleanType($value);
         }
 
+        if (is_array($value)) {
+            return new ArrayType(
+                collect($value)
+                    ->map(function ($value, $key) {
+                        return new ArrayItemType_(
+                            is_string($key) ? $key : null,
+                            static::createTypeFromValue($value),
+                        );
+                    })
+                    ->values()
+                    ->all()
+            );
+        }
+
         return null; // @todo: object
+    }
+
+    /**
+     * @param  Type[]  $parts
+     */
+    public static function flattenStringConcatTypes(array $parts): array
+    {
+        return collect($parts)
+            ->flatMap(fn ($t) => $t instanceof ConcatenatedStringType ? $t->parts : [$t])
+            ->values()
+            ->all();
     }
 }

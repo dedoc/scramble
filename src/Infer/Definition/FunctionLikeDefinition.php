@@ -16,6 +16,7 @@ class FunctionLikeDefinition
         public FunctionType $type,
         public array $sideEffects = [],
         public array $argumentsDefaults = [],
+        public ?string $definingClassName = null,
     ) {
     }
 

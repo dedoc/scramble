@@ -55,3 +55,7 @@ class RequestBodyExtensionTest__automaticall_infers_form_data
         $request->validate(['foo' => 'file']);
     }
 }
+
+it('falls back to static analysis when cannot evaluate rules', function () {
+
+});
