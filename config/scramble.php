@@ -80,4 +80,17 @@ return [
     ],
 
     'extensions' => [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Disallow Request Body
+    |--------------------------------------------------------------------------
+    |
+    | Disallow request body for specific HTTP methods. Scramble allows every
+    | HTTP method to have a request body by default except GET. However,
+    | HEAD, OPTIONS, DELETE, etc. you might want to include in this
+    | list to prevent empty request body for these methods.
+    |
+    */
+    'disallow_request_body' => ['get'],
 ];

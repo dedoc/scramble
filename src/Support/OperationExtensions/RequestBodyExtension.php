@@ -31,14 +31,14 @@ class RequestBodyExtension extends OperationExtension
             $mediaType = $this->getMediaType($operation, $routeInfo, $bodyParams);
 
             if (count($bodyParams)) {
-                if (! in_array($operation->method, ['get', 'head', 'delete'])) {
+                if (! in_array($operation->method, config('scramble.disallow_request_body'))) {
                     $operation->addRequestBodyObject(
                         RequestBodyObject::make()->setContent($mediaType, Schema::createFromParameters($bodyParams))
                     );
                 } else {
                     $operation->addParameters($bodyParams);
                 }
-            } elseif (! in_array($operation->method, ['get', 'head', 'delete'])) {
+            } elseif (! in_array($operation->method, config('scramble.disallow_request_body'))) {
                 $operation
                     ->addRequestBodyObject(
                         RequestBodyObject::make()
