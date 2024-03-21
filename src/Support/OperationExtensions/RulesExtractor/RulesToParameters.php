@@ -93,19 +93,21 @@ class RulesToParameters
     {
         $confirmedParamNameRules = collect($this->rules)
             ->map(fn ($rules, $name) => [$name, Arr::wrap(is_string($rules) ? explode('|', $rules) : $rules)])
-            ->first(fn ($nameRules) => in_array('confirmed', $nameRules[1]));
+            ->filter(fn ($nameRules) => in_array('confirmed', $nameRules[1]));
 
         if (! $confirmedParamNameRules) {
             return $parameters;
         }
 
-        /** @var Parameter $confirmedParam */
-        $confirmedParam = $parameters->first(fn ($p) => $p->name === $confirmedParamNameRules[0]);
+        foreach ($confirmedParamNameRules as $confirmedParamNameRule) {
+            /** @var Parameter $confirmedParam */
+            $confirmedParam = $parameters->first(fn ($p) => $p->name === $confirmedParamNameRule[0]);
 
-        $parameters->offsetSet(
-            $name = "$confirmedParamNameRules[0]_confirmation",
-            (clone $confirmedParam)->setName($name),
-        );
+            $parameters->offsetSet(
+                $name = "$confirmedParamNameRule[0]_confirmation",
+                (clone $confirmedParam)->setName($name),
+            );
+        }
 
         return $parameters;
     }

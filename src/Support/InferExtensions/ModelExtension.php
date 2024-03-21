@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
@@ -68,18 +69,22 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     private function getBaseAttributeType(Model $model, string $key, array $value)
     {
-        $type = explode(' ', $value['type']);
-        $typeName = explode('(', $type[0])[0];
+        $type = explode(' ', $value['type'] ?? '');
+        $typeName = explode('(', $type[0] ?? '')[0];
 
-        if (in_array($key, $model->getDates())) {
+        if (
+            ($model->getCasts()[$key] ?? null) === 'datetime'
+            || in_array($key, $model->getDates())
+        ) {
             return new ObjectType(Carbon::class);
         }
 
+        // @todo Fix to native types
         $attributeType = match ($typeName) {
             'int', 'integer', 'bigint' => new IntegerType(),
             'float', 'double', 'decimal' => new FloatType(),
-            'string', 'text', 'datetime' => new StringType(),
-            'bool', 'boolean' => new BooleanType(),
+            'varchar', 'string', 'text', 'datetime' => new StringType(), // string, text - needed?
+            'tinyint', 'bool', 'boolean' => new BooleanType(), // bool, boolean - needed?
             'json', 'array' => new ArrayType(),
             default => new UnknownType("unimplemented DB column type [$type[0]]"),
         };
@@ -149,9 +154,9 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
                 return $event->getInstance()->getPropertyType($name);
             });
 
-        return new ArrayType([
+        return new KeyedArrayType([
             ...$arrayableAttributesTypes->map(fn ($type, $name) => new ArrayItemType_($name, $type))->values()->all(),
-            ...$arrayableRelationsTypes->map(fn ($type, $name) => new ArrayItemType_($name, $type, $isOptional = true))->values()->all(),
+            ...$arrayableRelationsTypes->map(fn ($type, $name) => new ArrayItemType_($name, $type, isOptional: true))->values()->all(),
         ]);
     }
 

@@ -57,7 +57,7 @@ class Foo {
 }
 EOD)->getClassDefinition('Foo');
 
-    expect($type->methods['foo']->type->toString())->toBe('(): array{0: int(2), 1: int(2)}');
+    expect($type->methods['foo']->type->toString())->toBe('(): list{int(2), int(2)}');
 });
 
 it('resolves unknown references to unknowns in non-reference return types', function () {
@@ -73,7 +73,7 @@ class Foo {
 }
 EOD)->getClassDefinition('Foo');
 
-    expect($type->methods['foo']->type->toString())->toBe('(): array{0: int(2), 1: unknown}');
+    expect($type->methods['foo']->type->toString())->toBe('(): list{int(2), unknown}');
 });
 
 it('resolves a deep reference when encountered in self class', function () {

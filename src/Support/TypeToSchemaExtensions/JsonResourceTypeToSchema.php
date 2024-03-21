@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
+use Carbon\Carbon;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
@@ -12,8 +13,10 @@ use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
@@ -43,7 +46,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             ? $def->type->getReturnType()
             : new \Dedoc\Scramble\Support\Type\UnknownType();
 
-        if (! $array instanceof ArrayType) {
+        if (! $array instanceof KeyedArrayType) {
             if ($type->isInstanceOf(ResourceCollection::class)) {
                 $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($definition);
             } else {
@@ -51,11 +54,17 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             }
         }
 
-        if (! $array instanceof ArrayType) {
+        // The case when `toArray` is not defined.
+        if ($array instanceof ArrayType) {
+            return $this->openApiTransformer->transform($array);
+        }
+
+        if (! $array instanceof KeyedArrayType) {
             return new UnknownType();
         }
 
         $array->items = $this->flattenMergeValues($array->items);
+        $array->isList = KeyedArrayType::checkIsList($array->items);
 
         return $this->openApiTransformer->transform($array);
     }
@@ -64,8 +73,22 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     {
         return collect($items)
             ->flatMap(function (ArrayItemType_ $item) {
-                if ($item->value instanceof ArrayType) {
+                if ($item->value instanceof KeyedArrayType) {
                     $item->value->items = $this->flattenMergeValues($item->value->items);
+                    $item->value->isList = KeyedArrayType::checkIsList($item->value->items);
+
+                    return [$item];
+                }
+
+                if (
+                    $item->value instanceof Union
+                    && (new TypeWalker)->first($item->value, fn (Type $t) => $t->isInstanceOf(Carbon::class))
+                ) {
+                    (new TypeWalker)->replace($item->value, function (Type $t) {
+                        return $t->isInstanceOf(Carbon::class)
+                            ? tap(new StringType, fn ($t) => $t->setAttribute('format', 'date-time'))
+                            : null;
+                    });
 
                     return [$item];
                 }
@@ -116,9 +139,9 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
                 ) {
                     $arrayToMerge = $item->value->templateTypes[1];
 
-                    // Second generic argument of the `MergeValue` class must be an array.
+                    // Second generic argument of the `MergeValue` class must be a keyed array.
                     // Otherwise, we ignore it from the resulting array.
-                    if (! $arrayToMerge instanceof ArrayType) {
+                    if (! $arrayToMerge instanceof KeyedArrayType) {
                         return [];
                     }
 
@@ -153,16 +176,16 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
         $openApiType = $this->openApiTransformer->transform($type);
 
-        if (($withArray = $definition->getMethodCallType('with')) instanceof ArrayType) {
+        if (($withArray = $definition->getMethodCallType('with')) instanceof KeyedArrayType) {
             $withArray->items = $this->flattenMergeValues($withArray->items);
         }
-        if ($additional instanceof ArrayType) {
+        if ($additional instanceof KeyedArrayType) {
             $additional->items = $this->flattenMergeValues($additional->items);
         }
 
         $shouldWrap = ($wrapKey = $type->name::$wrap ?? null) !== null
-            || $withArray instanceof ArrayType
-            || $additional instanceof ArrayType;
+            || $withArray instanceof KeyedArrayType
+            || $additional instanceof KeyedArrayType;
         $wrapKey = $wrapKey ?: 'data';
 
         if ($shouldWrap) {
@@ -170,11 +193,11 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
                 ->addProperty($wrapKey, $openApiType)
                 ->setRequired([$wrapKey]);
 
-            if ($withArray instanceof ArrayType) {
+            if ($withArray instanceof KeyedArrayType) {
                 $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($withArray));
             }
 
-            if ($additional instanceof ArrayType) {
+            if ($additional instanceof KeyedArrayType) {
                 $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));
             }
         }

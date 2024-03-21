@@ -147,17 +147,13 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         $modelType = new UnknownType("Cannot resolve [$modelClass] model type.");
         $modelClassDefinition = null;
         if ($modelClass && is_a($modelClass, Model::class, true)) {
-            try {
-                $modelClassDefinition = (new ModelInfo($modelClass))->type();
+            // @todo Use ModelExtension implementation of model info to type conversion.
+            // @todo The problem is that model extension type is dynamic and I'm not sure how to use it here.
+            $modelClassDefinition = (new ModelInfo($modelClass))->type();
 
-                $scope->index->registerClassDefinition($modelClassDefinition);
+            $scope->index->registerClassDefinition($modelClassDefinition);
 
-                $modelType = new ObjectType($modelClassDefinition->name);
-            } catch (\LogicException $e) {
-                // Here doctrine/dbal is not installed.
-                $modelType = null;
-                $modelClassDefinition = null;
-            }
+            $modelType = new ObjectType($modelClassDefinition->name);
         }
 
         static::$jsonResourcesModelTypesCache[$jsonClass->name] = [$modelType, $modelClassDefinition];

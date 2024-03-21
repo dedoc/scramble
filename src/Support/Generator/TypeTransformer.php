@@ -14,6 +14,7 @@ use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
+use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -57,34 +58,23 @@ class TypeTransformer
         $openApiType = new StringType();
 
         if (
-            $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
-            && (
-                (collect($type->items)->every(fn ($t) => is_numeric($t->key)) && collect($type->items)->count() === 1)
-                || collect($type->items)->every(fn ($t) => $t->key === null)
-            )
+            $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
+            && $type->isList
         ) {
-            $isMap = collect($type->items)->every(fn ($t) => $t->key === null)
-                && count($type->items) === 2;
-
-            if ($isMap) {
-                $keyType = $this->transform($type->items[0]->value);
-
-                if ($keyType instanceof IntegerType) {
-                    $openApiType = (new ArrayType)
-                        ->setItems($this->transform($type->items[1]->value));
-                } else {
-                    $openApiType = (new ObjectType)
-                        ->additionalProperties($this->transform($type->items[1]->value));
-                }
-            } else {
-                $itemsType = isset($type->items[0])
-                    ? $this->transform($type->items[0]->value)
-                    : new StringType();
-
-                $openApiType = (new ArrayType())->setItems($itemsType);
-            }
+            /** @see https://stackoverflow.com/questions/57464633/how-to-define-a-json-array-with-concrete-item-definition-for-every-index-i-e-a */
+            $openApiType = (new ArrayType)
+                ->setMin(count($type->items))
+                ->setMax(count($type->items))
+                ->setPrefixItems(
+                    array_map(
+                        fn ($item) => $this->transform($item->value),
+                        $type->items
+                    )
+                )
+                ->setAdditionalItems(false);
         } elseif (
-            $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
+            $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
+            && ! $type->isList
         ) {
             $openApiType = new ObjectType();
             $requiredKeys = [];
@@ -103,6 +93,17 @@ class TypeTransformer
             $openApiType->properties = $props->all();
 
             $openApiType->setRequired($requiredKeys);
+        } elseif (
+            $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
+        ) {
+            $keyType = $this->transform($type->key);
+
+            if ($keyType instanceof IntegerType) {
+                $openApiType = (new ArrayType)->setItems($this->transform($type->value));
+            } else {
+                $openApiType = (new ObjectType)
+                    ->additionalProperties($this->transform($type->value));
+            }
         } elseif ($type instanceof ArrayItemType_) {
             $openApiType = $this->transform($type->value);
 
@@ -115,6 +116,10 @@ class TypeTransformer
 
                 if ($varNode && $varNode->description) {
                     $openApiType->setDescription($varNode->description);
+                }
+
+                if ($examples = ExamplesExtractor::make($docNode)->extract(preferString: $openApiType instanceof StringType)) {
+                    $openApiType->examples($examples);
                 }
             }
         } elseif ($type instanceof Union) {

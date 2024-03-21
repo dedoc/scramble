@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -15,6 +16,7 @@ use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
+use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
@@ -28,10 +30,8 @@ it('transforms simple types', function ($type, $openApiArrayed) {
     [new StringType(), ['type' => 'string']],
     [new LiteralStringType('wow'), ['type' => 'string', 'example' => 'wow']],
     [new BooleanType(), ['type' => 'boolean']],
-    [new ArrayType([
-        new ArrayItemType_(0, new StringType()),
-    ]), ['type' => 'array', 'items' => ['type' => 'string']]],
-    [new ArrayType([
+    [new ArrayType(value: new StringType), ['type' => 'array', 'items' => ['type' => 'string']]],
+    [new KeyedArrayType([
         new ArrayItemType_('key', new IntegerType()),
         new ArrayItemType_('optional_key', new IntegerType(), true),
     ]), [
@@ -41,6 +41,21 @@ it('transforms simple types', function ($type, $openApiArrayed) {
             'optional_key' => ['type' => 'integer'],
         ],
         'required' => ['key'],
+    ]],
+    [new KeyedArrayType([
+        new ArrayItemType_(null, new IntegerType()),
+        new ArrayItemType_(null, new IntegerType()),
+        new ArrayItemType_(null, new IntegerType()),
+    ]), [
+        'type' => 'array',
+        'prefixItems' => [
+            ['type' => 'integer'],
+            ['type' => 'integer'],
+            ['type' => 'integer'],
+        ],
+        'minItems' => 3,
+        'maxItems' => 3,
+        'additionalItems' => false,
     ]],
 ]);
 
@@ -132,6 +147,39 @@ it('gets nullable type reference', function () {
     ]);
 });
 
+it('infers date column directly referenced in json as date-time', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(InferTypesTest_JsonResourceWithCarbonAttribute::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/InferTypesTest_JsonResourceWithCarbonAttribute',
+    ]);
+
+    expect($components->getSchema(InferTypesTest_JsonResourceWithCarbonAttribute::class)->toArray()['properties']['created_at'])->toBe([
+        'type' => ['string', 'null'],
+        'format' => 'date-time',
+    ]);
+});
+
+it('supports @example tag in api resource', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(ApiResourceTest_ResourceWithExamples::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithExamples',
+    ]);
+
+    expect($components->getSchema(ApiResourceTest_ResourceWithExamples::class)->toArray()['properties']['id'])->toBe([
+        'type' => 'integer',
+        'examples' => [
+            'Foo',
+            'Multiword example',
+        ],
+    ]);
+});
+
 class ComplexTypeHandlersTest_SampleType extends JsonResource
 {
     public function toArray($request)
@@ -216,6 +264,38 @@ class ComplexTypeHandlersWithWhenCounted_SampleType extends JsonResource
             'bar_int' => $this->whenCounted('bar', fn () => 1),
             'bar_useless' => $this->whenCounted('bar', null),
             'bar_nullable' => $this->whenCounted('bar', fn () => 3, null),
+        ];
+    }
+}
+
+/**
+ * @property SamplePostModel $resource
+ */
+class InferTypesTest_JsonResourceWithCarbonAttribute extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'id' => $this->id,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
+    }
+}
+
+/**
+ * @property SamplePostModel $resource
+ */
+class ApiResourceTest_ResourceWithExamples extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            /**
+             * @example Foo
+             * @example Multiword example
+             */
+            'id' => $this->id,
         ];
     }
 }

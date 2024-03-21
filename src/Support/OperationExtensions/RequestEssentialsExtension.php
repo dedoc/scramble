@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
@@ -51,6 +52,13 @@ class RequestEssentialsExtension extends OperationExtension
     {
         [$pathParams, $pathAliases] = $this->getRoutePathParameters($routeInfo->route, $routeInfo->phpDoc());
 
+        $tagResolver = Scramble::$tagResolver ?? function (RouteInfo $routeInfo) {
+            return array_unique([
+                ...$this->extractTagsForMethod($routeInfo),
+                Str::of(class_basename($routeInfo->className()))->replace('Controller', ''),
+            ]);
+        };
+
         $operation
             ->setMethod(strtolower($routeInfo->route->methods()[0]))
             ->setPath(Str::replace(
@@ -58,10 +66,7 @@ class RequestEssentialsExtension extends OperationExtension
                 collect($pathAliases)->values()->map(fn ($v) => '{'.$v.'}')->all(),
                 $routeInfo->route->uri,
             ))
-            ->setTags(array_unique([
-                ...$this->extractTagsForMethod($routeInfo),
-                Str::of(class_basename($routeInfo->className()))->replace('Controller', ''),
-            ]))
+            ->setTags($tagResolver($routeInfo, $operation))
             ->servers($this->getAlternativeServers($routeInfo->route))
             ->addParameters($pathParams);
 
@@ -204,9 +209,13 @@ class RequestEssentialsExtension extends OperationExtension
                 'string' => new StringType(),
                 'bool' => new BooleanType(),
             ];
-            $schemaType = $type ? ($schemaTypesMap[$type] ?? new IntegerType) : new StringType;
 
-            $isModelId = $type && ! isset($schemaTypesMap[$type]);
+            $isEnum = function_exists('enum_exists') && enum_exists($type);
+            $schemaType = $isEnum
+                ? $this->openApiTransformer->transform(new ObjectType($type))
+                : ($type ? ($schemaTypesMap[$type] ?? new IntegerType) : new StringType);
+
+            $isModelId = $type && ! $isEnum && ! isset($schemaTypesMap[$type]);
 
             if ($isModelId) {
                 [$schemaType, $description] = $this->getModelIdTypeAndDescription($schemaType, $type, $paramName, $description, $route->bindingFields()[$paramName] ?? null);

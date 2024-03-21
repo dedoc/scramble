@@ -15,11 +15,16 @@ return [
      */
     'api_domain' => null,
 
+    /**
+     * The path where your OpenAPI specification will be exported.
+     */
+    'export_path' => 'api.json',
+
     /*
      * Define the theme of the documentation.
      * Available options are `light` and `dark`.
      */
-    'theme' => 'dark',
+    'theme' => 'light',
 
     'info' => [
         /*

@@ -79,12 +79,12 @@ it('handles shape arrays', function ($phpDoc) {
 
     assertMatchesSnapshot($result ? $result->toArray() : null);
 })->with([
-    '/** @var array{string} */',
-    '/** @var array{int, string} */',
-    '/** @var array{0: string, 1: string} */',
-    '/** @var array{wow: string} */',
-    '/** @var array{test: string, wow?: string} */', // test var here is added so snapshot name generates correctly
-    '/** @var array{string, string} */',
+    '/** @var array{string} */', // list with one item
+    '/** @var array{int, string} */', // list
+    '/** @var array{0: string, 1: string} */', // list
+    '/** @var array{wow: string} */', // keyed
+    '/** @var array{test: string, wow?: string} */', // keyed, test var here is added so snapshot name generates correctly
+    '/** @var array{string, string} */', // list
 ]);
 
 it('handles intersection type', function () {
