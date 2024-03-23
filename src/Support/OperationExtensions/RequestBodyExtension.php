@@ -17,10 +17,11 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use PhpParser\Node\Stmt\ClassMethod;
 use Throwable;
-use function in_array;
 
 class RequestBodyExtension extends OperationExtension
 {
+    const HTTP_METHODS_WITHOUT_REQUEST_BODY = ['get', 'delete', 'head'];
+
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
         $description = Str::of($routeInfo->phpDoc()->getAttribute('description'));
@@ -31,14 +32,14 @@ class RequestBodyExtension extends OperationExtension
             $mediaType = $this->getMediaType($operation, $routeInfo, $bodyParams);
 
             if (count($bodyParams)) {
-                if (! in_array($operation->method, config('scramble.disallow_request_body'))) {
+                if (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
                     $operation->addRequestBodyObject(
                         RequestBodyObject::make()->setContent($mediaType, Schema::createFromParameters($bodyParams))
                     );
                 } else {
                     $operation->addParameters($bodyParams);
                 }
-            } elseif (! in_array($operation->method, config('scramble.disallow_request_body'))) {
+            } elseif (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
                 $operation
                     ->addRequestBodyObject(
                         RequestBodyObject::make()
