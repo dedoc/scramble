@@ -115,7 +115,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             'object' => new ObjectType('\stdClass'),
             'collection' => new ObjectType(Collection::class),
             'Illuminate\Database\Eloquent\Casts\AsEnumCollection' => new Generic(Collection::class, [
-                new TemplateType($castAsParameters->first())
+                new TemplateType($castAsParameters->first()),
             ]),
             'date', 'datetime', 'custom_datetime' => new ObjectType(Carbon::class),
             'immutable_date', 'immutable_datetime', 'immutable_custom_datetime' => new ObjectType(CarbonImmutable::class),

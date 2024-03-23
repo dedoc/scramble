@@ -16,7 +16,7 @@ class SamplePostModel extends Model
 
     protected $casts = [
         'status' => Status::class,
-        'settings' => 'array'
+        'settings' => 'array',
     ];
 
     public function getReadTimeAttribute()
