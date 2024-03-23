@@ -5,6 +5,7 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
+use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
@@ -63,20 +64,18 @@ it('adds toArray method type the model class without defined toArray class', fun
         ]);
 });
 
-it('casts generic enum collections', function () {
-    $this->infer->analyzeClass(SampleUserModel::class);
+/*
+ * `AsEnumCollection::of` is added in Laravel 11, hence this check so tests are passing with Laravel 10.
+ */
+if (method_exists(AsEnumCollection::class, 'of')) {
+    it('casts generic enum collections', function () {
+        $this->infer->analyzeClass(SampleUserModel::class);
 
-    $object = new ObjectType(SampleUserModel::class);
+        $object = new ObjectType(SampleUserModel::class);
 
-    $expectedPropertiesTypes = [
-        'roles' => 'Illuminate\Support\Collection<Role>'
-        // other properties omitted for brevity
-    ];
-
-    foreach ($expectedPropertiesTypes as $name => $type) {
-        $propertyType = $object->getPropertyType($name);
+        $propertyType = $object->getPropertyType('roles');
 
         expect(Str::replace('Dedoc\\Scramble\\Tests\\Files\\', '', $propertyType->toString()))
-            ->toBe($type);
-    }
-});
+            ->toBe('Illuminate\Support\Collection<Role>');
+    });
+}

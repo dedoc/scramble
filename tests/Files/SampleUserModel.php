@@ -14,9 +14,9 @@ class SampleUserModel extends Model
     protected $table = 'users';
 
     protected function casts(): array
-{
-    return [
-        'roles' => AsEnumCollection::of(Role::class),
-    ];
-}
+    {
+        return [
+            'roles' => AsEnumCollection::of(Role::class),
+        ];
+    }
 }
