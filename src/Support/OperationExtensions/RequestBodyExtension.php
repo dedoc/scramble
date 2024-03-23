@@ -20,6 +20,8 @@ use Throwable;
 
 class RequestBodyExtension extends OperationExtension
 {
+    const HTTP_METHODS_WITHOUT_REQUEST_BODY = ['get', 'delete', 'head'];
+
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
         $description = Str::of($routeInfo->phpDoc()->getAttribute('description'));
@@ -30,14 +32,14 @@ class RequestBodyExtension extends OperationExtension
             $mediaType = $this->getMediaType($operation, $routeInfo, $bodyParams);
 
             if (count($bodyParams)) {
-                if ($operation->method !== 'get') {
+                if (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
                     $operation->addRequestBodyObject(
                         RequestBodyObject::make()->setContent($mediaType, Schema::createFromParameters($bodyParams))
                     );
                 } else {
                     $operation->addParameters($bodyParams);
                 }
-            } elseif ($operation->method !== 'get') {
+            } elseif (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
                 $operation
                     ->addRequestBodyObject(
                         RequestBodyObject::make()
