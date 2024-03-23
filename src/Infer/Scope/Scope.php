@@ -19,6 +19,7 @@ use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
 
@@ -50,6 +51,13 @@ class Scope
 
         if ($node instanceof Node\Expr\ConstFetch) {
             return (new ConstFetchTypeGetter)($node);
+        }
+
+        if ($node instanceof Node\Expr\Ternary) {
+            return Union::wrap([
+                $this->getType($node->if),
+                $this->getType($node->else)
+            ]);
         }
 
         if ($node instanceof Node\Expr\ClassConstFetch) {
