@@ -4,6 +4,7 @@ properties:
     status: { type: object }
     user_id: { type: integer }
     title: { type: string }
+    settings: { type: [array, 'null'], items: { type: string } }
     body: { type: string }
     created_at: { type: [string, 'null'], format: date-time }
     updated_at: { type: [string, 'null'], format: date-time }
@@ -15,6 +16,7 @@ required:
     - status
     - user_id
     - title
+    - settings
     - body
     - created_at
     - updated_at
