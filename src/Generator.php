@@ -27,14 +27,15 @@ class Generator
         private ServerFactory $serverFactory,
         private FileParser $fileParser,
         private Infer $infer
-    ) {}
+    ) {
+    }
 
-    public function __invoke(array $config = null, ?GeneratorStrategy $generatorStrategy = null)
+    public function __invoke(?array $config = null, ?GeneratorStrategy $generatorStrategy = null)
     {
         $config ??= config('scramble');
         $generatorStrategy ??= Scramble::buildDefaultGeneratorStrategy()->setConfig($config);
 
-//        dd($config, $generatorStrategy);
+        //        dd($config, $generatorStrategy);
 
         $openApi = $this->makeOpenApi();
 

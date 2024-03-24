@@ -10,9 +10,9 @@ use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
-use Illuminate\Support\Facades\Route as RouteFacade;
 
 class Scramble
 {
@@ -111,7 +111,7 @@ class Scramble
     {
         $config = array_merge(config('scramble'), $config);
 
-        return RouteFacade::get($path, function (Generator $generator) use ($config) {
+        return RouteFacade::get($path, function (Generator $generator) {
             return response()->json($generator(), options: JSON_PRETTY_PRINT);
         })
             ->middleware(Arr::get($config, 'middleware', [RestrictedDocsAccess::class]));

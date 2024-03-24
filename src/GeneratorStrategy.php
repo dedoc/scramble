@@ -12,8 +12,7 @@ class GeneratorStrategy
         private Closure $routeResolver,
         private Closure $tagsResolver,
         private Closure $openApiExtender,
-    )
-    {
+    ) {
     }
 
     public function setConfig(array $config)
