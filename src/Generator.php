@@ -30,8 +30,12 @@ class Generator
     ) {
     }
 
-    public function __invoke(GeneratorConfig $config)
+    public function __invoke(?GeneratorConfig $config = null)
     {
+        $config ??= (new GeneratorConfig(config('scramble')))
+            ->routes(Scramble::$routeResolver)
+            ->afterOpenApiGenerated(Scramble::$openApiExtender);
+
         $openApi = $this->makeOpenApi($config);
 
         $this->getRoutes($config)
@@ -77,7 +81,7 @@ class Generator
         $openApi = OpenApi::make('3.1.0')
             ->setComponents($this->transformer->getComponents())
             ->setInfo(
-                InfoObject::make($config->get('ui.title', config('app.name')))
+                InfoObject::make($config->get('ui.title', $default = config('app.name')) ?: $default)
                     ->setVersion($config->get('info.version', '0.0.1'))
                     ->setDescription($config->get('info.description', ''))
             );
