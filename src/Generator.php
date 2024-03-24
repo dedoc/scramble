@@ -21,32 +21,21 @@ use Throwable;
 
 class Generator
 {
-    private TypeTransformer $transformer;
-
-    private OperationBuilder $operationBuilder;
-
-    private ServerFactory $serverFactory;
-
-    private FileParser $fileParser;
-
-    private Infer $infer;
-
     public function __construct(
-        TypeTransformer $transformer,
-        OperationBuilder $operationBuilder,
-        ServerFactory $serverFactory,
-        FileParser $fileParser,
-        Infer $infer
-    ) {
-        $this->transformer = $transformer;
-        $this->operationBuilder = $operationBuilder;
-        $this->serverFactory = $serverFactory;
-        $this->fileParser = $fileParser;
-        $this->infer = $infer;
-    }
+        private TypeTransformer $transformer,
+        private OperationBuilder $operationBuilder,
+        private ServerFactory $serverFactory,
+        private FileParser $fileParser,
+        private Infer $infer
+    ) {}
 
-    public function __invoke()
+    public function __invoke(array $config = null, ?GeneratorStrategy $generatorStrategy = null)
     {
+        $config ??= config('scramble');
+        $generatorStrategy ??= Scramble::buildDefaultGeneratorStrategy()->setConfig($config);
+
+//        dd($config, $generatorStrategy);
+
         $openApi = $this->makeOpenApi();
 
         $this->getRoutes()

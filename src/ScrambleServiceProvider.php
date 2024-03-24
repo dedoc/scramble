@@ -50,7 +50,6 @@ class ScrambleServiceProvider extends PackageServiceProvider
         $package
             ->name('scramble')
             ->hasConfigFile()
-            ->hasRoute('web')
             ->hasCommand(ExportSpecifications::class)
             ->hasViews('scramble');
 
@@ -150,5 +149,12 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ]),
             );
         });
+    }
+
+    public function bootingPackage()
+    {
+        if (! Scramble::$defaultRoutesIgnored) {
+            $this->package->hasRoute('web');
+        }
     }
 }

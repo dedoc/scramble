@@ -50,11 +50,17 @@
 </head>
 <body style="height: 100vh; overflow-y: hidden">
 <elements-api
-    apiDescriptionUrl="{{ route('scramble.docs.index') }}"
+    id="docs"
     tryItCredentialsPolicy="{{ config('scramble.ui.try_it_credentials_policy', 'include') }}"
     router="hash"
     @if(config('scramble.ui.hide_try_it')) hideTryIt="true" @endif
     logo="{{ config('scramble.ui.logo') }}"
 />
+<script>
+    (async () => {
+        const docs = document.getElementById('docs');
+        docs.apiDescriptionDocument = @json($spec);
+    })();
+</script>
 </body>
 </html>
