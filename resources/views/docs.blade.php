@@ -6,8 +6,8 @@
     <title>{{ config('app.name') }} - API Docs</title>
 
     <script src="https://unpkg.com/@stoplight/elements/web-components.min.js"></script>
-
     <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements/styles.min.css">
+
     <script>
         const originalFetch = window.fetch;
 
@@ -37,7 +37,7 @@
             const csrfToken = getCookieValue(CSRF_TOKEN_COOKIE_KEY);
             if (csrfToken) {
                 const { headers = new Headers() } = options || {};
-                updateFetchHeaders(headers, CSRF_TOKEN_HEADER_KEY, unescape(csrfToken));
+                updateFetchHeaders(headers, CSRF_TOKEN_HEADER_KEY, decodeURI(csrfToken));
                 return originalFetch(url, {
                     ...options,
                     headers,
