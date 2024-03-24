@@ -5,14 +5,11 @@ namespace Dedoc\Scramble;
 use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
-use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route as RouteFacade;
-use Illuminate\Support\Str;
-use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+use LogicException;
 
 class Scramble
 {
@@ -25,11 +22,28 @@ class Scramble
     public static bool $defaultRoutesIgnored = false;
 
     /**
-     * Disables registration of default Scramble's documentation routes.
+     * Registered APIs for which Scramble generates documentation. The key is API name
+     * and the value is API's configuration.
+     *
+     * @var array<string, GeneratorConfig>
      */
-    public static function ignoreRoutes(): void
+    public static array $apis = [];
+
+    /**
+     * Disables registration of default API documentation routes.
+     */
+    public static function ignoreDefaultRoutes(): void
     {
         static::$defaultRoutesIgnored = true;
+    }
+
+    public static function registerApi(string $name, array $config = []): GeneratorConfig
+    {
+        static::$apis[$name] = $generatorConfig = new GeneratorConfig(
+            config: array_merge(config('scramble'), $config)
+        );
+
+        return $generatorConfig;
     }
 
     /**
@@ -38,6 +52,14 @@ class Scramble
     public static function extendOpenApi(callable $openApiExtender)
     {
         static::$openApiExtender = $openApiExtender;
+    }
+
+    /**
+     * Update open api document before finally rendering it.
+     */
+    public static function afterOpenApiGenerated(callable $afterOpenApiGenerated)
+    {
+        static::$openApiExtender = $afterOpenApiGenerated;
     }
 
     public static function routes(callable $routeResolver)
@@ -63,57 +85,35 @@ class Scramble
         app(ServerFactory::class)->variables($variables);
     }
 
-    public static function buildDefaultGeneratorStrategy()
+    public static function registerUiRoute(string $path, string $api = 'default'): Route
     {
-        return new GeneratorStrategy(
-            routeResolver: static::$routeResolver ?? function (Route $route) {
-                $expectedDomain = config('scramble.api_domain');
-
-                return Str::startsWith($route->uri, config('scramble.api_path', 'api'))
-                    && (! $expectedDomain || $route->getDomain() === $expectedDomain);
-            },
-            tagsResolver: static::$tagResolver ?? function (RouteInfo $routeInfo) {
-                return array_unique([
-                    ...static::extractTagsForMethod($routeInfo),
-                    Str::of(class_basename($routeInfo->className()))->replace('Controller', ''),
-                ]);
-            },
-            openApiExtender: static::$openApiExtender ?? fn ($openApi) => $openApi,
-        );
-    }
-
-    private static function extractTagsForMethod(RouteInfo $routeInfo)
-    {
-        $classPhpDoc = $routeInfo->reflectionMethod()
-            ? $routeInfo->reflectionMethod()->getDeclaringClass()->getDocComment()
-            : false;
-
-        $classPhpDoc = $classPhpDoc ? PhpDoc::parse($classPhpDoc) : new PhpDocNode([]);
-
-        if (! count($tagNodes = $classPhpDoc->getTagsByName('@tags'))) {
-            return [];
-        }
-
-        return explode(',', array_values($tagNodes)[0]->value->value);
-    }
-
-    public static function registerUiRoute(string $path, array $config = []): Route
-    {
-        $config = array_merge(config('scramble'), $config);
+        $config = static::getGeneratorConfig($api);
 
         return RouteFacade::get($path, function (Generator $generator) use ($config) {
-            return view('scramble::docs', ['spec' => $generator($config)]);
+            return view('scramble::docs', [
+                'spec' => $generator($config),
+                'config' => $config,
+            ]);
         })
-            ->middleware(Arr::get($config, 'middleware', [RestrictedDocsAccess::class]));
+            ->middleware($config->get('middleware', [RestrictedDocsAccess::class]));
     }
 
-    public static function registerJsonSpecificationRoute(string $path, array $config = []): Route
+    public static function registerJsonSpecificationRoute(string $path, string $api = 'default'): Route
     {
-        $config = array_merge(config('scramble'), $config);
+        $config = static::getGeneratorConfig($api);
 
-        return RouteFacade::get($path, function (Generator $generator) {
-            return response()->json($generator(), options: JSON_PRETTY_PRINT);
+        return RouteFacade::get($path, function (Generator $generator) use ($config) {
+            return response()->json($generator($config), options: JSON_PRETTY_PRINT);
         })
-            ->middleware(Arr::get($config, 'middleware', [RestrictedDocsAccess::class]));
+            ->middleware($config->get('middleware', [RestrictedDocsAccess::class]));
+    }
+
+    private static function getGeneratorConfig(string $api)
+    {
+        if (! array_key_exists($api, Scramble::$apis)) {
+            throw new LogicException("$api API is not registered. Register the API using `Scramble::registerApi` first.");
+        }
+
+        return Scramble::$apis[$api];
     }
 }
