@@ -109,7 +109,6 @@ class TypeTransformer
 
             if ($docNode = $type->getAttribute('docNode')) {
                 /** @var PhpDocNode $docNode */
-
                 $varNode = $docNode->getVarTagValues()[0] ?? null;
 
                 $openApiType = $varNode && $varNode->type

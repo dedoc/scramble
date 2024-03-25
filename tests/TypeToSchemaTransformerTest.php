@@ -325,6 +325,7 @@ class ApiResourceTest_ResourceWithFormat extends JsonResource
         return [
             /**
              * @var string $now
+             *
              * @format date-time
              */
             'now' => now(),
