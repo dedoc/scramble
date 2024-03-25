@@ -108,6 +108,7 @@ class TypeTransformer
             $openApiType = $this->transform($type->value);
 
             if ($docNode = $type->getAttribute('docNode')) {
+                /** @var PhpDocNode $docNode */
                 $varNode = $docNode->getVarTagValues()[0] ?? null;
 
                 $openApiType = $varNode && $varNode->type
@@ -120,6 +121,10 @@ class TypeTransformer
 
                 if ($examples = ExamplesExtractor::make($docNode)->extract(preferString: $openApiType instanceof StringType)) {
                     $openApiType->examples($examples);
+                }
+
+                if ($format = array_values($docNode->getTagsByName('@format'))[0]->value->value ?? null) {
+                    $openApiType->format($format);
                 }
             }
         } elseif ($type instanceof Union) {

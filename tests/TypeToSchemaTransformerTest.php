@@ -180,6 +180,21 @@ it('supports @example tag in api resource', function () {
     ]);
 });
 
+it('supports @format tag in api resource', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(ApiResourceTest_ResourceWithFormat::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithFormat',
+    ]);
+
+    expect($components->getSchema(ApiResourceTest_ResourceWithFormat::class)->toArray()['properties']['now'])->toBe([
+        'type' => 'string',
+        'format' => 'date-time',
+    ]);
+});
+
 class ComplexTypeHandlersTest_SampleType extends JsonResource
 {
     public function toArray($request)
@@ -296,6 +311,24 @@ class ApiResourceTest_ResourceWithExamples extends JsonResource
              * @example Multiword example
              */
             'id' => $this->id,
+        ];
+    }
+}
+
+/**
+ * @property SamplePostModel $resource
+ */
+class ApiResourceTest_ResourceWithFormat extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            /**
+             * @var string $now
+             *
+             * @format date-time
+             */
+            'now' => now(),
         ];
     }
 }
