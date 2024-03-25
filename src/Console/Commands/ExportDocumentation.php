@@ -7,39 +7,26 @@ use Dedoc\Scramble\Scramble;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
-class ExportSpecifications extends Command
+class ExportDocumentation extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'scramble:export
-        {--path= : The path where to save the exported json file}
-        {--api=default : The API for export}
+        {--path= : The path to save the exported JSON file}
+        {--api=default : The API to export a documentation for}
     ';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Export the OpenAPI specification to a json file.';
+    protected $description = 'Export the OpenAPI document to a JSON file.';
 
-    /**
-     * Execute the console command.
-     */
     public function handle(Generator $generator): void
     {
-        $specification = json_encode($generator());
-
         $config = Scramble::getGeneratorConfig($api = $this->option('api'));
+
+        $specification = json_encode($generator($config));
 
         /** @var string $filename */
         $filename = $this->option('path') ?? $config->get('export_path', 'api'.($api === 'default' ? '' : "-$api").'.json');
 
         File::put($filename, $specification);
 
-        $this->info("OpenAPI specification exported to {$filename}.");
+        $this->info("OpenAPI document exported to {$filename}.");
     }
 }

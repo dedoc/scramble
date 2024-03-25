@@ -40,7 +40,7 @@ class Scramble
     public static function registerApi(string $name, array $config = []): GeneratorConfig
     {
         static::$apis[$name] = $generatorConfig = new GeneratorConfig(
-            config: array_merge(config('scramble'), $config)
+            config: array_merge(config('scramble'), $config),
         );
 
         return $generatorConfig;
