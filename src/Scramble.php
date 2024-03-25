@@ -108,7 +108,7 @@ class Scramble
             ->middleware($config->get('middleware', [RestrictedDocsAccess::class]));
     }
 
-    private static function getGeneratorConfig(string $api)
+    public static function getGeneratorConfig(string $api)
     {
         if (! array_key_exists($api, Scramble::$apis)) {
             throw new LogicException("$api API is not registered. Register the API using `Scramble::registerApi` first.");
