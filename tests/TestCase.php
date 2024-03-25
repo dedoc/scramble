@@ -23,8 +23,9 @@ class TestCase extends Orchestra
             fn (string $modelName) => 'Dedoc\\Scramble\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
 
+        Scramble::$defaultRoutesIgnored = false;
+        Scramble::$routeResolver = null;
         Scramble::$openApiExtender = null;
-
         Scramble::$tagResolver = null;
 
         Context::reset();

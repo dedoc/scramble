@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en" data-theme="{{ config('scramble.theme', 'light') }}">
+<html lang="en" data-theme="{{ $config->get('ui.theme', 'light') }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>{{ config('app.name') }} - API Docs</title>
+    <title>{{ $config->get('ui.title', config('app.name') . ' - API Docs') }}</title>
 
     <script src="https://unpkg.com/@stoplight/elements/web-components.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements/styles.min.css">
@@ -50,11 +50,17 @@
 </head>
 <body style="height: 100vh; overflow-y: hidden">
 <elements-api
-    apiDescriptionUrl="{{ route('scramble.docs.index') }}"
-    tryItCredentialsPolicy="{{ config('scramble.ui.try_it_credentials_policy', 'include') }}"
+    id="docs"
+    tryItCredentialsPolicy="{{ $config->get('ui.try_it_credentials_policy', 'include') }}"
     router="hash"
-    @if(config('scramble.ui.hide_try_it')) hideTryIt="true" @endif
-    logo="{{ config('scramble.ui.logo') }}"
+    @if($config->get('ui.hide_try_it')) hideTryIt="true" @endif
+    logo="{{ $config->get('ui.logo') }}"
 />
+<script>
+    (async () => {
+        const docs = document.getElementById('docs');
+        docs.apiDescriptionDocument = @json($spec);
+    })();
+</script>
 </body>
 </html>

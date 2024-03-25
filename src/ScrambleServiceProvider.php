@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble;
 
-use Dedoc\Scramble\Console\Commands\ExportSpecifications;
+use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
@@ -50,8 +50,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
         $package
             ->name('scramble')
             ->hasConfigFile()
-            ->hasRoute('web')
-            ->hasCommand(ExportSpecifications::class)
+            ->hasCommand(ExportDocumentation::class)
             ->hasViews('scramble');
 
         $this->app->singleton(FileParser::class, function () {
@@ -150,5 +149,16 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ]),
             );
         });
+    }
+
+    public function bootingPackage()
+    {
+        if (! Scramble::$defaultRoutesIgnored) {
+            $this->package->hasRoute('web');
+        }
+
+        Scramble::registerApi('default', config('scramble'))
+            ->routes(Scramble::$routeResolver)
+            ->afterOpenApiGenerated(Scramble::$openApiExtender);
     }
 }
