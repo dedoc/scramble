@@ -145,7 +145,7 @@ class TypeHelper
         }
 
         if (is_array($value)) {
-            return new ArrayType(
+            return new KeyedArrayType(
                 collect($value)
                     ->map(function ($value, $key) {
                         return new ArrayItemType_(
@@ -156,6 +156,10 @@ class TypeHelper
                     ->values()
                     ->all()
             );
+        }
+
+        if (is_null($value)) {
+            return new NullType;
         }
 
         return null; // @todo: object

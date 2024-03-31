@@ -13,6 +13,7 @@ use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
@@ -218,7 +219,15 @@ class Scope
                     return [$arg->name ? $arg->name->name : $index => $type];
                 }
 
-                if (! $type instanceof ArrayType) {
+                if (! $type instanceof ArrayType && ! $type instanceof KeyedArrayType) {
+                    return [$arg->name ? $arg->name->name : $index => $type]; // falling back, but not sure if we should. Maybe some DTO is needed to represent unpacked arg type?
+                }
+
+                if ($type instanceof ArrayType) {
+                    /*
+                     * For example, when passing something that is array, but shape is unknown
+                     * $a = foo(...array_keys($bar));
+                     */
                     return [$arg->name ? $arg->name->name : $index => $type]; // falling back, but not sure if we should. Maybe some DTO is needed to represent unpacked arg type?
                 }
 

@@ -11,7 +11,7 @@ it('infers different rules types', function (string $statement, $expectedType) {
 
     expect($type->toString())->toBe($expectedType);
 })->with([
-    ['Illuminate\Validation\Rule::in(...["values" => ["foo", "bar"]])', 'Illuminate\Validation\Rules\In<array{0: string(foo), 1: string(bar)}>'],
-    ['Illuminate\Validation\Rule::in(values: ["foo", "bar"])', 'Illuminate\Validation\Rules\In<array{0: string(foo), 1: string(bar)}>'],
-    ['Illuminate\Validation\Rule::in(["foo", "bar"])', 'Illuminate\Validation\Rules\In<array{0: string(foo), 1: string(bar)}>'],
+    ['Illuminate\Validation\Rule::in(...["values" => ["foo", "bar"]])', 'Illuminate\Validation\Rules\In<list{string(foo), string(bar)}>'],
+    ['Illuminate\Validation\Rule::in(values: ["foo", "bar"])', 'Illuminate\Validation\Rules\In<list{string(foo), string(bar)}>'],
+    ['Illuminate\Validation\Rule::in(["foo", "bar"])', 'Illuminate\Validation\Rules\In<list{string(foo), string(bar)}>'],
 ]);

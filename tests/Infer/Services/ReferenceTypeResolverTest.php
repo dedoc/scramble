@@ -146,7 +146,7 @@ it('infers type of static method call and instance property fetch', function () 
 
     $type = getStatementType('(new ReferenceTypeResolverTest_Bar)->test()');
 
-    expect($type->toString())->toBe('array{0: array{0: string(bar), 1: int(21)}, 1: array{0: string(foo), 1: int(21)}}');
+    expect($type->toString())->toBe('list{list{string(bar), int(21)}, list{string(foo), int(21)}}');
 });
 class ReferenceTypeResolverTest_Foo
 {
