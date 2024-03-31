@@ -33,6 +33,7 @@ class ArrayKeysReturnTypeExtension implements FunctionReturnTypeExtension
         }
 
         $index = 0;
+
         return new KeyedArrayType(array_map(
             function (ArrayItemType_ $item) use (&$index) {
                 return new ArrayItemType_(
