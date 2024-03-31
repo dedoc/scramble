@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Infer\Scope\ScopeTypeResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -164,6 +165,11 @@ class RouteInfo
                     || $type instanceof FloatType
                     || $type instanceof BooleanType
                     || $type instanceof NullType
+                    /*
+                     * Give some weight for keyed array item so when comparing `array<mixed>` to `array{foo: unknown}`,
+                     * the keyed array is preferred.
+                     */
+                    || $type instanceof ArrayItemType_ && is_string($type->key)
                 ) {
                     $this->count++;
                 }

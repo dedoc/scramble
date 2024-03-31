@@ -3,7 +3,7 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use PhpParser\Node;
 
@@ -23,7 +23,7 @@ class ArrayHandler
 
         $scope->setType(
             $node,
-            TypeHelper::unpackIfArrayType(new ArrayType($arrayItems))
+            TypeHelper::unpackIfArray(new KeyedArrayType($arrayItems))
         );
     }
 }

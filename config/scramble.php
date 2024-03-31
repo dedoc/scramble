@@ -16,10 +16,9 @@ return [
     'api_domain' => null,
 
     /*
-     * Define the theme of the documentation.
-     * Available options are `light` and `dark`.
+     * The path where your OpenAPI specification will be exported.
      */
-    'theme' => 'dark',
+    'export_path' => 'api.json',
 
     'info' => [
         /*
@@ -37,6 +36,16 @@ return [
      * Customize Stoplight Elements UI
      */
     'ui' => [
+        /*
+         * Define the title of the documentation's website. App name is used when this config is `null`.
+         */
+        'title' => null,
+
+        /*
+         * Define the theme of the documentation. Available options are `light` and `dark`.
+         */
+        'theme' => 'light',
+
         /*
          * Hide the `Try It` feature. Enabled by default.
          */

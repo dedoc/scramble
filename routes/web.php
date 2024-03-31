@@ -1,12 +1,7 @@
 <?php
 
-use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
-use Illuminate\Support\Facades\Route;
+use Dedoc\Scramble\Scramble;
 
-Route::middleware(config('scramble.middleware', [RestrictedDocsAccess::class]))->group(function () {
-    Route::get('docs/api.json', function (Dedoc\Scramble\Generator $generator) {
-        return $generator();
-    })->name('scramble.docs.index');
+Scramble::registerUiRoute(path: 'docs/api')->name('scramble.docs.ui');
 
-    Route::view('docs/api', 'scramble::docs')->name('scramble.docs.api');
-});
+Scramble::registerJsonSpecificationRoute(path: 'docs/api.json')->name('scramble.docs.document');

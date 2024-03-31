@@ -1,0 +1,6 @@
+type: array
+prefixItems:
+    - { type: string }
+minItems: 1
+maxItems: 1
+additionalItems: false

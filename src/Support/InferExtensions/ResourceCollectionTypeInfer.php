@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -53,9 +52,7 @@ class ResourceCollectionTypeInfer implements ExpressionTypeInferExtension
             return new UnknownType('Cannot find a type of the collecting class.');
         }
 
-        return new ArrayType([
-            new ArrayItemType_(0, new ObjectType($collectingClassType->value)),
-        ]);
+        return new ArrayType(value: new ObjectType($collectingClassType->value));
     }
 
     private function getCollectingClassType(ClassDefinition $classDefinition): ?LiteralStringType

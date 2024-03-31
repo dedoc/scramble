@@ -24,6 +24,7 @@ use Dedoc\Scramble\Support\Type\Reference\StaticPropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
 
@@ -61,6 +62,13 @@ class Scope
             }
 
             return $this->setType($node, $type);
+        }
+
+        if ($node instanceof Node\Expr\Ternary) {
+            return Union::wrap([
+                $this->getType($node->if),
+                $this->getType($node->else),
+            ]);
         }
 
         if ($node instanceof Node\Expr\ClassConstFetch) {

@@ -21,35 +21,24 @@ use Throwable;
 
 class Generator
 {
-    private TypeTransformer $transformer;
-
-    private OperationBuilder $operationBuilder;
-
-    private ServerFactory $serverFactory;
-
-    private FileParser $fileParser;
-
-    private Infer $infer;
-
     public function __construct(
-        TypeTransformer $transformer,
-        OperationBuilder $operationBuilder,
-        ServerFactory $serverFactory,
-        FileParser $fileParser,
-        Infer $infer
+        private TypeTransformer $transformer,
+        private OperationBuilder $operationBuilder,
+        private ServerFactory $serverFactory,
+        private FileParser $fileParser,
+        private Infer $infer
     ) {
-        $this->transformer = $transformer;
-        $this->operationBuilder = $operationBuilder;
-        $this->serverFactory = $serverFactory;
-        $this->fileParser = $fileParser;
-        $this->infer = $infer;
     }
 
-    public function __invoke()
+    public function __invoke(?GeneratorConfig $config = null)
     {
-        $openApi = $this->makeOpenApi();
+        $config ??= (new GeneratorConfig(config('scramble')))
+            ->routes(Scramble::$routeResolver)
+            ->afterOpenApiGenerated(Scramble::$openApiExtender);
 
-        $this->getRoutes()
+        $openApi = $this->makeOpenApi($config);
+
+        $this->getRoutes($config)
             ->map(function (Route $route) use ($openApi) {
                 try {
                     return $this->routeToOperation($openApi, $route);
@@ -70,7 +59,7 @@ class Generator
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
                     (string) Str::of($operation->path)
-                        ->replaceFirst(config('scramble.api_path', 'api'), '')
+                        ->replaceFirst($config->get('api_path', 'api'), '')
                         ->trim('/')
                 )->addOperation($operation)
             ))
@@ -80,28 +69,28 @@ class Generator
 
         $this->moveSameAlternativeServersToPath($openApi);
 
-        if (isset(Scramble::$openApiExtender)) {
-            (Scramble::$openApiExtender)($openApi);
+        if ($afterOpenApiGenerated = $config->afterOpenApiGenerated()) {
+            $afterOpenApiGenerated($openApi);
         }
 
         return $openApi->toArray();
     }
 
-    private function makeOpenApi()
+    private function makeOpenApi(GeneratorConfig $config)
     {
         $openApi = OpenApi::make('3.1.0')
             ->setComponents($this->transformer->getComponents())
             ->setInfo(
-                InfoObject::make(config('app.name'))
-                    ->setVersion(config('scramble.info.version', '0.0.1'))
-                    ->setDescription(config('scramble.info.description', ''))
+                InfoObject::make($config->get('ui.title', $default = config('app.name')) ?: $default)
+                    ->setVersion($config->get('info.version', '0.0.1'))
+                    ->setDescription($config->get('info.description', ''))
             );
 
         [$defaultProtocol] = explode('://', url('/'));
-        $servers = config('scramble.servers') ?: [
-            '' => ($domain = config('scramble.api_domain'))
-                ? $defaultProtocol.'://'.$domain.'/'.config('scramble.api_path', 'api')
-                : config('scramble.api_path', 'api'),
+        $servers = $config->get('servers') ?: [
+            '' => ($domain = $config->get('api_domain'))
+                ? $defaultProtocol.'://'.$domain.'/'.$config->get('api_path', 'api')
+                : $config->get('api_path', 'api'),
         ];
         foreach ($servers as $description => $url) {
             $openApi->addServer(
@@ -112,7 +101,7 @@ class Generator
         return $openApi;
     }
 
-    private function getRoutes(): Collection
+    private function getRoutes(GeneratorConfig $config): Collection
     {
         return collect(RouteFacade::getRoutes())
             ->pipe(function (Collection $c) {
@@ -137,16 +126,7 @@ class Generator
             ->filter(function (Route $route) {
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
             })
-            ->filter(function (Route $route) {
-                $routeResolver = Scramble::$routeResolver ?? function (Route $route) {
-                    $expectedDomain = config('scramble.api_domain');
-
-                    return Str::startsWith($route->uri, config('scramble.api_path', 'api'))
-                        && (! $expectedDomain || $route->getDomain() === $expectedDomain);
-                };
-
-                return $routeResolver($route);
-            })
+            ->filter($config->routes())
             ->filter(fn (Route $r) => $r->getAction('controller'))
             ->values();
     }

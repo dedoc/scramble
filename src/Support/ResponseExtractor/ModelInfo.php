@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\ResponseExtractor;
 
+use BackedEnum;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Support\Type\ArrayType;
@@ -14,9 +15,6 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Doctrine\DBAL\Schema\Column;
-use Doctrine\DBAL\Schema\Index;
-use Doctrine\DBAL\Types\DecimalType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
@@ -24,7 +22,11 @@ use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionMethod;
 use SplFileObject;
+use UnitEnum;
 
+/**
+ * All the code here was written by the great Laravel team and community. Cudos to them.
+ */
 class ModelInfo
 {
     public static array $cache = [];
@@ -43,11 +45,9 @@ class ModelInfo
         'morphedByMany',
     ];
 
-    private string $class;
-
-    public function __construct(string $class)
-    {
-        $this->class = $class;
+    public function __construct(
+        private string $class
+    ) {
     }
 
     public function handle()
@@ -81,10 +81,6 @@ class ModelInfo
             return static::$cache[$this->class];
         }
 
-        if (! class_exists(Column::class)) {
-            throw new \LogicException('`doctrine/dbal` package is not installed. It is needed to get model attribute types.');
-        }
-
         $modelInfo = $this->handle();
 
         /** @var Model $model */
@@ -98,8 +94,8 @@ class ModelInfo
                     ? Union::wrap([new NullType(), $t])
                     : $t;
 
-                $type = explode(' ', $value['type']);
-                $typeName = explode('(', $type[0])[0];
+                $type = explode(' ', $value['type'] ?? '');
+                $typeName = explode('(', $type[0] ?? '')[0];
 
                 if (in_array($key, $model->getDates())) {
                     return $createType(new ObjectType('\\Carbon\\Carbon'));
@@ -113,8 +109,10 @@ class ModelInfo
                     'double' => new FloatType(),
                     'decimal' => new FloatType(),
                     'string' => new StringType(),
+                    'varchar' => new StringType(),
                     'text' => new StringType(),
                     'datetime' => new StringType(),
+                    'tinyint' => new BooleanType(),
                     'bool' => new BooleanType(),
                     'boolean' => new BooleanType(),
                     'json' => new ArrayType(),
@@ -166,47 +164,60 @@ class ModelInfo
      */
     protected function getAttributes($model)
     {
-        $schema = $model->getConnection()->getDoctrineSchemaManager();
-        $table = $model->getConnection()->getTablePrefix().$model->getTable();
-
-        $platform = $model->getConnection()
-            ->getDoctrineConnection()
-            ->getDatabasePlatform();
-
-        $platform->registerDoctrineTypeMapping('enum', 'string');
-        $platform->registerDoctrineTypeMapping('geometry', 'string');
-
-        $columns = $schema->listTableColumns($table);
-        $indexes = $schema->listTableIndexes($table);
+        $connection = $model->getConnection();
+        $schema = $connection->getSchemaBuilder();
+        $table = $model->getTable();
+        $columns = $schema->getColumns($table);
+        $indexes = $schema->getIndexes($table);
 
         return collect($columns)
             ->values()
-            ->map(fn (Column $column) => [
-                'name' => $column->getName(),
-                'type' => $this->getColumnType($column),
-                'increments' => $column->getAutoincrement(),
-                'nullable' => ! $column->getNotnull(),
+            ->map(fn ($column) => [
+                'name' => $column['name'],
+                'type' => $column['type'],
+                'increments' => $column['auto_increment'],
+                'nullable' => $column['nullable'],
                 'default' => $this->getColumnDefault($column, $model),
-                'unique' => $this->columnIsUnique($column->getName(), $indexes),
-                'fillable' => $model->isFillable($column->getName()),
-                'hidden' => $this->attributeIsHidden($column->getName(), $model),
+                'unique' => $this->columnIsUnique($column['name'], $indexes),
+                'fillable' => $model->isFillable($column['name']),
                 'appended' => null,
-                'cast' => $this->getCastType($column->getName(), $model),
+                'hidden' => $this->attributeIsHidden($column['name'], $model),
+                'cast' => $this->getCastType($column['name'], $model),
             ])
             ->merge($this->getVirtualAttributes($model, $columns))
             ->keyBy('name');
+    }
+
+    private function getColumnDefault($column, Model $model)
+    {
+        $attributeDefault = $model->getAttributes()[$column['name']] ?? null;
+
+        return match (true) {
+            $attributeDefault instanceof BackedEnum => $attributeDefault->value,
+            $attributeDefault instanceof UnitEnum => $attributeDefault->name,
+            default => $attributeDefault ?? $column['default'],
+        };
+    }
+
+    private function columnIsUnique($column, array $indexes)
+    {
+        return collect($indexes)->contains(
+            fn ($index) => count($index['columns']) === 1 && $index['columns'][0] === $column && $index['unique']
+        );
     }
 
     /**
      * Get the virtual (non-column) attributes for the given model.
      *
      * @param  \Illuminate\Database\Eloquent\Model  $model
-     * @param  \Doctrine\DBAL\Schema\Column[]  $columns
+     * @param  array[]  $columns
      * @return \Illuminate\Support\Collection
      */
     protected function getVirtualAttributes($model, $columns)
     {
         $class = new ReflectionClass($model);
+
+        $keyedColumns = collect($columns)->keyBy('name');
 
         return collect($class->getMethods())
             ->reject(
@@ -223,7 +234,7 @@ class ModelInfo
                     return [];
                 }
             })
-            ->reject(fn ($cast, $name) => collect($columns)->has($name))
+            ->reject(fn ($cast, $name) => $keyedColumns->has($name))
             ->map(fn ($cast, $name) => [
                 'name' => $name,
                 'type' => null,
@@ -338,43 +349,6 @@ class ModelInfo
     }
 
     /**
-     * Get the type of the given column.
-     *
-     * @param  \Doctrine\DBAL\Schema\Column  $column
-     * @return string
-     */
-    protected function getColumnType($column)
-    {
-        $name = $column->getType()->getName();
-
-        $unsigned = $column->getUnsigned() ? ' unsigned' : '';
-
-        $details = get_class($column->getType()) === DecimalType::class
-            ? $column->getPrecision().','.$column->getScale()
-            : $column->getLength();
-
-        if ($details) {
-            return sprintf('%s(%s)%s', $name, $details, $unsigned);
-        }
-
-        return sprintf('%s%s', $name, $unsigned);
-    }
-
-    /**
-     * Get the default value for the given column.
-     *
-     * @param  \Doctrine\DBAL\Schema\Column  $column
-     * @param  \Illuminate\Database\Eloquent\Model  $model
-     * @return mixed|null
-     */
-    protected function getColumnDefault($column, $model)
-    {
-        $attributeDefault = $model->getAttributes()[$column->getName()] ?? null;
-
-        return $attributeDefault ?? $column->getDefault();
-    }
-
-    /**
      * Determine if the given attribute is hidden.
      *
      * @param  string  $attribute
@@ -392,20 +366,6 @@ class ModelInfo
         }
 
         return false;
-    }
-
-    /**
-     * Determine if the given attribute is unique.
-     *
-     * @param  string  $column
-     * @param  \Doctrine\DBAL\Schema\Index[]  $indexes
-     * @return bool
-     */
-    protected function columnIsUnique($column, $indexes)
-    {
-        return collect($indexes)
-            ->filter(fn (Index $index) => count($index->getColumns()) === 1 && $index->getColumns()[0] === $column)
-            ->contains(fn (Index $index) => $index->isUnique());
     }
 
     /**

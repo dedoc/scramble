@@ -85,15 +85,15 @@ class TypeHelper
         return $matchingArg ? $scope->getType($matchingArg->value) : $default;
     }
 
-    public static function unpackIfArrayType($type)
+    public static function unpackIfArray($type)
     {
-        if (! $type instanceof ArrayType) {
+        if (! $type instanceof KeyedArrayType) {
             return $type;
         }
 
         $unpackedItems = collect($type->items)
             ->flatMap(function (ArrayItemType_ $type) {
-                if ($type->shouldUnpack && $type->value instanceof ArrayType) {
+                if ($type->shouldUnpack && $type->value instanceof KeyedArrayType) {
                     return $type->value->items;
                 }
 
@@ -109,7 +109,7 @@ class TypeHelper
                 return $arrayItems;
             }, []);
 
-        return new ArrayType(array_values($unpackedItems));
+        return new KeyedArrayType(array_values($unpackedItems));
     }
 
     /**
