@@ -245,3 +245,37 @@ class RequestBodyExtensionTest__allows_explicitly_specifying_parameter_placement
         $request->integer('foo', 10);
     }
 }
+
+it('allows specifying query position and default for params inferred from validation rules using validate method', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::post('api/test', [RequestBodyExtensionTest__allows_specifying_query_position_and_default_for_params_inferred_from_validation_rules_using_validate_method::class, 'index']);
+    });
+
+    expect($openApiDocument['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'])
+        ->toBe([
+            'per_page' => [
+                'type' => 'integer',
+                'default' => 10,
+            ]
+        ])
+        ->and($openApiDocument['paths']['/test']['post']['parameters'])
+        ->toBe([[
+            'name' => 'all',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'boolean',
+            ],
+        ]]);
+});
+class RequestBodyExtensionTest__allows_specifying_query_position_and_default_for_params_inferred_from_validation_rules_using_validate_method
+{
+    public function index(Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            /** @default 10 */
+            'per_page' => 'integer',
+            /** @query */
+            'all' => 'boolean',
+        ]);
+    }
+}
