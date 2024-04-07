@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Generator\MissingExample;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\IntegerType;
@@ -62,7 +63,7 @@ class RequestParametersBuilder
 
         $parameter = Parameter::make($parameterName, 'query'/* @todo: this is just a temp solution */);
 
-        [$parameterType, $parameterDefaultFromMethodCall] = match ($name) {
+        [$parameterType, $parameterDefault] = match ($name) {
             'integer' => $this->makeIntegerParameter($scope, $methodCallNode),
             'float' => $this->makeFloatParameter($scope, $methodCallNode),
             'boolean' => $this->makeBooleanParameter($scope, $methodCallNode),
@@ -76,12 +77,16 @@ class RequestParametersBuilder
             return;
         }
 
+        if ($parameterDefaultFromDoc = $this->getParameterDefaultFromPhpDoc($node)) {
+            $parameterDefault = $parameterDefaultFromDoc;
+        }
+
         $parameter
             ->description($this->makeDescriptionFromComments($node))
             ->setSchema(Schema::fromType(
                 app(TypeTransformer::class)->transform($parameterType)
             ))
-            ->default($parameterDefaultFromMethodCall ?? new MissingExample);
+            ->default($parameterDefault ?? new MissingExample);
 
         // @todo: query
         // @todo: get/input/post/?
@@ -159,22 +164,23 @@ class RequestParametersBuilder
 
     private function makeDescriptionFromComments(Node\Stmt\Expression $node)
     {
+        /*
+         * @todo: consider adding only @param annotation support,
+         * so when description is taken only if comment is marked with @param
+         */
+        if ($node->getDocComment()) {
+            /** @var PhpDocNode $phpDoc */
+            $phpDoc = $node->getAttribute('parsedPhpDoc');
+
+            return trim($phpDoc->getAttribute('summary').' '.$phpDoc->getAttribute('description'));
+        }
+
         if ($node->getComments()) {
             $docText = collect($node->getComments())
                 ->map(fn (Comment $c) => $c->getReformattedText())
                 ->join("\n");
 
             return (string) Str::of($docText)->replace(['//', ' * ', '/**', '/*', '*/'], '')->trim();
-        }
-
-        /*
-         * @todo: consider adding only @param annotation support,
-         * so when description is taken only if comment is marked with @param
-         */
-        if ($node->getDocComment()) {
-            return (string) Str::of($node->getDocComment()->getReformattedText())
-                ->replace(['//', ' * ', '/**', '/*', '*/'], '')
-                ->trim();
         }
 
         return '';
@@ -186,5 +192,13 @@ class RequestParametersBuilder
         $phpDoc = $node->getAttribute('parsedPhpDoc');
 
         return !! $phpDoc->getTagsByName('@ignoreParam');
+    }
+
+    private function getParameterDefaultFromPhpDoc(Node\Stmt\Expression $node)
+    {
+        /** @var PhpDocNode $phpDoc */
+        $phpDoc = $node->getAttribute('parsedPhpDoc');
+
+        return ExamplesExtractor::make($phpDoc, '@default')->extract()[0] ?? null;
     }
 }

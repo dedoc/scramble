@@ -204,3 +204,20 @@ class RequestBodyExtensionTest__ignores_parameter_with_ignore_param_doc
         $request->integer('foo', 10);
     }
 }
+
+it('uses and overrides default param value when it is provided manually in doc', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::post('api/test', [RequestBodyExtensionTest__uses_and_overrides_default_param_value_when_it_is_provided_manually_in_doc::class, 'index']);
+    });
+
+    expect($openApiDocument['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties']['foo']['default'])
+        ->toBe(15);
+});
+class RequestBodyExtensionTest__uses_and_overrides_default_param_value_when_it_is_provided_manually_in_doc
+{
+    public function index(Illuminate\Http\Request $request)
+    {
+        /** @default 15 */
+        $request->integer('foo', 10);
+    }
+}
