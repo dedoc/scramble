@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use PhpParser\Comment;
 use PhpParser\Node;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RequestParametersBuilder
 {
@@ -52,6 +53,10 @@ class RequestParametersBuilder
         }
 
         if (! ($parameterName = TypeHelper::getArgType($scope, $methodCallNode->args, ['key', 0])->value ?? null)) {
+            return;
+        }
+
+        if ($this->shouldIgnoreParameter($node)) {
             return;
         }
 
@@ -159,7 +164,7 @@ class RequestParametersBuilder
                 ->map(fn (Comment $c) => $c->getReformattedText())
                 ->join("\n");
 
-            return (string) Str::of($docText)->replace(['//', ' * ', '/*', '*/'], '')->trim();
+            return (string) Str::of($docText)->replace(['//', ' * ', '/**', '/*', '*/'], '')->trim();
         }
 
         /*
@@ -168,10 +173,18 @@ class RequestParametersBuilder
          */
         if ($node->getDocComment()) {
             return (string) Str::of($node->getDocComment()->getReformattedText())
-                ->replace(['//', ' * ', '/*', '*/'], '')
+                ->replace(['//', ' * ', '/**', '/*', '*/'], '')
                 ->trim();
         }
 
         return '';
+    }
+
+    private function shouldIgnoreParameter(Node\Stmt\Expression $node)
+    {
+        /** @var PhpDocNode $phpDoc */
+        $phpDoc = $node->getAttribute('parsedPhpDoc');
+
+        return !! $phpDoc->getTagsByName('@ignoreParam');
     }
 }

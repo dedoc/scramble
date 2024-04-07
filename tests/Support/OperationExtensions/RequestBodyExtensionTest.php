@@ -154,8 +154,6 @@ class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with
     public function index(Illuminate\Http\Request $request)
     {
         $request->enum('status', RequestBodyExtensionTest__Status_Params_Extraction::class);
-
-        //        $request->query('in_query');
     }
 }
 enum RequestBodyExtensionTest__Status_Params_Extraction: string
@@ -187,5 +185,22 @@ class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with
     public function index(Illuminate\Http\Request $request)
     {
         $request->query('in_query', 'foo');
+    }
+}
+
+it('ignores parameter with @ignoreParam doc', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::post('api/test', [RequestBodyExtensionTest__ignores_parameter_with_ignore_param_doc::class, 'index']);
+    });
+
+    expect($openApiDocument['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'] ?? [])
+        ->toHaveLength(0);
+});
+class RequestBodyExtensionTest__ignores_parameter_with_ignore_param_doc
+{
+    public function index(Illuminate\Http\Request $request)
+    {
+        /** @ignoreParam */
+        $request->integer('foo', 10);
     }
 }
