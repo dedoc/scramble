@@ -256,7 +256,7 @@ it('allows specifying query position and default for params inferred from valida
             'per_page' => [
                 'type' => 'integer',
                 'default' => 10,
-            ]
+            ],
         ])
         ->and($openApiDocument['paths']['/test']['post']['parameters'])
         ->toBe([[
