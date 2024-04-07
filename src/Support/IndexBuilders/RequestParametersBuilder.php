@@ -67,9 +67,9 @@ class RequestParametersBuilder
             'integer' => $this->makeIntegerParameter($scope, $methodCallNode),
             'float' => $this->makeFloatParameter($scope, $methodCallNode),
             'boolean' => $this->makeBooleanParameter($scope, $methodCallNode),
-            'string', 'str' => $this->makeStringParameter($scope, $methodCallNode),
             'enum' => $this->makeEnumParameter($scope, $methodCallNode),
             'query' => $this->makeQueryParameter($scope, $methodCallNode, $parameter),
+            'string', 'str', 'get', 'input', 'post' => $this->makeStringParameter($scope, $methodCallNode),
             default => [null, null],
         };
 
@@ -89,9 +89,6 @@ class RequestParametersBuilder
                 app(TypeTransformer::class)->transform($parameterType)
             ))
             ->default($parameterDefault ?? new MissingExample);
-
-        // @todo: query
-        // @todo: get/input/post/?
 
         $this->bag->set($parameterName, $parameter);
     }
