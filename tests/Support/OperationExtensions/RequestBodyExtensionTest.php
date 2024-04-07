@@ -135,7 +135,7 @@ it('extracts parameters, their defaults, and descriptions from calling request p
         ->toHaveLength(1)
         ->and($properties['status'])
         ->toBe([
-            '$ref' => '#/components/schemas/RequestBodyExtensionTest__Status_Params_Extraction'
+            '$ref' => '#/components/schemas/RequestBodyExtensionTest__Status_Params_Extraction',
         ])
         ->and($openApiDocument['components']['schemas']['RequestBodyExtensionTest__Status_Params_Extraction'])
         ->toBe([
@@ -146,8 +146,8 @@ it('extracts parameters, their defaults, and descriptions from calling request p
                 'hearts',
                 'spades',
             ],
-            'title' => 'RequestBodyExtensionTest__Status_Params_Extraction'
-      ]);
+            'title' => 'RequestBodyExtensionTest__Status_Params_Extraction',
+        ]);
 });
 class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_enum
 {
@@ -155,16 +155,16 @@ class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with
     {
         $request->enum('status', RequestBodyExtensionTest__Status_Params_Extraction::class);
 
-//        $request->query('in_query');
+        //        $request->query('in_query');
     }
 }
-enum RequestBodyExtensionTest__Status_Params_Extraction: string {
+enum RequestBodyExtensionTest__Status_Params_Extraction: string
+{
     case Clubs = 'clubs';
     case Diamonds = 'diamonds';
     case Hearts = 'hearts';
     case Spades = 'spades';
 }
-
 
 it('extracts parameters, their defaults, and descriptions from calling request parameters retrieving methods with query', function () {
     $openApiDocument = generateForRoute(function () {
@@ -180,7 +180,7 @@ it('extracts parameters, their defaults, and descriptions from calling request p
                 'type' => 'string',
             ],
             'default' => 'foo',
-          ]]);
+        ]]);
 });
 class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_query
 {

@@ -10,6 +10,7 @@ class Parameter
 
     /**
      * Possible values are "query", "header", "path" or "cookie".
+     *
      * @var "query"|"header"|"path"|"cookie".
      */
     public string $in;

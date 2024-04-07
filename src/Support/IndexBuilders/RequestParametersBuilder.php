@@ -110,7 +110,7 @@ class RequestParametersBuilder
     {
         return [
             new FloatType,
-            TypeHelper::getArgType($scope, $node->args, ['default', 1], new LiteralFloatType(0))->value ?? null
+            TypeHelper::getArgType($scope, $node->args, ['default', 1], new LiteralFloatType(0))->value ?? null,
         ];
     }
 
@@ -118,7 +118,7 @@ class RequestParametersBuilder
     {
         return [
             new BooleanType,
-            TypeHelper::getArgType($scope, $node->args, ['default', 1], new LiteralBooleanType(false))->value ?? null
+            TypeHelper::getArgType($scope, $node->args, ['default', 1], new LiteralBooleanType(false))->value ?? null,
         ];
     }
 
@@ -126,13 +126,13 @@ class RequestParametersBuilder
     {
         return [
             new StringType,
-            TypeHelper::getArgType($scope, $node->args, ['default', 1])->value ?? null
+            TypeHelper::getArgType($scope, $node->args, ['default', 1])->value ?? null,
         ];
     }
 
     private function makeEnumParameter(Scope $scope, Node $node)
     {
-        if (!$className = TypeHelper::getArgType($scope, $node->args, ['default', 1])->value ?? null) {
+        if (! $className = TypeHelper::getArgType($scope, $node->args, ['default', 1])->value ?? null) {
             return [null, null];
         }
 
