@@ -14,6 +14,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Http\Request;
@@ -60,6 +61,7 @@ class RequestParametersBuilder
             'float' => $this->makeFloatParameter($scope, $methodCallNode),
             'boolean' => $this->makeBooleanParameter($scope, $methodCallNode),
             'string', 'str' => $this->makeStringParameter($scope, $methodCallNode),
+            'enum' => $this->makeEnumParameter($scope, $methodCallNode),
             default => [null, null],
         };
 
@@ -123,6 +125,18 @@ class RequestParametersBuilder
         return [
             new StringType,
             TypeHelper::getArgType($scope, $node->args, ['default', 1])->value ?? null
+        ];
+    }
+
+    private function makeEnumParameter(Scope $scope, Node $node)
+    {
+        if (!$className = TypeHelper::getArgType($scope, $node->args, ['default', 1])->value ?? null) {
+            return [null, null];
+        }
+
+        return [
+            new ObjectType($className),
+            null,
         ];
     }
 

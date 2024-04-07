@@ -123,9 +123,39 @@ class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with
         $request->boolean('is_foo');
 
         $request->string('name', 'John Doe');
+//        $request->query('in_query');
+    }
+}
 
-//        $request->enum('status', RequestBodyExtensionTest__Status_Params_Extraction::class);
-//
+it('extracts parameters, their defaults, and descriptions from calling request parameters retrieving methods with enum', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::post('api/test', [RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_enum::class, 'index']);
+    });
+
+    expect($properties = $openApiDocument['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'])
+        ->toHaveLength(1)
+        ->and($properties['status'])
+        ->toBe([
+            '$ref' => '#/components/schemas/RequestBodyExtensionTest__Status_Params_Extraction'
+        ])
+        ->and($openApiDocument['components']['schemas']['RequestBodyExtensionTest__Status_Params_Extraction'])
+        ->toBe([
+            'type' => 'string',
+            'enum' => [
+                'clubs',
+                'diamonds',
+                'hearts',
+                'spades',
+            ],
+            'title' => 'RequestBodyExtensionTest__Status_Params_Extraction'
+      ]);
+});
+class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_enum
+{
+    public function index(Illuminate\Http\Request $request)
+    {
+        $request->enum('status', RequestBodyExtensionTest__Status_Params_Extraction::class);
+
 //        $request->query('in_query');
     }
 }
