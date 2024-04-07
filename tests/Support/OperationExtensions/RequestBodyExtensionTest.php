@@ -80,3 +80,58 @@ class RequestBodyExtensionTest__automaticall_infers_form_data
         $request->validate(['foo' => 'file']);
     }
 }
+
+it('extracts parameters, their defaults, and descriptions from calling request parameters retrieving methods with scalar types', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::post('api/test', [RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_scalar_types::class, 'index']);
+    });
+
+    expect($schema = $openApiDocument['paths']['/test']['post']['requestBody']['content']['application/json']['schema'])
+        ->toHaveLength(2)
+        ->and($schema['properties'])
+        ->toBe([
+            'count' => [
+                'type' => 'integer',
+                'description' => 'How many things are there.',
+                'default' => 10,
+            ],
+            'weight' => [
+                'type' => 'number',
+                'default' => 0.5,
+            ],
+            'is_foo' => [
+                'type' => 'boolean',
+                'default' => false,
+            ],
+            'name' => [
+                'type' => 'string',
+                'default' => 'John Doe',
+            ],
+        ])
+        ->and($schema['required'] ?? null)
+        ->toBeNull();
+});
+class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_scalar_types
+{
+    public function index(Illuminate\Http\Request $request)
+    {
+        // How many things are there.
+        $request->integer('count', 10);
+
+        $request->float('weight', 0.5);
+
+        $request->boolean('is_foo');
+
+        $request->string('name', 'John Doe');
+
+//        $request->enum('status', RequestBodyExtensionTest__Status_Params_Extraction::class);
+//
+//        $request->query('in_query');
+    }
+}
+enum RequestBodyExtensionTest__Status_Params_Extraction: string {
+    case Clubs = 'clubs';
+    case Diamonds = 'diamonds';
+    case Hearts = 'hearts';
+    case Spades = 'spades';
+}

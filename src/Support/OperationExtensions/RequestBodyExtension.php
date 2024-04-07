@@ -26,8 +26,16 @@ class RequestBodyExtension extends OperationExtension
     {
         $description = Str::of($routeInfo->phpDoc()->getAttribute('description'));
 
+        /*
+         * Making sure to analyze the route.
+         * @todo rename the method
+         */
+        $routeInfo->getMethodType();
+
         try {
             $bodyParams = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode());
+
+            $bodyParams = [...$bodyParams, ...array_values($routeInfo->requestParametersFromCalls->data)];
 
             $mediaType = $this->getMediaType($operation, $routeInfo, $bodyParams);
 

@@ -8,6 +8,7 @@ class Parameter
 
     /**
      * Possible values are "query", "header", "path" or "cookie".
+     * @var "query"|"header"|"path"|"cookie".
      */
     public string $in;
 
@@ -17,6 +18,9 @@ class Parameter
 
     /** @var array|scalar|null|MissingExample */
     public $example;
+
+    /** @var array|scalar|null|MissingExample */
+    public $default;
 
     public bool $deprecated = false;
 
@@ -28,7 +32,9 @@ class Parameter
     {
         $this->name = $name;
         $this->in = $in;
+
         $this->example = new MissingExample;
+        $this->default = new MissingExample;
 
         if ($this->in === 'path') {
             $this->required = true;
@@ -55,7 +61,11 @@ class Parameter
             $result['schema'] = $this->schema->toArray();
         }
 
-        return array_merge($result, $this->example instanceof MissingExample ? [] : ['example' => $this->example]);
+        return array_merge(
+            $result,
+            $this->example instanceof MissingExample ? [] : ['example' => $this->example],
+            $this->default instanceof MissingExample ? [] : ['default' => $this->default],
+        );
     }
 
     public function required(bool $required)
@@ -75,6 +85,13 @@ class Parameter
     public function setSchema(?Schema $schema): self
     {
         $this->schema = $schema;
+
+        return $this;
+    }
+
+    public function default($default)
+    {
+        $this->default = $default;
 
         return $this;
     }

@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\SimpleTypeGetters;
 
+use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -18,6 +19,10 @@ class ScalarTypeGetter
 
         if ($node instanceof Node\Scalar\LNumber) {
             return new LiteralIntegerType($node->value);
+        }
+
+        if ($node instanceof Node\Scalar\DNumber) {
+            return new LiteralFloatType($node->value);
         }
 
         return new UnknownType('Cannot get type from scalar');
