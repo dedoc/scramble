@@ -81,6 +81,8 @@ class RequestParametersBuilder
             $parameterDefault = $parameterDefaultFromDoc;
         }
 
+        $this->checkExplicitParameterPlacementInQuery($node, $parameter);
+
         $parameter
             ->description($this->makeDescriptionFromComments($node))
             ->setSchema(Schema::fromType(
@@ -168,10 +170,7 @@ class RequestParametersBuilder
          * @todo: consider adding only @param annotation support,
          * so when description is taken only if comment is marked with @param
          */
-        if ($node->getDocComment()) {
-            /** @var PhpDocNode $phpDoc */
-            $phpDoc = $node->getAttribute('parsedPhpDoc');
-
+        if ($phpDoc = $node->getAttribute('parsedPhpDoc')) {
             return trim($phpDoc->getAttribute('summary').' '.$phpDoc->getAttribute('description'));
         }
 
@@ -188,17 +187,27 @@ class RequestParametersBuilder
 
     private function shouldIgnoreParameter(Node\Stmt\Expression $node)
     {
-        /** @var PhpDocNode $phpDoc */
+        /** @var PhpDocNode|null $phpDoc */
         $phpDoc = $node->getAttribute('parsedPhpDoc');
 
-        return !! $phpDoc->getTagsByName('@ignoreParam');
+        return !! $phpDoc?->getTagsByName('@ignoreParam');
     }
 
     private function getParameterDefaultFromPhpDoc(Node\Stmt\Expression $node)
     {
-        /** @var PhpDocNode $phpDoc */
+        /** @var PhpDocNode|null $phpDoc */
         $phpDoc = $node->getAttribute('parsedPhpDoc');
 
         return ExamplesExtractor::make($phpDoc, '@default')->extract()[0] ?? null;
+    }
+
+    private function checkExplicitParameterPlacementInQuery(Node\Stmt\Expression $node, Parameter $parameter)
+    {
+        /** @var PhpDocNode|null $phpDoc */
+        $phpDoc = $node->getAttribute('parsedPhpDoc');
+
+        if(!! $phpDoc?->getTagsByName('@query')) {
+            $parameter->setAttribute('isInQuery', true);
+        }
     }
 }

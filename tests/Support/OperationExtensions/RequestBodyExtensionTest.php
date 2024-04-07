@@ -221,3 +221,27 @@ class RequestBodyExtensionTest__uses_and_overrides_default_param_value_when_it_i
         $request->integer('foo', 10);
     }
 }
+
+it('allows explicitly specifying parameter placement in query manually in doc', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::post('api/test', [RequestBodyExtensionTest__allows_explicitly_specifying_parameter_placement_in_query_manually_in_doc::class, 'index']);
+    });
+
+    expect($openApiDocument['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'] ?? [])
+        ->toBeEmpty()
+        ->and($openApiDocument['paths']['/test']['post']['parameters'])
+        ->toBe([[
+            'name' => 'foo',
+            'in' => 'query',
+            'schema' => ['type' => 'integer'],
+            'default' => 10,
+        ]]);
+});
+class RequestBodyExtensionTest__allows_explicitly_specifying_parameter_placement_in_query_manually_in_doc
+{
+    public function index(Illuminate\Http\Request $request)
+    {
+        /** @query */
+        $request->integer('foo', 10);
+    }
+}

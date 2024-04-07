@@ -23,7 +23,7 @@ class ExamplesExtractor
 
     public function extract(bool $preferString = false)
     {
-        if (! count($examples = $this->docNode->getTagsByName($this->tagName))) {
+        if (! count($examples = $this->docNode?->getTagsByName($this->tagName) ?? [])) {
             return [];
         }
 
