@@ -35,11 +35,17 @@ class RequestBodyExtension extends OperationExtension
         try {
             $bodyParams = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode());
 
-            $bodyParams = [...$bodyParams, ...array_values($routeInfo->requestParametersFromCalls->data)];
+            $allParams = [...$bodyParams, ...array_values($routeInfo->requestParametersFromCalls->data)];
+            [$queryParams, $bodyParams] = collect($allParams)
+                ->partition(function (Parameter $parameter) {
+                    return $parameter->getAttribute('isInQuery');
+                });
+            $queryParams = $queryParams->toArray();
+            $bodyParams = $bodyParams->toArray();
 
-            $mediaType = $this->getMediaType($operation, $routeInfo, $bodyParams);
+            $mediaType = $this->getMediaType($operation, $routeInfo, $allParams);
 
-            if (count($bodyParams)) {
+            if (count($allParams)) {
                 if (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
                     $operation->addRequestBodyObject(
                         RequestBodyObject::make()->setContent($mediaType, Schema::createFromParameters($bodyParams))
@@ -47,6 +53,7 @@ class RequestBodyExtension extends OperationExtension
                 } else {
                     $operation->addParameters($bodyParams);
                 }
+                $operation->addParameters($queryParams);
             } elseif (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
                 $operation
                     ->addRequestBodyObject(

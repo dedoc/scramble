@@ -14,6 +14,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
@@ -62,6 +63,7 @@ class RequestParametersBuilder
             'boolean' => $this->makeBooleanParameter($scope, $methodCallNode),
             'string', 'str' => $this->makeStringParameter($scope, $methodCallNode),
             'enum' => $this->makeEnumParameter($scope, $methodCallNode),
+            'query' => $this->makeQueryParameter($scope, $methodCallNode, $parameter),
             default => [null, null],
         };
 
@@ -137,6 +139,16 @@ class RequestParametersBuilder
         return [
             new ObjectType($className),
             null,
+        ];
+    }
+
+    private function makeQueryParameter(Scope $scope, Node $node, Parameter $parameter)
+    {
+        $parameter->setAttribute('isInQuery', true);
+
+        return [
+            new MixedType,
+            TypeHelper::getArgType($scope, $node->args, ['default', 1])->value ?? null,
         ];
     }
 

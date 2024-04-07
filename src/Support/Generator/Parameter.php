@@ -4,6 +4,8 @@ namespace Dedoc\Scramble\Support\Generator;
 
 class Parameter
 {
+    use WithAttributes;
+
     public string $name;
 
     /**

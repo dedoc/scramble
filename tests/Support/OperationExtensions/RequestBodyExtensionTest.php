@@ -123,7 +123,6 @@ class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with
         $request->boolean('is_foo');
 
         $request->string('name', 'John Doe');
-//        $request->query('in_query');
     }
 }
 
@@ -164,4 +163,29 @@ enum RequestBodyExtensionTest__Status_Params_Extraction: string {
     case Diamonds = 'diamonds';
     case Hearts = 'hearts';
     case Spades = 'spades';
+}
+
+
+it('extracts parameters, their defaults, and descriptions from calling request parameters retrieving methods with query', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::post('api/test', [RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_query::class, 'index']);
+    });
+
+    expect($openApiDocument['paths']['/test']['post']['parameters'])
+        ->toHaveLength(1)
+        ->toBe([[
+            'name' => 'in_query',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'string',
+            ],
+            'default' => 'foo',
+          ]]);
+});
+class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_query
+{
+    public function index(Illuminate\Http\Request $request)
+    {
+        $request->query('in_query', 'foo');
+    }
 }
