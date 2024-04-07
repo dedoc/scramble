@@ -26,12 +26,26 @@ class RequestBodyExtension extends OperationExtension
     {
         $description = Str::of($routeInfo->phpDoc()->getAttribute('description'));
 
+        /*
+         * Making sure to analyze the route.
+         * @todo rename the method
+         */
+        $routeInfo->getMethodType();
+
         try {
             $bodyParams = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode());
 
-            $mediaType = $this->getMediaType($operation, $routeInfo, $bodyParams);
+            $allParams = [...$bodyParams, ...array_values($routeInfo->requestParametersFromCalls->data)];
+            [$queryParams, $bodyParams] = collect($allParams)
+                ->partition(function (Parameter $parameter) {
+                    return $parameter->getAttribute('isInQuery');
+                });
+            $queryParams = $queryParams->toArray();
+            $bodyParams = $bodyParams->toArray();
 
-            if (count($bodyParams)) {
+            $mediaType = $this->getMediaType($operation, $routeInfo, $allParams);
+
+            if (count($allParams)) {
                 if (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
                     $operation->addRequestBodyObject(
                         RequestBodyObject::make()->setContent($mediaType, Schema::createFromParameters($bodyParams))
@@ -39,6 +53,7 @@ class RequestBodyExtension extends OperationExtension
                 } else {
                     $operation->addParameters($bodyParams);
                 }
+                $operation->addParameters($queryParams);
             } elseif (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
                 $operation
                     ->addRequestBodyObject(

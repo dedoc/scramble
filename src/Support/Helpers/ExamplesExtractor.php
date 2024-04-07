@@ -11,18 +11,19 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 class ExamplesExtractor
 {
     public function __construct(
-        private ?PhpDocNode $docNode
+        private ?PhpDocNode $docNode,
+        private string $tagName = '@example',
     ) {
     }
 
-    public static function make(?PhpDocNode $docNode)
+    public static function make(?PhpDocNode $docNode, string $tagName = '@example')
     {
-        return new self($docNode);
+        return new self($docNode, $tagName);
     }
 
     public function extract(bool $preferString = false)
     {
-        if (! count($examples = $this->docNode->getTagsByName('@example'))) {
+        if (! count($examples = $this->docNode?->getTagsByName($this->tagName) ?? [])) {
             return [];
         }
 
@@ -52,6 +53,10 @@ class ExamplesExtractor
             $exampleValue = $exampleValue === 'true';
         } elseif (is_numeric($exampleValue) && ! $preferString) {
             $exampleValue = floatval($exampleValue);
+
+            if (floor($exampleValue) == $exampleValue) {
+                $exampleValue = intval($exampleValue);
+            }
         }
 
         return $exampleValue;

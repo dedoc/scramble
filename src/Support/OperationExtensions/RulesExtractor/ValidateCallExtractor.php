@@ -32,6 +32,7 @@ class ValidateCallExtractor
             fn (Node $node) => $node instanceof Node\Expr\MethodCall
                 && $node->var instanceof Node\Expr\Variable
                 && is_a($this->getPossibleParamType($methodNode, $node->var), Request::class, true)
+                && $node->name instanceof Node\Identifier
                 && $node->name->name === 'validate'
         );
         $validationRules = $callToValidate->args[0] ?? null;
