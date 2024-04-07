@@ -190,7 +190,7 @@ class RequestParametersBuilder
         /** @var PhpDocNode|null $phpDoc */
         $phpDoc = $node->getAttribute('parsedPhpDoc');
 
-        return !! $phpDoc?->getTagsByName('@ignoreParam');
+        return (bool) $phpDoc?->getTagsByName('@ignoreParam');
     }
 
     private function getParameterDefaultFromPhpDoc(Node\Stmt\Expression $node)
@@ -206,7 +206,7 @@ class RequestParametersBuilder
         /** @var PhpDocNode|null $phpDoc */
         $phpDoc = $node->getAttribute('parsedPhpDoc');
 
-        if(!! $phpDoc?->getTagsByName('@query')) {
+        if ((bool) $phpDoc?->getTagsByName('@query')) {
             $parameter->setAttribute('isInQuery', true);
         }
     }
