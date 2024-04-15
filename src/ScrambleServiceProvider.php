@@ -132,7 +132,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             return new TypeTransformer(
                 $this->app->make(Infer::class),
                 new Components,
-                array_merge($typesToSchemaExtensions, [
+                array_merge([
                     EnumToSchema::class,
                     JsonResourceTypeToSchema::class,
                     ModelToSchema::class,
@@ -140,13 +140,13 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     AnonymousResourceCollectionTypeToSchema::class,
                     LengthAwarePaginatorTypeToSchema::class,
                     ResponseTypeToSchema::class,
-                ]),
-                array_merge($exceptionToResponseExtensions, [
+                ], $typesToSchemaExtensions),
+                array_merge([
                     ValidationExceptionToResponseExtension::class,
                     AuthorizationExceptionToResponseExtension::class,
                     NotFoundExceptionToResponseExtension::class,
                     HttpExceptionToResponseExtension::class,
-                ]),
+                ], $exceptionToResponseExtensions),
             );
         });
     }
