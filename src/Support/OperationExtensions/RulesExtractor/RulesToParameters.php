@@ -48,7 +48,9 @@ class RulesToParameters
 
     private function handleNested(Collection $parameters)
     {
-        [$nested, $parameters] = $parameters->partition(fn ($_, $key) => Str::contains($key, '.'));
+        [$nested, $parameters] = $parameters
+            ->sortBy(fn ($_, $key) => count(explode('.', $key)))
+            ->partition(fn ($_, $key) => Str::contains($key, '.'));
 
         $nestedParentsKeys = $nested->keys()->map(fn ($key) => explode('.', $key)[0]);
 
