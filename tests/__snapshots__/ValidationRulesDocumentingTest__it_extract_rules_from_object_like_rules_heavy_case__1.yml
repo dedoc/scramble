@@ -6,4 +6,4 @@
 -
     name: channels
     in: query
-    schema: { type: object, properties: { publisher: { type: object, properties: { id: { type: [integer, 'null'] }, name: { type: [string, 'null'] } } }, channel_url: { type: string }, agency: { type: [object, 'null'], properties: { id: { type: [integer, 'null'] }, name: { type: [string, 'null'] } } } } }
+    schema: { type: object, properties: { channel_url: { type: string }, agency: { type: [object, 'null'], properties: { id: { type: [integer, 'null'] }, name: { type: [string, 'null'] } } }, publisher: { type: object, properties: { id: { type: [integer, 'null'] }, name: { type: [string, 'null'] } } } } }
