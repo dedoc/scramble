@@ -34,7 +34,7 @@ it('supports multiple confirmed rule', function () {
 it('works when last validation item is items array', function () {
     $rules = [
         'items.*.name' => 'required|string',
-        'items.*.email'=> 'email',
+        'items.*.email' => 'email',
         'items.*' => 'array',
         'items' => ['array', 'min:1', 'max:10'],
     ];
@@ -44,28 +44,28 @@ it('works when last validation item is items array', function () {
     expect($params = collect($params)->map->toArray()->all())
         ->toBe([
             [
-                "name" => "items",
-                "in" => "query",
-                "schema" => [
-                    "type" => "array",
-                    "items" => [
-                        "type" => "object",
-                        "properties" => [
-                            "name" => [
-                                "type" => "string"
+                'name' => 'items',
+                'in' => 'query',
+                'schema' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'name' => [
+                                'type' => 'string',
                             ],
-                            "email" => [
-                                "type" => "string",
-                                "format" => "email",
+                            'email' => [
+                                'type' => 'string',
+                                'format' => 'email',
                             ],
                         ],
-                        "required" => [
-                            0 => "name",
+                        'required' => [
+                            0 => 'name',
                         ],
                     ],
-                    "minItems" => 1.0,
-                    "maxItems" => 10.0,
-                ]
-            ]
+                    'minItems' => 1.0,
+                    'maxItems' => 10.0,
+                ],
+            ],
         ]);
 });
