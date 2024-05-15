@@ -23,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use PhpParser\Comment;
 use PhpParser\Node;
+use PhpParser\NodeAbstract;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RequestParametersBuilder
@@ -33,15 +34,24 @@ class RequestParametersBuilder
 
     public function afterAnalyzedNode(Scope $scope, Node $node)
     {
-        if (! $node instanceof Node\Stmt\Expression) {
+        // @todo: Find more general approach to get a comment related to the node
+        [$commentHolderNode, $methodCallNode] = match ($node::class) {
+            Node\Stmt\Expression::class => [
+                $node,
+                $node->expr instanceof Node\Expr\Assign ? $node->expr->expr : $node->expr,
+            ],
+            Node\Arg::class => [$node, $node->value],
+            Node\ArrayItem::class => [$node, $node->value],
+            default => [null, null],
+        };
+
+        if (! $commentHolderNode) {
             return;
         }
 
-        if (! $node->expr instanceof Node\Expr\MethodCall) {
+        if (! $methodCallNode instanceof Node\Expr\MethodCall) {
             return;
         }
-
-        $methodCallNode = $node->expr;
 
         $varType = $scope->getType($methodCallNode->var);
 
@@ -57,7 +67,7 @@ class RequestParametersBuilder
             return;
         }
 
-        if ($this->shouldIgnoreParameter($node)) {
+        if ($this->shouldIgnoreParameter($commentHolderNode)) {
             return;
         }
 
@@ -77,14 +87,14 @@ class RequestParametersBuilder
             return;
         }
 
-        if ($parameterDefaultFromDoc = $this->getParameterDefaultFromPhpDoc($node)) {
+        if ($parameterDefaultFromDoc = $this->getParameterDefaultFromPhpDoc($commentHolderNode)) {
             $parameterDefault = $parameterDefaultFromDoc;
         }
 
-        $this->checkExplicitParameterPlacementInQuery($node, $parameter);
+        $this->checkExplicitParameterPlacementInQuery($commentHolderNode, $parameter);
 
         $parameter
-            ->description($this->makeDescriptionFromComments($node))
+            ->description($this->makeDescriptionFromComments($commentHolderNode))
             ->setSchema(Schema::fromType(
                 app(TypeTransformer::class)->transform($parameterType)
             ))
@@ -161,7 +171,7 @@ class RequestParametersBuilder
         ];
     }
 
-    private function makeDescriptionFromComments(Node\Stmt\Expression $node)
+    private function makeDescriptionFromComments(NodeAbstract $node)
     {
         /*
          * @todo: consider adding only @param annotation support,
@@ -182,7 +192,7 @@ class RequestParametersBuilder
         return '';
     }
 
-    private function shouldIgnoreParameter(Node\Stmt\Expression $node)
+    private function shouldIgnoreParameter(NodeAbstract $node)
     {
         /** @var PhpDocNode|null $phpDoc */
         $phpDoc = $node->getAttribute('parsedPhpDoc');
@@ -190,7 +200,7 @@ class RequestParametersBuilder
         return (bool) $phpDoc?->getTagsByName('@ignoreParam');
     }
 
-    private function getParameterDefaultFromPhpDoc(Node\Stmt\Expression $node)
+    private function getParameterDefaultFromPhpDoc(NodeAbstract $node)
     {
         /** @var PhpDocNode|null $phpDoc */
         $phpDoc = $node->getAttribute('parsedPhpDoc');
@@ -198,7 +208,7 @@ class RequestParametersBuilder
         return ExamplesExtractor::make($phpDoc, '@default')->extract()[0] ?? null;
     }
 
-    private function checkExplicitParameterPlacementInQuery(Node\Stmt\Expression $node, Parameter $parameter)
+    private function checkExplicitParameterPlacementInQuery(NodeAbstract $node, Parameter $parameter)
     {
         /** @var PhpDocNode|null $phpDoc */
         $phpDoc = $node->getAttribute('parsedPhpDoc');
