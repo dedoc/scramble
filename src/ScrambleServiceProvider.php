@@ -10,6 +10,7 @@ use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Dedoc\Scramble\Infer\Extensions\InferExtension;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\Support\DefaultCallback;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthorizationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\HttpExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\NotFoundExceptionToResponseExtension;
@@ -39,6 +40,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
+use Illuminate\Support\Facades\Event;
 use PhpParser\ParserFactory;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -160,5 +162,11 @@ class ScrambleServiceProvider extends PackageServiceProvider
         Scramble::registerApi('default', config('scramble'))
             ->routes(Scramble::$routeResolver)
             ->afterOpenApiGenerated(Scramble::$openApiExtender);
+
+        $this->app->booted(function () {
+            Scramble::getGeneratorConfig('default')
+                ->routes(Scramble::$routeResolver)
+                ->afterOpenApiGenerated(Scramble::$openApiExtender);
+        });
     }
 }
