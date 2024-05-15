@@ -14,7 +14,7 @@ class GeneratorConfig
         private ?Closure $routeResolver = null,
         private ?Closure $afterOpenApiGenerated = null,
     ) {
-        $this->routeResolver = $this->routeResolver ?? function (Route $route) {
+        $this->routeResolver = $this->routeResolver ?: function (Route $route) {
             $expectedDomain = $this->get('api_domain');
 
             return Str::startsWith($route->uri, $this->get('api_path', 'api'))
@@ -35,7 +35,9 @@ class GeneratorConfig
             return $this->routeResolver;
         }
 
-        $this->routeResolver = $routeResolver;
+        if ($routeResolver) {
+            $this->routeResolver = $routeResolver;
+        }
 
         return $this;
     }

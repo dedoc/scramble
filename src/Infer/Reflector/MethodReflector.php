@@ -48,7 +48,10 @@ class MethodReflector
         return new ReflectionMethod($this->className, $this->name);
     }
 
-    public function getAstNode(): ClassMethod
+    /**
+     * @todo: Think if this method can actually return `null` or it should fail.
+     */
+    public function getAstNode(): ?ClassMethod
     {
         if (! $this->methodNode) {
             $className = class_basename($this->className);
