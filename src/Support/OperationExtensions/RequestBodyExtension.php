@@ -41,7 +41,7 @@ class RequestBodyExtension extends OperationExtension
                 ...$bodyParams,
                 ...array_filter(
                     array_values($routeInfo->requestParametersFromCalls->data),
-                    fn ($p) => !in_array($p->name, $bodyParamsNames),
+                    fn ($p) => ! in_array($p->name, $bodyParamsNames),
                 ),
             ];
             [$queryParams, $bodyParams] = collect($allParams)
