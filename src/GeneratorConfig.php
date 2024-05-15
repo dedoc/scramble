@@ -14,12 +14,6 @@ class GeneratorConfig
         private ?Closure $routeResolver = null,
         private ?Closure $afterOpenApiGenerated = null,
     ) {
-        $this->routeResolver = $this->routeResolver ?: function (Route $route) {
-            $expectedDomain = $this->get('api_domain');
-
-            return Str::startsWith($route->uri, $this->get('api_path', 'api'))
-                && (! $expectedDomain || $route->getDomain() === $expectedDomain);
-        };
     }
 
     public function config(array $config)
@@ -32,7 +26,7 @@ class GeneratorConfig
     public function routes(?Closure $routeResolver = null)
     {
         if (count(func_get_args()) === 0) {
-            return $this->routeResolver;
+            return $this->routeResolver ?: $this->defaultRoutesFilter(...);
         }
 
         if ($routeResolver) {
@@ -40,6 +34,14 @@ class GeneratorConfig
         }
 
         return $this;
+    }
+
+    private function defaultRoutesFilter(Route $route)
+    {
+        $expectedDomain = $this->get('api_domain');
+
+        return Str::startsWith($route->uri, $this->get('api_path', 'api'))
+            && (! $expectedDomain || $route->getDomain() === $expectedDomain);
     }
 
     public function afterOpenApiGenerated(?Closure $afterOpenApiGenerated = null)
