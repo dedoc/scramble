@@ -35,7 +35,15 @@ class RequestBodyExtension extends OperationExtension
         try {
             $bodyParams = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode());
 
-            $allParams = [...$bodyParams, ...array_values($routeInfo->requestParametersFromCalls->data)];
+            $bodyParamsNames = array_map(fn ($p) => $p->name, $bodyParams);
+
+            $allParams = [
+                ...$bodyParams,
+                ...array_filter(
+                    array_values($routeInfo->requestParametersFromCalls->data),
+                    fn ($p) => !in_array($p->name, $bodyParamsNames),
+                ),
+            ];
             [$queryParams, $bodyParams] = collect($allParams)
                 ->partition(function (Parameter $parameter) {
                     return $parameter->getAttribute('isInQuery');

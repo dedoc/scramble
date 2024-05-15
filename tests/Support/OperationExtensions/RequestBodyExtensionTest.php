@@ -116,7 +116,7 @@ class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with
     public function index(Illuminate\Http\Request $request)
     {
         // How many things are there.
-        $request->integer('count', 10);
+        $param = $request->integer('count', 10);
 
         $request->float('weight', 0.5);
 
