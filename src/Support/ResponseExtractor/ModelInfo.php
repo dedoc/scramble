@@ -163,6 +163,7 @@ class ModelInfo
         return collect($columns)
             ->values()
             ->map(fn ($column) => [
+                'driver' => $connection->getDriverName(),
                 'name' => $column['name'],
                 'type' => $column['type'],
                 'increments' => $column['auto_increment'],
@@ -226,6 +227,7 @@ class ModelInfo
             })
             ->reject(fn ($cast, $name) => $keyedColumns->has($name))
             ->map(fn ($cast, $name) => [
+                'driver' => null,
                 'name' => $name,
                 'type' => null,
                 'increments' => false,
