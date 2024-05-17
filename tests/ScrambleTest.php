@@ -56,8 +56,6 @@ class ScrambleTest extends TestCase
 
         $doc = $generator(Scramble::getGeneratorConfig('default'));
 
-        dump($doc);
-
         $this->assertEquals('http://localhost/api', $doc['servers'][0]['url']);
         $this->assertEquals(['/a', '/b', '/c'], array_keys($doc['paths']));
     }
