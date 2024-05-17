@@ -20,6 +20,21 @@ return [
      */
     'export_path' => 'api.json',
 
+    /**
+     * Favicon of the documentations's website.
+     */
+    'favicon' => [
+        /**
+         * The URL of the favicon image
+         */
+        'href' => '',
+
+        /**
+         * Type attribute to specify the favicon image type
+         */
+        'type' => '',
+    ],
+
     'info' => [
         /*
          * API version.
