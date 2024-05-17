@@ -8,7 +8,7 @@
     <script src="https://unpkg.com/@stoplight/elements/web-components.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements/styles.min.css">
 
-    <link rel="icon" type="{{ $config->get('favicon.type') }}" href="{{ $config->get('favicon.href') }}">
+    <link rel="icon" type="{{ $config->get('ui.favicon.type') }}" href="{{ $config->get('ui.favicon.href') }}">
 
     <script>
         const originalFetch = window.fetch;

@@ -20,21 +20,6 @@ return [
      */
     'export_path' => 'api.json',
 
-    /**
-     * Favicon of the documentations's website.
-     */
-    'favicon' => [
-        /**
-         * The URL of the favicon image
-         */
-        'href' => '',
-
-        /**
-         * Type attribute to specify the favicon image type
-         */
-        'type' => '',
-    ],
-
     'info' => [
         /*
          * API version.
@@ -75,6 +60,21 @@ return [
          * Use to fetch the credential policy for the Try It feature. Options are: omit, include (default), and same-origin
          */
         'try_it_credentials_policy' => 'include',
+
+        /**
+         * Favicon of the website.
+         */
+        'favicon' => [
+            /**
+             * The URL of the favicon image.
+             */
+            'href' => '',
+
+            /**
+             * Type attribute to specify the favicon image type.
+             */
+            'type' => '',
+        ],
     ],
 
     /*
