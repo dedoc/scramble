@@ -56,7 +56,8 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
         if ($attribute = $info->get('attributes')->get($event->getName())) {
             $baseType = $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '')
-                ?? $this->getAttributeTypeFromDbColumnType($attribute['type'], $attribute['driver']);
+                ?? $this->getAttributeTypeFromDbColumnType($attribute['type'], $attribute['driver'])
+                ?? new UnknownType("Virtual attribute ({$attribute['name']}) type inference not supported.");
 
             if ($attribute['nullable']) {
                 return Union::wrap([$baseType, new NullType()]);
@@ -76,10 +77,10 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
      * MySQL/MariaDB decimal is mapped to a string by PDO.
      * Floating point numbers and decimals are all mapped to strings when using the pgsql driver.
      */
-    private function getAttributeTypeFromDbColumnType(?string $columnType, ?string $dbDriverName): AbstractType
+    private function getAttributeTypeFromDbColumnType(?string $columnType, ?string $dbDriverName): ?AbstractType
     {
         if ($columnType === null) {
-            return new UnknownType();
+            return null;
         }
 
         $typeName = str($columnType)
