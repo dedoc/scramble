@@ -95,6 +95,6 @@ class MethodReflector
 
     public function getClassReflector(): ClassReflector
     {
-        return ClassReflector::make($this->className);
+        return ClassReflector::make($this->getReflection()->class);
     }
 }
