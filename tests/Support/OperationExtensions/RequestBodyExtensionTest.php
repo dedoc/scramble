@@ -95,7 +95,7 @@ class RequestBodyExtensionTest__automaticall_infers_form_data_from_deeper
     public function index(Illuminate\Http\Request $request)
     {
         $request->validate([
-            'foo.*' => 'file'
+            'foo.*' => 'file',
         ]);
     }
 }
