@@ -2,29 +2,20 @@
 
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
-use Carbon\Carbon;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
-use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeWalker;
-use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Http\Resources\MergeValue;
-use Illuminate\Http\Resources\MissingValue;
 
 class JsonResourceTypeToSchema extends TypeToSchemaExtension
 {
