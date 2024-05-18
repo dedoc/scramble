@@ -112,19 +112,38 @@ class UserCollection_Four extends \Illuminate\Http\Resources\Json\ResourceCollec
 }
 
 it('attaches additional data to the response documentation', function () {
-    RouteFacade::get('api/test', [ResourceCollectionResponseTest_Controller::class, 'index']);
-
-    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ResourceCollectionResponseTest_Controller::class, 'index']);
+    });
 
     assertMatchesSnapshot($openApiDocument);
 });
-
 class ResourceCollectionResponseTest_Controller
 {
     public function index(Request $request)
     {
         return (new UserCollection_One())
+            ->additional([
+                'something' => ['foo' => 'bar'],
+            ]);
+    }
+}
+
+it('attaches additional data to the response documentation for annotation', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [AnnotationResourceCollectionResponseTest_Controller::class, 'index']);
+    });
+
+    expect($props = $openApiDocument['paths']['/test']['get']['responses'][200]['content']['application/json']['schema']['properties'])
+        ->toHaveKeys(['data', 'something'])
+        ->and($props['something']['properties'])
+        ->toBe(['foo' => ['type' => 'string', 'example' => 'bar']]);
+});
+class AnnotationResourceCollectionResponseTest_Controller
+{
+    public function index(Request $request)
+    {
+        return UserResource::collection(collect())
             ->additional([
                 'something' => ['foo' => 'bar'],
             ]);

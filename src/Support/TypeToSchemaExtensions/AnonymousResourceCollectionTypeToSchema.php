@@ -7,7 +7,9 @@ use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType as OpenApiArrayType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
+use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
@@ -16,6 +18,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
 {
+    use FlattensMergeValues;
+    use MergesOpenApiObjects;
+
     public function shouldHandle(Type $type)
     {
         return $type instanceof Generic
@@ -41,6 +46,11 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
+        $additional = $type->templateTypes[1 /* TAdditional */] ?? new UnknownType();
+        if ($additional instanceof KeyedArrayType) {
+            $additional->items = $this->flattenMergeValues($additional->items);
+        }
+
         // In case of paginated resource, we want to get pagination response.
         if ($type->templateTypes[0] instanceof Generic && ! $type->templateTypes[0]->isInstanceOf(JsonResource::class)) {
             return $this->openApiTransformer->toResponse($type->templateTypes[0]);
@@ -51,13 +61,22 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
         }
 
         $jsonResourceOpenApiType = $this->openApiTransformer->transform($collectingResourceType);
-        $responseWrapKey = AnonymousResourceCollection::$wrap;
 
-        $openApiType = $responseWrapKey
+        $shouldWrap = ($wrapKey = AnonymousResourceCollection::$wrap ?? null) !== null
+            || $additional instanceof KeyedArrayType;
+        $wrapKey = $wrapKey ?: 'data';
+
+        $openApiType = $shouldWrap
             ? (new OpenApiObjectType)
-                ->addProperty($responseWrapKey, (new OpenApiArrayType)->setItems($jsonResourceOpenApiType))
-                ->setRequired([$responseWrapKey])
+                ->addProperty($wrapKey, (new OpenApiArrayType)->setItems($jsonResourceOpenApiType))
+                ->setRequired([$wrapKey])
             : (new OpenApiArrayType)->setItems($jsonResourceOpenApiType);
+
+        if ($shouldWrap) {
+            if ($additional instanceof KeyedArrayType) {
+                $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));
+            }
+        }
 
         return Response::make(200)
             ->description('Array of `'.$this->components->uniqueSchemaName($collectingResourceType->name).'`')
