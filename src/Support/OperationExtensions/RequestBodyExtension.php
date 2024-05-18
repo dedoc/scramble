@@ -105,11 +105,10 @@ class RequestBodyExtension extends OperationExtension
     protected function hasBinary($bodyParams): bool
     {
         return collect($bodyParams)->contains(function (Parameter $parameter) {
-            if (property_exists($parameter?->schema?->type, 'format')) {
-                return $parameter->schema->type->format === 'binary';
-            }
+            // @todo: Use OpenApi document tree walker when ready
+            $parameterString = json_encode($parameter->toArray());
 
-            return false;
+            return Str::contains($parameterString, '"format":"binary"');
         });
     }
 

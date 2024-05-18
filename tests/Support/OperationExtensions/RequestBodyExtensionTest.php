@@ -81,6 +81,25 @@ class RequestBodyExtensionTest__automaticall_infers_form_data
     }
 }
 
+it('automatically infers multipart/form-data as request media type when some of body params is binary on a deeper layers', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::post('api/test', [RequestBodyExtensionTest__automaticall_infers_form_data_from_deeper::class, 'index']);
+    });
+
+    expect($openApiDocument['paths']['/test']['post']['requestBody']['content'])
+        ->toHaveKey('multipart/form-data')
+        ->toHaveLength(1);
+});
+class RequestBodyExtensionTest__automaticall_infers_form_data_from_deeper
+{
+    public function index(Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'foo.*' => 'file',
+        ]);
+    }
+}
+
 it('extracts parameters, their defaults, and descriptions from calling request parameters retrieving methods with scalar types', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::post('api/test', [RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_scalar_types::class, 'index']);
