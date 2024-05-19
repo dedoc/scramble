@@ -43,6 +43,11 @@ class ClassDefinition
         return $this->isInstanceOf($className) && $this->name !== $className;
     }
 
+    public function hasMethodDefinition(string $name): bool
+    {
+        return array_key_exists($name, $this->methods);
+    }
+
     public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [])
     {
         if (! array_key_exists($name, $this->methods)) {

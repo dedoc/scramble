@@ -37,6 +37,16 @@ it('adds errors responses with custom requests', function () {
     assertMatchesSnapshot($openApiDocument);
 });
 
+it('doesnt add errors with custom request when errors producing methods are not defined', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'doesnt_add_errors_with_custom_request_when_errors_producing_methods_not_defined']);
+    });
+
+    expect($openApiDocument['paths']['/test']['get']['responses'])
+        ->toHaveKeys([200])
+        ->toHaveCount(1);
+});
+
 it('adds auth error response', function () {
     RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_auth_error_response']);
 
@@ -83,6 +93,10 @@ class ErrorsResponsesTest_Controller extends Controller
     {
     }
 
+    public function doesnt_add_errors_with_custom_request_when_errors_producing_methods_not_defined(ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods $request)
+    {
+    }
+
     public function adds_auth_error_response(Illuminate\Http\Request $request)
     {
         $this->authorize('read');
@@ -115,4 +129,8 @@ class ErrorsResponsesTest_Controller_CustomRequest extends \Illuminate\Foundatio
     {
         return ['foo' => 'required'];
     }
+}
+
+class ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods extends \Illuminate\Foundation\Http\FormRequest
+{
 }
