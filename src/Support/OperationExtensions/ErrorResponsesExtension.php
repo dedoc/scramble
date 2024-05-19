@@ -84,7 +84,10 @@ class ErrorResponsesExtension extends OperationExtension
 
         $formRequest = $this->infer->analyzeClass($formRequest->name);
 
-        if ($formRequest->hasMethodDefinition('rules')) {
+        if (
+            $formRequest->hasMethodDefinition('rules')
+            || $formRequest->hasMethodDefinition('after')
+        ) {
             $methodType->exceptions = [
                 ...$methodType->exceptions,
                 new ObjectType(ValidationException::class),
