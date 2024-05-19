@@ -255,7 +255,7 @@ class ModelInfo
             ->reject(
                 fn (ReflectionMethod $method) => $method->isStatic()
                     || $method->isAbstract()
-                    || $method->getDeclaringClass()->getName() !== get_class($model)
+                    || $method->getDeclaringClass()->getName() === Model::class,
             )
             ->filter(function (ReflectionMethod $method) {
                 $file = new SplFileObject($method->getFileName());
