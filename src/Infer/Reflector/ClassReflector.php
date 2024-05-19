@@ -56,6 +56,9 @@ class ClassReflector
 
             $code = Str::before($content, $firstMatchedClassLikeString);
 
+            // Removes all comments.
+            $code = preg_replace('/\/\*(?:[^*]|\*+[^*\/])*\*+\/|(?<![:\'"])\/\/.*|(?<![:\'"])#.*/', '', $code);
+
             $re = '/(namespace|use) ([.\s\S]*?);/m';
             preg_match_all($re, $code, $matches);
 
