@@ -22,13 +22,18 @@ class TestCase extends Orchestra
         Factory::guessFactoryNamesUsing(
             fn (string $modelName) => 'Dedoc\\Scramble\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
+    }
+
+    protected function tearDown(): void
+    {
+        Context::reset();
 
         Scramble::$defaultRoutesIgnored = false;
         Scramble::$routeResolver = null;
         Scramble::$openApiExtender = null;
         Scramble::$tagResolver = null;
 
-        Context::reset();
+        parent::tearDown();
     }
 
     protected function getPackageProviders($app)
@@ -41,9 +46,6 @@ class TestCase extends Orchestra
     public function getEnvironmentSetUp($app)
     {
         config()->set('database.default', 'testing');
-
-        //        $migration = include __DIR__.'/migrations/create_documentor_table.php.stub';
-        //        $migration->up();
     }
 
     protected function defineDatabaseMigrations()

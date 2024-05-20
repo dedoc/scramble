@@ -427,16 +427,16 @@ class ReferenceTypeResolver
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type)
     {
+        $objectType = $this->resolve($scope, $type->object);
+
         if (
-            ($type->object instanceof ObjectType)
-            && ! array_key_exists($type->object->name, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClassResolver($type->object->name)
+            ($objectType instanceof ObjectType)
+            && ! array_key_exists($objectType->name, $this->index->classesDefinitions)
+            && ! $this->resolveUnknownClassResolver($objectType->name)
         ) {
             // Class is not indexed, and we simply cannot get an info from it.
             return $type;
         }
-
-        $objectType = $this->resolve($scope, $type->object);
 
         if (
             $objectType instanceof AbstractReferenceType

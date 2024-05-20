@@ -32,7 +32,7 @@ class FileParser
 
     public function parseContent(string $content): FileParserResult
     {
-        return $this->cache[md5($content).'23'] ??= new FileParserResult(
+        return $this->cache[md5($content)] ??= new FileParserResult(
             $statements = Arr::wrap($this->parser->parse($content)),
             new FileNameResolver(new NameContext(new Throwing()))
         );

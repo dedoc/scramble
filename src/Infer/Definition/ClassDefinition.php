@@ -45,7 +45,12 @@ class ClassDefinition
         return $this->isInstanceOf($className) && $this->name !== $className;
     }
 
-    public function getMethodDefinition(string $name, Scope $scope = new GlobalScope)
+    public function hasMethodDefinition(string $name): bool
+    {
+        return array_key_exists($name, $this->methods);
+    }
+
+    public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [])
     {
         if (! array_key_exists($name, $this->methods)) {
             return null;
@@ -57,7 +62,7 @@ class ClassDefinition
             $result = (new MethodAnalyzer(
                 $scope->index,
                 $this
-            ))->analyze($methodDefinition);
+            ))->analyze($methodDefinition, $indexBuilders);
 
             $this->methodsScopes[$name] = $result->scope;
             $this->methods[$name] = $result->definition;

@@ -134,7 +134,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ));
 
             return new TypeTransformer(
-                $this->app->make(Infer::class),
+                app()->make(Infer::class),
                 new Components,
                 array_merge($typesToSchemaExtensions, [
                     EnumToSchema::class,
@@ -164,5 +164,11 @@ class ScrambleServiceProvider extends PackageServiceProvider
         Scramble::registerApi('default', config('scramble'))
             ->routes(Scramble::$routeResolver)
             ->afterOpenApiGenerated(Scramble::$openApiExtender);
+
+        $this->app->booted(function () {
+            Scramble::getGeneratorConfig('default')
+                ->routes(Scramble::$routeResolver)
+                ->afterOpenApiGenerated(Scramble::$openApiExtender);
+        });
     }
 }

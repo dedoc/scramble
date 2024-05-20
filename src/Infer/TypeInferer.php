@@ -38,6 +38,7 @@ class TypeInferer extends NodeVisitorAbstract
         private FileNameResolver $nameResolver,
         private ?Scope $scope = null,
         array $extensions = [],
+        array $handlers = [],
     ) {
         $this->handlers = [
             new FunctionLikeHandler(),
@@ -58,6 +59,7 @@ class TypeInferer extends NodeVisitorAbstract
                 fn ($ext) => $ext instanceof ExpressionExceptionExtension,
             ))),
             new PhpDocHandler(),
+            ...$handlers,
         ];
     }
 

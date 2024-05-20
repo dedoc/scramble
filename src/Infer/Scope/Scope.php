@@ -67,7 +67,7 @@ class Scope
 
         if ($node instanceof Node\Expr\Ternary) {
             return Union::wrap([
-                $this->getType($node->if),
+                $this->getType($node->if ?? $node->cond),
                 $this->getType($node->else),
             ]);
         }

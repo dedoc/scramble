@@ -89,7 +89,9 @@ class Scramble
     {
         $config = static::getGeneratorConfig($api);
 
-        return RouteFacade::get($path, function (Generator $generator) use ($config) {
+        return RouteFacade::get($path, function (Generator $generator) use ($api) {
+            $config = static::getGeneratorConfig($api);
+
             return view('scramble::docs', [
                 'spec' => $generator($config),
                 'config' => $config,
@@ -102,7 +104,9 @@ class Scramble
     {
         $config = static::getGeneratorConfig($api);
 
-        return RouteFacade::get($path, function (Generator $generator) use ($config) {
+        return RouteFacade::get($path, function (Generator $generator) use ($api) {
+            $config = static::getGeneratorConfig($api);
+
             return response()->json($generator($config), options: JSON_PRETTY_PRINT);
         })
             ->middleware($config->get('middleware', [RestrictedDocsAccess::class]));

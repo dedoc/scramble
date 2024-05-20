@@ -82,22 +82,29 @@ class ErrorResponsesExtension extends OperationExtension
             return;
         }
 
-        $methodType->exceptions = [
-            ...$methodType->exceptions,
-            new ObjectType(ValidationException::class),
-        ];
+        $formRequest = $this->infer->analyzeClass($formRequest->name);
 
-        $formRequest = $this->infer->analyzeClass($formRequest->name, ['authorize']);
-
-        $authorizeReturnType = $formRequest->getMethodCallType('authorize');
         if (
-            (! $authorizeReturnType instanceof LiteralBooleanType)
-            || $authorizeReturnType->value !== true
+            $formRequest->hasMethodDefinition('rules')
+            || $formRequest->hasMethodDefinition('after')
         ) {
             $methodType->exceptions = [
                 ...$methodType->exceptions,
-                new ObjectType(AuthorizationException::class),
+                new ObjectType(ValidationException::class),
             ];
+        }
+
+        if ($formRequest->hasMethodDefinition('authorize')) {
+            $authorizeReturnType = $formRequest->getMethodCallType('authorize');
+            if (
+                (! $authorizeReturnType instanceof LiteralBooleanType)
+                || $authorizeReturnType->value !== true
+            ) {
+                $methodType->exceptions = [
+                    ...$methodType->exceptions,
+                    new ObjectType(AuthorizationException::class),
+                ];
+            }
         }
     }
 }

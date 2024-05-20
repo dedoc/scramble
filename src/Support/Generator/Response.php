@@ -37,12 +37,13 @@ class Response
             'description' => $this->description,
         ];
 
-        $content = [];
-        foreach ($this->content as $mediaType => $schema) {
-            $content[$mediaType] = $schema ? ['schema' => $schema->toArray()] : (object) [];
+        if (isset($this->content)) {
+            $content = [];
+            foreach ($this->content ?? [] as $mediaType => $schema) {
+                $content[$mediaType] = $schema ? ['schema' => $schema->toArray()] : (object) [];
+            }
+            $result['content'] = $content;
         }
-
-        $result['content'] = $content;
 
         return $result;
     }

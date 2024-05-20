@@ -26,12 +26,34 @@ class RequestBodyExtension extends OperationExtension
     {
         $description = Str::of($routeInfo->phpDoc()->getAttribute('description'));
 
+        /*
+         * Making sure to analyze the route.
+         * @todo rename the method
+         */
+        $routeInfo->getMethodType();
+
         try {
             $bodyParams = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode(), $routeInfo);
 
-            $mediaType = $this->getMediaType($operation, $routeInfo, $bodyParams);
+            $bodyParamsNames = array_map(fn ($p) => $p->name, $bodyParams);
 
-            if (count($bodyParams)) {
+            $allParams = [
+                ...$bodyParams,
+                ...array_filter(
+                    array_values($routeInfo->requestParametersFromCalls->data),
+                    fn ($p) => ! in_array($p->name, $bodyParamsNames),
+                ),
+            ];
+            [$queryParams, $bodyParams] = collect($allParams)
+                ->partition(function (Parameter $parameter) {
+                    return $parameter->getAttribute('isInQuery');
+                });
+            $queryParams = $queryParams->toArray();
+            $bodyParams = $bodyParams->toArray();
+
+            $mediaType = $this->getMediaType($operation, $routeInfo, $allParams);
+
+            if (count($allParams)) {
                 if (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
                     $operation->addRequestBodyObject(
                         RequestBodyObject::make()->setContent($mediaType, Schema::createFromParameters($bodyParams))
@@ -39,6 +61,7 @@ class RequestBodyExtension extends OperationExtension
                 } else {
                     $operation->addParameters($bodyParams);
                 }
+                $operation->addParameters($queryParams);
             } elseif (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
                 $operation
                     ->addRequestBodyObject(
@@ -82,11 +105,10 @@ class RequestBodyExtension extends OperationExtension
     protected function hasBinary($bodyParams): bool
     {
         return collect($bodyParams)->contains(function (Parameter $parameter) {
-            if (property_exists($parameter?->schema?->type, 'format')) {
-                return $parameter->schema->type->format === 'binary';
-            }
+            // @todo: Use OpenApi document tree walker when ready
+            $parameterString = json_encode($parameter->toArray());
 
-            return false;
+            return Str::contains($parameterString, '"format":"binary"');
         });
     }
 

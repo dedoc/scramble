@@ -56,7 +56,8 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
         if ($attribute = $info->get('attributes')->get($event->getName())) {
             $baseType = $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '')
-                ?? $this->getAttributeTypeFromDbColumnType($attribute['type'] ?? '');
+                ?? $this->getAttributeTypeFromDbColumnType($attribute['type'], $attribute['driver'])
+                ?? new UnknownType("Virtual attribute ({$attribute['name']}) type inference not supported.");
 
             if ($attribute['nullable']) {
                 return Union::wrap([$baseType, new NullType()]);
@@ -72,22 +73,34 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         throw new \LogicException('Should not happen');
     }
 
-    private function getAttributeTypeFromDbColumnType(string $columnType): AbstractType
+    /**
+     * MySQL/MariaDB decimal is mapped to a string by PDO.
+     * Floating point numbers and decimals are all mapped to strings when using the pgsql driver.
+     */
+    private function getAttributeTypeFromDbColumnType(?string $columnType, ?string $dbDriverName): ?AbstractType
     {
-        $type = Str::before($columnType, ' ');
-        $typeName = Str::before($type, '(');
+        if ($columnType === null) {
+            return null;
+        }
 
-        // @todo Fix to native types
-        $attributeType = match ($typeName) {
-            'int', 'integer', 'bigint' => new IntegerType(),
-            'float', 'double', 'decimal' => new FloatType(),
-            'varchar', 'string', 'text', 'datetime' => new StringType(), // string, text - needed?
-            'tinyint', 'bool', 'boolean' => new BooleanType(), // bool, boolean - needed?
-            'json', 'array' => new ArrayType(),
-            default => new UnknownType("unimplemented DB column type [$type]"),
-        };
+        $typeName = str($columnType)
+            ->before(' ') // strip modifiers from a type name such as `bigint unsigned`
+            ->before('(') // strip the length from a type name such as `tinyint(4)`
+            ->toString();
 
-        return $attributeType;
+        if (in_array($typeName, ['int', 'integer', 'tinyint', 'smallint', 'mediumint', 'bigint'])) {
+            return new IntegerType();
+        }
+
+        if ($dbDriverName === 'sqlite' && in_array($typeName, ['float', 'double', 'decimal'])) {
+            return new FloatType();
+        }
+
+        if (in_array($dbDriverName, ['mysql', 'mariadb']) && in_array($typeName, ['float', 'double'])) {
+            return new FloatType();
+        }
+
+        return new StringType();
     }
 
     /**
