@@ -130,7 +130,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ));
 
             return new TypeTransformer(
-                $this->app->make(Infer::class),
+                app()->make(Infer::class),
                 new Components,
                 array_merge($typesToSchemaExtensions, [
                     EnumToSchema::class,
