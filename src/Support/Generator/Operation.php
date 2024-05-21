@@ -23,7 +23,7 @@ class Operation
 
     public array $tags = [];
 
-    /** @var Parameter[] */
+    /** @var (Parameter|Reference)[] */
     public array $parameters = [];
 
     public ?RequestBodyObject $requestBodyObject = null;

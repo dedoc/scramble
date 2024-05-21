@@ -18,6 +18,7 @@ use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Str;
@@ -56,6 +57,10 @@ class TypeTransformer
     public function transform(Type $type)
     {
         $openApiType = new StringType();
+
+        if ($type instanceof TemplateType && $type->is) {
+            $type = $type->is;
+        }
 
         if (
             $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
