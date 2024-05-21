@@ -79,6 +79,27 @@ class CustomKey_RequestEssentialsExtensionTest_Controller
     {
     }
 }
+
+it('determines default route key type for union', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test/{user}', [UnionKey_RequestEssentialsExtensionTest_Controller::class, 'foo']);
+    });
+
+    expect($openApiDocument['paths']['/test/{user}']['get']['parameters'][0]['schema'])
+        ->toBe([
+            'anyOf' => [
+                ['type' => 'string'],
+                ['type' => 'integer'],
+            ],
+        ]);
+});
+class UnionKey_RequestEssentialsExtensionTest_Controller
+{
+    public function foo(string|int $user)
+    {
+    }
+}
+
 it('handles enum in route parameter', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::get('api/test/{status}', [EnumParameter_RequestEssentialsExtensionTest_Controller::class, 'foo']);

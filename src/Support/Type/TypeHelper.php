@@ -9,6 +9,9 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Illuminate\Support\Collection;
 use PhpParser\Node;
 use PhpParser\PrettyPrinter\Standard;
+use ReflectionNamedType;
+use ReflectionType;
+use ReflectionUnionType;
 
 class TypeHelper
 {
@@ -145,5 +148,44 @@ class TypeHelper
         }
 
         return null; // @todo: object
+    }
+
+    public static function createTypeFromReflectionType(ReflectionType $reflectionType, bool $handleNullable = true)
+    {
+        if ($reflectionType->allowsNull() && $handleNullable) {
+            return Union::wrap([
+                new NullType(),
+                static::createTypeFromReflectionType($reflectionType, handleNullable: false),
+            ]);
+        }
+
+        if ($reflectionType instanceof ReflectionUnionType) {
+            return Union::wrap(array_map(
+                fn ($node) => static::createTypeFromReflectionType($node, $handleNullable),
+                $reflectionType->getTypes(),
+            ));
+        }
+
+        if ($reflectionType instanceof ReflectionNamedType) {
+            if ($reflectionType->getName() === 'int') {
+                return new IntegerType();
+            }
+
+            if ($reflectionType->getName() === 'string') {
+                return new StringType();
+            }
+
+            if ($reflectionType->getName() === 'bool') {
+                return new BooleanType();
+            }
+
+            if ($reflectionType->getName() === 'float') {
+                return new FloatType();
+            }
+
+            return new ObjectType($reflectionType->getName());
+        }
+
+        return new UnknownType('Cannot create type from reflection type '.((string)$reflectionType));
     }
 }
