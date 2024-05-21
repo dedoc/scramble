@@ -57,11 +57,10 @@ it('adds auth error response', function () {
 });
 
 it('adds not found error response', function () {
-    RouteFacade::get('api/test/{user}', [ErrorsResponsesTest_Controller::class, 'adds_not_found_error_response'])
-        ->middleware('can:update,post');
-
-    Scramble::routes(fn (Route $r) => $r->uri === 'api/test/{user}');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test/{user}', [ErrorsResponsesTest_Controller::class, 'adds_not_found_error_response'])
+            ->middleware('can:update,post');
+    });
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -114,7 +113,7 @@ class ErrorsResponsesTest_Controller extends Controller
     }
 }
 
-class UserModel_ErrorsResponsesTest
+class UserModel_ErrorsResponsesTest extends \Illuminate\Database\Eloquent\Model
 {
 }
 

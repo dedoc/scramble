@@ -64,6 +64,10 @@ class FormRequestRulesExtractor
 
     private function findCustomRequestParam(Param $param)
     {
+        if (! $param->type || ! method_exists($param->type, '__toString')) {
+            return false;
+        }
+
         $className = (string) $param->type;
 
         return method_exists($className, 'rules');
