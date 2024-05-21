@@ -186,6 +186,6 @@ class TypeHelper
             return new ObjectType($reflectionType->getName());
         }
 
-        return new UnknownType('Cannot create type from reflection type '.((string)$reflectionType));
+        return new UnknownType('Cannot create type from reflection type '.((string) $reflectionType));
     }
 }
