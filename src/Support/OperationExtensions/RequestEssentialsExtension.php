@@ -210,7 +210,7 @@ class RequestEssentialsExtension extends OperationExtension
                 'bool' => new BooleanType(),
             ];
 
-            $isEnum = function_exists('enum_exists') && enum_exists($type);
+            $isEnum = $type && function_exists('enum_exists') && enum_exists($type);
             $schemaType = $isEnum
                 ? $this->openApiTransformer->transform(new ObjectType($type))
                 : ($type ? ($schemaTypesMap[$type] ?? new IntegerType) : new StringType);
