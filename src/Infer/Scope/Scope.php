@@ -60,6 +60,17 @@ class Scope
             ]);
         }
 
+        if ($node instanceof Node\Expr\Match_) {
+            return match (get_class($node->cond)) {
+                Node\Expr\ArrayDimFetch::class, Node\Expr\Variable::class => Union::wrap(
+                    collect($node->arms)
+                        ->map(fn (Node\MatchArm $arm) => $this->getType($arm->body))
+                        ->toArray()
+                ),
+                default => new UnknownType('Cannot infer type of property fetch: not supported yet.'),
+            };
+        }
+
         if ($node instanceof Node\Expr\ClassConstFetch) {
             return (new ClassConstFetchTypeGetter)($node, $this);
         }
