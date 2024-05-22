@@ -12,6 +12,7 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -31,6 +32,7 @@ class ErrorResponsesExtension extends OperationExtension
 
         $this->attachNotFoundException($operation, $methodType);
         $this->attachAuthorizationException($routeInfo, $methodType);
+        $this->attachAuthenticationException($routeInfo, $methodType);
         $this->attachCustomRequestExceptions($methodType);
     }
 
@@ -65,6 +67,22 @@ class ErrorResponsesExtension extends OperationExtension
         $methodType->exceptions = [
             ...$methodType->exceptions,
             new ObjectType(AuthorizationException::class),
+        ];
+    }
+
+    private function attachAuthenticationException(RouteInfo $routeInfo, FunctionType $methodType)
+    {
+        if (! collect($routeInfo->route->gatherMiddleware())->contains(fn ($m) => is_string($m) && Str::startsWith($m, 'auth:sanctum'))) {
+            return;
+        }
+
+        if (collect($methodType->exceptions)->contains(fn (Type $e) => $e->isInstanceOf(AuthenticationException::class))) {
+            return;
+        }
+
+        $methodType->exceptions = [
+            ...$methodType->exceptions,
+            new ObjectType(AuthenticationException::class),
         ];
     }
 
