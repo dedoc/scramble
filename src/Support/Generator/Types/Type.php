@@ -9,7 +9,7 @@ abstract class Type
 {
     use WithAttributes;
 
-    protected string $type;
+    public string $type;
 
     public string $format = '';
 
