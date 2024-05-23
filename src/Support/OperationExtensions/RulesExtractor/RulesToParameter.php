@@ -38,6 +38,10 @@ class RulesToParameter
 
     public function generate()
     {
+        if (count($this->docNode?->getTagsByName('@ignoreParam') ?? [])) {
+            return null;
+        }
+
         $rules = collect($this->rules)
             ->map(fn ($v) => method_exists($v, '__toString') ? $v->__toString() : $v)
             ->sortByDesc($this->rulesSorter());
