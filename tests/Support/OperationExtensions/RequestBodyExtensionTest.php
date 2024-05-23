@@ -298,3 +298,23 @@ class RequestBodyExtensionTest__allows_specifying_query_position_and_default_for
         ]);
     }
 }
+
+it('ignores param in rules with annotation', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test/{id}', [RequestBodyExtensionTest__ignores_rules_param_with_annotation::class, 'index']);
+    });
+
+    expect($params = $openApiDocument['paths']['/test/{id}']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($params[0]['in'])->toBe('path');
+});
+class RequestBodyExtensionTest__ignores_rules_param_with_annotation
+{
+    public function index(Illuminate\Http\Request $request, string $id)
+    {
+        $request->validate([
+            /** @ignoreParam */
+            'id' => 'integer',
+        ]);
+    }
+}

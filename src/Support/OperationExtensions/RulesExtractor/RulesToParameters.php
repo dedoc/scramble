@@ -40,6 +40,7 @@ class RulesToParameters
     {
         return collect($this->rules)
             ->map(fn ($rules, $name) => (new RulesToParameter($name, $rules, $this->nodeDocs[$name] ?? null, $this->openApiTransformer))->generate())
+            ->filter()
             ->pipe($this->handleNested(...))
             ->pipe($this->handleConfirmed(...))
             ->values()
