@@ -40,4 +40,20 @@ class ExtensionsBroker
 
         return null;
     }
+
+    public function getStaticMethodReturnType($event)
+    {
+        $extensions = array_filter($this->extensions, function ($e) use ($event) {
+            return $e instanceof StaticMethodReturnTypeExtension
+                && $e->shouldHandle($event->getName());
+        });
+
+        foreach ($extensions as $extension) {
+            if ($propertyType = $extension->getStaticMethodReturnType($event)) {
+                return $propertyType;
+            }
+        }
+
+        return null;
+    }
 }

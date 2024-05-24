@@ -5,8 +5,10 @@ namespace Dedoc\Scramble\Infer\Services;
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
@@ -22,6 +24,8 @@ use Dedoc\Scramble\Support\Type\Reference\Dependency\PropertyDependency;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -123,6 +127,10 @@ class ReferenceTypeResolver
                 return $this->resolveMethodCallReferenceType($scope, $t);
             }
 
+            if ($t instanceof StaticMethodCallReferenceType) {
+                return $this->resolveStaticMethodCallReferenceType($scope, $t);
+            }
+
             if ($t instanceof CallableCallReferenceType) {
                 return $this->resolveCallableCallReferenceType($scope, $t);
             }
@@ -212,6 +220,54 @@ class ReferenceTypeResolver
         return $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType);
     }
 
+    private function resolveStaticMethodCallReferenceType(Scope $scope, StaticMethodCallReferenceType $type)
+    {
+        // (#self).listTableDetails()
+        // (#Doctrine\DBAL\Schema\Table).listTableDetails()
+        // (#TName).listTableDetails()
+
+        $type->arguments = array_map(
+            // @todo: fix resolving arguments when deep arg is reference
+            fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
+            $type->arguments,
+        );
+
+        $contextualClassName = $this->resolveClassName($scope, $type->callee);
+        if (! $contextualClassName) {
+            return new UnknownType();
+        }
+        $type->callee = $contextualClassName;
+
+        // Assuming callee here can be only string of known name. Reality is more complex than
+        // that, but it is fine for now.
+
+        // Attempting extensions broker before potentially giving up on type inference
+        if ($returnType = Context::getInstance()->extensionsBroker->getStaticMethodReturnType(new StaticMethodCallEvent(
+            callee: $type->callee,
+            name: $type->methodName,
+            scope: $scope,
+            arguments: $type->arguments,
+        ))) {
+            return $returnType;
+        }
+
+        if (
+            ! array_key_exists($type->callee, $this->index->classesDefinitions)
+            && ! $this->resolveUnknownClassResolver($type->callee)
+        ) {
+            return new UnknownType();
+        }
+
+        /** @var ClassDefinition $calleeDefinition */
+        $calleeDefinition = $this->index->getClassDefinition($type->callee);
+
+        if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
+            return new UnknownType("Cannot get a method type [$type->methodName] on type [$type->callee]");
+        }
+
+        return $this->getFunctionCallResult($methodDefinition, $type->arguments);
+    }
+
     private function resolveUnknownClassResolver(string $className): ?ClassDefinition
     {
         try {
@@ -259,6 +315,12 @@ class ReferenceTypeResolver
             $type->arguments,
         );
 
+        $contextualClassName = $this->resolveClassName($scope, $type->name);
+        if (! $contextualClassName) {
+            return new UnknownType();
+        }
+        $type->name = $contextualClassName;
+
         if (
             ! array_key_exists($type->name, $this->index->classesDefinitions)
             && ! $this->resolveUnknownClassResolver($type->name)
@@ -272,11 +334,20 @@ class ReferenceTypeResolver
             return new ObjectType($type->name);
         }
 
-        $inferredTemplates = collect($this->resolveTypesTemplatesFromArguments(
+        $propertyDefaultTemplateTypes = collect($classDefinition->properties)
+            ->filter(fn (ClassPropertyDefinition $definition) => $definition->type instanceof TemplateType && (bool) $definition->defaultType)
+            ->mapWithKeys(fn (ClassPropertyDefinition $definition) => [
+                $definition->type->name => $definition->defaultType,
+            ]);
+
+        $inferredConstructorParamTemplates = collect($this->resolveTypesTemplatesFromArguments(
             $classDefinition->templateTypes,
             $classDefinition->getMethodDefinition('__construct', $scope)->type->arguments ?? [],
             $this->prepareArguments($classDefinition->getMethodDefinition('__construct', $scope), $type->arguments),
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
+
+        $inferredTemplates = $propertyDefaultTemplateTypes
+            ->merge($inferredConstructorParamTemplates);
 
         return new Generic(
             $classDefinition->name,
@@ -428,13 +499,10 @@ class ReferenceTypeResolver
             return $realArguments;
         }
 
-        /*
-         * @todo $realArguments for now is considered only by index, not by names.
-         */
         return collect($callee->type->arguments)
             ->keys()
             ->map(function (string $name, int $index) use ($callee, $realArguments) {
-                return $realArguments[$index] ?? $callee->argumentsDefaults[$name] ?? null;
+                return $realArguments[$name] ?? $realArguments[$index] ?? $callee->argumentsDefaults[$name] ?? null;
             })
             ->filter()
             ->values()
@@ -471,5 +539,18 @@ class ReferenceTypeResolver
                 $foundCorrespondingTemplateType,
             ];
         }, $templates)));
+    }
+
+    private function resolveClassName(Scope $scope, string $name): ?string
+    {
+        if (! in_array($name, StaticReference::KEYWORDS)) {
+            return $name;
+        }
+
+        return match ($name) {
+            StaticReference::SELF => $scope->context->functionDefinition?->definingClassName,
+            StaticReference::STATIC => $scope->context->classDefinition?->name,
+            StaticReference::PARENT => $scope->context->classDefinition?->parentFqn,
+        };
     }
 }
