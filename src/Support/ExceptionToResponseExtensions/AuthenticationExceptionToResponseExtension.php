@@ -22,7 +22,7 @@ class AuthenticationExceptionToResponseExtension extends ExceptionToResponseExte
 
     public function toResponse(Type $type)
     {
-        $validationResponseBodyType = (new OpenApiTypes\ObjectType())
+        $responseBodyType = (new OpenApiTypes\ObjectType())
             ->addProperty(
                 'message',
                 (new OpenApiTypes\StringType())
@@ -31,10 +31,10 @@ class AuthenticationExceptionToResponseExtension extends ExceptionToResponseExte
             ->setRequired(['message']);
 
         return Response::make(401)
-            ->description('Unauthorized')
+            ->description('Unauthenticated')
             ->setContent(
                 'application/json',
-                Schema::fromType($validationResponseBodyType)
+                Schema::fromType($responseBodyType)
             );
     }
 

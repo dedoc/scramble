@@ -72,7 +72,13 @@ class ErrorResponsesExtension extends OperationExtension
 
     private function attachAuthenticationException(RouteInfo $routeInfo, FunctionType $methodType)
     {
-        if (! collect($routeInfo->route->gatherMiddleware())->contains(fn ($m) => is_string($m) && Str::startsWith($m, 'auth:sanctum'))) {
+        if (count($routeInfo->phpDoc()->getTagsByName('@unauthenticated'))) {
+            return;
+        }
+
+        $isAuthMiddleware = fn ($m) => is_string($m) && ($m === 'auth' || Str::startsWith($m, 'auth:'));
+
+        if (! collect($routeInfo->route->gatherMiddleware())->contains($isAuthMiddleware)) {
             return;
         }
 
