@@ -26,3 +26,14 @@ it('infers ternary expressions nodes types', function ($code, $expectedTypeStrin
     ['unknown() ?: true ?: 1', 'unknown|boolean(true)|int(1)'],
     ['unknown() ?: unknown() ?: unknown()', 'unknown'],
 ]);
+
+it('infers match node type', function ($code, $expectedTypeString) {
+    expect(getStatementTypeForScopeTest($code)->toString())->toBe($expectedTypeString);
+})->with([
+    [<<<'EOD'
+match (unknown()) {
+    42 => 1,
+    default => null,
+}
+EOD, 'int(1)|null'],
+]);
