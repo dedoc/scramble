@@ -10,12 +10,16 @@ use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -126,6 +130,23 @@ class Scope
             );
         }
 
+        if ($node instanceof Node\Expr\StaticCall) {
+            // Only string method names support.
+            if (! $node->name instanceof Node\Identifier) {
+                return $type;
+            }
+
+            // Only string class names support.
+            if (! $node->class instanceof Node\Name) {
+                return $type;
+            }
+
+            return $this->setType(
+                $node,
+                new StaticMethodCallReferenceType($node->class->toString(), $node->name->name, $this->getArgsTypes($node->args)),
+            );
+        }
+
         if ($node instanceof Node\Expr\PropertyFetch) {
             // Only string prop names support.
             if (! $name = ($node->name->name ?? null)) {
@@ -168,8 +189,31 @@ class Scope
     {
         return collect($args)
             ->filter(fn ($arg) => $arg instanceof Node\Arg)
-            ->keyBy(fn (Node\Arg $arg, $index) => $arg->name ? $arg->name->name : $index)
-            ->map(fn (Node\Arg $arg) => $this->getType($arg->value))
+            ->mapWithKeys(function (Node\Arg $arg, $index) {
+                $type = $this->getType($arg->value);
+
+                if (! $arg->unpack) {
+                    return [$arg->name ? $arg->name->name : $index => $type];
+                }
+
+                if (! $type instanceof ArrayType && ! $type instanceof KeyedArrayType) {
+                    return [$arg->name ? $arg->name->name : $index => $type]; // falling back, but not sure if we should. Maybe some DTO is needed to represent unpacked arg type?
+                }
+
+                if ($type instanceof ArrayType) {
+                    /*
+                     * For example, when passing something that is array, but shape is unknown
+                     * $a = foo(...array_keys($bar));
+                     */
+                    return [$arg->name ? $arg->name->name : $index => $type]; // falling back, but not sure if we should. Maybe some DTO is needed to represent unpacked arg type?
+                }
+
+                return collect($type->items)
+                    ->mapWithKeys(fn (ArrayItemType_ $item, $i) => [
+                        $item->key ?: $index + $i => $item->value,
+                    ])
+                    ->all();
+            })
             ->toArray();
     }
 

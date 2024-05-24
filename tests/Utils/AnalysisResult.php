@@ -49,10 +49,12 @@ class AnalysisResult
         $traverser->addVisitor($infer);
         $traverser->traverse($fileAst);
 
-        return (new ReferenceTypeResolver($this->index))->resolve($scope, $scope->getType(
+        $unresolvedType = $scope->getType(
             new Node\Expr\Variable('a', [
                 'startLine' => INF,
             ]),
-        ));
+        );
+
+        return (new ReferenceTypeResolver($this->index))->resolve($scope, $unresolvedType);
     }
 }
