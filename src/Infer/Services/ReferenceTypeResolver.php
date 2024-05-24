@@ -227,7 +227,7 @@ class ReferenceTypeResolver
         // (#TName).listTableDetails()
 
         $type->arguments = array_map(
-        // @todo: fix resolving arguments when deep arg is reference
+            // @todo: fix resolving arguments when deep arg is reference
             fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
             $type->arguments,
         );
