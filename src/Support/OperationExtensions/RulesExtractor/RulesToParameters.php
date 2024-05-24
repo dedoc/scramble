@@ -40,8 +40,9 @@ class RulesToParameters
     {
         return collect($this->rules)
             ->map(fn ($rules, $name) => (new RulesToParameter($name, $rules, $this->nodeDocs[$name] ?? null, $this->openApiTransformer))->generate())
-            ->pipe(\Closure::fromCallable([$this, 'handleNested']))
-            ->pipe(\Closure::fromCallable([$this, 'handleConfirmed']))
+            ->filter()
+            ->pipe($this->handleNested(...))
+            ->pipe($this->handleConfirmed(...))
             ->values()
             ->all();
     }

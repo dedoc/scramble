@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
@@ -241,6 +242,22 @@ class ReferenceTypeResolver
 
         if ($calleeType instanceof AbstractReferenceType) {
             throw new \LogicException('Should not happen.');
+        }
+
+        // Attempting extensions broker before potentially giving up on type inference
+        if (($calleeType instanceof TemplateType || $calleeType instanceof ObjectType)) {
+            $unwrappedType = $calleeType instanceof TemplateType && $calleeType->is
+                ? $calleeType->is
+                : $calleeType;
+
+            if ($unwrappedType instanceof ObjectType && $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
+                instance: $unwrappedType,
+                name: $type->methodName,
+                scope: $scope,
+                arguments: $type->arguments,
+            ))) {
+                return $returnType;
+            }
         }
 
         // (#TName).listTableDetails()

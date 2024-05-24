@@ -18,7 +18,7 @@ class ArrayItemHandler
         $scope->setType(
             $node,
             new ArrayItemType_(
-                $node->key->value ?? null,
+                $node->key ? ($scope->getType($node->key)->value ?? null) : null, // @todo handle cases when key is something dynamic
                 $scope->getType($node->value),
                 isOptional: false,
                 shouldUnpack: $node->unpack,

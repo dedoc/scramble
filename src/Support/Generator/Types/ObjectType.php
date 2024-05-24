@@ -10,7 +10,7 @@ class ObjectType extends Type
     /** @var string[] */
     public array $required = [];
 
-    private ?Type $additionalProperties = null;
+    public ?Type $additionalProperties = null;
 
     public function __construct()
     {

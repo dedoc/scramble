@@ -67,3 +67,14 @@ class ScopeTest_Bar
         return 42;
     }
 }
+
+it('infers match node type', function ($code, $expectedTypeString) {
+    expect(getStatementTypeForScopeTest($code)->toString())->toBe($expectedTypeString);
+})->with([
+    [<<<'EOD'
+match (unknown()) {
+    42 => 1,
+    default => null,
+}
+EOD, 'int(1)|null'],
+]);
