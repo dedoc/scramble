@@ -19,11 +19,16 @@ class StaticMethodCallEvent
 
     public function getDefinition()
     {
-        return $this->scope->index->getClassDefinition($this->callee);
+        return $this->scope->index->getClassDefinition($this->getCallee());
+    }
+
+    public function getCallee()
+    {
+        return $this->callee;
     }
 
     public function getName()
     {
-        return $this->callee;
+        return $this->name;
     }
 }

@@ -7,10 +7,8 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 
 trait ArgumentTypesAware
 {
-    public function getArg(string $name, int $position, ?Type $default = null)
+    public function getArg(string $name, int $position, Type $default = new UnknownType())
     {
-        $default ??= new UnknownType();
-
         return $this->arguments[$name] ?? $this->arguments[$position] ?? $default;
     }
 }

@@ -31,7 +31,7 @@ class StaticReference
 
     public function isParent()
     {
-        return $this->keyword === static::SELF;
+        return $this->keyword === static::PARENT;
     }
 
     public function toString()
