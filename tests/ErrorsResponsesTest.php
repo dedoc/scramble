@@ -47,13 +47,26 @@ it('doesnt add errors with custom request when errors producing methods are not 
         ->toHaveCount(1);
 });
 
-it('adds auth error response', function () {
-    RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_auth_error_response']);
-
-    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+it('adds authorization error response', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_authorization_error_response']);
+    });
 
     assertMatchesSnapshot($openApiDocument);
+});
+
+it('adds authentication error response', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_authorization_error_response'])
+            ->middleware('auth');
+    });
+
+    expect($openApiDocument)
+        ->toHaveKey('components.responses.AuthenticationException')
+        ->and($openApiDocument['paths']['/test']['get']['responses'][401])
+        ->toBe([
+            '$ref' => '#/components/responses/AuthenticationException',
+        ]);
 });
 
 it('adds not found error response', function () {
@@ -96,9 +109,14 @@ class ErrorsResponsesTest_Controller extends Controller
     {
     }
 
-    public function adds_auth_error_response(Illuminate\Http\Request $request)
+    public function adds_authorization_error_response(Illuminate\Http\Request $request)
     {
         $this->authorize('read');
+    }
+
+    public function adds_authentication_error_response(Illuminate\Http\Request $request)
+    {
+
     }
 
     public function adds_not_found_error_response(Illuminate\Http\Request $request, UserModel_ErrorsResponsesTest $user)
