@@ -67,7 +67,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
         $this->app->when(ExtensionsBroker::class)
             ->needs('$extensions')
             ->give(function () {
-                $extensions = config('scramble.extensions', []);
+                $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
 
                 $inferExtensionsClasses = array_values(array_filter(
                     $extensions,
@@ -99,7 +99,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
         $this->app->when(OperationBuilder::class)
             ->needs('$extensionsClasses')
             ->give(function () {
-                $extensions = config('scramble.extensions', []);
+                $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
 
                 $operationExtensions = array_values(array_filter(
                     $extensions,
@@ -118,7 +118,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
         $this->app->singleton(ServerFactory::class);
 
         $this->app->singleton(TypeTransformer::class, function () {
-            $extensions = config('scramble.extensions', []);
+            $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
 
             $typesToSchemaExtensions = array_values(array_filter(
                 $extensions,

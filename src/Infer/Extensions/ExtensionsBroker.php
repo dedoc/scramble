@@ -45,7 +45,7 @@ class ExtensionsBroker
     {
         $extensions = array_filter($this->extensions, function ($e) use ($event) {
             return $e instanceof StaticMethodReturnTypeExtension
-                && $e->shouldHandle($event->getName());
+                && $e->shouldHandle($event->getCallee());
         });
 
         foreach ($extensions as $extension) {
