@@ -79,7 +79,7 @@ class Scramble
     }
 
     /**
-     * @param class-string<ExceptionToResponseExtension|OperationExtension|TypeToSchemaExtension|InferExtension> $extensionClassName
+     * @param  class-string<ExceptionToResponseExtension|OperationExtension|TypeToSchemaExtension|InferExtension>  $extensionClassName
      */
     public static function registerExtension(string $extensionClassName): void
     {
