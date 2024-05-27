@@ -2,7 +2,11 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
+use Dedoc\Scramble\Extensions\OperationExtension;
+use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
+use Dedoc\Scramble\Infer\Extensions\InferExtension;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Dedoc\Scramble\Support\RouteInfo;
@@ -28,6 +32,13 @@ class Scramble
      * @var array<string, GeneratorConfig>
      */
     public static array $apis = [];
+
+    /**
+     * Extensions registered using programmatic API.
+     *
+     * @var class-string<ExceptionToResponseExtension|OperationExtension|TypeToSchemaExtension|InferExtension>[]
+     */
+    public static array $extensions = [];
 
     /**
      * Disables registration of default API documentation routes.
@@ -65,6 +76,14 @@ class Scramble
     public static function routes(callable $routeResolver)
     {
         static::$routeResolver = $routeResolver;
+    }
+
+    /**
+     * @param  class-string<ExceptionToResponseExtension|OperationExtension|TypeToSchemaExtension|InferExtension>  $extensionClassName
+     */
+    public static function registerExtension(string $extensionClassName): void
+    {
+        static::$extensions[] = $extensionClassName;
     }
 
     /**
