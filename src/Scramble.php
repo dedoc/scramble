@@ -87,6 +87,14 @@ class Scramble
     }
 
     /**
+     * @param  class-string<ExceptionToResponseExtension|OperationExtension|TypeToSchemaExtension|InferExtension>[]  $extensionClassNames
+     */
+    public static function registerExtensions(array $extensionClassNames): void
+    {
+        static::$extensions = array_merge(static::$extensions, $extensionClassNames);
+    }
+
+    /**
      * Modify tag generation behaviour
      *
      * @param  callable(RouteInfo, Operation): string[]  $tagResolver

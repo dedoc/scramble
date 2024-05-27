@@ -56,4 +56,16 @@ class ExtensionsBroker
 
         return null;
     }
+
+    public function afterClassDefinitionCreated($event)
+    {
+        $extensions = array_filter($this->extensions, function ($e) use ($event) {
+            return $e instanceof AfterClassDefinitionCreatedExtension
+                && $e->shouldHandle($event->name);
+        });
+
+        foreach ($extensions as $extension) {
+            $extension->afterClassDefinitionCreated($event);
+        }
+    }
 }
