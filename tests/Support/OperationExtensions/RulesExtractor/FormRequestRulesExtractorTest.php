@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Tests\Support\OperationExtensions\RulesExtractor;
 
-use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Tests\TestCase;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
@@ -29,7 +28,8 @@ class FormRequestRulesExtractorTest extends TestCase
     }
 }
 
-interface DataRequestContract {
+interface DataRequestContract
+{
     public function rules();
 }
 
