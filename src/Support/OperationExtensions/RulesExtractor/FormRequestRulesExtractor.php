@@ -10,6 +10,7 @@ use PhpParser\Node;
 use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Param;
 use PhpParser\NodeFinder;
+use ReflectionClass;
 
 class FormRequestRulesExtractor
 {
@@ -26,8 +27,7 @@ class FormRequestRulesExtractor
             return false;
         }
 
-        return collect($this->handler->getParams())
-            ->contains(\Closure::fromCallable([$this, 'findCustomRequestParam']));
+        return collect($this->handler->getParams())->contains($this->findCustomRequestParam(...));
     }
 
     public function node()
@@ -75,9 +75,18 @@ class FormRequestRulesExtractor
 
     private function getFormRequestClassName()
     {
-        $requestParam = collect($this->handler->getParams())
-            ->first(\Closure::fromCallable([$this, 'findCustomRequestParam']));
+        $requestParam = collect($this->handler->getParams())->first($this->findCustomRequestParam(...));
 
-        return (string) $requestParam->type;
+        $requestClassName = (string) $requestParam->type;
+
+        $reflectionClass = new ReflectionClass($requestClassName);
+
+        // If the classname is actually an interface, it might be bound to the container.
+        if (! $reflectionClass->isInstantiable() && app()->bound($requestClassName)) {
+            $classInstance = app()->getBindings()[$requestClassName]['concrete'](app());
+            $requestClassName = $classInstance::class;
+        }
+
+        return $requestClassName;
     }
 }
