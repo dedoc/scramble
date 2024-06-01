@@ -27,8 +27,7 @@ class FormRequestRulesExtractor
             return false;
         }
 
-        return collect($this->handler->getParams())
-            ->contains(\Closure::fromCallable([$this, 'findCustomRequestParam']));
+        return collect($this->handler->getParams())->contains($this->findCustomRequestParam(...));
     }
 
     public function node()
@@ -76,8 +75,7 @@ class FormRequestRulesExtractor
 
     private function getFormRequestClassName()
     {
-        $requestParam = collect($this->handler->getParams())
-            ->first(\Closure::fromCallable([$this, 'findCustomRequestParam']));
+        $requestParam = collect($this->handler->getParams())->first($this->findCustomRequestParam(...));
 
         $requestClassName = (string) $requestParam->type;
 
