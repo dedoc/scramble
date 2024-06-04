@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble;
 
-class OpenAPITraverser
+class OpenApiTraverser
 {
     public function __construct(
         private array $visitors = [],

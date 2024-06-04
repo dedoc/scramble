@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble;
 
-interface OpenAPIVisitor
+interface OpenApiVisitor
 {
     /**
      * Called when entering an object for traversal.

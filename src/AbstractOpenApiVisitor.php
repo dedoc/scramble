@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble;
 
-class AbstractOpenAPIVisitor implements OpenAPIVisitor
+class AbstractOpenApiVisitor implements OpenApiVisitor
 {
     public function enter(mixed $object, array $path = [])
     {

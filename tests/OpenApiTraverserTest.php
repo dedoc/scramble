@@ -1,6 +1,6 @@
 <?php
 
-use Dedoc\Scramble\AbstractOpenAPIVisitor;
+use Dedoc\Scramble\AbstractOpenApiVisitor;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
@@ -12,8 +12,8 @@ it('traverses open api document', function () {
     $document->addPath($path = new Path('/test'));
     $path->addOperation(new Operation('GET'));
 
-    $traverser = new \Dedoc\Scramble\OpenAPITraverser([
-        $visitor = new class extends AbstractOpenAPIVisitor
+    $traverser = new \Dedoc\Scramble\OpenApiTraverser([
+        $visitor = new class extends AbstractOpenApiVisitor
         {
             public array $paths = [];
 
