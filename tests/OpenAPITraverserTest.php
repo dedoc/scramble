@@ -13,14 +13,16 @@ it('traverses open api document', function () {
     $path->addOperation(new Operation('GET'));
 
     $traverser = new \Dedoc\Scramble\OpenAPITraverser([
-        $visitor = new class extends AbstractOpenAPIObjectVisitor {
+        $visitor = new class extends AbstractOpenAPIObjectVisitor
+        {
             public array $paths = [];
+
             /** @inheritdoc  */
             public function enter($object, $path = [])
             {
-                $this->paths[] = join('.', $path);
+                $this->paths[] = implode('.', $path);
             }
-        }
+        },
     ]);
 
     $traverser->traverse($document);
