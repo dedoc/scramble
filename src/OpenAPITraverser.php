@@ -9,13 +9,13 @@ class OpenAPITraverser
     ) {
     }
 
-    public function traverse($type): void
+    public function traverse($type, $path = ['#']): void
     {
         if (is_scalar($type) || $type === null) {
             return;
         }
 
-        $this->enterType($type);
+        $this->enterType($type, $path);
 
         $propertiesWithNodes = $this->getNodes($type);
 
@@ -23,28 +23,28 @@ class OpenAPITraverser
             $node = $type->$propertyWithNode;
 
             if (! is_array($node)) {
-                $this->traverse($node);
+                $this->traverse($node, [...$path, $propertyWithNode]);
             } else {
-                foreach ($node as $item) {
-                    $this->traverse($item);
+                foreach ($node as $i => $item) {
+                    $this->traverse($item, [...$path, $propertyWithNode, $i]);
                 }
             }
         }
 
-        $this->leaveType($type);
+        $this->leaveType($type, $path);
     }
 
-    private function enterType($type): void
+    private function enterType($type, $path): void
     {
         foreach ($this->visitors as $visitor) {
-            $visitor->enter($type);
+            $visitor->enter($type, $path);
         }
     }
 
-    private function leaveType($type): void
+    private function leaveType($type, $path): void
     {
         foreach ($this->visitors as $visitor) {
-            $visitor->leave($type);
+            $visitor->leave($type, $path);
         }
     }
 
