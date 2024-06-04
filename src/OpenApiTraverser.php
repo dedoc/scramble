@@ -9,7 +9,7 @@ class OpenApiTraverser
     ) {
     }
 
-    public function traverse($type, $path = ['#']): void
+    public function traverse($type, $path = []): void
     {
         if (is_scalar($type) || $type === null) {
             return;

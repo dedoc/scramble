@@ -27,10 +27,10 @@ it('traverses open api document', function () {
     $traverser->traverse($document);
 
     expect($visitor->paths)->toBe([
-        '#',
-        '#.info',
-        '#.components',
-        '#.paths.0',
-        '#.paths.0.operations.GET',
+        '',
+        'info',
+        'components',
+        'paths.0',
+        'paths.0.operations.GET',
     ]);
 });
