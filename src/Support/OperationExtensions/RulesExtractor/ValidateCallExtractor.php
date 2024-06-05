@@ -84,6 +84,7 @@ class ValidateCallExtractor
             $validationRulesCode = $printer->prettyPrint([$validationRules]);
 
             $injectableParams = collect($methodNode->getParams())
+                ->filter(fn (Node\Param $param) => isset($param->type->name))
                 ->filter(fn (Node\Param $param) => ! class_exists($className = (string) $param->type) || ! is_a($className, Request::class, true))
                 ->filter(fn (Node\Param $param) => isset($param->var->name) && is_string($param->var->name))
                 ->mapWithKeys(function (Node\Param $param) {
@@ -122,7 +123,7 @@ class ValidateCallExtractor
     {
         $paramsMap = collect($methodNode->getParams())
             ->mapWithKeys(function (Node\Param $param) {
-                if (! $param->type) {
+                if (! isset($param->type->name)) {
                     return [];
                 }
 
