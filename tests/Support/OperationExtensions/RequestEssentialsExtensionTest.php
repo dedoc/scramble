@@ -2,6 +2,7 @@
 
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Dedoc\Scramble\Tests\Files\Status;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 it('uses getRouteKeyName to determine model route key type', function () {
@@ -95,8 +96,27 @@ it('determines default route key type for union', function () {
 });
 class UnionKey_RequestEssentialsExtensionTest_Controller
 {
-    public function foo(string|int $user)
+    public function foo(Request $request, string|int $user)
     {
+        $request->validate(['foo' => 'required']);
+    }
+}
+
+it('determines route key type for nullable', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test/{user}', [NullableKey_RequestEssentialsExtensionTest_Controller::class, 'foo']);
+    });
+
+    expect($openApiDocument['paths']['/test/{user}']['get']['parameters'][0]['schema'])
+        ->toBe([
+            'type' => ['integer', 'null'],
+        ]);
+});
+class NullableKey_RequestEssentialsExtensionTest_Controller
+{
+    public function foo(Request $request, ?int $user)
+    {
+        $request->validate(['foo' => 'required']);
     }
 }
 
