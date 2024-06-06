@@ -79,6 +79,7 @@ class RequestBodyExtension extends OperationExtension
         $operation->addParameters($queryParams);
         if (in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
             $operation->addParameters($bodyParams);
+
             return;
         }
 
