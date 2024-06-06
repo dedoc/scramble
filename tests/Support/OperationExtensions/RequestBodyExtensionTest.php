@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route as RouteFacade;
 
 it('uses application/json media type as a default request media type', function () {
     $openApiDocument = generateForRoute(function () {
