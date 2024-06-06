@@ -2,10 +2,12 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
+use Dedoc\Scramble\Support\PhpDoc;
 use Illuminate\Http\Request;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\PrettyPrinter\Standard;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class ValidateCallExtractor
 {
@@ -71,6 +73,7 @@ class ValidateCallExtractor
 
         return new ValidationNodesResult(
             $validationRules instanceof Node\Arg ? $validationRules->value : $validationRules,
+            ($callToValidate->getAttribute('parsedPhpDoc', new PhpDocNode([])))->getTagsByName('@schemaName')[0]->value->value ?? null,
         );
     }
 

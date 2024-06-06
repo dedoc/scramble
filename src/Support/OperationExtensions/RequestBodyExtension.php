@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
+use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\RequestBodyObject;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
@@ -32,46 +33,9 @@ class RequestBodyExtension extends OperationExtension
          */
         $routeInfo->getMethodType();
 
+        [$bodyParams, $schemaName] = [[], null];
         try {
-            $bodyParams = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode());
-
-            $bodyParamsNames = array_map(fn ($p) => $p->name, $bodyParams);
-
-            $allParams = [
-                ...$bodyParams,
-                ...array_filter(
-                    array_values($routeInfo->requestParametersFromCalls->data),
-                    fn ($p) => ! in_array($p->name, $bodyParamsNames),
-                ),
-            ];
-            [$queryParams, $bodyParams] = collect($allParams)
-                ->partition(function (Parameter $parameter) {
-                    return $parameter->getAttribute('isInQuery');
-                });
-            $queryParams = $queryParams->toArray();
-            $bodyParams = $bodyParams->toArray();
-
-            $mediaType = $this->getMediaType($operation, $routeInfo, $allParams);
-
-            if (count($allParams)) {
-                if (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
-                    $operation->addRequestBodyObject(
-                        RequestBodyObject::make()->setContent($mediaType, Schema::createFromParameters($bodyParams))
-                    );
-                } else {
-                    $operation->addParameters($bodyParams);
-                }
-                $operation->addParameters($queryParams);
-            } elseif (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
-                $operation
-                    ->addRequestBodyObject(
-                        RequestBodyObject::make()
-                            ->setContent(
-                                $mediaType,
-                                Schema::fromType(new ObjectType)
-                            )
-                    );
-            }
+            [$bodyParams, $schemaName] = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode());
         } catch (Throwable $exception) {
             if (app()->environment('testing')) {
                 throw $exception;
@@ -82,6 +46,69 @@ class RequestBodyExtension extends OperationExtension
         $operation
             ->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'))
             ->description($description);
+
+        $bodyParamsNames = array_map(fn ($p) => $p->name, $bodyParams);
+
+        $allParams = [
+            ...$bodyParams,
+            ...array_filter(
+                array_values($routeInfo->requestParametersFromCalls->data),
+                fn ($p) => ! in_array($p->name, $bodyParamsNames),
+            ),
+        ];
+        [$queryParams, $bodyParams] = collect($allParams)
+            ->partition(function (Parameter $parameter) {
+                return $parameter->getAttribute('isInQuery');
+            });
+        $queryParams = $queryParams->toArray();
+        $bodyParams = $bodyParams->toArray();
+
+        $mediaType = $this->getMediaType($operation, $routeInfo, $allParams);
+
+        if (empty($allParams)) {
+            if (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
+                $operation
+                    ->addRequestBodyObject(
+                        RequestBodyObject::make()->setContent($mediaType, Schema::fromType(new ObjectType))
+                    );
+            }
+
+            return;
+        }
+
+        $operation->addParameters($queryParams);
+        if (in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
+            $operation->addParameters($bodyParams);
+            return;
+        }
+
+        $this->addRequestBody(
+            $operation,
+            $mediaType,
+            Schema::createFromParameters($bodyParams),
+            $schemaName,
+        );
+    }
+
+    protected function addRequestBody(Operation $operation, string $mediaType, Schema $requestBodySchema, ?string $schemaName)
+    {
+        if (! $schemaName) {
+            $operation->addRequestBodyObject(RequestBodyObject::make()->setContent($mediaType, $requestBodySchema));
+
+            return;
+        }
+
+        $components = $this->openApiTransformer->getComponents();
+        if (! $components->hasSchema($schemaName)) {
+            $components->addSchema($schemaName, $requestBodySchema);
+        }
+
+        $operation->addRequestBodyObject(
+            RequestBodyObject::make()->setContent(
+                $mediaType,
+                new Reference('schemas', $schemaName, $components),
+            )
+        );
     }
 
     protected function getMediaType(Operation $operation, RouteInfo $routeInfo, array $bodyParams): string
@@ -116,7 +143,10 @@ class RequestBodyExtension extends OperationExtension
     {
         [$rules, $nodesResults] = $this->extractRouteRequestValidationRules($route, $methodNode);
 
-        return (new RulesToParameters($rules, $nodesResults, $this->openApiTransformer))->handle();
+        return [
+            (new RulesToParameters($rules, $nodesResults, $this->openApiTransformer))->handle(),
+            $nodesResults[0]->schemaName ?? null,
+        ];
     }
 
     protected function extractRouteRequestValidationRules(Route $route, $methodNode)

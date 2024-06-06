@@ -44,11 +44,26 @@ class PhpDocResolver extends NodeVisitorAbstract
             $doc = new Doc("/** $docText */");
         }
 
-        if ($doc) {
-            $node->setAttribute('parsedPhpDoc', $this->parseDocs($doc));
+        if (! $doc) {
+            return null;
         }
 
-        return null;
+        $parsedDoc = $this->parseDocs($doc);
+
+        $node->setAttribute('parsedPhpDoc', $parsedDoc);
+
+        /*
+         * Parsed doc is propagated to the child expressions nodes, so it is easier for the consumer
+         * to get to the php doc when needed. For example, when some method call is annotated with phpdoc,
+         * we'd want to get this doc from the method call node, not an expression one.
+         */
+        if ($node instanceof Node\Stmt\Expression) {
+            $node->expr->setAttribute('parsedPhpDoc', $parsedDoc);
+        }
+
+        if ($node instanceof Node\Stmt\Expression && $node->expr instanceof Expr\Assign) {
+            $node->expr->expr->setAttribute('parsedPhpDoc', $parsedDoc);
+        }
     }
 
     private function parseDocs(Doc $doc)
