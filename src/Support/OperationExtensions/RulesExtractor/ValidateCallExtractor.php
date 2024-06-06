@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
-use Dedoc\Scramble\Support\PhpDoc;
 use Illuminate\Http\Request;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
