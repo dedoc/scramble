@@ -21,7 +21,7 @@ class Validation_ReusableSchemaNamesTest_Controller
         /**
          * @schemaName FooObject
          */
-        $data = $request->validate(['foo' => 'integer']);
+        $request->validate(['foo' => 'integer']);
     }
 }
 
@@ -30,7 +30,9 @@ it('makes reusable request body from form request', function () {
         return Route::post('test', FormRequest_ReusableSchemaNamesTest_Controller::class);
     });
 
-    // assert document has request body and a reference to it
+    expect($document)->toHaveKey('components.schemas.ReusableSchemaNamesTestFormRequest')
+        ->and($document['paths']['/test']['post']['requestBody']['content']['application/json']['schema'])
+        ->toBe(['$ref' => '#/components/schemas/ReusableSchemaNamesTestFormRequest']);
 });
 class FormRequest_ReusableSchemaNamesTest_Controller
 {

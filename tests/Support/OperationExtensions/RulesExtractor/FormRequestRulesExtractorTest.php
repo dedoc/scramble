@@ -18,7 +18,7 @@ class FormRequestRulesExtractorTest extends TestCase
             return Route::post('/test', FormRequestRulesExtractorTestController::class);
         });
 
-        expect($openApi['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'])
+        expect($openApi['components']['schemas']['ConcreteDataRequest']['properties'])
             ->toHaveKey('foo');
     }
 

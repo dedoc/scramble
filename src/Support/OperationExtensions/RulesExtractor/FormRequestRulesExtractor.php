@@ -42,8 +42,8 @@ class FormRequestRulesExtractor
             Arr::wrap($rulesMethodNode->stmts),
             fn (Node $node) => $node instanceof Node\Expr\ArrayItem
                 && $node->key instanceof Node\Scalar\String_
-                && $node->getAttribute('parsedPhpDoc')
-        ));
+                && $node->getAttribute('parsedPhpDoc'),
+        ), $requestClassName);
     }
 
     public function extract(Route $route)
@@ -53,13 +53,17 @@ class FormRequestRulesExtractor
         /** @var Request $request */
         $request = (new $requestClassName);
 
-        if (! method_exists($request, 'setMethod')) {
-            return [];
+        $rules = [];
+
+        if (method_exists($request, 'setMethod')) {
+            $request->setMethod($route->methods()[0]);
         }
 
-        $request->setMethod($route->methods()[0]);
+        if (method_exists($request, 'rules')) {
+            $rules = $request->rules();
+        }
 
-        return $request->rules();
+        return $rules;
     }
 
     private function findCustomRequestParam(Param $param)
