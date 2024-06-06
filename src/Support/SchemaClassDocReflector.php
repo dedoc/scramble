@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support;
 
-use Dedoc\Scramble\Support\PhpDoc;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocChildNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTextNode;
