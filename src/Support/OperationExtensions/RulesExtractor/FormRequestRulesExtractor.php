@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Support\SchemaClassDocReflector;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
@@ -34,16 +35,24 @@ class FormRequestRulesExtractor
     {
         $requestClassName = $this->getFormRequestClassName();
 
-        $method = Infer\Reflector\ClassReflector::make($requestClassName)->getMethod('rules');
+        $classReflector = Infer\Reflector\ClassReflector::make($requestClassName);
 
-        $rulesMethodNode = $method->getAstNode();
+        $phpDocReflector = SchemaClassDocReflector::createFromDocString($classReflector->getReflection()->getDocComment() ?: '');
 
-        return new ValidationNodesResult((new NodeFinder())->find(
-            Arr::wrap($rulesMethodNode->stmts),
-            fn (Node $node) => $node instanceof Node\Expr\ArrayItem
-                && $node->key instanceof Node\Scalar\String_
-                && $node->getAttribute('parsedPhpDoc')
-        ));
+        $schemaName = ($phpDocReflector->getTagValue('@ignoreSchema')->value ?? null) !== null
+            ? null
+            : $phpDocReflector->getSchemaName($requestClassName);
+
+        return new ValidationNodesResult(
+            (new NodeFinder())->find(
+                Arr::wrap($classReflector->getMethod('rules')->getAstNode()->stmts),
+                fn (Node $node) => $node instanceof Node\Expr\ArrayItem
+                    && $node->key instanceof Node\Scalar\String_
+                    && $node->getAttribute('parsedPhpDoc'),
+            ),
+            schemaName: $schemaName,
+            description: $phpDocReflector->getDescription(),
+        );
     }
 
     public function extract(Route $route)
@@ -53,13 +62,17 @@ class FormRequestRulesExtractor
         /** @var Request $request */
         $request = (new $requestClassName);
 
-        if (! method_exists($request, 'setMethod')) {
-            return [];
+        $rules = [];
+
+        if (method_exists($request, 'setMethod')) {
+            $request->setMethod($route->methods()[0]);
         }
 
-        $request->setMethod($route->methods()[0]);
+        if (method_exists($request, 'rules')) {
+            $rules = $request->rules();
+        }
 
-        return $request->rules();
+        return $rules;
     }
 
     private function findCustomRequestParam(Param $param)

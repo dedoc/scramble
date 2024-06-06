@@ -4,7 +4,7 @@ namespace Dedoc\Scramble\Tests\Support\OperationExtensions\RulesExtractor;
 
 use Dedoc\Scramble\Tests\TestCase;
 use Illuminate\Foundation\Application;
-use Illuminate\Http\Request;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Route;
 use Orchestra\Testbench\Attributes\DefineEnvironment;
 
@@ -18,7 +18,7 @@ class FormRequestRulesExtractorTest extends TestCase
             return Route::post('/test', FormRequestRulesExtractorTestController::class);
         });
 
-        expect($openApi['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'])
+        expect($openApi['components']['schemas']['ConcreteDataRequest']['properties'])
             ->toHaveKey('foo');
     }
 
@@ -33,7 +33,7 @@ interface DataRequestContract
     public function rules();
 }
 
-class ConcreteDataRequest extends Request implements DataRequestContract
+class ConcreteDataRequest extends FormRequest implements DataRequestContract
 {
     public function rules()
     {
