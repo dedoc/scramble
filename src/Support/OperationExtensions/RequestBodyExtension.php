@@ -33,9 +33,9 @@ class RequestBodyExtension extends OperationExtension
          */
         $routeInfo->getMethodType();
 
-        [$bodyParams, $schemaName] = [[], null];
+        [$bodyParams, $schemaName, $schemaDescription] = [[], null, null];
         try {
-            [$bodyParams, $schemaName] = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode());
+            [$bodyParams, $schemaName, $schemaDescription] = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode());
         } catch (Throwable $exception) {
             if (app()->environment('testing')) {
                 throw $exception;
@@ -88,10 +88,11 @@ class RequestBodyExtension extends OperationExtension
             $mediaType,
             Schema::createFromParameters($bodyParams),
             $schemaName,
+            $schemaDescription,
         );
     }
 
-    protected function addRequestBody(Operation $operation, string $mediaType, Schema $requestBodySchema, ?string $schemaName)
+    protected function addRequestBody(Operation $operation, string $mediaType, Schema $requestBodySchema, ?string $schemaName, ?string $schemaDescription)
     {
         if (! $schemaName) {
             $operation->addRequestBodyObject(RequestBodyObject::make()->setContent($mediaType, $requestBodySchema));
@@ -101,6 +102,8 @@ class RequestBodyExtension extends OperationExtension
 
         $components = $this->openApiTransformer->getComponents();
         if (! $components->hasSchema($schemaName)) {
+            $requestBodySchema->type->setDescription($schemaDescription ?: '');
+
             $components->addSchema($schemaName, $requestBodySchema);
         }
 
@@ -147,6 +150,7 @@ class RequestBodyExtension extends OperationExtension
         return [
             (new RulesToParameters($rules, $nodesResults, $this->openApiTransformer))->handle(),
             $nodesResults[0]->schemaName ?? null,
+            $nodesResults[0]->description ?? null,
         ];
     }
 

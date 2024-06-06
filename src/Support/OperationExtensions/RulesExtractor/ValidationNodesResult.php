@@ -6,7 +6,8 @@ class ValidationNodesResult
 {
     public function __construct(
         public $node,
-        public ?string $schemaName,
+        public ?string $schemaName = null,
+        public ?string $description = null,
     ) {
     }
 }
