@@ -16,6 +16,7 @@ use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -167,6 +168,8 @@ class TypeTransformer
             $openApiType = (new StringType())->example($type->value);
         } elseif ($type instanceof LiteralIntegerType) {
             $openApiType = (new IntegerType())->example($type->value);
+        }  elseif ($type instanceof LiteralFloatType) {
+            $openApiType = (new NumberType())->example($type->value);
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\StringType) {
             $openApiType = new StringType();
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\FloatType) {

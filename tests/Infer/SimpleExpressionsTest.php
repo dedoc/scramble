@@ -7,6 +7,9 @@ it(
     ['null', 'null'],
     ['true', 'boolean(true)'],
     ['false', 'boolean(false)'],
+    ['1', 'int(1)'],
+    ['"foo"', 'string(foo)'],
+    ['157.50', 'float(157.5)'],
 ]);
 
 it(

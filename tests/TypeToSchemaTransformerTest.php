@@ -8,6 +8,7 @@ use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -29,6 +30,7 @@ it('transforms simple types', function ($type, $openApiArrayed) {
     [new IntegerType(), ['type' => 'integer']],
     [new StringType(), ['type' => 'string']],
     [new LiteralStringType('wow'), ['type' => 'string', 'example' => 'wow']],
+    [new LiteralFloatType(157.50), ['type' => 'number', 'example' => 157.5]],
     [new BooleanType(), ['type' => 'boolean']],
     [new ArrayType(value: new StringType), ['type' => 'array', 'items' => ['type' => 'string']]],
     [new KeyedArrayType([
