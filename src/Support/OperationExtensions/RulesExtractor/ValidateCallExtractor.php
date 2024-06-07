@@ -44,7 +44,7 @@ class ValidateCallExtractor
             $callToValidate = (new NodeFinder())->findFirst(
                 $methodNode,
                 fn (Node $node) => $node instanceof Node\Expr\MethodCall
-                    && count($node->args) === 2
+                    && count($node->args) >= 2
                     && $node->var instanceof Node\Expr\Variable && $node->var->name === 'this'
                     && $node->name instanceof Node\Identifier && $node->name->name === 'validate'
                     && $node->args[0]->value instanceof Node\Expr\Variable
@@ -59,7 +59,7 @@ class ValidateCallExtractor
             $callToValidate = (new NodeFinder())->findFirst(
                 $methodNode,
                 fn (Node $node) => $node instanceof Node\Expr\StaticCall
-                    && count($node->args) === 2
+                    && count($node->args) >= 2
                     && $node->class instanceof Node\Name && is_a($node->class->toString(), \Illuminate\Support\Facades\Validator::class, true)
                     && $node->name instanceof Node\Identifier && $node->name->name === 'make'
                     && $node->args[0]->value instanceof Node\Expr\MethodCall && is_a($this->getPossibleParamType($methodNode, $node->args[0]->value->var), Request::class, true)

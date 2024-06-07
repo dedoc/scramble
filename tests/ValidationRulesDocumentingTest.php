@@ -240,10 +240,9 @@ it('extracts rules docs from form request', function () {
 });
 
 it('extracts rules from Validator::make facade call', function () {
-    RouteFacade::get('api/test', [ValidationFacadeRulesDocumenting_Test::class, 'index']);
-
-    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ValidationFacadeRulesDocumenting_Test::class, 'index']);
+    });
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -277,7 +276,7 @@ class ValidationFacadeRulesDocumenting_Test
     {
         Validator::make($request->all(), [
             'content' => ['required', Rule::in('wow')],
-        ]);
+        ], attributes: []);
     }
 }
 
