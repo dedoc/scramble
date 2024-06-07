@@ -168,7 +168,7 @@ class TypeTransformer
             $openApiType = (new StringType())->example($type->value);
         } elseif ($type instanceof LiteralIntegerType) {
             $openApiType = (new IntegerType())->example($type->value);
-        }  elseif ($type instanceof LiteralFloatType) {
+        } elseif ($type instanceof LiteralFloatType) {
             $openApiType = (new NumberType())->example($type->value);
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\StringType) {
             $openApiType = new StringType();
