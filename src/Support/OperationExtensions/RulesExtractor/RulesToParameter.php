@@ -97,6 +97,14 @@ class RulesToParameter
             $parameter->default($default[0]);
         }
 
+        if ($format = ExamplesExtractor::make($this->docNode, '@format')->extract(preferString: $parameter->schema->type instanceof StringType)) {
+            $parameter->format($format[0]);
+        }
+
+        if ($required = ExamplesExtractor::make($this->docNode, '@required')->extract(preferString: $parameter->schema->type instanceof StringType)) {
+            $parameter->required(! empty($required));
+        }
+
         if ($this->docNode->getTagsByName('@query')) {
             $parameter->setAttribute('isInQuery', true);
         }
