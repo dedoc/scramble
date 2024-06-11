@@ -53,6 +53,7 @@ class OpenApiTraverser
         if (! is_object($instance)) {
             return [];
         }
+
         return array_keys(get_object_vars($instance));
     }
 }

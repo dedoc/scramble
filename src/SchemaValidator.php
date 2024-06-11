@@ -8,12 +8,11 @@ use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 class SchemaValidator
 {
     /**
-     * @param array<int, array{callable(OpenApiType): bool, string}> $rules
+     * @param  array<int, array{callable(OpenApiType): bool, string}>  $rules
      */
     public function __construct(
         private array $rules,
-    )
-    {
+    ) {
     }
 
     public function hasRules(): bool
@@ -34,7 +33,7 @@ class SchemaValidator
                 $line = $type->getAttribute('line');
 
                 if ($file) {
-                    $errorMessage = rtrim($errorMessage, '.') . '. Got when analyzing an expression in file ['.$file.'] on line '.$line;
+                    $errorMessage = rtrim($errorMessage, '.').'. Got when analyzing an expression in file ['.$file.'] on line '.$line;
                 }
 
                 throw new InvalidSchema($errorMessage);

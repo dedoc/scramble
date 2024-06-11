@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Support\Generator;
 
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
