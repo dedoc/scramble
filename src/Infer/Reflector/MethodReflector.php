@@ -60,7 +60,7 @@ class MethodReflector
             $methodDoc = $methodReflection->getDocComment() ?: '';
             $lines = $methodReflection->getStartLine();
 
-            $lines = str_repeat("\n", max( $lines - 3 - substr_count($methodDoc, "\n"), 1));
+            $lines = str_repeat("\n", max($lines - 3 - substr_count($methodDoc, "\n"), 1));
 
             $partialClass = "<?php$lines class $className {\n".$methodDoc."\n".$this->getMethodCode()."\n}";
 

@@ -25,8 +25,7 @@ class RulesToParameter
         string|array $rules,
         private ?PhpDocNode $docNode,
         private TypeTransformer $openApiTransformer,
-    )
-    {
+    ) {
         $this->rules = Arr::wrap(is_string($rules) ? explode('|', $rules) : $rules);
     }
 

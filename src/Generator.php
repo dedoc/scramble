@@ -184,13 +184,17 @@ class Generator
 
     private function createSchemaEnforceTraverser()
     {
-        $traverser = new OpenApiTraverser([$visitor = new class extends AbstractOpenApiVisitor {
+        $traverser = new OpenApiTraverser([$visitor = new class extends AbstractOpenApiVisitor
+        {
             public array $operationReferences = [];
+
             public function popReferences()
             {
                 $this->operationReferences = [];
+
                 return $this->operationReferences;
             }
+
             public function enter($object, array $path = [])
             {
                 if ($object instanceof Reference) {
