@@ -204,9 +204,7 @@ class Generator
 
             public function popReferences()
             {
-                $this->operationReferences = [];
-
-                return $this->operationReferences;
+                return tap($this->operationReferences, fn () => $this->operationReferences = []);
             }
 
             public function enter($object, array $path = [])
