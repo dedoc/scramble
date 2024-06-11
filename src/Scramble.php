@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route as RouteFacade;
+use Illuminate\Support\Str;
 use LogicException;
 
 class Scramble
@@ -28,7 +29,7 @@ class Scramble
     public static bool $defaultRoutesIgnored = false;
 
     /**
-     * @var array<int, array{callable(OpenApiType): bool, string|(callable(OpenApiType): string)}>
+     * @var array<int, array{callable(OpenApiType, string): bool, string|(callable(OpenApiType, string): string)}>
      */
     public static array $enforceSchemaRules = [];
 
@@ -118,12 +119,12 @@ class Scramble
         static::$enforceSchemaRules[] = [$cb, $errorMessageGetter];
     }
 
-    public static function preventSchema(string|array $schemaTypes)
+    public static function preventSchema(string|array $schemaTypes, array $ignorePaths = [])
     {
-        $forbiddenSchemas = Arr::flatten(Arr::wrap(func_get_args()));
+        $forbiddenSchemas = Arr::wrap($schemaTypes);
 
         static::enforceSchema(
-            fn ($schema) => ! in_array($schema::class, $forbiddenSchemas),
+            fn ($schema, $path) => Str::is($ignorePaths, $path) || ! in_array($schema::class, $forbiddenSchemas),
             fn ($schema) => 'Schema type ['.$schema::class.'] is not allowed.',
         );
     }

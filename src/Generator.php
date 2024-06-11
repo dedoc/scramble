@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Exceptions\InvalidSchema;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
@@ -23,6 +24,8 @@ use Throwable;
 
 class Generator
 {
+    public array $exceptions = [];
+
     public function __construct(
         private TypeTransformer $transformer,
         private OperationBuilder $operationBuilder,
@@ -32,7 +35,7 @@ class Generator
     ) {
     }
 
-    public function __invoke(?GeneratorConfig $config = null)
+    public function __invoke(?GeneratorConfig $config = null, bool $throwInvalidSchemaExceptions = true)
     {
         $config ??= (new GeneratorConfig(config('scramble')))
             ->routes(Scramble::$routeResolver)
@@ -41,9 +44,9 @@ class Generator
         $openApi = $this->makeOpenApi($config);
 
         $this->getRoutes($config)
-            ->map(function (Route $route) use ($openApi) {
+            ->map(function (Route $route) use ($openApi, $throwInvalidSchemaExceptions) {
                 try {
-                    return $this->routeToOperation($openApi, $route);
+                    return $this->routeToOperation($openApi, $route, $throwInvalidSchemaExceptions);
                 } catch (Throwable $e) {
                     if (config('app.debug', false)) {
                         $method = $route->methods()[0];
@@ -112,10 +115,13 @@ class Generator
                         return false;
                     }
 
-                    $reflection = new \ReflectionMethod(...explode('@', $route->getAction('uses')));
+                    try {
+                        $reflection = new \ReflectionMethod(...explode('@', $route->getAction('uses')));
 
-                    if (str_contains($reflection->getDocComment() ?: '', '@only-docs')) {
-                        return true;
+                        if (str_contains($reflection->getDocComment() ?: '', '@only-docs')) {
+                            return true;
+                        }
+                    } catch (Throwable) {
                     }
 
                     return false;
@@ -131,7 +137,7 @@ class Generator
             ->values();
     }
 
-    private function routeToOperation(OpenApi $openApi, Route $route)
+    private function routeToOperation(OpenApi $openApi, Route $route, bool $throwInvalidSchemaExceptions = true)
     {
         $routeInfo = new RouteInfo($route, $this->fileParser, $this->infer);
 
@@ -141,12 +147,12 @@ class Generator
 
         $operation = $this->operationBuilder->build($routeInfo, $openApi);
 
-        $this->ensureSchemaTypes($operation);
+        $this->ensureSchemaTypes($operation, $throwInvalidSchemaExceptions);
 
         return $operation;
     }
 
-    private function ensureSchemaTypes(Operation $operation): void
+    private function ensureSchemaTypes(Operation $operation, bool $throwInvalidSchemaExceptions = true): void
     {
         if (! Scramble::getSchemaValidator()->hasRules()) {
             return;
@@ -154,36 +160,44 @@ class Generator
 
         [$traverser, $visitor] = $this->createSchemaEnforceTraverser();
 
-        $traverser->traverse($operation);
+        $traverse = function ($object, $path) use ($traverser, $throwInvalidSchemaExceptions) {
+            try {
+                $traverser->traverse($object, $path);
+            } catch (InvalidSchema $e) {
+                if ($throwInvalidSchemaExceptions) {
+                    throw $e;
+                }
+                $this->exceptions[] = $e;
+            }
+        };
+
+        $traverse($operation, ['#', 'paths', $operation->path, $operation->method]);
         $references = $visitor->popReferences();
 
+        /** @var Reference $ref */
         foreach ($references as $ref) {
             if ($resolvedType = $ref->resolve()) {
-                $traverser->traverse($resolvedType);
+                $traverse($resolvedType, ['#', 'components', $ref->referenceType, $ref->getUniqueName()]);
             }
         }
     }
 
     private function createSchemaEnforceTraverser()
     {
-        $traverser = new OpenApiTraverser([$visitor = new class extends AbstractOpenApiVisitor
-        {
+        $traverser = new OpenApiTraverser([$visitor = new class extends AbstractOpenApiVisitor {
             public array $operationReferences = [];
-
             public function popReferences()
             {
                 $this->operationReferences = [];
-
                 return $this->operationReferences;
             }
-
             public function enter($object, array $path = [])
             {
                 if ($object instanceof Reference) {
                     $this->operationReferences[] = $object;
                 }
                 if ($object instanceof Type) {
-                    Scramble::getSchemaValidator()->validate($object);
+                    Scramble::getSchemaValidator()->validate($object, implode('/', $path));
                 }
             }
         }]);

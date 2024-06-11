@@ -16,24 +16,18 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RulesToParameter
 {
-    private string $name;
-
-    private array $rules;
-
-    private TypeTransformer $openApiTransformer;
-
-    private ?PhpDocNode $docNode;
-
     const RULES_PRIORITY = [
         'bool', 'boolean', 'numeric', 'int', 'integer', 'file', 'image', 'string', 'array', 'exists',
     ];
 
-    public function __construct(string $name, $rules, ?PhpDocNode $docNode, TypeTransformer $openApiTransformer)
+    public function __construct(
+        private string $name,
+        string|array $rules,
+        private ?PhpDocNode $docNode,
+        private TypeTransformer $openApiTransformer,
+    )
     {
-        $this->name = $name;
         $this->rules = Arr::wrap(is_string($rules) ? explode('|', $rules) : $rules);
-        $this->docNode = $docNode;
-        $this->openApiTransformer = $openApiTransformer;
     }
 
     public function generate()
@@ -46,6 +40,7 @@ class RulesToParameter
             ->map(fn ($v) => method_exists($v, '__toString') ? $v->__toString() : $v)
             ->sortByDesc($this->rulesSorter());
 
+        /** @var OpenApiType $type */
         $type = $rules->reduce(function (OpenApiType $type, $rule) {
             if (is_string($rule)) {
                 return $this->getTypeFromStringRule($type, $rule);

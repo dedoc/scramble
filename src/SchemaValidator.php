@@ -17,17 +17,17 @@ class SchemaValidator
 
     public function hasRules(): bool
     {
-        return count($this->rules);
+        return (bool) count($this->rules);
     }
 
     /**
      * @throws InvalidSchema
      */
-    public function validate(OpenApiType $type): void
+    public function validate(OpenApiType $type, string $path): void
     {
         foreach ($this->rules as [$ruleCb, $errorMessageGetter]) {
-            if (! $ruleCb($type)) {
-                $errorMessage = value($errorMessageGetter, $type);
+            if (! $ruleCb($type, $path)) {
+                $errorMessage = value($errorMessageGetter, $type, $path);
 
                 $file = $type->getAttribute('file');
                 $line = $type->getAttribute('line');
@@ -36,7 +36,7 @@ class SchemaValidator
                     $errorMessage = rtrim($errorMessage, '.').'. Got when analyzing an expression in file ['.$file.'] on line '.$line;
                 }
 
-                throw new InvalidSchema($errorMessage);
+                throw InvalidSchema::create($errorMessage, $path);
             }
         }
     }
