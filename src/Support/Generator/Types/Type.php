@@ -33,10 +33,6 @@ abstract class Type
         $this->type = $type;
         $this->example = new MissingExample;
         $this->default = new MissingExample;
-
-        if ($createdIn = debug_backtrace(limit: 2)[1] ?? null) {
-            $this->setAttribute('originFile', "$createdIn[file]:$createdIn[line]");
-        }
     }
 
     public function nullable(bool $nullable)

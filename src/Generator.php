@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble;
 
 use Dedoc\Scramble\Exceptions\InvalidSchema;
+use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
@@ -57,6 +58,10 @@ class Generator
                 try {
                     return $this->routeToOperation($openApi, $route);
                 } catch (Throwable $e) {
+                    if ($e instanceof RouteAware) {
+                        $e->setRoute($route);
+                    }
+
                     if (config('app.debug', false)) {
                         $method = $route->methods()[0];
                         $action = $route->getAction('uses');
