@@ -2,8 +2,10 @@
 
 namespace Dedoc\Scramble\Tests;
 
+use Dedoc\Scramble\Exceptions\InvalidSchema;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
 use Orchestra\Testbench\Attributes\DefineEnvironment;
@@ -14,6 +16,19 @@ use Orchestra\Testbench\Attributes\DefineRoute;
  */
 class ScrambleTest extends TestCase
 {
+    #[DefineEnvironment('withEnforcedUnknownSchemaPrevention')]
+    /** @test */
+    public function throws_when_unknown_type_is_prevented()
+    {
+        expect(fn () => $this->generateForRoute(fn () => Route::get('test', [ScrambleSchemaRulesTest_Controller::class, 'test'])))
+            ->toThrow(fn (InvalidSchema $e) => expect($e->getMessage())->toContain(
+                'GET test',
+                'Dedoc\Scramble\Tests\ScrambleSchemaRulesTest_Controller@test',
+                '/paths/test/get/responses/0/content/application~1json/type',
+                '[Dedoc\Scramble\Tests\ScrambleSchemaRulesTest_Controller] on line',
+            ));
+    }
+
     #[DefineEnvironment('withClosureAllRouteResolver')]
     /** @test */
     public function caches_routes_when_closure_resolver_set()
@@ -74,6 +89,11 @@ class ScrambleTest extends TestCase
         $this->assertEquals(['/api/a', '/api/b', '/api/c', '/second-api/a', '/second-api/b', '/second-api/c'], array_keys($doc['paths']));
     }
 
+    protected function withEnforcedUnknownSchemaPrevention()
+    {
+        Scramble::preventSchema(UnknownType::class);
+    }
+
     protected function withClosureAllRouteResolver()
     {
         Scramble::routes(fn () => true);
@@ -115,5 +135,13 @@ class ScrambleTest_Controller
 {
     public function test()
     {
+    }
+}
+
+class ScrambleSchemaRulesTest_Controller
+{
+    public function test()
+    {
+        return some_function();
     }
 }
