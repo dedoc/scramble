@@ -26,6 +26,8 @@ class Generator
 {
     public array $exceptions = [];
 
+    protected bool $throwExceptions = true;
+
     public function __construct(
         private TypeTransformer $transformer,
         private OperationBuilder $operationBuilder,
@@ -35,7 +37,14 @@ class Generator
     ) {
     }
 
-    public function __invoke(?GeneratorConfig $config = null, bool $throwInvalidSchemaExceptions = true)
+    public function setThrowExceptions(bool $throwExceptions): static
+    {
+        $this->throwExceptions = $throwExceptions;
+
+        return $this;
+    }
+
+    public function __invoke(?GeneratorConfig $config = null)
     {
         $config ??= (new GeneratorConfig(config('scramble')))
             ->routes(Scramble::$routeResolver)
@@ -44,9 +53,9 @@ class Generator
         $openApi = $this->makeOpenApi($config);
 
         $this->getRoutes($config)
-            ->map(function (Route $route) use ($openApi, $throwInvalidSchemaExceptions) {
+            ->map(function (Route $route) use ($openApi) {
                 try {
-                    return $this->routeToOperation($openApi, $route, $throwInvalidSchemaExceptions);
+                    return $this->routeToOperation($openApi, $route);
                 } catch (Throwable $e) {
                     if (config('app.debug', false)) {
                         $method = $route->methods()[0];
@@ -137,7 +146,7 @@ class Generator
             ->values();
     }
 
-    private function routeToOperation(OpenApi $openApi, Route $route, bool $throwInvalidSchemaExceptions = true)
+    private function routeToOperation(OpenApi $openApi, Route $route)
     {
         $routeInfo = new RouteInfo($route, $this->fileParser, $this->infer);
 
@@ -147,12 +156,12 @@ class Generator
 
         $operation = $this->operationBuilder->build($routeInfo, $openApi);
 
-        $this->ensureSchemaTypes($operation, $throwInvalidSchemaExceptions);
+        $this->ensureSchemaTypes($operation);
 
         return $operation;
     }
 
-    private function ensureSchemaTypes(Operation $operation, bool $throwInvalidSchemaExceptions = true): void
+    private function ensureSchemaTypes(Operation $operation): void
     {
         if (! Scramble::getSchemaValidator()->hasRules()) {
             return;
@@ -160,24 +169,24 @@ class Generator
 
         [$traverser, $visitor] = $this->createSchemaEnforceTraverser();
 
-        $traverse = function ($object, $path) use ($traverser, $throwInvalidSchemaExceptions) {
+        $traverse = function ($object, $path) use ($traverser) {
             try {
                 $traverser->traverse($object, $path);
             } catch (InvalidSchema $e) {
-                if ($throwInvalidSchemaExceptions) {
+                if ($this->throwExceptions) {
                     throw $e;
                 }
                 $this->exceptions[] = $e;
             }
         };
 
-        $traverse($operation, ['#', 'paths', $operation->path, $operation->method]);
+        $traverse($operation, ['', 'paths', $operation->path, $operation->method]);
         $references = $visitor->popReferences();
 
         /** @var Reference $ref */
         foreach ($references as $ref) {
             if ($resolvedType = $ref->resolve()) {
-                $traverse($resolvedType, ['#', 'components', $ref->referenceType, $ref->getUniqueName()]);
+                $traverse($resolvedType, ['', 'components', $ref->referenceType, $ref->getUniqueName()]);
             }
         }
     }
@@ -201,7 +210,10 @@ class Generator
                     $this->operationReferences[] = $object;
                 }
                 if ($object instanceof Type) {
-                    Scramble::getSchemaValidator()->validate($object, implode('/', $path));
+                    Scramble::getSchemaValidator()->validate(
+                        $object,
+                        implode('/', array_map(OpenApiTraverser::normalizeJsonPointerReferenceToken(...), $path)),
+                    );
                 }
             }
         }]);

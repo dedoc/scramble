@@ -22,7 +22,7 @@ class RulesToParameter
 
     public function __construct(
         private string $name,
-        string|array $rules,
+        $rules,
         private ?PhpDocNode $docNode,
         private TypeTransformer $openApiTransformer,
     ) {
