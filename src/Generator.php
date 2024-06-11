@@ -2,16 +2,15 @@
 
 namespace Dedoc\Scramble;
 
-use Dedoc\Scramble\Exceptions\InvalidSchema;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\OpenApiVisitor\SchemaEnforceVisitor;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Path;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Server;
-use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
 use Dedoc\Scramble\Support\OperationBuilder;
@@ -174,52 +173,22 @@ class Generator
 
         [$traverser, $visitor] = $this->createSchemaEnforceTraverser();
 
-        $traverse = function ($object, $path) use ($traverser) {
-            try {
-                $traverser->traverse($object, $path);
-            } catch (InvalidSchema $e) {
-                if ($this->throwExceptions) {
-                    throw $e;
-                }
-                $this->exceptions[] = $e;
-            }
-        };
-
-        $traverse($operation, ['', 'paths', $operation->path, $operation->method]);
+        $traverser->traverse($operation, ['', 'paths', $operation->path, $operation->method]);
         $references = $visitor->popReferences();
 
         /** @var Reference $ref */
         foreach ($references as $ref) {
             if ($resolvedType = $ref->resolve()) {
-                $traverse($resolvedType, ['', 'components', $ref->referenceType, $ref->getUniqueName()]);
+                $traverser->traverse($resolvedType, ['', 'components', $ref->referenceType, $ref->getUniqueName()]);
             }
         }
+
+        $this->exceptions = array_merge($this->exceptions, $visitor->getExceptions());
     }
 
     private function createSchemaEnforceTraverser()
     {
-        $traverser = new OpenApiTraverser([$visitor = new class extends AbstractOpenApiVisitor
-        {
-            public array $operationReferences = [];
-
-            public function popReferences()
-            {
-                return tap($this->operationReferences, fn () => $this->operationReferences = []);
-            }
-
-            public function enter($object, array $path = [])
-            {
-                if ($object instanceof Reference) {
-                    $this->operationReferences[] = $object;
-                }
-                if ($object instanceof Type) {
-                    Scramble::getSchemaValidator()->validate(
-                        $object,
-                        implode('/', array_map(OpenApiTraverser::normalizeJsonPointerReferenceToken(...), $path)),
-                    );
-                }
-            }
-        }]);
+        $traverser = new OpenApiTraverser([$visitor = new SchemaEnforceVisitor($this->throwExceptions)]);
 
         return [$traverser, $visitor];
     }
