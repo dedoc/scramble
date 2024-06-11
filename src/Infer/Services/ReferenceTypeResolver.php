@@ -69,7 +69,7 @@ class ReferenceTypeResolver
             $type,//->toString(),
             fn () => (new TypeWalker)->replace(
                 $type,
-                fn (Type $t) => $this->doResolve($t, $type, $scope),
+                fn (Type $t) => $this->doResolve($t, $type, $scope)?->mergeAttributes($t->attributes()),
             ),
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );
@@ -79,7 +79,7 @@ class ReferenceTypeResolver
             fn () => (new TypeWalker)->replace(
                 $resultingType,
                 fn (Type $t) => $t instanceof Union
-                    ? TypeHelper::mergeTypes(...$t->types)
+                    ? TypeHelper::mergeTypes(...$t->types)->mergeAttributes($t->attributes())
                     : null,
             ),
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),

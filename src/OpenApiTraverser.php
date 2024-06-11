@@ -50,6 +50,9 @@ class OpenApiTraverser
 
     private function getNodes($instance)
     {
+        if (! is_object($instance)) {
+            return [];
+        }
         return array_keys(get_object_vars($instance));
     }
 }

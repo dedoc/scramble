@@ -231,6 +231,10 @@ class RequestEssentialsExtension extends OperationExtension
             $schemaType->setAttribute('isModelId', true);
         }
 
+        if ($schemaType instanceof \Dedoc\Scramble\Support\Generator\Types\UnknownType) {
+            $schemaType = new StringType;
+        }
+
         return [$schemaType, $description ?? ''];
     }
 

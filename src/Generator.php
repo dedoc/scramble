@@ -7,7 +7,9 @@ use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Path;
+use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Server;
+use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
 use Dedoc\Scramble\Support\OperationBuilder;
@@ -109,13 +111,11 @@ class Generator
                     if (! is_string($route->getAction('uses'))) {
                         return false;
                     }
-                    try {
-                        $reflection = new \ReflectionMethod(...explode('@', $route->getAction('uses')));
 
-                        if (str_contains($reflection->getDocComment() ?: '', '@only-docs')) {
-                            return true;
-                        }
-                    } catch (Throwable $e) {
+                    $reflection = new \ReflectionMethod(...explode('@', $route->getAction('uses')));
+
+                    if (str_contains($reflection->getDocComment() ?: '', '@only-docs')) {
+                        return true;
                     }
 
                     return false;
@@ -139,7 +139,52 @@ class Generator
             return null;
         }
 
-        return $this->operationBuilder->build($routeInfo, $openApi);
+        $operation = $this->operationBuilder->build($routeInfo, $openApi);
+
+        $this->ensureSchemaTypes($operation);
+
+        return $operation;
+    }
+
+    private function ensureSchemaTypes(Operation $operation): void
+    {
+        if (! Scramble::getSchemaValidator()->hasRules()) {
+            return;
+        }
+
+        [$traverser, $visitor] = $this->createSchemaEnforceTraverser();
+
+        $traverser->traverse($operation);
+        $references = $visitor->popReferences();
+
+        foreach ($references as $ref) {
+            if ($resolvedType = $ref->resolve()) {
+                $traverser->traverse($resolvedType);
+            }
+        }
+    }
+
+    private function createSchemaEnforceTraverser()
+    {
+        $traverser = new OpenApiTraverser([$visitor = new class extends AbstractOpenApiVisitor {
+            public array $operationReferences = [];
+            public function popReferences()
+            {
+                $this->operationReferences = [];
+                return $this->operationReferences;
+            }
+            public function enter($object, array $path = [])
+            {
+                if ($object instanceof Reference) {
+                    $this->operationReferences[] = $object;
+                }
+                if ($object instanceof Type) {
+                    Scramble::getSchemaValidator()->validate($object);
+                }
+            }
+        }]);
+
+        return [$traverser, $visitor];
     }
 
     private function moveSameAlternativeServersToPath(OpenApi $openApi)
