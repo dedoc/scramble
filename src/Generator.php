@@ -160,18 +160,18 @@ class Generator
 
         $operation = $this->operationBuilder->build($routeInfo, $openApi);
 
-        $this->ensureSchemaTypes($operation);
+        $this->ensureSchemaTypes($route, $operation);
 
         return $operation;
     }
 
-    private function ensureSchemaTypes(Operation $operation): void
+    private function ensureSchemaTypes(Route $route, Operation $operation): void
     {
         if (! Scramble::getSchemaValidator()->hasRules()) {
             return;
         }
 
-        [$traverser, $visitor] = $this->createSchemaEnforceTraverser();
+        [$traverser, $visitor] = $this->createSchemaEnforceTraverser($route);
 
         $traverser->traverse($operation, ['', 'paths', $operation->path, $operation->method]);
         $references = $visitor->popReferences();
@@ -182,13 +182,11 @@ class Generator
                 $traverser->traverse($resolvedType, ['', 'components', $ref->referenceType, $ref->getUniqueName()]);
             }
         }
-
-        $this->exceptions = array_merge($this->exceptions, $visitor->getExceptions());
     }
 
-    private function createSchemaEnforceTraverser()
+    private function createSchemaEnforceTraverser(Route $route)
     {
-        $traverser = new OpenApiTraverser([$visitor = new SchemaEnforceVisitor($this->throwExceptions)]);
+        $traverser = new OpenApiTraverser([$visitor = new SchemaEnforceVisitor($route, $this->throwExceptions, $this->exceptions)]);
 
         return [$traverser, $visitor];
     }

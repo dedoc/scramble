@@ -27,7 +27,7 @@ class SchemaValidator
     {
         foreach ($this->rules as [$ruleCb, $errorMessageGetter]) {
             if (! $ruleCb($type, $path)) {
-                $errorMessage = value($errorMessageGetter, $type, $path);
+                $originalMessage = $errorMessage = value($errorMessageGetter, $type, $path);
 
                 $file = $type->getAttribute('file');
                 $line = $type->getAttribute('line');
@@ -36,7 +36,13 @@ class SchemaValidator
                     $errorMessage = rtrim($errorMessage, '.').'. Got when analyzing an expression in file ['.$file.'] on line '.$line;
                 }
 
-                throw InvalidSchema::create($errorMessage, $path);
+                $exception = InvalidSchema::create($errorMessage, $path);
+
+                $exception->originalMessage = $originalMessage;
+                $exception->originFile = $file;
+                $exception->originLine = $line;
+
+                throw $exception;
             }
         }
     }

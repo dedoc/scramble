@@ -8,6 +8,7 @@ use Dedoc\Scramble\OpenApiTraverser;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Types\Type;
+use Illuminate\Routing\Route;
 
 class SchemaEnforceVisitor extends AbstractOpenApiVisitor
 {
@@ -15,20 +16,17 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
 
     protected static array $handledReferences = [];
 
-    protected array $exceptions = [];
-
-    public function __construct(private bool $throwExceptions = true)
+    public function __construct(
+        private Route $route,
+        private bool $throwExceptions = true,
+        protected array &$exceptions = [],
+    )
     {
     }
 
     public function popReferences()
     {
         return tap($this->operationReferences, fn () => $this->operationReferences = []);
-    }
-
-    public function getExceptions()
-    {
-        return $this->exceptions;
     }
 
     public function enter($object, array $path = [])
@@ -54,9 +52,12 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
                 implode('/', array_map(OpenApiTraverser::normalizeJsonPointerReferenceToken(...), $path)),
             );
         } catch (InvalidSchema $e) {
+            $e->setRoute($this->route);
+
             if ($this->throwExceptions) {
                 throw $e;
             }
+
             $this->exceptions[] = $e;
         }
     }

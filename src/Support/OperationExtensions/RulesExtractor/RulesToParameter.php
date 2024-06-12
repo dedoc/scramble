@@ -20,6 +20,8 @@ class RulesToParameter
         'bool', 'boolean', 'numeric', 'int', 'integer', 'file', 'image', 'string', 'array', 'exists',
     ];
 
+    private array $rules;
+
     public function __construct(
         private string $name,
         $rules,
