@@ -29,7 +29,7 @@ class Scramble
     public static bool $defaultRoutesIgnored = false;
 
     /**
-     * @var array<int, array{callable(OpenApiType, string): bool, string|(callable(OpenApiType, string): string)}>
+     * @var array<int, array{callable(OpenApiType, string): bool, string|(callable(OpenApiType, string): string), string[], bool}>
      */
     public static array $enforceSchemaRules = [];
 
@@ -114,18 +114,24 @@ class Scramble
         static::$tagResolver = $tagResolver;
     }
 
-    public static function enforceSchema(callable $cb, string|callable $errorMessageGetter)
+    /**
+     * @param bool $throw When `true` documentation won't be generated in case of the error. When `false`,
+     *   documentation will be generated but errors will be available in `scramble:analyze` command.
+     */
+    public static function enforceSchema(callable $cb, string|callable $errorMessageGetter, array $ignorePaths = [], bool $throw = true)
     {
-        static::$enforceSchemaRules[] = [$cb, $errorMessageGetter];
+        static::$enforceSchemaRules[] = [$cb, $errorMessageGetter, $ignorePaths, $throw];
     }
 
-    public static function preventSchema(string|array $schemaTypes, array $ignorePaths = [])
+    public static function preventSchema(string|array $schemaTypes, array $ignorePaths = [], bool $throw = true)
     {
         $forbiddenSchemas = Arr::wrap($schemaTypes);
 
         static::enforceSchema(
-            fn ($schema, $path) => Str::is($ignorePaths, $path) || ! in_array($schema::class, $forbiddenSchemas),
+            fn ($schema, $path) => ! in_array($schema::class, $forbiddenSchemas),
             fn ($schema) => 'Schema ['.$schema::class.'] is not allowed.',
+            $ignorePaths,
+            $throw,
         );
     }
 

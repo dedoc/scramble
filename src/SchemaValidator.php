@@ -4,6 +4,7 @@ namespace Dedoc\Scramble;
 
 use Dedoc\Scramble\Exceptions\InvalidSchema;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
+use Illuminate\Support\Str;
 
 class SchemaValidator
 {
@@ -20,30 +21,28 @@ class SchemaValidator
         return (bool) count($this->rules);
     }
 
-    /**
-     * @throws InvalidSchema
-     */
-    public function validate(OpenApiType $type, string $path): void
+    public function validate(OpenApiType $type, string $path): array
     {
-        foreach ($this->rules as [$ruleCb, $errorMessageGetter]) {
+        $exceptions = [];
+
+        foreach ($this->rules as [$ruleCb, $errorMessageGetter, $ignorePaths, $throw]) {
+            if (Str::is($ignorePaths, $path)) {
+                continue;
+            }
+
             if (! $ruleCb($type, $path)) {
-                $originalMessage = $errorMessage = value($errorMessageGetter, $type, $path);
+                $errorMessage = value($errorMessageGetter, $type, $path);
 
-                $file = $type->getAttribute('file');
-                $line = $type->getAttribute('line');
+                $exception = InvalidSchema::createForSchema($errorMessage, $path, $type);
 
-                if ($file) {
-                    $errorMessage = rtrim($errorMessage, '.').'. Got when analyzing an expression in file ['.$file.'] on line '.$line;
+                if ($throw) {
+                    throw $exception;
                 }
 
-                $exception = InvalidSchema::create($errorMessage, $path);
-
-                $exception->originalMessage = $originalMessage;
-                $exception->originFile = $file;
-                $exception->originLine = $line;
-
-                throw $exception;
+                $exceptions[] = $exception;
             }
         }
+
+        return $exceptions;
     }
 }

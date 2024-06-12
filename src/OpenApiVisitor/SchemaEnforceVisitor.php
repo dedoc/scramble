@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\OpenApiVisitor;
 
 use Dedoc\Scramble\AbstractOpenApiVisitor;
 use Dedoc\Scramble\Exceptions\InvalidSchema;
+use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\OpenApiTraverser;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Reference;
@@ -46,8 +47,9 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
 
     protected function validateSchema($object, $path)
     {
+        $exceptions = [];
         try {
-            Scramble::getSchemaValidator()->validate(
+            $exceptions = Scramble::getSchemaValidator()->validate(
                 $object,
                 implode('/', array_map(OpenApiTraverser::normalizeJsonPointerReferenceToken(...), $path)),
             );
@@ -60,5 +62,11 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
 
             $this->exceptions[] = $e;
         }
+        foreach ($exceptions as $exception) {
+            if ($exception instanceof RouteAware) {
+                $exception->setRoute($this->route);
+            }
+        }
+        $this->exceptions = array_merge($this->exceptions, $exceptions);
     }
 }

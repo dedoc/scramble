@@ -3,10 +3,10 @@
 namespace Dedoc\Scramble\Exceptions;
 
 use Dedoc\Scramble\Console\Commands\Components\Code;
+use Dedoc\Scramble\Support\Generator\Types\Type;
 use Exception;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Routing\Route;
-use function Termwind\render;
 
 class InvalidSchema extends Exception implements RouteAware, ConsoleRenderable
 {
@@ -20,11 +20,21 @@ class InvalidSchema extends Exception implements RouteAware, ConsoleRenderable
 
     public ?int $originLine = null;
 
-    public static function create(string $message, string $path)
+    public static function createForSchema(string $message, string $path, Type $schema)
     {
-        $exception = new self($path.': '.$message);
+        $file = $schema->getAttribute('file');
+        $line = $schema->getAttribute('line');
 
-        $exception->originalMessage = $message;
+        $originalMessage = $message;
+        if ($file) {
+            $message = rtrim($message, '.').'. Got when analyzing an expression in file ['.$file.'] on line '.$line;
+        }
+
+        $exception = new static($path.': '.$message);
+
+        $exception->originalMessage = $originalMessage;
+        $exception->originFile = $file;
+        $exception->originLine = $line;
         $exception->jsonPointer = $path;
 
         return $exception;
