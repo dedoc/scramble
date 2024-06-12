@@ -8,7 +8,7 @@ use Exception;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Routing\Route;
 
-class InvalidSchema extends Exception implements RouteAware, ConsoleRenderable
+class InvalidSchema extends Exception implements ConsoleRenderable, RouteAware
 {
     use RouteAwareTrait;
 
@@ -57,7 +57,7 @@ class InvalidSchema extends Exception implements RouteAware, ConsoleRenderable
         }
 
         if ($this->originFile) {
-            $line = $this->originLine?":$this->originLine" : '';
+            $line = $this->originLine ? ":$this->originLine" : '';
 
             $tableCells[] = ['<fg=gray>Inferred at</>', "{$this->originFile}{$line}"];
 

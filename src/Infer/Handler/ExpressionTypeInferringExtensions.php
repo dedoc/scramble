@@ -29,6 +29,7 @@ class ExpressionTypeInferringExtensions
                 $type = $extension->getType($node, $scope);
                 if ($type) {
                     $scope->setType($node, $type);
+
                     return $type;
                 }
 

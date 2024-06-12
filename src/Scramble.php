@@ -15,7 +15,6 @@ use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route as RouteFacade;
-use Illuminate\Support\Str;
 use LogicException;
 
 class Scramble
@@ -115,8 +114,8 @@ class Scramble
     }
 
     /**
-     * @param bool $throw When `true` documentation won't be generated in case of the error. When `false`,
-     *   documentation will be generated but errors will be available in `scramble:analyze` command.
+     * @param  bool  $throw  When `true` documentation won't be generated in case of the error. When `false`,
+     *                       documentation will be generated but errors will be available in `scramble:analyze` command.
      */
     public static function enforceSchema(callable $cb, string|callable $errorMessageGetter, array $ignorePaths = [], bool $throw = true)
     {

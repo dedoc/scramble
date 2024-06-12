@@ -11,8 +11,7 @@ class TermsOfContentItem implements Component
     public function __construct(
         public string $right,
         public ?string $left = null,
-    )
-    {
+    ) {
     }
 
     public function render(OutputStyle $style): void
@@ -36,6 +35,7 @@ class TermsOfContentItem implements Component
     private function getLineWidth(string $string)
     {
         $re = '/<.*?>/m';
+
         return mb_strlen(preg_replace($re, '', $string));
     }
 }

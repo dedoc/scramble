@@ -43,7 +43,7 @@ class AnalyzeDocumentation extends Command
                     $method = $route->methods()[0];
                     $errorsMessage = ($count = $exceptions->count()).' '.Str::plural('error', $count);
 
-                    $color = match($method) {
+                    $color = match ($method) {
                         'POST', 'PUT' => 'blue',
                         'DELETE' => 'red',
                         default => 'yellow',
@@ -84,7 +84,7 @@ class AnalyzeDocumentation extends Command
             });
 
         if (count($generator->exceptions)) {
-            $this->error("[ERROR] Found ".count($generator->exceptions)." errors.");
+            $this->error('[ERROR] Found '.count($generator->exceptions).' errors.');
 
             return static::FAILURE;
         }
