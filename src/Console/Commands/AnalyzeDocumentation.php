@@ -53,7 +53,7 @@ class AnalyzeDocumentation extends Command
     }
 
     /**
-     * @param Collection<int, Throwable> $exceptions
+     * @param  Collection<int, Throwable>  $exceptions
      */
     private function renderExceptionsGroup(Collection $exceptions, string $group, int &$i): void
     {
@@ -82,7 +82,7 @@ class AnalyzeDocumentation extends Command
     }
 
     /**
-     * @param Collection<int, RouteAware> $exceptions
+     * @param  Collection<int, RouteAware>  $exceptions
      */
     private function renderRouteExceptionsGroupLine(Collection $exceptions): void
     {
@@ -90,10 +90,10 @@ class AnalyzeDocumentation extends Command
         $route = $firstException->getRoute();
 
         $method = $route->methods()[0];
-        $errorsMessage = ($count = $exceptions->count()) . ' ' . Str::plural('error', $count);
+        $errorsMessage = ($count = $exceptions->count()).' '.Str::plural('error', $count);
 
         $tocComponent = new TermsOfContentItem(
-            right: '<options=bold;fg='.$this->getHttpMethodColor($method).'>' . $method . "</> $route->uri <fg=red>$errorsMessage</>",
+            right: '<options=bold;fg='.$this->getHttpMethodColor($method).'>'.$method."</> $route->uri <fg=red>$errorsMessage</>",
             left: $this->getRouteAction($route),
         );
 
@@ -117,7 +117,7 @@ class AnalyzeDocumentation extends Command
             return null;
         }
 
-        if (count($parts = explode('@', $uses)) !== 2 || !method_exists(...$parts)) {
+        if (count($parts = explode('@', $uses)) !== 2 || ! method_exists(...$parts)) {
             return null;
         }
 

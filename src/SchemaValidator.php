@@ -23,6 +23,7 @@ class SchemaValidator
 
     /**
      * @return InvalidSchema[]
+     *
      * @throws InvalidSchema
      */
     public function validate(OpenApiType $type, string $path): array
