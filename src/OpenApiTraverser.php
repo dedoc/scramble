@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble;
 
+use Illuminate\Support\Str;
+
 class OpenApiTraverser
 {
     public function __construct(
@@ -50,6 +52,15 @@ class OpenApiTraverser
 
     private function getNodes($instance)
     {
+        if (! is_object($instance)) {
+            return [];
+        }
+
         return array_keys(get_object_vars($instance));
+    }
+
+    public static function normalizeJsonPointerReferenceToken(string $referenceToken)
+    {
+        return Str::replace(['~', '/'], ['~0', '~1'], addslashes($referenceToken));
     }
 }

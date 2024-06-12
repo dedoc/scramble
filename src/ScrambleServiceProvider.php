@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
@@ -25,6 +26,7 @@ use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\OperationExtensions\DeprecationExtension;
@@ -52,6 +54,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->name('scramble')
             ->hasConfigFile()
             ->hasCommand(ExportDocumentation::class)
+            ->hasCommand(AnalyzeDocumentation::class)
             ->hasViews('scramble');
 
         $this->app->singleton(FileParser::class, function () {
@@ -89,6 +92,11 @@ class ScrambleServiceProvider extends PackageServiceProvider
                         new ValidatorTypeInfer(),
                         new ResourceCollectionTypeInfer(),
                         new ResponseFactoryTypeInfer(),
+
+                        /*
+                         * Keep this extension last, so the trace info is preserved.
+                         */
+                        new TypeTraceInfer(),
                     ],
                     array_map(function ($class) {
                         return app($class);

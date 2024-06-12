@@ -9,9 +9,11 @@ use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 use Dedoc\Scramble\Infer\Extensions\InferExtension;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
+use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use LogicException;
 
@@ -24,6 +26,11 @@ class Scramble
     public static $openApiExtender = null;
 
     public static bool $defaultRoutesIgnored = false;
+
+    /**
+     * @var array<int, array{callable(OpenApiType, string): bool, string|(callable(OpenApiType, string): string), string[], bool}>
+     */
+    public static array $enforceSchemaRules = [];
 
     /**
      * Registered APIs for which Scramble generates documentation. The key is API name
@@ -59,6 +66,8 @@ class Scramble
 
     /**
      * Update open api document before finally rendering it.
+     *
+     * @deprecated
      */
     public static function extendOpenApi(callable $openApiExtender)
     {
@@ -66,7 +75,7 @@ class Scramble
     }
 
     /**
-     * Update open api document before finally rendering it.
+     * Update Open API document before finally rendering it.
      */
     public static function afterOpenApiGenerated(callable $afterOpenApiGenerated)
     {
@@ -102,6 +111,32 @@ class Scramble
     public static function resolveTagsUsing(callable $tagResolver)
     {
         static::$tagResolver = $tagResolver;
+    }
+
+    /**
+     * @param  bool  $throw  When `true` documentation won't be generated in case of the error. When `false`,
+     *                       documentation will be generated but errors will be available in `scramble:analyze` command.
+     */
+    public static function enforceSchema(callable $cb, string|callable $errorMessageGetter, array $ignorePaths = [], bool $throw = true)
+    {
+        static::$enforceSchemaRules[] = [$cb, $errorMessageGetter, $ignorePaths, $throw];
+    }
+
+    public static function preventSchema(string|array $schemaTypes, array $ignorePaths = [], bool $throw = true)
+    {
+        $forbiddenSchemas = Arr::wrap($schemaTypes);
+
+        static::enforceSchema(
+            fn ($schema, $path) => ! in_array($schema::class, $forbiddenSchemas),
+            fn ($schema) => 'Schema ['.$schema::class.'] is not allowed.',
+            $ignorePaths,
+            $throw,
+        );
+    }
+
+    public static function getSchemaValidator(): SchemaValidator
+    {
+        return new SchemaValidator(static::$enforceSchemaRules);
     }
 
     /**

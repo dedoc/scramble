@@ -57,7 +57,7 @@ class TypeTransformer
 
     public function transform(Type $type)
     {
-        $openApiType = new StringType();
+        $openApiType = new UnknownType();
 
         if ($type instanceof TemplateType && $type->is) {
             $type = $type->is;
@@ -195,6 +195,14 @@ class TypeTransformer
 
         if ($type->hasAttribute('format')) {
             $openApiType->format($type->getAttribute('format'));
+        }
+
+        if ($type->hasAttribute('file')) {
+            $openApiType->setAttribute('file', $type->getAttribute('file'));
+        }
+
+        if ($type->hasAttribute('line')) {
+            $openApiType->setAttribute('line', $type->getAttribute('line'));
         }
 
         return $openApiType;

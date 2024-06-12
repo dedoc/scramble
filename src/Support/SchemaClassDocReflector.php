@@ -18,7 +18,7 @@ class SchemaClassDocReflector
         return array_values($this->phpDoc->getTagsByName($tagName))[0]?->value ?? null;
     }
 
-    public function getSchemaName(?string $default = null): ?string
+    public function getSchemaName(string $default = ''): ?string
     {
         return explode("\n", $this->phpDoc->getTagsByName('@schemaName')[0]->value->value ?? $default)[0];
     }

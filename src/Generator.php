@@ -2,11 +2,14 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\OpenApiVisitor\SchemaEnforceVisitor;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Path;
+use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Server;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
@@ -21,6 +24,10 @@ use Throwable;
 
 class Generator
 {
+    public array $exceptions = [];
+
+    protected bool $throwExceptions = true;
+
     public function __construct(
         private TypeTransformer $transformer,
         private OperationBuilder $operationBuilder,
@@ -28,6 +35,13 @@ class Generator
         private FileParser $fileParser,
         private Infer $infer
     ) {
+    }
+
+    public function setThrowExceptions(bool $throwExceptions): static
+    {
+        $this->throwExceptions = $throwExceptions;
+
+        return $this;
     }
 
     public function __invoke(?GeneratorConfig $config = null)
@@ -43,6 +57,10 @@ class Generator
                 try {
                     return $this->routeToOperation($openApi, $route);
                 } catch (Throwable $e) {
+                    if ($e instanceof RouteAware) {
+                        $e->setRoute($route);
+                    }
+
                     if (config('app.debug', false)) {
                         $method = $route->methods()[0];
                         $action = $route->getAction('uses');
@@ -109,13 +127,14 @@ class Generator
                     if (! is_string($route->getAction('uses'))) {
                         return false;
                     }
+
                     try {
                         $reflection = new \ReflectionMethod(...explode('@', $route->getAction('uses')));
 
                         if (str_contains($reflection->getDocComment() ?: '', '@only-docs')) {
                             return true;
                         }
-                    } catch (Throwable $e) {
+                    } catch (Throwable) {
                     }
 
                     return false;
@@ -139,7 +158,37 @@ class Generator
             return null;
         }
 
-        return $this->operationBuilder->build($routeInfo, $openApi);
+        $operation = $this->operationBuilder->build($routeInfo, $openApi);
+
+        $this->ensureSchemaTypes($route, $operation);
+
+        return $operation;
+    }
+
+    private function ensureSchemaTypes(Route $route, Operation $operation): void
+    {
+        if (! Scramble::getSchemaValidator()->hasRules()) {
+            return;
+        }
+
+        [$traverser, $visitor] = $this->createSchemaEnforceTraverser($route);
+
+        $traverser->traverse($operation, ['', 'paths', $operation->path, $operation->method]);
+        $references = $visitor->popReferences();
+
+        /** @var Reference $ref */
+        foreach ($references as $ref) {
+            if ($resolvedType = $ref->resolve()) {
+                $traverser->traverse($resolvedType, ['', 'components', $ref->referenceType, $ref->getUniqueName()]);
+            }
+        }
+    }
+
+    private function createSchemaEnforceTraverser(Route $route)
+    {
+        $traverser = new OpenApiTraverser([$visitor = new SchemaEnforceVisitor($route, $this->throwExceptions, $this->exceptions)]);
+
+        return [$traverser, $visitor];
     }
 
     private function moveSameAlternativeServersToPath(OpenApi $openApi)

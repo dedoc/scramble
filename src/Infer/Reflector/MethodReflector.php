@@ -55,9 +55,14 @@ class MethodReflector
     {
         if (! $this->methodNode) {
             $className = class_basename($this->className);
+            $methodReflection = $this->getReflection();
 
-            $methodDoc = $this->getReflection()->getDocComment() ?: '';
-            $partialClass = "<?php\nclass $className {\n".$methodDoc."\n".$this->getMethodCode()."\n}";
+            $methodDoc = $methodReflection->getDocComment() ?: '';
+            $lines = $methodReflection->getStartLine();
+
+            $lines = str_repeat("\n", max($lines - 3 - substr_count($methodDoc, "\n"), 1));
+
+            $partialClass = "<?php$lines class $className {\n".$methodDoc."\n".$this->getMethodCode()."\n}";
 
             $statements = $this->parser->parseContent($partialClass)->getStatements();
             $node = (new NodeFinder())
