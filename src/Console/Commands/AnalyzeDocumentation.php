@@ -11,6 +11,7 @@ use Illuminate\Console\Command;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Throwable;
 
 class AnalyzeDocumentation extends Command
 {
@@ -24,64 +25,12 @@ class AnalyzeDocumentation extends Command
     {
         $generator->setThrowExceptions(false);
 
-        $config = Scramble::getGeneratorConfig($this->option('api'));
-
-        $generator($config);
+        $generator(Scramble::getGeneratorConfig($this->option('api')));
 
         $i = 1;
-
-        collect($generator->exceptions)
-            ->groupBy(fn ($e) => $e instanceof RouteAware ? $this->getRouteKey($e->getRoute()) : '')
-            ->each(function (Collection $exceptions, string $routeKey) use (&$i) {
-                // when route key is set, then the exceptions in the group are route aware.
-                if ($routeKey) {
-                    /** @var RouteAware $firstException */
-                    $firstException = $exceptions->first();
-                    /** @var Route $route */
-                    $route = $firstException->getRoute();
-
-                    $method = $route->methods()[0];
-                    $errorsMessage = ($count = $exceptions->count()).' '.Str::plural('error', $count);
-
-                    $color = match ($method) {
-                        'POST', 'PUT' => 'blue',
-                        'DELETE' => 'red',
-                        default => 'yellow',
-                    };
-
-                    $tocComponent = new TermsOfContentItem(right: "<options=bold;fg=$color>".$method."</> $route->uri <fg=red>$errorsMessage</>");
-
-                    if (
-                        $route->getAction('uses')
-                        && count($parts = explode('@', $route->getAction('uses'))) === 2
-                        && class_exists($parts[0])
-                        && method_exists(...$parts)
-                    ) {
-                        [$class, $method] = $parts;
-
-                        $eloquentClassName = Str::replace(['App\Http\Controllers\\', 'App\Http\\'], '', $class);
-
-                        $tocComponent->left = "<fg=gray>{$eloquentClassName}@{$method}</>";
-                    }
-
-                    $tocComponent->render($this->output);
-
-                    $this->line('');
-                }
-
-                $exceptions->each(function ($exception) use (&$i) {
-                    $message = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', property_exists($exception, 'originalMessage') ? $exception->originalMessage : $exception->getMessage());
-
-                    $this->output->writeln("<options=bold>$i. {$message}</>");
-
-                    if ($exception instanceof ConsoleRenderable) {
-                        $exception->renderInConsole($this->output);
-                    }
-
-                    $i++;
-                    $this->line('');
-                });
-            });
+        $this->groupExceptions($generator->exceptions)->each(function (Collection $exceptions, string $group) use (&$i) {
+            $this->renderExceptionsGroup($exceptions, $group, $i);
+        });
 
         if (count($generator->exceptions)) {
             $this->error('[ERROR] Found '.count($generator->exceptions).' errors.');
@@ -94,7 +43,33 @@ class AnalyzeDocumentation extends Command
         return static::SUCCESS;
     }
 
-    private function getRouteKey(?Route $route)
+    /**
+     * @return Collection<string, Collection<int, Throwable>>
+     */
+    private function groupExceptions(array $exceptions): Collection
+    {
+        return collect($exceptions)
+            ->groupBy(fn ($e) => $e instanceof RouteAware ? $this->getRouteKey($e->getRoute()) : '');
+    }
+
+    /**
+     * @param Collection<int, Throwable> $exceptions
+     */
+    private function renderExceptionsGroup(Collection $exceptions, string $group, int &$i): void
+    {
+        // when route key is set, then the exceptions in the group are route aware.
+        if ($group) {
+            $this->renderRouteExceptionsGroupLine($exceptions);
+        }
+
+        $exceptions->each(function ($exception) use (&$i) {
+            $this->renderException($exception, $i);
+            $i++;
+            $this->line('');
+        });
+    }
+
+    private function getRouteKey(?Route $route): string
     {
         if (! $route) {
             return '';
@@ -104,5 +79,63 @@ class AnalyzeDocumentation extends Command
         $action = $route->getAction('uses');
 
         return "$method.$action";
+    }
+
+    /**
+     * @param Collection<int, RouteAware> $exceptions
+     */
+    private function renderRouteExceptionsGroupLine(Collection $exceptions): void
+    {
+        $firstException = $exceptions->first();
+        $route = $firstException->getRoute();
+
+        $method = $route->methods()[0];
+        $errorsMessage = ($count = $exceptions->count()) . ' ' . Str::plural('error', $count);
+
+        $tocComponent = new TermsOfContentItem(
+            right: '<options=bold;fg='.$this->getHttpMethodColor($method).'>' . $method . "</> $route->uri <fg=red>$errorsMessage</>",
+            left: $this->getRouteAction($route),
+        );
+
+        $tocComponent->render($this->output);
+
+        $this->line('');
+    }
+
+    private function getHttpMethodColor(string $method): string
+    {
+        return match ($method) {
+            'POST', 'PUT' => 'blue',
+            'DELETE' => 'red',
+            default => 'yellow',
+        };
+    }
+
+    public function getRouteAction(?Route $route): ?string
+    {
+        if (! $uses = $route->getAction('uses')) {
+            return null;
+        }
+
+        if (count($parts = explode('@', $uses)) !== 2 || !method_exists(...$parts)) {
+            return null;
+        }
+
+        [$class, $method] = $parts;
+
+        $eloquentClassName = Str::replace(['App\Http\Controllers\\', 'App\Http\\'], '', $class);
+
+        return "<fg=gray>{$eloquentClassName}@{$method}</>";
+    }
+
+    private function renderException($exception, int $i): void
+    {
+        $message = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', property_exists($exception, 'originalMessage') ? $exception->originalMessage : $exception->getMessage());
+
+        $this->output->writeln("<options=bold>$i. {$message}</>");
+
+        if ($exception instanceof ConsoleRenderable) {
+            $exception->renderInConsole($this->output);
+        }
     }
 }
