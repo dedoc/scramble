@@ -21,6 +21,10 @@ class SchemaValidator
         return (bool) count($this->rules);
     }
 
+    /**
+     * @return InvalidSchema[]
+     * @throws InvalidSchema
+     */
     public function validate(OpenApiType $type, string $path): array
     {
         $exceptions = [];
@@ -30,17 +34,16 @@ class SchemaValidator
                 continue;
             }
 
-            if (! $ruleCb($type, $path)) {
-                $errorMessage = value($errorMessageGetter, $type, $path);
-
-                $exception = InvalidSchema::createForSchema($errorMessage, $path, $type);
-
-                if ($throw) {
-                    throw $exception;
-                }
-
-                $exceptions[] = $exception;
+            if ($ruleCb($type, $path)) {
+                continue;
             }
+
+            throw_if(
+                $throw,
+                $exception = InvalidSchema::createForSchema(value($errorMessageGetter, $type, $path), $path, $type),
+            );
+
+            $exceptions[] = $exception;
         }
 
         return $exceptions;
