@@ -120,22 +120,4 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             ->shortName(class_basename($type->name))
             ->uniqueName($type->name);
     }
-
-    private function getResourceType(Type $type): Type
-    {
-        if (! $type instanceof Generic) {
-            return new \Dedoc\Scramble\Support\Type\UnknownType();
-        }
-
-        if ($type->isInstanceOf(AnonymousResourceCollection::class)) {
-            return $type->templateTypes[0]->templateTypes[0]
-                ?? new \Dedoc\Scramble\Support\Type\UnknownType();
-        }
-
-        if ($type->isInstanceOf(JsonResource::class)) {
-            return $type->templateTypes[0];
-        }
-
-        return new \Dedoc\Scramble\Support\Type\UnknownType();
-    }
 }
