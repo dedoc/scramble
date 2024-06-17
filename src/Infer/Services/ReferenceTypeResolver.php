@@ -329,6 +329,7 @@ class ReferenceTypeResolver
         }
 
         $classDefinition = $this->index->getClassDefinition($type->name);
+//        dd($classDefinition);
 
         if (! $classDefinition->templateTypes) {
             return new ObjectType($type->name);

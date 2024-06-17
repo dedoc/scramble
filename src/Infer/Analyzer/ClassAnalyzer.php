@@ -29,8 +29,12 @@ class ClassAnalyzer
         $classReflection = new \ReflectionClass($name);
 
         $parentDefinition = null;
-        if ($classReflection->getParentClass() && ! str_contains($classReflection->getParentClass()->getFileName(), '/vendor/')) {
+        if ($classReflection->getParentClass()/* && ! str_contains($classReflection->getParentClass()->getFileName(), '/vendor/')*/) {
             $parentDefinition = $this->analyze($parentName = $classReflection->getParentClass()->name);
+        }
+
+        if ($name === 'App\Exceptions\BusinessException') {
+//            dd($parentDefinition, $name);
         }
 
         $classDefinition = new ClassDefinition(

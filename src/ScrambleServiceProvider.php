@@ -22,10 +22,12 @@ use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCallsTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCreationInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\JsonResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\ResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\OperationBuilder;
@@ -78,6 +80,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ));
 
                 $inferExtensionsClasses = array_merge([
+                    ResponseMethodReturnTypeExtension::class,
+                    JsonResponseMethodReturnTypeExtension::class,
                     ModelExtension::class,
                 ], $inferExtensionsClasses);
 
