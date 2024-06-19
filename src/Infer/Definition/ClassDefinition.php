@@ -77,6 +77,13 @@ class ClassDefinition
                     ->mergeAttributes($returnType->attributes())
             );
         }
+        foreach ($this->methods[$name]->type->exceptions as $i => $exceptionType) {
+            if (ReferenceTypeResolver::hasResolvableReferences($exceptionType)) {
+                $this->methods[$name]->type->exceptions[$i] = (new ReferenceTypeResolver($scope->index))
+                    ->resolve($methodScope, $exceptionType)
+                    ->mergeAttributes($exceptionType->attributes());
+            }
+        }
 
         return $this->methods[$name];
     }

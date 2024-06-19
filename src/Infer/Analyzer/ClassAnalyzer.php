@@ -12,7 +12,9 @@ use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use ReflectionClass;
 
 class ClassAnalyzer
 {
@@ -20,21 +22,36 @@ class ClassAnalyzer
     {
     }
 
+    private function shouldAnalyzeParentClass(ReflectionClass $parentClassReflection): bool
+    {
+        if ($this->index->getClassDefinition($parentClassReflection->name)) {
+            return true;
+        }
+
+        /*
+         * Classes from `vendor` aren't analyzed at the moment. Instead, it is up to developers to provide
+         * definitions for them using the dictionaries.
+         */
+        return ! str_contains($parentClassReflection->getFileName(), '/vendor/');
+    }
+
+    /**
+     * @throws \ReflectionException
+     */
     public function analyze(string $name): ClassDefinition
     {
         if ($definition = $this->index->getClassDefinition($name)) {
             return $definition;
         }
 
-        $classReflection = new \ReflectionClass($name);
+        $classReflection = new ReflectionClass($name);
 
         $parentDefinition = null;
-        if ($classReflection->getParentClass() && ! str_contains($classReflection->getParentClass()->getFileName(), '/vendor/')) {
+        if ($classReflection->getParentClass()/** && ! str_contains($classReflection->getParentClass()->getFileName(), '/vendor/')*/) {
             $parentDefinition = $this->analyze($parentName = $classReflection->getParentClass()->name);
         }
-
-        if ($name === 'App\Exceptions\BusinessException') {
-//            dd($parentDefinition, $name);
+        if ($classReflection->getParentClass() && $this->shouldAnalyzeParentClass($classReflection->getParentClass())) {
+            $parentDefinition = $this->analyze($parentName = $classReflection->getParentClass()->name);
         }
 
         /*
@@ -90,8 +107,6 @@ class ClassAnalyzer
                 definingClassName: $name,
             );
         }
-
-//        dump($classDefinition);
 
         $this->index->registerClassDefinition($classDefinition);
 

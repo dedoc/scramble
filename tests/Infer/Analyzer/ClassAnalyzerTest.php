@@ -77,3 +77,11 @@ it('analyzes parent instantiation', function () {
 
     expect($type->toString())->toBe('Dedoc\Scramble\Tests\Infer\stubs\Child<int(42), string(some)>');
 });
+
+it('analyzes deep parent instantiation', function () {
+    $this->classAnalyzer->analyze(Child::class);
+
+    $type = getStatementType('new Dedoc\Scramble\Tests\Infer\stubs\Child("some", "wow", 42)');
+
+    expect($type->toString())->toBe('Dedoc\Scramble\Tests\Infer\stubs\Child<int(42), string(some)>');
+});
