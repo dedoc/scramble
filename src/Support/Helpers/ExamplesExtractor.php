@@ -13,8 +13,7 @@ class ExamplesExtractor
     public function __construct(
         private ?PhpDocNode $docNode,
         private string $tagName = '@example',
-    ) {
-    }
+    ) {}
 
     public static function make(?PhpDocNode $docNode, string $tagName = '@example')
     {

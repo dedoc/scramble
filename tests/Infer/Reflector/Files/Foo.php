@@ -2,6 +2,4 @@
 
 namespace Dedoc\Scramble\Tests\Infer\Reflector\Files;
 
-class Foo extends Bar
-{
-}
+class Foo extends Bar {}

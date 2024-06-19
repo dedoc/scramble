@@ -11,8 +11,7 @@ class FileParserResult
     public function __construct(
         private array $statements,
         private FileNameResolver $nameResolver,
-    ) {
-    }
+    ) {}
 
     public function getNameResolver()
     {

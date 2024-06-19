@@ -40,8 +40,7 @@ class Scope
         public ScopeContext $context,
         public FileNameResolver $nameResolver,
         public ?Scope $parentScope = null,
-    ) {
-    }
+    ) {}
 
     public function getType(Node $node): Type
     {
@@ -303,10 +302,7 @@ class Scope
         return $type;
     }
 
-    public function getMethodCallType(Type $calledOn, string $methodName, array $arguments = []): Type
-    {
-
-    }
+    public function getMethodCallType(Type $calledOn, string $methodName, array $arguments = []): Type {}
 
     public function getPropertyFetchType(Type $calledOn, string $propertyName): Type
     {

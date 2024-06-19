@@ -6,8 +6,7 @@ class ExtensionsBroker
 {
     public function __construct(
         public readonly array $extensions,
-    ) {
-    }
+    ) {}
 
     public function getPropertyType($event)
     {

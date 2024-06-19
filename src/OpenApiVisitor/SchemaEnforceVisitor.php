@@ -21,8 +21,7 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
         private Route $route,
         private bool $throwExceptions = true,
         protected array &$exceptions = [],
-    ) {
-    }
+    ) {}
 
     public function popReferences()
     {

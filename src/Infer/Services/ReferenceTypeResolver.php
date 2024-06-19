@@ -40,8 +40,7 @@ class ReferenceTypeResolver
 {
     public function __construct(
         private Index $index,
-    ) {
-    }
+    ) {}
 
     public static function getInstance(): static
     {

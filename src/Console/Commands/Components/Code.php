@@ -10,8 +10,7 @@ class Code implements Component
     public function __construct(
         public string $filePath,
         public int $line,
-    ) {
-    }
+    ) {}
 
     public function render(OutputStyle $style): void
     {

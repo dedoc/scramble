@@ -101,39 +101,26 @@ class ErrorsResponsesTest_Controller extends Controller
             ->validate();
     }
 
-    public function adds_errors_with_custom_request(ErrorsResponsesTest_Controller_CustomRequest $request)
-    {
-    }
+    public function adds_errors_with_custom_request(ErrorsResponsesTest_Controller_CustomRequest $request) {}
 
-    public function doesnt_add_errors_with_custom_request_when_errors_producing_methods_not_defined(ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods $request)
-    {
-    }
+    public function doesnt_add_errors_with_custom_request_when_errors_producing_methods_not_defined(ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods $request) {}
 
     public function adds_authorization_error_response(Illuminate\Http\Request $request)
     {
         $this->authorize('read');
     }
 
-    public function adds_authentication_error_response(Illuminate\Http\Request $request)
-    {
+    public function adds_authentication_error_response(Illuminate\Http\Request $request) {}
 
-    }
-
-    public function adds_not_found_error_response(Illuminate\Http\Request $request, UserModel_ErrorsResponsesTest $user)
-    {
-    }
+    public function adds_not_found_error_response(Illuminate\Http\Request $request, UserModel_ErrorsResponsesTest $user) {}
 
     /**
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function phpdoc_exception_response(Illuminate\Http\Request $request)
-    {
-    }
+    public function phpdoc_exception_response(Illuminate\Http\Request $request) {}
 }
 
-class UserModel_ErrorsResponsesTest extends \Illuminate\Database\Eloquent\Model
-{
-}
+class UserModel_ErrorsResponsesTest extends \Illuminate\Database\Eloquent\Model {}
 
 class ErrorsResponsesTest_Controller_CustomRequest extends \Illuminate\Foundation\Http\FormRequest
 {
@@ -148,6 +135,4 @@ class ErrorsResponsesTest_Controller_CustomRequest extends \Illuminate\Foundatio
     }
 }
 
-class ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods extends \Illuminate\Foundation\Http\FormRequest
-{
-}
+class ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods extends \Illuminate\Foundation\Http\FormRequest {}

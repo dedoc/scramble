@@ -9,8 +9,7 @@ class IndexBuildingHandler
 {
     public function __construct(
         private array $indexBuilders,
-    ) {
-    }
+    ) {}
 
     public function shouldHandle($node)
     {

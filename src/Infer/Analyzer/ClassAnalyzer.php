@@ -16,9 +16,7 @@ use Illuminate\Support\Str;
 
 class ClassAnalyzer
 {
-    public function __construct(private Index $index)
-    {
-    }
+    public function __construct(private Index $index) {}
 
     public function analyze(string $name): ClassDefinition
     {

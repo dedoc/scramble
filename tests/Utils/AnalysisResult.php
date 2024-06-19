@@ -18,9 +18,7 @@ use PhpParser\NodeTraverser;
 
 class AnalysisResult
 {
-    public function __construct(public Index $index)
-    {
-    }
+    public function __construct(public Index $index) {}
 
     public function getClassDefinition(string $string): ?ClassDefinition
     {

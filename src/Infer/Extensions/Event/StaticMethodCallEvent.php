@@ -14,8 +14,7 @@ class StaticMethodCallEvent
         public readonly string $name,
         public readonly Scope $scope,
         public readonly array $arguments,
-    ) {
-    }
+    ) {}
 
     public function getDefinition()
     {

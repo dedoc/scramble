@@ -20,8 +20,7 @@ class ClassReflector
     private function __construct(
         private FileParser $parser,
         private string $className,
-    ) {
-    }
+    ) {}
 
     public function getMethod(string $name)
     {

@@ -9,9 +9,7 @@ use ReflectionClass;
 
 class SchemaClassDocReflector
 {
-    public function __construct(public readonly PhpDocNode $phpDoc)
-    {
-    }
+    public function __construct(public readonly PhpDocNode $phpDoc) {}
 
     public function getTagValue(string $tagName)
     {

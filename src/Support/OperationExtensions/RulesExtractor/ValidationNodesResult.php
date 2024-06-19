@@ -8,6 +8,5 @@ class ValidationNodesResult
         public $node,
         public ?string $schemaName = null,
         public ?string $description = null,
-    ) {
-    }
+    ) {}
 }

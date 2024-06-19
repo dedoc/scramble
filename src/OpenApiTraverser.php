@@ -8,8 +8,7 @@ class OpenApiTraverser
 {
     public function __construct(
         private array $visitors = [],
-    ) {
-    }
+    ) {}
 
     public function traverse($type, $path = []): void
     {
