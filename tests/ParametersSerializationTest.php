@@ -1,8 +1,8 @@
 <?php
 
-use \Dedoc\Scramble\Support\Generator\Parameter;
-use \Dedoc\Scramble\Support\Generator\Types\StringType;
-use \Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Parameter;
+use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
 
 it('checks return type of $parameter->toArray() when "style" and "explode" specified', function () {
     $type = new StringType();
@@ -21,11 +21,11 @@ it('checks return type of $parameter->toArray() when "style" and "explode" speci
             'enum' => [
                 'products',
                 'categories',
-                'condition'
-            ]
+                'condition',
+            ],
         ],
         'style' => 'form',
-        'explode' => false
+        'explode' => false,
     ]);
 });
 
@@ -44,8 +44,8 @@ it('checks return type of $parameter->toArray() when "style" and "explode" not s
             'enum' => [
                 'products',
                 'categories',
-                'condition'
-            ]
-        ]
+                'condition',
+            ],
+        ],
     ]);
 });

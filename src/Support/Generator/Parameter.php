@@ -77,12 +77,12 @@ class Parameter
             $result,
             $this->example instanceof MissingExample ? [] : ['example' => $this->example],
             $this->default instanceof MissingExample ? [] : ['default' => $this->default],
-            !is_null($this->style) ? [
+            ! is_null($this->style) ? [
                 'style' => $this->style,
-            ]: [],
-            !is_null($this->explode) ? [
-                'explode' => $this->explode
-            ]: []
+            ] : [],
+            ! is_null($this->explode) ? [
+                'explode' => $this->explode,
+            ] : []
         );
     }
 
@@ -131,13 +131,15 @@ class Parameter
         return $this;
     }
 
-    public function setExplode(bool $explode): self {
+    public function setExplode(bool $explode): self
+    {
         $this->explode = $explode;
 
         return $this;
     }
 
-    public function setStyle(string $style): self {
+    public function setStyle(string $style): self
+    {
         $this->style = $style;
 
         return $this;
