@@ -17,6 +17,15 @@ class Parameter
 
     public bool $required = false;
 
+    public ?bool $explode = null;
+
+    /**
+     * Possible values are "simple", "label", "matrix", "form", "spaceDelimited", "pipeDelimited" or "deepObject".
+     *
+     * @var "simple"|"label"|"matrix"|"form"|"spaceDelimited"|"pipeDelimited"|"deepObject"|null
+     */
+    public ?string $style = null;
+
     public string $description = '';
 
     /** @var array|scalar|null|MissingExample */
@@ -68,6 +77,12 @@ class Parameter
             $result,
             $this->example instanceof MissingExample ? [] : ['example' => $this->example],
             $this->default instanceof MissingExample ? [] : ['default' => $this->default],
+            !is_null($this->style) ? [
+                'style' => $this->style,
+            ]: [],
+            !is_null($this->explode) ? [
+                'explode' => $this->explode
+            ]: []
         );
     }
 
@@ -112,6 +127,18 @@ class Parameter
     public function example($example)
     {
         $this->example = $example;
+
+        return $this;
+    }
+
+    public function setExplode(bool $explode): self {
+        $this->explode = $explode;
+
+        return $this;
+    }
+
+    public function setStyle(string $style): self {
+        $this->style = $style;
 
         return $this;
     }
