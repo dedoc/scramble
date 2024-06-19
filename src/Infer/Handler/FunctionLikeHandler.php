@@ -64,7 +64,12 @@ class FunctionLikeHandler implements CreatesScope
         // simple assigning of args to props ("simple" - assigning is in the fn's statements, means
         // it is not in if or other block) by setting args types to be prop's ones.
         // Also, here we find calls to `parent::__construct` and infer args class' templates types from there.
-        $classDefinitionTemplatesTypes = $this->findPropertyAssignedArgs($node, $scope, $fnType);
+        [$classDefinitionTemplatesTypes, $knownTypesAssignedToTemplates] = $this->findPropertyAssignedArgs($node, $scope, $fnType);
+
+        // When `parent::__construct(...)` is called and there are known types of arguments passed there, for example
+        // `parent::__construct(42)`, we track this `42` and save it as a default type of the property of the
+        // child class.
+        $this->assignKnownTypesAsPropertiesDefaults($scope, $knownTypesAssignedToTemplates);
 
         $localTemplates = [];
         $fnType->arguments = collect($node->getParams())
@@ -160,11 +165,11 @@ class FunctionLikeHandler implements CreatesScope
     private function findPropertyAssignedArgs(FunctionLike $node, Scope $scope, FunctionType $fnType)
     {
         if (! $scope->isInClass()) {
-            return [];
+            return [[], []];
         }
 
         if ($fnType->name !== '__construct') {
-            return [];
+            return [[], []];
         }
 
         $argumentsByKeys = collect($node->getParams())
@@ -187,6 +192,8 @@ class FunctionLikeHandler implements CreatesScope
                 && $s->expr->name->toString() === '__construct',
         )[0] ?? null : null;
 
+        $knownTypesAssignedToProperties = [];
+
         if (
             $callToParentConstruct
             && ($parentDefinition = $scope->index->getClassDefinition($scope->classDefinition()->parentFqn))
@@ -195,15 +202,25 @@ class FunctionLikeHandler implements CreatesScope
             $parentConstructorArguments = $parentConstructorDefinition->type->arguments;
 
             foreach ($callToParentConstruct->expr->args as $index => $arg) {
-                if (! $arg->value instanceof Node\Expr\Variable) {
-                    continue;
-                }
+                $argName = $arg->name
+                    ? ($arg->name instanceof Node\Identifier ? $arg->name->toString() : null)
+                    : null;
 
                 $correspondingParentArgumentType = $arg->name
                     ? ($parentConstructorArguments[$arg->name->toString()] ?? null)
                     : (array_values($parentConstructorArguments)[$index] ?? null);
 
                 if (! $correspondingParentArgumentType) {
+                    continue;
+                }
+
+                if (! $arg->value instanceof Node\Expr\Variable) {
+                    $type = TypeHelper::getArgType($scope, $callToParentConstruct->expr->args, [$argName, $index]);
+
+                    if ($correspondingParentArgumentType instanceof TemplateType) {
+                        $knownTypesAssignedToProperties[$correspondingParentArgumentType->name] = $type;
+                    }
+
                     continue;
                 }
 
@@ -223,7 +240,7 @@ class FunctionLikeHandler implements CreatesScope
                 && ($argumentsByKeys[$s->expr->expr->name] ?? false),
         );
 
-        return array_reduce($assignPropertiesToThisNodes, function ($acc, Node\Stmt\Expression $s) use ($scope) {
+        $argumentsAssignedToProperties = array_reduce($assignPropertiesToThisNodes, function ($acc, Node\Stmt\Expression $s) use ($scope) {
             $propName = $s->expr->var->name->name;
 
             if (! array_key_exists($propName, $scope->classDefinition()->properties)) {
@@ -234,5 +251,27 @@ class FunctionLikeHandler implements CreatesScope
 
             return $acc;
         }, $argumentsAssignedToProperties);
+
+        return [$argumentsAssignedToProperties, $knownTypesAssignedToProperties];
+    }
+
+    private function assignKnownTypesAsPropertiesDefaults(Scope $scope, array $knownTypesAssignedToTemplates)
+    {
+        if (! $scope->isInClass() || !$scope->isInFunction()) {
+            return;
+        }
+
+        if ($scope->functionDefinition()->type->name !== '__construct') {
+            return;
+        }
+
+        foreach ($knownTypesAssignedToTemplates as $templateName => $knownType) {
+            foreach ($scope->classDefinition()->properties as $propertyDefinition) {
+                // @todo FIX consider assigning properties default types by property name, not by template type - it simply makes more sense.
+                if ($propertyDefinition->type instanceof TemplateType && $propertyDefinition->type->name === $templateName) {
+                    $propertyDefinition->defaultType = $knownType;
+                }
+            }
+        }
     }
 }

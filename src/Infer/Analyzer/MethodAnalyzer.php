@@ -40,6 +40,8 @@ class MethodAnalyzer
 
         $methodDefinition->isFullyAnalyzed = true;
 
+//        dump($methodDefinition);
+
         return $methodDefinition;
     }
 

@@ -37,10 +37,14 @@ class ClassAnalyzer
 //            dd($parentDefinition, $name);
         }
 
+        /*
+         * @todo consider more advanced cloning implementation.
+         * Currently just cloning property definition feels alright as only its `defaultType` may change.
+         */
         $classDefinition = new ClassDefinition(
             name: $name,
             templateTypes: $parentDefinition?->templateTypes ?: [],
-            properties: $parentDefinition?->properties ?: [],
+            properties: array_map(fn ($pd) => clone $pd, $parentDefinition?->properties ?: []),
             methods: $parentDefinition?->methods ?: [],
             parentFqn: $parentName ?? null,
         );
@@ -86,6 +90,8 @@ class ClassAnalyzer
                 definingClassName: $name,
             );
         }
+
+//        dump($classDefinition);
 
         $this->index->registerClassDefinition($classDefinition);
 

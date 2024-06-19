@@ -329,11 +329,15 @@ class ReferenceTypeResolver
         }
 
         $classDefinition = $this->index->getClassDefinition($type->name);
-//        dd($classDefinition);
 
         if (! $classDefinition->templateTypes) {
             return new ObjectType($type->name);
         }
+
+        // Constructor method must be analyzed before getting default property types, as property defaults may be set in
+        // a constructor by calling parent::__construct(...).
+
+        $constructorDefinition = $classDefinition->getMethodDefinition('__construct', $scope);
 
         $propertyDefaultTemplateTypes = collect($classDefinition->properties)
             ->filter(fn (ClassPropertyDefinition $definition) => $definition->type instanceof TemplateType && (bool) $definition->defaultType)
@@ -343,7 +347,7 @@ class ReferenceTypeResolver
 
         $inferredConstructorParamTemplates = collect($this->resolveTypesTemplatesFromArguments(
             $classDefinition->templateTypes,
-            $classDefinition->getMethodDefinition('__construct', $scope)->type->arguments ?? [],
+            $constructorDefinition->type->arguments ?? [],
             $this->prepareArguments($classDefinition->getMethodDefinition('__construct', $scope), $type->arguments),
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
 
