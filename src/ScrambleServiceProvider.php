@@ -67,7 +67,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(Index::class, function () {
             $index = new Index();
-            foreach ((require 'dictionaries/classMap.php') ?: [] as $className => $serializedClassDefinition) {
+            foreach ((require __DIR__.'/../dictionaries/classMap.php') ?: [] as $className => $serializedClassDefinition) {
                 $index->classesDefinitions[$className] = unserialize($serializedClassDefinition);
             }
 
