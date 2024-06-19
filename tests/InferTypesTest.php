@@ -47,8 +47,6 @@ it('infers model type', function () {
     $type = new ObjectType(SamplePostModel::class);
     $openApiType = $extension->toSchema($type);
 
-    dd($openApiType, $components);
-
     expect($components->schemas)->toHaveLength(2)->toHaveKeys([SamplePostModel::class, SampleUserModel::class]);
     assertMatchesSnapshot($openApiType->toArray());
 });
