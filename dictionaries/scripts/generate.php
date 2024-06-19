@@ -1,5 +1,9 @@
 <?php
 
+use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Services\FileParser;
+use PhpParser\ParserFactory;
+
 include 'vendor/autoload.php';
 
 $classes = [
@@ -8,6 +12,13 @@ $classes = [
     \Symfony\Component\HttpKernel\Exception\HttpException::class,
 ];
 
+app()->singleton(FileParser::class, function () {
+    return new FileParser(
+        (new ParserFactory)->createForHostVersion()
+    );
+});
+app()->singleton(Index::class);
+
 $classesDefinitions = [];
 foreach ($classes as $className) {
     $classesDefinitions[$className] = generateClassDefinitionInitialization($className);
@@ -15,9 +26,12 @@ foreach ($classes as $className) {
 
 function generateClassDefinitionInitialization(string $name)
 {
-    $classAnalyzer = new \Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer(
-        new \Dedoc\Scramble\Infer\Scope\Index(),
-    );
+    $classAnalyzer = app(\Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer::class);
+
+    $classDefinition = $classAnalyzer->analyze($name);
+    foreach ($classDefinition->methods as $methodName => $method) {
+        $classDefinition->getMethodDefinition($methodName);
+    }
 
     return serialize($classAnalyzer->analyze($name));
 }

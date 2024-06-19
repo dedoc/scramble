@@ -34,8 +34,13 @@ class MethodReflector
     {
         $reflection = $this->getReflection();
 
+        // The class may be a part of standard PHP classes.
+        if (! $path = $reflection->getFileName()) {
+            return '';
+        }
+
         return implode("\n", array_slice(
-            preg_split('/\r\n|\r|\n/', file_get_contents($reflection->getFileName())),
+            preg_split('/\r\n|\r|\n/', file_get_contents($path)),
             $reflection->getStartLine() - 1,
             $reflection->getStartLine() === $reflection->getEndLine() ? 1 : max($reflection->getEndLine() - $reflection->getStartLine(), 1) + 1,
         ));

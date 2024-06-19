@@ -28,7 +28,7 @@ class ResponseExtension extends OperationExtension
 
         $responses = collect($returnTypes)
             ->merge(optional($routeInfo->getMethodType())->exceptions ?: [])
-            ->map(fn ($returnType) => $this->openApiTransformer->toResponse($returnType))
+            ->map($this->openApiTransformer->toResponse(...))
             ->filter();
 
         [$responses, $references] = $responses->partition(fn ($r) => $r instanceof Response);

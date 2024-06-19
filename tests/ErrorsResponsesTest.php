@@ -90,10 +90,8 @@ it('adds validation error response when documented in phpdoc', function () {
 it('adds http error response exception extending HTTP exception is thrown', function () {
     $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'custom_exception_response']));
 
-    dd($openApiDocument);
-
-    assertMatchesSnapshot($openApiDocument);
-})->skip();
+    expect($openApiDocument['paths']['/test']['get']['responses'][409])->toHaveKey('content.application/json.schema.type', 'object');
+});
 class ErrorsResponsesTest_Controller extends Controller
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
