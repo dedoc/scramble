@@ -223,7 +223,7 @@ class FunctionLikeHandler implements CreatesScope
                 && ($argumentsByKeys[$s->expr->expr->name] ?? false),
         );
 
-        $argumentsAssignedToProperties = array_reduce($assignPropertiesToThisNodes, function ($acc, Node\Stmt\Expression $s) use ($scope) {
+        return array_reduce($assignPropertiesToThisNodes, function ($acc, Node\Stmt\Expression $s) use ($scope) {
             $propName = $s->expr->var->name->name;
 
             if (! array_key_exists($propName, $scope->classDefinition()->properties)) {
@@ -234,7 +234,5 @@ class FunctionLikeHandler implements CreatesScope
 
             return $acc;
         }, $argumentsAssignedToProperties);
-
-        return $argumentsAssignedToProperties;
     }
 }
