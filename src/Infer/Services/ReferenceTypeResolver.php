@@ -27,6 +27,7 @@ use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\SelfType;
+use Dedoc\Scramble\Support\Type\SideEffects\ParentConstructCall;
 use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -34,6 +35,7 @@ use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class ReferenceTypeResolver
@@ -348,10 +350,11 @@ class ReferenceTypeResolver
         $inferredConstructorParamTemplates = collect($this->resolveTypesTemplatesFromArguments(
             $classDefinition->templateTypes,
             $constructorDefinition->type->arguments ?? [],
-            $this->prepareArguments($classDefinition->getMethodDefinition('__construct', $scope), $type->arguments),
+            $this->prepareArguments($constructorDefinition, $type->arguments),
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
 
-        $inferredTemplates = $propertyDefaultTemplateTypes
+        $inferredTemplates = $this->getParentConstructCallsTypes($classDefinition, $constructorDefinition)
+            ->merge($propertyDefaultTemplateTypes)
             ->merge($inferredConstructorParamTemplates);
 
         return new Generic(
@@ -557,5 +560,38 @@ class ReferenceTypeResolver
             StaticReference::STATIC => $scope->context->classDefinition?->name,
             StaticReference::PARENT => $scope->context->classDefinition?->parentFqn,
         };
+    }
+
+    /**
+     * @return Collection<string, Type> The key is a template type name and a value is a resulting type.
+     */
+    private function getParentConstructCallsTypes(ClassDefinition $classDefinition, ?FunctionLikeDefinition $constructorDefinition): Collection
+    {
+        if (! $constructorDefinition) {
+            return collect();
+        }
+
+        /** @var ParentConstructCall $firstParentConstructorCall */
+        $firstParentConstructorCall = collect($constructorDefinition->sideEffects)->first(fn ($se) => $se instanceof ParentConstructCall);
+
+        if (! $firstParentConstructorCall) {
+            return collect();
+        }
+
+        if (! $classDefinition->parentFqn) {
+            return collect();
+        }
+
+        $parentClassDefinition = $this->index->getClassDefinition($classDefinition->parentFqn);
+
+        $templateArgs = collect($this->resolveTypesTemplatesFromArguments(
+            $parentClassDefinition->templateTypes,
+            $parentClassDefinition->getMethodDefinition('__construct')?->type->arguments ?? [],
+            $this->prepareArguments($parentClassDefinition->getMethodDefinition('__construct'), $firstParentConstructorCall->arguments),
+        ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
+
+        return $this
+            ->getParentConstructCallsTypes($parentClassDefinition, $parentClassDefinition->getMethodDefinition('__construct'))
+            ->merge($templateArgs);
     }
 }

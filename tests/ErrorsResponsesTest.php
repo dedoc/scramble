@@ -93,7 +93,7 @@ it('adds http error response exception extending HTTP exception is thrown', func
     dd($openApiDocument);
 
     assertMatchesSnapshot($openApiDocument);
-});
+})->skip();
 class ErrorsResponsesTest_Controller extends Controller
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;

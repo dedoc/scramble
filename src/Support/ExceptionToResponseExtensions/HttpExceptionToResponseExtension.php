@@ -38,8 +38,6 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
             return null;
         }
 
-        dd($type);
-
         $responseBodyType = (new OpenApiTypes\ObjectType())
             ->addProperty(
                 'message',

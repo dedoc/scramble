@@ -47,9 +47,6 @@ class ClassAnalyzer
         $classReflection = new ReflectionClass($name);
 
         $parentDefinition = null;
-        if ($classReflection->getParentClass()/** && ! str_contains($classReflection->getParentClass()->getFileName(), '/vendor/')*/) {
-            $parentDefinition = $this->analyze($parentName = $classReflection->getParentClass()->name);
-        }
         if ($classReflection->getParentClass() && $this->shouldAnalyzeParentClass($classReflection->getParentClass())) {
             $parentDefinition = $this->analyze($parentName = $classReflection->getParentClass()->name);
         }

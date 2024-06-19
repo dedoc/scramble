@@ -257,7 +257,7 @@ class FunctionLikeHandler implements CreatesScope
 
     private function assignKnownTypesAsPropertiesDefaults(Scope $scope, array $knownTypesAssignedToTemplates)
     {
-        if (! $scope->isInClass() || !$scope->isInFunction()) {
+        if (!$scope->isInClass() || !$scope->isInFunction()) {
             return;
         }
 
