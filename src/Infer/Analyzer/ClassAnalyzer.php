@@ -12,15 +12,12 @@ use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use ReflectionClass;
 
 class ClassAnalyzer
 {
-    public function __construct(private Index $index)
-    {
-    }
+    public function __construct(private Index $index) {}
 
     private function shouldAnalyzeParentClass(ReflectionClass $parentClassReflection): bool
     {

@@ -70,6 +70,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             foreach ((require 'dictionaries/classMap.php') ?: [] as $className => $serializedClassDefinition) {
                 $index->classesDefinitions[$className] = unserialize($serializedClassDefinition);
             }
+
             return $index;
         });
 

@@ -394,7 +394,5 @@ class ControllerWithoutSecurity
     /**
      * @unauthenticated
      */
-    public function index()
-    {
-    }
+    public function index() {}
 }

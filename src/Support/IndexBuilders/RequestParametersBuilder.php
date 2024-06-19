@@ -28,9 +28,7 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RequestParametersBuilder
 {
-    public function __construct(public Bag $bag)
-    {
-    }
+    public function __construct(public Bag $bag) {}
 
     public function afterAnalyzedNode(Scope $scope, Node $node)
     {

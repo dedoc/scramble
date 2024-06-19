@@ -13,8 +13,7 @@ class ObjectType extends AbstractType
 {
     public function __construct(
         public string $name,
-    ) {
-    }
+    ) {}
 
     public function isInstanceOf(string $className)
     {

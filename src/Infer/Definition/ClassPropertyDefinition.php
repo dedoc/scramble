@@ -9,6 +9,5 @@ class ClassPropertyDefinition
     public function __construct(
         public Type $type,
         public ?Type $defaultType = null,
-    ) {
-    }
+    ) {}
 }

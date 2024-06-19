@@ -11,8 +11,7 @@ class TermsOfContentItem implements Component
     public function __construct(
         public string $right,
         public ?string $left = null,
-    ) {
-    }
+    ) {}
 
     public function render(OutputStyle $style): void
     {

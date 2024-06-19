@@ -13,8 +13,7 @@ class GeneratorConfig
         private array $config = [],
         private ?Closure $routeResolver = null,
         private ?Closure $afterOpenApiGenerated = null,
-    ) {
-    }
+    ) {}
 
     public function config(array $config)
     {

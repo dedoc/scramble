@@ -34,8 +34,7 @@ class Generator
         private ServerFactory $serverFactory,
         private FileParser $fileParser,
         private Infer $infer
-    ) {
-    }
+    ) {}
 
     public function setThrowExceptions(bool $throwExceptions): static
     {

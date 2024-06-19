@@ -13,7 +13,8 @@ foreach ($classes as $className) {
     $classesDefinitions[$className] = generateClassDefinitionInitialization($className);
 }
 
-function generateClassDefinitionInitialization(string $name) {
+function generateClassDefinitionInitialization(string $name)
+{
     $classAnalyzer = new \Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer(
         new \Dedoc\Scramble\Infer\Scope\Index(),
     );

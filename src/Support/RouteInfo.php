@@ -156,9 +156,7 @@ class RouteInfo
         {
             public int $count = 0;
 
-            public function enter(Type $type)
-            {
-            }
+            public function enter(Type $type) {}
 
             public function leave(Type $type)
             {
