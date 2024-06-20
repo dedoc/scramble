@@ -86,6 +86,12 @@ it('adds validation error response when documented in phpdoc', function () {
 
     assertMatchesSnapshot($openApiDocument);
 });
+
+it('adds http error response exception extending HTTP exception is thrown', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'custom_exception_response']));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][409])->toHaveKey('content.application/json.schema.type', 'object');
+});
 class ErrorsResponsesTest_Controller extends Controller
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
@@ -118,6 +124,19 @@ class ErrorsResponsesTest_Controller extends Controller
      * @throws \Illuminate\Validation\ValidationException
      */
     public function phpdoc_exception_response(Illuminate\Http\Request $request) {}
+
+    public function custom_exception_response(Illuminate\Http\Request $request)
+    {
+        throw new BusinessException('The business error');
+    }
+}
+
+class BusinessException extends \Symfony\Component\HttpKernel\Exception\HttpException
+{
+    public function __construct(string $message = '', ?\Throwable $previous = null, array $headers = [], int $code = 0)
+    {
+        parent::__construct(409, $message, $previous, $headers, $code);
+    }
 }
 
 class UserModel_ErrorsResponsesTest extends \Illuminate\Database\Eloquent\Model {}

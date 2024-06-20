@@ -25,9 +25,14 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
      */
     public function toResponse(Type $type)
     {
-        if (! $codeType = $type->templateTypes[0] ?? null) {
-            return null;
-        }
+        /*
+         * So you (Roman from future) are wondering what 7 or 0 is.
+         * When index is 7 – the type is honestly inferred – this the index of `TCode` template.
+         * When index is 0 - the type is manually constructed in other extensions.
+         */
+        $codeType = count($type->templateTypes ?? []) > 3
+            ? ($type->templateTypes[7] ?? null)
+            : ($type->templateTypes[0] ?? null);
 
         if (! $codeType instanceof LiteralIntegerType) {
             return null;

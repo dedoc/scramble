@@ -13,28 +13,49 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
+use ReflectionClass;
 
 class ClassAnalyzer
 {
     public function __construct(private Index $index) {}
 
+    private function shouldAnalyzeParentClass(ReflectionClass $parentClassReflection): bool
+    {
+        if ($this->index->getClassDefinition($parentClassReflection->name)) {
+            return true;
+        }
+
+        /*
+         * Classes from `vendor` aren't analyzed at the moment. Instead, it is up to developers to provide
+         * definitions for them using the dictionaries.
+         */
+        return ! str_contains($parentClassReflection->getFileName(), '/vendor/');
+    }
+
+    /**
+     * @throws \ReflectionException
+     */
     public function analyze(string $name): ClassDefinition
     {
         if ($definition = $this->index->getClassDefinition($name)) {
             return $definition;
         }
 
-        $classReflection = new \ReflectionClass($name);
+        $classReflection = new ReflectionClass($name);
 
         $parentDefinition = null;
-        if ($classReflection->getParentClass() && ! str_contains($classReflection->getParentClass()->getFileName(), '/vendor/')) {
+        if ($classReflection->getParentClass() && $this->shouldAnalyzeParentClass($classReflection->getParentClass())) {
             $parentDefinition = $this->analyze($parentName = $classReflection->getParentClass()->name);
         }
 
+        /*
+         * @todo consider more advanced cloning implementation.
+         * Currently just cloning property definition feels alright as only its `defaultType` may change.
+         */
         $classDefinition = new ClassDefinition(
             name: $name,
             templateTypes: $parentDefinition?->templateTypes ?: [],
-            properties: $parentDefinition?->properties ?: [],
+            properties: array_map(fn ($pd) => clone $pd, $parentDefinition?->properties ?: []),
             methods: $parentDefinition?->methods ?: [],
             parentFqn: $parentName ?? null,
         );
