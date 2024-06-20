@@ -30,7 +30,7 @@ class ResponseExtension extends OperationExtension
             ->merge(optional($routeInfo->getMethodType())->exceptions ?: [])
             ->map($this->openApiTransformer->toResponse(...))
             ->filter()
-            ->unique(fn ($s) => json_encode($s->toArray()))
+            ->unique(fn ($response) => ($response instanceof Response ? $response->code : 'ref').':'.json_encode($response->toArray()))
             ->values();
 
         [$responses, $references] = $responses->partition(fn ($r) => $r instanceof Response);
@@ -42,18 +42,22 @@ class ResponseExtension extends OperationExtension
                     return $responses->first();
                 }
 
+                // @todo: Responses with similar code and type should result in a different example schemas.
+
+                $responsesTypes = $responses->pluck('content.application/json.type')
+                    /*
+                     * Empty response body can happen, and in case it is going to be grouped
+                     * by status, it should become an empty string.
+                     */
+                    ->map(fn ($type) => $type ?: new OpenApiTypes\StringType)
+                    ->unique(fn ($type) => json_encode($type->toArray()))
+                    ->all();
+
                 return Response::make((int) $code)
+                    ->description($responses->first()->description)
                     ->setContent(
                         'application/json',
-                        Schema::fromType((new AnyOf)->setItems(
-                            $responses->pluck('content.application/json.type')
-                                /*
-                                 * Empty response body can happen, and in case it is going to be grouped
-                                 * by status, it should become an empty string.
-                                 */
-                                ->map(fn ($type) => $type ?: new OpenApiTypes\StringType)
-                                ->all()
-                        ))
+                        Schema::fromType(count($responsesTypes) > 1 ? (new AnyOf)->setItems($responsesTypes) : $responsesTypes[0])
                     );
             })
             ->values()
