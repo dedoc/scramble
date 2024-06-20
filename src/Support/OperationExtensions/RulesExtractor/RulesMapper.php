@@ -24,14 +24,14 @@ class RulesMapper
         $this->openApiTransformer = $openApiTransformer;
     }
 
-    public function string(Type $_)
+    public function string(Type $prevType)
     {
-        return new StringType;
+        return (new StringType)->addProperties($prevType);
     }
 
-    public function bool(Type $_)
+    public function bool(Type $prevType)
     {
-        return new BooleanType;
+        return (new BooleanType)->addProperties($prevType);
     }
 
     public function boolean(Type $_)
@@ -39,14 +39,14 @@ class RulesMapper
         return $this->bool($_);
     }
 
-    public function numeric(Type $_)
+    public function numeric(Type $prevType)
     {
-        return new NumberType;
+        return (new NumberType)->addProperties($prevType);
     }
 
-    public function int(Type $_)
+    public function int(Type $prevType)
     {
-        return new IntegerType;
+        return (new IntegerType)->addProperties($prevType);
     }
 
     public function integer(Type $_)
