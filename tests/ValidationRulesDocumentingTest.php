@@ -212,6 +212,21 @@ it('converts max rule into "maxItems" for array fields', function () {
         ->toHaveKey('maxItems', 8);
 });
 
+it('documents nullable uri rule', function () {
+    $rules = [
+        'page_url' => ['nullable', 'url'],
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    expect($params = collect($params)->all())
+        ->toHaveCount(1)
+        ->and($params[0]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toHaveProperty('format', 'uri')
+        ->toHaveProperty('nullable', true);
+});
+
 it('extracts rules from request->validate call', function () {
     RouteFacade::get('api/test', [ValidationRulesDocumenting_Test::class, 'index']);
 
