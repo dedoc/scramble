@@ -326,7 +326,11 @@ class ReferenceTypeResolver
             ! array_key_exists($type->name, $this->index->classesDefinitions)
             && ! $this->resolveUnknownClassResolver($type->name)
         ) {
-            return new UnknownType();
+            /*
+             * Usually in this case we want to return UnknownType. But we certainly know that using `new` will produce
+             * an object of a type being created.
+             */
+            return new ObjectType($type->name);
         }
 
         $classDefinition = $this->index->getClassDefinition($type->name);
