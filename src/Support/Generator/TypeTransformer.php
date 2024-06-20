@@ -162,7 +162,8 @@ class TypeTransformer
                     );
                 }
 
-                $openApiType = count($items) === 1 ? $items[0] : (new AnyOf)->setItems($items);
+                $uniqueItems = collect($items)->unique(fn ($i) => json_encode($i->toArray()))->values()->all();
+                $openApiType = count($uniqueItems) === 1 ? $uniqueItems[0] : (new AnyOf)->setItems($uniqueItems);
             }
         } elseif ($type instanceof LiteralStringType) {
             $openApiType = (new StringType())->example($type->value);
