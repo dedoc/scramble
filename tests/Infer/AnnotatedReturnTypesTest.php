@@ -15,6 +15,7 @@ EOD)->getFunctionDefinition('foo');
     ['Foo_AnnotatedReturnTypesTest', '42', 'Foo_AnnotatedReturnTypesTest'],
 ]);
 
-class Foo_AnnotatedReturnTypesTest {
-    public function __construct(private int $wow){}
+class Foo_AnnotatedReturnTypesTest
+{
+    public function __construct(private int $wow) {}
 }
