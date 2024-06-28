@@ -22,9 +22,7 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RouteResponseTypeRetriever
 {
-    public function __construct(private RouteInfo $routeInfo)
-    {
-    }
+    public function __construct(private RouteInfo $routeInfo) {}
 
     public function getResponseType()
     {
