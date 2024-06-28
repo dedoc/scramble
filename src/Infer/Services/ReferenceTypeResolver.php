@@ -56,7 +56,11 @@ class ReferenceTypeResolver
             $functionType->setReturnType($resolvedReference);
         }
 
-        if ($annotatedReturnType = $functionType->getAttribute('returnTypeAnnotation')) {
+        if ($annotatedReturnType = $functionType->getAttribute('annotatedReturnType')) {
+            if (! $functionType->getAttribute('inferredReturnType')) {
+                $functionType->setAttribute('inferredReturnType', clone $functionType->getReturnType());
+            }
+
             $functionType->setReturnType(
                 $this->addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType)
             );
