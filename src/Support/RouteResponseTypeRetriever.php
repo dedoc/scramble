@@ -28,6 +28,10 @@ class RouteResponseTypeRetriever
 
     public function getResponseType()
     {
+        if (! $this->routeInfo->getMethodType()) {
+            return null;
+        }
+
         if ($manuallyDefinedType = $this->getManuallyDefinedType()) {
             return $manuallyDefinedType;
         }
