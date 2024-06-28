@@ -14,6 +14,19 @@ class ArrayType extends AbstractType
         return ['value', 'key'];
     }
 
+    public function accepts(Type $otherType): bool
+    {
+        if (parent::accepts($otherType)) {
+            return true;
+        }
+
+        if ($otherType instanceof KeyedArrayType) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function isSame(Type $type)
     {
         return false;

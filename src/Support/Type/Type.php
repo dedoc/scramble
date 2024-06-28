@@ -16,6 +16,8 @@ interface Type
 
     public function isInstanceOf(string $className);
 
+    public function accepts(Type $otherType): bool;
+
     public function nodes(): array;
 
     public function getPropertyType(string $propertyName, Scope $scope): Type;
