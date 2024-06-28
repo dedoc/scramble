@@ -20,6 +20,7 @@ use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeTraverser;
 use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -208,8 +209,40 @@ class RouteInfo
             return null;
         }
 
-        return (new ObjectType($this->reflectionMethod()->getDeclaringClass()->getName()))
+        $inferredType = (new ObjectType($this->reflectionMethod()->getDeclaringClass()->getName()))
             ->getMethodReturnType($this->methodName());
+
+        $inferredTypes = $inferredType instanceof Union
+            ? $inferredType->types
+            : [$inferredType];
+
+        /*
+         * Despite us respecting manually annotated type, there may be an inferred type that contains more information
+         * than annotated type. In fact, any inferred type will contain more information than annotated type. Hence,
+         * we want to make sure that we omit annotated type.
+         */
+        if (
+            ($annotationType = $this->getMethodType()->getAttribute('returnTypeAnnotation'))
+            && ! $this->inferredTypesContainMoreConcreteAnnotatedType($inferredTypes, $annotationType)
+        ) {
+            $inferredTypes = [$annotationType, ...$inferredTypes];
+        }
+
+
+        return Union::wrap($inferredTypes);
+    }
+
+    private function inferredTypesContainMoreConcreteAnnotatedType(array $inferredTypes, Type $annotationType): bool
+    {
+        return (bool) collect($inferredTypes)
+            ->filter()
+            ->first(function ($t) use ($annotationType) {
+                if ($t instanceof ObjectType && $annotationType instanceof ObjectType) {
+                    return is_a($t->name, $annotationType->name, true);
+                }
+
+                return is_a($t::class, $annotationType::class, true);
+            });
     }
 
     /**

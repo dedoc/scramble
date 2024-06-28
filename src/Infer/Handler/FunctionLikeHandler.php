@@ -147,6 +147,10 @@ class FunctionLikeHandler implements CreatesScope
             $fnDefinition->type->setReturnType(TypeHelper::createTypeFromTypeNode($returnTypeAnnotation) ?: new VoidType);
         }
 
+        if ($returnTypeAnnotation = $node->getReturnType()) {
+            $fnDefinition->type->setAttribute('returnTypeAnnotation', TypeHelper::createTypeFromTypeNode($returnTypeAnnotation));
+        }
+
         // Simple way of handling the arrow functions, as they do not have a return statement.
         // So here we just create a "virtual" return and processing it as by default.
         if ($node instanceof Node\Expr\ArrowFunction) {
