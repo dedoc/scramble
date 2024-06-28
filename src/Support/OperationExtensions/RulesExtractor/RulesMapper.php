@@ -115,7 +115,11 @@ class RulesMapper
 
     public function min(Type $type, $params)
     {
-        if ($type instanceof NumberType || $type instanceof ArrayType) {
+        if (
+            $type instanceof NumberType
+            || $type instanceof ArrayType
+            || $type instanceof StringType
+        ) {
             $type->setMin((float) $params[0]);
         }
 
@@ -124,7 +128,11 @@ class RulesMapper
 
     public function max(Type $type, $params)
     {
-        if ($type instanceof NumberType || $type instanceof ArrayType) {
+        if (
+            $type instanceof NumberType
+            || $type instanceof ArrayType
+            || $type instanceof StringType
+        ) {
             $type->setMax((float) $params[0]);
         }
 

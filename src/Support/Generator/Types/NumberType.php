@@ -4,9 +4,9 @@ namespace Dedoc\Scramble\Support\Generator\Types;
 
 class NumberType extends Type
 {
-    private $min = null;
+    public $min = null;
 
-    private $max = null;
+    public $max = null;
 
     public function __construct($type = 'number')
     {
