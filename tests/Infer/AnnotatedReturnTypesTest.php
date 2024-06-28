@@ -10,8 +10,8 @@ EOD)->getFunctionDefinition('foo');
 
     expect($type->type->returnType->toString())->toBe($expectedInferredReturnTypeString);
 })->with([
-//    ['Foo_AnnotatedReturnTypesTest', 'new Foo_AnnotatedReturnTypesTest(42)', 'Foo_AnnotatedReturnTypesTest<int(42)>'],
-//    ['int', 'new Foo_AnnotatedReturnTypesTest(42)', 'int'],
+    ['Foo_AnnotatedReturnTypesTest', 'new Foo_AnnotatedReturnTypesTest(42)', 'Foo_AnnotatedReturnTypesTest<int(42)>'],
+    ['int', 'new Foo_AnnotatedReturnTypesTest(42)', 'int'],
     ['Foo_AnnotatedReturnTypesTest', '42', 'Foo_AnnotatedReturnTypesTest'],
 ]);
 

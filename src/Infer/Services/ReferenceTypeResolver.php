@@ -62,16 +62,21 @@ class ReferenceTypeResolver
             }
 
             $functionType->setReturnType(
-                $this->addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType)
+                $this->addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType, $scope)
             );
         }
     }
 
-    private function addAnnotatedReturnType(Type $inferredReturnType, Type $annotatedReturnType): Type
+    private function addAnnotatedReturnType(Type $inferredReturnType, Type $annotatedReturnType, Scope $scope): Type
     {
         $types = $inferredReturnType instanceof Union
             ? $inferredReturnType->types
             : [$inferredReturnType];
+
+        // @todo: Handle case when annotated return type is union.
+        if ($annotatedReturnType instanceof ObjectType) {
+            $annotatedReturnType->name = $this->resolveClassName($scope, $annotatedReturnType->name);
+        }
 
         $annotatedTypeCanAcceptAnyInferredType = collect($types)
             ->some(fn (Type $t) => $annotatedReturnType->accepts($t));
