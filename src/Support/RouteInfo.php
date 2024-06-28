@@ -20,7 +20,6 @@ use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeTraverser;
 use Dedoc\Scramble\Support\Type\TypeWalker;
-use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -209,26 +208,8 @@ class RouteInfo
             return null;
         }
 
-        $inferredType = (new ObjectType($this->reflectionMethod()->getDeclaringClass()->getName()))
+        return (new ObjectType($this->reflectionMethod()->getDeclaringClass()->getName()))
             ->getMethodReturnType($this->methodName());
-
-        $inferredTypes = $inferredType instanceof Union
-            ? $inferredType->types
-            : [$inferredType];
-
-        /*
-         * Despite us respecting manually annotated type, there may be an inferred type that contains more information
-         * than annotated type. In fact, any inferred type will contain more information than annotated type. Hence,
-         * we want to make sure that we omit annotated type.
-         */
-        if (
-            ($annotationType = $this->getMethodType()->getAttribute('returnTypeAnnotation'))
-            && ! $this->inferredTypesContainMoreConcreteAnnotatedType($inferredTypes, $annotationType)
-        ) {
-            $inferredTypes = [$annotationType, ...$inferredTypes];
-        }
-
-        return Union::wrap($inferredTypes);
     }
 
     private function inferredTypesContainMoreConcreteAnnotatedType(array $inferredTypes, Type $annotationType): bool

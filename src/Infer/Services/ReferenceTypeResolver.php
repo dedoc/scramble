@@ -12,6 +12,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -47,6 +48,36 @@ class ReferenceTypeResolver
     public static function getInstance(): static
     {
         return app(static::class);
+    }
+
+    public function resolveFunctionReturnReferences(Scope $scope, FunctionType $functionType): void
+    {
+        if (static::hasResolvableReferences($returnType = $functionType->getReturnType())) {
+            $resolvedReference = $this->resolve($scope, $returnType);
+            $functionType->setReturnType($resolvedReference);
+        }
+
+        if ($annotatedReturnType = $functionType->getAttribute('returnTypeAnnotation')) {
+//            $functionType->setReturnType(
+//                $this->addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType)
+//            );
+        }
+    }
+
+    private function addAnnotatedReturnType(Type $inferredReturnType, Type $annotatedReturnType): Type
+    {
+        $types = $inferredReturnType instanceof Union
+            ? $inferredReturnType->types
+            : [$inferredReturnType];
+
+        $annotatedTypeCanAcceptAnyInferredType = collect($types)
+            ->some(fn (Type $t) => $annotatedReturnType->accepts($t));
+
+        if (! $annotatedTypeCanAcceptAnyInferredType) {
+            $types = [$annotatedReturnType];
+        }
+
+        return Union::wrap($types)->mergeAttributes($inferredReturnType->attributes());
     }
 
     public static function hasResolvableReferences(Type $type): bool

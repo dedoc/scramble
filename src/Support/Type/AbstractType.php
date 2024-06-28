@@ -20,6 +20,11 @@ abstract class AbstractType implements Type
         return false;
     }
 
+    public function accepts(Type $otherType): bool
+    {
+        return is_a($this::class, $otherType::class, true);
+    }
+
     public function getPropertyType(string $propertyName, Scope $scope): Type
     {
         $className = $this::class;
