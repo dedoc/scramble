@@ -228,7 +228,6 @@ class RouteInfo
             $inferredTypes = [$annotationType, ...$inferredTypes];
         }
 
-
         return Union::wrap($inferredTypes);
     }
 
