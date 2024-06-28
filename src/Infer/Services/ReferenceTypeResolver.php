@@ -58,9 +58,9 @@ class ReferenceTypeResolver
         }
 
         if ($annotatedReturnType = $functionType->getAttribute('returnTypeAnnotation')) {
-//            $functionType->setReturnType(
-//                $this->addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType)
-//            );
+            $functionType->setReturnType(
+                $this->addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType)
+            );
         }
     }
 

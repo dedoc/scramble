@@ -212,19 +212,6 @@ class RouteInfo
             ->getMethodReturnType($this->methodName());
     }
 
-    private function inferredTypesContainMoreConcreteAnnotatedType(array $inferredTypes, Type $annotationType): bool
-    {
-        return (bool) collect($inferredTypes)
-            ->filter()
-            ->first(function ($t) use ($annotationType) {
-                if ($t instanceof ObjectType && $annotationType instanceof ObjectType) {
-                    return is_a($t->name, $annotationType->name, true);
-                }
-
-                return is_a($t::class, $annotationType::class, true);
-            });
-    }
-
     /**
      * @todo Maybe better name is needed as this method performs method analysis, indexes building, etc.
      */

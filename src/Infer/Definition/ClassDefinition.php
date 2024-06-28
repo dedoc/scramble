@@ -70,7 +70,7 @@ class ClassDefinition
         );
 
         (new ReferenceTypeResolver($scope->index))
-            ->resolveFunctionReturnReferences($scope, $this->methods[$name]->type);
+            ->resolveFunctionReturnReferences($methodScope, $this->methods[$name]->type);
 
         foreach ($this->methods[$name]->type->exceptions as $i => $exceptionType) {
             if (ReferenceTypeResolver::hasResolvableReferences($exceptionType)) {
