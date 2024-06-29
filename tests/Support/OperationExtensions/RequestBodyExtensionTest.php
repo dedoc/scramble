@@ -197,8 +197,8 @@ it('extracts parameters, their defaults, and descriptions from calling request p
             'in' => 'query',
             'schema' => [
                 'type' => 'string',
+                'default' => 'foo',
             ],
-            'default' => 'foo',
         ]]);
 });
 class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_query
@@ -254,8 +254,10 @@ it('allows explicitly specifying parameter placement in query manually in doc', 
         ->toBe([[
             'name' => 'foo',
             'in' => 'query',
-            'schema' => ['type' => 'integer'],
-            'default' => 10,
+            'schema' => [
+                'type' => 'integer',
+                'default' => 10,
+            ],
         ]]);
 });
 class RequestBodyExtensionTest__allows_explicitly_specifying_parameter_placement_in_query_manually_in_doc
