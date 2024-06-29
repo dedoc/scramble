@@ -94,9 +94,10 @@ class RequestParametersBuilder
         $parameter
             ->description($this->makeDescriptionFromComments($commentHolderNode))
             ->setSchema(Schema::fromType(
-                app(TypeTransformer::class)->transform($parameterType)
-            ))
-            ->default($parameterDefault ?? new MissingExample);
+                app(TypeTransformer::class)
+                    ->transform($parameterType)
+                    ->default($parameterDefault ?? new MissingExample)
+            ));
 
         $this->bag->set($parameterName, $parameter);
     }
