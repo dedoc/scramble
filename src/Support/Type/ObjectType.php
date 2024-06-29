@@ -80,7 +80,7 @@ class ObjectType extends AbstractType
             return false;
         }
 
-        return is_a($this->name, $otherType->name, true);
+        return is_a($otherType->name, $this->name, true);
     }
 
     public function toString(): string

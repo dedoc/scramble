@@ -14,8 +14,13 @@ EOD)->getFunctionDefinition('foo');
     ['int', 'new Foo_AnnotatedReturnTypesTest(42)', 'int'],
     ['Foo_AnnotatedReturnTypesTest', '42', 'Foo_AnnotatedReturnTypesTest'],
 ]);
-
 class Foo_AnnotatedReturnTypesTest
 {
     public function __construct(private int $wow) {}
 }
+
+it('understands static keywords annotations', function () {
+    $type = getStatementType('(new Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\AnnotatedBar)->fooMethod()->build()');
+
+    expect($type->toString())->toBe('array{from: string(bar)}');
+});
