@@ -127,3 +127,31 @@ class Foo_TestFiveResource extends \Illuminate\Http\Resources\Json\JsonResource
         ];
     }
 }
+
+test('automated response status code inference when using ->response->setStatusCode method', function () {
+    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestSix::class, 'single']));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][201]['content']['application/json']['schema'])
+        ->toBe(['$ref' => '#/components/schemas/Foo_TestFiveResource']);
+});
+
+test('automated response status code inference when using collection ->response->setStatusCode method', function () {
+    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestSix::class, 'collection']));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][201]['content']['application/json']['schema'])
+        ->toBe([
+            'type' => 'array',
+            'items' => ['$ref' => '#/components/schemas/Foo_TestFiveResource'],
+        ]);
+});
+class Foo_TestSix
+{
+    public function single()
+    {
+        return (new Foo_TestFiveResource())->response()->setStatusCode(201);
+    }
+    public function collection()
+    {
+        return Foo_TestFiveResource::collection()->response()->setStatusCode(201);
+    }
+}

@@ -2,30 +2,28 @@
 
 namespace Dedoc\Scramble\Support\InferExtensions;
 
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
+use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
+use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Type;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Http\Resources\Json\ResourceCollection;
 
-class JsonResourceExtension
+class JsonResourceExtension implements MethodReturnTypeExtension
 {
-    public function shouldHandle(ClassDefinition $type)
+    public function shouldHandle(ObjectType $type): bool
     {
-        return $type->isInstanceOf(JsonResource::class)
-            && ! $type->isInstanceOf(ResourceCollection::class);
+        return $type->isInstanceOf(JsonResource::class);
     }
 
-    public function getPropertyType(PropertyFetchEvent $event)
+    public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
-        if ($event->getDefinition()->hasProperty($event->getName())) {
-            return null;
-        }
-
-        $modelType = $event->getInstance()->templateTypes[0];
-
-        if ($event->getName() === 'resource') {
-            return $modelType;
-        }
-
-        return $modelType->getPropertyType($event->getName());
+        return match($event->name) {
+            'response', 'toResponse' => new Generic(JsonResponse::class, [$event->getInstance(), new LiteralIntegerType(200), new ArrayType]),
+            default => null,
+        };
     }
 }
