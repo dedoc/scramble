@@ -287,12 +287,11 @@ class TypeTransformer
             $response->code = $code;
 
             if ($varType = $docNode->getVarTagValues()[0]->type ?? null) {
-                $response->setContent(
-                    'application/json',
-                    Schema::fromType($this->transform(
-                        PhpDocTypeHelper::toType($varType),
-                    ))
-                );
+                $type = PhpDocTypeHelper::toType($varType);
+
+                $typeResponse = $this->toResponse($type);
+
+                $response->setContent('application/json', $typeResponse->getContent('application/json'));
             }
         }
 
