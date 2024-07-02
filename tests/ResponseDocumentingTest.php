@@ -68,10 +68,7 @@ class Foo_TestThree
 }
 
 test('manually annotated responses support', function () {
-    \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestFour::class, 'index']);
-
-    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestFour::class, 'index']));
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -94,5 +91,39 @@ class Foo_TestFour
 
         // Simple comment.
         return response()->json(['foo' => 'bar']);
+    }
+}
+
+test('manually annotated responses resources support', function () {
+    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestFive::class, 'index']));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][200]['content']['application/json']['schema'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                'data' => ['$ref' => '#/components/schemas/Foo_TestFiveResource'],
+            ],
+            'required' => ['data'],
+        ]);
+});
+class Foo_TestFive
+{
+    public function index()
+    {
+        /**
+         * @body Foo_TestFiveResource
+         */
+        return response()->json(['foo' => 'bar']);
+    }
+}
+class Foo_TestFiveResource extends \Illuminate\Http\Resources\Json\JsonResource
+{
+    public static $wrap = 'data';
+
+    public function toArray(\Illuminate\Http\Request $request)
+    {
+        return [
+            'foo' => $this->id,
+        ];
     }
 }
