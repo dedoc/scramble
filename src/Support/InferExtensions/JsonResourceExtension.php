@@ -21,7 +21,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension
 
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
-        return match($event->name) {
+        return match ($event->name) {
             'response', 'toResponse' => new Generic(JsonResponse::class, [$event->getInstance(), new LiteralIntegerType(200), new ArrayType]),
             default => null,
         };

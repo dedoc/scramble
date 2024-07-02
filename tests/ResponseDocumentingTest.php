@@ -150,6 +150,7 @@ class Foo_TestSix
     {
         return (new Foo_TestFiveResource())->response()->setStatusCode(201);
     }
+
     public function collection()
     {
         return Foo_TestFiveResource::collection()->response()->setStatusCode(201);
