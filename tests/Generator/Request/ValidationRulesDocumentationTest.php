@@ -15,6 +15,28 @@ it('supports confirmed rule', function () {
         ->toMatchArray(['name' => 'password_confirmation']);
 });
 
+it('supports confirmed rule in array', function () {
+    $rules = [
+        'user.password' => ['required', 'min:8', 'confirmed'],
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'password' => ['type' => 'string', 'minLength' => 8],
+                    'password_confirmation' => ['type' => 'string', 'minLength' => 8],
+                ],
+                'required' => ['password', 'password_confirmation'],
+            ]
+        ]);
+});
+
 it('supports multiple confirmed rule', function () {
     $rules = [
         'password' => ['required', 'min:8', 'confirmed'],
