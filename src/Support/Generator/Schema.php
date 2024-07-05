@@ -46,7 +46,6 @@ class Schema
 
                 $paramType->setDescription($parameter->description);
                 $paramType->example($parameter->example);
-                $paramType->default($parameter->default);
 
                 $type->addProperty($parameter->name, $paramType);
             })

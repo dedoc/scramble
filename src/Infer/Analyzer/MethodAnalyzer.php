@@ -23,8 +23,7 @@ class MethodAnalyzer
     public function __construct(
         private Index $index,
         private ClassDefinition $classDefinition,
-    ) {
-    }
+    ) {}
 
     public function analyze(FunctionLikeDefinition $methodDefinition, array $indexBuilders = [])
     {

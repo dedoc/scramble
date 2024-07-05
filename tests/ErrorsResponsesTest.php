@@ -86,6 +86,12 @@ it('adds validation error response when documented in phpdoc', function () {
 
     assertMatchesSnapshot($openApiDocument);
 });
+
+it('adds http error response exception extending HTTP exception is thrown', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'custom_exception_response']));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][409])->toHaveKey('content.application/json.schema.type', 'object');
+});
 class ErrorsResponsesTest_Controller extends Controller
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
@@ -101,39 +107,39 @@ class ErrorsResponsesTest_Controller extends Controller
             ->validate();
     }
 
-    public function adds_errors_with_custom_request(ErrorsResponsesTest_Controller_CustomRequest $request)
-    {
-    }
+    public function adds_errors_with_custom_request(ErrorsResponsesTest_Controller_CustomRequest $request) {}
 
-    public function doesnt_add_errors_with_custom_request_when_errors_producing_methods_not_defined(ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods $request)
-    {
-    }
+    public function doesnt_add_errors_with_custom_request_when_errors_producing_methods_not_defined(ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods $request) {}
 
     public function adds_authorization_error_response(Illuminate\Http\Request $request)
     {
         $this->authorize('read');
     }
 
-    public function adds_authentication_error_response(Illuminate\Http\Request $request)
-    {
+    public function adds_authentication_error_response(Illuminate\Http\Request $request) {}
 
-    }
-
-    public function adds_not_found_error_response(Illuminate\Http\Request $request, UserModel_ErrorsResponsesTest $user)
-    {
-    }
+    public function adds_not_found_error_response(Illuminate\Http\Request $request, UserModel_ErrorsResponsesTest $user) {}
 
     /**
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function phpdoc_exception_response(Illuminate\Http\Request $request)
+    public function phpdoc_exception_response(Illuminate\Http\Request $request) {}
+
+    public function custom_exception_response(Illuminate\Http\Request $request)
     {
+        throw new BusinessException('The business error');
     }
 }
 
-class UserModel_ErrorsResponsesTest extends \Illuminate\Database\Eloquent\Model
+class BusinessException extends \Symfony\Component\HttpKernel\Exception\HttpException
 {
+    public function __construct(string $message = '', ?\Throwable $previous = null, array $headers = [], int $code = 0)
+    {
+        parent::__construct(409, $message, $previous, $headers, $code);
+    }
 }
+
+class UserModel_ErrorsResponsesTest extends \Illuminate\Database\Eloquent\Model {}
 
 class ErrorsResponsesTest_Controller_CustomRequest extends \Illuminate\Foundation\Http\FormRequest
 {
@@ -148,6 +154,4 @@ class ErrorsResponsesTest_Controller_CustomRequest extends \Illuminate\Foundatio
     }
 }
 
-class ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods extends \Illuminate\Foundation\Http\FormRequest
-{
-}
+class ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods extends \Illuminate\Foundation\Http\FormRequest {}

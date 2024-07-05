@@ -7,6 +7,9 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Tests\Infer\stubs\Bar;
+use Dedoc\Scramble\Tests\Infer\stubs\Child;
+use Dedoc\Scramble\Tests\Infer\stubs\ChildPromotion;
+use Dedoc\Scramble\Tests\Infer\stubs\DeepChild;
 use Dedoc\Scramble\Tests\Infer\stubs\Foo;
 use Dedoc\Scramble\Tests\Infer\stubs\FooWithTrait;
 
@@ -67,4 +70,28 @@ it('analyzes traits', function () {
         'methodBaz',
         'methodInvokingFooTraitMethod',
     ]);
+});
+
+it('analyzes parent instantiation', function () {
+    $this->classAnalyzer->analyze(Child::class);
+
+    $type = getStatementType('new Dedoc\Scramble\Tests\Infer\stubs\Child("some", "wow", 42)');
+
+    expect($type->toString())->toBe('Dedoc\Scramble\Tests\Infer\stubs\Child<int(42), string(wow), string(some)>');
+});
+
+it('analyzes deep parent instantiation', function () {
+    $this->classAnalyzer->analyze(DeepChild::class);
+
+    $type = getStatementType('new Dedoc\Scramble\Tests\Infer\stubs\DeepChild("some", "wow", 42)');
+
+    expect($type->toString())->toBe('Dedoc\Scramble\Tests\Infer\stubs\DeepChild<int(42), string(wow), string(some)>');
+});
+
+it('analyzes parent with property promotion', function () {
+    $this->classAnalyzer->analyze(ChildPromotion::class);
+
+    $type = getStatementType('new Dedoc\Scramble\Tests\Infer\stubs\ChildPromotion("some", "wow", 42)');
+
+    expect($type->toString())->toBe('Dedoc\Scramble\Tests\Infer\stubs\ChildPromotion<int(42), string(wow), string(some)>');
 });

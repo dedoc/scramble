@@ -9,8 +9,7 @@ class UniqueNameOptions
         public readonly array $unique,
         public readonly string $separator = '.',
         public readonly int $fallbackEloquentPartsCount = 2,
-    ) {
-    }
+    ) {}
 
     public function getFallbackEloquent(): string
     {

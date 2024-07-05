@@ -21,6 +21,7 @@ use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
+use Dedoc\Scramble\Support\Type\SideEffects\ParentConstructCall;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
@@ -40,8 +41,7 @@ class Scope
         public ScopeContext $context,
         public FileNameResolver $nameResolver,
         public ?Scope $parentScope = null,
-    ) {
-    }
+    ) {}
 
     public function getType(Node $node): Type
     {
@@ -139,6 +139,14 @@ class Scope
             // Only string class names support.
             if (! $node->class instanceof Node\Name) {
                 return $type;
+            }
+
+            if (
+                $this->functionDefinition()?->type->name === '__construct'
+                && $node->class->toString() === 'parent'
+                && $node->name->toString() === '__construct'
+            ) {
+                $this->functionDefinition()->sideEffects[] = new ParentConstructCall($this->getArgsTypes($node->args));
             }
 
             return $this->setType(
@@ -303,10 +311,7 @@ class Scope
         return $type;
     }
 
-    public function getMethodCallType(Type $calledOn, string $methodName, array $arguments = []): Type
-    {
-
-    }
+    public function getMethodCallType(Type $calledOn, string $methodName, array $arguments = []): Type {}
 
     public function getPropertyFetchType(Type $calledOn, string $propertyName): Type
     {

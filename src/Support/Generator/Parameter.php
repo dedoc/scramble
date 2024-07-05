@@ -31,9 +31,6 @@ class Parameter
     /** @var array|scalar|null|MissingExample */
     public $example;
 
-    /** @var array|scalar|null|MissingExample */
-    public $default;
-
     public bool $deprecated = false;
 
     public bool $allowEmptyValue = false;
@@ -46,7 +43,6 @@ class Parameter
         $this->in = $in;
 
         $this->example = new MissingExample;
-        $this->default = new MissingExample;
 
         if ($this->in === 'path') {
             $this->required = true;
@@ -103,13 +99,6 @@ class Parameter
     public function setSchema(?Schema $schema): self
     {
         $this->schema = $schema;
-
-        return $this;
-    }
-
-    public function default($default)
-    {
-        $this->default = $default;
 
         return $this;
     }

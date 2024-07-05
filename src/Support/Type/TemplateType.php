@@ -11,8 +11,7 @@ class TemplateType extends AbstractType
          */
         //        public string $parentName,
         public ?Type $is = null,
-    ) {
-    }
+    ) {}
 
     public function isSame(Type $type)
     {

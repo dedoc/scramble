@@ -43,8 +43,5 @@ class ConcreteDataRequest extends FormRequest implements DataRequestContract
 
 class FormRequestRulesExtractorTestController
 {
-    public function __invoke(DataRequestContract $request)
-    {
-
-    }
+    public function __invoke(DataRequestContract $request) {}
 }

@@ -47,8 +47,7 @@ class ModelInfo
 
     public function __construct(
         private string $class
-    ) {
-    }
+    ) {}
 
     public function handle()
     {

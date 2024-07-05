@@ -197,8 +197,8 @@ it('extracts parameters, their defaults, and descriptions from calling request p
             'in' => 'query',
             'schema' => [
                 'type' => 'string',
+                'default' => 'foo',
             ],
-            'default' => 'foo',
         ]]);
 });
 class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_query
@@ -254,8 +254,10 @@ it('allows explicitly specifying parameter placement in query manually in doc', 
         ->toBe([[
             'name' => 'foo',
             'in' => 'query',
-            'schema' => ['type' => 'integer'],
-            'default' => 10,
+            'schema' => [
+                'type' => 'integer',
+                'default' => 10,
+            ],
         ]]);
 });
 class RequestBodyExtensionTest__allows_explicitly_specifying_parameter_placement_in_query_manually_in_doc
@@ -352,9 +354,7 @@ it('makes reusable request body from form request', function () {
 });
 class FormRequest_ReusableSchemaNamesTest_Controller
 {
-    public function __invoke(ReusableSchemaNamesTestFormRequest $request)
-    {
-    }
+    public function __invoke(ReusableSchemaNamesTestFormRequest $request) {}
 }
 class ReusableSchemaNamesTestFormRequest
 {
@@ -375,9 +375,7 @@ it('allows to opt out from saving form request in schemas', function () {
 });
 class FormRequest_OptOutSchemaNamesTest_Controller
 {
-    public function __invoke(OptOutSchemaNamesTestFormRequest $request)
-    {
-    }
+    public function __invoke(OptOutSchemaNamesTestFormRequest $request) {}
 }
 /** @ignoreSchema */
 class OptOutSchemaNamesTestFormRequest extends FormRequest
@@ -399,9 +397,7 @@ it('allows to customize name and add description for form request in schemas', f
 });
 class FormRequest_CustomSchemaNameFormRequest_Controller
 {
-    public function __invoke(CustomSchemaNameFormRequest $request)
-    {
-    }
+    public function __invoke(CustomSchemaNameFormRequest $request) {}
 }
 /**
  * @schemaName NiceSchemaNameRequest

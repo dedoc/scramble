@@ -133,9 +133,7 @@ class ScrambleTest extends TestCase
 
 class ScrambleTest_Controller
 {
-    public function test()
-    {
-    }
+    public function test() {}
 }
 
 class ScrambleSchemaRulesTest_Controller

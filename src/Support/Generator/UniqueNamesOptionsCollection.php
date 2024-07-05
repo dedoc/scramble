@@ -23,8 +23,7 @@ class UniqueNamesOptionsCollection
 
     public function __construct(
         private Collection $names = new Collection,
-    ) {
-    }
+    ) {}
 
     public function push(UniqueNameOptions $name)
     {

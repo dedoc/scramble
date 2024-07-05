@@ -25,7 +25,5 @@ class ResolveTagDocumentationTestController extends \Illuminate\Routing\Controll
     /**
      * @tags testTag
      */
-    public function a()
-    {
-    }
+    public function a() {}
 }

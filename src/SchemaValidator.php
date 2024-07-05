@@ -13,8 +13,7 @@ class SchemaValidator
      */
     public function __construct(
         private array $rules,
-    ) {
-    }
+    ) {}
 
     public function hasRules(): bool
     {
