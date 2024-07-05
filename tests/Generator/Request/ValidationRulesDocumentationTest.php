@@ -33,7 +33,7 @@ it('supports confirmed rule in array', function () {
                     'password_confirmation' => ['type' => 'string', 'minLength' => 8],
                 ],
                 'required' => ['password', 'password_confirmation'],
-            ]
+            ],
         ]);
 });
 
