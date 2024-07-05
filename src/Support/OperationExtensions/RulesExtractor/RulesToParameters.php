@@ -39,10 +39,10 @@ class RulesToParameters
     public function handle()
     {
         return collect($this->rules)
+            ->pipe($this->handleConfirmed(...))
             ->map(fn ($rules, $name) => (new RulesToParameter($name, $rules, $this->nodeDocs[$name] ?? null, $this->openApiTransformer))->generate())
             ->filter()
             ->pipe($this->handleNested(...))
-            ->pipe($this->handleConfirmed(...))
             ->values()
             ->all();
     }
@@ -92,27 +92,24 @@ class RulesToParameters
             ->merge($nested);
     }
 
-    private function handleConfirmed(Collection $parameters)
+    private function handleConfirmed(Collection $rules)
     {
-        $confirmedParamNameRules = collect($this->rules)
+        $confirmedParamNameRules = $rules
             ->map(fn ($rules, $name) => [$name, Arr::wrap(is_string($rules) ? explode('|', $rules) : $rules)])
             ->filter(fn ($nameRules) => in_array('confirmed', $nameRules[1]));
 
         if (! $confirmedParamNameRules) {
-            return $parameters;
+            return $rules;
         }
 
         foreach ($confirmedParamNameRules as $confirmedParamNameRule) {
-            /** @var Parameter $confirmedParam */
-            $confirmedParam = $parameters->first(fn ($p) => $p->name === $confirmedParamNameRule[0]);
-
-            $parameters->offsetSet(
-                $name = "$confirmedParamNameRule[0]_confirmation",
-                (clone $confirmedParam)->setName($name),
+            $rules->offsetSet(
+                "$confirmedParamNameRule[0]_confirmation",
+                array_filter($confirmedParamNameRule[1], fn ($rule) => $rule !== 'confirmed'),
             );
         }
 
-        return $parameters;
+        return $rules;
     }
 
     private function setDeepType(Type &$base, string $key, Type $typeToSet)
