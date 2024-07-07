@@ -14,9 +14,7 @@ abstract class OperationExtension
         protected Infer $infer,
         protected TypeTransformer $openApiTransformer,
         protected GeneratorConfig $config
-    )
-    {
-    }
+    ) {}
 
     abstract public function handle(Operation $operation, RouteInfo $routeInfo);
 }
