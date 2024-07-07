@@ -64,7 +64,6 @@ class Parameter
             'deprecated' => $this->deprecated,
             'allowEmptyValue' => $this->allowEmptyValue,
             'style' => $this->style,
-            'explode' => $this->explode,
         ]);
 
         if ($this->schema) {
@@ -74,6 +73,9 @@ class Parameter
         return array_merge(
             $result,
             $this->example instanceof MissingExample ? [] : ['example' => $this->example],
+            ! is_null($this->explode) ? [
+                'explode' => $this->explode,
+            ] : []
         );
     }
 
