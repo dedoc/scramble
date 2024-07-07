@@ -7,12 +7,24 @@ class ArrayType extends AbstractType
     public function __construct(
         public Type $value = new MixedType,
         public Type $key = new IntegerType,
-    ) {
-    }
+    ) {}
 
     public function nodes(): array
     {
         return ['value', 'key'];
+    }
+
+    public function accepts(Type $otherType): bool
+    {
+        if (parent::accepts($otherType)) {
+            return true;
+        }
+
+        if ($otherType instanceof KeyedArrayType) {
+            return true;
+        }
+
+        return false;
     }
 
     public function isSame(Type $type)

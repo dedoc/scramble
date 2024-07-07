@@ -144,7 +144,12 @@ class FunctionLikeHandler implements CreatesScope
                 ])
             )
         ) {
+            $fnDefinition->type->setAttribute('inferredReturnType', $fnDefinition->type->getReturnType());
             $fnDefinition->type->setReturnType(TypeHelper::createTypeFromTypeNode($returnTypeAnnotation) ?: new VoidType);
+        }
+
+        if ($returnTypeAnnotation = $node->getReturnType()) {
+            $fnDefinition->type->setAttribute('annotatedReturnType', TypeHelper::createTypeFromTypeNode($returnTypeAnnotation));
         }
 
         // Simple way of handling the arrow functions, as they do not have a return statement.
@@ -223,7 +228,8 @@ class FunctionLikeHandler implements CreatesScope
                 && ($argumentsByKeys[$s->expr->expr->name] ?? false),
         );
 
-        return array_reduce($assignPropertiesToThisNodes, function ($acc, Node\Stmt\Expression $s) use ($scope) {
+        // Variable type becomes a property type.
+        $assignPropertiesToThisNodes = array_reduce($assignPropertiesToThisNodes, function ($acc, Node\Stmt\Expression $s) use ($scope) {
             $propName = $s->expr->var->name->name;
 
             if (! array_key_exists($propName, $scope->classDefinition()->properties)) {
@@ -234,5 +240,14 @@ class FunctionLikeHandler implements CreatesScope
 
             return $acc;
         }, $argumentsAssignedToProperties);
+
+        $promotedProperties = collect($node->getParams())
+            ->filter(fn (Node\Param $p) => $p->isPromoted())
+            ->mapWithKeys(fn (Node\Param $param) => $param->var instanceof Node\Expr\Variable ? [
+                $param->var->name => $scope->classDefinition()->properties[$param->var->name]->type,
+            ] : [])
+            ->toArray();
+
+        return array_merge($assignPropertiesToThisNodes, $promotedProperties);
     }
 }

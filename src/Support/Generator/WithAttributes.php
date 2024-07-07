@@ -31,4 +31,16 @@ trait WithAttributes
 
         return null;
     }
+
+    public function attributes()
+    {
+        return $this->attributes;
+    }
+
+    public function mergeAttributes($attributes)
+    {
+        $this->attributes = array_merge($this->attributes, $attributes);
+
+        return $this;
+    }
 }

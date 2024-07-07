@@ -7,6 +7,5 @@ class PropertyDependency implements Dependency
     public function __construct(
         public string $class,
         public string $name,
-    ) {
-    }
+    ) {}
 }

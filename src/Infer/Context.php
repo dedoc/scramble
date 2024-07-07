@@ -10,8 +10,7 @@ class Context
 
     public function __construct(
         public readonly ExtensionsBroker $extensionsBroker,
-    ) {
-    }
+    ) {}
 
     public static function configure(
         ExtensionsBroker $extensionsBroker,

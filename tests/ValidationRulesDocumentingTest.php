@@ -184,6 +184,34 @@ it('converts max rule into "maximum" for numeric fields', function () {
         ->toHaveKey('maximum', 8);
 });
 
+it('converts min rule into "minLength" for string fields', function () {
+    $rules = [
+        'str' => ['string', 'min:8'],
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    expect($params = collect($params)->all())
+        ->toHaveCount(1)
+        ->and($params[0]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toHaveKey('minLength', 8);
+});
+
+it('converts max rule into "maxLength" for string fields', function () {
+    $rules = [
+        'str' => ['string', 'max:8'],
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    expect($params = collect($params)->all())
+        ->toHaveCount(1)
+        ->and($params[0]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toHaveKey('maxLength', 8);
+});
+
 it('converts min rule into "minItems" for array fields', function () {
     $rules = [
         'num' => ['array', 'min:8'],
@@ -210,6 +238,21 @@ it('converts max rule into "maxItems" for array fields', function () {
         ->and($params[0]->schema->type)
         ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\ArrayType::class)
         ->toHaveKey('maxItems', 8);
+});
+
+it('documents nullable uri rule', function () {
+    $rules = [
+        'page_url' => ['nullable', 'url'],
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    expect($params = collect($params)->all())
+        ->toHaveCount(1)
+        ->and($params[0]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toHaveProperty('format', 'uri')
+        ->toHaveProperty('nullable', true);
 });
 
 it('extracts rules from request->validate call', function () {
@@ -394,7 +437,5 @@ class ControllerWithoutSecurity
     /**
      * @unauthenticated
      */
-    public function index()
-    {
-    }
+    public function index() {}
 }

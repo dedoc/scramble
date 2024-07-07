@@ -10,8 +10,7 @@ class Infer
 {
     public function __construct(
         public Index $index
-    ) {
-    }
+    ) {}
 
     public function analyzeClass(string $class): ClassDefinition
     {

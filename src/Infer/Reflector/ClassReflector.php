@@ -20,8 +20,7 @@ class ClassReflector
     private function __construct(
         private FileParser $parser,
         private string $className,
-    ) {
-    }
+    ) {}
 
     public function getMethod(string $name)
     {
@@ -44,7 +43,9 @@ class ClassReflector
     public function getNameContext(): NameContext
     {
         if (! $this->nameContext) {
-            $content = file_get_contents($this->getReflection()->getFileName());
+            $content = ($path = $this->getReflection()->getFileName())
+                ? file_get_contents($path)
+                : "<? class {$this->className} {}"; // @todo add extends, implements, etc. Maybe make name context manually.
 
             preg_match(
                 '/(class|enum|interface|trait)\s+?(.*?)\s+?{/m',

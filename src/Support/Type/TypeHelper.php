@@ -58,6 +58,12 @@ class TypeHelper
                 return new FloatType();
             }
 
+            if ($typeNode->name === 'array') {
+                return new ArrayType(
+                    value: new MixedType(),
+                );
+            }
+
             return new ObjectType($typeNode->toString());
         }
 

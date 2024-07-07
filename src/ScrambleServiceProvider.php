@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
@@ -20,11 +21,15 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCallsTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCreationInfer;
+use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\JsonResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\ResponseMethodReturnTypeExtension;
+use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\OperationExtensions\DeprecationExtension;
@@ -40,6 +45,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\VoidTypeToSchema;
 use PhpParser\ParserFactory;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -52,6 +58,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->name('scramble')
             ->hasConfigFile()
             ->hasCommand(ExportDocumentation::class)
+            ->hasCommand(AnalyzeDocumentation::class)
             ->hasViews('scramble');
 
         $this->app->singleton(FileParser::class, function () {
@@ -60,7 +67,14 @@ class ScrambleServiceProvider extends PackageServiceProvider
             );
         });
 
-        $this->app->singleton(Index::class);
+        $this->app->singleton(Index::class, function () {
+            $index = new Index();
+            foreach ((require __DIR__.'/../dictionaries/classMap.php') ?: [] as $className => $serializedClassDefinition) {
+                $index->classesDefinitions[$className] = unserialize($serializedClassDefinition);
+            }
+
+            return $index;
+        });
 
         $this->app->singleton(Infer::class);
 
@@ -75,6 +89,9 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ));
 
                 $inferExtensionsClasses = array_merge([
+                    ResponseMethodReturnTypeExtension::class,
+                    JsonResourceExtension::class,
+                    JsonResponseMethodReturnTypeExtension::class,
                     ModelExtension::class,
                 ], $inferExtensionsClasses);
 
@@ -89,6 +106,11 @@ class ScrambleServiceProvider extends PackageServiceProvider
                         new ValidatorTypeInfer(),
                         new ResourceCollectionTypeInfer(),
                         new ResponseFactoryTypeInfer(),
+
+                        /*
+                         * Keep this extension last, so the trace info is preserved.
+                         */
+                        new TypeTraceInfer(),
                     ],
                     array_map(function ($class) {
                         return app($class);
@@ -141,6 +163,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     AnonymousResourceCollectionTypeToSchema::class,
                     LengthAwarePaginatorTypeToSchema::class,
                     ResponseTypeToSchema::class,
+                    VoidTypeToSchema::class,
                 ]),
                 array_merge($exceptionToResponseExtensions, [
                     ValidationExceptionToResponseExtension::class,

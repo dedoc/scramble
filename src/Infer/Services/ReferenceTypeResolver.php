@@ -27,6 +27,7 @@ use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\SelfType;
+use Dedoc\Scramble\Support\Type\SideEffects\ParentConstructCall;
 use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -34,18 +35,57 @@ use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class ReferenceTypeResolver
 {
     public function __construct(
         private Index $index,
-    ) {
-    }
+    ) {}
 
     public static function getInstance(): static
     {
         return app(static::class);
+    }
+
+    public function resolveFunctionReturnReferences(Scope $scope, FunctionType $functionType): void
+    {
+        if (static::hasResolvableReferences($returnType = $functionType->getReturnType())) {
+            $resolvedReference = $this->resolve($scope, $returnType);
+            $functionType->setReturnType($resolvedReference);
+        }
+
+        if ($annotatedReturnType = $functionType->getAttribute('annotatedReturnType')) {
+            if (! $functionType->getAttribute('inferredReturnType')) {
+                $functionType->setAttribute('inferredReturnType', clone $functionType->getReturnType());
+            }
+
+            $functionType->setReturnType(
+                $this->addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType, $scope)
+            );
+        }
+    }
+
+    private function addAnnotatedReturnType(Type $inferredReturnType, Type $annotatedReturnType, Scope $scope): Type
+    {
+        $types = $inferredReturnType instanceof Union
+            ? $inferredReturnType->types
+            : [$inferredReturnType];
+
+        // @todo: Handle case when annotated return type is union.
+        if ($annotatedReturnType instanceof ObjectType) {
+            $annotatedReturnType->name = $this->resolveClassName($scope, $annotatedReturnType->name);
+        }
+
+        $annotatedTypeCanAcceptAnyInferredType = collect($types)
+            ->some(fn (Type $t) => $annotatedReturnType->accepts($t));
+
+        if (! $annotatedTypeCanAcceptAnyInferredType) {
+            $types = [$annotatedReturnType];
+        }
+
+        return Union::wrap($types)->mergeAttributes($inferredReturnType->attributes());
     }
 
     public static function hasResolvableReferences(Type $type): bool
@@ -69,7 +109,7 @@ class ReferenceTypeResolver
             $type,//->toString(),
             fn () => (new TypeWalker)->replace(
                 $type,
-                fn (Type $t) => $this->doResolve($t, $type, $scope),
+                fn (Type $t) => $this->doResolve($t, $type, $scope)?->mergeAttributes($t->attributes()),
             ),
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );
@@ -79,7 +119,7 @@ class ReferenceTypeResolver
             fn () => (new TypeWalker)->replace(
                 $resultingType,
                 fn (Type $t) => $t instanceof Union
-                    ? TypeHelper::mergeTypes(...$t->types)
+                    ? TypeHelper::mergeTypes(...$t->types)->mergeAttributes($t->attributes())
                     : null,
             ),
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
@@ -325,7 +365,11 @@ class ReferenceTypeResolver
             ! array_key_exists($type->name, $this->index->classesDefinitions)
             && ! $this->resolveUnknownClassResolver($type->name)
         ) {
-            return new UnknownType();
+            /*
+             * Usually in this case we want to return UnknownType. But we certainly know that using `new` will produce
+             * an object of a type being created.
+             */
+            return new ObjectType($type->name);
         }
 
         $classDefinition = $this->index->getClassDefinition($type->name);
@@ -340,13 +384,16 @@ class ReferenceTypeResolver
                 $definition->type->name => $definition->defaultType,
             ]);
 
+        $constructorDefinition = $classDefinition->getMethodDefinition('__construct', $scope);
+
         $inferredConstructorParamTemplates = collect($this->resolveTypesTemplatesFromArguments(
             $classDefinition->templateTypes,
-            $classDefinition->getMethodDefinition('__construct', $scope)->type->arguments ?? [],
-            $this->prepareArguments($classDefinition->getMethodDefinition('__construct', $scope), $type->arguments),
+            $constructorDefinition->type->arguments ?? [],
+            $this->prepareArguments($constructorDefinition, $type->arguments),
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
 
-        $inferredTemplates = $propertyDefaultTemplateTypes
+        $inferredTemplates = $this->getParentConstructCallsTypes($classDefinition, $constructorDefinition)
+            ->merge($propertyDefaultTemplateTypes)
             ->merge($inferredConstructorParamTemplates);
 
         return new Generic(
@@ -552,5 +599,38 @@ class ReferenceTypeResolver
             StaticReference::STATIC => $scope->context->classDefinition?->name,
             StaticReference::PARENT => $scope->context->classDefinition?->parentFqn,
         };
+    }
+
+    /**
+     * @return Collection<string, Type> The key is a template type name and a value is a resulting type.
+     */
+    private function getParentConstructCallsTypes(ClassDefinition $classDefinition, ?FunctionLikeDefinition $constructorDefinition): Collection
+    {
+        if (! $constructorDefinition) {
+            return collect();
+        }
+
+        /** @var ParentConstructCall $firstParentConstructorCall */
+        $firstParentConstructorCall = collect($constructorDefinition->sideEffects)->first(fn ($se) => $se instanceof ParentConstructCall);
+
+        if (! $firstParentConstructorCall) {
+            return collect();
+        }
+
+        if (! $classDefinition->parentFqn) {
+            return collect();
+        }
+
+        $parentClassDefinition = $this->index->getClassDefinition($classDefinition->parentFqn);
+
+        $templateArgs = collect($this->resolveTypesTemplatesFromArguments(
+            $parentClassDefinition->templateTypes,
+            $parentClassDefinition->getMethodDefinition('__construct')?->type->arguments ?? [],
+            $this->prepareArguments($parentClassDefinition->getMethodDefinition('__construct'), $firstParentConstructorCall->arguments),
+        ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
+
+        return $this
+            ->getParentConstructCallsTypes($parentClassDefinition, $parentClassDefinition->getMethodDefinition('__construct'))
+            ->merge($templateArgs);
     }
 }

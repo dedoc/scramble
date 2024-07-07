@@ -25,9 +25,7 @@ class ModelWithCustomRouteKeyName extends \Illuminate\Database\Eloquent\Model
 }
 class Foo_RequestEssentialsExtensionTest_Controller
 {
-    public function foo(ModelWithCustomRouteKeyName $model)
-    {
-    }
+    public function foo(ModelWithCustomRouteKeyName $model) {}
 }
 
 it('correctly handles not request class with rules method', function () {
@@ -50,9 +48,7 @@ class ModelWithRulesMethod extends \Illuminate\Database\Eloquent\Model
 }
 class Foo_RequestRulesTest_Controller
 {
-    public function foo(ModelWithRulesMethod $model)
-    {
-    }
+    public function foo(ModelWithRulesMethod $model) {}
 }
 
 it('handles custom key from route to determine model route key type', function () {
@@ -76,9 +72,7 @@ it('determines default model route key type', function () {
 });
 class CustomKey_RequestEssentialsExtensionTest_Controller
 {
-    public function foo(SampleUserModel $user)
-    {
-    }
+    public function foo(SampleUserModel $user) {}
 }
 
 it('determines default route key type for union', function () {
@@ -130,7 +124,5 @@ it('handles enum in route parameter', function () {
 });
 class EnumParameter_RequestEssentialsExtensionTest_Controller
 {
-    public function foo(Status $status)
-    {
-    }
+    public function foo(Status $status) {}
 }

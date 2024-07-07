@@ -34,6 +34,7 @@ class TestCase extends Orchestra
         Scramble::$routeResolver = null;
         Scramble::$openApiExtender = null;
         Scramble::$tagResolver = null;
+        Scramble::$enforceSchemaRules = [];
 
         parent::tearDown();
     }

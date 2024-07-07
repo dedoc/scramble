@@ -118,9 +118,7 @@ it('resolves method call from parent class', function () {
 
     expect($type->toString())->toBe('int(2)');
 });
-class Mc_Foo extends Mc_Bar
-{
-}
+class Mc_Foo extends Mc_Bar {}
 class Mc_Bar
 {
     public function foo()

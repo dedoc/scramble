@@ -6,6 +6,5 @@ class FunctionDependency implements Dependency
 {
     public function __construct(
         public string $name,
-    ) {
-    }
+    ) {}
 }

@@ -12,8 +12,7 @@ class PropertyFetchReferenceType extends AbstractReferenceType
     public function __construct(
         public Type $object,
         public string $propertyName,
-    ) {
-    }
+    ) {}
 
     public function toString(): string
     {

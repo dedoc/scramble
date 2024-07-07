@@ -11,6 +11,8 @@ use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
+use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MergeValue;
 use Illuminate\Http\Resources\MissingValue;
@@ -111,5 +113,27 @@ trait FlattensMergeValues
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * @todo Maybe does not belong here as simply provides a knowledge about locating a type in a json resource generics.
+     * This is something similar to Scramble's PRO wrap handling logic.
+     */
+    private function getResourceType(Type $type): Type
+    {
+        if (! $type instanceof Generic) {
+            return new UnknownType();
+        }
+
+        if ($type->isInstanceOf(AnonymousResourceCollection::class)) {
+            return $type->templateTypes[0]->templateTypes[0]
+                ?? new UnknownType();
+        }
+
+        if ($type->isInstanceOf(JsonResource::class)) {
+            return $type->templateTypes[0];
+        }
+
+        return new UnknownType();
     }
 }

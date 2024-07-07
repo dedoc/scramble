@@ -12,11 +12,11 @@ class ArrayType extends Type
     /** @var Type|Schema */
     public $prefixItems = [];
 
-    private $minItems = null;
+    public $minItems = null;
 
-    private $maxItems = null;
+    public $maxItems = null;
 
-    private $additionalItems = null;
+    public $additionalItems = null;
 
     public function __construct()
     {

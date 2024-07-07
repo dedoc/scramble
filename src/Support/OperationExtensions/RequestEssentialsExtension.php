@@ -54,10 +54,7 @@ class RequestEssentialsExtension extends OperationExtension
 
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
-        [$pathParams, $pathAliases] = $this->getRoutePathParameters(
-            $routeInfo->route,
-            $routeInfo->phpDoc(),
-        );
+        [$pathParams, $pathAliases] = $this->getRoutePathParameters($routeInfo);
 
         $tagResolver = Scramble::$tagResolver ?? function (RouteInfo $routeInfo) {
             return array_unique([
@@ -150,8 +147,10 @@ class RequestEssentialsExtension extends OperationExtension
         return Str::of($str)->matchAll('/\{(.*?)\}/')->values()->toArray();
     }
 
-    private function getRoutePathParameters(Route $route, ?PhpDocNode $methodPhpDocNode)
+    private function getRoutePathParameters(RouteInfo $routeInfo)
     {
+        [$route, $methodPhpDocNode] = [$routeInfo->route, $routeInfo->phpDoc()];
+
         $paramNames = $route->parameterNames();
         $paramsWithRealNames = ($reflectionParams = collect($route->signatureParameters())
             ->filter(function (ReflectionParameter $v) {
@@ -184,13 +183,14 @@ class RequestEssentialsExtension extends OperationExtension
          * 2. PhpDoc Typehint
          * 3. String (?)
          */
-        $params = array_map(function (string $paramName) use ($route, $aliases, $reflectionParamsByKeys, $phpDocTypehintParam) {
+        $params = array_map(function (string $paramName) use ($routeInfo, $route, $aliases, $reflectionParamsByKeys, $phpDocTypehintParam) {
             $paramName = $aliases[$paramName];
 
             $description = $phpDocTypehintParam[$paramName]?->description ?? '';
             [$schemaType, $description] = $this->getParameterType(
                 $paramName,
                 $description,
+                $routeInfo,
                 $route,
                 $phpDocTypehintParam[$paramName] ?? null,
                 $reflectionParamsByKeys[$paramName] ?? null,
@@ -204,9 +204,13 @@ class RequestEssentialsExtension extends OperationExtension
         return [$params, $aliases];
     }
 
-    private function getParameterType(string $paramName, string $description, Route $route, ?ParamTagValueNode $phpDocParam, ?ReflectionParameter $reflectionParam)
+    private function getParameterType(string $paramName, string $description, RouteInfo $routeInfo, Route $route, ?ParamTagValueNode $phpDocParam, ?ReflectionParameter $reflectionParam)
     {
         $type = new UnknownType;
+        if ($routeInfo->reflectionMethod()) {
+            $type->setAttribute('file', $routeInfo->reflectionMethod()->getFileName());
+            $type->setAttribute('line', $routeInfo->reflectionMethod()->getStartLine());
+        }
 
         if ($phpDocParam?->type) {
             $type = PhpDocTypeHelper::toType($phpDocParam->type);
@@ -229,6 +233,10 @@ class RequestEssentialsExtension extends OperationExtension
             [$schemaType, $description] = $this->getModelIdTypeAndDescription($schemaType, $type, $paramName, $description, $route->bindingFields()[$paramName] ?? null);
 
             $schemaType->setAttribute('isModelId', true);
+        }
+
+        if ($schemaType instanceof \Dedoc\Scramble\Support\Generator\Types\UnknownType) {
+            $schemaType = (new StringType)->mergeAttributes($schemaType->attributes());
         }
 
         return [$schemaType, $description ?? ''];

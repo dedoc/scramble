@@ -30,8 +30,7 @@ class ClassDefinition
         /** @var array<string, FunctionLikeDefinition> $methods */
         public array $methods = [],
         public ?string $parentFqn = null,
-    ) {
-    }
+    ) {}
 
     public function isInstanceOf(string $className)
     {
@@ -70,12 +69,15 @@ class ClassDefinition
             new FileNameResolver(new NameContext(new Throwing())),
         );
 
-        if (ReferenceTypeResolver::hasResolvableReferences($returnType = $this->methods[$name]->type->getReturnType())) {
-            $this->methods[$name]->type->setReturnType(
-                (new ReferenceTypeResolver($scope->index))
-                    ->resolve($methodScope, $returnType)
-                    ->mergeAttributes($returnType->attributes())
-            );
+        (new ReferenceTypeResolver($scope->index))
+            ->resolveFunctionReturnReferences($methodScope, $this->methods[$name]->type);
+
+        foreach ($this->methods[$name]->type->exceptions as $i => $exceptionType) {
+            if (ReferenceTypeResolver::hasResolvableReferences($exceptionType)) {
+                $this->methods[$name]->type->exceptions[$i] = (new ReferenceTypeResolver($scope->index))
+                    ->resolve($methodScope, $exceptionType)
+                    ->mergeAttributes($exceptionType->attributes());
+            }
         }
 
         return $this->methods[$name];

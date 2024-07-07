@@ -73,16 +73,6 @@ function analyzeClass(string $className, array $extensions = []): AnalysisResult
 
 function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolver)
 {
-    $resolveReferencesInFunctionReturn = function ($scope, $functionType) use ($referenceResolver) {
-        if (! ReferenceTypeResolver::hasResolvableReferences($returnType = $functionType->getReturnType())) {
-            return;
-        }
-
-        $resolvedReference = $referenceResolver->resolve($scope, $returnType);
-
-        $functionType->setReturnType($resolvedReference);
-    };
-
     foreach ($index->functionsDefinitions as $functionDefinition) {
         $fnScope = new Scope(
             $index,
@@ -90,7 +80,7 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
             new ScopeContext(functionDefinition: $functionDefinition),
             new FileNameResolver(new NameContext(new Throwing())),
         );
-        $resolveReferencesInFunctionReturn($fnScope, $functionDefinition->type);
+        $referenceResolver->resolveFunctionReturnReferences($fnScope, $functionDefinition->type);
     }
 
     foreach ($index->classesDefinitions as $classDefinition) {
@@ -101,7 +91,7 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
                 new ScopeContext($classDefinition, $methodDefinition),
                 new FileNameResolver(new NameContext(new Throwing())),
             );
-            $resolveReferencesInFunctionReturn($methodScope, $methodDefinition->type);
+            $referenceResolver->resolveFunctionReturnReferences($methodScope, $methodDefinition->type);
         }
     }
 }

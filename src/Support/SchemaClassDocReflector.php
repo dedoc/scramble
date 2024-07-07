@@ -9,16 +9,14 @@ use ReflectionClass;
 
 class SchemaClassDocReflector
 {
-    public function __construct(public readonly PhpDocNode $phpDoc)
-    {
-    }
+    public function __construct(public readonly PhpDocNode $phpDoc) {}
 
     public function getTagValue(string $tagName)
     {
         return array_values($this->phpDoc->getTagsByName($tagName))[0]?->value ?? null;
     }
 
-    public function getSchemaName(?string $default = null): ?string
+    public function getSchemaName(string $default = ''): ?string
     {
         return explode("\n", $this->phpDoc->getTagsByName('@schemaName')[0]->value->value ?? $default)[0];
     }

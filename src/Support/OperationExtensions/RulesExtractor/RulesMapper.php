@@ -24,14 +24,14 @@ class RulesMapper
         $this->openApiTransformer = $openApiTransformer;
     }
 
-    public function string(Type $_)
+    public function string(Type $prevType)
     {
-        return new StringType;
+        return (new StringType)->addProperties($prevType);
     }
 
-    public function bool(Type $_)
+    public function bool(Type $prevType)
     {
-        return new BooleanType;
+        return (new BooleanType)->addProperties($prevType);
     }
 
     public function boolean(Type $_)
@@ -39,14 +39,14 @@ class RulesMapper
         return $this->bool($_);
     }
 
-    public function numeric(Type $_)
+    public function numeric(Type $prevType)
     {
-        return new NumberType;
+        return (new NumberType)->addProperties($prevType);
     }
 
-    public function int(Type $_)
+    public function int(Type $prevType)
     {
-        return new IntegerType;
+        return (new IntegerType)->addProperties($prevType);
     }
 
     public function integer(Type $_)
@@ -115,7 +115,11 @@ class RulesMapper
 
     public function min(Type $type, $params)
     {
-        if ($type instanceof NumberType || $type instanceof ArrayType) {
+        if (
+            $type instanceof NumberType
+            || $type instanceof ArrayType
+            || $type instanceof StringType
+        ) {
             $type->setMin((float) $params[0]);
         }
 
@@ -124,7 +128,11 @@ class RulesMapper
 
     public function max(Type $type, $params)
     {
-        if ($type instanceof NumberType || $type instanceof ArrayType) {
+        if (
+            $type instanceof NumberType
+            || $type instanceof ArrayType
+            || $type instanceof StringType
+        ) {
             $type->setMax((float) $params[0]);
         }
 
@@ -170,5 +178,14 @@ class RulesMapper
         }
 
         return $type->format('binary');
+    }
+
+    public function url(Type $type)
+    {
+        if ($type instanceof UnknownType) {
+            $type = $this->string($type);
+        }
+
+        return $type->format('uri');
     }
 }

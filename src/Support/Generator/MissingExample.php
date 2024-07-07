@@ -2,6 +2,4 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class MissingExample
-{
-}
+class MissingExample {}

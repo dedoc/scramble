@@ -57,7 +57,7 @@ class TypeTransformer
 
     public function transform(Type $type)
     {
-        $openApiType = new StringType();
+        $openApiType = new UnknownType();
 
         if ($type instanceof TemplateType && $type->is) {
             $type = $type->is;
@@ -162,7 +162,9 @@ class TypeTransformer
                     );
                 }
 
-                $openApiType = count($items) === 1 ? $items[0] : (new AnyOf)->setItems($items);
+                // Removing duplicated schemas before making a resulting AnyOf type.
+                $uniqueItems = collect($items)->unique(fn ($i) => json_encode($i->toArray()))->values()->all();
+                $openApiType = count($uniqueItems) === 1 ? $uniqueItems[0] : (new AnyOf)->setItems($uniqueItems);
             }
         } elseif ($type instanceof LiteralStringType) {
             $openApiType = (new StringType())->example($type->value);
@@ -195,6 +197,14 @@ class TypeTransformer
 
         if ($type->hasAttribute('format')) {
             $openApiType->format($type->getAttribute('format'));
+        }
+
+        if ($type->hasAttribute('file')) {
+            $openApiType->setAttribute('file', $type->getAttribute('file'));
+        }
+
+        if ($type->hasAttribute('line')) {
+            $openApiType->setAttribute('line', $type->getAttribute('line'));
         }
 
         return $openApiType;
@@ -246,6 +256,13 @@ class TypeTransformer
 
     public function toResponse(Type $type)
     {
+        // In case of union type being returned and all of its types resulting in the same response, we want to make
+        // sure to take only unique types to avoid having the same types in the response.
+        if ($type instanceof Union) {
+            $uniqueItems = collect($type->types)->unique(fn ($i) => json_encode($this->transform($i)->toArray()))->values()->all();
+            $type = count($uniqueItems) === 1 ? $uniqueItems[0] : Union::wrap($uniqueItems);
+        }
+
         if (! $response = $this->handleResponseUsingExtensions($type)) {
             if ($type->isInstanceOf(\Throwable::class)) {
                 return null;
@@ -270,12 +287,11 @@ class TypeTransformer
             $response->code = $code;
 
             if ($varType = $docNode->getVarTagValues()[0]->type ?? null) {
-                $response->setContent(
-                    'application/json',
-                    Schema::fromType($this->transform(
-                        PhpDocTypeHelper::toType($varType),
-                    ))
-                );
+                $type = PhpDocTypeHelper::toType($varType);
+
+                $typeResponse = $this->toResponse($type);
+
+                $response->setContent('application/json', $typeResponse->getContent('application/json'));
             }
         }
 

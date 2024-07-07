@@ -2,6 +2,4 @@
 
 namespace Dedoc\Scramble\Infer\Extensions;
 
-interface InferExtension
-{
-}
+interface InferExtension {}

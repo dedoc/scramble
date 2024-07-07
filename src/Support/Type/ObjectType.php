@@ -13,8 +13,7 @@ class ObjectType extends AbstractType
 {
     public function __construct(
         public string $name,
-    ) {
-    }
+    ) {}
 
     public function isInstanceOf(string $className)
     {
@@ -73,6 +72,15 @@ class ObjectType extends AbstractType
         return $returnType instanceof TemplateType && $returnType->is
             ? $returnType->is
             : $returnType;
+    }
+
+    public function accepts(Type $otherType): bool
+    {
+        if (! $otherType instanceof ObjectType) {
+            return false;
+        }
+
+        return is_a($otherType->name, $this->name, true);
     }
 
     public function toString(): string

@@ -11,8 +11,7 @@ class NewCallReferenceType extends AbstractReferenceType
         public string $name,
         /** @var Type[] $arguments */
         public array $arguments,
-    ) {
-    }
+    ) {}
 
     public function isInstanceOf(string $className)
     {
