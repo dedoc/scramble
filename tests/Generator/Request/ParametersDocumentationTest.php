@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 if (trait_exists(HasUuids::class)) {
@@ -34,5 +35,33 @@ if (trait_exists(HasUuids::class)) {
     class DocumentsModelKeysUuidParametersAsUuids_Model extends \Illuminate\Database\Eloquent\Model
     {
         use HasUuids;
+    }
+}
+
+it('supports @format annotation for validation rules', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', SupportFormatAnnotation_ParametersDocumentationTestController::class));
+
+    expect($openApiDocument['paths']['/test']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($openApiDocument['paths']['/test']['get']['parameters'][0])
+        ->toBe([
+            'name' => 'foo',
+            'in' => 'query',
+            'required' => true,
+            'schema' => [
+                'type' => 'string',
+                'format' => 'uuid',
+            ],
+        ]);
+});
+
+class SupportFormatAnnotation_ParametersDocumentationTestController
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            /** @format uuid */
+            'foo' => ['required'],
+        ]);
     }
 }
