@@ -17,6 +17,15 @@ class Parameter
 
     public bool $required = false;
 
+    public ?bool $explode = null;
+
+    /**
+     * Possible values are "simple", "label", "matrix", "form", "spaceDelimited", "pipeDelimited" or "deepObject".
+     *
+     * @var "simple"|"label"|"matrix"|"form"|"spaceDelimited"|"pipeDelimited"|"deepObject"|null
+     */
+    public ?string $style = null;
+
     public string $description = '';
 
     /** @var array|scalar|null|MissingExample */
@@ -54,6 +63,7 @@ class Parameter
             'description' => $this->description,
             'deprecated' => $this->deprecated,
             'allowEmptyValue' => $this->allowEmptyValue,
+            'style' => $this->style,
         ]);
 
         if ($this->schema) {
@@ -63,6 +73,9 @@ class Parameter
         return array_merge(
             $result,
             $this->example instanceof MissingExample ? [] : ['example' => $this->example],
+            ! is_null($this->explode) ? [
+                'explode' => $this->explode,
+            ] : []
         );
     }
 
@@ -100,6 +113,20 @@ class Parameter
     public function example($example)
     {
         $this->example = $example;
+
+        return $this;
+    }
+
+    public function setExplode(bool $explode): self
+    {
+        $this->explode = $explode;
+
+        return $this;
+    }
+
+    public function setStyle(string $style): self
+    {
+        $this->style = $style;
 
         return $this;
     }
