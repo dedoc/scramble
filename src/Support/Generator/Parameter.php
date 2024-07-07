@@ -28,8 +28,6 @@ class Parameter
 
     public string $description = '';
 
-    public string $format = '';
-
     /** @var array|scalar|null|MissingExample */
     public $example;
 
@@ -63,7 +61,6 @@ class Parameter
             'in' => $this->in,
             'required' => $this->required,
             'description' => $this->description,
-            'format' => $this->format,
             'deprecated' => $this->deprecated,
             'allowEmptyValue' => $this->allowEmptyValue,
             'style' => $this->style,
@@ -106,13 +103,6 @@ class Parameter
     public function description(string $description)
     {
         $this->description = $description;
-
-        return $this;
-    }
-
-    public function format(string $format)
-    {
-        $this->format = $format;
 
         return $this;
     }
