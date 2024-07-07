@@ -52,9 +52,9 @@ class Generator
         $openApi = $this->makeOpenApi($config);
 
         $this->getRoutes($config)
-            ->map(function (Route $route) use ($openApi) {
+            ->map(function (Route $route) use ($openApi, $config) {
                 try {
-                    return $this->routeToOperation($openApi, $route);
+                    return $this->routeToOperation($openApi, $route, $config);
                 } catch (Throwable $e) {
                     if ($e instanceof RouteAware) {
                         $e->setRoute($route);
@@ -149,7 +149,7 @@ class Generator
             ->values();
     }
 
-    private function routeToOperation(OpenApi $openApi, Route $route)
+    private function routeToOperation(OpenApi $openApi, Route $route, GeneratorConfig $config)
     {
         $routeInfo = new RouteInfo($route, $this->fileParser, $this->infer);
 
@@ -157,7 +157,7 @@ class Generator
             return null;
         }
 
-        $operation = $this->operationBuilder->build($routeInfo, $openApi);
+        $operation = $this->operationBuilder->build($routeInfo, $openApi, $config);
 
         $this->ensureSchemaTypes($route, $operation);
 

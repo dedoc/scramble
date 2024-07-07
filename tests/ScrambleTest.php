@@ -64,6 +64,19 @@ class ScrambleTest extends TestCase
     }
 
     /** @test */
+    #[DefineEnvironment('registerCustomPathApi')]
+    #[DefineRoute('registerCustomNewsletterApiRoutes')]
+    public function generates_correct_server_url_when_api_config_defines_custom_api_path()
+    {
+        $generator = app(Generator::class);
+
+        $doc = $generator(Scramble::getGeneratorConfig('newsletter'));
+
+        $this->assertEquals('http://localhost/newsletter/api', $doc['servers'][0]['url']);
+        $this->assertEquals(['/a'], array_keys($doc['paths']));
+    }
+
+    /** @test */
     #[DefineRoute('registerTestConsumerRoutes')]
     public function filters_consumer_routes_with_config_file()
     {
@@ -87,6 +100,22 @@ class ScrambleTest extends TestCase
 
         $this->assertEquals('http://localhost', $doc['servers'][0]['url']);
         $this->assertEquals(['/api/a', '/api/b', '/api/c', '/second-api/a', '/second-api/b', '/second-api/c'], array_keys($doc['paths']));
+    }
+
+    protected function registerCustomPathApi()
+    {
+        Scramble::ignoreDefaultRoutes();
+
+        Scramble::registerApi('newsletter', [
+            'api_path' => 'newsletter/api',
+        ]);
+    }
+
+    protected function registerCustomNewsletterApiRoutes(Router $router)
+    {
+        $router->group(['prefix' => 'newsletter/api'], function (Router $router) {
+            $router->get('a', [ScrambleTest_Controller::class, 'test']);
+        });
     }
 
     protected function withEnforcedUnknownSchemaPrevention()

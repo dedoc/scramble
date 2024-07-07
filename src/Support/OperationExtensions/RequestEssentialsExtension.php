@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
+use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Scramble;
@@ -37,19 +38,14 @@ use ReflectionParameter;
 
 class RequestEssentialsExtension extends OperationExtension
 {
-    private OpenApi $openApi;
-
-    private ServerFactory $serverFactory;
-
     public function __construct(
         Infer $infer,
         TypeTransformer $openApiTransformer,
-        OpenApi $openApi,
-        ServerFactory $serverFactory
+        GeneratorConfig $config,
+        private OpenApi $openApi,
+        private ServerFactory $serverFactory
     ) {
-        parent::__construct($infer, $openApiTransformer);
-        $this->openApi = $openApi;
-        $this->serverFactory = $serverFactory;
+        parent::__construct($infer, $openApiTransformer, $config);
     }
 
     public function handle(Operation $operation, RouteInfo $routeInfo)
@@ -94,7 +90,7 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         [$protocol] = explode('://', url('/'));
-        $expectedServer = $this->serverFactory->make($protocol.'://'.$route->getDomain().'/'.config('scramble.api_path', 'api'));
+        $expectedServer = $this->serverFactory->make($protocol.'://'.$route->getDomain().'/'.$this->config->get('api_path', 'api'));
 
         if ($this->isServerMatchesAllGivenServers($expectedServer, $this->openApi->servers)) {
             return [];
