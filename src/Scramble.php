@@ -61,6 +61,9 @@ class Scramble
             config: array_merge(config('scramble'), $config),
         );
 
+        // By default, afterOpenApiGenerated is the same for all APIs.
+        $generatorConfig->afterOpenApiGenerated(Scramble::$openApiExtender);
+
         return $generatorConfig;
     }
 
