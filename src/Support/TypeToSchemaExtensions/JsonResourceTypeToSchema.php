@@ -3,9 +3,11 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\Type\ArrayType;
@@ -87,17 +89,12 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         $wrapKey = $wrapKey ?: 'data';
 
         if ($shouldWrap) {
-            $openApiType = (new \Dedoc\Scramble\Support\Generator\Types\ObjectType())
-                ->addProperty($wrapKey, $openApiType)
-                ->setRequired([$wrapKey]);
-
-            if ($withArray instanceof KeyedArrayType) {
-                $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($withArray));
-            }
-
-            if ($additional instanceof KeyedArrayType) {
-                $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));
-            }
+            $openApiType = $this->mergeResourceTypeAndAdditionals(
+                $wrapKey,
+                $openApiType,
+                $this->normalizeKeyedArrayType($withArray),
+                $this->normalizeKeyedArrayType($additional),
+            );
         }
 
         return Response::make(200)
@@ -106,6 +103,47 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
                 'application/json',
                 Schema::fromType($openApiType),
             );
+    }
+
+    private function mergeResourceTypeAndAdditionals(string $wrapKey, Reference|OpenApiObjectType $openApiType, ?KeyedArrayType $withArray, ?KeyedArrayType $additional)
+    {
+        $resolvedOpenApiType = $openApiType instanceof Reference ? $openApiType->resolve() : $openApiType;
+        $resolvedOpenApiType = $resolvedOpenApiType instanceof Schema ? $resolvedOpenApiType->type : $resolvedOpenApiType;
+
+        // If resolved type already contains wrapKey, we don't need to wrap it again. But we still need to merge additionals.
+        if ($resolvedOpenApiType instanceof OpenApiObjectType && $resolvedOpenApiType->hasProperty($wrapKey)) {
+            $items = array_values(array_filter([
+                $openApiType,
+                $this->transformNullableType($withArray),
+                $this->transformNullableType($additional),
+            ]));
+
+            return count($items) > 1 ? (new AllOf)->setItems($items) : $items[0];
+        }
+
+        $openApiType = (new OpenApiObjectType())
+            ->addProperty($wrapKey, $openApiType)
+            ->setRequired([$wrapKey]);
+
+        if ($withArray) {
+            $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($withArray));
+        }
+
+        if ($additional) {
+            $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));
+        }
+
+        return $openApiType;
+    }
+
+    private function normalizeKeyedArrayType($type): ?KeyedArrayType
+    {
+        return $type instanceof KeyedArrayType ? $type : null;
+    }
+
+    private function transformNullableType(?KeyedArrayType $type)
+    {
+        return $type ? $this->openApiTransformer->transform($type) : null;
     }
 
     public function reference(ObjectType $type)
