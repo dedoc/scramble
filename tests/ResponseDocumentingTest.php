@@ -156,3 +156,43 @@ class Foo_TestSix
         return Foo_TestFiveResource::collection()->response()->setStatusCode(201);
     }
 }
+
+test('does not wrap resources when resource is wrapped', function () {
+    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestSeven::class, 'index']));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][200]['content']['application/json']['schema'])
+        ->toBe(['$ref' => '#/components/schemas/Foo_TestSevenResource']);
+    expect($openApiDocument['components']['schemas']['Foo_TestSevenResource'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                'data' => [
+                    'type' => 'object',
+                    'properties' => ['foo' => ['type' => 'string']],
+                    'required' => ['foo'],
+                ]
+            ],
+            'required' => ['data'],
+            'title' => 'Foo_TestSevenResource',
+        ]);
+});
+class Foo_TestSevenResource extends \Illuminate\Http\Resources\Json\JsonResource
+{
+    public static $wrap = 'data';
+
+    public function toArray(\Illuminate\Http\Request $request)
+    {
+        return [
+            'data' => [
+                'foo' => $this->id,
+            ],
+        ];
+    }
+}
+class Foo_TestSeven
+{
+    public function index()
+    {
+        return (new Foo_TestSevenResource(unknown()));
+    }
+}
