@@ -69,18 +69,17 @@ class SupportFormatAnnotation_ParametersDocumentationTestController
 it('supports optional parameters', function () {
     $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test/{param?}', SupportOptionalParam_ParametersDocumentationTestController::class));
 
-    dd($openApiDocument);
-
-    expect($openApiDocument['paths']['/test']['get']['parameters'])
+    expect($openApiDocument['paths']['/test/{param}']['get']['parameters'])
         ->toHaveCount(1)
-        ->and($openApiDocument['paths']['/test']['get']['parameters'][0])
+        ->and($openApiDocument['paths']['/test/{param}']['get']['parameters'][0])
         ->toBe([
-            'name' => 'foo',
-            'in' => 'query',
+            'name' => 'param',
+            'in' => 'path',
             'required' => true,
+            'description' => '**Optional**. The name of the person to greet',
             'schema' => [
-                'type' => 'string',
-                'format' => 'uuid',
+                'type' => ['string', 'null'],
+                'default' => 'foo',
             ],
         ]);
 });
