@@ -170,7 +170,7 @@ test('does not wrap resources when resource is wrapped', function () {
                     'type' => 'object',
                     'properties' => ['foo' => ['type' => 'string']],
                     'required' => ['foo'],
-                ]
+                ],
             ],
             'required' => ['data'],
             'title' => 'Foo_TestSevenResource',
@@ -193,6 +193,6 @@ class Foo_TestSeven
 {
     public function index()
     {
-        return (new Foo_TestSevenResource(unknown()));
+        return new Foo_TestSevenResource(unknown());
     }
 }
