@@ -59,12 +59,14 @@ class RequestEssentialsExtension extends OperationExtension
             ]);
         };
 
+        $uriWithoutOptionalParams = Str::replace('?}', '}', $routeInfo->route->uri);
+
         $operation
             ->setMethod(strtolower($routeInfo->route->methods()[0]))
             ->setPath(Str::replace(
                 collect($pathAliases)->keys()->map(fn ($k) => '{'.$k.'}')->all(),
                 collect($pathAliases)->values()->map(fn ($v) => '{'.$v.'}')->all(),
-                $routeInfo->route->uri,
+                $uriWithoutOptionalParams,
             ))
             ->setTags($tagResolver($routeInfo, $operation))
             ->servers($this->getAlternativeServers($routeInfo->route))
@@ -233,6 +235,16 @@ class RequestEssentialsExtension extends OperationExtension
 
         if ($schemaType instanceof \Dedoc\Scramble\Support\Generator\Types\UnknownType) {
             $schemaType = (new StringType)->mergeAttributes($schemaType->attributes());
+        }
+
+        if ($reflectionParam?->isDefaultValueAvailable()) {
+            $schemaType->default($reflectionParam->getDefaultValue());
+        }
+
+        $description ??= '';
+
+        if ($isOptional = Str::contains($route->uri(), '{'.$paramName.'?}')) {
+            $description = implode('. ', array_filter(['**Optional**', $description]));
         }
 
         return [$schemaType, $description ?? ''];

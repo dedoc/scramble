@@ -65,3 +65,32 @@ class SupportFormatAnnotation_ParametersDocumentationTestController
         ]);
     }
 }
+
+it('supports optional parameters', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test/{param?}', SupportOptionalParam_ParametersDocumentationTestController::class));
+
+    dd($openApiDocument);
+
+    expect($openApiDocument['paths']['/test']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($openApiDocument['paths']['/test']['get']['parameters'][0])
+        ->toBe([
+            'name' => 'foo',
+            'in' => 'query',
+            'required' => true,
+            'schema' => [
+                'type' => 'string',
+                'format' => 'uuid',
+            ],
+        ]);
+});
+
+class SupportOptionalParam_ParametersDocumentationTestController
+{
+    /**
+     * @param string|null $param The name of the person to greet
+     */
+    public function __invoke(?string $param = 'foo')
+    {
+    }
+}
