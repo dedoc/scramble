@@ -81,6 +81,7 @@ it('supports optional parameters', function () {
                 'type' => ['string', 'null'],
                 'default' => 'paypal',
             ],
+            'x-optional' => true,
         ]);
 });
 
