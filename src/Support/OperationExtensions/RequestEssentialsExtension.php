@@ -59,12 +59,14 @@ class RequestEssentialsExtension extends OperationExtension
             ]);
         };
 
+        $uriWithoutOptionalParams = Str::replace('?}', '}', $routeInfo->route->uri);
+
         $operation
             ->setMethod(strtolower($routeInfo->route->methods()[0]))
             ->setPath(Str::replace(
                 collect($pathAliases)->keys()->map(fn ($k) => '{'.$k.'}')->all(),
                 collect($pathAliases)->values()->map(fn ($v) => '{'.$v.'}')->all(),
-                $routeInfo->route->uri,
+                $uriWithoutOptionalParams,
             ))
             ->setTags($tagResolver($routeInfo, $operation))
             ->servers($this->getAlternativeServers($routeInfo->route))
@@ -183,7 +185,7 @@ class RequestEssentialsExtension extends OperationExtension
             $paramName = $aliases[$paramName];
 
             $description = $phpDocTypehintParam[$paramName]?->description ?? '';
-            [$schemaType, $description] = $this->getParameterType(
+            [$schemaType, $description, $isOptional] = $this->getParameterType(
                 $paramName,
                 $description,
                 $routeInfo,
@@ -192,9 +194,15 @@ class RequestEssentialsExtension extends OperationExtension
                 $reflectionParamsByKeys[$paramName] ?? null,
             );
 
-            return Parameter::make($paramName, 'path')
+            $param = Parameter::make($paramName, 'path')
                 ->description($description)
                 ->setSchema(Schema::fromType($schemaType));
+
+            if ($isOptional) {
+                $param->setExtensionProperty('optional', true);
+            }
+
+            return $param;
         }, array_values(array_diff($route->parameterNames(), $this->getParametersFromString($route->getDomain()))));
 
         return [$params, $aliases];
@@ -235,7 +243,18 @@ class RequestEssentialsExtension extends OperationExtension
             $schemaType = (new StringType)->mergeAttributes($schemaType->attributes());
         }
 
-        return [$schemaType, $description ?? ''];
+        if ($reflectionParam?->isDefaultValueAvailable()) {
+            $schemaType->default($reflectionParam->getDefaultValue());
+        }
+
+        $description ??= '';
+
+        $isOptional = false;
+        if ($isOptional = Str::contains($route->uri(), ['{'.$paramName.'?}', '{'.Str::snake($paramName).'?}'], ignoreCase: true)) {
+            $description = implode('. ', array_filter(['**Optional**', $description]));
+        }
+
+        return [$schemaType, $description, $isOptional];
     }
 
     private function getModelIdTypeAndDescription(
