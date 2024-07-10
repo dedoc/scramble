@@ -88,9 +88,7 @@ it('supports optional parameters', function () {
 class SupportOptionalParam_ParametersDocumentationTestController
 {
     /**
-     * @param string|null $paymentPreference The name of the payment preference to use
+     * @param  string|null  $paymentPreference  The name of the payment preference to use
      */
-    public function __invoke(?string $paymentPreference = 'paypal')
-    {
-    }
+    public function __invoke(?string $paymentPreference = 'paypal') {}
 }
