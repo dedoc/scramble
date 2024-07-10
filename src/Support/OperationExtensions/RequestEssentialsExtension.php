@@ -243,7 +243,7 @@ class RequestEssentialsExtension extends OperationExtension
 
         $description ??= '';
 
-        if ($isOptional = Str::contains($route->uri(), '{'.$paramName.'?}')) {
+        if ($isOptional = Str::contains($route->uri(), ['{'.$paramName.'?}','{'.Str::snake($paramName).'?}'], ignoreCase: true)) {
             $description = implode('. ', array_filter(['**Optional**', $description]));
         }
 

@@ -67,19 +67,19 @@ class SupportFormatAnnotation_ParametersDocumentationTestController
 }
 
 it('supports optional parameters', function () {
-    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test/{param?}', SupportOptionalParam_ParametersDocumentationTestController::class));
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test/{payment_preference?}', SupportOptionalParam_ParametersDocumentationTestController::class));
 
-    expect($openApiDocument['paths']['/test/{param}']['get']['parameters'])
+    expect($openApiDocument['paths']['/test/{paymentPreference}']['get']['parameters'])
         ->toHaveCount(1)
-        ->and($openApiDocument['paths']['/test/{param}']['get']['parameters'][0])
+        ->and($openApiDocument['paths']['/test/{paymentPreference}']['get']['parameters'][0])
         ->toBe([
-            'name' => 'param',
+            'name' => 'paymentPreference',
             'in' => 'path',
             'required' => true,
-            'description' => '**Optional**. The name of the person to greet',
+            'description' => '**Optional**. The name of the payment preference to use',
             'schema' => [
                 'type' => ['string', 'null'],
-                'default' => 'foo',
+                'default' => 'paypal',
             ],
         ]);
 });
@@ -87,9 +87,9 @@ it('supports optional parameters', function () {
 class SupportOptionalParam_ParametersDocumentationTestController
 {
     /**
-     * @param string|null $param The name of the person to greet
+     * @param string|null $paymentPreference The name of the payment preference to use
      */
-    public function __invoke(?string $param = 'foo')
+    public function __invoke(?string $paymentPreference = 'paypal')
     {
     }
 }
