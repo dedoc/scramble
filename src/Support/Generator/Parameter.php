@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\Generator;
 class Parameter
 {
     use WithAttributes;
+    use WithExtensions;
 
     public string $name;
 
@@ -75,7 +76,8 @@ class Parameter
             $this->example instanceof MissingExample ? [] : ['example' => $this->example],
             ! is_null($this->explode) ? [
                 'explode' => $this->explode,
-            ] : []
+            ] : [],
+            $this->extensionPropertiesToArray(),
         );
     }
 

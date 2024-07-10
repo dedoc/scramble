@@ -185,7 +185,7 @@ class RequestEssentialsExtension extends OperationExtension
             $paramName = $aliases[$paramName];
 
             $description = $phpDocTypehintParam[$paramName]?->description ?? '';
-            [$schemaType, $description] = $this->getParameterType(
+            [$schemaType, $description, $isOptional] = $this->getParameterType(
                 $paramName,
                 $description,
                 $routeInfo,
@@ -194,9 +194,15 @@ class RequestEssentialsExtension extends OperationExtension
                 $reflectionParamsByKeys[$paramName] ?? null,
             );
 
-            return Parameter::make($paramName, 'path')
+            $param = Parameter::make($paramName, 'path')
                 ->description($description)
                 ->setSchema(Schema::fromType($schemaType));
+
+            if ($isOptional) {
+                $param->setExtensionProperty('optional', true);
+            }
+
+            return $param;
         }, array_values(array_diff($route->parameterNames(), $this->getParametersFromString($route->getDomain()))));
 
         return [$params, $aliases];
@@ -243,11 +249,12 @@ class RequestEssentialsExtension extends OperationExtension
 
         $description ??= '';
 
+        $isOptional = false;
         if ($isOptional = Str::contains($route->uri(), ['{'.$paramName.'?}','{'.Str::snake($paramName).'?}'], ignoreCase: true)) {
             $description = implode('. ', array_filter(['**Optional**', $description]));
         }
 
-        return [$schemaType, $description ?? ''];
+        return [$schemaType, $description, $isOptional];
     }
 
     private function getModelIdTypeAndDescription(
