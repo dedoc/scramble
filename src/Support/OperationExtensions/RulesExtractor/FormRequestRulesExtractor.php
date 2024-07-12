@@ -29,7 +29,7 @@ class FormRequestRulesExtractor
             return false;
         }
 
-        if (!collect($this->handler->getParams())->contains($this->findCustomRequestParam(...))) {
+        if (! collect($this->handler->getParams())->contains($this->findCustomRequestParam(...))) {
             return false;
         }
 
