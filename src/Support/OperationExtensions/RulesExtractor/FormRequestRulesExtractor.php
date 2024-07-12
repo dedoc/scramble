@@ -12,6 +12,7 @@ use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Param;
 use PhpParser\NodeFinder;
 use ReflectionClass;
+use Spatie\LaravelData\Contracts\BaseData;
 
 class FormRequestRulesExtractor
 {
@@ -28,7 +29,17 @@ class FormRequestRulesExtractor
             return false;
         }
 
-        return collect($this->handler->getParams())->contains($this->findCustomRequestParam(...));
+        if (!collect($this->handler->getParams())->contains($this->findCustomRequestParam(...))) {
+            return false;
+        }
+
+        $className = $this->getFormRequestClassName();
+
+        if (is_a($className, BaseData::class, true)) {
+            return false;
+        }
+
+        return true;
     }
 
     public function node()
