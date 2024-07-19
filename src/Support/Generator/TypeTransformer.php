@@ -121,8 +121,10 @@ class TypeTransformer
                     ? $this->transform(PhpDocTypeHelper::toType($varNode->type))
                     : $openApiType;
 
-                if ($varNode && $varNode->description) {
-                    $openApiType->setDescription($varNode->description);
+                $commentDescription = trim($docNode->getAttribute('summary').' '.$docNode->getAttribute('description'));
+                $varNodeDescription = $varNode && $varNode->description ? trim($varNode->description) : '';
+                if ($commentDescription || $varNodeDescription) {
+                    $openApiType->setDescription(implode('. ', array_filter([$varNodeDescription, $commentDescription])));
                 }
 
                 if ($examples = ExamplesExtractor::make($docNode)->extract(preferString: $openApiType instanceof StringType)) {
