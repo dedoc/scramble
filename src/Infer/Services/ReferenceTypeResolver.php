@@ -17,6 +17,7 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\Dependency\ClassDependency;
 use Dedoc\Scramble\Support\Type\Reference\Dependency\FunctionDependency;
 use Dedoc\Scramble\Support\Type\Reference\Dependency\MethodDependency;
@@ -163,6 +164,10 @@ class ReferenceTypeResolver
     private function doResolve(Type $t, Type $type, Scope $scope)
     {
         $resolver = function () use ($t, $scope) {
+            if ($t instanceof ConstFetchReferenceType) {
+                return $this->resolveConstFetchReferenceType($scope, $t);
+            }
+
             if ($t instanceof MethodCallReferenceType) {
                 return $this->resolveMethodCallReferenceType($scope, $t);
             }
@@ -195,6 +200,28 @@ class ReferenceTypeResolver
         }
 
         return $this->resolve($scope, $resolved);
+    }
+
+    private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type)
+    {
+        $analyzedType = clone $type;
+
+        if ($type->callee instanceof StaticReference) {
+            $contextualCalleeName = match ($type->callee->keyword) {
+                StaticReference::SELF => $scope->context->functionDefinition?->definingClassName,
+                StaticReference::STATIC => $scope->context->classDefinition?->name,
+                StaticReference::PARENT => $scope->context->classDefinition?->parentFqn,
+            };
+
+            // This can only happen if any of static reserved keyword used in non-class context – hence considering not possible for now.
+            if (! $contextualCalleeName) {
+                return new UnknownType("Cannot properly analyze [{$type->toString()}] reference type as static keyword used in non-class context, or current class scope has no parent.");
+            }
+
+            $analyzedType->callee = $contextualCalleeName;
+        }
+
+        return (new ConstFetchTypeGetter)($scope, $analyzedType->callee, $analyzedType->constName);
     }
 
     private function resolveMethodCallReferenceType(Scope $scope, MethodCallReferenceType $type)
