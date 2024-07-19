@@ -24,7 +24,6 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
-use function Symfony\Component\Translation\t;
 
 /**
  * Transforms PHP type to OpenAPI schema type.
