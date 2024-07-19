@@ -30,12 +30,15 @@ class RouteInfo
 
     public readonly Bag $requestParametersFromCalls;
 
+    public readonly Infer\Extensions\IndexBuildingBroker $indexBuildingBroker;
+
     public function __construct(Route $route, FileParser $fileParser, Infer $infer)
     {
         $this->route = $route;
         $this->parser = $fileParser;
         $this->infer = $infer;
         $this->requestParametersFromCalls = new Bag();
+        $this->indexBuildingBroker = app(Infer\Extensions\IndexBuildingBroker::class);
     }
 
     public function isClassBased(): bool
@@ -118,6 +121,7 @@ class RouteInfo
              */
             $this->methodType = $def->getMethodDefinition($this->methodName(), indexBuilders: [
                 new RequestParametersBuilder($this->requestParametersFromCalls),
+                ...$this->indexBuildingBroker->indexBuilders,
             ])->type;
         }
 

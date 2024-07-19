@@ -8,6 +8,7 @@ use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
+use Dedoc\Scramble\Infer\Extensions\IndexBuildingBroker;
 use Dedoc\Scramble\Infer\Extensions\InferExtension;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\FileParser;
@@ -18,6 +19,7 @@ use Dedoc\Scramble\Support\ExceptionToResponseExtensions\NotFoundExceptionToResp
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\ValidationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCallsTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCreationInfer;
@@ -135,6 +137,21 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ResponseExtension::class,
                     DeprecationExtension::class,
                 ], $operationExtensions);
+            });
+
+        $this->app->when(IndexBuildingBroker::class)
+            ->needs('$indexBuilders')
+            ->give(function () {
+                $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
+
+                $indexBuilders = array_values(array_filter(
+                    $extensions,
+                    fn ($e) => is_a($e, IndexBuilder::class, true),
+                ));
+
+                return array_map(function ($class) {
+                    return app($class);
+                }, $indexBuilders);
             });
 
         $this->app->singleton(ServerFactory::class);

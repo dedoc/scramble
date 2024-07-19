@@ -193,12 +193,16 @@ class Scope
         return $type;
     }
 
-    private function getArgsTypes(array $args)
+    // @todo: Move to some helper, Scope should be passed as a dependency.
+    public function getArgsTypes(array $args)
     {
         return collect($args)
             ->filter(fn ($arg) => $arg instanceof Node\Arg)
             ->mapWithKeys(function (Node\Arg $arg, $index) {
                 $type = $this->getType($arg->value);
+                if ($parsedPhpDoc = $arg->getAttribute('parsedPhpDoc')) {
+                    $type->setAttribute('docNode', $parsedPhpDoc);
+                }
 
                 if (! $arg->unpack) {
                     return [$arg->name ? $arg->name->name : $index => $type];
