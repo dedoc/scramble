@@ -197,6 +197,25 @@ it('supports @format tag in api resource', function () {
     ]);
 });
 
+it('supports simple comments descriptions in api resource', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(ApiResourceTest_ResourceWithSimpleDescription::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithSimpleDescription',
+    ]);
+
+    expect($components->getSchema(ApiResourceTest_ResourceWithSimpleDescription::class)->toArray()['properties']['now'])->toBe([
+        'type' => 'string',
+        'description' => 'The date of the current moment.',
+    ]);
+    expect($components->getSchema(ApiResourceTest_ResourceWithSimpleDescription::class)->toArray()['properties']['now2'])->toBe([
+        'type' => 'string',
+        'description' => 'Inline comments are also supported.',
+    ]);
+});
+
 class ComplexTypeHandlersTest_SampleType extends JsonResource
 {
     public function toArray($request)
@@ -331,6 +350,21 @@ class ApiResourceTest_ResourceWithFormat extends JsonResource
              * @format date-time
              */
             'now' => now(),
+        ];
+    }
+}
+
+class ApiResourceTest_ResourceWithSimpleDescription extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            /**
+             * The date of the current moment.
+             */
+            'now' => now(),
+            // Inline comments are also supported.
+            'now2' => now(),
         ];
     }
 }
