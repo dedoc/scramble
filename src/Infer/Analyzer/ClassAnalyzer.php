@@ -44,8 +44,11 @@ class ClassAnalyzer
         $classReflection = new ReflectionClass($name);
 
         $parentDefinition = null;
+
         if ($classReflection->getParentClass() && $this->shouldAnalyzeParentClass($classReflection->getParentClass())) {
             $parentDefinition = $this->analyze($parentName = $classReflection->getParentClass()->name);
+        } elseif ($classReflection->getParentClass() && ! $this->shouldAnalyzeParentClass($classReflection->getParentClass())) {
+            // @todo: Here we still want to fire the event, so we can add some details to the definition.
         }
 
         /*

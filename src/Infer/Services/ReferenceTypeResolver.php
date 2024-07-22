@@ -423,12 +423,14 @@ class ReferenceTypeResolver
             ->merge($propertyDefaultTemplateTypes)
             ->merge($inferredConstructorParamTemplates);
 
-        return new Generic(
+        $type = new Generic(
             $classDefinition->name,
             collect($classDefinition->templateTypes)
-                ->map(fn (TemplateType $t) => $inferredTemplates->get($t->name, new UnknownType()))
+                ->map(fn (TemplateType $t) => $inferredTemplates->get($t->name, new UnknownType))
                 ->toArray(),
         );
+
+        return $this->getMethodCallsSideEffectIntroducedTypesInConstructor($type, $scope, $classDefinition, $constructorDefinition);
     }
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type)
@@ -659,5 +661,42 @@ class ReferenceTypeResolver
         return $this
             ->getParentConstructCallsTypes($parentClassDefinition, $parentClassDefinition->getMethodDefinition('__construct'))
             ->merge($templateArgs);
+    }
+
+    private function getMethodCallsSideEffectIntroducedTypesInConstructor(Generic $type, Scope $scope, ClassDefinition $classDefinition, ?FunctionLikeDefinition $constructorDefinition): Type
+    {
+        if (! $constructorDefinition) {
+            return $type;
+        }
+
+        $mappo = new \WeakMap();
+        foreach ($constructorDefinition->sideEffects as $se) {
+            if (! $se instanceof MethodCallReferenceType) {
+                continue;
+            }
+
+            if ((! $se->callee instanceof SelfType) && ($mappo->offsetExists($se->callee) && ! $mappo->offsetGet($se->callee) instanceof SelfType)) {
+                continue;
+            }
+
+            // at this point we know that this is a method call on a self type
+            $resultingType = $this->resolveMethodCallReferenceType($scope, $se);
+
+            // $resultingType will be Self type if $this is returned, and we're in context of fluent setter
+
+            $mappo->offsetSet($se, $resultingType);
+
+            $methodDefinition = ($methodDependency = collect($se->dependencies())->first(fn ($d) => $d instanceof MethodDependency))
+                ? $this->index->getClassDefinition($methodDependency->class)?->getMethodDefinition($methodDependency->name)
+                : null;
+
+            if (! $methodDefinition) {
+                continue;
+            }
+
+            $type = $this->getFunctionCallResult($methodDefinition, $se->arguments, $type);
+        }
+
+        return $type;
     }
 }

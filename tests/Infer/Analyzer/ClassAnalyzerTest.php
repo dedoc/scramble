@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Tests\Infer\stubs\Bar;
 use Dedoc\Scramble\Tests\Infer\stubs\Child;
+use Dedoc\Scramble\Tests\Infer\stubs\ChildParentSetterCalls;
 use Dedoc\Scramble\Tests\Infer\stubs\ChildPromotion;
 use Dedoc\Scramble\Tests\Infer\stubs\DeepChild;
 use Dedoc\Scramble\Tests\Infer\stubs\Foo;
@@ -94,4 +95,12 @@ it('analyzes parent with property promotion', function () {
     $type = getStatementType('new Dedoc\Scramble\Tests\Infer\stubs\ChildPromotion("some", "wow", 42)');
 
     expect($type->toString())->toBe('Dedoc\Scramble\Tests\Infer\stubs\ChildPromotion<int(42), string(wow), string(some)>');
+});
+
+it('analyzes call to parent setter methods in child constructor', function () {
+    $this->classAnalyzer->analyze(ChildParentSetterCalls::class);
+
+    $type = getStatementType('new Dedoc\Scramble\Tests\Infer\stubs\ChildParentSetterCalls("some", "wow")');
+
+    expect($type->toString())->toBe('Dedoc\Scramble\Tests\Infer\stubs\ChildParentSetterCalls<string(from ChildParentSetterCalls constructor), string(from ChildParentSetterCalls wow), string(some)>');
 });
