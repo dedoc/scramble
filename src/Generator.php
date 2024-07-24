@@ -219,7 +219,7 @@ class Generator
 
     private function setUniqueOperationId(OpenApi $openApi)
     {
-        $names = new UniqueNamesOptionsCollection();
+        $names = new UniqueNamesOptionsCollection;
 
         $this->foreachOperation($openApi, function (Operation $operation) use ($names) {
             $names->push($operation->getAttribute('operationId'));

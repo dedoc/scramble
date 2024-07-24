@@ -68,7 +68,7 @@ class MethodReflector
             $partialClass = "<?php$lines class $className {\n".$methodDoc."\n".$this->getMethodCode()."\n}";
 
             $statements = $this->parser->parseContent($partialClass)->getStatements();
-            $node = (new NodeFinder())
+            $node = (new NodeFinder)
                 ->findFirst(
                     $statements,
                     fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $this->name,

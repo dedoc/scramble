@@ -77,7 +77,7 @@ class TemplateTypesSolver
                 ?? null;
 
             if (! $foundCorrespondingTemplateType) {
-                $foundCorrespondingTemplateType = new UnknownType();
+                $foundCorrespondingTemplateType = new UnknownType;
                 // throw new \LogicException("Cannot infer type of template $template->name from arguments.");
             }
 

@@ -34,7 +34,7 @@ class FileParser
     {
         return $this->cache[md5($content)] ??= new FileParserResult(
             $statements = Arr::wrap($this->parser->parse($content)),
-            new FileNameResolver(new NameContext(new Throwing()))
+            new FileNameResolver(new NameContext(new Throwing))
         );
     }
 }

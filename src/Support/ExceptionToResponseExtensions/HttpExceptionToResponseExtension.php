@@ -38,10 +38,10 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
             return null;
         }
 
-        $responseBodyType = (new OpenApiTypes\ObjectType())
+        $responseBodyType = (new OpenApiTypes\ObjectType)
             ->addProperty(
                 'message',
-                tap((new OpenApiTypes\StringType())->setDescription('Error overview.'), function (OpenApiTypes\StringType $t) use ($type) {
+                tap((new OpenApiTypes\StringType)->setDescription('Error overview.'), function (OpenApiTypes\StringType $t) use ($type) {
                     $messageType = $type->templateTypes[1] ?? null;
                     if (! $messageType instanceof LiteralStringType) {
                         return;

@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 beforeEach(function () {
-    $this->infer = new Infer(new Infer\Scope\Index());
+    $this->infer = new Infer(new Infer\Scope\Index);
 });
 
 it('adds models attributes to the model class definition as properties', function () {

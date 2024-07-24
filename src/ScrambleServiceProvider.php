@@ -70,7 +70,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
         });
 
         $this->app->singleton(Index::class, function () {
-            $index = new Index();
+            $index = new Index;
             foreach ((require __DIR__.'/../dictionaries/classMap.php') ?: [] as $className => $serializedClassDefinition) {
                 $index->classesDefinitions[$className] = unserialize($serializedClassDefinition);
             }
@@ -99,20 +99,20 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                 return array_merge(
                     [
-                        new PossibleExceptionInfer(),
-                        new AbortHelpersExceptionInfer(),
+                        new PossibleExceptionInfer,
+                        new AbortHelpersExceptionInfer,
 
-                        new JsonResourceCallsTypeInfer(),
-                        new JsonResourceCreationInfer(),
-                        new JsonResourceTypeInfer(),
-                        new ValidatorTypeInfer(),
-                        new ResourceCollectionTypeInfer(),
-                        new ResponseFactoryTypeInfer(),
+                        new JsonResourceCallsTypeInfer,
+                        new JsonResourceCreationInfer,
+                        new JsonResourceTypeInfer,
+                        new ValidatorTypeInfer,
+                        new ResourceCollectionTypeInfer,
+                        new ResponseFactoryTypeInfer,
 
                         /*
                          * Keep this extension last, so the trace info is preserved.
                          */
-                        new TypeTraceInfer(),
+                        new TypeTraceInfer,
                     ],
                     array_map(function ($class) {
                         return app($class);

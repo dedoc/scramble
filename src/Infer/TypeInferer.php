@@ -40,14 +40,14 @@ class TypeInferer extends NodeVisitorAbstract
         array $handlers = [],
     ) {
         $this->handlers = [
-            new FunctionLikeHandler(),
-            new AssignHandler(),
-            new ClassHandler(),
-            new PropertyHandler(),
-            new ArrayHandler(),
-            new ArrayItemHandler(),
-            new ReturnHandler(),
-            new ThrowHandler(),
+            new FunctionLikeHandler,
+            new AssignHandler,
+            new ClassHandler,
+            new PropertyHandler,
+            new ArrayHandler,
+            new ArrayItemHandler,
+            new ReturnHandler,
+            new ThrowHandler,
             new ExpressionTypeInferringExtensions(array_values(array_filter(
                 $extensions,
                 fn ($ext) => $ext instanceof ExpressionTypeInferExtension,
@@ -56,7 +56,7 @@ class TypeInferer extends NodeVisitorAbstract
                 $extensions,
                 fn ($ext) => $ext instanceof ExpressionExceptionExtension,
             ))),
-            new PhpDocHandler(),
+            new PhpDocHandler,
             ...$handlers,
         ];
     }

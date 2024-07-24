@@ -11,7 +11,7 @@ class RequestBodyObject
 
     public static function make()
     {
-        return new self();
+        return new self;
     }
 
     public function setContent(string $type, Schema|Reference $schema)

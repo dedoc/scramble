@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Infer\Extensions;
 
 use Dedoc\Scramble\Support\IndexBuilders\Bag;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
-use Dedoc\ScramblePro\Extensions\LaravelQueryBuilder\Index\QueryRequestConstraintsIndexBuilder;
 
 class IndexBuildingBroker
 {
@@ -20,7 +19,7 @@ class IndexBuildingBroker
             }
         }
 
-        return new Bag();
+        return new Bag;
     }
 
     public function handleEvent($event)

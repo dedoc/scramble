@@ -113,7 +113,7 @@ class PhpDocTypeHelper
             }
 
             if ($type->constExpr instanceof ConstExprFloatNode) {
-                return new FloatType(); // todo: float literal?
+                return new FloatType; // todo: float literal?
             }
         }
 

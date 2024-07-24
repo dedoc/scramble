@@ -39,14 +39,14 @@ function analyzeFile(
     $index = app(Index::class); //new Index;
 
     $traverser = new NodeTraverser;
-    $traverser->addVisitor($nameResolver = new NameResolver());
+    $traverser->addVisitor($nameResolver = new NameResolver);
     $traverser->addVisitor(new PhpDocResolver(
         $nameResolver = new FileNameResolver($nameResolver->getNameContext()),
     ));
     $traverser->addVisitor(new TypeInferer(
         $index,
         $nameResolver,
-        new Scope($index, new NodeTypesResolver(), new ScopeContext(), $nameResolver),
+        new Scope($index, new NodeTypesResolver, new ScopeContext, $nameResolver),
         Infer\Context::getInstance()->extensionsBroker->extensions,
     ));
     $traverser->traverse(
@@ -78,7 +78,7 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
             $index,
             new NodeTypesResolver,
             new ScopeContext(functionDefinition: $functionDefinition),
-            new FileNameResolver(new NameContext(new Throwing())),
+            new FileNameResolver(new NameContext(new Throwing)),
         );
         $referenceResolver->resolveFunctionReturnReferences($fnScope, $functionDefinition->type);
     }
@@ -89,7 +89,7 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
                 $index,
                 new NodeTypesResolver,
                 new ScopeContext($classDefinition, $methodDefinition),
-                new FileNameResolver(new NameContext(new Throwing())),
+                new FileNameResolver(new NameContext(new Throwing)),
             );
             $referenceResolver->resolveFunctionReturnReferences($methodScope, $methodDefinition->type);
         }

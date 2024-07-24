@@ -67,7 +67,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
             return new Generic(
                 MergeValue::class,
                 [
-                    $node->name->name === 'merge' ? new LiteralBooleanType(true) : new BooleanType(),
+                    $node->name->name === 'merge' ? new LiteralBooleanType(true) : new BooleanType,
                     $type,
                 ],
             );
@@ -114,7 +114,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         if ($this->isMethodCallToThis($node, ['whenCounted'])) {
             if (count($node->args) === 1) {
                 return new Union([
-                    new IntegerType(),
+                    new IntegerType,
                     new ObjectType(MissingValue::class),
                 ]);
             }

@@ -25,7 +25,7 @@ class FileParserResult
 
     public function findFirstClass(string $class)
     {
-        return (new NodeFinder())->findFirst(
+        return (new NodeFinder)->findFirst(
             $this->getStatements(),
             fn (Node $node) => $node instanceof Node\Stmt\Class_
                 && ($node->namespacedName ?? $node->name)->toString() === ltrim($class, '\\'),
@@ -38,7 +38,7 @@ class FileParserResult
 
         $classAst = $this->findFirstClass($class);
 
-        return (new NodeFinder())
+        return (new NodeFinder)
             ->findFirst(
                 Arr::wrap($classAst),
                 fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $method,

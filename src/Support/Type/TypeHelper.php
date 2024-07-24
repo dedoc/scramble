@@ -36,31 +36,31 @@ class TypeHelper
     {
         if ($typeNode instanceof Node\NullableType) {
             return Union::wrap([
-                new NullType(),
+                new NullType,
                 static::createTypeFromTypeNode($typeNode->type),
             ]);
         }
 
         if ($typeNode instanceof Node\Identifier) {
             if ($typeNode->name === 'int') {
-                return new IntegerType();
+                return new IntegerType;
             }
 
             if ($typeNode->name === 'string') {
-                return new StringType();
+                return new StringType;
             }
 
             if ($typeNode->name === 'bool') {
-                return new BooleanType();
+                return new BooleanType;
             }
 
             if ($typeNode->name === 'float') {
-                return new FloatType();
+                return new FloatType;
             }
 
             if ($typeNode->name === 'array') {
                 return new ArrayType(
-                    value: new MixedType(),
+                    value: new MixedType,
                 );
             }
 
@@ -78,7 +78,7 @@ class TypeHelper
             ));
         }
 
-        return new UnknownType('Cannot get type from AST node '.(new Standard())->prettyPrint([$typeNode]));
+        return new UnknownType('Cannot get type from AST node '.(new Standard)->prettyPrint([$typeNode]));
     }
 
     /**
@@ -146,7 +146,7 @@ class TypeHelper
         }
 
         if (is_float($value)) {
-            return new FloatType();
+            return new FloatType;
         }
 
         if (is_bool($value)) {
@@ -160,7 +160,7 @@ class TypeHelper
     {
         if ($reflectionType->allowsNull() && $handleNullable) {
             return Union::wrap([
-                new NullType(),
+                new NullType,
                 static::createTypeFromReflectionType($reflectionType, handleNullable: false),
             ]);
         }
@@ -174,19 +174,19 @@ class TypeHelper
 
         if ($reflectionType instanceof ReflectionNamedType) {
             if ($reflectionType->getName() === 'int') {
-                return new IntegerType();
+                return new IntegerType;
             }
 
             if ($reflectionType->getName() === 'string') {
-                return new StringType();
+                return new StringType;
             }
 
             if ($reflectionType->getName() === 'bool') {
-                return new BooleanType();
+                return new BooleanType;
             }
 
             if ($reflectionType->getName() === 'float') {
-                return new FloatType();
+                return new FloatType;
             }
 
             return new ObjectType($reflectionType->getName());

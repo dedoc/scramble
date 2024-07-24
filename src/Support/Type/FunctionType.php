@@ -25,7 +25,7 @@ class FunctionType extends AbstractType implements FunctionLikeType
     ) {
         $this->name = $name;
         $this->arguments = $arguments;
-        $this->returnType = $returnType ?: new VoidType();
+        $this->returnType = $returnType ?: new VoidType;
         $this->exceptions = $exceptions;
     }
 

@@ -46,7 +46,7 @@ class ClassConstFetchTypeGetter
         // In case we're here, it means that we were unable to infer the type from the const fetch. So we rollback to the
         // string type.
         if ($node->name->toString() === 'class') {
-            return new StringType();
+            return new StringType;
         }
 
         return new UnknownType('Cannot get type from class const fetch');

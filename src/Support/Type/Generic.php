@@ -40,7 +40,7 @@ class Generic extends ObjectType
 
         /** @var array<string, Type> $inferredTemplates */
         $inferredTemplates = collect($templateNameToIndexMap)
-            ->mapWithKeys(fn ($i, $name) => [$name => $this->templateTypes[$i] ?? new UnknownType()])
+            ->mapWithKeys(fn ($i, $name) => [$name => $this->templateTypes[$i] ?? new UnknownType])
             ->toArray();
 
         return (new TypeWalker)->replace($propertyType, function (Type $t) use ($inferredTemplates) {

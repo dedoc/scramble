@@ -29,7 +29,7 @@ class ValidateCallExtractor
 
         // $request->validate, when $request is a Request instance
         /** @var Node\Expr\MethodCall $callToValidate */
-        $callToValidate = (new NodeFinder())->findFirst(
+        $callToValidate = (new NodeFinder)->findFirst(
             $methodNode,
             fn (Node $node) => $node instanceof Node\Expr\MethodCall
                 && $node->var instanceof Node\Expr\Variable
@@ -41,7 +41,7 @@ class ValidateCallExtractor
 
         if (! $validationRules) {
             // $this->validate($request, $rules), rules are second param. First should be $request, but no way to check type. So relying on convention.
-            $callToValidate = (new NodeFinder())->findFirst(
+            $callToValidate = (new NodeFinder)->findFirst(
                 $methodNode,
                 fn (Node $node) => $node instanceof Node\Expr\MethodCall
                     && count($node->args) >= 2
@@ -56,7 +56,7 @@ class ValidateCallExtractor
 
         if (! $validationRules) {
             // Validator::make($request->...(), $rules), rules are second param. First should be $request, but no way to check type. So relying on convention.
-            $callToValidate = (new NodeFinder())->findFirst(
+            $callToValidate = (new NodeFinder)->findFirst(
                 $methodNode,
                 fn (Node $node) => $node instanceof Node\Expr\StaticCall
                     && count($node->args) >= 2
@@ -86,7 +86,7 @@ class ValidateCallExtractor
         $validationRules = $this->node()->node ?? null;
 
         if ($validationRules) {
-            $printer = new Standard();
+            $printer = new Standard;
             $validationRulesCode = $printer->prettyPrint([$validationRules]);
 
             $injectableParams = collect($methodNode->getParams())

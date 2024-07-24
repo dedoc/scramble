@@ -40,13 +40,13 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
         $array = ($def = $type->getMethodDefinition('toArray'))
             ? $def->type->getReturnType()
-            : new \Dedoc\Scramble\Support\Type\UnknownType();
+            : new \Dedoc\Scramble\Support\Type\UnknownType;
 
         if (! $array instanceof KeyedArrayType) {
             if ($type->isInstanceOf(ResourceCollection::class)) {
                 $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($definition);
             } else {
-                return new UnknownType();
+                return new UnknownType;
             }
         }
 
@@ -56,7 +56,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         }
 
         if (! $array instanceof KeyedArrayType) {
-            return new UnknownType();
+            return new UnknownType;
         }
 
         $array->items = $this->flattenMergeValues($array->items);
@@ -72,7 +72,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     {
         $definition = $this->infer->analyzeClass($type->name);
 
-        $additional = $type->templateTypes[1 /* TAdditional */] ?? new UnknownType();
+        $additional = $type->templateTypes[1 /* TAdditional */] ?? new UnknownType;
 
         $openApiType = $this->openApiTransformer->transform($type);
 
@@ -121,7 +121,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             return count($items) > 1 ? (new AllOf)->setItems($items) : $items[0];
         }
 
-        $openApiType = (new OpenApiObjectType())
+        $openApiType = (new OpenApiObjectType)
             ->addProperty($wrapKey, $openApiType)
             ->setRequired([$wrapKey]);
 

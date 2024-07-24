@@ -21,10 +21,10 @@ class SelfTemplateDefinition
         $templateDefinitions = $this->getAllDefinedTemplates($type, $event);
 
         $templateType = $this->type instanceof TemplateType
-            ? collect($templateDefinitions)->get($this->type->name, new UnknownType())
+            ? collect($templateDefinitions)->get($this->type->name, new UnknownType)
             : $this->type;
 
-        (new TemplateTypesSolver())->defineTemplateTypes(
+        (new TemplateTypesSolver)->defineTemplateTypes(
             $event->getDefinition(),
             $type,
             $this->definedTemplate,
@@ -40,9 +40,9 @@ class SelfTemplateDefinition
     {
         $classDefinition = $event->getDefinition();
 
-        $classDefinedTemplates = (new TemplateTypesSolver())->getClassContextTemplates($type, $classDefinition);
+        $classDefinedTemplates = (new TemplateTypesSolver)->getClassContextTemplates($type, $classDefinition);
 
-        $methodDefinedTemplates = (new TemplateTypesSolver())->getFunctionContextTemplates($classDefinition->getMethodDefinition($event->name), $event->arguments);
+        $methodDefinedTemplates = (new TemplateTypesSolver)->getFunctionContextTemplates($classDefinition->getMethodDefinition($event->name), $event->arguments);
 
         return array_merge($classDefinedTemplates, $methodDefinedTemplates);
     }

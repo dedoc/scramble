@@ -7,8 +7,7 @@ class ConstFetchReferenceType extends AbstractReferenceType
     public function __construct(
         public string|StaticReference $callee,
         public string $constName,
-    ) {
-    }
+    ) {}
 
     public function toString(): string
     {

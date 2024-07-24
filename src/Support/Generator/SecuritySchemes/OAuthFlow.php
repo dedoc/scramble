@@ -50,7 +50,7 @@ class OAuthFlow
                 'refreshUrl' => $this->refreshUrl,
             ]),
             // Never filter 'scopes' as it is allowed to be empty. If empty it must be an object
-            'scopes' => empty($this->scopes) ? new \stdClass() : $this->scopes,
+            'scopes' => empty($this->scopes) ? new \stdClass : $this->scopes,
         ];
     }
 }

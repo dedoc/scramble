@@ -39,8 +39,8 @@ class AnalysisResult
         $index = $this->index;
         $infer = new TypeInferer(
             $index,
-            $nameResolver = new FileNameResolver(new PhpParser\NameContext(new PhpParser\ErrorHandler\Throwing())),
-            $scope = new Scope($index, new NodeTypesResolver(), new ScopeContext(), $nameResolver),
+            $nameResolver = new FileNameResolver(new PhpParser\NameContext(new PhpParser\ErrorHandler\Throwing)),
+            $scope = new Scope($index, new NodeTypesResolver, new ScopeContext, $nameResolver),
             Context::getInstance()->extensionsBroker->extensions,
         );
         $traverser = new NodeTraverser;

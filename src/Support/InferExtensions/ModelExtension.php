@@ -60,7 +60,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
                 ?? new UnknownType("Virtual attribute ({$attribute['name']}) type inference not supported.");
 
             if ($attribute['nullable']) {
-                return Union::wrap([$baseType, new NullType()]);
+                return Union::wrap([$baseType, new NullType]);
             }
 
             return $baseType;
@@ -89,18 +89,18 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             ->toString();
 
         if (in_array($typeName, ['int', 'integer', 'tinyint', 'smallint', 'mediumint', 'bigint'])) {
-            return new IntegerType();
+            return new IntegerType;
         }
 
         if ($dbDriverName === 'sqlite' && in_array($typeName, ['float', 'double', 'decimal'])) {
-            return new FloatType();
+            return new FloatType;
         }
 
         if (in_array($dbDriverName, ['mysql', 'mariadb']) && in_array($typeName, ['float', 'double'])) {
-            return new FloatType();
+            return new FloatType;
         }
 
-        return new StringType();
+        return new StringType;
     }
 
     /**
@@ -120,11 +120,11 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         }
 
         return match ($castAsType) {
-            'array', 'json' => new ArrayType(),
-            'real', 'float', 'double' => new FloatType(),
-            'int', 'integer', 'timestamp' => new IntegerType(),
-            'bool', 'boolean' => new BooleanType(),
-            'string', 'decimal' => new StringType(),
+            'array', 'json' => new ArrayType,
+            'real', 'float', 'double' => new FloatType,
+            'int', 'integer', 'timestamp' => new IntegerType,
+            'bool', 'boolean' => new BooleanType,
+            'string', 'decimal' => new StringType,
             'object' => new ObjectType('\stdClass'),
             'collection' => new ObjectType(Collection::class),
             'Illuminate\Database\Eloquent\Casts\AsEnumCollection' => new Generic(Collection::class, [

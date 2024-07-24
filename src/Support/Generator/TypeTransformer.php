@@ -57,7 +57,7 @@ class TypeTransformer
 
     public function transform(Type $type)
     {
-        $openApiType = new UnknownType();
+        $openApiType = new UnknownType;
 
         if ($type instanceof TemplateType && $type->is) {
             $type = $type->is;
@@ -82,7 +82,7 @@ class TypeTransformer
             $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
             && ! $type->isList
         ) {
-            $openApiType = new ObjectType();
+            $openApiType = new ObjectType;
             $requiredKeys = [];
 
             $props = collect($type->items)
@@ -141,7 +141,7 @@ class TypeTransformer
                 if ($notNullType) {
                     $openApiType = $this->transform($notNullType)->nullable(true);
                 } else {
-                    $openApiType = new NullType();
+                    $openApiType = new NullType;
                 }
             } else {
                 [$literals, $otherTypes] = collect($type->types)
@@ -153,13 +153,13 @@ class TypeTransformer
                 $items = array_map($this->transform(...), $otherTypes->values()->toArray());
 
                 if ($stringLiterals->count()) {
-                    $items[] = (new StringType())->enum(
+                    $items[] = (new StringType)->enum(
                         $stringLiterals->map->value->unique()->toArray()
                     );
                 }
 
                 if ($integerLiterals->count()) {
-                    $items[] = (new IntegerType())->enum(
+                    $items[] = (new IntegerType)->enum(
                         $integerLiterals->map->value->unique()->toArray()
                     );
                 }
@@ -169,23 +169,23 @@ class TypeTransformer
                 $openApiType = count($uniqueItems) === 1 ? $uniqueItems[0] : (new AnyOf)->setItems($uniqueItems);
             }
         } elseif ($type instanceof LiteralStringType) {
-            $openApiType = (new StringType())->example($type->value);
+            $openApiType = (new StringType)->example($type->value);
         } elseif ($type instanceof LiteralIntegerType) {
-            $openApiType = (new IntegerType())->example($type->value);
+            $openApiType = (new IntegerType)->example($type->value);
         } elseif ($type instanceof LiteralFloatType) {
-            $openApiType = (new NumberType())->example($type->value);
+            $openApiType = (new NumberType)->example($type->value);
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\StringType) {
-            $openApiType = new StringType();
+            $openApiType = new StringType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\FloatType) {
-            $openApiType = new NumberType();
+            $openApiType = new NumberType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntegerType) {
-            $openApiType = new IntegerType();
+            $openApiType = new IntegerType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\BooleanType) {
-            $openApiType = new BooleanType();
+            $openApiType = new BooleanType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\NullType) {
-            $openApiType = new NullType();
+            $openApiType = new NullType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\ObjectType) {
-            $openApiType = new ObjectType();
+            $openApiType = new ObjectType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntersectionType) {
             $openApiType = (new AllOf)->setItems(array_filter(array_map(
                 fn ($t) => $this->transform($t),

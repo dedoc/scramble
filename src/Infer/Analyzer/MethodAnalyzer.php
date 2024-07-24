@@ -56,12 +56,12 @@ class MethodAnalyzer
         $traverser->addVisitor(new TypeInferer(
             $this->index,
             $nameResolver,
-            new Scope($this->index, new NodeTypesResolver(), new ScopeContext($this->classDefinition), $nameResolver),
+            new Scope($this->index, new NodeTypesResolver, new ScopeContext($this->classDefinition), $nameResolver),
             Context::getInstance()->extensionsBroker->extensions,
             [new IndexBuildingHandler($indexBuilders)],
         ));
 
-        $node = (new NodeFinder())
+        $node = (new NodeFinder)
             ->findFirst(
                 $nodes,
                 fn ($n) => $n instanceof ClassMethod && $n->name->toString() === $methodDefinition->type->name
