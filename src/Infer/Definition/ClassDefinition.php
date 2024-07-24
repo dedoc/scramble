@@ -66,7 +66,7 @@ class ClassDefinition
             $scope->index,
             new NodeTypesResolver,
             new ScopeContext($this, $methodDefinition),
-            new FileNameResolver(new NameContext(new Throwing())),
+            new FileNameResolver(new NameContext(new Throwing)),
         );
 
         (new ReferenceTypeResolver($scope->index))

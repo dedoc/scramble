@@ -26,7 +26,7 @@ class ClassConstFetchTypeGetter
                 return new LiteralStringType($type->name);
             }
 
-            return new StringType();
+            return new StringType;
         }
 
         return new UnknownType('Cannot get type from class const fetch');

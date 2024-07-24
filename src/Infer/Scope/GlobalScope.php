@@ -12,9 +12,9 @@ class GlobalScope extends Scope
     {
         parent::__construct(
             app()->make(Index::class), // ???
-            new NodeTypesResolver(),
-            new ScopeContext(),
-            new FileNameResolver(new NameContext(new Throwing())),
+            new NodeTypesResolver,
+            new ScopeContext,
+            new FileNameResolver(new NameContext(new Throwing)),
         );
     }
 }

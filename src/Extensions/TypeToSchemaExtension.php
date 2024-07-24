@@ -25,7 +25,7 @@ abstract class TypeToSchemaExtension
 
     public function toSchema(Type $type)
     {
-        return new StringType(); // @todo unknown type
+        return new StringType; // @todo unknown type
     }
 
     public function toResponse(Type $type)

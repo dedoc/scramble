@@ -35,7 +35,7 @@ class RouteInfo
         $this->route = $route;
         $this->parser = $fileParser;
         $this->infer = $infer;
-        $this->requestParametersFromCalls = new Bag();
+        $this->requestParametersFromCalls = new Bag;
     }
 
     public function isClassBased(): bool

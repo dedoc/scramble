@@ -57,7 +57,7 @@ class RulesMapper
     public function array(Type $_, $params)
     {
         if (count($params)) {
-            $object = (new \Dedoc\Scramble\Support\Generator\Types\ObjectType())
+            $object = (new \Dedoc\Scramble\Support\Generator\Types\ObjectType)
                 ->setRequired($params);
 
             foreach ($params as $param) {

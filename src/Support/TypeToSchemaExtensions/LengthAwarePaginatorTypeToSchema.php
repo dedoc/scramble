@@ -43,7 +43,7 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
         }
 
         $type = new OpenApiObjectType;
-        $type->addProperty('data', (new ArrayType())->setItems($collectingType));
+        $type->addProperty('data', (new ArrayType)->setItems($collectingType));
         $type->addProperty(
             'links',
             (new OpenApiObjectType)

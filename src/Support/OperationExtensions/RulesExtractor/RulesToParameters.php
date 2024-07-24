@@ -219,7 +219,7 @@ class RulesToParameters
     {
         return collect($this->validationNodesResults)
             ->mapWithKeys(function (ValidationNodesResult $result) {
-                $arrayNodes = (new NodeFinder())->find(
+                $arrayNodes = (new NodeFinder)->find(
                     Arr::wrap($result->node),
                     fn (Node $node) => $node instanceof Node\Expr\ArrayItem
                         && $node->key instanceof Node\Scalar\String_

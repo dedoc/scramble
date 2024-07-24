@@ -80,7 +80,7 @@ class ModelInfo
             ->map(function ($value, $key) use ($model) {
                 $isNullable = $value['nullable'];
                 $createType = fn ($t) => $isNullable
-                    ? Union::wrap([new NullType(), $t])
+                    ? Union::wrap([new NullType, $t])
                     : $t;
 
                 $type = explode(' ', $value['type'] ?? '');
@@ -91,21 +91,21 @@ class ModelInfo
                 }
 
                 $types = [
-                    'int' => new IntegerType(),
-                    'integer' => new IntegerType(),
-                    'bigint' => new IntegerType(),
-                    'float' => new FloatType(),
-                    'double' => new FloatType(),
-                    'decimal' => new FloatType(),
-                    'string' => new StringType(),
-                    'varchar' => new StringType(),
-                    'text' => new StringType(),
-                    'datetime' => new StringType(),
-                    'tinyint' => new BooleanType(),
-                    'bool' => new BooleanType(),
-                    'boolean' => new BooleanType(),
-                    'json' => new ArrayType(),
-                    'array' => new ArrayType(),
+                    'int' => new IntegerType,
+                    'integer' => new IntegerType,
+                    'bigint' => new IntegerType,
+                    'float' => new FloatType,
+                    'double' => new FloatType,
+                    'decimal' => new FloatType,
+                    'string' => new StringType,
+                    'varchar' => new StringType,
+                    'text' => new StringType,
+                    'datetime' => new StringType,
+                    'tinyint' => new BooleanType,
+                    'bool' => new BooleanType,
+                    'boolean' => new BooleanType,
+                    'json' => new ArrayType,
+                    'array' => new ArrayType,
                 ];
 
                 $attributeType = null;

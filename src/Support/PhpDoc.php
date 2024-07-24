@@ -17,8 +17,8 @@ class PhpDoc
     {
         $docComment = Str::replace(['@body'], '@var', $docComment);
 
-        $lexer = new Lexer();
-        $constExprParser = new ConstExprParser();
+        $lexer = new Lexer;
+        $constExprParser = new ConstExprParser;
         $typeParser = new TypeParser($constExprParser);
         $phpDocParser = new PhpDocParser($typeParser, $constExprParser);
 

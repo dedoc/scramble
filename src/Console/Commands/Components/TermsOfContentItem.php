@@ -15,7 +15,7 @@ class TermsOfContentItem implements Component
 
     public function render(OutputStyle $style): void
     {
-        $width = (new Terminal())->getWidth();
+        $width = (new Terminal)->getWidth();
 
         $rightWidth = $this->getLineWidth($this->right ?: '');
         $leftWidth = $this->getLineWidth($this->left ?: '');

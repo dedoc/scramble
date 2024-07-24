@@ -248,7 +248,7 @@ class ReferenceTypeResolver
             && ! array_key_exists($calleeType->name, $this->index->classesDefinitions)
             && ! $this->resolveUnknownClassResolver($calleeType->name)
         ) {
-            return new UnknownType();
+            return new UnknownType;
         }
 
         if (! $methodDefinition = $calleeType->getMethodDefinition($type->methodName, $scope)) {
@@ -274,7 +274,7 @@ class ReferenceTypeResolver
 
         $contextualClassName = $this->resolveClassName($scope, $type->callee);
         if (! $contextualClassName) {
-            return new UnknownType();
+            return new UnknownType;
         }
         $type->callee = $contextualClassName;
 
@@ -295,7 +295,7 @@ class ReferenceTypeResolver
             ! array_key_exists($type->callee, $this->index->classesDefinitions)
             && ! $this->resolveUnknownClassResolver($type->callee)
         ) {
-            return new UnknownType();
+            return new UnknownType;
         }
 
         /** @var ClassDefinition $calleeDefinition */
@@ -332,7 +332,7 @@ class ReferenceTypeResolver
 
         if (! $calleeType) {
             // Callee cannot be resolved from index.
-            return new UnknownType();
+            return new UnknownType;
         }
 
         if ($calleeType instanceof FunctionType) { // When resolving into a closure.
@@ -342,7 +342,7 @@ class ReferenceTypeResolver
         // @todo: callee now can be either in index or not, add support for other cases.
         if (! $calleeType instanceof FunctionLikeDefinition) {
             // Callee cannot be resolved.
-            return new UnknownType();
+            return new UnknownType;
         }
 
         return $this->getFunctionCallResult($calleeType, $type->arguments);
@@ -357,7 +357,7 @@ class ReferenceTypeResolver
 
         $contextualClassName = $this->resolveClassName($scope, $type->name);
         if (! $contextualClassName) {
-            return new UnknownType();
+            return new UnknownType;
         }
         $type->name = $contextualClassName;
 
@@ -399,7 +399,7 @@ class ReferenceTypeResolver
         return new Generic(
             $classDefinition->name,
             collect($classDefinition->templateTypes)
-                ->map(fn (TemplateType $t) => $inferredTemplates->get($t->name, new UnknownType()))
+                ->map(fn (TemplateType $t) => $inferredTemplates->get($t->name, new UnknownType))
                 ->toArray(),
         );
     }
@@ -426,7 +426,7 @@ class ReferenceTypeResolver
         }
 
         if (! $objectType instanceof ObjectType && ! $objectType instanceof SelfType) {
-            return new UnknownType();
+            return new UnknownType;
         }
 
         $classDefinition = $objectType instanceof SelfType && $scope->isInClass()
@@ -463,7 +463,7 @@ class ReferenceTypeResolver
             : [];
         /** @var array<string, Type> $inferredTemplates */
         $inferredTemplates = $calledOnType instanceof Generic
-            ? collect($templateNameToIndexMap)->mapWithKeys(fn ($i, $name) => [$name => $calledOnType->templateTypes[$i] ?? new UnknownType()])->toArray()
+            ? collect($templateNameToIndexMap)->mapWithKeys(fn ($i, $name) => [$name => $calledOnType->templateTypes[$i] ?? new UnknownType])->toArray()
             : [];
 
         $isTemplateForResolution = function (Type $t) use ($callee, $inferredTemplates) {
@@ -516,7 +516,7 @@ class ReferenceTypeResolver
                 && $returnType instanceof Generic
             ) {
                 $templateType = $sideEffect->type instanceof TemplateType
-                    ? collect($inferredTemplates)->get($sideEffect->type->name, new UnknownType())
+                    ? collect($inferredTemplates)->get($sideEffect->type->name, new UnknownType)
                     : $sideEffect->type;
 
                 if (! isset($templateNameToIndexMap[$sideEffect->definedTemplate])) {
@@ -577,7 +577,7 @@ class ReferenceTypeResolver
                 ?? null;
 
             if (! $foundCorrespondingTemplateType) {
-                $foundCorrespondingTemplateType = new UnknownType();
+                $foundCorrespondingTemplateType = new UnknownType;
                 // throw new \LogicException("Cannot infer type of template $template->name from arguments.");
             }
 

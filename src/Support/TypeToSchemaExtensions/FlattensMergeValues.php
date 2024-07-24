@@ -122,18 +122,18 @@ trait FlattensMergeValues
     private function getResourceType(Type $type): Type
     {
         if (! $type instanceof Generic) {
-            return new UnknownType();
+            return new UnknownType;
         }
 
         if ($type->isInstanceOf(AnonymousResourceCollection::class)) {
             return $type->templateTypes[0]->templateTypes[0]
-                ?? new UnknownType();
+                ?? new UnknownType;
         }
 
         if ($type->isInstanceOf(JsonResource::class)) {
             return $type->templateTypes[0];
         }
 
-        return new UnknownType();
+        return new UnknownType;
     }
 }

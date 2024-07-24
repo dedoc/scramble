@@ -120,7 +120,7 @@ class ResourceCollectionResponseTest_Controller
 {
     public function index(Request $request)
     {
-        return (new UserCollection_One())
+        return (new UserCollection_One)
             ->additional([
                 'something' => ['foo' => 'bar'],
             ]);

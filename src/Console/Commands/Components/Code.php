@@ -14,7 +14,7 @@ class Code implements Component
 
     public function render(OutputStyle $style): void
     {
-        $code = (new Highlighter())->highlight(file_get_contents($this->filePath), $this->line);
+        $code = (new Highlighter)->highlight(file_get_contents($this->filePath), $this->line);
 
         $style->writeln($code);
     }

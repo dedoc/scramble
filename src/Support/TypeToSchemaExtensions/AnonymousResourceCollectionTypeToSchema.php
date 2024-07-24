@@ -46,7 +46,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
-        $additional = $type->templateTypes[1 /* TAdditional */] ?? new UnknownType();
+        $additional = $type->templateTypes[1 /* TAdditional */] ?? new UnknownType;
         if ($additional instanceof KeyedArrayType) {
             $additional->items = $this->flattenMergeValues($additional->items);
         }

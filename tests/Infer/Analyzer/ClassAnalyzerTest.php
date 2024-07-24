@@ -52,7 +52,7 @@ it('resolves pending returns lazily', function () {
 
     $barDef = $classDefinition->getMethodDefinition('bar');
     $barReturnType = $this->resolver->resolve(
-        new Scope($this->index, new NodeTypesResolver(), new ScopeContext($classDefinition), new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing()))),
+        new Scope($this->index, new NodeTypesResolver, new ScopeContext($classDefinition), new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing))),
         $barDef->type->getReturnType(),
     );
 

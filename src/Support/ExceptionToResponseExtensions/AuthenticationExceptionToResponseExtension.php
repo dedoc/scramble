@@ -22,10 +22,10 @@ class AuthenticationExceptionToResponseExtension extends ExceptionToResponseExte
 
     public function toResponse(Type $type)
     {
-        $responseBodyType = (new OpenApiTypes\ObjectType())
+        $responseBodyType = (new OpenApiTypes\ObjectType)
             ->addProperty(
                 'message',
-                (new OpenApiTypes\StringType())
+                (new OpenApiTypes\StringType)
                     ->setDescription('Error overview.')
             )
             ->setRequired(['message']);

@@ -27,15 +27,15 @@ it('transforms simple types', function ($type, $openApiArrayed) {
 
     expect($transformer->transform($type)->toArray())->toBe($openApiArrayed);
 })->with([
-    [new IntegerType(), ['type' => 'integer']],
-    [new StringType(), ['type' => 'string']],
+    [new IntegerType, ['type' => 'integer']],
+    [new StringType, ['type' => 'string']],
     [new LiteralStringType('wow'), ['type' => 'string', 'example' => 'wow']],
     [new LiteralFloatType(157.50), ['type' => 'number', 'example' => 157.5]],
-    [new BooleanType(), ['type' => 'boolean']],
+    [new BooleanType, ['type' => 'boolean']],
     [new ArrayType(value: new StringType), ['type' => 'array', 'items' => ['type' => 'string']]],
     [new KeyedArrayType([
-        new ArrayItemType_('key', new IntegerType()),
-        new ArrayItemType_('optional_key', new IntegerType(), true),
+        new ArrayItemType_('key', new IntegerType),
+        new ArrayItemType_('optional_key', new IntegerType, true),
     ]), [
         'type' => 'object',
         'properties' => [
@@ -45,9 +45,9 @@ it('transforms simple types', function ($type, $openApiArrayed) {
         'required' => ['key'],
     ]],
     [new KeyedArrayType([
-        new ArrayItemType_(null, new IntegerType()),
-        new ArrayItemType_(null, new IntegerType()),
-        new ArrayItemType_(null, new IntegerType()),
+        new ArrayItemType_(null, new IntegerType),
+        new ArrayItemType_(null, new IntegerType),
+        new ArrayItemType_(null, new IntegerType),
     ]), [
         'type' => 'array',
         'prefixItems' => [

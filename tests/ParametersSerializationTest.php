@@ -5,7 +5,7 @@ use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 
 it('checks return type of param when "style" and "explode" specified', function () {
-    $type = new StringType();
+    $type = new StringType;
     $type->enum(['products', 'categories', 'condition']);
 
     $parameter = new Parameter('includes', 'query');
@@ -30,7 +30,7 @@ it('checks return type of param when "style" and "explode" specified', function 
 });
 
 it('checks return type of param when "style" and "explode" not specified', function () {
-    $type = new StringType();
+    $type = new StringType;
     $type->enum(['products', 'categories', 'condition']);
 
     $parameter = new Parameter('includes', 'query');

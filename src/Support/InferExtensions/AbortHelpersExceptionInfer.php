@@ -44,7 +44,7 @@ class AbortHelpersExceptionInfer implements ExpressionExceptionExtension
         }
 
         $messageType = TypeHelper::getArgType($scope, $node->args, ['message', 1 + $paramsShift], new LiteralStringType(''));
-        $headersType = TypeHelper::getArgType($scope, $node->args, ['headers', 2 + $paramsShift], new ArrayType());
+        $headersType = TypeHelper::getArgType($scope, $node->args, ['headers', 2 + $paramsShift], new ArrayType);
 
         return [
             new Generic(HttpException::class, [

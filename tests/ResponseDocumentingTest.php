@@ -148,7 +148,7 @@ class Foo_TestSix
 {
     public function single()
     {
-        return (new Foo_TestFiveResource())->response()->setStatusCode(201);
+        return (new Foo_TestFiveResource)->response()->setStatusCode(201);
     }
 
     public function collection()
