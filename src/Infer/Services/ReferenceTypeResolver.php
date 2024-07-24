@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
@@ -231,8 +232,7 @@ class ReferenceTypeResolver
         // (#TName).listTableDetails()
 
         $type->arguments = array_map(
-            // @todo: fix resolving arguments when deep arg is reference
-            fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
+            fn ($t) => $this->resolve($scope, $t),
             $type->arguments,
         );
 
@@ -246,18 +246,24 @@ class ReferenceTypeResolver
             throw new \LogicException('Should not happen.');
         }
 
+        $event = null;
+
         // Attempting extensions broker before potentially giving up on type inference
         if (($calleeType instanceof TemplateType || $calleeType instanceof ObjectType)) {
             $unwrappedType = $calleeType instanceof TemplateType && $calleeType->is
                 ? $calleeType->is
                 : $calleeType;
 
-            if ($unwrappedType instanceof ObjectType && $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
-                instance: $unwrappedType,
-                name: $type->methodName,
-                scope: $scope,
-                arguments: $type->arguments,
-            ))) {
+            if ($unwrappedType instanceof ObjectType) {
+                $event = new MethodCallEvent(
+                    instance: $unwrappedType,
+                    name: $type->methodName,
+                    scope: $scope,
+                    arguments: $type->arguments,
+                );
+            }
+
+            if ($event && $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType($event)) {
                 return $returnType;
             }
         }
@@ -284,7 +290,7 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$name]");
         }
 
-        return $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType);
+        return $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType, $event);
     }
 
     private function resolveStaticMethodCallReferenceType(Scope $scope, StaticMethodCallReferenceType $type)
@@ -341,7 +347,9 @@ class ReferenceTypeResolver
             $reflection = new \ReflectionClass($className);
 
             if (Str::contains($reflection->getFileName(), '/vendor/')) {
-                return null;
+                Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($className, new ClassDefinition($className)));
+
+                return $this->index->getClassDefinition($className);
             }
 
             return (new ClassAnalyzer($this->index))->analyze($className);
@@ -478,6 +486,7 @@ class ReferenceTypeResolver
         array $arguments,
         /* When this is a handling for method call */
         ObjectType|SelfType|null $calledOnType = null,
+        ?MethodCallEvent $event = null,
     ) {
         $returnType = $callee->type->getReturnType();
         $isSelf = false;
@@ -543,18 +552,9 @@ class ReferenceTypeResolver
                 $sideEffect instanceof SelfTemplateDefinition
                 && $isSelf
                 && $returnType instanceof Generic
+                && $event
             ) {
-                $templateType = $sideEffect->type instanceof TemplateType
-                    ? collect($inferredTemplates)->get($sideEffect->type->name, new UnknownType())
-                    : $sideEffect->type;
-
-                if (! isset($templateNameToIndexMap[$sideEffect->definedTemplate])) {
-                    throw new \LogicException('Should not happen');
-                }
-
-                $templateIndex = $templateNameToIndexMap[$sideEffect->definedTemplate];
-
-                $returnType->templateTypes[$templateIndex] = $templateType;
+                $sideEffect->apply($returnType, $event);
             }
         }
 
@@ -652,6 +652,10 @@ class ReferenceTypeResolver
 
         $parentClassDefinition = $this->index->getClassDefinition($classDefinition->parentFqn);
 
+        if (! $parentClassDefinition) {
+            return collect();
+        }
+
         $templateArgs = collect($this->resolveTypesTemplatesFromArguments(
             $parentClassDefinition->templateTypes,
             $parentClassDefinition->getMethodDefinition('__construct')?->type->arguments ?? [],
@@ -694,7 +698,16 @@ class ReferenceTypeResolver
                 continue;
             }
 
-            $type = $this->getFunctionCallResult($methodDefinition, $se->arguments, $type);
+            if (! $type instanceof ObjectType) {
+                continue;
+            }
+
+            $type = $this->getFunctionCallResult($methodDefinition, $se->arguments, $type, new MethodCallEvent(
+                instance: $type,
+                name: $se->methodName,
+                scope: $scope,
+                arguments: $se->arguments,
+            ));
         }
 
         return $type;

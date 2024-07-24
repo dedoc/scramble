@@ -49,6 +49,9 @@ class ClassAnalyzer
             $parentDefinition = $this->analyze($parentName = $classReflection->getParentClass()->name);
         } elseif ($classReflection->getParentClass() && ! $this->shouldAnalyzeParentClass($classReflection->getParentClass())) {
             // @todo: Here we still want to fire the event, so we can add some details to the definition.
+            $parentDefinition = new ClassDefinition($parentName = $classReflection->getParentClass()->name);
+
+            Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($parentDefinition->name, $parentDefinition));
         }
 
         /*
