@@ -93,7 +93,7 @@ class RulesToParameter
             $parameter->schema->type->default($default[0]);
         }
 
-        if ($format = $this->docNode->getTagsByName('@format')[0]->value->value ?? null) {
+        if ($format = array_values($this->docNode->getTagsByName('@format'))[0]->value->value ?? null) {
             $parameter->schema->type->format($format);
         }
 

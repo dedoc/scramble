@@ -124,10 +124,19 @@ class Scope
                 return $this->setType($node, new UnknownType("Cannot infer type of method [{$node->name->name}] call on template type: not supported yet."));
             }
 
-            return $this->setType(
-                $node,
-                new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args)),
-            );
+            $referenceType = new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args));
+
+            /*
+             * When inside a constructor, we want to add a side effect to the constructor definition, so we can track
+             * how the properties are being set.
+             */
+            if (
+                $this->functionDefinition()?->type->name === '__construct'
+            ) {
+                $this->functionDefinition()->sideEffects[] = $referenceType;
+            }
+
+            return $this->setType($node, $referenceType);
         }
 
         if ($node instanceof Node\Expr\StaticCall) {
@@ -193,12 +202,16 @@ class Scope
         return $type;
     }
 
-    private function getArgsTypes(array $args)
+    // @todo: Move to some helper, Scope should be passed as a dependency.
+    public function getArgsTypes(array $args)
     {
         return collect($args)
             ->filter(fn ($arg) => $arg instanceof Node\Arg)
             ->mapWithKeys(function (Node\Arg $arg, $index) {
                 $type = $this->getType($arg->value);
+                if ($parsedPhpDoc = $arg->getAttribute('parsedPhpDoc')) {
+                    $type->setAttribute('docNode', $parsedPhpDoc);
+                }
 
                 if (! $arg->unpack) {
                     return [$arg->name ? $arg->name->name : $index => $type];

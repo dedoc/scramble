@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
@@ -17,6 +18,7 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\Dependency\ClassDependency;
 use Dedoc\Scramble\Support\Type\Reference\Dependency\FunctionDependency;
 use Dedoc\Scramble\Support\Type\Reference\Dependency\MethodDependency;
@@ -163,6 +165,10 @@ class ReferenceTypeResolver
     private function doResolve(Type $t, Type $type, Scope $scope)
     {
         $resolver = function () use ($t, $scope) {
+            if ($t instanceof ConstFetchReferenceType) {
+                return $this->resolveConstFetchReferenceType($scope, $t);
+            }
+
             if ($t instanceof MethodCallReferenceType) {
                 return $this->resolveMethodCallReferenceType($scope, $t);
             }
@@ -197,6 +203,28 @@ class ReferenceTypeResolver
         return $this->resolve($scope, $resolved);
     }
 
+    private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type)
+    {
+        $analyzedType = clone $type;
+
+        if ($type->callee instanceof StaticReference) {
+            $contextualCalleeName = match ($type->callee->keyword) {
+                StaticReference::SELF => $scope->context->functionDefinition?->definingClassName,
+                StaticReference::STATIC => $scope->context->classDefinition?->name,
+                StaticReference::PARENT => $scope->context->classDefinition?->parentFqn,
+            };
+
+            // This can only happen if any of static reserved keyword used in non-class context – hence considering not possible for now.
+            if (! $contextualCalleeName) {
+                return new UnknownType("Cannot properly analyze [{$type->toString()}] reference type as static keyword used in non-class context, or current class scope has no parent.");
+            }
+
+            $analyzedType->callee = $contextualCalleeName;
+        }
+
+        return (new ConstFetchTypeGetter)($scope, $analyzedType->callee, $analyzedType->constName);
+    }
+
     private function resolveMethodCallReferenceType(Scope $scope, MethodCallReferenceType $type)
     {
         // (#self).listTableDetails()
@@ -204,8 +232,7 @@ class ReferenceTypeResolver
         // (#TName).listTableDetails()
 
         $type->arguments = array_map(
-            // @todo: fix resolving arguments when deep arg is reference
-            fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
+            fn ($t) => $this->resolve($scope, $t),
             $type->arguments,
         );
 
@@ -219,18 +246,24 @@ class ReferenceTypeResolver
             throw new \LogicException('Should not happen.');
         }
 
+        $event = null;
+
         // Attempting extensions broker before potentially giving up on type inference
         if (($calleeType instanceof TemplateType || $calleeType instanceof ObjectType)) {
             $unwrappedType = $calleeType instanceof TemplateType && $calleeType->is
                 ? $calleeType->is
                 : $calleeType;
 
-            if ($unwrappedType instanceof ObjectType && $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
-                instance: $unwrappedType,
-                name: $type->methodName,
-                scope: $scope,
-                arguments: $type->arguments,
-            ))) {
+            if ($unwrappedType instanceof ObjectType) {
+                $event = new MethodCallEvent(
+                    instance: $unwrappedType,
+                    name: $type->methodName,
+                    scope: $scope,
+                    arguments: $type->arguments,
+                );
+            }
+
+            if ($event && $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType($event)) {
                 return $returnType;
             }
         }
@@ -257,7 +290,7 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$name]");
         }
 
-        return $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType);
+        return $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType, $event);
     }
 
     private function resolveStaticMethodCallReferenceType(Scope $scope, StaticMethodCallReferenceType $type)
@@ -314,7 +347,9 @@ class ReferenceTypeResolver
             $reflection = new \ReflectionClass($className);
 
             if (Str::contains($reflection->getFileName(), '/vendor/')) {
-                return null;
+                Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($className, new ClassDefinition($className)));
+
+                return $this->index->getClassDefinition($className);
             }
 
             return (new ClassAnalyzer($this->index))->analyze($className);
@@ -396,12 +431,14 @@ class ReferenceTypeResolver
             ->merge($propertyDefaultTemplateTypes)
             ->merge($inferredConstructorParamTemplates);
 
-        return new Generic(
+        $type = new Generic(
             $classDefinition->name,
             collect($classDefinition->templateTypes)
                 ->map(fn (TemplateType $t) => $inferredTemplates->get($t->name, new UnknownType))
                 ->toArray(),
         );
+
+        return $this->getMethodCallsSideEffectIntroducedTypesInConstructor($type, $scope, $classDefinition, $constructorDefinition);
     }
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type)
@@ -449,6 +486,7 @@ class ReferenceTypeResolver
         array $arguments,
         /* When this is a handling for method call */
         ObjectType|SelfType|null $calledOnType = null,
+        ?MethodCallEvent $event = null,
     ) {
         $returnType = $callee->type->getReturnType();
         $isSelf = false;
@@ -514,18 +552,9 @@ class ReferenceTypeResolver
                 $sideEffect instanceof SelfTemplateDefinition
                 && $isSelf
                 && $returnType instanceof Generic
+                && $event
             ) {
-                $templateType = $sideEffect->type instanceof TemplateType
-                    ? collect($inferredTemplates)->get($sideEffect->type->name, new UnknownType)
-                    : $sideEffect->type;
-
-                if (! isset($templateNameToIndexMap[$sideEffect->definedTemplate])) {
-                    throw new \LogicException('Should not happen');
-                }
-
-                $templateIndex = $templateNameToIndexMap[$sideEffect->definedTemplate];
-
-                $returnType->templateTypes[$templateIndex] = $templateType;
+                $sideEffect->apply($returnType, $event);
             }
         }
 
@@ -623,6 +652,10 @@ class ReferenceTypeResolver
 
         $parentClassDefinition = $this->index->getClassDefinition($classDefinition->parentFqn);
 
+        if (! $parentClassDefinition) {
+            return collect();
+        }
+
         $templateArgs = collect($this->resolveTypesTemplatesFromArguments(
             $parentClassDefinition->templateTypes,
             $parentClassDefinition->getMethodDefinition('__construct')?->type->arguments ?? [],
@@ -632,5 +665,51 @@ class ReferenceTypeResolver
         return $this
             ->getParentConstructCallsTypes($parentClassDefinition, $parentClassDefinition->getMethodDefinition('__construct'))
             ->merge($templateArgs);
+    }
+
+    private function getMethodCallsSideEffectIntroducedTypesInConstructor(Generic $type, Scope $scope, ClassDefinition $classDefinition, ?FunctionLikeDefinition $constructorDefinition): Type
+    {
+        if (! $constructorDefinition) {
+            return $type;
+        }
+
+        $mappo = new \WeakMap;
+        foreach ($constructorDefinition->sideEffects as $se) {
+            if (! $se instanceof MethodCallReferenceType) {
+                continue;
+            }
+
+            if ((! $se->callee instanceof SelfType) && ($mappo->offsetExists($se->callee) && ! $mappo->offsetGet($se->callee) instanceof SelfType)) {
+                continue;
+            }
+
+            // at this point we know that this is a method call on a self type
+            $resultingType = $this->resolveMethodCallReferenceType($scope, $se);
+
+            // $resultingType will be Self type if $this is returned, and we're in context of fluent setter
+
+            $mappo->offsetSet($se, $resultingType);
+
+            $methodDefinition = ($methodDependency = collect($se->dependencies())->first(fn ($d) => $d instanceof MethodDependency))
+                ? $this->index->getClassDefinition($methodDependency->class)?->getMethodDefinition($methodDependency->name)
+                : null;
+
+            if (! $methodDefinition) {
+                continue;
+            }
+
+            if (! $type instanceof ObjectType) {
+                continue;
+            }
+
+            $type = $this->getFunctionCallResult($methodDefinition, $se->arguments, $type, new MethodCallEvent(
+                instance: $type,
+                name: $se->methodName,
+                scope: $scope,
+                arguments: $se->arguments,
+            ));
+        }
+
+        return $type;
     }
 }

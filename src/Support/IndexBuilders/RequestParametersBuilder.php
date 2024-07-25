@@ -26,11 +26,11 @@ use PhpParser\Node;
 use PhpParser\NodeAbstract;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
-class RequestParametersBuilder
+class RequestParametersBuilder implements IndexBuilder
 {
-    public function __construct(public Bag $bag) {}
+    public function __construct(public readonly Bag $bag) {}
 
-    public function afterAnalyzedNode(Scope $scope, Node $node)
+    public function afterAnalyzedNode(Scope $scope, Node $node): void
     {
         // @todo: Find more general approach to get a comment related to the node
         [$commentHolderNode, $methodCallNode] = match ($node::class) {
