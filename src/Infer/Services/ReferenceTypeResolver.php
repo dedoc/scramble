@@ -346,7 +346,7 @@ class ReferenceTypeResolver
         try {
             $reflection = new \ReflectionClass($className);
 
-            if (Str::contains($reflection->getFileName(), '/vendor/')) {
+            if (Str::contains($reflection->getFileName(), DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR)) {
                 Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($className, new ClassDefinition($className)));
 
                 return $this->index->getClassDefinition($className);

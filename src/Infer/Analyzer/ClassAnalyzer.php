@@ -29,7 +29,7 @@ class ClassAnalyzer
          * Classes from `vendor` aren't analyzed at the moment. Instead, it is up to developers to provide
          * definitions for them using the dictionaries.
          */
-        return ! str_contains($parentClassReflection->getFileName(), '/vendor/');
+        return ! str_contains($parentClassReflection->getFileName(), DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR);
     }
 
     /**
