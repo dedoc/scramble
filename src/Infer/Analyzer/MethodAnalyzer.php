@@ -28,7 +28,7 @@ class MethodAnalyzer
     public function analyze(FunctionLikeDefinition $methodDefinition, array $indexBuilders = [])
     {
         $this->traverseClassMethod(
-            [$tree = $this->getClassReflector()->getMethod($methodDefinition->type->name)->getAstNode()],
+            [$this->getClassReflector()->getMethod($methodDefinition->type->name)->getAstNode()],
             $methodDefinition,
             $indexBuilders,
         );
