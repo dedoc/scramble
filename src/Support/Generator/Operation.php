@@ -138,6 +138,12 @@ class Operation
     {
         $result = [];
 
+        if ($this->attributes) {
+            foreach ($this->attributes as $key => $value) {
+                $result[$key] = $value;
+            }
+        }
+
         if ($this->operationId) {
             $result['operationId'] = $this->operationId;
         }
