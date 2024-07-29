@@ -20,11 +20,11 @@ it('default deprecated key is false', function () {
         ->and($array)->not()->toHaveKey('deprecated');
 });
 
-it('set custom attribute key', function () {
+it('set extension property', function () {
     $operation = new \Dedoc\Scramble\Support\Generator\Operation('get');
-    $operation->setAttribute('custom-key', 'custom-value');
+    $operation->setExtensionProperty('custom-key', 'custom-value');
 
     $array = $operation->toArray();
 
-    expect($array)->toBe(['custom-key' => 'custom-value']);
+    expect($array)->toBe(['x-custom-key' => 'custom-value']);
 });
