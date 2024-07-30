@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\Generator;
 class Operation
 {
     use WithAttributes;
+    use WithExtensions;
 
     public string $method;
 
@@ -196,6 +197,9 @@ class Operation
             $result['servers'] = $servers;
         }
 
-        return $result;
+        return array_merge(
+            $result,
+            $this->extensionPropertiesToArray(),
+        );
     }
 }
