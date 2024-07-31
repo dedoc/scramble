@@ -15,7 +15,8 @@ class ModelToSchema extends TypeToSchemaExtension
     public function shouldHandle(Type $type)
     {
         return $type instanceof ObjectType
-            && $type->isInstanceOf(Model::class);
+            && $type->isInstanceOf(Model::class)
+            && $type->name !== Model::class;
     }
 
     /**
