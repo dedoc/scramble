@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\SchemaClassDocReflector;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use PhpParser\Node;
 use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Param;
@@ -23,7 +24,7 @@ class FormRequestRulesExtractor
         $this->handler = $handler;
     }
 
-    public function shouldHandle()
+    public function shouldHandle(): bool
     {
         if (! $this->handler) {
             return false;
@@ -33,60 +34,57 @@ class FormRequestRulesExtractor
             return false;
         }
 
-        $className = $this->getFormRequestClassName();
-
-        if (is_a($className, BaseData::class, true)) {
-            return false;
-        }
-
         return true;
     }
 
-    public function node()
+    /**
+     * @return ValidationNodesResult[]
+     */
+    public function nodes(): array
     {
-        $requestClassName = $this->getFormRequestClassName();
+        return $this->getFormRequestClassNames()->map(function (string $requestClassName) {
+            $classReflector = Infer\Reflector\ClassReflector::make($requestClassName);
 
-        $classReflector = Infer\Reflector\ClassReflector::make($requestClassName);
+            $phpDocReflector = SchemaClassDocReflector::createFromDocString($classReflector->getReflection()->getDocComment() ?: '');
 
-        $phpDocReflector = SchemaClassDocReflector::createFromDocString($classReflector->getReflection()->getDocComment() ?: '');
+            $schemaName = ($phpDocReflector->getTagValue('@ignoreSchema')->value ?? null) !== null
+                ? null
+                : $phpDocReflector->getSchemaName($requestClassName);
 
-        $schemaName = ($phpDocReflector->getTagValue('@ignoreSchema')->value ?? null) !== null
-            ? null
-            : $phpDocReflector->getSchemaName($requestClassName);
-
-        return new ValidationNodesResult(
-            (new NodeFinder)->find(
-                Arr::wrap($classReflector->getMethod('rules')->getAstNode()->stmts),
-                fn (Node $node) => $node instanceof Node\Expr\ArrayItem
-                    && $node->key instanceof Node\Scalar\String_
-                    && $node->getAttribute('parsedPhpDoc'),
-            ),
-            schemaName: $schemaName,
-            description: $phpDocReflector->getDescription(),
-        );
+            return new ValidationNodesResult(
+                (new NodeFinder)->find(
+                    Arr::wrap($classReflector->getMethod('rules')->getAstNode()->stmts),
+                    fn (Node $node) => $node instanceof Node\Expr\ArrayItem
+                        && $node->key instanceof Node\Scalar\String_
+                        && $node->getAttribute('parsedPhpDoc'),
+                ),
+                schemaName: $schemaName,
+                description: $phpDocReflector->getDescription(),
+            );
+        })->all();
     }
 
-    public function extract(Route $route)
+    public function extract(Route $route): array
     {
-        $requestClassName = $this->getFormRequestClassName();
-
-        /** @var Request $request */
-        $request = (new $requestClassName);
-
         $rules = [];
 
-        if (method_exists($request, 'setMethod')) {
-            $request->setMethod($route->methods()[0]);
-        }
+        $this->getFormRequestClassNames()->each(function (string $requestClassName) use ($route, &$rules) {
+            /** @var Request $request */
+            $request = (new $requestClassName);
 
-        if (method_exists($request, 'rules')) {
-            $rules = $request->rules();
-        }
+            if (method_exists($request, 'setMethod')) {
+                $request->setMethod($route->methods()[0]);
+            }
+
+            if (method_exists($request, 'rules')) {
+                $rules = array_merge($rules, $request->rules());
+            }
+        });
 
         return $rules;
     }
 
-    private function findCustomRequestParam(Param $param)
+    private function findCustomRequestParam(Param $param): bool
     {
         if (! $param->type || ! method_exists($param->type, '__toString')) {
             return false;
@@ -94,23 +92,29 @@ class FormRequestRulesExtractor
 
         $className = (string) $param->type;
 
+        if (is_a($className, BaseData::class, true)) {
+            return false;
+        }
+
         return method_exists($className, 'rules');
     }
 
-    private function getFormRequestClassName()
+    private function getFormRequestClassNames(): Collection
     {
-        $requestParam = collect($this->handler->getParams())->first($this->findCustomRequestParam(...));
+        return collect($this->handler->getParams())
+            ->filter($this->findCustomRequestParam(...))
+            ->map(function($requestParam){
+                $requestClassName = (string) $requestParam->type;
 
-        $requestClassName = (string) $requestParam->type;
+                $reflectionClass = new ReflectionClass($requestClassName);
 
-        $reflectionClass = new ReflectionClass($requestClassName);
+                // If the classname is actually an interface, it might be bound to the container.
+                if (! $reflectionClass->isInstantiable() && app()->bound($requestClassName)) {
+                    $classInstance = app()->getBindings()[$requestClassName]['concrete'](app());
+                    $requestClassName = $classInstance::class;
+                }
 
-        // If the classname is actually an interface, it might be bound to the container.
-        if (! $reflectionClass->isInstantiable() && app()->bound($requestClassName)) {
-            $classInstance = app()->getBindings()[$requestClassName]['concrete'](app());
-            $requestClassName = $classInstance::class;
-        }
-
-        return $requestClassName;
+                return $requestClassName;
+            });
     }
 }
