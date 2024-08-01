@@ -26,6 +26,17 @@ class FormRequestRulesExtractorTest extends TestCase
     {
         $app->bind(DataRequestContract::class, ConcreteDataRequest::class);
     }
+
+    public function test_request_multiple(): void
+    {
+        $openApi = $this->generateForRoute(function () {
+            return Route::post('/test', FormRequestMultipleRulesExtractorTestController::class);
+        });
+
+        expect($openApi['components']['schemas']['FirstRequest']['properties'])
+            ->toHaveKey('first')
+            ->toHaveKey('second');
+    }
 }
 
 interface DataRequestContract
@@ -44,4 +55,25 @@ class ConcreteDataRequest extends FormRequest implements DataRequestContract
 class FormRequestRulesExtractorTestController
 {
     public function __invoke(DataRequestContract $request) {}
+}
+
+class FirstRequest extends FormRequest implements DataRequestContract
+{
+    public function rules()
+    {
+        return ['first' => 'required'];
+    }
+}
+
+class SecondRequest extends FormRequest implements DataRequestContract
+{
+    public function rules()
+    {
+        return ['second' => 'required'];
+    }
+}
+
+class FormRequestMultipleRulesExtractorTestController
+{
+    public function __invoke(FirstRequest $firstRequest, SecondRequest $secondRequest) {}
 }
