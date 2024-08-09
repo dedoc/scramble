@@ -60,7 +60,7 @@ class ClassReflector
             // Removes all comments.
             $code = preg_replace('/\/\*(?:[^*]|\*+[^*\/])*\*+\/|(?<![:\'"])\/\/.*|(?<![:\'"])#.*/', '', $code);
 
-            $re = '/(namespace|use) ([.\s\S]*?);/m';
+            $re = '/^(namespace|use) ([.\s\S]*?);/m';
             preg_match_all($re, $code, $matches);
 
             $code = "<?php\n".implode("\n", $matches[0]);
