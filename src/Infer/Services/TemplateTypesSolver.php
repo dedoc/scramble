@@ -36,7 +36,6 @@ class TemplateTypesSolver
      * Prepares the actual arguments list with which a function is going to be executed, taking into consideration
      * arguments defaults.
      *
-     * @param  ?FunctionLikeDefinition  $callee
      * @param  array  $realArguments  The list of arguments a function has been called with.
      * @return array The actual list of arguments where not passed arguments replaced with default values.
      */
