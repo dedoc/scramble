@@ -51,6 +51,7 @@ class ResponseExtension extends OperationExtension
                      */
                     ->map(fn ($type) => $type ?: new OpenApiTypes\StringType)
                     ->unique(fn ($type) => json_encode($type->toArray()))
+                    ->values()
                     ->all();
 
                 return Response::make((int) $code)
