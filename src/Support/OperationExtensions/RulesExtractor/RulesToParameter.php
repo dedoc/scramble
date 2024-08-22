@@ -57,7 +57,7 @@ class RulesToParameter
 
         $parameter = Parameter::make($this->name, 'query')
             ->setSchema(Schema::fromType($type))
-            ->required($rules->contains('required'))
+            ->required($rules->contains('required') && $rules->doesntContain('sometimes'))
             ->description($description);
 
         return $this->applyDocsInfo($parameter);
