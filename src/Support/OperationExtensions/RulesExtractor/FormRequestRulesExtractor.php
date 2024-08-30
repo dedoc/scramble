@@ -71,7 +71,7 @@ class FormRequestRulesExtractor
         $requestClassName = $this->getFormRequestClassName();
 
         /** @var Request $request */
-        $request = (new $requestClassName);
+        $request = app($requestClassName);
 
         $rules = [];
 
