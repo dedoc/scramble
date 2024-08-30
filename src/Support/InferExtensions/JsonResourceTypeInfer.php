@@ -128,7 +128,10 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         return null;
     }
 
-    private static function modelType(ClassDefinition $jsonClass, Scope $scope): ?Type
+    /**
+     * @internal
+     */
+    public static function modelType(ClassDefinition $jsonClass, Scope $scope): ?Type
     {
         if ([$cachedModelType, $cachedModelDefinition] = static::$jsonResourcesModelTypesCache[$jsonClass->name] ?? null) {
             if ($cachedModelDefinition) {
