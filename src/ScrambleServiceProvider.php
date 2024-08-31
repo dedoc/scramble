@@ -28,6 +28,7 @@ use Dedoc\Scramble\Support\InferExtensions\JsonResourceTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
+use Dedoc\Scramble\Support\InferExtensions\RedirectHelpersInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseMethodReturnTypeExtension;
@@ -101,6 +102,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     [
                         new PossibleExceptionInfer,
                         new AbortHelpersExceptionInfer,
+                        new RedirectHelpersInfer,
 
                         new JsonResourceCallsTypeInfer,
                         new JsonResourceCreationInfer,
