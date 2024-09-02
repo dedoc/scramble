@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
@@ -361,6 +362,26 @@ class ReferenceTypeResolver
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)
     {
+        if ($type->callee instanceof CallableStringType) {
+            $analyzedType = clone $type;
+
+            $analyzedType->arguments = array_map(
+                // @todo: fix resolving arguments when deep arg is reference
+                fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
+                $type->arguments,
+            );
+
+            $returnType = Context::getInstance()->extensionsBroker->getFunctionReturnType(new FunctionCallEvent(
+                name: $analyzedType->callee->name,
+                scope: $scope,
+                arguments: $analyzedType->arguments,
+            ));
+
+            if ($returnType) {
+                return $returnType;
+            }
+        }
+
         $calleeType = $type->callee instanceof CallableStringType
             ? $this->index->getFunctionDefinition($type->callee->name)
             : $this->resolve($scope, $type->callee);
