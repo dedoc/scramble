@@ -26,6 +26,7 @@ class ArrayMergeReturnTypeExtension implements FunctionReturnTypeExtension
             // unique them by key like array_merge works
             ->reduce(function ($carry, $item) {
                 $carry[$item->key] = $item;
+
                 return $carry;
             }, []);
 

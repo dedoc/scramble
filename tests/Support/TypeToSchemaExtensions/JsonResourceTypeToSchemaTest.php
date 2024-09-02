@@ -8,7 +8,7 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 
 it('documents the response type when return is not array node', function () {
-    $type = new Generic(JsonResourceTypeToSchemaTest_Sample::class, [new UnknownType()]);
+    $type = new Generic(JsonResourceTypeToSchemaTest_Sample::class, [new UnknownType]);
 
     $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
         JsonResourceTypeToSchema::class,

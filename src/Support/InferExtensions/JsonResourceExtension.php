@@ -47,8 +47,6 @@ class JsonResourceExtension implements MethodReturnTypeExtension, StaticMethodRe
      * Note: In fact, this is not a static call to the JsonResource. This is how type inference system treats it for
      * now, when analyzing parent::toArray() call. `parent::` becomes `JsonResource::`. So this should be fixed in
      * future just for the sake of following how real code works.
-     *
-     *
      */
     private function handleToArrayStaticCall(StaticMethodCallEvent $event): ?Type
     {
