@@ -32,7 +32,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, StaticMethodRe
     {
         return match ($event->name) {
             // @todo This should work automatically as toArray calls must be proxied to parents.
-            'toArray' => ($event->getInstance()->name === JsonResource::class || ! $event->getDefinition()->hasMethodDefinition('toArray'))
+            'toArray' => ($event->getInstance()->name === JsonResource::class || ($event->getDefinition() && ! $event->getDefinition()->hasMethodDefinition('toArray')))
                 ? $this->getToArrayReturn($event->getInstance()->name, $event->arguments, $event->scope)
                 : null,
             'response', 'toResponse' => new Generic(JsonResponse::class, [$event->getInstance(), new LiteralIntegerType(200), new ArrayType]),
