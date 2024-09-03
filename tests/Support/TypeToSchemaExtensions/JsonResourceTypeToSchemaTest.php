@@ -27,6 +27,44 @@ it('documents the response type when return is not array node', function () {
     ]);
 });
 
+it('documents spread parent toArray calls', function () {
+    $type = new Generic(JsonResourceTypeToSchemaTest_SpreadSample::class, [new UnknownType]);
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+        JsonResourceTypeToSchema::class,
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+
+    $schema = $extension->toSchema($type);
+
+    expect($schema->toArray())->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'integer'],
+            'name' => ['type' => 'string'],
+            'foo' => ['type' => 'string', 'example' => 'bar'],
+        ],
+        'required' => ['id', 'name', 'foo'],
+    ]);
+});
+
+/**
+ * @property JsonResourceTypeToSchemaTest_User $resource
+ */
+class JsonResourceTypeToSchemaTest_SpreadSample extends \Illuminate\Http\Resources\Json\JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            ...parent::toArray($request),
+            'foo' => 'bar',
+        ];
+    }
+}
+{
+
+}
+
 /**
  * @property JsonResourceTypeToSchemaTest_User $resource
  */

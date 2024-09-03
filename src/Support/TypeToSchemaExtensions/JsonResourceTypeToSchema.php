@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -41,6 +42,9 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         $array = ($def = $type->getMethodDefinition('toArray'))
             ? $def->type->getReturnType()
             : new \Dedoc\Scramble\Support\Type\UnknownType;
+
+        // @todo: Should unpacking be done here? Or here we'd want to have already unpacked array?
+        $array = TypeHelper::unpackIfArray($array);
 
         if (! $array instanceof KeyedArrayType) {
             if ($type->isInstanceOf(ResourceCollection::class)) {
