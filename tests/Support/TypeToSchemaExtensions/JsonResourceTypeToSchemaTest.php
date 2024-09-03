@@ -71,9 +71,7 @@ it('documents json resources when no toArray is defined', function () {
 /**
  * @property JsonResourceTypeToSchemaTest_User $resource
  */
-class JsonResourceTypeToSchemaTest_NoToArraySample extends \Illuminate\Http\Resources\Json\JsonResource
-{
-}
+class JsonResourceTypeToSchemaTest_NoToArraySample extends \Illuminate\Http\Resources\Json\JsonResource {}
 
 /**
  * @property JsonResourceTypeToSchemaTest_User $resource
