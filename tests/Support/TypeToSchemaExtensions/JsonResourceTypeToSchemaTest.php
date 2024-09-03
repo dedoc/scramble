@@ -61,9 +61,6 @@ class JsonResourceTypeToSchemaTest_SpreadSample extends \Illuminate\Http\Resourc
         ];
     }
 }
-{
-
-}
 
 /**
  * @property JsonResourceTypeToSchemaTest_User $resource
