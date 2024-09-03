@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -30,6 +31,10 @@ class JsonResourceExtension implements MethodReturnTypeExtension, StaticMethodRe
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         return match ($event->name) {
+            // @todo This should work automatically as toArray calls must be proxied to parents.
+            'toArray' => ($event->getInstance()->name === JsonResource::class || ! $event->getDefinition()->hasMethodDefinition('toArray'))
+                ? $this->getToArrayReturn($event->getInstance()->name, $event->arguments, $event->scope)
+                : null,
             'response', 'toResponse' => new Generic(JsonResponse::class, [$event->getInstance(), new LiteralIntegerType(200), new ArrayType]),
             default => null,
         };
@@ -56,11 +61,16 @@ class JsonResourceExtension implements MethodReturnTypeExtension, StaticMethodRe
             return null;
         }
 
-        $modelType = JsonResourceTypeInfer::modelType($event->scope->index->getClassDefinition($contextClassName), $event->scope);
+        return $this->getToArrayReturn($contextClassName, $event->arguments, $event->scope);
+    }
+
+    private function getToArrayReturn(string $resourceClassName, array $arguments, Scope $scope)
+    {
+        $modelType = JsonResourceTypeInfer::modelType($scope->index->getClassDefinition($resourceClassName), $scope);
 
         return ReferenceTypeResolver::getInstance()->resolve(
-            $event->scope,
-            new MethodCallReferenceType($modelType, 'toArray', arguments: $event->arguments),
+            $scope,
+            new MethodCallReferenceType($modelType, 'toArray', arguments: $arguments),
         );
     }
 }

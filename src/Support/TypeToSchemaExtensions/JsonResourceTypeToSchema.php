@@ -3,6 +3,8 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
@@ -14,6 +16,7 @@ use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -39,9 +42,10 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     {
         $definition = $this->infer->analyzeClass($type->name);
 
-        $array = ($def = $type->getMethodDefinition('toArray'))
-            ? $def->type->getReturnType()
-            : new \Dedoc\Scramble\Support\Type\UnknownType;
+        $array = ReferenceTypeResolver::getInstance()->resolve(
+            new GlobalScope,
+            (new MethodCallReferenceType($type, 'toArray', arguments: []))
+        );
 
         // @todo: Should unpacking be done here? Or here we'd want to have already unpacked array?
         $array = TypeHelper::unpackIfArray($array);

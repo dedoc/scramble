@@ -48,6 +48,33 @@ it('documents spread parent toArray calls', function () {
     ]);
 });
 
+it('documents json resources when no toArray is defined', function () {
+    $type = new Generic(JsonResourceTypeToSchemaTest_NoToArraySample::class, [new UnknownType]);
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+        JsonResourceTypeToSchema::class,
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+
+    $schema = $extension->toSchema($type);
+
+    expect($schema->toArray())->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'integer'],
+            'name' => ['type' => 'string'],
+        ],
+        'required' => ['id', 'name'],
+    ]);
+});
+
+/**
+ * @property JsonResourceTypeToSchemaTest_User $resource
+ */
+class JsonResourceTypeToSchemaTest_NoToArraySample extends \Illuminate\Http\Resources\Json\JsonResource
+{
+}
+
 /**
  * @property JsonResourceTypeToSchemaTest_User $resource
  */
