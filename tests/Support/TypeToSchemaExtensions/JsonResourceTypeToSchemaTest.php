@@ -6,38 +6,27 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 
-it('documents the response type when return is not array node', function () {
-    $type = new Generic(JsonResourceTypeToSchemaTest_Sample::class, [new UnknownType]);
+it('supports parent toArray class', function (string $className, array $expectedSchemaArray) {
+    $type = new Generic($className, [new UnknownType]);
 
     $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
         JsonResourceTypeToSchema::class,
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
 
-    $schema = $extension->toSchema($type);
-
-    expect($schema->toArray())->toBe([
+    expect($extension->toSchema($type)->toArray())->toBe($expectedSchemaArray);
+})->with([
+    [JsonResourceTypeToSchemaTest_Sample::class, [
         'type' => 'object',
         'properties' => [
             'id' => ['type' => 'integer'],
             'name' => ['type' => 'string'],
         ],
         'required' => ['id', 'name'],
-    ]);
-});
-
-it('documents spread parent toArray calls', function () {
-    $type = new Generic(JsonResourceTypeToSchemaTest_SpreadSample::class, [new UnknownType]);
-
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
-        JsonResourceTypeToSchema::class,
-    ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
-
-    $schema = $extension->toSchema($type);
-
-    expect($schema->toArray())->toBe([
+    ]],
+    [JsonResourceTypeToSchemaTest_SpreadSample::class, [
         'type' => 'object',
         'properties' => [
             'id' => ['type' => 'integer'],
@@ -45,34 +34,20 @@ it('documents spread parent toArray calls', function () {
             'foo' => ['type' => 'string', 'example' => 'bar'],
         ],
         'required' => ['id', 'name', 'foo'],
-    ]);
-});
-
-it('documents json resources when no toArray is defined', function () {
-    $type = new Generic(JsonResourceTypeToSchemaTest_NoToArraySample::class, [new UnknownType]);
-
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
-        JsonResourceTypeToSchema::class,
-    ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
-
-    $schema = $extension->toSchema($type);
-
-    expect($schema->toArray())->toBe([
+    ]],
+    [JsonResourceTypeToSchemaTest_NoToArraySample::class, [
         'type' => 'object',
         'properties' => [
             'id' => ['type' => 'integer'],
             'name' => ['type' => 'string'],
         ],
         'required' => ['id', 'name'],
-    ]);
-});
-
+    ]],
+]);
 /**
  * @property JsonResourceTypeToSchemaTest_User $resource
  */
 class JsonResourceTypeToSchemaTest_NoToArraySample extends \Illuminate\Http\Resources\Json\JsonResource {}
-
 /**
  * @property JsonResourceTypeToSchemaTest_User $resource
  */
@@ -86,7 +61,6 @@ class JsonResourceTypeToSchemaTest_SpreadSample extends \Illuminate\Http\Resourc
         ];
     }
 }
-
 /**
  * @property JsonResourceTypeToSchemaTest_User $resource
  */
@@ -97,6 +71,30 @@ class JsonResourceTypeToSchemaTest_Sample extends \Illuminate\Http\Resources\Jso
         return parent::toArray($request);
     }
 }
+
+it('handles withResponse for json api resource', function () {
+    $type = new Generic(JsonResourceTypeToSchemaTest_WithResponseSample::class, [new UnknownType]);
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+        JsonResourceTypeToSchema::class,
+        ResponseTypeToSchema::class,
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+
+    expect($extension->toResponse($type)->code)->toBe(429);
+});
+
+/**
+ * @property JsonResourceTypeToSchemaTest_User $resource
+ */
+class JsonResourceTypeToSchemaTest_WithResponseSample extends \Illuminate\Http\Resources\Json\JsonResource
+{
+    public function withResponse(\Illuminate\Http\Request $request, \Illuminate\Http\JsonResponse $response)
+    {
+        $response->setStatusCode(429);
+    }
+}
+
 class JsonResourceTypeToSchemaTest_User extends \Illuminate\Database\Eloquent\Model
 {
     protected $table = 'users';
