@@ -14,7 +14,7 @@ class GlobalScope extends Scope
             app()->make(Index::class), // ???
             new NodeTypesResolver,
             new ScopeContext,
-            new FileNameResolver(new NameContext(new Throwing)),
+            new FileNameResolver(tap(new NameContext(new Throwing), fn (NameContext $nc) => $nc->startNamespace())),
         );
     }
 }

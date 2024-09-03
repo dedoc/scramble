@@ -66,7 +66,7 @@ class ClassDefinition
             $scope->index,
             new NodeTypesResolver,
             new ScopeContext($this, $methodDefinition),
-            new FileNameResolver(new NameContext(new Throwing)),
+            new FileNameResolver(tap(new NameContext(new Throwing), fn (NameContext $nc) => $nc->startNamespace())),
         );
 
         (new ReferenceTypeResolver($scope->index))
