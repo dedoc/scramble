@@ -20,9 +20,7 @@ class MethodQuery
 
     private ?Scope $scope = null;
 
-    public function __construct(private Infer $infer)
-    {
-    }
+    public function __construct(private Infer $infer) {}
 
     public static function make(Infer $infer): static
     {
@@ -38,7 +36,7 @@ class MethodQuery
 
     public function from(Infer\Definition\ClassDefinition $classDefinition, string $methodName): static
     {
-        $bag = new Bag();
+        $bag = new Bag;
 
         if (! $methodDefinition = $classDefinition->getMethodDefinition($methodName)) {
             return $this;
@@ -46,7 +44,7 @@ class MethodQuery
 
         (new MethodAnalyzer($this->infer->index, $classDefinition))
             ->analyze($methodDefinition, [
-                new class ($bag, $this->argumentsOverrides) implements IndexBuilder
+                new class($bag, $this->argumentsOverrides) implements IndexBuilder
                 {
                     public function __construct(private Bag $bag, private array $argumentsOverrides = []) {}
 
@@ -80,7 +78,7 @@ class MethodQuery
 
                         $this->bag->set('_hasReplaced', true);
                     }
-                }
+                },
             ]);
 
         $this->scope = $bag->data['scope'] ?? null;

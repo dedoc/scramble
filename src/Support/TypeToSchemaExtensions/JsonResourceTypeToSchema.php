@@ -123,7 +123,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     {
         $definition = $this->infer->analyzeClass($type->name);
 
-        $responseType = new Generic(JsonResponse::class, [new \Dedoc\Scramble\Support\Type\UnknownType(), new LiteralIntegerType(200), new KeyedArrayType()]);
+        $responseType = new Generic(JsonResponse::class, [new \Dedoc\Scramble\Support\Type\UnknownType, new LiteralIntegerType(200), new KeyedArrayType]);
 
         $methodQuery = MethodQuery::make($this->infer)
             ->withArgumentType([null, 1], $responseType)
@@ -133,7 +133,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
         $effectTypes
             ->filter(fn ($t) => $t instanceof AbstractReferenceType)
-            ->each(function (AbstractReferenceType $t) use ($responseType, $methodQuery) {
+            ->each(function (AbstractReferenceType $t) use ($methodQuery) {
                 ReferenceTypeResolver::getInstance()->resolve($methodQuery->getScope(), $t);
             });
 
