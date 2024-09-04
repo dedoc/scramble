@@ -28,7 +28,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MergeValue;
 use Illuminate\Http\Resources\MissingValue;
 
-class JsonResourceExtension implements PropertyTypeExtension, MethodReturnTypeExtension, StaticMethodReturnTypeExtension
+class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeExtension, StaticMethodReturnTypeExtension
 {
     public function shouldHandle(ObjectType|string $type): bool
     {
@@ -43,7 +43,7 @@ class JsonResourceExtension implements PropertyTypeExtension, MethodReturnTypeEx
     {
         return match ($event->name) {
             // @todo This should work automatically as toArray calls must be proxied to parents.
-            'toArray' => ($event->getInstance()->name === JsonResource::class || ($event->getDefinition() && !$event->getDefinition()->hasMethodDefinition('toArray')))
+            'toArray' => ($event->getInstance()->name === JsonResource::class || ($event->getDefinition() && ! $event->getDefinition()->hasMethodDefinition('toArray')))
                 ? $this->getToArrayReturn($event->getInstance()->name, $event->arguments, $event->scope)
                 : null,
             'response', 'toResponse' => new Generic(JsonResponse::class, [$event->getInstance(), new LiteralIntegerType(200), new ArrayType]),
@@ -70,7 +70,7 @@ class JsonResourceExtension implements PropertyTypeExtension, MethodReturnTypeEx
             ]),
 
             'mergeWhen' => new Generic(MergeValue::class, [
-                new BooleanType(),
+                new BooleanType,
                 $this->value($event->getArg('value', 1)),
             ]),
 
@@ -81,7 +81,7 @@ class JsonResourceExtension implements PropertyTypeExtension, MethodReturnTypeEx
                     $this->value($event->getArg('default', 2, new ObjectType(MissingValue::class))),
                 ]),
 
-            default => !$event->getDefinition() || $event->getDefinition()->hasMethodDefinition($event->name)
+            default => ! $event->getDefinition() || $event->getDefinition()->hasMethodDefinition($event->name)
                 ? null
                 : $this->proxyMethodCallToModel($event),
         };

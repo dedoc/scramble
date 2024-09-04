@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Infer\Scope;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\BooleanNotTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;

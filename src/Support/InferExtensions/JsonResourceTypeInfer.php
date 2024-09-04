@@ -6,15 +6,11 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
-use PhpParser\Node;
 use PhpParser\Node\Expr;
 
 class JsonResourceTypeInfer implements ExpressionTypeInferExtension

@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
-use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;

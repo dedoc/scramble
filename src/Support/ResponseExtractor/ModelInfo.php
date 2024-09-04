@@ -3,21 +3,8 @@
 namespace Dedoc\Scramble\Support\ResponseExtractor;
 
 use BackedEnum;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
-use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
-use Dedoc\Scramble\Support\Type\ArrayType;
-use Dedoc\Scramble\Support\Type\BooleanType;
-use Dedoc\Scramble\Support\Type\FloatType;
-use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\IntegerType;
-use Dedoc\Scramble\Support\Type\NullType;
-use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\StringType;
-use Dedoc\Scramble\Support\Type\Union;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionMethod;

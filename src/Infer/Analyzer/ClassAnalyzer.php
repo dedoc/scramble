@@ -12,7 +12,6 @@ use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 use ReflectionClass;
 
