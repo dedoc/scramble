@@ -3,21 +3,32 @@
 namespace Dedoc\Scramble\Support\InferExtensions;
 
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
+use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\BooleanType;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\Union;
+use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\MergeValue;
+use Illuminate\Http\Resources\MissingValue;
 
-class JsonResourceExtension implements MethodReturnTypeExtension, StaticMethodReturnTypeExtension
+class JsonResourceExtension implements PropertyTypeExtension, MethodReturnTypeExtension, StaticMethodReturnTypeExtension
 {
     public function shouldHandle(ObjectType|string $type): bool
     {
@@ -36,7 +47,43 @@ class JsonResourceExtension implements MethodReturnTypeExtension, StaticMethodRe
                 ? $this->getToArrayReturn($event->getInstance()->name, $event->arguments, $event->scope)
                 : null,
             'response', 'toResponse' => new Generic(JsonResponse::class, [$event->getInstance(), new LiteralIntegerType(200), new ArrayType]),
-            default => null,
+
+            'whenLoaded' => count($event->arguments) === 1
+                ? Union::wrap([
+                    // Relationship type which does not really matter
+                    new UnknownType('Skipped real relationship type extracting'),
+                    new ObjectType(MissingValue::class),
+                ])
+                : Union::wrap([
+                    $this->value($event->getArg('value', 1)),
+                    $this->value($event->getArg('default', 2, new ObjectType(MissingValue::class))),
+                ]),
+
+            'when' => Union::wrap([
+                $this->value($event->getArg('value', 1)),
+                $this->value($event->getArg('default', 2, new ObjectType(MissingValue::class))),
+            ]),
+
+            'merge' => new Generic(MergeValue::class, [
+                new LiteralBooleanType(true),
+                $this->value($event->getArg('value', 0)),
+            ]),
+
+            'mergeWhen' => new Generic(MergeValue::class, [
+                new BooleanType(),
+                $this->value($event->getArg('value', 1)),
+            ]),
+
+            'whenCounted' => count($event->arguments) === 1
+                ? Union::wrap([new IntegerType, new ObjectType(MissingValue::class)])
+                : Union::wrap([
+                    $this->value($event->getArg('value', 1)),
+                    $this->value($event->getArg('default', 2, new ObjectType(MissingValue::class))),
+                ]),
+
+            default => $event->getDefinition()->hasMethodDefinition($event->name)
+                ? null
+                : $this->proxyMethodCallToModel($event),
         };
     }
 
@@ -45,6 +92,22 @@ class JsonResourceExtension implements MethodReturnTypeExtension, StaticMethodRe
         return match ($event->name) {
             'toArray' => $this->handleToArrayStaticCall($event),
             default => null,
+        };
+    }
+
+    public function getPropertyType(PropertyFetchEvent $event): ?Type
+    {
+        return match ($event->name) {
+            'resource' => JsonResourceTypeInfer::modelType($event->getDefinition(), $event->scope),
+            default => $event->getDefinition()->hasPropertyDefinition($event->name)
+                ? null
+                : ReferenceTypeResolver::getInstance()->resolve(
+                    $event->scope,
+                    new PropertyFetchReferenceType(
+                        JsonResourceTypeInfer::modelType($event->getDefinition(), $event->scope),
+                        $event->name,
+                    ),
+                ),
         };
     }
 
@@ -72,5 +135,20 @@ class JsonResourceExtension implements MethodReturnTypeExtension, StaticMethodRe
             $scope,
             new MethodCallReferenceType($modelType, 'toArray', arguments: $arguments),
         );
+    }
+
+    private function proxyMethodCallToModel(MethodCallEvent $event)
+    {
+        $modelType = JsonResourceTypeInfer::modelType($event->scope->index->getClassDefinition($event->getInstance()->name), $event->scope);
+
+        return ReferenceTypeResolver::getInstance()->resolve(
+            $event->scope,
+            new MethodCallReferenceType($modelType, $event->name, arguments: $event->arguments),
+        );
+    }
+
+    private function value(Type $type)
+    {
+        return $type instanceof FunctionType ? $type->getReturnType() : $type;
     }
 }

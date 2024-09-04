@@ -499,7 +499,7 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get property [$type->propertyName] type on [$name]");
         }
 
-        return $objectType->getPropertyType($type->propertyName);
+        return $objectType->getPropertyType($type->propertyName, $scope);
     }
 
     private function getFunctionCallResult(

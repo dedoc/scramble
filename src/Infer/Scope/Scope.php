@@ -323,11 +323,4 @@ class Scope
 
         return $type;
     }
-
-    public function getMethodCallType(Type $calledOn, string $methodName, array $arguments = []): Type {}
-
-    public function getPropertyFetchType(Type $calledOn, string $propertyName): Type
-    {
-        return (new ReferenceTypeResolver($this->index))->resolve($this, new PropertyFetchReferenceType($calledOn, $propertyName));
-    }
 }

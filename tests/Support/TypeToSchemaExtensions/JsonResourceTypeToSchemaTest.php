@@ -16,7 +16,14 @@ it('supports call to method', function () {
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
 
-    expect($extension->toSchema($type)->toArray())->toBe([]);
+    expect($extension->toSchema($type)->toArray())->toBe([
+        'type' => 'object',
+        'properties' => [
+            'res_int' => ['type' => 'integer'],
+            'proxy_int' => ['type' => 'integer'],
+        ],
+        'required' => ['res_int', 'proxy_int'],
+    ]);
 });
 
 it('supports parent toArray class', function (string $className, array $expectedSchemaArray) {
@@ -115,6 +122,7 @@ class JsonResourceTypeToSchemaTest_WithInteger extends \Illuminate\Http\Resource
     {
         return [
             'res_int' => $this->resource->getInteger(),
+            'proxy_int' => $this->getInteger(),
         ];
     }
 }
