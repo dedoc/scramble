@@ -1,9 +1,8 @@
 <?php
 
-namespace Dedoc\Scramble\Support\InferExtensions;
+namespace Dedoc\Scramble\Support\Helpers;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
-use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -11,16 +10,10 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use PhpParser\Node\Expr;
 
-class JsonResourceTypeInfer implements ExpressionTypeInferExtension
+class JsonResourceHelper
 {
     public static $jsonResourcesModelTypesCache = [];
-
-    public function getType(Expr $node, Scope $scope): ?Type
-    {
-        return null;
-    }
 
     /**
      * @internal

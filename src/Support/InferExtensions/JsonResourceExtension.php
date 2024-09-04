@@ -10,6 +10,7 @@ use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -44,7 +45,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         return match ($event->name) {
             // @todo This should work automatically as toArray calls must be proxied to parents.
             'toArray' => ($event->getInstance()->name === JsonResource::class || ($event->getDefinition() && ! $event->getDefinition()->hasMethodDefinition('toArray')))
-                ? $this->getToArrayReturn($event->getInstance()->name, $event->arguments, $event->scope)
+                ? $this->getModelMethodReturn($event->getInstance()->name, 'toArray', $event->arguments, $event->scope)
                 : null,
             'response', 'toResponse' => new Generic(JsonResponse::class, [$event->getInstance(), new LiteralIntegerType(200), new ArrayType]),
 
@@ -98,13 +99,13 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
     public function getPropertyType(PropertyFetchEvent $event): ?Type
     {
         return match ($event->name) {
-            'resource' => JsonResourceTypeInfer::modelType($event->getDefinition(), $event->scope),
+            'resource' => JsonResourceHelper::modelType($event->getDefinition(), $event->scope),
             default => ! $event->getDefinition() || $event->getDefinition()->hasPropertyDefinition($event->name)
                 ? null
                 : ReferenceTypeResolver::getInstance()->resolve(
                     $event->scope,
                     new PropertyFetchReferenceType(
-                        JsonResourceTypeInfer::modelType($event->getDefinition(), $event->scope),
+                        JsonResourceHelper::modelType($event->getDefinition(), $event->scope),
                         $event->name,
                     ),
                 ),
@@ -124,26 +125,21 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
             return null;
         }
 
-        return $this->getToArrayReturn($contextClassName, $event->arguments, $event->scope);
-    }
-
-    private function getToArrayReturn(string $resourceClassName, array $arguments, Scope $scope)
-    {
-        $modelType = JsonResourceTypeInfer::modelType($scope->index->getClassDefinition($resourceClassName), $scope);
-
-        return ReferenceTypeResolver::getInstance()->resolve(
-            $scope,
-            new MethodCallReferenceType($modelType, 'toArray', arguments: $arguments),
-        );
+        return $this->getModelMethodReturn($contextClassName, 'toArray', $event->arguments, $event->scope);
     }
 
     private function proxyMethodCallToModel(MethodCallEvent $event)
     {
-        $modelType = JsonResourceTypeInfer::modelType($event->scope->index->getClassDefinition($event->getInstance()->name), $event->scope);
+        return $this->getModelMethodReturn($event->getInstance()->name, $event->name, $event->arguments, $event->scope);
+    }
+
+    private function getModelMethodReturn(string $resourceClassName, string $methodName, array $arguments, Scope $scope)
+    {
+        $modelType = JsonResourceHelper::modelType($scope->index->getClassDefinition($resourceClassName), $scope);
 
         return ReferenceTypeResolver::getInstance()->resolve(
-            $event->scope,
-            new MethodCallReferenceType($modelType, $event->name, arguments: $event->arguments),
+            $scope,
+            new MethodCallReferenceType($modelType, $methodName, arguments: $arguments),
         );
     }
 
