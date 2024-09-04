@@ -43,7 +43,7 @@ class JsonResourceExtension implements PropertyTypeExtension, MethodReturnTypeEx
     {
         return match ($event->name) {
             // @todo This should work automatically as toArray calls must be proxied to parents.
-            'toArray' => ($event->getInstance()->name === JsonResource::class || ($event->getDefinition() && ! $event->getDefinition()->hasMethodDefinition('toArray')))
+            'toArray' => ($event->getInstance()->name === JsonResource::class || ($event->getDefinition() && !$event->getDefinition()->hasMethodDefinition('toArray')))
                 ? $this->getToArrayReturn($event->getInstance()->name, $event->arguments, $event->scope)
                 : null,
             'response', 'toResponse' => new Generic(JsonResponse::class, [$event->getInstance(), new LiteralIntegerType(200), new ArrayType]),
@@ -81,7 +81,7 @@ class JsonResourceExtension implements PropertyTypeExtension, MethodReturnTypeEx
                     $this->value($event->getArg('default', 2, new ObjectType(MissingValue::class))),
                 ]),
 
-            default => $event->getDefinition()->hasMethodDefinition($event->name)
+            default => !$event->getDefinition() || $event->getDefinition()->hasMethodDefinition($event->name)
                 ? null
                 : $this->proxyMethodCallToModel($event),
         };
@@ -99,7 +99,7 @@ class JsonResourceExtension implements PropertyTypeExtension, MethodReturnTypeEx
     {
         return match ($event->name) {
             'resource' => JsonResourceTypeInfer::modelType($event->getDefinition(), $event->scope),
-            default => $event->getDefinition()->hasPropertyDefinition($event->name)
+            default => ! $event->getDefinition() || $event->getDefinition()->hasPropertyDefinition($event->name)
                 ? null
                 : ReferenceTypeResolver::getInstance()->resolve(
                     $event->scope,
