@@ -62,7 +62,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
 
         $jsonResourceOpenApiType = $this->openApiTransformer->transform($collectingResourceType);
 
-        $shouldWrap = ($wrapKey = AnonymousResourceCollection::$wrap ?? null) !== null
+        $shouldWrap = ($wrapKey = $collectingResourceType->name::$wrap ?? null) !== null
             || $additional instanceof KeyedArrayType;
         $wrapKey = $wrapKey ?: 'data';
 
