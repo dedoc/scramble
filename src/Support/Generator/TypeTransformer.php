@@ -154,13 +154,13 @@ class TypeTransformer
 
                 if ($stringLiterals->count()) {
                     $items[] = (new StringType)->enum(
-                        $stringLiterals->map->value->unique()->toArray()
+                        $stringLiterals->map->value->unique()->values()->toArray()
                     );
                 }
 
                 if ($integerLiterals->count()) {
                     $items[] = (new IntegerType)->enum(
-                        $integerLiterals->map->value->unique()->toArray()
+                        $integerLiterals->map->value->unique()->values()->toArray()
                     );
                 }
 
