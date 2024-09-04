@@ -6,7 +6,6 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -133,11 +132,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
      */
     public static function modelType(ClassDefinition $jsonClass, Scope $scope): ?Type
     {
-        if ([$cachedModelType, $cachedModelDefinition] = static::$jsonResourcesModelTypesCache[$jsonClass->name] ?? null) {
-            if ($cachedModelDefinition) {
-                $scope->index->registerClassDefinition($cachedModelDefinition);
-            }
-
+        if ($cachedModelType = static::$jsonResourcesModelTypesCache[$jsonClass->name] ?? null) {
             return $cachedModelType;
         }
 
@@ -148,18 +143,11 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
         );
 
         $modelType = new UnknownType("Cannot resolve [$modelClass] model type.");
-        $modelClassDefinition = null;
         if ($modelClass && is_a($modelClass, Model::class, true)) {
-            // @todo Use ModelExtension implementation of model info to type conversion.
-            // @todo The problem is that model extension type is dynamic and I'm not sure how to use it here.
-            $modelClassDefinition = (new ModelInfo($modelClass))->type();
-
-            $scope->index->registerClassDefinition($modelClassDefinition);
-
-            $modelType = new ObjectType($modelClassDefinition->name);
+            $modelType = new ObjectType($modelClass);
         }
 
-        static::$jsonResourcesModelTypesCache[$jsonClass->name] = [$modelType, $modelClassDefinition];
+        static::$jsonResourcesModelTypesCache[$jsonClass->name] = $modelType;
 
         return $modelType;
     }
@@ -178,7 +166,7 @@ class JsonResourceTypeInfer implements ExpressionTypeInferExtension
             $modelClass = $getFqName($modelName);
 
             if (class_exists($modelClass)) {
-                return '\\'.$modelClass;
+                return $modelClass;
             }
         }
 
