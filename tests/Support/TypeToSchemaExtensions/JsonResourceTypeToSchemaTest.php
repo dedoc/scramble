@@ -8,6 +8,24 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 
+it('supports call to method', function () {
+    $type = new Generic(JsonResourceTypeToSchemaTest_WithInteger::class, [new UnknownType]);
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+        JsonResourceTypeToSchema::class,
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+
+    expect($extension->toSchema($type)->toArray())->toBe([
+        'type' => 'object',
+        'properties' => [
+            'res_int' => ['type' => 'integer'],
+            'proxy_int' => ['type' => 'integer'],
+        ],
+        'required' => ['res_int', 'proxy_int'],
+    ]);
+});
+
 it('supports parent toArray class', function (string $className, array $expectedSchemaArray) {
     $type = new Generic($className, [new UnknownType]);
 
@@ -95,9 +113,28 @@ class JsonResourceTypeToSchemaTest_WithResponseSample extends \Illuminate\Http\R
     }
 }
 
+/**
+ * @property JsonResourceTypeToSchemaTest_User $resource
+ */
+class JsonResourceTypeToSchemaTest_WithInteger extends \Illuminate\Http\Resources\Json\JsonResource
+{
+    public function toArray(\Illuminate\Http\Request $request)
+    {
+        return [
+            'res_int' => $this->resource->getInteger(),
+            'proxy_int' => $this->getInteger(),
+        ];
+    }
+}
+
 class JsonResourceTypeToSchemaTest_User extends \Illuminate\Database\Eloquent\Model
 {
     protected $table = 'users';
 
     protected $visible = ['id', 'name'];
+
+    public function getInteger(): int
+    {
+        return unknown();
+    }
 }

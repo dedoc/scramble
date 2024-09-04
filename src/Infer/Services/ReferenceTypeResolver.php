@@ -247,6 +247,13 @@ class ReferenceTypeResolver
             throw new \LogicException('Should not happen.');
         }
 
+        /*
+         * Doing a deep dive into the dependent class, if it has not been analyzed.
+         */
+        if ($calleeType instanceof ObjectType) {
+            $this->resolveUnknownClass($calleeType->name);
+        }
+
         $event = null;
 
         // Attempting extensions broker before potentially giving up on type inference
@@ -280,7 +287,6 @@ class ReferenceTypeResolver
         if (
             ($calleeType instanceof ObjectType)
             && ! array_key_exists($calleeType->name, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClassResolver($calleeType->name)
         ) {
             return new UnknownType;
         }
@@ -315,6 +321,11 @@ class ReferenceTypeResolver
         // Assuming callee here can be only string of known name. Reality is more complex than
         // that, but it is fine for now.
 
+        /*
+         * Doing a deep dive into the dependent class, if it has not been analyzed.
+         */
+        $this->resolveUnknownClass($type->callee);
+
         // Attempting extensions broker before potentially giving up on type inference
         if ($returnType = Context::getInstance()->extensionsBroker->getStaticMethodReturnType(new StaticMethodCallEvent(
             callee: $type->callee,
@@ -325,10 +336,7 @@ class ReferenceTypeResolver
             return $returnType;
         }
 
-        if (
-            ! array_key_exists($type->callee, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClassResolver($type->callee)
-        ) {
+        if (! array_key_exists($type->callee, $this->index->classesDefinitions)) {
             return new UnknownType;
         }
 
@@ -342,7 +350,7 @@ class ReferenceTypeResolver
         return $this->getFunctionCallResult($methodDefinition, $type->arguments);
     }
 
-    private function resolveUnknownClassResolver(string $className): ?ClassDefinition
+    private function resolveUnknownClass(string $className): ?ClassDefinition
     {
         try {
             $reflection = new \ReflectionClass($className);
@@ -419,7 +427,7 @@ class ReferenceTypeResolver
 
         if (
             ! array_key_exists($type->name, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClassResolver($type->name)
+            && ! $this->resolveUnknownClass($type->name)
         ) {
             /*
              * Usually in this case we want to return UnknownType. But we certainly know that using `new` will produce
@@ -469,7 +477,7 @@ class ReferenceTypeResolver
         if (
             ($objectType instanceof ObjectType)
             && ! array_key_exists($objectType->name, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClassResolver($objectType->name)
+            && ! $this->resolveUnknownClass($objectType->name)
         ) {
             // Class is not indexed, and we simply cannot get an info from it.
             return $type;
@@ -499,7 +507,7 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get property [$type->propertyName] type on [$name]");
         }
 
-        return $objectType->getPropertyType($type->propertyName);
+        return $objectType->getPropertyType($type->propertyName, $scope);
     }
 
     private function getFunctionCallResult(

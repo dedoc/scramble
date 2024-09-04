@@ -2,7 +2,7 @@
 
 use Dedoc\Scramble\Generator;
 
-use function Pest\Laravel\{artisan};
+use function Pest\Laravel\artisan;
 
 it('exports_the_specifications_to_a_specified_json_file', function () {
     $filepath = 'api-test.json';
