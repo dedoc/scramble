@@ -1,5 +1,5 @@
 {
-    "name": "dedoc/scramble",
+    "name": "justcoded/scramble",
     "description": "Automatic generation of API documentation for Laravel applications.",
     "keywords": [
         "laravel",
@@ -8,13 +8,6 @@
     ],
     "homepage": "https://github.com/dedoc/scramble",
     "license": "MIT",
-    "authors": [
-        {
-            "name": "Roman Lytvynenko",
-            "email": "litvinenko95@gmail.com",
-            "role": "Developer"
-        }
-    ],
     "require": {
         "php": "^8.1",
         "illuminate/contracts": "^10.0|^11.0",
