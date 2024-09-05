@@ -1,3 +1,6 @@
+> **FORK OF https://github.com/dedoc/scramble.**
+> Improved several classes inside to be able to extend it, filter results and use individual classes for generating OAS partials, not the whole document.
+
 <p>
   <a href="https://scramble.dedoc.co" target="_blank">
     <img src="./.github/gh-img.png?v=1" alt="Scramble – Laravel API documentation generator"/>
