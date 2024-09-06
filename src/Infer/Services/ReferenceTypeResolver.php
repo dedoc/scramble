@@ -40,6 +40,7 @@ use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+
 use function DeepCopy\deep_copy;
 
 class ReferenceTypeResolver
