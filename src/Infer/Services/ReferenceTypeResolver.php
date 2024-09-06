@@ -41,6 +41,8 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
+use function DeepCopy\deep_copy;
+
 class ReferenceTypeResolver
 {
     public function __construct(
@@ -558,7 +560,7 @@ class ReferenceTypeResolver
                 $this->prepareArguments($callee, $arguments),
             ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray());
 
-            $returnType = (new TypeWalker)->replace($returnType, function (Type $t) use ($inferredTemplates) {
+            $returnType = (new TypeWalker)->replace(deep_copy($returnType), function (Type $t) use ($inferredTemplates) {
                 if (! $t instanceof TemplateType) {
                     return null;
                 }
