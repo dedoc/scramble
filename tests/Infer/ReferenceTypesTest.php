@@ -27,6 +27,25 @@ EOD)->getClassDefinition('Foo');
         ->toBe('(): int(2)');
 });
 
+it('correctly replaces templates without modifying type', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public function foo ($a) {
+        return ['a' => $a];
+    }
+}
+EOD);
+
+    /*
+     * Previously this test would fail due to original return type being mutated.
+     */
+    $type->getExpressionType('(new Foo)->foo(123)');
+
+    expect($type->getExpressionType('(new Foo)->foo(42)')->toString())
+        ->toBe('array{a: int(42)}');
+});
+
 it('resolves a cyclic reference safely', function () {
     $type = analyzeFile(<<<'EOD'
 <?php
