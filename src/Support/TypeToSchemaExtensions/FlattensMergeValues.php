@@ -64,7 +64,9 @@ trait FlattensMergeValues
                     $item->value instanceof Union
                     && (new TypeWalker)->first($item->value, fn (Type $t) => $t->isInstanceOf(MissingValue::class))
                 ) {
-                    $newType = array_filter($item->value->types, fn (Type $t) => ! $t->isInstanceOf(MissingValue::class));
+                    $newType = array_values(
+                        array_filter($item->value->types, fn (Type $t) => ! $t->isInstanceOf(MissingValue::class))
+                    );
 
                     if (! count($newType)) {
                         return [];
