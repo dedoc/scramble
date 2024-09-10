@@ -58,7 +58,7 @@ class JsonResourceCreationInfer implements ExpressionTypeInferExtension
     /**
      * @param  Node\Arg[]  $args
      */
-    private function setResourceType(Generic $obj, Scope $scope, array $args)
+    protected function setResourceType(Generic $obj, Scope $scope, array $args)
     {
         $obj->templateTypes[0] = TypeHelper::getArgType($scope, $args, ['resource', 0]);
 
