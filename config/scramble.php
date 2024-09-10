@@ -1,6 +1,10 @@
 <?php
 
 use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
+use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
+use Dedoc\Scramble\Support\InferExtensions\JsonResponseMethodReturnTypeExtension;
+use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
+use Dedoc\Scramble\Support\InferExtensions\ResponseMethodReturnTypeExtension;
 
 return [
     /*
@@ -84,4 +88,12 @@ return [
     ],
 
     'extensions' => [],
+
+    'model_extension' => ModelExtension::class,
+
+    'response_method_return_type_extension' => ResponseMethodReturnTypeExtension::class,
+
+    'json_resource_extension' => JsonResourceExtension::class,
+
+    'json_resource_method_return_type_extension' => JsonResponseMethodReturnTypeExtension::class,
 ];

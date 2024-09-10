@@ -32,7 +32,7 @@ use Illuminate\Support\Str;
 
 class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 {
-    private static $cache;
+    protected static $cache;
 
     public function shouldHandle(ObjectType $type): bool
     {
@@ -77,7 +77,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
      * MySQL/MariaDB decimal is mapped to a string by PDO.
      * Floating point numbers and decimals are all mapped to strings when using the pgsql driver.
      */
-    private function getAttributeTypeFromDbColumnType(?string $columnType, ?string $dbDriverName): ?AbstractType
+    protected function getAttributeTypeFromDbColumnType(?string $columnType, ?string $dbDriverName): ?AbstractType
     {
         if ($columnType === null) {
             return null;
@@ -106,7 +106,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
     /**
      * @todo Add support for custom castables.
      */
-    private function getAttributeTypeFromEloquentCasts(string $cast): ?AbstractType
+    protected function getAttributeTypeFromEloquentCasts(string $cast): ?AbstractType
     {
         if ($cast && enum_exists($cast)) {
             return new ObjectType($cast);
@@ -136,7 +136,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         };
     }
 
-    private function getRelationType(array $relation)
+    protected function getRelationType(array $relation)
     {
         if ($isManyRelation = Str::contains($relation['type'], 'Many')) {
             return new Generic(
@@ -196,12 +196,12 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         ]);
     }
 
-    private function getModelInfo(ObjectType $type)
+    protected function getModelInfo(ObjectType $type)
     {
         return static::$cache[$type->name] ??= (new ModelInfo($type->name))->handle();
     }
 
-    private function getProtectedValue($obj, $name)
+    protected function getProtectedValue($obj, $name)
     {
         $array = (array) $obj;
         $prefix = chr(0).'*'.chr(0);

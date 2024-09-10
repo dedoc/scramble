@@ -24,13 +24,9 @@ use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCallsTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCreationInfer;
-use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
-use Dedoc\Scramble\Support\InferExtensions\JsonResponseMethodReturnTypeExtension;
-use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
-use Dedoc\Scramble\Support\InferExtensions\ResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\OperationBuilder;
@@ -91,10 +87,10 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ));
 
                 $inferExtensionsClasses = array_merge([
-                    ResponseMethodReturnTypeExtension::class,
-                    JsonResourceExtension::class,
-                    JsonResponseMethodReturnTypeExtension::class,
-                    ModelExtension::class,
+                    config('scramble.response_method_return_type_extension'),
+                    config('scramble.json_resource_extension'),
+                    config('scramble.json_resource_method_return_type_extension'),
+                    config('scramble.model_extension'),
                 ], $inferExtensionsClasses);
 
                 return array_merge(

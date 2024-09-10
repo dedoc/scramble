@@ -117,7 +117,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
      * now, when analyzing parent::toArray() call. `parent::` becomes `JsonResource::`. So this should be fixed in
      * future just for the sake of following how real code works.
      */
-    private function handleToArrayStaticCall(StaticMethodCallEvent $event): ?Type
+    protected function handleToArrayStaticCall(StaticMethodCallEvent $event): ?Type
     {
         $contextClassName = $event->scope->context->classDefinition->name ?? null;
 
@@ -128,12 +128,12 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         return $this->getModelMethodReturn($contextClassName, 'toArray', $event->arguments, $event->scope);
     }
 
-    private function proxyMethodCallToModel(MethodCallEvent $event)
+    protected function proxyMethodCallToModel(MethodCallEvent $event)
     {
         return $this->getModelMethodReturn($event->getInstance()->name, $event->name, $event->arguments, $event->scope);
     }
 
-    private function getModelMethodReturn(string $resourceClassName, string $methodName, array $arguments, Scope $scope)
+    protected function getModelMethodReturn(string $resourceClassName, string $methodName, array $arguments, Scope $scope)
     {
         $modelType = JsonResourceHelper::modelType($scope->index->getClassDefinition($resourceClassName), $scope);
 
@@ -143,7 +143,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         );
     }
 
-    private function value(Type $type)
+    protected function value(Type $type)
     {
         return $type instanceof FunctionType ? $type->getReturnType() : $type;
     }
