@@ -46,7 +46,6 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
         $type = new OpenApiObjectType;
         $type->addProperty('data', (new ArrayType())->setItems($collectingType));
 
-
         $links = (new OpenApiObjectType)
             ->addProperty('first', (new StringType)->nullable(true))
             ->addProperty('last', (new StringType)->nullable(true))
@@ -56,7 +55,7 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
 
         $linksSchema = Schema::fromType($links);
         $linksSchemaName = 'PaginatedSetLinks';
-        if(!$this->components->hasSchema($linksSchemaName)) {
+        if (! $this->components->hasSchema($linksSchemaName)) {
             $this->components->addSchema($linksSchemaName, $linksSchema);
         }
 
@@ -84,7 +83,7 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
 
         $metaSchema = Schema::fromType($meta);
         $metaSchemaName = 'PaginatedSetMeta';
-        if(!$this->components->hasSchema($metaSchemaName)) {
+        if (! $this->components->hasSchema($metaSchemaName)) {
             $this->components->addSchema($metaSchemaName, $metaSchema);
         }
 
