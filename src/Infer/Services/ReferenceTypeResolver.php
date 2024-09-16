@@ -119,7 +119,7 @@ class ReferenceTypeResolver
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );
 
-        return RecursionGuard::run(
+        return deep_copy(RecursionGuard::run(
             $resultingType,//->toString(),
             fn () => (new TypeWalker)->replace(
                 $resultingType,
@@ -128,7 +128,7 @@ class ReferenceTypeResolver
                     : null,
             ),
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
-        );
+        ));
     }
 
     private function checkDependencies(AbstractReferenceType $type)
