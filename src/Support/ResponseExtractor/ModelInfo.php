@@ -3,21 +3,8 @@
 namespace Dedoc\Scramble\Support\ResponseExtractor;
 
 use BackedEnum;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
-use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
-use Dedoc\Scramble\Support\Type\ArrayType;
-use Dedoc\Scramble\Support\Type\BooleanType;
-use Dedoc\Scramble\Support\Type\FloatType;
-use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\IntegerType;
-use Dedoc\Scramble\Support\Type\NullType;
-use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\StringType;
-use Dedoc\Scramble\Support\Type\Union;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionMethod;
@@ -71,90 +58,6 @@ class ModelInfo
             $class,
             $this->getAttributes($model),
             $this->getRelations($model),
-        );
-    }
-
-    public function type()
-    {
-        if (isset(static::$cache[$this->class])) {
-            return static::$cache[$this->class];
-        }
-
-        $modelInfo = $this->handle();
-        if (! $modelInfo->get('instance')) {
-            return new ClassDefinition($modelInfo->get('class'));
-        }
-
-        /** @var Model $model */
-        $model = app()->make($modelInfo->get('class'));
-
-        /** @var Collection $properties */
-        $properties = $modelInfo->get('attributes')
-            ->map(function ($value, $key) use ($model) {
-                $isNullable = $value['nullable'];
-                $createType = fn ($t) => $isNullable
-                    ? Union::wrap([new NullType, $t])
-                    : $t;
-
-                $type = explode(' ', $value['type'] ?? '');
-                $typeName = explode('(', $type[0] ?? '')[0];
-
-                if (in_array($key, $model->getDates())) {
-                    return $createType(new ObjectType('\\Carbon\\Carbon'));
-                }
-
-                $types = [
-                    'int' => new IntegerType,
-                    'integer' => new IntegerType,
-                    'bigint' => new IntegerType,
-                    'float' => new FloatType,
-                    'double' => new FloatType,
-                    'decimal' => new FloatType,
-                    'string' => new StringType,
-                    'varchar' => new StringType,
-                    'text' => new StringType,
-                    'datetime' => new StringType,
-                    'tinyint' => new BooleanType,
-                    'bool' => new BooleanType,
-                    'boolean' => new BooleanType,
-                    'json' => new ArrayType,
-                    'array' => new ArrayType,
-                ];
-
-                $attributeType = null;
-
-                if (array_key_exists($typeName, $types)) {
-                    $attributeType = $createType($types[$typeName]);
-                }
-
-                if ($attributeType && $value['cast'] && function_exists('enum_exists') && enum_exists($value['cast'])) {
-                    if (! isset($value['cast']::cases()[0]->value)) {
-                        return $attributeType;
-                    }
-
-                    $attributeType = new ObjectType($value['cast']);
-                }
-
-                return $attributeType ?: new UnknownType("unimplemented DB column type [$type[0]]");
-            });
-
-        $relations = $modelInfo->get('relations')
-            ->map(function ($relation) {
-                if ($isManyRelation = Str::contains($relation['type'], 'Many')) {
-                    return new Generic(
-                        \Illuminate\Database\Eloquent\Collection::class,
-                        [
-                            new ObjectType($relation['related']),
-                        ]
-                    );
-                }
-
-                return new ObjectType($relation['related']);
-            });
-
-        return static::$cache[$this->class] = new ClassDefinition(
-            name: $modelInfo->get('class'),
-            properties: $properties->merge($relations)->map(fn ($t) => new ClassPropertyDefinition($t))->all(),
         );
     }
 

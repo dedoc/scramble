@@ -3,9 +3,11 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Infer\Analyzer\MethodQuery;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Reference;
-use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
@@ -13,8 +15,14 @@ use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeHelper;
+use Dedoc\Scramble\Support\Type\TypeWalker;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -38,9 +46,13 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     {
         $definition = $this->infer->analyzeClass($type->name);
 
-        $array = ($def = $type->getMethodDefinition('toArray'))
-            ? $def->type->getReturnType()
-            : new \Dedoc\Scramble\Support\Type\UnknownType;
+        $array = ReferenceTypeResolver::getInstance()->resolve(
+            new GlobalScope,
+            (new MethodCallReferenceType($type, 'toArray', arguments: []))
+        );
+
+        // @todo: Should unpacking be done here? Or here we'd want to have already unpacked array?
+        $array = TypeHelper::unpackIfArray($array);
 
         if (! $array instanceof KeyedArrayType) {
             if ($type->isInstanceOf(ResourceCollection::class)) {
@@ -97,12 +109,35 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             );
         }
 
-        return Response::make(200)
+        $response = $this->openApiTransformer->toResponse($this->makeBaseResponse($type));
+
+        return $response
             ->description('`'.$this->components->uniqueSchemaName($type->name).'`')
             ->setContent(
                 'application/json',
                 Schema::fromType($openApiType),
             );
+    }
+
+    private function makeBaseResponse(Type $type)
+    {
+        $definition = $this->infer->analyzeClass($type->name);
+
+        $responseType = new Generic(JsonResponse::class, [new \Dedoc\Scramble\Support\Type\UnknownType, new LiteralIntegerType(200), new KeyedArrayType]);
+
+        $methodQuery = MethodQuery::make($this->infer)
+            ->withArgumentType([null, 1], $responseType)
+            ->from($definition, 'withResponse');
+
+        $effectTypes = $methodQuery->getTypes(fn ($t) => (bool) (new TypeWalker)->first($t, fn ($t) => $t === $responseType));
+
+        $effectTypes
+            ->filter(fn ($t) => $t instanceof AbstractReferenceType)
+            ->each(function (AbstractReferenceType $t) use ($methodQuery) {
+                ReferenceTypeResolver::getInstance()->resolve($methodQuery->getScope(), $t);
+            });
+
+        return $responseType;
     }
 
     private function mergeResourceTypeAndAdditionals(string $wrapKey, Reference|OpenApiObjectType $openApiType, ?KeyedArrayType $withArray, ?KeyedArrayType $additional)

@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
@@ -39,6 +40,8 @@ use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+
+use function DeepCopy\deep_copy;
 
 class ReferenceTypeResolver
 {
@@ -116,7 +119,7 @@ class ReferenceTypeResolver
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );
 
-        return RecursionGuard::run(
+        return deep_copy(RecursionGuard::run(
             $resultingType,//->toString(),
             fn () => (new TypeWalker)->replace(
                 $resultingType,
@@ -125,7 +128,7 @@ class ReferenceTypeResolver
                     : null,
             ),
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
-        );
+        ));
     }
 
     private function checkDependencies(AbstractReferenceType $type)
@@ -246,6 +249,13 @@ class ReferenceTypeResolver
             throw new \LogicException('Should not happen.');
         }
 
+        /*
+         * Doing a deep dive into the dependent class, if it has not been analyzed.
+         */
+        if ($calleeType instanceof ObjectType) {
+            $this->resolveUnknownClass($calleeType->name);
+        }
+
         $event = null;
 
         // Attempting extensions broker before potentially giving up on type inference
@@ -279,7 +289,6 @@ class ReferenceTypeResolver
         if (
             ($calleeType instanceof ObjectType)
             && ! array_key_exists($calleeType->name, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClassResolver($calleeType->name)
         ) {
             return new UnknownType;
         }
@@ -314,6 +323,11 @@ class ReferenceTypeResolver
         // Assuming callee here can be only string of known name. Reality is more complex than
         // that, but it is fine for now.
 
+        /*
+         * Doing a deep dive into the dependent class, if it has not been analyzed.
+         */
+        $this->resolveUnknownClass($type->callee);
+
         // Attempting extensions broker before potentially giving up on type inference
         if ($returnType = Context::getInstance()->extensionsBroker->getStaticMethodReturnType(new StaticMethodCallEvent(
             callee: $type->callee,
@@ -324,10 +338,7 @@ class ReferenceTypeResolver
             return $returnType;
         }
 
-        if (
-            ! array_key_exists($type->callee, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClassResolver($type->callee)
-        ) {
+        if (! array_key_exists($type->callee, $this->index->classesDefinitions)) {
             return new UnknownType;
         }
 
@@ -341,7 +352,7 @@ class ReferenceTypeResolver
         return $this->getFunctionCallResult($methodDefinition, $type->arguments);
     }
 
-    private function resolveUnknownClassResolver(string $className): ?ClassDefinition
+    private function resolveUnknownClass(string $className): ?ClassDefinition
     {
         try {
             $reflection = new \ReflectionClass($className);
@@ -361,6 +372,26 @@ class ReferenceTypeResolver
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)
     {
+        if ($type->callee instanceof CallableStringType) {
+            $analyzedType = clone $type;
+
+            $analyzedType->arguments = array_map(
+                // @todo: fix resolving arguments when deep arg is reference
+                fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
+                $type->arguments,
+            );
+
+            $returnType = Context::getInstance()->extensionsBroker->getFunctionReturnType(new FunctionCallEvent(
+                name: $analyzedType->callee->name,
+                scope: $scope,
+                arguments: $analyzedType->arguments,
+            ));
+
+            if ($returnType) {
+                return $returnType;
+            }
+        }
+
         $calleeType = $type->callee instanceof CallableStringType
             ? $this->index->getFunctionDefinition($type->callee->name)
             : $this->resolve($scope, $type->callee);
@@ -398,7 +429,7 @@ class ReferenceTypeResolver
 
         if (
             ! array_key_exists($type->name, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClassResolver($type->name)
+            && ! $this->resolveUnknownClass($type->name)
         ) {
             /*
              * Usually in this case we want to return UnknownType. But we certainly know that using `new` will produce
@@ -448,7 +479,7 @@ class ReferenceTypeResolver
         if (
             ($objectType instanceof ObjectType)
             && ! array_key_exists($objectType->name, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClassResolver($objectType->name)
+            && ! $this->resolveUnknownClass($objectType->name)
         ) {
             // Class is not indexed, and we simply cannot get an info from it.
             return $type;
@@ -478,7 +509,7 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get property [$type->propertyName] type on [$name]");
         }
 
-        return $objectType->getPropertyType($type->propertyName);
+        return $objectType->getPropertyType($type->propertyName, $scope);
     }
 
     private function getFunctionCallResult(
@@ -529,7 +560,7 @@ class ReferenceTypeResolver
                 $this->prepareArguments($callee, $arguments),
             ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray());
 
-            $returnType = (new TypeWalker)->replace($returnType, function (Type $t) use ($inferredTemplates) {
+            $returnType = (new TypeWalker)->replace(deep_copy($returnType), function (Type $t) use ($inferredTemplates) {
                 if (! $t instanceof TemplateType) {
                     return null;
                 }
@@ -565,7 +596,6 @@ class ReferenceTypeResolver
      * Prepares the actual arguments list with which a function is going to be executed, taking into consideration
      * arguments defaults.
      *
-     * @param  ?FunctionLikeDefinition  $callee
      * @param  array  $realArguments  The list of arguments a function has been called with.
      * @return array The actual list of arguments where not passed arguments replaced with default values.
      */

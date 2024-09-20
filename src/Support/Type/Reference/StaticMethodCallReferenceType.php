@@ -14,6 +14,11 @@ class StaticMethodCallReferenceType extends AbstractReferenceType
         public array $arguments,
     ) {}
 
+    public function nodes(): array
+    {
+        return ['arguments'];
+    }
+
     public function toString(): string
     {
         $argsTypes = implode(

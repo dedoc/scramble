@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
+use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -66,7 +67,11 @@ class ClassDefinition
             $scope->index,
             new NodeTypesResolver,
             new ScopeContext($this, $methodDefinition),
-            new FileNameResolver(new NameContext(new Throwing)),
+            new FileNameResolver(
+                class_exists($this->name)
+                    ? ClassReflector::make($this->name)->getNameContext()
+                    : tap(new NameContext(new Throwing), fn (NameContext $nc) => $nc->startNamespace()),
+            ),
         );
 
         (new ReferenceTypeResolver($scope->index))
@@ -86,6 +91,11 @@ class ClassDefinition
     public function getPropertyDefinition($name)
     {
         return $this->properties[$name] ?? null;
+    }
+
+    public function hasPropertyDefinition(string $name): bool
+    {
+        return array_key_exists($name, $this->properties);
     }
 
     public function getMethodCallType(string $name, ?ObjectType $calledOn = null)
