@@ -138,3 +138,36 @@ class JsonResourceTypeToSchemaTest_User extends \Illuminate\Database\Eloquent\Mo
         return unknown();
     }
 }
+
+it('handles default in json api resource', function () {
+    $type = new Generic(JsonResourceTypeToSchemaTest_WithDefault::class, [new UnknownType]);
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+        JsonResourceTypeToSchema::class,
+        ResponseTypeToSchema::class,
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+
+    expect($extension->toSchema($type)->toArray())->toBe([
+        'type' => 'object',
+        'properties' => [
+            'foo' => [
+                'type' => 'string',
+                'default' => 'fooBar',
+            ],
+        ],
+        'required' => ['foo'],
+    ]);
+});
+class JsonResourceTypeToSchemaTest_WithDefault extends \Illuminate\Http\Resources\Json\JsonResource
+{
+    public function toArray(\Illuminate\Http\Request $request)
+    {
+        return [
+            /**
+             * @default fooBar
+             */
+            'foo' => $this->resource->foo,
+        ];
+    }
+}
