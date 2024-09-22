@@ -4,6 +4,21 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
+it('doesnt add body when empty', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::post('api/test', [RequestBodyExtensionTest__doesnt_use_body_when_empty::class, 'store']);
+    });
+
+    expect($openApiDocument['paths']['/test']['post'])
+        ->not->toHaveKey('requestBody');
+});
+class RequestBodyExtensionTest__doesnt_use_body_when_empty
+{
+    public function store(Illuminate\Http\Request $request)
+    {
+    }
+}
+
 it('uses application/json media type as a default request media type', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::post('api/test', [RequestBodyExtensionTest__uses_application_json_as_default::class, 'index']);

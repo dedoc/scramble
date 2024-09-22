@@ -66,13 +66,6 @@ class RequestBodyExtension extends OperationExtension
         $mediaType = $this->getMediaType($operation, $routeInfo, $allParams);
 
         if (empty($allParams)) {
-            if (! in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
-                $operation
-                    ->addRequestBodyObject(
-                        RequestBodyObject::make()->setContent($mediaType, Schema::fromType(new ObjectType))
-                    );
-            }
-
             return;
         }
 
@@ -86,14 +79,20 @@ class RequestBodyExtension extends OperationExtension
         $this->addRequestBody(
             $operation,
             $mediaType,
-            Schema::createFromParameters($bodyParams),
+            $bodyParams,
             $schemaName,
             $schemaDescription,
         );
     }
 
-    protected function addRequestBody(Operation $operation, string $mediaType, Schema $requestBodySchema, ?string $schemaName, ?string $schemaDescription)
+    protected function addRequestBody(Operation $operation, string $mediaType, array $bodyParams, ?string $schemaName, ?string $schemaDescription)
     {
+        if (empty($bodyParams)) {
+            return;
+        }
+
+        $requestBodySchema =  Schema::createFromParameters($bodyParams);
+
         if (! $schemaName) {
             $operation->addRequestBodyObject(RequestBodyObject::make()->setContent($mediaType, $requestBodySchema));
 
