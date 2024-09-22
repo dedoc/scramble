@@ -8,7 +8,6 @@ use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\RequestBodyObject;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\FormRequestRulesExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ValidateCallExtractor;
@@ -91,7 +90,7 @@ class RequestBodyExtension extends OperationExtension
             return;
         }
 
-        $requestBodySchema =  Schema::createFromParameters($bodyParams);
+        $requestBodySchema = Schema::createFromParameters($bodyParams);
 
         if (! $schemaName) {
             $operation->addRequestBodyObject(RequestBodyObject::make()->setContent($mediaType, $requestBodySchema));

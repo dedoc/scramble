@@ -14,9 +14,7 @@ it('doesnt add body when empty', function () {
 });
 class RequestBodyExtensionTest__doesnt_use_body_when_empty
 {
-    public function store(Illuminate\Http\Request $request)
-    {
-    }
+    public function store(Illuminate\Http\Request $request) {}
 }
 
 it('uses application/json media type as a default request media type', function () {
