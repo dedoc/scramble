@@ -131,6 +131,10 @@ class TypeTransformer
                     $openApiType->examples($examples);
                 }
 
+                if ($default = ExamplesExtractor::make($docNode, '@default')->extract(preferString: $openApiType instanceof StringType)) {
+                    $openApiType->default($default[0]);
+                }
+
                 if ($format = array_values($docNode->getTagsByName('@format'))[0]->value->value ?? null) {
                     $openApiType->format($format);
                 }
