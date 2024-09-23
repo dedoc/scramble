@@ -2,10 +2,13 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
-class ValidationNodesResult
+/**
+ * @internal
+ */
+class ParametersExtractionResult
 {
     public function __construct(
-        public $node,
+        public array $parameters,
         public ?string $schemaName = null,
         public ?string $description = null,
     ) {}

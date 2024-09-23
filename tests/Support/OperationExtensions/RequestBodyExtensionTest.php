@@ -1,7 +1,9 @@
 <?php
 
+use Dedoc\Scramble\Scramble;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 it('doesnt add body when empty', function () {
@@ -422,6 +424,37 @@ class CustomSchemaNameFormRequest extends FormRequest
     public function rules()
     {
         return ['foo' => 'integer'];
+    }
+}
+
+it('allows to use validation on form request', function () {
+    $routes = collect([
+        RouteFacade::post('a', [AllowsBothFormRequestAndInlineValidationRules::class, 'a']),
+        RouteFacade::post('b', [AllowsBothFormRequestAndInlineValidationRules::class, 'b']),
+    ])->map->uri->toArray();
+
+    Scramble::routes(fn (Route $r) => in_array($r->uri, $routes));
+
+    $document = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    expect($document)->toMatchSnapshot();
+});
+class FormRequest_WithData extends FormRequest
+{
+    public function rules()
+    {
+        return ['foo' => 'string'];
+    }
+}
+class AllowsBothFormRequestAndInlineValidationRules
+{
+    public function a(FormRequest_WithData $request)
+    {
+        $request->validate(['bar' => 'string']);
+    }
+    public function b(FormRequest_WithData $request)
+    {
+        $request->validate(['baz' => 'numeric']);
     }
 }
 

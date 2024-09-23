@@ -3,17 +3,22 @@
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
+use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\RequestBodyObject;
 use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\FormRequestRulesExtractor;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RequestMethodCallsExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ValidateCallExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use PhpParser\Node\Stmt\ClassMethod;
 use Throwable;
@@ -32,9 +37,10 @@ class RequestBodyExtension extends OperationExtension
          */
         $routeInfo->getMethodType();
 
-        [$bodyParams, $schemaName, $schemaDescription] = [[], null, null];
+        $rulesResults = collect();
+
         try {
-            [$bodyParams, $schemaName, $schemaDescription] = $this->extractParamsFromRequestValidationRules($routeInfo->route, $routeInfo->methodNode());
+            $rulesResults = collect($this->extractRouteRequestValidationRules($routeInfo, $routeInfo->methodNode()));
         } catch (Throwable $exception) {
             if (app()->environment('testing')) {
                 throw $exception;
@@ -46,21 +52,11 @@ class RequestBodyExtension extends OperationExtension
             ->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'))
             ->description($description);
 
-        $bodyParamsNames = array_map(fn ($p) => $p->name, $bodyParams);
+        $allParams = $rulesResults->flatMap->parameters->values()->all();
 
-        $allParams = [
-            ...$bodyParams,
-            ...array_filter(
-                array_values($routeInfo->requestParametersFromCalls->data),
-                fn ($p) => ! in_array($p->name, $bodyParamsNames),
-            ),
-        ];
         [$queryParams, $bodyParams] = collect($allParams)
-            ->partition(function (Parameter $parameter) {
-                return $parameter->getAttribute('isInQuery');
-            });
-        $queryParams = $queryParams->toArray();
-        $bodyParams = $bodyParams->toArray();
+            ->partition(fn (Parameter $p) => $p->getAttribute('isInQuery'))
+            ->map->toArray();
 
         $mediaType = $this->getMediaType($operation, $routeInfo, $allParams);
 
@@ -75,41 +71,66 @@ class RequestBodyExtension extends OperationExtension
             return;
         }
 
-        $this->addRequestBody(
-            $operation,
-            $mediaType,
-            $bodyParams,
-            $schemaName,
-            $schemaDescription,
-        );
-    }
+        [$schemaResults, $schemalessResults] = $rulesResults->partition('schemaName');
+        $schemalessResults = collect([$this->mergeSchemalessRulesResults($schemalessResults->values())]);
 
-    protected function addRequestBody(Operation $operation, string $mediaType, array $bodyParams, ?string $schemaName, ?string $schemaDescription)
-    {
-        if (empty($bodyParams)) {
+        $schemas = $schemaResults->merge($schemalessResults)
+            ->filter(fn (ParametersExtractionResult $r) => count($r->parameters) || $r->schemaName)
+            ->map(function (ParametersExtractionResult $r) use ($queryParams) {
+                $qpNames = collect($queryParams)->keyBy('name');
+
+                $r->parameters = collect($r->parameters)->filter(fn ($p) => !$qpNames->has($p->name))->values()->all();
+
+                return $r;
+            })
+            ->values()
+            ->map($this->makeSchemaFromResults(...));
+
+        if ($schemas->isEmpty()) {
             return;
         }
 
-        $requestBodySchema = Schema::createFromParameters($bodyParams);
-
-        if (! $schemaName) {
-            $operation->addRequestBodyObject(RequestBodyObject::make()->setContent($mediaType, $requestBodySchema));
-
-            return;
-        }
-
-        $components = $this->openApiTransformer->getComponents();
-        if (! $components->hasSchema($schemaName)) {
-            $requestBodySchema->type->setDescription($schemaDescription ?: '');
-
-            $components->addSchema($schemaName, $requestBodySchema);
+        $schema = $this->makeComposedRequestBodySchema($schemas);
+        if (! $schema instanceof Reference) {
+            $schema = Schema::fromType($schema);
         }
 
         $operation->addRequestBodyObject(
-            RequestBodyObject::make()->setContent(
-                $mediaType,
-                new Reference('schemas', $schemaName, $components),
-            )
+            RequestBodyObject::make()->setContent($mediaType, $schema),
+        );
+    }
+
+    protected function makeSchemaFromResults(ParametersExtractionResult $result): Type
+    {
+        $requestBodySchema = Schema::createFromParameters($result->parameters);
+
+        if (! $result->schemaName) {
+            return $requestBodySchema->type;
+        }
+
+        $components = $this->openApiTransformer->getComponents();
+        if (! $components->hasSchema($result->schemaName)) {
+            $requestBodySchema->type->setDescription($result->description ?: '');
+
+            $components->addSchema($result->schemaName, $requestBodySchema);
+        }
+
+        return new Reference('schemas', $result->schemaName, $components);
+    }
+
+    protected function makeComposedRequestBodySchema(Collection $schemas)
+    {
+        if ($schemas->count() === 1) {
+            return $schemas->first();
+        }
+
+        return (new AllOf())->setItems($schemas->all());
+    }
+
+    protected function mergeSchemalessRulesResults(Collection $schemalessResults): ParametersExtractionResult
+    {
+        return new ParametersExtractionResult(
+            parameters: $schemalessResults->values()->flatMap->parameters->values()->all(),
         );
     }
 
@@ -141,37 +162,18 @@ class RequestBodyExtension extends OperationExtension
         });
     }
 
-    protected function extractParamsFromRequestValidationRules(Route $route, ?ClassMethod $methodNode)
+    protected function extractRouteRequestValidationRules(RouteInfo $routeInfo, $methodNode)
     {
-        [$rules, $nodesResults] = $this->extractRouteRequestValidationRules($route, $methodNode);
-
-        return [
-            (new RulesToParameters($rules, $nodesResults, $this->openApiTransformer))->handle(),
-            $nodesResults[0]->schemaName ?? null,
-            $nodesResults[0]->description ?? null,
+        $handlers = [
+            new FormRequestRulesExtractor($methodNode, $this->openApiTransformer),
+            new RequestMethodCallsExtractor(),
+            new ValidateCallExtractor($methodNode, $this->openApiTransformer),
         ];
-    }
 
-    protected function extractRouteRequestValidationRules(Route $route, $methodNode)
-    {
-        $rules = [];
-        $nodesResults = [];
-
-        // Custom form request's class `validate` method
-        if (($formRequestRulesExtractor = new FormRequestRulesExtractor($methodNode))->shouldHandle()) {
-            if (count($formRequestRules = $formRequestRulesExtractor->extract($route))) {
-                $rules = array_merge($rules, $formRequestRules);
-                $nodesResults[] = $formRequestRulesExtractor->node();
-            }
-        }
-
-        if (($validateCallExtractor = new ValidateCallExtractor($methodNode))->shouldHandle()) {
-            if ($validateCallRules = $validateCallExtractor->extract()) {
-                $rules = array_merge($rules, $validateCallRules);
-                $nodesResults[] = $validateCallExtractor->node();
-            }
-        }
-
-        return [$rules, array_filter($nodesResults)];
+        return collect($handlers)
+            ->filter(fn ($h) => $h->shouldHandle())
+            ->map(fn ($h) => $h->extract($routeInfo))
+            ->values()
+            ->toArray();
     }
 }

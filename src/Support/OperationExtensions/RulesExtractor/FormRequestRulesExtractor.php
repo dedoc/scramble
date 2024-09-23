@@ -3,6 +3,8 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\SchemaClassDocReflector;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
@@ -14,16 +16,15 @@ use PhpParser\NodeFinder;
 use ReflectionClass;
 use Spatie\LaravelData\Contracts\BaseData;
 
-class FormRequestRulesExtractor
+class FormRequestRulesExtractor implements RulesExtractor
 {
-    private ?FunctionLike $handler;
+    use GeneratesParametersFromRules;
 
-    public function __construct(?FunctionLike $handler)
+    public function __construct(private ?FunctionLike $handler, private TypeTransformer $typeTransformer)
     {
-        $this->handler = $handler;
     }
 
-    public function shouldHandle()
+    public function shouldHandle(): bool
     {
         if (! $this->handler) {
             return false;
@@ -42,7 +43,7 @@ class FormRequestRulesExtractor
         return true;
     }
 
-    public function node()
+    public function extract(RouteInfo $routeInfo): ParametersExtractionResult
     {
         $requestClassName = $this->getFormRequestClassName();
 
@@ -54,19 +55,25 @@ class FormRequestRulesExtractor
             ? null
             : $phpDocReflector->getSchemaName($requestClassName);
 
-        return new ValidationNodesResult(
-            (new NodeFinder)->find(
-                Arr::wrap($classReflector->getMethod('rules')->getAstNode()->stmts),
-                fn (Node $node) => $node instanceof Node\Expr\ArrayItem
-                    && $node->key instanceof Node\Scalar\String_
-                    && $node->getAttribute('parsedPhpDoc'),
+        return new ParametersExtractionResult(
+            parameters: $this->makeParameters(
+                node: (new NodeFinder)->find(
+                    Arr::wrap($classReflector->getMethod('rules')->getAstNode()->stmts),
+                    fn (Node $node) => $node instanceof Node\Expr\ArrayItem
+                        && $node->key instanceof Node\Scalar\String_
+                        && $node->getAttribute('parsedPhpDoc'),
+                ),
+                rules: $this->rules($routeInfo->route),
+                typeTransformer: $this->typeTransformer,
             ),
             schemaName: $schemaName,
             description: $phpDocReflector->getDescription(),
         );
     }
 
-    public function extract(Route $route)
+
+
+    protected function rules(Route $route)
     {
         $requestClassName = $this->getFormRequestClassName();
 
