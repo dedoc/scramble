@@ -13,15 +13,11 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use PhpParser\Node;
-use PhpParser\NodeFinder;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RulesToParameters
 {
     private array $rules;
-
-    /** @var ValidationNodesResult[] */
-    private array $validationNodesResults;
 
     /** @var array<string, PhpDocNode> */
     private array $nodeDocs;
@@ -31,9 +27,8 @@ class RulesToParameters
     public function __construct(array $rules, array $validationNodesResults, TypeTransformer $openApiTransformer)
     {
         $this->rules = $rules;
-        $this->validationNodesResults = $validationNodesResults;
         $this->openApiTransformer = $openApiTransformer;
-        $this->nodeDocs = $this->extractNodeDocs();
+        $this->nodeDocs = $this->extractNodeDocs($validationNodesResults);
     }
 
     public function handle()
@@ -215,23 +210,12 @@ class RulesToParameters
         }
     }
 
-    private function extractNodeDocs()
+    private function extractNodeDocs($validationNodesResults)
     {
-        return collect($this->validationNodesResults)
-            ->mapWithKeys(function (ValidationNodesResult $result) {
-                $arrayNodes = (new NodeFinder)->find(
-                    Arr::wrap($result->node),
-                    fn (Node $node) => $node instanceof Node\Expr\ArrayItem
-                        && $node->key instanceof Node\Scalar\String_
-                        && $node->getAttribute('parsedPhpDoc')
-                );
-
-                return collect($arrayNodes)
-                    ->mapWithKeys(fn (Node\Expr\ArrayItem $item) => [
-                        $item->key->value => $item->getAttribute('parsedPhpDoc'),
-                    ])
-                    ->toArray();
-            })
+        return collect($validationNodesResults)
+            ->mapWithKeys(fn (Node\Expr\ArrayItem $item) => [
+                $item->key->value => $item->getAttribute('parsedPhpDoc'),
+            ])
             ->toArray();
     }
 

@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\SchemaClassDocReflector;
 use Illuminate\Http\Request;
 use PhpParser\Node;
@@ -9,21 +11,18 @@ use PhpParser\NodeFinder;
 use PhpParser\PrettyPrinter\Standard;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
-class ValidateCallExtractor
+class ValidateCallExtractor implements RulesExtractor
 {
-    private ?Node\FunctionLike $handle;
+    use GeneratesParametersFromRules;
 
-    public function __construct(?Node\FunctionLike $handle)
-    {
-        $this->handle = $handle;
-    }
+    public function __construct(private ?Node\FunctionLike $handle, private TypeTransformer $typeTransformer) {}
 
-    public function shouldHandle()
+    public function shouldHandle(): bool
     {
         return (bool) $this->handle;
     }
 
-    public function node(): ?ValidationNodesResult
+    public function extract(RouteInfo $routeInfo): ParametersExtractionResult
     {
         $methodNode = $this->handle;
 
@@ -68,61 +67,67 @@ class ValidateCallExtractor
         }
 
         if (! $validationRules) {
-            return null;
+            return new ParametersExtractionResult(parameters: []);
         }
+
+        $validationRulesNode = $validationRules instanceof Node\Arg ? $validationRules->value : $validationRules;
 
         $phpDocReflector = new SchemaClassDocReflector($callToValidate->getAttribute('parsedPhpDoc', new PhpDocNode([])));
 
-        return new ValidationNodesResult(
-            $validationRules instanceof Node\Arg ? $validationRules->value : $validationRules,
+        return new ParametersExtractionResult(
+            parameters: $this->makeParameters(
+                node: (new NodeFinder)->find(
+                    $validationRulesNode instanceof Node\Expr\Array_ ? $validationRulesNode->items : [],
+                    fn (Node $node) => $node instanceof Node\Expr\ArrayItem
+                        && $node->key instanceof Node\Scalar\String_
+                        && $node->getAttribute('parsedPhpDoc'),
+                ),
+                rules: $this->rules($validationRulesNode),
+                typeTransformer: $this->typeTransformer,
+            ),
             schemaName: $phpDocReflector->getSchemaName(),
             description: $phpDocReflector->getDescription(),
         );
     }
 
-    public function extract()
+    public function rules($validationRules): array
     {
-        $methodNode = $this->handle;
-        $validationRules = $this->node()->node ?? null;
-
-        if ($validationRules) {
-            $printer = new Standard;
-            $validationRulesCode = $printer->prettyPrint([$validationRules]);
-
-            $injectableParams = collect($methodNode->getParams())
-                ->filter(fn (Node\Param $param) => isset($param->type->name))
-                ->filter(fn (Node\Param $param) => ! class_exists($className = (string) $param->type) || ! is_a($className, Request::class, true))
-                ->filter(fn (Node\Param $param) => isset($param->var->name) && is_string($param->var->name))
-                ->mapWithKeys(function (Node\Param $param) {
-                    try {
-                        $type = (string) $param->type;
-                        $primitives = [
-                            'int' => 1,
-                            'bool' => true,
-                            'string' => '',
-                            'float' => 1,
-                        ];
-                        $value = $primitives[$type] ?? app($type);
-
-                        return [
-                            $param->var->name => $value,
-                        ];
-                    } catch (\Throwable $e) {
-                        return [];
-                    }
-                })
-                ->all();
-
-            try {
-                extract($injectableParams);
-
-                $rules = eval("\$request = request(); return $validationRulesCode;");
-            } catch (\Throwable $exception) {
-                throw $exception;
-            }
+        if (! $validationRules) {
+            return [];
         }
 
-        return $rules ?? null;
+        $methodNode = $this->handle;
+
+        $printer = new Standard;
+        $validationRulesCode = $printer->prettyPrint([$validationRules]);
+
+        $injectableParams = collect($methodNode->getParams())
+            ->filter(fn (Node\Param $param) => isset($param->type->name))
+            ->filter(fn (Node\Param $param) => ! class_exists($className = (string) $param->type) || ! is_a($className, Request::class, true))
+            ->filter(fn (Node\Param $param) => isset($param->var->name) && is_string($param->var->name))
+            ->mapWithKeys(function (Node\Param $param) {
+                try {
+                    $type = (string) $param->type;
+                    $primitives = [
+                        'int' => 1,
+                        'bool' => true,
+                        'string' => '',
+                        'float' => 1,
+                    ];
+                    $value = $primitives[$type] ?? app($type);
+
+                    return [
+                        $param->var->name => $value,
+                    ];
+                } catch (\Throwable $e) {
+                    return [];
+                }
+            })
+            ->all();
+
+        extract($injectableParams);
+
+        return eval("\$request = request(); return $validationRulesCode;");
     }
 
     private function getPossibleParamType(Node\Stmt\ClassMethod $methodNode, Node\Expr\Variable $node): ?string
