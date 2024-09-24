@@ -452,6 +452,7 @@ class AllowsBothFormRequestAndInlineValidationRules
     {
         $request->validate(['bar' => 'string']);
     }
+
     public function b(FormRequest_WithData $request)
     {
         $request->validate(['baz' => 'numeric']);

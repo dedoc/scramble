@@ -20,9 +20,7 @@ class FormRequestRulesExtractor implements RulesExtractor
 {
     use GeneratesParametersFromRules;
 
-    public function __construct(private ?FunctionLike $handler, private TypeTransformer $typeTransformer)
-    {
-    }
+    public function __construct(private ?FunctionLike $handler, private TypeTransformer $typeTransformer) {}
 
     public function shouldHandle(): bool
     {
@@ -70,8 +68,6 @@ class FormRequestRulesExtractor implements RulesExtractor
             description: $phpDocReflector->getDescription(),
         );
     }
-
-
 
     protected function rules(Route $route)
     {

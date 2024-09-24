@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
 use Dedoc\Scramble\Support\RouteInfo;
-use Illuminate\Routing\Route;
 
 interface RulesExtractor
 {

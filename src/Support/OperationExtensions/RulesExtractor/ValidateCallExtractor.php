@@ -15,9 +15,7 @@ class ValidateCallExtractor implements RulesExtractor
 {
     use GeneratesParametersFromRules;
 
-    public function __construct(private ?Node\FunctionLike $handle, private TypeTransformer $typeTransformer)
-    {
-    }
+    public function __construct(private ?Node\FunctionLike $handle, private TypeTransformer $typeTransformer) {}
 
     public function shouldHandle(): bool
     {

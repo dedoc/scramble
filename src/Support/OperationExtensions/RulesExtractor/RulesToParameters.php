@@ -13,7 +13,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use PhpParser\Node;
-use PhpParser\NodeFinder;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RulesToParameters

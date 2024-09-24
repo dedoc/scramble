@@ -13,14 +13,12 @@ use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\FormRequestRulesExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RequestMethodCallsExtractor;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ValidateCallExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use PhpParser\Node\Stmt\ClassMethod;
 use Throwable;
 
 class RequestBodyExtension extends OperationExtension
@@ -79,7 +77,7 @@ class RequestBodyExtension extends OperationExtension
             ->map(function (ParametersExtractionResult $r) use ($queryParams) {
                 $qpNames = collect($queryParams)->keyBy('name');
 
-                $r->parameters = collect($r->parameters)->filter(fn ($p) => !$qpNames->has($p->name))->values()->all();
+                $r->parameters = collect($r->parameters)->filter(fn ($p) => ! $qpNames->has($p->name))->values()->all();
 
                 return $r;
             })
@@ -124,7 +122,7 @@ class RequestBodyExtension extends OperationExtension
             return $schemas->first();
         }
 
-        return (new AllOf())->setItems($schemas->all());
+        return (new AllOf)->setItems($schemas->all());
     }
 
     protected function mergeSchemalessRulesResults(Collection $schemalessResults): ParametersExtractionResult
@@ -183,7 +181,7 @@ class RequestBodyExtension extends OperationExtension
          * This is the extractor that cannot re-define the incoming type but can add new properties.
          * Also, it is useful for additional details.
          */
-        $detailsExtractor = new RequestMethodCallsExtractor();
+        $detailsExtractor = new RequestMethodCallsExtractor;
 
         $methodCallsExtractedResults = $detailsExtractor->extract($routeInfo);
 
@@ -191,7 +189,7 @@ class RequestBodyExtension extends OperationExtension
     }
 
     /**
-     * @param ParametersExtractionResult[] $rulesExtractedResults
+     * @param  ParametersExtractionResult[]  $rulesExtractedResults
      */
     protected function mergeExtractedProperties(array $rulesExtractedResults, ParametersExtractionResult $methodCallsExtractedResult)
     {
