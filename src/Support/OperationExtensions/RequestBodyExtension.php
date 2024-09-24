@@ -52,7 +52,7 @@ class RequestBodyExtension extends OperationExtension
             ->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'))
             ->description($description);
 
-        $allParams = $rulesResults->flatMap->parameters->values()->all();
+        $allParams = $rulesResults->flatMap->parameters->unique('name')->values()->all();
 
         [$queryParams, $bodyParams] = collect($allParams)
             ->partition(fn (Parameter $p) => $p->getAttribute('isInQuery'))
@@ -130,7 +130,7 @@ class RequestBodyExtension extends OperationExtension
     protected function mergeSchemalessRulesResults(Collection $schemalessResults): ParametersExtractionResult
     {
         return new ParametersExtractionResult(
-            parameters: $schemalessResults->values()->flatMap->parameters->values()->all(),
+            parameters: $schemalessResults->values()->flatMap->parameters->unique('name')->values()->all(),
         );
     }
 
@@ -164,16 +164,48 @@ class RequestBodyExtension extends OperationExtension
 
     protected function extractRouteRequestValidationRules(RouteInfo $routeInfo, $methodNode)
     {
-        $handlers = [
+        /*
+         * These are the extractors that are getting types from the validation rules, so it is
+         * certain that a property must have the extracted type.
+         */
+        $typeDefiningHandlers = [
             new FormRequestRulesExtractor($methodNode, $this->openApiTransformer),
-            new RequestMethodCallsExtractor(),
             new ValidateCallExtractor($methodNode, $this->openApiTransformer),
         ];
 
-        return collect($handlers)
+        $validationRulesExtractedResults = collect($typeDefiningHandlers)
             ->filter(fn ($h) => $h->shouldHandle())
             ->map(fn ($h) => $h->extract($routeInfo))
             ->values()
             ->toArray();
+
+        /*
+         * This is the extractor that cannot re-define the incoming type but can add new properties.
+         * Also, it is useful for additional details.
+         */
+        $detailsExtractor = new RequestMethodCallsExtractor();
+
+        $methodCallsExtractedResults = $detailsExtractor->extract($routeInfo);
+
+        return $this->mergeExtractedProperties($validationRulesExtractedResults, $methodCallsExtractedResults);
+    }
+
+    /**
+     * @param ParametersExtractionResult[] $rulesExtractedResults
+     */
+    protected function mergeExtractedProperties(array $rulesExtractedResults, ParametersExtractionResult $methodCallsExtractedResult)
+    {
+        $rulesParameters = collect($rulesExtractedResults)->flatMap->parameters->keyBy('name');
+
+        $methodCallsExtractedResult->parameters = collect($methodCallsExtractedResult->parameters)
+            ->filter(fn (Parameter $p) => ! $rulesParameters->has($p->name))
+            ->values()
+            ->all();
+
+        /*
+         * Possible improvements here: using defaults when merging results, etc.
+         */
+
+        return [...$rulesExtractedResults, $methodCallsExtractedResult];
     }
 }
