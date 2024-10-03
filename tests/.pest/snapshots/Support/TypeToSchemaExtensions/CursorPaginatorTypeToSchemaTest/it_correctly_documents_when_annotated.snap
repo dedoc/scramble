@@ -1,0 +1,92 @@
+{
+    "description": "Paginated set of `CursorPaginatorTypeToSchemaTest_Resource`",
+    "content": {
+        "application\/json": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#\/components\/schemas\/CursorPaginatorTypeToSchemaTest_Resource"
+                        }
+                    },
+                    "links": {
+                        "type": "object",
+                        "properties": {
+                            "first": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "last": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "prev": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "next": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "first",
+                            "last",
+                            "prev",
+                            "next"
+                        ]
+                    },
+                    "meta": {
+                        "type": "object",
+                        "properties": {
+                            "path": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Base path for paginator generated URLs."
+                            },
+                            "per_page": {
+                                "type": "integer",
+                                "description": "Number of items shown per page."
+                            },
+                            "next_cursor": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "prev_cursor": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "path",
+                            "per_page",
+                            "next_cursor",
+                            "prev_cursor"
+                        ]
+                    }
+                },
+                "required": [
+                    "data",
+                    "links",
+                    "meta"
+                ]
+            }
+        }
+    }
+}
