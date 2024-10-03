@@ -46,6 +46,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\PaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\VoidTypeToSchema;
 use PhpParser\ParserFactory;
@@ -179,6 +180,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ModelToSchema::class,
                     EloquentCollectionToSchema::class,
                     AnonymousResourceCollectionTypeToSchema::class,
+                    PaginatorTypeToSchema::class,
                     LengthAwarePaginatorTypeToSchema::class,
                     ResponseTypeToSchema::class,
                     VoidTypeToSchema::class,
