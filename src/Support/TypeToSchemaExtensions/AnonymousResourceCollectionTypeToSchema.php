@@ -101,7 +101,6 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
         $paginatorSchema = array_values($paginatorResponse->content)[0] ?? null;
         $paginatorSchemaType = $paginatorSchema->type ?? null;
 
-
         if (! $paginatorSchemaType instanceof OpenApiObjectType) {
             // should not happen
             return null;
