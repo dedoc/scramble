@@ -42,37 +42,27 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
             return null;
         }
 
-        $type = new OpenApiObjectType;
-        $type->addProperty('data', (new ArrayType)->setItems($collectingType));
-        $type->addProperty(
-            'links',
-            (new OpenApiObjectType)
-                ->addProperty('first', (new StringType)->nullable(true))
-                ->addProperty('last', (new StringType)->nullable(true))
-                ->addProperty('prev', (new StringType)->nullable(true))
-                ->addProperty('next', (new StringType)->nullable(true))
-                ->setRequired(['first', 'last', 'prev', 'next'])
-        );
-        $type->addProperty(
-            'meta',
-            (new OpenApiObjectType)
-                ->addProperty('current_page', new IntegerType)
-                ->addProperty('from', (new IntegerType)->nullable(true))
-                ->addProperty('last_page', new IntegerType)
-                ->addProperty('links', (new ArrayType)->setItems(
-                    (new OpenApiObjectType)
-                        ->addProperty('url', (new StringType)->nullable(true))
-                        ->addProperty('label', new StringType)
-                        ->addProperty('active', new BooleanType)
-                        ->setRequired(['url', 'label', 'active'])
-                )->setDescription('Generated paginator links.'))
-                ->addProperty('path', (new StringType)->nullable(true)->setDescription('Base path for paginator generated URLs.'))
-                ->addProperty('per_page', (new IntegerType)->setDescription('Number of items shown per page.'))
-                ->addProperty('to', (new IntegerType)->nullable(true)->setDescription('Number of the last item in the slice.'))
-                ->addProperty('total', (new IntegerType)->setDescription('Total number of items being paginated.'))
-                ->setRequired(['current_page', 'from', 'last_page', 'links', 'path', 'per_page', 'to', 'total'])
-        );
-        $type->setRequired(['data', 'links', 'meta']);
+        $type = (new OpenApiObjectType)
+            ->addProperty('current_page', new IntegerType)
+            ->addProperty('data', (new ArrayType)->setItems($collectingType))
+            ->addProperty('first_page_url', (new StringType)->nullable(true))
+            ->addProperty('from', (new IntegerType)->nullable(true))
+            ->addProperty('last_page_url', (new StringType)->nullable(true))
+            ->addProperty('last_page', new IntegerType)
+            ->addProperty('links', (new ArrayType)->setItems(
+                (new OpenApiObjectType)
+                    ->addProperty('url', (new StringType)->nullable(true))
+                    ->addProperty('label', new StringType)
+                    ->addProperty('active', new BooleanType)
+                    ->setRequired(['url', 'label', 'active'])
+            )->setDescription('Generated paginator links.'))
+            ->addProperty('next_page_url', (new StringType)->nullable(true))
+            ->addProperty('path', (new StringType)->nullable(true)->setDescription('Base path for paginator generated URLs.'))
+            ->addProperty('per_page', (new IntegerType)->setDescription('Number of items shown per page.'))
+            ->addProperty('prev_page_url', (new StringType)->nullable(true))
+            ->addProperty('to', (new IntegerType)->nullable(true)->setDescription('Number of the last item in the slice.'))
+            ->addProperty('total', (new IntegerType)->setDescription('Total number of items being paginated.'))
+            ->setRequired(['current_page', 'data', 'first_page_url', 'from', 'last_page_url', 'last_page', 'links', 'next_page_url', 'path', 'per_page', 'prev_page_url', 'to', 'total']);
 
         return Response::make(200)
             ->description('Paginated set of `'.$this->components->uniqueSchemaName($collectingClassType->name).'`')

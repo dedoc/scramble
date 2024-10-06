@@ -41,27 +41,15 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
             return null;
         }
 
-        $type = new OpenApiObjectType;
-        $type->addProperty('data', (new ArrayType)->setItems($collectingType));
-        $type->addProperty(
-            'links',
-            (new OpenApiObjectType)
-                ->addProperty('first', (new StringType)->nullable(true))
-                ->addProperty('last', (new StringType)->nullable(true))
-                ->addProperty('prev', (new StringType)->nullable(true))
-                ->addProperty('next', (new StringType)->nullable(true))
-                ->setRequired(['first', 'last', 'prev', 'next'])
-        );
-        $type->addProperty(
-            'meta',
-            (new OpenApiObjectType)
-                ->addProperty('path', (new StringType)->nullable(true)->setDescription('Base path for paginator generated URLs.'))
-                ->addProperty('per_page', (new IntegerType)->setDescription('Number of items shown per page.'))
-                ->addProperty('next_cursor', (new StringType)->nullable(true))
-                ->addProperty('prev_cursor', (new StringType)->nullable(true))
-                ->setRequired(['path', 'per_page', 'next_cursor', 'prev_cursor'])
-        );
-        $type->setRequired(['data', 'links', 'meta']);
+        $type = (new OpenApiObjectType)
+            ->addProperty('data', (new ArrayType)->setItems($collectingType))
+            ->addProperty('path', (new StringType)->nullable(true)->setDescription('Base path for paginator generated URLs.'))
+            ->addProperty('per_page', (new IntegerType)->setDescription('Number of items shown per page.'))
+            ->addProperty('next_cursor', (new StringType)->nullable(true)->setDescription('The "cursor" that points to the next set of items.'))
+            ->addProperty('next_page_url', (new StringType)->format('uri')->nullable(true))
+            ->addProperty('prev_cursor', (new StringType)->nullable(true)->setDescription('The "cursor" that points to the previous set of items.'))
+            ->addProperty('prev_page_url', (new StringType)->format('uri')->nullable(true))
+            ->setRequired(['data', 'path', 'per_page', 'next_cursor', 'next_page_url', 'prev_cursor', 'prev_page_url']);
 
         return Response::make(200)
             ->description('Paginated set of `'.$this->components->uniqueSchemaName($collectingClassType->name).'`')

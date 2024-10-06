@@ -11,80 +11,54 @@
                             "$ref": "#\/components\/schemas\/CursorPaginatorTypeToSchemaTest_Resource"
                         }
                     },
-                    "links": {
-                        "type": "object",
-                        "properties": {
-                            "first": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ]
-                            },
-                            "last": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ]
-                            },
-                            "prev": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ]
-                            },
-                            "next": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ]
-                            }
-                        },
-                        "required": [
-                            "first",
-                            "last",
-                            "prev",
-                            "next"
-                        ]
+                    "path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Base path for paginator generated URLs."
                     },
-                    "meta": {
-                        "type": "object",
-                        "properties": {
-                            "path": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ],
-                                "description": "Base path for paginator generated URLs."
-                            },
-                            "per_page": {
-                                "type": "integer",
-                                "description": "Number of items shown per page."
-                            },
-                            "next_cursor": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ]
-                            },
-                            "prev_cursor": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ]
-                            }
-                        },
-                        "required": [
-                            "path",
-                            "per_page",
-                            "next_cursor",
-                            "prev_cursor"
-                        ]
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Number of items shown per page."
+                    },
+                    "next_cursor": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The \"cursor\" that points to the next set of items."
+                    },
+                    "next_page_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uri"
+                    },
+                    "prev_cursor": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The \"cursor\" that points to the previous set of items."
+                    },
+                    "prev_page_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uri"
                     }
                 },
                 "required": [
                     "data",
-                    "links",
-                    "meta"
+                    "path",
+                    "per_page",
+                    "next_cursor",
+                    "next_page_url",
+                    "prev_cursor",
+                    "prev_page_url"
                 ]
             }
         }
