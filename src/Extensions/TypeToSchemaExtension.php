@@ -26,8 +26,8 @@ abstract class TypeToSchemaExtension
     }
 
     /**
-     * @param Type $type
-     * @param ?OpenApiType $previousExtensionResult
+     * @param Type $type The type being transformed to schema.
+     * @param ?OpenApiType $previousExtensionResult The resulting schema from a previous extension.
      */
     public function toSchema(Type $type)
     {
@@ -35,8 +35,8 @@ abstract class TypeToSchemaExtension
     }
 
     /**
-     * @param Type $type
-     * @param ?Response $previousExtensionResult
+     * @param Type $type The type being transformed to response.
+     * @param ?Response $previousExtensionResult The resulting response from a previous extension.
      */
     public function toResponse(Type $type)
     {
