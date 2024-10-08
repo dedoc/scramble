@@ -6,7 +6,6 @@ use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
-use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
@@ -15,14 +14,14 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\CursorPaginator;
 
-class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
+class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
 {
     public function shouldHandle(Type $type)
     {
         return $type instanceof Generic
-            && $type->name === LengthAwarePaginator::class
+            && $type->name === CursorPaginator::class
             && count($type->templateTypes) === 1
             && $type->templateTypes[0] instanceof ObjectType;
     }
@@ -43,26 +42,14 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
         }
 
         $type = (new OpenApiObjectType)
-            ->addProperty('current_page', new IntegerType)
             ->addProperty('data', (new ArrayType)->setItems($collectingType))
-            ->addProperty('first_page_url', (new StringType)->nullable(true))
-            ->addProperty('from', (new IntegerType)->nullable(true))
-            ->addProperty('last_page_url', (new StringType)->nullable(true))
-            ->addProperty('last_page', new IntegerType)
-            ->addProperty('links', (new ArrayType)->setItems(
-                (new OpenApiObjectType)
-                    ->addProperty('url', (new StringType)->nullable(true))
-                    ->addProperty('label', new StringType)
-                    ->addProperty('active', new BooleanType)
-                    ->setRequired(['url', 'label', 'active'])
-            )->setDescription('Generated paginator links.'))
-            ->addProperty('next_page_url', (new StringType)->nullable(true))
             ->addProperty('path', (new StringType)->nullable(true)->setDescription('Base path for paginator generated URLs.'))
             ->addProperty('per_page', (new IntegerType)->setDescription('Number of items shown per page.'))
-            ->addProperty('prev_page_url', (new StringType)->nullable(true))
-            ->addProperty('to', (new IntegerType)->nullable(true)->setDescription('Number of the last item in the slice.'))
-            ->addProperty('total', (new IntegerType)->setDescription('Total number of items being paginated.'))
-            ->setRequired(['current_page', 'data', 'first_page_url', 'from', 'last_page_url', 'last_page', 'links', 'next_page_url', 'path', 'per_page', 'prev_page_url', 'to', 'total']);
+            ->addProperty('next_cursor', (new StringType)->nullable(true)->setDescription('The "cursor" that points to the next set of items.'))
+            ->addProperty('next_page_url', (new StringType)->format('uri')->nullable(true))
+            ->addProperty('prev_cursor', (new StringType)->nullable(true)->setDescription('The "cursor" that points to the previous set of items.'))
+            ->addProperty('prev_page_url', (new StringType)->format('uri')->nullable(true))
+            ->setRequired(['data', 'path', 'per_page', 'next_cursor', 'next_page_url', 'prev_cursor', 'prev_page_url']);
 
         return Response::make(200)
             ->description('Paginated set of `'.$this->components->uniqueSchemaName($collectingClassType->name).'`')
