@@ -4,9 +4,11 @@ namespace Dedoc\Scramble\Extensions;
 
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Support\Generator\Components;
-use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Response;
+use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 
 abstract class TypeToSchemaExtension
 {
@@ -23,11 +25,19 @@ abstract class TypeToSchemaExtension
         $this->components = $components;
     }
 
+    /**
+     * @param Type $type
+     * @param ?OpenApiType $previousExtensionResult
+     */
     public function toSchema(Type $type)
     {
-        return new StringType; // @todo unknown type
+        return new UnknownType;
     }
 
+    /**
+     * @param Type $type
+     * @param ?Response $previousExtensionResult
+     */
     public function toResponse(Type $type)
     {
         return null;
