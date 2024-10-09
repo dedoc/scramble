@@ -140,7 +140,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         return $responseType;
     }
 
-    private function mergeResourceTypeAndAdditionals(string $wrapKey, Reference|OpenApiObjectType $openApiType, ?KeyedArrayType $withArray, ?KeyedArrayType $additional)
+    private function mergeResourceTypeAndAdditionals(string $wrapKey, $openApiType, ?KeyedArrayType $withArray, ?KeyedArrayType $additional)
     {
         $resolvedOpenApiType = $openApiType instanceof Reference ? $openApiType->resolve() : $openApiType;
         $resolvedOpenApiType = $resolvedOpenApiType instanceof Schema ? $resolvedOpenApiType->type : $resolvedOpenApiType;
