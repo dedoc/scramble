@@ -52,6 +52,9 @@ class ClassAnalyzer
             $parentDefinition = new ClassDefinition($parentName = $classReflection->getParentClass()->name);
 
             Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($parentDefinition->name, $parentDefinition));
+
+            // In case parent definition is added in an extension.
+            $parentDefinition = $this->index->getClassDefinition($parentName) ?: $parentDefinition;
         }
 
         /*
