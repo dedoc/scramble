@@ -17,7 +17,7 @@ class ClassConstFetchTypeGetter
 {
     public function __invoke(Node\Expr\ClassConstFetch $node, Scope $scope): Type
     {
-        if ($node->name->toString() === 'class') {
+        if ($node->name instanceof Node\Identifier && $node->name->toString() === 'class') {
             if ($node->class instanceof Node\Name) {
                 return new LiteralStringType($node->class->toString());
             }
@@ -45,7 +45,7 @@ class ClassConstFetchTypeGetter
 
         // In case we're here, it means that we were unable to infer the type from the const fetch. So we rollback to the
         // string type.
-        if ($node->name->toString() === 'class') {
+        if ($node->name instanceof Node\Identifier && $node->name->toString() === 'class') {
             return new StringType;
         }
 
