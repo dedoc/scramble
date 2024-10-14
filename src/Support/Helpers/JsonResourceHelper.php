@@ -45,6 +45,7 @@ class JsonResourceHelper
         $phpDoc = $reflectionClass->getDocComment() ?: '';
 
         $mixinOrPropertyLine = Str::of($phpDoc)
+            ->replace(['/**', '*/'], '')
             ->explode("\n")
             ->first(fn ($str) => Str::is(['*@property*$resource', '*@mixin*'], $str));
 
