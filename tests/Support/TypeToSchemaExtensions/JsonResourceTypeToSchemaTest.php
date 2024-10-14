@@ -133,16 +133,14 @@ it('gets the underlying model when mixin is inline', function () {
 
     $model = JsonResourceHelper::modelType(
         $infer->analyzeClass(JsonResourceTypeToSchemaTest_WithIntegerInline::class),
-        new Infer\Scope\GlobalScope(),
+        new Infer\Scope\GlobalScope,
     );
 
     expect($model->name)->toBe(JsonResourceTypeToSchemaTest_User::class);
 });
 
 /** @mixin JsonResourceTypeToSchemaTest_User */
-class JsonResourceTypeToSchemaTest_WithIntegerInline extends \Illuminate\Http\Resources\Json\JsonResource
-{
-}
+class JsonResourceTypeToSchemaTest_WithIntegerInline extends \Illuminate\Http\Resources\Json\JsonResource {}
 
 class JsonResourceTypeToSchemaTest_User extends \Illuminate\Database\Eloquent\Model
 {
