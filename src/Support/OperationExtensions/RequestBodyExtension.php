@@ -156,7 +156,7 @@ class RequestBodyExtension extends OperationExtension
             // @todo: Use OpenApi document tree walker when ready
             $parameterString = json_encode($parameter->toArray());
 
-            return Str::contains($parameterString, '"format":"binary"');
+            return Str::contains($parameterString, '"contentMediaType":"application\/octet-stream"');
         });
     }
 
