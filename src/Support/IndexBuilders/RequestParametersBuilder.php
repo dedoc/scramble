@@ -19,6 +19,7 @@ use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
+use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use PhpParser\Comment;
@@ -165,7 +166,7 @@ class RequestParametersBuilder implements IndexBuilder
         $parameter->setAttribute('isInQuery', true);
 
         return [
-            new MixedType,
+            new UnknownType,
             TypeHelper::getArgType($scope, $node->args, ['default', 1])->value ?? null,
         ];
     }
