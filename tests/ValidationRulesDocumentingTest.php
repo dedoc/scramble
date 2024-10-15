@@ -142,7 +142,7 @@ it('supports image rule', function () {
     $type = app()->make(RulesToParameters::class, ['rules' => $rules])->handle()[0]->schema->type;
 
     expect($type)->toBeInstanceOf(StringType::class)
-        ->and($type->format)->toBe('binary');
+        ->and($type->contentMediaType)->toBe('application/octet-stream');
 });
 
 it('supports file rule', function () {
@@ -153,7 +153,7 @@ it('supports file rule', function () {
     $type = app()->make(RulesToParameters::class, ['rules' => $rules])->handle()[0]->schema->type;
 
     expect($type)->toBeInstanceOf(StringType::class)
-        ->and($type->format)->toBe('binary');
+        ->and($type->contentMediaType)->toBe('application/octet-stream');
 });
 
 it('converts min rule into "minimum" for numeric fields', function () {

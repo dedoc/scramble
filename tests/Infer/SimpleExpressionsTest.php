@@ -20,6 +20,13 @@ it(
     ['!! $some', 'boolean'],
 ]);
 
+it(
+    'doesnt fail on dynamic static fetch',
+    fn ($statement, $expectedType) => expect(getStatementType($statement)->toString())->toBe($expectedType),
+)->with([
+    ['Something::{$v}', 'unknown'],
+]);
+
 // @todo
 // casts test (int, float, bool, string)
 // array with literals test (int, float, bool, string)

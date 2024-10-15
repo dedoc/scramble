@@ -3,6 +3,7 @@
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
@@ -126,6 +127,20 @@ class JsonResourceTypeToSchemaTest_WithInteger extends \Illuminate\Http\Resource
         ];
     }
 }
+
+it('gets the underlying model when mixin is inline', function () {
+    $infer = app(Infer::class);
+
+    $model = JsonResourceHelper::modelType(
+        $infer->analyzeClass(JsonResourceTypeToSchemaTest_WithIntegerInline::class),
+        new Infer\Scope\GlobalScope,
+    );
+
+    expect($model->name)->toBe(JsonResourceTypeToSchemaTest_User::class);
+});
+
+/** @mixin JsonResourceTypeToSchemaTest_User */
+class JsonResourceTypeToSchemaTest_WithIntegerInline extends \Illuminate\Http\Resources\Json\JsonResource {}
 
 class JsonResourceTypeToSchemaTest_User extends \Illuminate\Database\Eloquent\Model
 {

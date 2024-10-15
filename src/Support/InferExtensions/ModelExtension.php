@@ -174,7 +174,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
                 $propertyType = $event->getInstance()->getPropertyType($name);
 
                 (new TypeWalker)->replace($propertyType, function (Type $t) {
-                    return $t->isInstanceOf(Carbon::class)
+                    return ($t->isInstanceOf(Carbon::class) || $t->isInstanceOf(CarbonImmutable::class))
                         ? tap(new StringType, fn ($t) => $t->setAttribute('format', 'date-time'))
                         : null;
                 });

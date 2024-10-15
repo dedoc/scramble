@@ -29,7 +29,7 @@ class PaginatorTypeToSchema extends TypeToSchemaExtension
     /**
      * @param  Generic  $type
      */
-    public function toResponse(Type $type)
+    public function toSchema(Type $type)
     {
         $collectingClassType = $type->templateTypes[0];
 
@@ -41,7 +41,7 @@ class PaginatorTypeToSchema extends TypeToSchemaExtension
             return null;
         }
 
-        $type = (new OpenApiObjectType)
+        return (new OpenApiObjectType)
             ->addProperty('current_page', new IntegerType)
             ->addProperty('data', (new ArrayType)->setItems($collectingType))
             ->addProperty('first_page_url', (new StringType)->nullable(true))
@@ -52,9 +52,21 @@ class PaginatorTypeToSchema extends TypeToSchemaExtension
             ->addProperty('prev_page_url', (new StringType)->nullable(true))
             ->addProperty('to', (new IntegerType)->nullable(true)->setDescription('Number of the last item in the slice.'))
             ->setRequired(['current_page', 'data', 'first_page_url', 'from', 'next_page_url', 'path', 'per_page', 'prev_page_url', 'to']);
+    }
+
+    /**
+     * @param  Generic  $type
+     */
+    public function toResponse(Type $type)
+    {
+        $collectingClassType = $type->templateTypes[0];
+
+        if (! $collectingClassType->isInstanceOf(JsonResource::class) && ! $collectingClassType->isInstanceOf(Model::class)) {
+            return null;
+        }
 
         return Response::make(200)
             ->description('Paginated set of `'.$this->components->uniqueSchemaName($collectingClassType->name).'`')
-            ->setContent('application/json', Schema::fromType($type));
+            ->setContent('application/json', Schema::fromType($this->openApiTransformer->transform($type)));
     }
 }

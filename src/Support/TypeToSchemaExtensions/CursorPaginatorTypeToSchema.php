@@ -29,7 +29,7 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
     /**
      * @param  Generic  $type
      */
-    public function toResponse(Type $type)
+    public function toSchema(Type $type)
     {
         $collectingClassType = $type->templateTypes[0];
 
@@ -41,7 +41,7 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
             return null;
         }
 
-        $type = (new OpenApiObjectType)
+        return (new OpenApiObjectType)
             ->addProperty('data', (new ArrayType)->setItems($collectingType))
             ->addProperty('path', (new StringType)->nullable(true)->setDescription('Base path for paginator generated URLs.'))
             ->addProperty('per_page', (new IntegerType)->setDescription('Number of items shown per page.'))
@@ -50,9 +50,21 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
             ->addProperty('prev_cursor', (new StringType)->nullable(true)->setDescription('The "cursor" that points to the previous set of items.'))
             ->addProperty('prev_page_url', (new StringType)->format('uri')->nullable(true))
             ->setRequired(['data', 'path', 'per_page', 'next_cursor', 'next_page_url', 'prev_cursor', 'prev_page_url']);
+    }
+
+    /**
+     * @param  Generic  $type
+     */
+    public function toResponse(Type $type)
+    {
+        $collectingClassType = $type->templateTypes[0];
+
+        if (! $collectingClassType->isInstanceOf(JsonResource::class) && ! $collectingClassType->isInstanceOf(Model::class)) {
+            return null;
+        }
 
         return Response::make(200)
             ->description('Paginated set of `'.$this->components->uniqueSchemaName($collectingClassType->name).'`')
-            ->setContent('application/json', Schema::fromType($type));
+            ->setContent('application/json', Schema::fromType($this->openApiTransformer->transform($type)));
     }
 }
