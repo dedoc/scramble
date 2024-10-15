@@ -103,9 +103,11 @@ class RequestBodyExtension extends OperationExtension
 
     protected function isSchemaRequired(Reference|Schema $schema): bool
     {
-        $type = $schema instanceof Reference
+        $schema = $schema instanceof Reference
             ? $schema->resolve()
-            : $schema->type;
+            : $schema;
+
+        $type = $schema instanceof Schema ? $schema->type : $schema;
 
         if ($type instanceof ObjectType) {
             return count($type->required) > 0;
