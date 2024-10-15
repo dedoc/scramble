@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
+use Dedoc\Scramble\Support\Generator\Types\MixedType;
 use Dedoc\Scramble\Support\Generator\Types\NullType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
@@ -188,6 +189,8 @@ class TypeTransformer
             $openApiType = new BooleanType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\NullType) {
             $openApiType = new NullType;
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\MixedType) {
+            $openApiType = new MixedType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\ObjectType) {
             $openApiType = new ObjectType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntersectionType) {

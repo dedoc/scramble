@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
@@ -154,7 +155,7 @@ class PhpDocTypeHelper
             return new NullType;
         }
         if ($type->name === 'mixed') {
-            return new UnknownType('PhpDoc mixed type');
+            return new MixedType;
         }
 
         return new ObjectType($type->name);
