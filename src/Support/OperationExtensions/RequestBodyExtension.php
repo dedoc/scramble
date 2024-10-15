@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\RequestBodyObject;
 use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\FormRequestRulesExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
@@ -94,8 +95,23 @@ class RequestBodyExtension extends OperationExtension
         }
 
         $operation->addRequestBodyObject(
-            RequestBodyObject::make()->setContent($mediaType, $schema),
+            RequestBodyObject::make()
+                ->setContent($mediaType, $schema)
+                ->required($this->isSchemaRequired($schema))
         );
+    }
+
+    protected function isSchemaRequired(Reference|Schema $schema): bool
+    {
+        $type = $schema instanceof Reference
+            ? $schema->resolve()
+            : $schema->type;
+
+        if ($type instanceof ObjectType) {
+            return count($type->required) > 0;
+        }
+
+        return false;
     }
 
     protected function makeSchemaFromResults(ParametersExtractionResult $result): Type

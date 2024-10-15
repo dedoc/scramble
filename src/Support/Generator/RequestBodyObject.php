@@ -4,10 +4,15 @@ namespace Dedoc\Scramble\Support\Generator;
 
 class RequestBodyObject
 {
+    public string $description = '';
+
     /** @var array<string, Schema> */
     public array $content;
 
-    public string $description = '';
+    /**
+     * Determines if the request body is required in the request.
+     */
+    public bool $required = false;
 
     public static function make()
     {
@@ -17,6 +22,13 @@ class RequestBodyObject
     public function setContent(string $type, Schema|Reference $schema)
     {
         $this->content[$type] = $schema;
+
+        return $this;
+    }
+
+    public function required(bool $required = true)
+    {
+        $this->required = $required;
 
         return $this;
     }
@@ -32,6 +44,7 @@ class RequestBodyObject
     {
         $result = array_filter([
             'description' => $this->description,
+            'required' => $this->required,
         ]);
 
         $content = [];
