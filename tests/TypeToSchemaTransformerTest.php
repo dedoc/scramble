@@ -26,14 +26,14 @@ use function Spatie\Snapshots\assertMatchesSnapshot;
 it('transforms simple types', function ($type, $openApiArrayed) {
     $transformer = app(TypeTransformer::class);
 
-    expect($transformer->transform($type)->toArray())->toBe($openApiArrayed);
+    expect(json_encode($transformer->transform($type)->toArray()))->toBe(json_encode($openApiArrayed));
 })->with([
     [new IntegerType, ['type' => 'integer']],
     [new StringType, ['type' => 'string']],
     [new LiteralStringType('wow'), ['type' => 'string', 'example' => 'wow']],
     [new LiteralFloatType(157.50), ['type' => 'number', 'example' => 157.5]],
     [new BooleanType, ['type' => 'boolean']],
-    [new MixedType, []],
+    [new MixedType, (object)[]],
     [new ArrayType(value: new StringType), ['type' => 'array', 'items' => ['type' => 'string']]],
     [new KeyedArrayType([
         new ArrayItemType_('key', new IntegerType),
