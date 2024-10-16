@@ -33,7 +33,7 @@ it('transforms simple types', function ($type, $openApiArrayed) {
     [new LiteralStringType('wow'), ['type' => 'string', 'example' => 'wow']],
     [new LiteralFloatType(157.50), ['type' => 'number', 'example' => 157.5]],
     [new BooleanType, ['type' => 'boolean']],
-    [new MixedType, (object)[]],
+    [new MixedType, (object) []],
     [new ArrayType(value: new StringType), ['type' => 'array', 'items' => ['type' => 'string']]],
     [new KeyedArrayType([
         new ArrayItemType_('key', new IntegerType),

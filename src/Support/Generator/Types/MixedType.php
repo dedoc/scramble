@@ -2,8 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Generator\Types;
 
-use JsonSerializable;
-
 class MixedType extends Type
 {
     public function __construct()
@@ -14,6 +12,6 @@ class MixedType extends Type
     public function toArray()
     {
         // Yes. It is not an array. I live with it.
-        return (object)[];
+        return (object) [];
     }
 }
