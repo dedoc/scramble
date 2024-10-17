@@ -77,8 +77,23 @@ class ErrorResponsesExtension extends OperationExtension
         }
 
         $isAuthMiddleware = fn ($m) => is_string($m) && ($m === 'auth' || Str::startsWith($m, 'auth:'));
+        
+        $routeMiddleware = collect($routeInfo->route->gatherMiddleware());
+        
+        $router = app()->make('router');
+        
+        $middlewareGroups = $router->getMiddlewareGroups();
 
-        if (! collect($routeInfo->route->gatherMiddleware())->contains($isAuthMiddleware)) {
+        $groupMiddleware = collect($routeInfo->route->middleware())
+            ->flatMap(function ($middleware) use ($middlewareGroups) {
+                return array_key_exists($middleware, $middlewareGroups)
+                    ? $middlewareGroups[$middleware]
+                    : [$middleware];
+            });
+
+        $allMiddleware = $routeMiddleware->merge($groupMiddleware);
+
+        if (!$allMiddleware->contains($isAuthMiddleware)) {
             return;
         }
 
