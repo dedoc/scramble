@@ -10,13 +10,10 @@ use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use PhpParser\Node\Param;
 
 class DeepParametersMerger
 {
-    public function __construct(private Collection $parameters)
-    {
-    }
+    public function __construct(private Collection $parameters) {}
 
     public function handle()
     {

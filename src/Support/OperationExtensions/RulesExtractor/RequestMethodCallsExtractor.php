@@ -18,6 +18,7 @@ class RequestMethodCallsExtractor implements RulesExtractor
             parameters: array_map(
                 function (Parameter $p) {
                     $p->setAttribute('isFromMethodCall', true);
+
                     return $p;
                 },
                 array_values($routeInfo->requestParametersFromCalls->data),

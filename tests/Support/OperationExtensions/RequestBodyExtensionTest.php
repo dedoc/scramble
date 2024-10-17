@@ -367,21 +367,21 @@ it('prefers nested parameters from validation in case defined in both places', f
         ->toBe([
             'type' => 'object',
             'properties' => [
-                "foo" => [
-                    "type" => "object",
-                    "properties" => [
-                        "fun" => [
-                            "type" => "integer"
+                'foo' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'fun' => [
+                            'type' => 'integer',
                         ],
-                        "bar" => [
-                            "type" => "string"
-                        ]
-                    ]
+                        'bar' => [
+                            'type' => 'string',
+                        ],
+                    ],
                 ],
-                "foo.thisOneShouldNotBeMerged" => [
-                    "type" => "string"
+                'foo.thisOneShouldNotBeMerged' => [
+                    'type' => 'string',
                 ],
-            ]
+            ],
         ]);
 });
 class Validation_PrefersParamsFromValidationTest_Controller

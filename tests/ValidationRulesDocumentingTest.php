@@ -16,7 +16,8 @@ use Illuminate\Validation\Rules\Enum;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
-function validationRulesToDocumentationWithDeep (array $rules) {
+function validationRulesToDocumentationWithDeep(array $rules)
+{
     return (new DeepParametersMerger(collect(app()->make(RulesToParameters::class, ['rules' => $rules])->handle())))
         ->handle();
 }

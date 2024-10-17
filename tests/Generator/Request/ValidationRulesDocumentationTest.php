@@ -3,7 +3,8 @@
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 
-function validationRulesToDocumentationWithDeep_Clone (array $rules) {
+function validationRulesToDocumentationWithDeep_Clone(array $rules)
+{
     return (new DeepParametersMerger(collect(app()->make(RulesToParameters::class, ['rules' => $rules])->handle())))
         ->handle();
 }
