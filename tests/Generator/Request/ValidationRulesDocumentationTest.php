@@ -1,6 +1,12 @@
 <?php
 
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
+
+function validationRulesToDocumentationWithDeep_Clone (array $rules) {
+    return (new DeepParametersMerger(collect(app()->make(RulesToParameters::class, ['rules' => $rules])->handle())))
+        ->handle();
+}
 
 it('supports confirmed rule', function () {
     $rules = [
@@ -20,7 +26,7 @@ it('supports confirmed rule in array', function () {
         'user.password' => ['required', 'min:8', 'confirmed'],
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = validationRulesToDocumentationWithDeep_Clone($rules);
 
     expect($params = collect($params)->map->toArray()->all())
         ->toHaveCount(1)
@@ -61,7 +67,7 @@ it('works when last validation item is items array', function () {
         'items' => ['array', 'min:1', 'max:10'],
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = validationRulesToDocumentationWithDeep_Clone($rules);
 
     expect($params = collect($params)->map->toArray()->all())
         ->toBe([

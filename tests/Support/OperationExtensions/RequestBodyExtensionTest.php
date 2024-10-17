@@ -358,6 +358,47 @@ class Validation_ReusableSchemaNamesTest_Controller
     }
 }
 
+it('prefers nested parameters from validation in case defined in both places', function () {
+    $document = generateForRoute(function () {
+        return RouteFacade::post('test', Validation_PrefersParamsFromValidationTest_Controller::class);
+    });
+
+    expect($document['paths']['/test']['post']['requestBody']['content']['application/json']['schema'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                "foo.thisOneShouldNotBeMerged" => [
+                    "type" => "string"
+                ],
+                "foo" => [
+                    "type" => "object",
+                    "properties" => [
+                        "fun" => [
+                            "type" => "integer"
+                        ],
+                        "bar" => [
+                            "type" => "string"
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+});
+class Validation_PrefersParamsFromValidationTest_Controller
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate(['foo.fun' => 'integer']);
+
+        // `foo.fun` should be removed as already defined
+        $request->string('foo.fun');
+
+        $request->string('foo.bar');
+
+        $request->get('foo.thisOneShouldNotBeMerged');
+    }
+}
+
 it('makes reusable request body from form request', function () {
     $document = generateForRoute(function () {
         return RouteFacade::post('test', FormRequest_ReusableSchemaNamesTest_Controller::class);

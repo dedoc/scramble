@@ -11,6 +11,7 @@ use Dedoc\Scramble\Support\Generator\RequestBodyObject;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\FormRequestRulesExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RequestMethodCallsExtractor;
@@ -146,8 +147,13 @@ class RequestBodyExtension extends OperationExtension
     protected function mergeSchemalessRulesResults(Collection $schemalessResults): ParametersExtractionResult
     {
         return new ParametersExtractionResult(
-            parameters: $schemalessResults->values()->flatMap->parameters->unique('name')->values()->all(),
+            parameters: $this->convertDotNamedParamsToComplexStructures($schemalessResults->values()->flatMap->parameters->unique('name')->values()->all()),
         );
+    }
+
+    protected function convertDotNamedParamsToComplexStructures($params)
+    {
+        return (new DeepParametersMerger(collect($params)))->handle();
     }
 
     protected function getMediaType(Operation $operation, RouteInfo $routeInfo, array $bodyParams): string
