@@ -4,6 +4,7 @@ use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\ApiKeySecurityScheme;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -15,6 +16,12 @@ use Illuminate\Validation\Rules\Enum;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
+function validationRulesToDocumentationWithDeep(array $rules)
+{
+    return (new DeepParametersMerger(collect(app()->make(RulesToParameters::class, ['rules' => $rules])->handle())))
+        ->handle();
+}
+
 // @todo: move rules from here to Generator/Request/ValidationRulesDocumentation test
 
 it('extract rules from array like rules', function () {
@@ -25,7 +32,7 @@ it('extract rules from array like rules', function () {
         'some.*.name' => 'string',
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = validationRulesToDocumentationWithDeep($rules);
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -36,7 +43,7 @@ it('extract rules from array rules', function () {
         'foo.id' => 'int',
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = validationRulesToDocumentationWithDeep($rules);
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -48,7 +55,7 @@ it('supports array rule details', function () {
         'destination.lon' => 'numeric|required|min:20|max:28.5',
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = validationRulesToDocumentationWithDeep($rules);
 
     assertMatchesSnapshot(json_encode(collect($params)->map->toArray()->all()));
 });
@@ -80,7 +87,7 @@ it('extract rules from object like rules', function () {
         'channels.agency.name' => 'nullable|string',
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = $params = validationRulesToDocumentationWithDeep($rules);
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -107,7 +114,7 @@ it('extract rules from object like rules heavy case', function () {
         'channels.agency.name' => 'nullable|string',
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = $params = validationRulesToDocumentationWithDeep($rules);
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -118,7 +125,7 @@ it('extract rules from object like rules with explicit array', function () {
         'channels.publisher.id' => 'int',
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = validationRulesToDocumentationWithDeep($rules);
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });

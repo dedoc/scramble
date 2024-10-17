@@ -11,6 +11,7 @@ use Dedoc\Scramble\Support\Generator\RequestBodyObject;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\FormRequestRulesExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RequestMethodCallsExtractor;
@@ -53,22 +54,25 @@ class RequestBodyExtension extends OperationExtension
 
         $allParams = $rulesResults->flatMap->parameters->unique('name')->values()->all();
 
-        [$queryParams, $bodyParams] = collect($allParams)
-            ->partition(fn (Parameter $p) => $p->getAttribute('isInQuery'))
-            ->map->toArray();
-
         $mediaType = $this->getMediaType($operation, $routeInfo, $allParams);
 
         if (empty($allParams)) {
             return;
         }
 
-        $operation->addParameters($queryParams);
         if (in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
-            $operation->addParameters($bodyParams);
+            $operation->addParameters(
+                $this->convertDotNamedParamsToComplexStructures($allParams)
+            );
 
             return;
         }
+
+        [$queryParams, $bodyParams] = collect($allParams)
+            ->partition(fn (Parameter $p) => $p->getAttribute('isInQuery'))
+            ->map->toArray();
+
+        $operation->addParameters($this->convertDotNamedParamsToComplexStructures($queryParams));
 
         [$schemaResults, $schemalessResults] = $rulesResults->partition('schemaName');
         $schemalessResults = collect([$this->mergeSchemalessRulesResults($schemalessResults->values())]);
@@ -118,7 +122,9 @@ class RequestBodyExtension extends OperationExtension
 
     protected function makeSchemaFromResults(ParametersExtractionResult $result): Type
     {
-        $requestBodySchema = Schema::createFromParameters($result->parameters);
+        $requestBodySchema = Schema::createFromParameters(
+            $this->convertDotNamedParamsToComplexStructures($result->parameters),
+        );
 
         if (! $result->schemaName) {
             return $requestBodySchema->type;
@@ -146,8 +152,13 @@ class RequestBodyExtension extends OperationExtension
     protected function mergeSchemalessRulesResults(Collection $schemalessResults): ParametersExtractionResult
     {
         return new ParametersExtractionResult(
-            parameters: $schemalessResults->values()->flatMap->parameters->unique('name')->values()->all(),
+            parameters: $this->convertDotNamedParamsToComplexStructures($schemalessResults->values()->flatMap->parameters->unique('name')->values()->all()),
         );
+    }
+
+    protected function convertDotNamedParamsToComplexStructures($params)
+    {
+        return (new DeepParametersMerger(collect($params)))->handle();
     }
 
     protected function getMediaType(Operation $operation, RouteInfo $routeInfo, array $bodyParams): string

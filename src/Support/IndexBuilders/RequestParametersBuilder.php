@@ -77,7 +77,8 @@ class RequestParametersBuilder implements IndexBuilder
             'boolean' => $this->makeBooleanParameter($scope, $methodCallNode),
             'enum' => $this->makeEnumParameter($scope, $methodCallNode),
             'query' => $this->makeQueryParameter($scope, $methodCallNode, $parameter),
-            'string', 'str', 'get', 'input', 'post' => $this->makeStringParameter($scope, $methodCallNode),
+            'string', 'str', 'input' => $this->makeStringParameter($scope, $methodCallNode),
+            'get', 'post' => $this->makeFlatParameter($scope, $methodCallNode),
             default => [null, null],
         };
 
@@ -98,6 +99,10 @@ class RequestParametersBuilder implements IndexBuilder
                     ->transform($parameterType)
                     ->default($parameterDefault ?? new MissingExample)
             ));
+
+        if ($parameterType->getAttribute('isFlat')) {
+            $parameter->setAttribute('isFlat', true);
+        }
 
         $this->bag->set($parameterName, $parameter);
     }
@@ -144,6 +149,18 @@ class RequestParametersBuilder implements IndexBuilder
     {
         return [
             new StringType,
+            TypeHelper::getArgType($scope, $node->args, ['default', 1])->value ?? null,
+        ];
+    }
+
+    private function makeFlatParameter(Scope $scope, Node $node)
+    {
+        $type = new StringType;
+
+        $type->setAttribute('isFlat', true);
+
+        return [
+            $type,
             TypeHelper::getArgType($scope, $node->args, ['default', 1])->value ?? null,
         ];
     }
