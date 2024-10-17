@@ -119,7 +119,9 @@ class RequestBodyExtension extends OperationExtension
 
     protected function makeSchemaFromResults(ParametersExtractionResult $result): Type
     {
-        $requestBodySchema = Schema::createFromParameters($result->parameters);
+        $requestBodySchema = Schema::createFromParameters(
+            $this->convertDotNamedParamsToComplexStructures($result->parameters),
+        );
 
         if (! $result->schemaName) {
             return $requestBodySchema->type;
