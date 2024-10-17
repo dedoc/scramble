@@ -54,22 +54,25 @@ class RequestBodyExtension extends OperationExtension
 
         $allParams = $rulesResults->flatMap->parameters->unique('name')->values()->all();
 
-        [$queryParams, $bodyParams] = collect($allParams)
-            ->partition(fn (Parameter $p) => $p->getAttribute('isInQuery'))
-            ->map->toArray();
-
         $mediaType = $this->getMediaType($operation, $routeInfo, $allParams);
 
         if (empty($allParams)) {
             return;
         }
 
-        $operation->addParameters($queryParams);
         if (in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
-            $operation->addParameters($bodyParams);
+            $operation->addParameters(
+                $this->convertDotNamedParamsToComplexStructures($allParams)
+            );
 
             return;
         }
+
+        [$queryParams, $bodyParams] = collect($allParams)
+            ->partition(fn (Parameter $p) => $p->getAttribute('isInQuery'))
+            ->map->toArray();
+
+        $operation->addParameters($this->convertDotNamedParamsToComplexStructures($queryParams));
 
         [$schemaResults, $schemalessResults] = $rulesResults->partition('schemaName');
         $schemalessResults = collect([$this->mergeSchemalessRulesResults($schemalessResults->values())]);

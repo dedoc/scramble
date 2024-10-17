@@ -367,9 +367,6 @@ it('prefers nested parameters from validation in case defined in both places', f
         ->toBe([
             'type' => 'object',
             'properties' => [
-                "foo.thisOneShouldNotBeMerged" => [
-                    "type" => "string"
-                ],
                 "foo" => [
                     "type" => "object",
                     "properties" => [
@@ -380,7 +377,10 @@ it('prefers nested parameters from validation in case defined in both places', f
                             "type" => "string"
                         ]
                     ]
-                ]
+                ],
+                "foo.thisOneShouldNotBeMerged" => [
+                    "type" => "string"
+                ],
             ]
         ]);
 });

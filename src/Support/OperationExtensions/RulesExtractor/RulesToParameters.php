@@ -17,11 +17,20 @@ class RulesToParameters
 
     private TypeTransformer $openApiTransformer;
 
+    private bool $mergeDotNotatedKeys = true;
+
     public function __construct(array $rules, array $validationNodesResults, TypeTransformer $openApiTransformer)
     {
         $this->rules = $rules;
         $this->openApiTransformer = $openApiTransformer;
         $this->nodeDocs = $this->extractNodeDocs($validationNodesResults);
+    }
+
+    public function mergeDotNotatedKeys(bool $mergeDotNotatedKeys = true)
+    {
+        $this->mergeDotNotatedKeys = $mergeDotNotatedKeys;
+
+        return $this;
     }
 
     public function handle()
@@ -30,6 +39,7 @@ class RulesToParameters
             ->pipe($this->handleConfirmed(...))
             ->map(fn ($rules, $name) => (new RulesToParameter($name, $rules, $this->nodeDocs[$name] ?? null, $this->openApiTransformer))->generate())
             ->filter()
+            ->pipe(fn ($c) => $this->mergeDotNotatedKeys ? collect((new DeepParametersMerger($c))->handle()) : $c)
             ->values()
             ->all();
     }
