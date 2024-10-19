@@ -30,9 +30,21 @@ class Schema
 
     public function toArray()
     {
-        return array_merge($this->type->toArray(), array_filter([
+        $typeArray = $this->type->toArray();
+
+        if ($typeArray instanceof \stdClass) { // mixed
+            $typeArray = [];
+        }
+
+        $result = array_merge($typeArray, array_filter([
             'title' => $this->title,
         ]));
+
+        if (empty($result)) {
+            return (object) [];
+        }
+
+        return $result;
     }
 
     public static function createFromParameters(array $parameters)
