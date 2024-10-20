@@ -3,12 +3,14 @@
 namespace Dedoc\Scramble\Support;
 
 use PhpParser\Node\Stmt;
-use PhpParser\NodeDumper;
 use PhpParser\ParserFactory;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTagNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PropertyTagValueNode;
+use PHPStan\PhpDocParser\Ast\Type\ArrayShapeItemNode;
+use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IntersectionTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
@@ -68,14 +70,25 @@ class ReflectionClassWithDocBlock extends \ReflectionClass
             }
         }
 
-        if ($type instanceof UnionTypeNode || $type instanceof IntersectionTypeNode) {
-            foreach ($type->types as $i => $subtype) {
-                $type->types[$i] = $this->resolve($subtype);
-            }
-        }
-
         if ($type instanceof ArrayTypeNode) {
             $type->type = $this->resolve($type->type);
+        }
+
+        if ($type instanceof UnionTypeNode || $type instanceof IntersectionTypeNode) {
+            $type->types = array_map(fn($type) => $this->resolve($type), $type->types);
+        }
+
+        if ($type instanceof GenericTypeNode) {
+            $type->type = $this->resolve($type->type);
+            $type->genericTypes = array_map(fn($type) => $this->resolve($type), $type->genericTypes);
+        }
+
+        if ($type instanceof ArrayShapeNode) {
+            $type->items = array_map(fn($type) => $this->resolve($type), $type->items);
+        }
+
+        if ($type instanceof ArrayShapeItemNode) {
+            $type->valueType = $this->resolve($type->valueType);
         }
 
         return $type;
