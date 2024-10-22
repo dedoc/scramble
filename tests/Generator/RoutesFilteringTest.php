@@ -47,5 +47,6 @@ it('filters all controller routes with ExcludeAllRoutesFromDocs attribute', func
 class RoutesFilteringTest_ControllerB
 {
     public function foo() {}
+
     public function bar() {}
 }
