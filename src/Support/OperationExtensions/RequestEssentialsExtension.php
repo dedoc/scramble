@@ -196,6 +196,7 @@ class RequestEssentialsExtension extends OperationExtension
 
             $param = Parameter::make($paramName, 'path')
                 ->description($description)
+                ->required(!$isOptional)
                 ->setSchema(Schema::fromType($schemaType));
 
             if ($isOptional) {
