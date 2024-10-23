@@ -75,7 +75,6 @@ it('supports optional parameters', function () {
         ->toBe([
             'name' => 'paymentPreference',
             'in' => 'path',
-            'required' => true,
             'description' => '**Optional**. The name of the payment preference to use',
             'schema' => [
                 'type' => ['string', 'null'],
