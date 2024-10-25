@@ -15,6 +15,15 @@ return [
      */
     'api_domain' => null,
 
+
+    /*
+     * This is the URI path where scramble will be accessible from.
+     * Feel free to change this path to anything you like.
+     * Note that the URI will not affect the paths of its internal API that aren't exposed to users.
+    */
+
+    'path' => env('SCRAMBLE_PATH', 'docs/api'),
+
     /*
      * The path where your OpenAPI specification will be exported.
      */
