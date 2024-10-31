@@ -2,8 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\Scope;
 
-use Dedoc\Scramble\Support\Type\FunctionType;
-use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 
 /**
  * Index stores type information about analyzed classes, functions, and constants.
@@ -13,32 +13,32 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 class Index
 {
     /**
-     * @var array<string, FunctionType>
+     * @var array<string, ClassDefinition>
      */
-    public array $functions = [];
+    public array $classesDefinitions = [];
 
     /**
-     * @var array<string, ObjectType>
+     * @var array<string, FunctionLikeDefinition>
      */
-    public array $classes = [];
+    public array $functionsDefinitions = [];
 
-    public function registerFunctionType(string $fnName, FunctionType $type): void
+    public function registerClassDefinition(ClassDefinition $classDefinition): void
     {
-        $this->functions[$fnName] = $type;
+        $this->classesDefinitions[$classDefinition->name] = $classDefinition;
     }
 
-    public function getFunctionType(string $fnName): ?FunctionType
+    public function getClassDefinition(string $className): ?ClassDefinition
     {
-        return $this->functions[$fnName] ?? null;
+        return $this->classesDefinitions[$className] ?? null;
     }
 
-    public function registerClassType(string $className, ObjectType $type): void
+    public function registerFunctionDefinition(FunctionLikeDefinition $fnDefinition)
     {
-        $this->classes[$className] = $type;
+        $this->functionsDefinitions[$fnDefinition->type->name] = $fnDefinition;
     }
 
-    public function getClassType(string $className): ?ObjectType
+    public function getFunctionDefinition(string $fnName): ?FunctionLikeDefinition
     {
-        return $this->classes[$className] ?? null;
+        return $this->functionsDefinitions[$fnName] ?? null;
     }
 }

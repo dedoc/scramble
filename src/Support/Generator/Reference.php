@@ -26,6 +26,11 @@ class Reference extends Type
         return $this->components->get($this);
     }
 
+    public function getUniqueName()
+    {
+        return $this->components->uniqueSchemaName($this->fullName);
+    }
+
     public function toArray()
     {
         if ($this->nullable) {
@@ -34,7 +39,7 @@ class Reference extends Type
 
         return array_filter([
             'description' => $this->description,
-            '$ref' => "#/components/{$this->referenceType}/{$this->components->uniqueSchemaName($this->fullName)}",
+            '$ref' => "#/components/{$this->referenceType}/{$this->getUniqueName()}",
         ]);
     }
 }

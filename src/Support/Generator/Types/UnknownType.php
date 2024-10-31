@@ -2,6 +2,4 @@
 
 namespace Dedoc\Scramble\Support\Generator\Types;
 
-class UnknownType extends StringType
-{
-}
+class UnknownType extends StringType {}

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Routing\Route;
+
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 test('response()->noContent() call support', function () {
@@ -67,10 +68,7 @@ class Foo_TestThree
 }
 
 test('manually annotated responses support', function () {
-    \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestFour::class, 'index']);
-
-    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestFour::class, 'index']));
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -93,5 +91,108 @@ class Foo_TestFour
 
         // Simple comment.
         return response()->json(['foo' => 'bar']);
+    }
+}
+
+test('manually annotated responses resources support', function () {
+    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestFive::class, 'index']));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][200]['content']['application/json']['schema'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                'data' => ['$ref' => '#/components/schemas/Foo_TestFiveResource'],
+            ],
+            'required' => ['data'],
+        ]);
+});
+class Foo_TestFive
+{
+    public function index()
+    {
+        /**
+         * @body Foo_TestFiveResource
+         */
+        return response()->json(['foo' => 'bar']);
+    }
+}
+class Foo_TestFiveResource extends \Illuminate\Http\Resources\Json\JsonResource
+{
+    public static $wrap = 'data';
+
+    public function toArray(\Illuminate\Http\Request $request)
+    {
+        return [
+            'foo' => $this->id,
+        ];
+    }
+}
+
+test('automated response status code inference when using ->response->setStatusCode method', function () {
+    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestSix::class, 'single']));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][201]['content']['application/json']['schema'])
+        ->toBe(['$ref' => '#/components/schemas/Foo_TestFiveResource']);
+});
+
+test('automated response status code inference when using collection ->response->setStatusCode method', function () {
+    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestSix::class, 'collection']));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][201]['content']['application/json']['schema'])
+        ->toBe([
+            'type' => 'array',
+            'items' => ['$ref' => '#/components/schemas/Foo_TestFiveResource'],
+        ]);
+});
+class Foo_TestSix
+{
+    public function single()
+    {
+        return (new Foo_TestFiveResource)->response()->setStatusCode(201);
+    }
+
+    public function collection()
+    {
+        return Foo_TestFiveResource::collection()->response()->setStatusCode(201);
+    }
+}
+
+test('does not wrap resources when resource is wrapped', function () {
+    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestSeven::class, 'index']));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][200]['content']['application/json']['schema'])
+        ->toBe(['$ref' => '#/components/schemas/Foo_TestSevenResource']);
+    expect($openApiDocument['components']['schemas']['Foo_TestSevenResource'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                'data' => [
+                    'type' => 'object',
+                    'properties' => ['foo' => ['type' => 'string']],
+                    'required' => ['foo'],
+                ],
+            ],
+            'required' => ['data'],
+            'title' => 'Foo_TestSevenResource',
+        ]);
+});
+class Foo_TestSevenResource extends \Illuminate\Http\Resources\Json\JsonResource
+{
+    public static $wrap = 'data';
+
+    public function toArray(\Illuminate\Http\Request $request)
+    {
+        return [
+            'data' => [
+                'foo' => $this->id,
+            ],
+        ];
+    }
+}
+class Foo_TestSeven
+{
+    public function index()
+    {
+        return new Foo_TestSevenResource(unknown());
     }
 }

@@ -1,0 +1,133 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Laravel",
+        "version": "0.0.1"
+    },
+    "servers": [
+        {
+            "url": "http:\/\/localhost\/api"
+        }
+    ],
+    "paths": {
+        "\/a": {
+            "post": {
+                "operationId": "allowsBothFormRequestAndInlineValidationRules.a",
+                "tags": [
+                    "AllowsBothFormRequestAndInlineValidationRules"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#\/components\/schemas\/FormRequest_WithData"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "bar": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "422": {
+                        "$ref": "#\/components\/responses\/ValidationException"
+                    }
+                }
+            }
+        },
+        "\/b": {
+            "post": {
+                "operationId": "allowsBothFormRequestAndInlineValidationRules.b",
+                "tags": [
+                    "AllowsBothFormRequestAndInlineValidationRules"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#\/components\/schemas\/FormRequest_WithData"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "baz": {
+                                                "type": "number"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "422": {
+                        "$ref": "#\/components\/responses\/ValidationException"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "FormRequest_WithData": {
+                "type": "object",
+                "properties": {
+                    "foo": {
+                        "type": "string"
+                    }
+                },
+                "title": "FormRequest_WithData"
+            }
+        },
+        "responses": {
+            "ValidationException": {
+                "description": "Validation error",
+                "content": {
+                    "application\/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Errors overview."
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "description": "A detailed description of each field that failed validation.",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "message",
+                                "errors"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

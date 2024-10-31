@@ -2,67 +2,18 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
+use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Scope\Scope;
+
 class ObjectType extends AbstractType
 {
-    public string $name;
-
-    /**
-     * @var array<string, Type>
-     */
-    public array $properties = [];
-
-    /**
-     * @var array<string, FunctionType>
-     */
-    public array $methods = [];
-
     public function __construct(
-        string $name,
-        array $properties = []
-    ) {
-        $this->name = $name;
-        $this->properties = $properties;
-    }
-
-    public function getPropertyFetchType(string $propertyName): Type
-    {
-        if (array_key_exists($propertyName, $this->properties)) {
-            return $this->properties[$propertyName];
-        }
-
-        return new UnknownType("Cannot get type of property [$propertyName] on object [$this->name]");
-    }
-
-    public function children(): array
-    {
-        return [
-            ...array_values($this->properties),
-            ...array_values($this->methods),
-        ];
-    }
-
-    public function nodes(): array
-    {
-        return ['methods', 'properties'];
-    }
-
-    public function getMethodCallType(string $methodName): Type
-    {
-        if (! array_key_exists($methodName, $this->methods)) {
-            return new UnknownType("Cannot get type of calling method [$methodName] on object [$this->name]");
-        }
-
-        return $this->methods[$methodName]->getReturnType();
-    }
-
-    public function getMethodType(string $methodName): Type
-    {
-        if (! array_key_exists($methodName, $this->methods)) {
-            return new UnknownType("Cannot get type of method [$methodName] on object [$this->name]");
-        }
-
-        return $this->methods[$methodName];
-    }
+        public string $name,
+    ) {}
 
     public function isInstanceOf(string $className)
     {
@@ -72,6 +23,64 @@ class ObjectType extends AbstractType
     public function isSame(Type $type)
     {
         return false;
+    }
+
+    public function getPropertyType(string $propertyName, Scope $scope = new GlobalScope): Type
+    {
+        if ($propertyType = app(ExtensionsBroker::class)->getPropertyType(new PropertyFetchEvent(
+            instance: $this,
+            name: $propertyName,
+            scope: $scope,
+        ))) {
+            return $propertyType;
+        }
+
+        $definition = $scope->index->getClassDefinition($this->name);
+
+        if (! $propertyDefinition = $definition?->getPropertyDefinition($propertyName)) {
+            return new UnknownType("Cannot get a property type [$propertyName] on type [{$this->name}]");
+        }
+
+        return $propertyDefinition->type ?: $propertyDefinition->defaultType;
+    }
+
+    public function getMethodDefinition(string $methodName, Scope $scope = new GlobalScope): ?FunctionLikeDefinition
+    {
+        $classDefinition = $scope->index->getClassDefinition($this->name);
+
+        return $classDefinition?->getMethodDefinition($methodName, $scope);
+    }
+
+    public function getMethodReturnType(string $methodName, array $arguments = [], Scope $scope = new GlobalScope): ?Type
+    {
+        if ($returnType = app(ExtensionsBroker::class)->getMethodReturnType(new MethodCallEvent(
+            instance: $this,
+            name: $methodName,
+            scope: $scope,
+            arguments: $arguments,
+        ))) {
+            return $returnType;
+        }
+
+        if (! $methodDefinition = $this->getMethodDefinition($methodName)) {
+            return null;
+        }
+
+        $returnType = $methodDefinition->type->getReturnType();
+
+        // Here templates should be replaced for generics and arguments should be taken into account.
+        return $returnType instanceof TemplateType && $returnType->is
+            ? $returnType->is
+            : $returnType;
+    }
+
+    public function accepts(Type $otherType): bool
+    {
+        if (! $otherType instanceof ObjectType) {
+            return false;
+        }
+
+        return is_a($otherType->name, $this->name, true);
     }
 
     public function toString(): string

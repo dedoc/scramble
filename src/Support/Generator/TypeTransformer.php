@@ -2,19 +2,25 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-use Dedoc\Scramble\Infer\Infer;
+use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
+use Dedoc\Scramble\Support\Generator\Types\MixedType;
 use Dedoc\Scramble\Support\Generator\Types\NullType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
+use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Str;
@@ -52,39 +58,32 @@ class TypeTransformer
 
     public function transform(Type $type)
     {
-        $openApiType = new StringType();
+        $openApiType = new UnknownType;
+
+        if ($type instanceof TemplateType && $type->is) {
+            $type = $type->is;
+        }
 
         if (
-            $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
-            && (
-                (collect($type->items)->every(fn ($t) => is_numeric($t->key)) && collect($type->items)->count() === 1)
-                || collect($type->items)->every(fn ($t) => $t->key === null)
-            )
+            $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
+            && $type->isList
         ) {
-            $isMap = collect($type->items)->every(fn ($t) => $t->key === null)
-                && count($type->items) === 2;
-
-            if ($isMap) {
-                $keyType = $this->transform($type->items[0]->value);
-
-                if ($keyType instanceof IntegerType) {
-                    $openApiType = (new ArrayType)
-                        ->setItems($this->transform($type->items[1]->value));
-                } else {
-                    $openApiType = (new ObjectType)
-                        ->additionalProperties($this->transform($type->items[1]->value));
-                }
-            } else {
-                $itemsType = isset($type->items[0])
-                    ? $this->transform($type->items[0]->value)
-                    : new StringType();
-
-                $openApiType = (new ArrayType())->setItems($itemsType);
-            }
+            /** @see https://stackoverflow.com/questions/57464633/how-to-define-a-json-array-with-concrete-item-definition-for-every-index-i-e-a */
+            $openApiType = (new ArrayType)
+                ->setMin(count($type->items))
+                ->setMax(count($type->items))
+                ->setPrefixItems(
+                    array_map(
+                        fn ($item) => $this->transform($item->value),
+                        $type->items
+                    )
+                )
+                ->setAdditionalItems(false);
         } elseif (
-            $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
+            $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
+            && ! $type->isList
         ) {
-            $openApiType = new ObjectType();
+            $openApiType = new ObjectType;
             $requiredKeys = [];
 
             $props = collect($type->items)
@@ -101,18 +100,44 @@ class TypeTransformer
             $openApiType->properties = $props->all();
 
             $openApiType->setRequired($requiredKeys);
+        } elseif (
+            $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
+        ) {
+            $keyType = $this->transform($type->key);
+
+            if ($keyType instanceof IntegerType) {
+                $openApiType = (new ArrayType)->setItems($this->transform($type->value));
+            } else {
+                $openApiType = (new ObjectType)
+                    ->additionalProperties($this->transform($type->value));
+            }
         } elseif ($type instanceof ArrayItemType_) {
             $openApiType = $this->transform($type->value);
 
             if ($docNode = $type->getAttribute('docNode')) {
+                /** @var PhpDocNode $docNode */
                 $varNode = $docNode->getVarTagValues()[0] ?? null;
 
                 $openApiType = $varNode && $varNode->type
                     ? $this->transform(PhpDocTypeHelper::toType($varNode->type))
                     : $openApiType;
 
-                if ($varNode && $varNode->description) {
-                    $openApiType->setDescription($varNode->description);
+                $commentDescription = trim($docNode->getAttribute('summary').' '.$docNode->getAttribute('description'));
+                $varNodeDescription = $varNode && $varNode->description ? trim($varNode->description) : '';
+                if ($commentDescription || $varNodeDescription) {
+                    $openApiType->setDescription(implode('. ', array_filter([$varNodeDescription, $commentDescription])));
+                }
+
+                if ($examples = ExamplesExtractor::make($docNode)->extract(preferString: $openApiType instanceof StringType)) {
+                    $openApiType->examples($examples);
+                }
+
+                if ($default = ExamplesExtractor::make($docNode, '@default')->extract(preferString: $openApiType instanceof StringType)) {
+                    $openApiType->default($default[0]);
+                }
+
+                if ($format = array_values($docNode->getTagsByName('@format'))[0]->value->value ?? null) {
+                    $openApiType->format($format);
                 }
             }
         } elseif ($type instanceof Union) {
@@ -121,42 +146,53 @@ class TypeTransformer
                 if ($notNullType) {
                     $openApiType = $this->transform($notNullType)->nullable(true);
                 } else {
-                    $openApiType = new NullType();
+                    $openApiType = new NullType;
                 }
             } else {
-                $items = array_map($this->transform(...), $type->types);
+                [$literals, $otherTypes] = collect($type->types)
+                    ->partition(fn ($t) => $t instanceof LiteralStringType || $t instanceof LiteralIntegerType);
 
-                [$stringLiterals, $otherTypes] = collect($items)
-                    ->partition(fn ($t) => $t instanceof StringType && count($t->enum) === 1);
+                [$stringLiterals, $integerLiterals] = collect($literals)
+                    ->partition(fn ($t) => $t instanceof LiteralStringType);
 
-                $items = $otherTypes->toArray();
+                $items = array_map($this->transform(...), $otherTypes->values()->toArray());
+
                 if ($stringLiterals->count()) {
-                    $items[] = (new StringType())->enum(
-                        $stringLiterals->flatMap->enum->unique()->toArray()
+                    $items[] = (new StringType)->enum(
+                        $stringLiterals->map->value->unique()->values()->toArray()
                     );
                 }
-                $items = array_values($items);
 
-                if (count($items) === 1) {
-                    $openApiType = $items[0];
-                } else {
-                    $openApiType = (new AnyOf)->setItems($items);
+                if ($integerLiterals->count()) {
+                    $items[] = (new IntegerType)->enum(
+                        $integerLiterals->map->value->unique()->values()->toArray()
+                    );
                 }
+
+                // Removing duplicated schemas before making a resulting AnyOf type.
+                $uniqueItems = collect($items)->unique(fn ($i) => json_encode($i->toArray()))->values()->all();
+                $openApiType = count($uniqueItems) === 1 ? $uniqueItems[0] : (new AnyOf)->setItems($uniqueItems);
             }
-        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\Literal\LiteralStringType) {
-            $openApiType = (new StringType())->enum([$type->value]);
+        } elseif ($type instanceof LiteralStringType) {
+            $openApiType = (new StringType)->example($type->value);
+        } elseif ($type instanceof LiteralIntegerType) {
+            $openApiType = (new IntegerType)->example($type->value);
+        } elseif ($type instanceof LiteralFloatType) {
+            $openApiType = (new NumberType)->example($type->value);
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\StringType) {
-            $openApiType = new StringType();
+            $openApiType = new StringType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\FloatType) {
-            $openApiType = new NumberType();
+            $openApiType = new NumberType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntegerType) {
-            $openApiType = new IntegerType();
+            $openApiType = new IntegerType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\BooleanType) {
-            $openApiType = new BooleanType();
+            $openApiType = new BooleanType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\NullType) {
-            $openApiType = new NullType();
+            $openApiType = new NullType;
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\MixedType) {
+            $openApiType = new MixedType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\ObjectType) {
-            $openApiType = new ObjectType();
+            $openApiType = new ObjectType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntersectionType) {
             $openApiType = (new AllOf)->setItems(array_filter(array_map(
                 fn ($t) => $this->transform($t),
@@ -170,6 +206,14 @@ class TypeTransformer
 
         if ($type->hasAttribute('format')) {
             $openApiType->format($type->getAttribute('format'));
+        }
+
+        if ($type->hasAttribute('file')) {
+            $openApiType->setAttribute('file', $type->getAttribute('file'));
+        }
+
+        if ($type->hasAttribute('line')) {
+            $openApiType->setAttribute('line', $type->getAttribute('line'));
         }
 
         return $openApiType;
@@ -221,6 +265,13 @@ class TypeTransformer
 
     public function toResponse(Type $type)
     {
+        // In case of union type being returned and all of its types resulting in the same response, we want to make
+        // sure to take only unique types to avoid having the same types in the response.
+        if ($type instanceof Union) {
+            $uniqueItems = collect($type->types)->unique(fn ($i) => json_encode($this->transform($i)->toArray()))->values()->all();
+            $type = count($uniqueItems) === 1 ? $uniqueItems[0] : Union::wrap($uniqueItems);
+        }
+
         if (! $response = $this->handleResponseUsingExtensions($type)) {
             if ($type->isInstanceOf(\Throwable::class)) {
                 return null;
@@ -245,12 +296,11 @@ class TypeTransformer
             $response->code = $code;
 
             if ($varType = $docNode->getVarTagValues()[0]->type ?? null) {
-                $response->setContent(
-                    'application/json',
-                    Schema::fromType($this->transform(
-                        PhpDocTypeHelper::toType($varType),
-                    ))
-                );
+                $type = PhpDocTypeHelper::toType($varType);
+
+                $typeResponse = $this->toResponse($type);
+
+                $response->setContent('application/json', $typeResponse->getContent('application/json'));
             }
         }
 

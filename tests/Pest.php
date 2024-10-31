@@ -1,45 +1,115 @@
 <?php
 
-use Dedoc\Scramble\DefaultExtensions;
+use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
+use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Scope\ScopeContext;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
+use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
+use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Tests\TestCase;
 use Dedoc\Scramble\Tests\Utils\AnalysisResult;
 use Illuminate\Routing\Route;
+use PhpParser\ErrorHandler\Throwing;
+use PhpParser\NameContext;
 use PhpParser\NodeTraverser;
-use PhpParser\ParserFactory as ParserFactoryAlias;
+use PhpParser\NodeVisitor\NameResolver;
 
 uses(TestCase::class)->in(__DIR__);
 
-function analyzeFile(string $code, array $extensions = []): AnalysisResult
-{
-    $fileAst = (new ParserFactoryAlias)->create(ParserFactoryAlias::PREFER_PHP7)->parse($code);
+function analyzeFile(
+    string $code,
+    $extensions = [],
+): AnalysisResult {
+    if ($code[0] === '/') {
+        $code = file_get_contents($code);
+    }
 
-    $index = new Index();
-    $infer = app()->make(TypeInferer::class, [
-        'namesResolver' => new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing())),
-        'extensions' => [...$extensions, ...DefaultExtensions::infer()],
-        'referenceTypeResolver' => new \Dedoc\Scramble\Infer\Services\ReferenceTypeResolver($index),
-        'index' => $index,
-    ]);
+    if (count($extensions)) {
+        Infer\Context::configure(
+            new Infer\Extensions\ExtensionsBroker($extensions),
+        );
+    }
+
+    $index = app(Index::class); //new Index;
+
     $traverser = new NodeTraverser;
-    $traverser->addVisitor($infer);
-    $traverser->traverse($fileAst);
+    $traverser->addVisitor($nameResolver = new NameResolver);
+    $traverser->addVisitor(new PhpDocResolver(
+        $nameResolver = new FileNameResolver($nameResolver->getNameContext()),
+    ));
+    $traverser->addVisitor(new TypeInferer(
+        $index,
+        $nameResolver,
+        new Scope($index, new NodeTypesResolver, new ScopeContext, $nameResolver),
+        Infer\Context::getInstance()->extensionsBroker->extensions,
+    ));
+    $traverser->traverse(
+        FileParser::getInstance()->parseContent($code)->getStatements(),
+    );
 
-    return new AnalysisResult($infer->scope, $fileAst);
+    // Should this be here? Index must be global?
+    resolveReferences($index, new ReferenceTypeResolver($index));
+
+    return new AnalysisResult($index);
 }
 
-function getStatementType(string $statement): ?Type
+function analyzeClass(string $className, array $extensions = []): AnalysisResult
 {
-    $code = <<<EOD
-<?php
-\$a = $statement;
-EOD;
+    Infer\Context::configure(
+        new Infer\Extensions\ExtensionsBroker($extensions),
+    );
+    $infer = app(Infer::class);
 
-    return analyzeFile($code)->getVarType('a');
+    $infer->analyzeClass($className);
+
+    return new AnalysisResult($infer->index);
 }
+
+function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolver)
+{
+    foreach ($index->functionsDefinitions as $functionDefinition) {
+        $fnScope = new Scope(
+            $index,
+            new NodeTypesResolver,
+            new ScopeContext(functionDefinition: $functionDefinition),
+            new FileNameResolver(new NameContext(new Throwing)),
+        );
+        $referenceResolver->resolveFunctionReturnReferences($fnScope, $functionDefinition->type);
+    }
+
+    foreach ($index->classesDefinitions as $classDefinition) {
+        foreach ($classDefinition->methods as $name => $methodDefinition) {
+            $methodScope = new Scope(
+                $index,
+                new NodeTypesResolver,
+                new ScopeContext($classDefinition, $methodDefinition),
+                new FileNameResolver(new NameContext(new Throwing)),
+            );
+            $referenceResolver->resolveFunctionReturnReferences($methodScope, $methodDefinition->type);
+        }
+    }
+}
+
+function getStatementType(string $statement, array $extensions = []): ?Type
+{
+    return analyzeFile('<?php', $extensions)->getExpressionType($statement);
+}
+
+dataset('extendableTemplateTypes', [
+    ['int', 'int'],
+    ['bool', 'boolean'],
+    ['float', 'float'],
+    ['', 'TA', 'TA'],
+    ['string', 'TA', 'TA is string'],
+    ['SomeClass', 'TA', 'TA is SomeClass'],
+    ['callable', 'TA', 'TA is callable'],
+]);
 
 function generateForRoute(Closure $param)
 {

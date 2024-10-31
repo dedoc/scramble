@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 use Dedoc\Scramble\Infer\Extensions\ExpressionExceptionExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -43,16 +44,14 @@ class AbortHelpersExceptionInfer implements ExpressionExceptionExtension
         }
 
         $messageType = TypeHelper::getArgType($scope, $node->args, ['message', 1 + $paramsShift], new LiteralStringType(''));
-        $headersType = TypeHelper::getArgType($scope, $node->args, ['headers', 2 + $paramsShift], new ArrayType());
+        $headersType = TypeHelper::getArgType($scope, $node->args, ['headers', 2 + $paramsShift], new ArrayType);
 
         return [
-            tap(new ObjectType(HttpException::class), function (ObjectType $type) use ($codeType, $messageType, $headersType) {
-                $type->properties = array_merge($type->properties, [
-                    'statusCode' => $codeType,
-                    'message' => $messageType,
-                    'headers' => $headersType,
-                ]);
-            }),
+            new Generic(HttpException::class, [
+                $codeType,
+                $messageType,
+                $headersType,
+            ]),
         ];
     }
 }

@@ -1,0 +1,74 @@
+{
+    "description": "Paginated set of `PaginatorTypeToSchemaTest_Resource`",
+    "content": {
+        "application\/json": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#\/components\/schemas\/PaginatorTypeToSchemaTest_Resource"
+                        }
+                    },
+                    "first_page_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "from": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "next_page_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Base path for paginator generated URLs."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Number of items shown per page."
+                    },
+                    "prev_page_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "to": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Number of the last item in the slice."
+                    }
+                },
+                "required": [
+                    "current_page",
+                    "data",
+                    "first_page_url",
+                    "from",
+                    "next_page_url",
+                    "path",
+                    "per_page",
+                    "prev_page_url",
+                    "to"
+                ]
+            }
+        }
+    }
+}

@@ -4,6 +4,9 @@ namespace Dedoc\Scramble\Support\Generator;
 
 class Operation
 {
+    use WithAttributes;
+    use WithExtensions;
+
     public string $method;
 
     public string $path = '';
@@ -14,12 +17,14 @@ class Operation
 
     public string $summary = '';
 
+    public bool $deprecated = false;
+
     /** @var array<Security|array> */
     public array $security = [];
 
     public array $tags = [];
 
-    /** @var Parameter[] */
+    /** @var (Parameter|Reference)[] */
     public array $parameters = [];
 
     public ?RequestBodyObject $requestBodyObject = null;
@@ -109,6 +114,13 @@ class Operation
         return $this;
     }
 
+    public function deprecated(bool $deprecated)
+    {
+        $this->deprecated = $deprecated;
+
+        return $this;
+    }
+
     public function setTags(array $tags)
     {
         $this->tags = array_map(fn ($t) => (string) $t, $tags);
@@ -137,6 +149,10 @@ class Operation
 
         if ($this->summary) {
             $result['summary'] = $this->summary;
+        }
+
+        if ($this->deprecated) {
+            $result['deprecated'] = $this->deprecated;
         }
 
         if (count($this->tags)) {
@@ -168,7 +184,7 @@ class Operation
         if (count($this->security)) {
             $securities = [];
             foreach ($this->security as $security) {
-                $securities[] = is_array($security) ? $security : $security->toArray();
+                $securities[] = (object) (is_array($security) ? $security : $security->toArray());
             }
             $result['security'] = $securities;
         }
@@ -181,6 +197,9 @@ class Operation
             $result['servers'] = $servers;
         }
 
-        return $result;
+        return array_merge(
+            $result,
+            $this->extensionPropertiesToArray(),
+        );
     }
 }

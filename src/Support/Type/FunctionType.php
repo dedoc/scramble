@@ -10,6 +10,8 @@ class FunctionType extends AbstractType implements FunctionLikeType
 
     public Type $returnType;
 
+    public array $templates = [];
+
     /**
      * @var array<ObjectType|Generic>
      */
@@ -23,24 +25,11 @@ class FunctionType extends AbstractType implements FunctionLikeType
     ) {
         $this->name = $name;
         $this->arguments = $arguments;
-        $this->returnType = $returnType ?: new VoidType();
+        $this->returnType = $returnType ?: new VoidType;
         $this->exceptions = $exceptions;
     }
 
-    public function children(): array
-    {
-        return [
-            ...array_values($this->arguments),
-            $this->returnType,
-        ];
-    }
-
     public function nodes(): array
-    {
-        return ['returnType', 'arguments'];
-    }
-
-    public function publicNodes(): array
     {
         return ['returnType', 'arguments'];
     }
@@ -67,7 +56,8 @@ class FunctionType extends AbstractType implements FunctionLikeType
     public function toString(): string
     {
         return sprintf(
-            '(%s): %s',
+            '%s(%s): %s',
+            $this->templates ? sprintf('<%s>', implode(', ', array_map(fn ($t) => $t->toDefinitionString(), $this->templates))) : '',
             implode(', ', array_map(fn ($t) => $t->toString(), $this->arguments)),
             $this->returnType->toString(),
         );

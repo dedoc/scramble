@@ -9,8 +9,10 @@ use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -30,6 +32,7 @@ class ErrorResponsesExtension extends OperationExtension
 
         $this->attachNotFoundException($operation, $methodType);
         $this->attachAuthorizationException($routeInfo, $methodType);
+        $this->attachAuthenticationException($routeInfo, $methodType);
         $this->attachCustomRequestExceptions($methodType);
     }
 
@@ -67,28 +70,65 @@ class ErrorResponsesExtension extends OperationExtension
         ];
     }
 
-    private function attachCustomRequestExceptions(FunctionType $methodType)
+    private function attachAuthenticationException(RouteInfo $routeInfo, FunctionType $methodType)
     {
-        if (! $formRequest = collect($methodType->arguments)->first(fn (Type $arg) => $arg instanceof ObjectType && $arg->isInstanceOf(FormRequest::class))) {
+        if (count($routeInfo->phpDoc()->getTagsByName('@unauthenticated'))) {
+            return;
+        }
+
+        $isAuthMiddleware = fn ($m) => is_string($m) && ($m === 'auth' || Str::startsWith($m, 'auth:'));
+
+        if (! collect($routeInfo->route->gatherMiddleware())->contains($isAuthMiddleware)) {
+            return;
+        }
+
+        if (collect($methodType->exceptions)->contains(fn (Type $e) => $e->isInstanceOf(AuthenticationException::class))) {
             return;
         }
 
         $methodType->exceptions = [
             ...$methodType->exceptions,
-            new ObjectType(ValidationException::class),
+            new ObjectType(AuthenticationException::class),
         ];
+    }
+
+    private function attachCustomRequestExceptions(FunctionType $methodType)
+    {
+        if (! $formRequest = collect($methodType->arguments)->first(fn (Type $arg) => $arg->isInstanceOf(FormRequest::class))) {
+            return;
+        }
+
+        $formRequest = $formRequest instanceof ObjectType
+            ? $formRequest
+            : ($formRequest instanceof TemplateType ? $formRequest->is : null);
+
+        if (! $formRequest) {
+            return;
+        }
 
         $formRequest = $this->infer->analyzeClass($formRequest->name);
 
-        $authorizeReturnType = $formRequest->getMethodCallType('authorize');
         if (
-            (! $authorizeReturnType instanceof LiteralBooleanType)
-            || $authorizeReturnType->value !== true
+            $formRequest->hasMethodDefinition('rules')
+            || $formRequest->hasMethodDefinition('after')
         ) {
             $methodType->exceptions = [
                 ...$methodType->exceptions,
-                new ObjectType(AuthorizationException::class),
+                new ObjectType(ValidationException::class),
             ];
+        }
+
+        if ($formRequest->hasMethodDefinition('authorize')) {
+            $authorizeReturnType = $formRequest->getMethodCallType('authorize');
+            if (
+                (! $authorizeReturnType instanceof LiteralBooleanType)
+                || $authorizeReturnType->value !== true
+            ) {
+                $methodType->exceptions = [
+                    ...$methodType->exceptions,
+                    new ObjectType(AuthorizationException::class),
+                ];
+            }
         }
     }
 }

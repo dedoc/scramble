@@ -19,12 +19,31 @@ class Foo {
         return 2;
     }
 }
-EOD)->getClassType('Foo');
+EOD)->getClassDefinition('Foo');
 
-    expect($type->getMethodType('bar')->toString())
+    expect($type->methods['bar']->type->toString())
         ->toBe('(): int(2)')
-        ->and($type->getMethodType('foo')->toString())
+        ->and($type->methods['foo']->type->toString())
         ->toBe('(): int(2)');
+});
+
+it('correctly replaces templates without modifying type', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public function foo ($a) {
+        return ['a' => $a];
+    }
+}
+EOD);
+
+    /*
+     * Previously this test would fail due to original return type being mutated.
+     */
+    $type->getExpressionType('(new Foo)->foo(123)');
+
+    expect($type->getExpressionType('(new Foo)->foo(42)')->toString())
+        ->toBe('array{a: int(42)}');
 });
 
 it('resolves a cyclic reference safely', function () {
@@ -38,9 +57,9 @@ class Foo {
         return $this->foo();
     }
 }
-EOD)->getClassType('Foo');
+EOD)->getClassDefinition('Foo');
 
-    expect($type->getMethodType('foo')->toString())
+    expect($type->methods['foo']->type->toString())
         ->toBe('(): unknown|int(1)');
 });
 
@@ -55,9 +74,9 @@ class Foo {
         return 2;
     }
 }
-EOD)->getClassType('Foo');
+EOD)->getClassDefinition('Foo');
 
-    expect($type->getMethodType('foo')->toString())->toBe('(): array{0: int(2), 1: int(2)}');
+    expect($type->methods['foo']->type->toString())->toBe('(): list{int(2), int(2)}');
 });
 
 it('resolves unknown references to unknowns in non-reference return types', function () {
@@ -71,9 +90,9 @@ class Foo {
         return 2;
     }
 }
-EOD)->getClassType('Foo');
+EOD)->getClassDefinition('Foo');
 
-    expect($type->getMethodType('foo')->toString())->toBe('(): array{0: int(2), 1: unknown}');
+    expect($type->methods['foo']->type->toString())->toBe('(): list{int(2), unknown}');
 });
 
 it('resolves a deep reference when encountered in self class', function () {
@@ -90,9 +109,9 @@ class Foo {
         return 2;
     }
 }
-EOD)->getClassType('Foo');
+EOD)->getClassDefinition('Foo');
 
-    expect($type->getMethodType('foo')->toString())->toBe('(): int(2)');
+    expect($type->methods['foo']->type->toString())->toBe('(): int(2)');
 });
 
 it('resolves a reference from function', function () {
@@ -104,9 +123,9 @@ function foo () {
 function bar () {
     return 2;
 }
-EOD)->getFunctionType('foo');
+EOD)->getFunctionDefinition('foo');
 
-    expect($type->toString())->toBe('(): int(2)');
+    expect($type->type->toString())->toBe('(): int(2)');
 });
 
 it('resolves references in unknowns after traversal', function () {
@@ -124,12 +143,12 @@ class PendingUnknownWithSelfReference
         return $this;
     }
 }
-EOD)->getClassType('PendingUnknownWithSelfReference');
+EOD)->getClassDefinition('PendingUnknownWithSelfReference');
 
-    expect($type->methods['returnSomeCall']->toString())
+    expect($type->methods['returnSomeCall']->type->toString())
         ->toBe('(): unknown')
-        ->and($type->methods['returnThis']->toString())
-        ->toBe('(): PendingUnknownWithSelfReference');
+        ->and($type->methods['returnThis']->type->toString())
+        ->toBe('(): self');
 });
 
 it('resolves deep references in unknowns after traversal', function () {
@@ -145,8 +164,8 @@ class Foo
         return (new Bar)->some()->call();
     }
 }
-EOD)->getClassType('Foo');
+EOD)->getClassDefinition('Foo');
 
-    expect($type->methods['returnSomeCall']->toString())
-        ->toBe('(): unknown|unknown');
+    expect($type->methods['returnSomeCall']->type->toString())
+        ->toBe('(): unknown');
 });

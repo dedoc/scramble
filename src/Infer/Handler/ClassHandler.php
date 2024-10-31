@@ -2,8 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\Handler;
 
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\ObjectType;
 use PhpParser\Node;
 
 class ClassHandler implements CreatesScope
@@ -20,12 +20,18 @@ class ClassHandler implements CreatesScope
 
     public function enter(Node\Stmt\Class_ $node, Scope $scope)
     {
-        $scope->context->setClass(
-            $classType = new ObjectType($node->name ? $scope->resolveName($node->name->toString()) : 'anonymous@class'),
-        );
+        $parentDefinition = $node->extends
+            ? $scope->index->getClassDefinition($node->extends->toString())
+            : null;
 
-        $scope->index->registerClassType($scope->resolveName($node->name->toString()), $classType);
+        $scope->context->setClassDefinition($classDefinition = new ClassDefinition(
+            name: $node->namespacedName ? $node->namespacedName->toString() : 'anonymous@class',
+            templateTypes: $parentDefinition?->templateTypes ?: [],
+            properties: $parentDefinition?->properties ?: [],
+            methods: $parentDefinition?->methods ?: [],
+            parentFqn: $node->extends ? $node->extends->toString() : null,
+        ));
 
-        $scope->setType($node, $classType);
+        $scope->index->registerClassDefinition($classDefinition);
     }
 }

@@ -4,14 +4,28 @@ namespace Dedoc\Scramble\Support\Generator;
 
 class Parameter
 {
+    use WithAttributes;
+    use WithExtensions;
+
     public string $name;
 
     /**
      * Possible values are "query", "header", "path" or "cookie".
+     *
+     * @var "query"|"header"|"path"|"cookie".
      */
     public string $in;
 
     public bool $required = false;
+
+    public ?bool $explode = null;
+
+    /**
+     * Possible values are "simple", "label", "matrix", "form", "spaceDelimited", "pipeDelimited" or "deepObject".
+     *
+     * @var "simple"|"label"|"matrix"|"form"|"spaceDelimited"|"pipeDelimited"|"deepObject"|null
+     */
+    public ?string $style = null;
 
     public string $description = '';
 
@@ -28,6 +42,7 @@ class Parameter
     {
         $this->name = $name;
         $this->in = $in;
+
         $this->example = new MissingExample;
 
         if ($this->in === 'path') {
@@ -49,13 +64,21 @@ class Parameter
             'description' => $this->description,
             'deprecated' => $this->deprecated,
             'allowEmptyValue' => $this->allowEmptyValue,
+            'style' => $this->style,
         ]);
 
         if ($this->schema) {
             $result['schema'] = $this->schema->toArray();
         }
 
-        return array_merge($result, $this->example instanceof MissingExample ? [] : ['example' => $this->example]);
+        return array_merge(
+            $result,
+            $this->example instanceof MissingExample ? [] : ['example' => $this->example],
+            ! is_null($this->explode) ? [
+                'explode' => $this->explode,
+            ] : [],
+            $this->extensionPropertiesToArray(),
+        );
     }
 
     public function required(bool $required)
@@ -92,6 +115,20 @@ class Parameter
     public function example($example)
     {
         $this->example = $example;
+
+        return $this;
+    }
+
+    public function setExplode(bool $explode): self
+    {
+        $this->explode = $explode;
+
+        return $this;
+    }
+
+    public function setStyle(string $style): self
+    {
+        $this->style = $style;
 
         return $this;
     }

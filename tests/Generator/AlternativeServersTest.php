@@ -61,7 +61,5 @@ it('alternative server is moved to paths when all path operations have it', func
 
 class AlternativeServers_Test extends \Illuminate\Routing\Controller
 {
-    public function a()
-    {
-    }
+    public function a() {}
 }

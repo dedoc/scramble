@@ -29,7 +29,7 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
         ) {
             if (count($node->args)) {
                 return new Generic(
-                    new ObjectType(Response::class),
+                    Response::class,
                     [
                         TypeHelper::getArgType($scope, $node->args, ['content', 0], new LiteralStringType('')),
                         TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
@@ -49,7 +49,7 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
             if ($node->name instanceof Identifier && $node->name == 'noContent') {
                 // Response 204, no content
                 return new Generic(
-                    new ObjectType(Response::class),
+                    Response::class,
                     [
                         new LiteralStringType(''),
                         TypeHelper::getArgType($scope, $node->args, ['status', 0], new LiteralIntegerType(204)),
@@ -60,7 +60,7 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
 
             if ($node->name instanceof Identifier && $node->name == 'json') {
                 return new Generic(
-                    new ObjectType(JsonResponse::class),
+                    JsonResponse::class,
                     [
                         TypeHelper::getArgType($scope, $node->args, ['data', 0], new ArrayType),
                         TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
@@ -71,7 +71,7 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
 
             if ($node->name instanceof Identifier && $node->name == 'make') {
                 return new Generic(
-                    new ObjectType(Response::class),
+                    Response::class,
                     [
                         TypeHelper::getArgType($scope, $node->args, ['content', 0], new LiteralStringType('')),
                         TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
@@ -84,7 +84,6 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
         // call Response and JsonResponse constructors
         if (
             $node instanceof Expr\New_
-            && $scope->getType($node) instanceof ObjectType
             && (
                 $scope->getType($node)->isInstanceOf(JsonResponse::class)
                 || $scope->getType($node)->isInstanceOf(Response::class)
@@ -96,7 +95,7 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension
                 : new LiteralStringType('');
 
             return new Generic(
-                $scope->getType($node),
+                $scope->getType($node)->name,
                 [
                     TypeHelper::getArgType($scope, $node->args, [$contentName, 0], $contentDefaultType),
                     TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),

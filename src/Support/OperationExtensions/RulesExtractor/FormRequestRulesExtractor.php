@@ -2,7 +2,10 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
-use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\RouteInfo;
+use Dedoc\Scramble\Support\SchemaClassDocReflector;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
@@ -11,25 +14,23 @@ use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Param;
 use PhpParser\NodeFinder;
 use ReflectionClass;
+use Spatie\LaravelData\Contracts\BaseData;
 
-class FormRequestRulesExtractor
+class FormRequestRulesExtractor implements RulesExtractor
 {
-    private ?FunctionLike $handler;
+    use GeneratesParametersFromRules;
 
-    public function __construct(?FunctionLike $handler)
-    {
-        $this->handler = $handler;
-    }
+    public function __construct(private ?FunctionLike $handler, private TypeTransformer $typeTransformer) {}
 
-    public function shouldHandle()
+    public function shouldHandle(): bool
     {
         if (! $this->handler) {
             return false;
         }
 
-        return collect($this->handler->getParams())
-            ->contains(\Closure::fromCallable([$this, 'findCustomRequestParam']));
-    }
+        if (! collect($this->handler->getParams())->contains($this->findCustomRequestParam(...))) {
+            return false;
+        }
 
     public function node(Route $route)
     {
@@ -48,15 +49,31 @@ class FormRequestRulesExtractor
             return null;
         }
 
-        return new ValidationNodesResult((new NodeFinder())->find(
-            Arr::wrap($rulesMethodNode->stmts),
-            fn (Node $node) => $node instanceof Node\Expr\ArrayItem
-                && $node->key instanceof Node\Scalar\String_
-                && $node->getAttribute('parsedPhpDoc')
-        ));
+        $classReflector = Infer\Reflector\ClassReflector::make($requestClassName);
+
+        $phpDocReflector = SchemaClassDocReflector::createFromDocString($classReflector->getReflection()->getDocComment() ?: '');
+
+        $schemaName = ($phpDocReflector->getTagValue('@ignoreSchema')->value ?? null) !== null
+            ? null
+            : $phpDocReflector->getSchemaName($requestClassName);
+
+        return new ParametersExtractionResult(
+            parameters: $this->makeParameters(
+                node: (new NodeFinder)->find(
+                    Arr::wrap($classReflector->getMethod('rules')->getAstNode()->stmts),
+                    fn (Node $node) => $node instanceof Node\Expr\ArrayItem
+                        && $node->key instanceof Node\Scalar\String_
+                        && $node->getAttribute('parsedPhpDoc'),
+                ),
+                rules: $this->rules($routeInfo->route),
+                typeTransformer: $this->typeTransformer,
+            ),
+            schemaName: $schemaName,
+            description: $phpDocReflector->getDescription(),
+        );
     }
 
-    public function extract(Route $route)
+    protected function rules(Route $route)
     {
         $requestClassName = $this->getFormRequestClassName();
 
@@ -76,6 +93,10 @@ class FormRequestRulesExtractor
 
     private function findCustomRequestParam(Param $param)
     {
+        if (! $param->type || ! method_exists($param->type, '__toString')) {
+            return false;
+        }
+
         $className = (string) $param->type;
 
         return method_exists($className, 'rules');
@@ -83,9 +104,18 @@ class FormRequestRulesExtractor
 
     private function getFormRequestClassName()
     {
-        $requestParam = collect($this->handler->getParams())
-            ->first(\Closure::fromCallable([$this, 'findCustomRequestParam']));
+        $requestParam = collect($this->handler->getParams())->first($this->findCustomRequestParam(...));
 
-        return (string) $requestParam->type;
+        $requestClassName = (string) $requestParam->type;
+
+        $reflectionClass = new ReflectionClass($requestClassName);
+
+        // If the classname is actually an interface, it might be bound to the container.
+        if (! $reflectionClass->isInstantiable() && app()->bound($requestClassName)) {
+            $classInstance = app()->getBindings()[$requestClassName]['concrete'](app());
+            $requestClassName = $classInstance::class;
+        }
+
+        return $requestClassName;
     }
 }

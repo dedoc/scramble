@@ -4,6 +4,7 @@ use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\ApiKeySecurityScheme;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -12,7 +13,14 @@ use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
+
 use function Spatie\Snapshots\assertMatchesSnapshot;
+
+function validationRulesToDocumentationWithDeep(array $rules)
+{
+    return (new DeepParametersMerger(collect(app()->make(RulesToParameters::class, ['rules' => $rules])->handle())))
+        ->handle();
+}
 
 // @todo: move rules from here to Generator/Request/ValidationRulesDocumentation test
 
@@ -24,7 +32,7 @@ it('extract rules from array like rules', function () {
         'some.*.name' => 'string',
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = validationRulesToDocumentationWithDeep($rules);
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -35,7 +43,7 @@ it('extract rules from array rules', function () {
         'foo.id' => 'int',
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = validationRulesToDocumentationWithDeep($rules);
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -47,7 +55,7 @@ it('supports array rule details', function () {
         'destination.lon' => 'numeric|required|min:20|max:28.5',
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = validationRulesToDocumentationWithDeep($rules);
 
     assertMatchesSnapshot(json_encode(collect($params)->map->toArray()->all()));
 });
@@ -79,7 +87,7 @@ it('extract rules from object like rules', function () {
         'channels.agency.name' => 'nullable|string',
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = $params = validationRulesToDocumentationWithDeep($rules);
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -106,7 +114,7 @@ it('extract rules from object like rules heavy case', function () {
         'channels.agency.name' => 'nullable|string',
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = $params = validationRulesToDocumentationWithDeep($rules);
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -117,7 +125,7 @@ it('extract rules from object like rules with explicit array', function () {
         'channels.publisher.id' => 'int',
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = validationRulesToDocumentationWithDeep($rules);
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -131,6 +139,127 @@ it('supports exists rule', function () {
 
     expect($type)->toBeInstanceOf(StringType::class)
         ->and($type->format)->toBe('email');
+});
+
+it('supports image rule', function () {
+    $rules = [
+        'image' => 'required|image',
+    ];
+
+    $type = app()->make(RulesToParameters::class, ['rules' => $rules])->handle()[0]->schema->type;
+
+    expect($type)->toBeInstanceOf(StringType::class)
+        ->and($type->contentMediaType)->toBe('application/octet-stream');
+});
+
+it('supports file rule', function () {
+    $rules = [
+        'file' => 'required|file',
+    ];
+
+    $type = app()->make(RulesToParameters::class, ['rules' => $rules])->handle()[0]->schema->type;
+
+    expect($type)->toBeInstanceOf(StringType::class)
+        ->and($type->contentMediaType)->toBe('application/octet-stream');
+});
+
+it('converts min rule into "minimum" for numeric fields', function () {
+    $rules = [
+        'num' => ['int', 'min:8'],
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    expect($params = collect($params)->all())
+        ->toHaveCount(1)
+        ->and($params[0]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\NumberType::class)
+        ->toHaveKey('minimum', 8);
+});
+
+it('converts max rule into "maximum" for numeric fields', function () {
+    $rules = [
+        'num' => ['int', 'max:8'],
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    expect($params = collect($params)->all())
+        ->toHaveCount(1)
+        ->and($params[0]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\NumberType::class)
+        ->toHaveKey('maximum', 8);
+});
+
+it('converts min rule into "minLength" for string fields', function () {
+    $rules = [
+        'str' => ['string', 'min:8'],
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    expect($params = collect($params)->all())
+        ->toHaveCount(1)
+        ->and($params[0]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toHaveKey('minLength', 8);
+});
+
+it('converts max rule into "maxLength" for string fields', function () {
+    $rules = [
+        'str' => ['string', 'max:8'],
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    expect($params = collect($params)->all())
+        ->toHaveCount(1)
+        ->and($params[0]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toHaveKey('maxLength', 8);
+});
+
+it('converts min rule into "minItems" for array fields', function () {
+    $rules = [
+        'num' => ['array', 'min:8'],
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    expect($params = collect($params)->all())
+        ->toHaveCount(1)
+        ->and($params[0]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\ArrayType::class)
+        ->toHaveKey('minItems', 8);
+});
+
+it('converts max rule into "maxItems" for array fields', function () {
+    $rules = [
+        'num' => ['array', 'max:8'],
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    expect($params = collect($params)->all())
+        ->toHaveCount(1)
+        ->and($params[0]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\ArrayType::class)
+        ->toHaveKey('maxItems', 8);
+});
+
+it('documents nullable uri rule', function () {
+    $rules = [
+        'page_url' => ['nullable', 'url'],
+    ];
+
+    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+
+    expect($params = collect($params)->all())
+        ->toHaveCount(1)
+        ->and($params[0]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toHaveProperty('format', 'uri')
+        ->toHaveProperty('nullable', true);
 });
 
 it('extracts rules from request->validate call', function () {
@@ -161,10 +290,9 @@ it('extracts rules docs from form request', function () {
 });
 
 it('extracts rules from Validator::make facade call', function () {
-    RouteFacade::get('api/test', [ValidationFacadeRulesDocumenting_Test::class, 'index']);
-
-    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ValidationFacadeRulesDocumenting_Test::class, 'index']);
+    });
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -198,7 +326,7 @@ class ValidationFacadeRulesDocumenting_Test
     {
         Validator::make($request->all(), [
             'content' => ['required', Rule::in('wow')],
-        ]);
+        ], attributes: []);
     }
 }
 
@@ -316,7 +444,5 @@ class ControllerWithoutSecurity
     /**
      * @unauthenticated
      */
-    public function index()
-    {
-    }
+    public function index() {}
 }

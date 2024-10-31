@@ -18,6 +18,7 @@ class CreatePostsTable extends Migration
             $table->enum('status', ['draft', 'published']);
             $table->integer('user_id');
             $table->string('title');
+            $table->json('settings')->nullable();
             $table->text('body');
             $table->timestamps();
         });

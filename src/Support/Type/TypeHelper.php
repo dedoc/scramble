@@ -3,9 +3,15 @@
 namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Illuminate\Support\Collection;
 use PhpParser\Node;
 use PhpParser\PrettyPrinter\Standard;
+use ReflectionNamedType;
+use ReflectionType;
+use ReflectionUnionType;
 
 class TypeHelper
 {
@@ -30,26 +36,32 @@ class TypeHelper
     {
         if ($typeNode instanceof Node\NullableType) {
             return Union::wrap([
-                new NullType(),
+                new NullType,
                 static::createTypeFromTypeNode($typeNode->type),
             ]);
         }
 
         if ($typeNode instanceof Node\Identifier) {
             if ($typeNode->name === 'int') {
-                return new IntegerType();
+                return new IntegerType;
             }
 
             if ($typeNode->name === 'string') {
-                return new StringType();
+                return new StringType;
             }
 
             if ($typeNode->name === 'bool') {
-                return new BooleanType();
+                return new BooleanType;
             }
 
             if ($typeNode->name === 'float') {
-                return new FloatType();
+                return new FloatType;
+            }
+
+            if ($typeNode->name === 'array') {
+                return new ArrayType(
+                    value: new MixedType,
+                );
             }
 
             return new ObjectType($typeNode->toString());
@@ -66,7 +78,7 @@ class TypeHelper
             ));
         }
 
-        return new UnknownType('Cannot get type from AST node '.(new Standard())->prettyPrint([$typeNode]));
+        return new UnknownType('Cannot get type from AST node '.(new Standard)->prettyPrint([$typeNode]));
     }
 
     /**
@@ -82,15 +94,15 @@ class TypeHelper
         return $matchingArg ? $scope->getType($matchingArg->value) : $default;
     }
 
-    public static function unpackIfArrayType($type)
+    public static function unpackIfArray($type)
     {
-        if (! $type instanceof ArrayType) {
+        if (! $type instanceof KeyedArrayType) {
             return $type;
         }
 
         $unpackedItems = collect($type->items)
             ->flatMap(function (ArrayItemType_ $type) {
-                if ($type->shouldUnpack && $type->value instanceof ArrayType) {
+                if ($type->shouldUnpack && $type->value instanceof KeyedArrayType) {
                     return $type->value->items;
                 }
 
@@ -106,7 +118,7 @@ class TypeHelper
                 return $arrayItems;
             }, []);
 
-        return new ArrayType(array_values($unpackedItems));
+        return new KeyedArrayType(array_values($unpackedItems));
     }
 
     /**
@@ -121,5 +133,65 @@ class TypeHelper
             fn ($arg) => ($arg->name->name ?? '') === $name,
             fn () => empty($args[$index]->name->name) ? ($args[$index] ?? null) : null,
         );
+    }
+
+    public static function createTypeFromValue(mixed $value)
+    {
+        if (is_string($value)) {
+            return new LiteralStringType($value);
+        }
+
+        if (is_int($value)) {
+            return new LiteralIntegerType($value);
+        }
+
+        if (is_float($value)) {
+            return new FloatType;
+        }
+
+        if (is_bool($value)) {
+            return new LiteralBooleanType($value);
+        }
+
+        return null; // @todo: object
+    }
+
+    public static function createTypeFromReflectionType(ReflectionType $reflectionType, bool $handleNullable = true)
+    {
+        if ($reflectionType->allowsNull() && $handleNullable) {
+            return Union::wrap([
+                new NullType,
+                static::createTypeFromReflectionType($reflectionType, handleNullable: false),
+            ]);
+        }
+
+        if ($reflectionType instanceof ReflectionUnionType) {
+            return Union::wrap(array_map(
+                fn ($node) => static::createTypeFromReflectionType($node, $handleNullable),
+                $reflectionType->getTypes(),
+            ));
+        }
+
+        if ($reflectionType instanceof ReflectionNamedType) {
+            if ($reflectionType->getName() === 'int') {
+                return new IntegerType;
+            }
+
+            if ($reflectionType->getName() === 'string') {
+                return new StringType;
+            }
+
+            if ($reflectionType->getName() === 'bool') {
+                return new BooleanType;
+            }
+
+            if ($reflectionType->getName() === 'float') {
+                return new FloatType;
+            }
+
+            return new ObjectType($reflectionType->getName());
+        }
+
+        return new UnknownType('Cannot create type from reflection type '.((string) $reflectionType));
     }
 }

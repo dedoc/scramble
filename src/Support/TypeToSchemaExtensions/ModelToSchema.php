@@ -15,7 +15,8 @@ class ModelToSchema extends TypeToSchemaExtension
     public function shouldHandle(Type $type)
     {
         return $type instanceof ObjectType
-            && $type->isInstanceOf(Model::class);
+            && $type->isInstanceOf(Model::class)
+            && $type->name !== Model::class;
     }
 
     /**
@@ -23,11 +24,11 @@ class ModelToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        $type = $this->infer->analyzeClass($type->name);
+        $this->infer->analyzeClass($type->name);
 
-        return $this->openApiTransformer->transform(
-            $type->getMethodCallType('toArray')
-        );
+        $toArrayReturnType = $type->getMethodReturnType('toArray');
+
+        return $this->openApiTransformer->transform($toArrayReturnType);
     }
 
     /**

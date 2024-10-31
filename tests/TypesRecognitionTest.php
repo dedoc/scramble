@@ -1,21 +1,22 @@
 <?php
 
-use Dedoc\Scramble\Infer\Infer;
-use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
-use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
+
 use function Spatie\Snapshots\assertMatchesSnapshot;
+
+// @todo move all tests into PhpDoc/PhpDocTypeHelperTest
 
 function getTypeFromDoc(string $phpDoc)
 {
     $docNode = PhpDoc::parse($phpDoc);
     $varNode = $docNode->getVarTagValues()[0];
 
-    return (new TypeTransformer(new Infer(app(FileParser::class)), new Components))
+    return (new TypeTransformer(new Infer(new Index), new Components))
         ->transform(PhpDocTypeHelper::toType($varNode->type));
 }
 
@@ -23,10 +24,6 @@ function getPhpTypeFromDoc(string $phpDoc)
 {
     $docNode = PhpDoc::parse($phpDoc);
     $varNode = $docNode->getVarTagValues()[0];
-
-    PhpDocTypeWalker::traverse($varNode->type, [new ResolveFqnPhpDocTypeVisitor(
-            new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing())),
-    )]);
 
     return PhpDocTypeHelper::toType($varNode->type);
 }
@@ -82,12 +79,12 @@ it('handles shape arrays', function ($phpDoc) {
 
     assertMatchesSnapshot($result ? $result->toArray() : null);
 })->with([
-    '/** @var array{string} */',
-    '/** @var array{int, string} */',
-    '/** @var array{0: string, 1: string} */',
-    '/** @var array{wow: string} */',
-    '/** @var array{test: string, wow?: string} */', // test var here is added so snapshot name generates correctly
-    '/** @var array{string, string} */',
+    '/** @var array{string} */', // list with one item
+    '/** @var array{int, string} */', // list
+    '/** @var array{0: string, 1: string} */', // list
+    '/** @var array{wow: string} */', // keyed
+    '/** @var array{test: string, wow?: string} */', // keyed, test var here is added so snapshot name generates correctly
+    '/** @var array{string, string} */', // list
 ]);
 
 it('handles intersection type', function () {

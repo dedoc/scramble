@@ -10,24 +10,26 @@ class ThrowHandler
 {
     public function shouldHandle($node)
     {
-        return $node instanceof Node\Stmt\Throw_;
+        return $node instanceof Node\Expr\Throw_;
     }
 
-    public function leave(Node\Stmt\Throw_ $node, Scope $scope)
+    public function leave(Node\Expr\Throw_ $node, Scope $scope)
     {
         if (! $scope->isInFunction()) {
             return;
         }
 
-        if (! $scope->getType($node->expr)->isInstanceOf(Throwable::class)) {
+        $exceptionType = $scope->getType($node->expr);
+
+        if (! $exceptionType->isInstanceOf(Throwable::class)) {
             return;
         }
 
-        $fnType = $scope->function();
+        $fnDefinition = $scope->functionDefinition();
 
-        $fnType->exceptions = [
-            ...$fnType->exceptions,
-            $scope->getType($node->expr),
+        $fnDefinition->type->exceptions = [
+            ...$fnDefinition->type->exceptions,
+            $exceptionType,
         ];
     }
 }

@@ -15,7 +15,7 @@ class Schema
 
     public static function fromType(Type $type)
     {
-        $schema = new static();
+        $schema = new static;
         $schema->setType($type);
 
         return $schema;
@@ -30,14 +30,26 @@ class Schema
 
     public function toArray()
     {
-        return array_merge($this->type->toArray(), array_filter([
+        $typeArray = $this->type->toArray();
+
+        if ($typeArray instanceof \stdClass) { // mixed
+            $typeArray = [];
+        }
+
+        $result = array_merge($typeArray, array_filter([
             'title' => $this->title,
         ]));
+
+        if (empty($result)) {
+            return (object) [];
+        }
+
+        return $result;
     }
 
     public static function createFromParameters(array $parameters)
     {
-        $schema = (new static())->setType($type = new ObjectType);
+        $schema = (new static)->setType($type = new ObjectType);
 
         collect($parameters)
             ->each(function (Parameter $parameter) use ($type) {

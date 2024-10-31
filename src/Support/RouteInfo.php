@@ -2,12 +2,12 @@
 
 namespace Dedoc\Scramble\Support;
 
-use Dedoc\Scramble\Infer\Infer;
+use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Infer\Services\FileParser;
-use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
+use Dedoc\Scramble\Support\IndexBuilders\Bag;
+use Dedoc\Scramble\Support\IndexBuilders\RequestParametersBuilder;
 use Dedoc\Scramble\Support\Type\FunctionType;
-use Dedoc\Scramble\Support\Type\TypeWalker;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Routing\Route;
 use PhpParser\Node\Stmt\ClassMethod;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
@@ -28,11 +28,17 @@ class RouteInfo
 
     private Infer $infer;
 
+    public readonly Bag $requestParametersFromCalls;
+
+    public readonly Infer\Extensions\IndexBuildingBroker $indexBuildingBroker;
+
     public function __construct(Route $route, FileParser $fileParser, Infer $infer)
     {
         $this->route = $route;
         $this->parser = $fileParser;
         $this->infer = $infer;
+        $this->requestParametersFromCalls = new Bag;
+        $this->indexBuildingBroker = app(Infer\Extensions\IndexBuildingBroker::class);
     }
 
     public function isClassBased(): bool
@@ -75,9 +81,8 @@ class RouteInfo
             return $this->methodNode;
         }
 
-         $result = $this->parser->parse($this->reflectionMethod()->getFileName());
-
-         return $this->methodNode = $result->findMethod($this->route->getAction('uses'));
+        return $this->methodNode = MethodReflector::make(...explode('@', $this->route->getAction('uses')))
+            ->getAstNode();
     }
 
     public function reflectionMethod(): ?ReflectionMethod
@@ -94,56 +99,30 @@ class RouteInfo
             ->getMethod($this->methodName());
     }
 
-    public function getReturnTypes()
-    {
-        return collect([
-            ($phpDocType = $this->getDocReturnType()) ? PhpDocTypeHelper::toType($phpDocType) : null,
-            $this->getCodeReturnType(),
-        ])
-            ->filter()
-            // Make sure the type with more leafs is first one.
-            ->sortByDesc(fn ($type) => count((new TypeWalker)->find($type, fn ($t) => ! $t instanceof UnknownType)))
-            ->values()
-            ->all();
-    }
-
     public function getReturnType()
     {
-        if ($phpDocType = $this->getDocReturnType()) {
-            return $phpDocType;
-        }
-
-        return $this->getCodeReturnType();
+        return (new RouteResponseTypeRetriever($this))->getResponseType();
     }
 
-    public function getDocReturnType()
-    {
-        if ($this->phpDoc() && ($returnType = $this->phpDoc()->getReturnTagValues()[0] ?? null) && optional($returnType)->type) {
-            return $returnType->type;
-        }
-
-        return null;
-    }
-
-    public function getCodeReturnType()
-    {
-        if (! $methodType = $this->getMethodType()) {
-            return null;
-        }
-
-        return $methodType->getReturnType();
-    }
-
+    /**
+     * @todo Maybe better name is needed as this method performs method analysis, indexes building, etc.
+     */
     public function getMethodType(): ?FunctionType
     {
-        if (! $this->isClassBased() || ! $this->methodNode()) {
+        if (! $this->isClassBased() || ! $this->reflectionMethod()) {
             return null;
         }
 
         if (! $this->methodType) {
-            $this->methodType = $this->infer
-                ->analyzeClass($this->reflectionMethod()->getDeclaringClass()->getName())
-                ->getMethodType($this->methodName());
+            $def = $this->infer->analyzeClass($this->reflectionMethod()->getDeclaringClass()->getName());
+
+            /*
+             * Here the final resolution of the method types may happen.
+             */
+            $this->methodType = $def->getMethodDefinition($this->methodName(), indexBuilders: [
+                new RequestParametersBuilder($this->requestParametersFromCalls),
+                ...$this->indexBuildingBroker->indexBuilders,
+            ])->type;
         }
 
         return $this->methodType;

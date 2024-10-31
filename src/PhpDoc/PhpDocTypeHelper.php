@@ -9,9 +9,11 @@ use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\IntersectionType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
@@ -39,7 +41,7 @@ class PhpDocTypeHelper
         }
 
         if ($type instanceof ArrayShapeNode) {
-            return new ArrayType(array_map(
+            return new KeyedArrayType(array_map(
                 function (ArrayShapeItemNode $t) {
                     $keyName = $t->keyName instanceof IdentifierTypeNode
                         ? $t->keyName->name
@@ -56,19 +58,23 @@ class PhpDocTypeHelper
         }
 
         if ($type instanceof ArrayTypeNode) {
-            return new ArrayType([
-                new ArrayItemType_(0, static::toType($type->type)),
-            ]);
+            return new ArrayType(
+                value: static::toType($type->type),
+            );
         }
 
         if ($type instanceof GenericTypeNode) {
             if ($type->type->name === 'array') {
-                return static::toType(new ArrayShapeNode(
-                    array_map(
-                        fn ($type) => new ArrayShapeItemNode(null, false, $type),
-                        $type->genericTypes,
-                    )
-                ));
+                if (count($type->genericTypes) === 1) {
+                    return new ArrayType(
+                        value: static::toType($type->genericTypes[0]),
+                    );
+                }
+
+                return new ArrayType(
+                    value: static::toType($type->genericTypes[1]),
+                    key: static::toType($type->genericTypes[0]),
+                );
             }
 
             if (! ($typeObject = static::toType($type->type)) instanceof ObjectType) {
@@ -76,7 +82,7 @@ class PhpDocTypeHelper
             }
 
             return new Generic(
-                $typeObject,
+                $typeObject->name,
                 array_map(
                     fn ($type) => static::toType($type),
                     $type->genericTypes,
@@ -108,7 +114,7 @@ class PhpDocTypeHelper
             }
 
             if ($type->constExpr instanceof ConstExprFloatNode) {
-                return new FloatType(); // todo: float literal?
+                return new FloatType; // todo: float literal?
             }
         }
 
@@ -149,7 +155,7 @@ class PhpDocTypeHelper
             return new NullType;
         }
         if ($type->name === 'mixed') {
-            return new UnknownType('PhpDoc mixed type');
+            return new MixedType;
         }
 
         return new ObjectType($type->name);

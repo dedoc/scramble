@@ -33,6 +33,8 @@ After install you will have 2 routes added to your application:
 - `/docs/api` - UI viewer for your documentation
 - `/docs/api.json` - Open API document in JSON format describing your API.
 
+By default, these routes are available only in `local` environment. You can change this behavior by defining `viewApiDocs` gate.
+
 ---
 
 <p>

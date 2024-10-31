@@ -1,0 +1,117 @@
+{
+    "description": "Paginated set of `LengthAwarePaginatorTypeToSchemaTest_Resource`",
+    "content": {
+        "application\/json": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#\/components\/schemas\/LengthAwarePaginatorTypeToSchemaTest_Resource"
+                        }
+                    },
+                    "first_page_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "from": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "last_page_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "links": {
+                        "type": "array",
+                        "description": "Generated paginator links.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "url": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "active": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "url",
+                                "label",
+                                "active"
+                            ]
+                        }
+                    },
+                    "next_page_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Base path for paginator generated URLs."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Number of items shown per page."
+                    },
+                    "prev_page_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "to": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Number of the last item in the slice."
+                    },
+                    "total": {
+                        "type": "integer",
+                        "description": "Total number of items being paginated."
+                    }
+                },
+                "required": [
+                    "current_page",
+                    "data",
+                    "first_page_url",
+                    "from",
+                    "last_page_url",
+                    "last_page",
+                    "links",
+                    "next_page_url",
+                    "path",
+                    "per_page",
+                    "prev_page_url",
+                    "to",
+                    "total"
+                ]
+            }
+        }
+    }
+}

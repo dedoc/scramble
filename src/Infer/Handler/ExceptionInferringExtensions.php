@@ -27,14 +27,14 @@ class ExceptionInferringExtensions
             return;
         }
 
-        $fnType = $scope->function();
+        $fnDefinition = $scope->functionDefinition();
 
         foreach ($this->extensions as $extension) {
             if (! count($exceptions = $extension->getException($node, $scope))) {
                 continue;
             }
 
-            $fnType->exceptions = array_merge($fnType->exceptions, $exceptions);
+            $fnDefinition->type->exceptions = array_merge($fnDefinition->type->exceptions, $exceptions);
         }
     }
 }

@@ -60,6 +60,7 @@ class Components
                         $this->uniqueSchemaName($fullName) => $s->setTitle($this->uniqueSchemaName($fullName))->toArray(),
                     ];
                 })
+                ->sortKeys()
                 ->toArray();
         }
 

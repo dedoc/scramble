@@ -16,11 +16,11 @@ it('infers manually thrown exceptions', function () {
 function foo () {
     throw new \Exception();
 }
-EOD)->getFunctionType('foo');
+EOD)->getFunctionDefinition('foo');
 
     expect($type)->not()->toBeNull()
-        ->and($type->exceptions)->toHaveCount(1)
-        ->and($type->exceptions[0]->name)->toBe(Exception::class);
+        ->and($type->type->exceptions)->toHaveCount(1)
+        ->and($type->type->exceptions[0]->name)->toBe(Exception::class);
 });
 
 it('infers exceptions using expression exception extensions', function () {
@@ -39,9 +39,9 @@ EOD, [
                 }
             }
         },
-    ])->getFunctionType('foo');
+    ])->getFunctionDefinition('foo');
 
     expect($type)->not()->toBeNull()
-        ->and($type->exceptions)->toHaveCount(1)
-        ->and($type->exceptions[0]->name)->toBe(Exception::class);
+        ->and($type->type->exceptions)->toHaveCount(1)
+        ->and($type->type->exceptions[0]->name)->toBe(Exception::class);
 });
