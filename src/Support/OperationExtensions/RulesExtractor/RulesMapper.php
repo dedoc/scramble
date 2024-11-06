@@ -139,6 +139,13 @@ class RulesMapper
         return $type;
     }
 
+    public function size(Type $type, $params)
+    {
+        $type = $this->min($type, $params);
+
+        return $this->max($type, $params);
+    }
+
     public function in(Type $type, $params)
     {
         return $type->enum(
