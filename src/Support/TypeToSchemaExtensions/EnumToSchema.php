@@ -3,10 +3,12 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Support\ClassBasedSchemaNameResolver;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
+use Dedoc\Scramble\Support\SchemaClassDocReflector;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 
@@ -40,6 +42,12 @@ class EnumToSchema extends TypeToSchemaExtension
 
     public function reference(ObjectType $type)
     {
-        return new Reference('schemas', $type->name, $this->components);
+        $defaultName = app(ClassBasedSchemaNameResolver::class)->resolve($type->name);
+
+        return new Reference(
+            'schemas',
+            SchemaClassDocReflector::createFromClassName($type->name)->getSchemaName($defaultName),
+            $this->components,
+        );
     }
 }
