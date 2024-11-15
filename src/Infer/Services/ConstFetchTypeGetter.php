@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\EnumCaseType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -19,6 +20,10 @@ class ConstFetchTypeGetter
             $constantReflection = new \ReflectionClassConstant($className, $constName);
             $constantValue = $constantReflection->getValue();
 
+            if ($constantReflection->isEnumCase()) {
+                return new EnumCaseType($className, $constName);
+            }
+
             $type = TypeHelper::createTypeFromValue($constantValue);
 
             if ($type) {
@@ -27,6 +32,8 @@ class ConstFetchTypeGetter
         } catch (\ReflectionException $e) {
             return new UnknownType('Cannot get const value');
         }
+
+        $a=1;
 
         return new UnknownType('ConstFetchTypeGetter is not yet implemented fully for non-class const fetches.');
     }
