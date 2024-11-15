@@ -372,7 +372,9 @@ class ReferenceTypeResolver
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)
     {
-        if ($type->callee instanceof CallableStringType) {
+        $callee = $this->resolve($scope, $type->callee);
+
+        if ($callee instanceof CallableStringType) {
             $analyzedType = clone $type;
 
             $analyzedType->arguments = array_map(
@@ -382,7 +384,7 @@ class ReferenceTypeResolver
             );
 
             $returnType = Context::getInstance()->extensionsBroker->getFunctionReturnType(new FunctionCallEvent(
-                name: $analyzedType->callee->name,
+                name: $callee->name,
                 scope: $scope,
                 arguments: $analyzedType->arguments,
             ));
@@ -392,7 +394,14 @@ class ReferenceTypeResolver
             }
         }
 
-        $calleeType = $type->callee instanceof CallableStringType
+        if ($callee instanceof ObjectType) {
+            return $this->resolve(
+                $scope,
+                new MethodCallReferenceType($callee, '__invoke', $type->arguments),
+            );
+        }
+
+        $calleeType = $callee instanceof CallableStringType
             ? $this->index->getFunctionDefinition($type->callee->name)
             : $this->resolve($scope, $type->callee);
 

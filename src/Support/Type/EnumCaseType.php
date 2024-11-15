@@ -2,13 +2,14 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-class EnumCaseType extends AbstractType
+class EnumCaseType extends ObjectType
 {
     public function __construct(
-        public string $callee,
-        public string $name,
+        string $name,
+        public string $caseName,
     )
     {
+        parent::__construct($name);
     }
 
     public function isSame(Type $type)
@@ -18,6 +19,6 @@ class EnumCaseType extends AbstractType
 
     public function toString(): string
     {
-        return "{$this->callee}::{$this->name}";
+        return "{$this->name}::{$this->caseName}";
     }
 }
