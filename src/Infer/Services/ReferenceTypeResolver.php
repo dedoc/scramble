@@ -373,6 +373,7 @@ class ReferenceTypeResolver
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)
     {
         $callee = $this->resolve($scope, $type->callee);
+        $callee = $callee instanceof TemplateType ? $callee->is : $callee;
 
         if ($callee instanceof CallableStringType) {
             $analyzedType = clone $type;
