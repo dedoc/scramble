@@ -33,7 +33,7 @@ class ConstFetchTypeGetter
             return new UnknownType('Cannot get const value');
         }
 
-        $a=1;
+        $a = 1;
 
         return new UnknownType('ConstFetchTypeGetter is not yet implemented fully for non-class const fetches.');
     }

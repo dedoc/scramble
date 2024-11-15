@@ -7,8 +7,7 @@ class EnumCaseType extends ObjectType
     public function __construct(
         string $name,
         public string $caseName,
-    )
-    {
+    ) {
         parent::__construct($name);
     }
 
