@@ -67,11 +67,7 @@ class Scope
         }
 
         if ($node instanceof Node\Expr\Match_) {
-            return Union::wrap(
-                collect($node->arms)
-                    ->map(fn (Node\MatchArm $arm) => $this->getType($arm->body))
-                    ->toArray()
-            );
+            return Union::wrap(array_map(fn (Node\MatchArm $arm) => $this->getType($arm->body), $node->arms));
         }
 
         if ($node instanceof Node\Expr\ClassConstFetch) {
