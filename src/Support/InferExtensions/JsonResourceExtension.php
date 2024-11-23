@@ -29,7 +29,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MergeValue;
 use Illuminate\Http\Resources\MissingValue;
 
-class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeExtension, StaticMethodReturnTypeExtension
+class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 {
     public function shouldHandle(ObjectType|string $type): bool
     {
@@ -43,10 +43,10 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         return match ($event->name) {
-            // @todo This should work automatically as toArray calls must be proxied to parents.
             'toArray' => ($event->getInstance()->name === JsonResource::class || ($event->getDefinition() && ! $event->getDefinition()->hasMethodDefinition('toArray')))
                 ? $this->getModelMethodReturn($event->getInstance()->name, 'toArray', $event->arguments, $event->scope)
                 : null,
+
             'response', 'toResponse' => new Generic(JsonResponse::class, [$event->getInstance(), new LiteralIntegerType(200), new ArrayType]),
 
             'whenLoaded' => count($event->arguments) === 1
@@ -88,14 +88,6 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         };
     }
 
-    public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
-    {
-        return match ($event->name) {
-            'toArray' => $this->handleToArrayStaticCall($event),
-            default => null,
-        };
-    }
-
     public function getPropertyType(PropertyFetchEvent $event): ?Type
     {
         return match ($event->name) {
@@ -112,22 +104,6 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         };
     }
 
-    /**
-     * Note: In fact, this is not a static call to the JsonResource. This is how type inference system treats it for
-     * now, when analyzing parent::toArray() call. `parent::` becomes `JsonResource::`. So this should be fixed in
-     * future just for the sake of following how real code works.
-     */
-    private function handleToArrayStaticCall(StaticMethodCallEvent $event): ?Type
-    {
-        $contextClassName = $event->scope->context->classDefinition->name ?? null;
-
-        if (! $contextClassName) {
-            return null;
-        }
-
-        return $this->getModelMethodReturn($contextClassName, 'toArray', $event->arguments, $event->scope);
-    }
-
     private function proxyMethodCallToModel(MethodCallEvent $event)
     {
         return $this->getModelMethodReturn($event->getInstance()->name, $event->name, $event->arguments, $event->scope);
@@ -135,7 +111,12 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
 
     private function getModelMethodReturn(string $resourceClassName, string $methodName, array $arguments, Scope $scope)
     {
-        $modelType = JsonResourceHelper::modelType($scope->index->getClassDefinition($resourceClassName), $scope);
+        $callingResourceClassName = $scope->classDefinition()?->name ?: $resourceClassName;
+        if (! $callingResourceClassName) {
+            return null;
+        }
+
+        $modelType = JsonResourceHelper::modelType($scope->index->getClassDefinition($callingResourceClassName), $scope);
 
         return ReferenceTypeResolver::getInstance()->resolve(
             $scope,

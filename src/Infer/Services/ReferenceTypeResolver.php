@@ -314,11 +314,15 @@ class ReferenceTypeResolver
             $type->arguments,
         );
 
+        $calleeName = $type->callee;
         $contextualClassName = $this->resolveClassName($scope, $type->callee);
         if (! $contextualClassName) {
             return new UnknownType;
         }
         $type->callee = $contextualClassName;
+
+        $isStaticCall = ! in_array($calleeName, StaticReference::KEYWORDS)
+            || (in_array($calleeName, StaticReference::KEYWORDS) && $scope->context->functionDefinition?->isStatic);
 
         // Assuming callee here can be only string of known name. Reality is more complex than
         // that, but it is fine for now.
@@ -329,8 +333,18 @@ class ReferenceTypeResolver
         $this->resolveUnknownClass($type->callee);
 
         // Attempting extensions broker before potentially giving up on type inference
-        if ($returnType = Context::getInstance()->extensionsBroker->getStaticMethodReturnType(new StaticMethodCallEvent(
+        if ($isStaticCall && $returnType = Context::getInstance()->extensionsBroker->getStaticMethodReturnType(new StaticMethodCallEvent(
             callee: $type->callee,
+            name: $type->methodName,
+            scope: $scope,
+            arguments: $type->arguments,
+        ))) {
+            return $returnType;
+        }
+
+        // Attempting extensions broker before potentially giving up on type inference
+        if (!$isStaticCall && $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
+            instance: new ObjectType($contextualClassName), // @todo may be generic but currently this information is lost.
             name: $type->methodName,
             scope: $scope,
             arguments: $type->arguments,
@@ -347,6 +361,10 @@ class ReferenceTypeResolver
 
         if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$type->callee]");
+        }
+
+        if ($scope->context->functionDefinition?->isStatic && in_array($calleeName, StaticReference::KEYWORDS)) {
+            $a = 1;
         }
 
         return $this->getFunctionCallResult($methodDefinition, $type->arguments);
