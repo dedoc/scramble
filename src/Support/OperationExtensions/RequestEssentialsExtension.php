@@ -26,14 +26,19 @@ use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Routing\ImplicitRouteBinding;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Reflector;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ParamTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+use ReflectionNamedType;
 use ReflectionParameter;
 
 class RequestEssentialsExtension extends OperationExtension
@@ -145,23 +150,53 @@ class RequestEssentialsExtension extends OperationExtension
         return Str::of($str)->matchAll('/\{(.*?)\}/')->values()->toArray();
     }
 
+    /**
+     * The goal here is to get the mapping of route names specified in route path to the parameters
+     * used in a route definition. The mapping then is used to get more information about the parameters for
+     * the documentation. For example, the description from PHPDoc will be used for a route path parameter
+     * description.
+     *
+     * So given the route path `/emails/{email_id}/recipients/{recipient_id}` and the route's method:
+     * `public function show(Request $request, string $emailId, string $recipientId)`, we get the mapping:
+     * `['email_id' => 'emailId', 'recipient_id' => 'recipientId']`.
+     *
+     * The trick is to avoid mapping parameters like `Request $request`, but to correctly map the model bindings
+     * (and other potential kind of bindings).
+     *
+     * During this method implementation, Laravel implicit binding checks against snake cased parameters.
+     * @see ImplicitRouteBinding::getParameterName
+     */
     private function getRoutePathParameters(RouteInfo $routeInfo)
     {
         [$route, $methodPhpDocNode] = [$routeInfo->route, $routeInfo->phpDoc()];
 
         $paramNames = $route->parameterNames();
-        $paramsWithRealNames = ($reflectionParams = collect($route->signatureParameters())
-            ->filter(function (ReflectionParameter $v) {
-                if (($type = $v->getType()) && ($type instanceof \ReflectionNamedType) && ($typeName = $type->getName())) {
-                    if (is_a($typeName, Request::class, true)) {
-                        return false;
-                    }
+
+        $implicitlyBoundParams = collect()
+            ->union($route->signatureParameters(UrlRoutable::class))
+            ->union($route->signatureParameters(['backedEnum' => true]))
+            ->filter(function (ReflectionParameter $p) use ($paramNames) {
+                return in_array($p->name, $paramNames)
+                    || in_array(Str::snake($p->name), $paramNames);
+            });
+
+        $routeParams = collect($route->signatureParameters())
+            ->filter(function (ReflectionParameter $p) {
+                if (! $type = $p->getType()) {
+                    return true;
                 }
 
-                return true;
+                return !$type instanceof ReflectionNamedType || $type->isBuiltin();
             })
-            ->values())
+            ->union($implicitlyBoundParams)
+            ->values();
+
+        $paramsWithRealNames = $routeParams
+            ->take(count($paramNames))
             ->map(fn (ReflectionParameter $v) => $v->name)
+            ->pipe(fn (Collection $paramsBeingCalculated) => $paramsBeingCalculated->merge(
+                collect($paramNames)->skip($paramsBeingCalculated->count()),
+            ))
             ->all();
 
         if (count($paramNames) !== count($paramsWithRealNames)) {
@@ -170,7 +205,7 @@ class RequestEssentialsExtension extends OperationExtension
 
         $aliases = collect($paramNames)->mapWithKeys(fn ($name, $i) => [$name => $paramsWithRealNames[$i]])->all();
 
-        $reflectionParamsByKeys = $reflectionParams->keyBy->name;
+        $reflectionParamsByKeys = $routeParams->keyBy->name;
         $phpDocTypehintParam = $methodPhpDocNode
             ? collect($methodPhpDocNode->getParamTagValues())->keyBy(fn (ParamTagValueNode $n) => Str::replace('$', '', $n->parameterName))
             : collect();
