@@ -349,7 +349,7 @@ class ReferenceTypeResolver
         if (!$isStaticCall && $scope->context->classDefinition) {
             $definingMethodName = ($definingClass = $scope->index->getClassDefinition($contextualClassName))
                 ? $definingClass->getMethodDefiningClassName($type->methodName, $scope->index)
-                : $scope->context->classDefinition->getMethodDefiningClassName($type->methodName, $scope->index);
+                : $contextualClassName;
 
             $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType($e = new MethodCallEvent(
                 instance: $i = new ObjectType($scope->context->classDefinition->name),
@@ -373,10 +373,6 @@ class ReferenceTypeResolver
 
         if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$type->callee]");
-        }
-
-        if ($scope->context->functionDefinition?->isStatic && in_array($calleeName, StaticReference::KEYWORDS)) {
-            $a = 1;
         }
 
         return $this->getFunctionCallResult($methodDefinition, $type->arguments);

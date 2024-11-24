@@ -47,10 +47,6 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                 ? $this->getModelMethodReturn($event->getInstance()->name, 'toArray', $event->arguments, $event->scope)
                 : null,
 
-            'toArray' => ($event->getInstance()->name === JsonResource::class || ($event->getDefinition() && ! $event->getDefinition()->hasMethodDefinition('toArray')))
-                ? $this->getModelMethodReturn($event->getInstance()->name, 'toArray', $event->arguments, $event->scope)
-                : null,
-
             'response', 'toResponse' => new Generic(JsonResponse::class, [$event->getInstance(), new LiteralIntegerType(200), new ArrayType]),
 
             'whenLoaded' => count($event->arguments) === 1
@@ -115,12 +111,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
 
     private function getModelMethodReturn(string $resourceClassName, string $methodName, array $arguments, Scope $scope)
     {
-        $callingResourceClassName = $scope->classDefinition()?->name ?: $resourceClassName;
-        if (! $callingResourceClassName) {
-            return null;
-        }
-
-        $modelType = JsonResourceHelper::modelType($scope->index->getClassDefinition($callingResourceClassName), $scope);
+        $modelType = JsonResourceHelper::modelType($scope->index->getClassDefinition($resourceClassName), $scope);
 
         return ReferenceTypeResolver::getInstance()->resolve(
             $scope,
