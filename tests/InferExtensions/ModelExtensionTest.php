@@ -49,7 +49,7 @@ it('adds models attributes to the model class definition as properties', functio
 it('adds toArray method type the model class without defined toArray class', function () {
     $this->infer->analyzeClass(SampleUserModel::class);
 
-    $scope = new Infer\Scope\GlobalScope();
+    $scope = new Infer\Scope\GlobalScope;
     $scope->index = $this->infer->index;
 
     $toArrayReturnType = (new ObjectType(SampleUserModel::class))

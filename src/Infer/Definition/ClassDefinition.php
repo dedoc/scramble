@@ -68,6 +68,7 @@ class ClassDefinition
 
             if ($lastLookedUpClassDefinition->parentFqn) {
                 $lastLookedUpClassName = $lastLookedUpClassDefinition->parentFqn;
+
                 continue;
             }
 

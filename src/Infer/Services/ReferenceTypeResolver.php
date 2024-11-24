@@ -346,7 +346,7 @@ class ReferenceTypeResolver
         }
 
         // Attempting extensions broker before potentially giving up on type inference
-        if (!$isStaticCall && $scope->context->classDefinition) {
+        if (! $isStaticCall && $scope->context->classDefinition) {
             $definingMethodName = ($definingClass = $scope->index->getClassDefinition($contextualClassName))
                 ? $definingClass->getMethodDefiningClassName($type->methodName, $scope->index)
                 : $contextualClassName;
