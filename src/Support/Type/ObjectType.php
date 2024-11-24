@@ -53,11 +53,14 @@ class ObjectType extends AbstractType
 
     public function getMethodReturnType(string $methodName, array $arguments = [], Scope $scope = new GlobalScope): ?Type
     {
+        $classDefinition = $scope->index->getClassDefinition($this->name);
+
         if ($returnType = app(ExtensionsBroker::class)->getMethodReturnType(new MethodCallEvent(
             instance: $this,
             name: $methodName,
             scope: $scope,
             arguments: $arguments,
+            methodDefiningClassName: $classDefinition ? $classDefinition->getMethodDefiningClassName($methodName, $scope->index) : $this->name,
         ))) {
             return $returnType;
         }

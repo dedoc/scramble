@@ -116,7 +116,7 @@ class Scope
             $calleeType = $this->getType($node->var);
 
             $event = $calleeType instanceof ObjectType
-                ? new MethodCallEvent($calleeType, $node->name->name, $this, $this->getArgsTypes($node->args))
+                ? new MethodCallEvent($calleeType, $node->name->name, $this, $this->getArgsTypes($node->args), $calleeType->name)
                 : null;
 
             $type = ($event ? app(ExtensionsBroker::class)->getMethodReturnType($event) : null)

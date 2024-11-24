@@ -265,11 +265,14 @@ class ReferenceTypeResolver
                 : $calleeType;
 
             if ($unwrappedType instanceof ObjectType) {
+                $classDefinition = $this->index->getClassDefinition($unwrappedType->name);
+
                 $event = new MethodCallEvent(
                     instance: $unwrappedType,
                     name: $type->methodName,
                     scope: $scope,
                     arguments: $type->arguments,
+                    methodDefiningClassName: $classDefinition ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index) : $unwrappedType->name,
                 );
             }
 
@@ -314,11 +317,15 @@ class ReferenceTypeResolver
             $type->arguments,
         );
 
+        $calleeName = $type->callee;
         $contextualClassName = $this->resolveClassName($scope, $type->callee);
         if (! $contextualClassName) {
             return new UnknownType;
         }
         $type->callee = $contextualClassName;
+
+        $isStaticCall = ! in_array($calleeName, StaticReference::KEYWORDS)
+            || (in_array($calleeName, StaticReference::KEYWORDS) && $scope->context->functionDefinition?->isStatic);
 
         // Assuming callee here can be only string of known name. Reality is more complex than
         // that, but it is fine for now.
@@ -329,13 +336,32 @@ class ReferenceTypeResolver
         $this->resolveUnknownClass($type->callee);
 
         // Attempting extensions broker before potentially giving up on type inference
-        if ($returnType = Context::getInstance()->extensionsBroker->getStaticMethodReturnType(new StaticMethodCallEvent(
+        if ($isStaticCall && $returnType = Context::getInstance()->extensionsBroker->getStaticMethodReturnType(new StaticMethodCallEvent(
             callee: $type->callee,
             name: $type->methodName,
             scope: $scope,
             arguments: $type->arguments,
         ))) {
             return $returnType;
+        }
+
+        // Attempting extensions broker before potentially giving up on type inference
+        if (! $isStaticCall && $scope->context->classDefinition) {
+            $definingMethodName = ($definingClass = $scope->index->getClassDefinition($contextualClassName))
+                ? $definingClass->getMethodDefiningClassName($type->methodName, $scope->index)
+                : $contextualClassName;
+
+            $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType($e = new MethodCallEvent(
+                instance: $i = new ObjectType($scope->context->classDefinition->name),
+                name: $type->methodName,
+                scope: $scope,
+                arguments: $type->arguments,
+                methodDefiningClassName: $definingMethodName,
+            ));
+
+            if ($returnType) {
+                return $returnType;
+            }
         }
 
         if (! array_key_exists($type->callee, $this->index->classesDefinitions)) {
@@ -747,6 +773,7 @@ class ReferenceTypeResolver
                 name: $se->methodName,
                 scope: $scope,
                 arguments: $se->arguments,
+                methodDefiningClassName: $type->name,
             ));
         }
 

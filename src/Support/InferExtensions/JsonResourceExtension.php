@@ -4,10 +4,8 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
-use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
-use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
@@ -29,7 +27,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MergeValue;
 use Illuminate\Http\Resources\MissingValue;
 
-class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeExtension, StaticMethodReturnTypeExtension
+class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 {
     public function shouldHandle(ObjectType|string $type): bool
     {
@@ -43,10 +41,10 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         return match ($event->name) {
-            // @todo This should work automatically as toArray calls must be proxied to parents.
-            'toArray' => ($event->getInstance()->name === JsonResource::class || ($event->getDefinition() && ! $event->getDefinition()->hasMethodDefinition('toArray')))
+            'toArray' => $event->methodDefiningClassName === JsonResource::class
                 ? $this->getModelMethodReturn($event->getInstance()->name, 'toArray', $event->arguments, $event->scope)
                 : null,
+
             'response', 'toResponse' => new Generic(JsonResponse::class, [$event->getInstance(), new LiteralIntegerType(200), new ArrayType]),
 
             'whenLoaded' => count($event->arguments) === 1
@@ -88,14 +86,6 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         };
     }
 
-    public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
-    {
-        return match ($event->name) {
-            'toArray' => $this->handleToArrayStaticCall($event),
-            default => null,
-        };
-    }
-
     public function getPropertyType(PropertyFetchEvent $event): ?Type
     {
         return match ($event->name) {
@@ -110,22 +100,6 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                     ),
                 ),
         };
-    }
-
-    /**
-     * Note: In fact, this is not a static call to the JsonResource. This is how type inference system treats it for
-     * now, when analyzing parent::toArray() call. `parent::` becomes `JsonResource::`. So this should be fixed in
-     * future just for the sake of following how real code works.
-     */
-    private function handleToArrayStaticCall(StaticMethodCallEvent $event): ?Type
-    {
-        $contextClassName = $event->scope->context->classDefinition->name ?? null;
-
-        if (! $contextClassName) {
-            return null;
-        }
-
-        return $this->getModelMethodReturn($contextClassName, 'toArray', $event->arguments, $event->scope);
     }
 
     private function proxyMethodCallToModel(MethodCallEvent $event)

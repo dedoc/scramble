@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
@@ -154,10 +153,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             return null;
         }
 
-        /** @var ClassDefinition $definition */
-        $definition = $event->getDefinition();
-
-        if (array_key_exists('toArray', $definition?->methods ?: [])) {
+        if ($event->methodDefiningClassName !== Model::class) {
             return null;
         }
 
