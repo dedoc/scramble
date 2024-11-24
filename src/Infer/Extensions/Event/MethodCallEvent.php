@@ -15,7 +15,9 @@ class MethodCallEvent
         public readonly string $name,
         public readonly Scope $scope,
         public readonly array $arguments,
-    ) {}
+        public readonly string|null $methodDefiningClassName,
+    ) {
+    }
 
     public function getDefinition()
     {

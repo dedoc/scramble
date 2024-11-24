@@ -265,11 +265,14 @@ class ReferenceTypeResolver
                 : $calleeType;
 
             if ($unwrappedType instanceof ObjectType) {
+                $classDefinition = $this->index->getClassDefinition($unwrappedType->name);
+
                 $event = new MethodCallEvent(
                     instance: $unwrappedType,
                     name: $type->methodName,
                     scope: $scope,
                     arguments: $type->arguments,
+                    methodDefiningClassName: $classDefinition ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index) : $unwrappedType->name,
                 );
             }
 
@@ -343,13 +346,22 @@ class ReferenceTypeResolver
         }
 
         // Attempting extensions broker before potentially giving up on type inference
-        if (!$isStaticCall && $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
-            instance: new ObjectType($contextualClassName), // @todo may be generic but currently this information is lost.
-            name: $type->methodName,
-            scope: $scope,
-            arguments: $type->arguments,
-        ))) {
-            return $returnType;
+        if (!$isStaticCall && $scope->context->classDefinition) {
+            $definingMethodName = ($definingClass = $scope->index->getClassDefinition($contextualClassName))
+                ? $definingClass->getMethodDefiningClassName($type->methodName, $scope->index)
+                : $scope->context->classDefinition->getMethodDefiningClassName($type->methodName, $scope->index);
+
+            $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType($e = new MethodCallEvent(
+                instance: $i = new ObjectType($scope->context->classDefinition->name),
+                name: $type->methodName,
+                scope: $scope,
+                arguments: $type->arguments,
+                methodDefiningClassName: $definingMethodName,
+            ));
+
+            if ($returnType) {
+                return $returnType;
+            }
         }
 
         if (! array_key_exists($type->callee, $this->index->classesDefinitions)) {
@@ -765,6 +777,7 @@ class ReferenceTypeResolver
                 name: $se->methodName,
                 scope: $scope,
                 arguments: $se->arguments,
+                methodDefiningClassName: $type->name,
             ));
         }
 

@@ -43,6 +43,10 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         return match ($event->name) {
+            'toArray' => $event->methodDefiningClassName === JsonResource::class
+                ? $this->getModelMethodReturn($event->getInstance()->name, 'toArray', $event->arguments, $event->scope)
+                : null,
+
             'toArray' => ($event->getInstance()->name === JsonResource::class || ($event->getDefinition() && ! $event->getDefinition()->hasMethodDefinition('toArray')))
                 ? $this->getModelMethodReturn($event->getInstance()->name, 'toArray', $event->arguments, $event->scope)
                 : null,

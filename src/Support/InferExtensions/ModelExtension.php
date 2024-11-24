@@ -154,10 +154,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             return null;
         }
 
-        /** @var ClassDefinition $definition */
-        $definition = $event->getDefinition();
-
-        if (array_key_exists('toArray', $definition?->methods ?: [])) {
+        if ($event->methodDefiningClassName !== Model::class) {
             return null;
         }
 

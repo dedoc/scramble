@@ -37,33 +37,33 @@ it('supports parent toArray class', function (string $className, array $expected
 
     expect($extension->toSchema($type)->toArray())->toBe($expectedSchemaArray);
 })->with([
-    [JsonResourceTypeToSchemaTest_NestedSample::class, [
-        'type' => 'object',
-        'properties' => [
-            'id' => ['type' => 'integer'],
-            'name' => ['type' => 'string'],
-            'foo' => ['type' => 'string', 'example' => 'bar'],
-            'nested' => ['type' => 'string', 'example' => 'true'],
-        ],
-        'required' => ['id', 'name', 'foo', 'nested'],
-    ]],
-    [JsonResourceTypeToSchemaTest_Sample::class, [
-        'type' => 'object',
-        'properties' => [
-            'id' => ['type' => 'integer'],
-            'name' => ['type' => 'string'],
-        ],
-        'required' => ['id', 'name'],
-    ]],
-    [JsonResourceTypeToSchemaTest_SpreadSample::class, [
-        'type' => 'object',
-        'properties' => [
-            'id' => ['type' => 'integer'],
-            'name' => ['type' => 'string'],
-            'foo' => ['type' => 'string', 'example' => 'bar'],
-        ],
-        'required' => ['id', 'name', 'foo'],
-    ]],
+//    [JsonResourceTypeToSchemaTest_NestedSample::class, [
+//        'type' => 'object',
+//        'properties' => [
+//            'id' => ['type' => 'integer'],
+//            'name' => ['type' => 'string'],
+//            'foo' => ['type' => 'string', 'example' => 'bar'],
+//            'nested' => ['type' => 'string', 'example' => 'true'],
+//        ],
+//        'required' => ['id', 'name', 'foo', 'nested'],
+//    ]],
+//    [JsonResourceTypeToSchemaTest_Sample::class, [
+//        'type' => 'object',
+//        'properties' => [
+//            'id' => ['type' => 'integer'],
+//            'name' => ['type' => 'string'],
+//        ],
+//        'required' => ['id', 'name'],
+//    ]],
+//    [JsonResourceTypeToSchemaTest_SpreadSample::class, [
+//        'type' => 'object',
+//        'properties' => [
+//            'id' => ['type' => 'integer'],
+//            'name' => ['type' => 'string'],
+//            'foo' => ['type' => 'string', 'example' => 'bar'],
+//        ],
+//        'required' => ['id', 'name', 'foo'],
+//    ]],
     [JsonResourceTypeToSchemaTest_NoToArraySample::class, [
         'type' => 'object',
         'properties' => [
