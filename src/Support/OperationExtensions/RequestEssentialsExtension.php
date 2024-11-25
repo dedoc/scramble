@@ -165,6 +165,7 @@ class RequestEssentialsExtension extends OperationExtension
      * (and other potential kind of bindings).
      *
      * During this method implementation, Laravel implicit binding checks against snake cased parameters.
+     *
      * @see ImplicitRouteBinding::getParameterName
      */
     private function getRoutePathParameters(RouteInfo $routeInfo)
@@ -194,7 +195,7 @@ class RequestEssentialsExtension extends OperationExtension
                 }
 
                 return [
-                    $name => null
+                    $name => null,
                 ];
             });
 
@@ -202,13 +203,13 @@ class RequestEssentialsExtension extends OperationExtension
 
         $checkingRouteSignatureParameters = $route->signatureParameters();
         $paramsToSignatureParametersNameMap = collect($paramNames)
-            ->mapWithKeys(function ($name) use ($implicitlyBoundReflectionParams, $paramsValuesClasses, &$checkingRouteSignatureParameters) {
+            ->mapWithKeys(function ($name) use ($paramsValuesClasses, &$checkingRouteSignatureParameters) {
                 $boundParamType = $paramsValuesClasses[$name];
                 $mappedParameterReflection = collect($checkingRouteSignatureParameters)
-                    ->first(function (ReflectionParameter $rp) use ($paramsValuesClasses, $boundParamType) {
+                    ->first(function (ReflectionParameter $rp) use ($boundParamType) {
                         $type = $rp->getType();
 
-                        if (!$type instanceof ReflectionNamedType || $type->isBuiltin()) {
+                        if (! $type instanceof ReflectionNamedType || $type->isBuiltin()) {
                             return true;
                         }
 
@@ -270,7 +271,7 @@ class RequestEssentialsExtension extends OperationExtension
         return [$params, $aliases];
     }
 
-    private function getExplicitlyBoundParamType(string $name): string|null
+    private function getExplicitlyBoundParamType(string $name): ?string
     {
         if (! $binder = app(Router::class)->getBindingCallback($name)) {
             return null;
@@ -283,7 +284,7 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         if ($returnType = $reflection->getReturnType()) {
-            return $returnType instanceof ReflectionNamedType && !$returnType->isBuiltin()
+            return $returnType instanceof ReflectionNamedType && ! $returnType->isBuiltin()
                 ? $returnType->getName()
                 : null;
         }
