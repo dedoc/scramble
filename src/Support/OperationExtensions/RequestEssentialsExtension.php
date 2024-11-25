@@ -310,8 +310,7 @@ class RequestEssentialsExtension extends OperationExtension
         ?ParamTagValueNode $phpDocParam,
         ?ReflectionParameter $reflectionParam,
         ?string $boundClass,
-    )
-    {
+    ) {
         $type = $boundClass ? new ObjectType($boundClass) : new UnknownType;
         if ($routeInfo->reflectionMethod()) {
             $type->setAttribute('file', $routeInfo->reflectionMethod()->getFileName());
