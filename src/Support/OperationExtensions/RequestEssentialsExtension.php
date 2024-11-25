@@ -32,12 +32,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Routing\ImplicitRouteBinding;
 use Illuminate\Routing\Route;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Reflector;
 use Illuminate\Support\Str;
+use Laravel\SerializableClosure\Support\ReflectionClosure;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ParamTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+use ReflectionException;
+use ReflectionFunction;
 use ReflectionNamedType;
 use ReflectionParameter;
 
@@ -172,13 +176,18 @@ class RequestEssentialsExtension extends OperationExtension
 
         $paramNames = $route->parameterNames();
 
-        $implicitlyBoundParams = collect()
+        $implicitlyBoundReflectionParams = collect()
             ->union($route->signatureParameters(UrlRoutable::class))
             ->union($route->signatureParameters(['backedEnum' => true]))
             ->filter(function (ReflectionParameter $p) use ($paramNames) {
                 return in_array($p->name, $paramNames)
                     || in_array(Str::snake($p->name), $paramNames);
             });
+
+        $explicitlyBoundParamsNames = collect($paramNames)
+            ->map($this->getExplicitlyBoundParamType(...))
+            ->dd()
+            ->values();
 
         $routeParams = collect($route->signatureParameters())
             ->filter(function (ReflectionParameter $p) {
@@ -188,7 +197,8 @@ class RequestEssentialsExtension extends OperationExtension
 
                 return !$type instanceof ReflectionNamedType || $type->isBuiltin();
             })
-            ->union($implicitlyBoundParams)
+            ->union($implicitlyBoundReflectionParams)
+            ->sortKeys()
             ->values();
 
         $paramsWithRealNames = $routeParams
@@ -241,6 +251,35 @@ class RequestEssentialsExtension extends OperationExtension
         }, array_values(array_diff($route->parameterNames(), $this->getParametersFromString($route->getDomain()))));
 
         return [$params, $aliases];
+    }
+
+    private function getExplicitlyBoundParamType(string $name): string|null
+    {
+        if (! $binder = app(Router::class)->getBindingCallback($name)) {
+            return null;
+        }
+
+        try {
+            $reflection = new ReflectionFunction($binder);
+        } catch (ReflectionException) {
+            return null;
+        }
+
+        if ($returnType = $reflection->getReturnType()) {
+            return $returnType instanceof ReflectionNamedType && !$returnType->isBuiltin()
+                ? $returnType->getName()
+                : null;
+        }
+
+        // in case this is a model binder
+        if (
+            ($modelClass = $reflection->getClosureUsedVariables()['class'] ?? null)
+            && is_string($modelClass)
+        ) {
+            return $modelClass;
+        }
+
+        return null;
     }
 
     private function getParameterType(string $paramName, string $description, RouteInfo $routeInfo, Route $route, ?ParamTagValueNode $phpDocParam, ?ReflectionParameter $reflectionParam)
