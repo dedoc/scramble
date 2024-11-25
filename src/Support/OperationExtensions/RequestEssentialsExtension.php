@@ -179,39 +179,59 @@ class RequestEssentialsExtension extends OperationExtension
         $implicitlyBoundReflectionParams = collect()
             ->union($route->signatureParameters(UrlRoutable::class))
             ->union($route->signatureParameters(['backedEnum' => true]))
-            ->filter(function (ReflectionParameter $p) use ($paramNames) {
-                return in_array($p->name, $paramNames)
-                    || in_array(Str::snake($p->name), $paramNames);
-            });
+            ->keyBy('name');
 
-        $explicitlyBoundParamsNames = collect($paramNames)
-            ->map($this->getExplicitlyBoundParamType(...))
-            ->dd()
-            ->values();
-
-        $routeParams = collect($route->signatureParameters())
-            ->filter(function (ReflectionParameter $p) {
-                if (! $type = $p->getType()) {
-                    return true;
+        $paramsValuesClasses = collect($paramNames)
+            ->mapWithKeys(function ($name) use ($implicitlyBoundReflectionParams) {
+                if ($explicitlyBoundParamType = $this->getExplicitlyBoundParamType($name)) {
+                    return [$name => $explicitlyBoundParamType];
                 }
 
-                return !$type instanceof ReflectionNamedType || $type->isBuiltin();
-            })
-            ->union($implicitlyBoundReflectionParams)
-            ->sortKeys()
+                /** @var ReflectionParameter $implicitlyBoundParam */
+                $implicitlyBoundParam = $implicitlyBoundReflectionParams->first(
+                    fn (ReflectionParameter $p) => $p->name === $name || Str::snake($p->name) === $name,
+                );
+
+                if ($implicitlyBoundParam) {
+                    return [$name => Reflector::getParameterClassName($implicitlyBoundParam)];
+                }
+
+                return [
+                    $name => null
+                ];
+            });
+
+        $routeParams = collect($route->signatureParameters());
+
+        $checkingRouteSignatureParameters = $route->signatureParameters();
+        $paramsToSignatureParametersNameMap = collect($paramNames)
+            ->mapWithKeys(function ($name) use ($implicitlyBoundReflectionParams, $paramsValuesClasses, &$checkingRouteSignatureParameters) {
+                $boundParamType = $paramsValuesClasses[$name];
+                $mappedParameterReflection = collect($checkingRouteSignatureParameters)
+                    ->first(function (ReflectionParameter $rp) use ($paramsValuesClasses, $boundParamType) {
+                        $type = $rp->getType();
+
+                        if (! $boundParamType) {
+                            return !$type instanceof ReflectionNamedType || $type->isBuiltin();
+                        }
+
+                        $className = Reflector::getParameterClassName($rp);
+
+                        return is_a($boundParamType, $className, true);
+                    });
+
+                if ($mappedParameterReflection) {
+                    $checkingRouteSignatureParameters = array_filter($checkingRouteSignatureParameters, fn ($v) => $v !== $mappedParameterReflection);
+                }
+
+                return [
+                    $name => $mappedParameterReflection,
+                ];
+            });
+
+        $paramsWithRealNames = $paramsToSignatureParametersNameMap
+            ->mapWithKeys(fn (?ReflectionParameter $reflectionParameter, $name) => [$name => $reflectionParameter?->name ?: $name])
             ->values();
-
-        $paramsWithRealNames = $routeParams
-            ->take(count($paramNames))
-            ->map(fn (ReflectionParameter $v) => $v->name)
-            ->pipe(fn (Collection $paramsBeingCalculated) => $paramsBeingCalculated->merge(
-                collect($paramNames)->skip($paramsBeingCalculated->count()),
-            ))
-            ->all();
-
-        if (count($paramNames) !== count($paramsWithRealNames)) {
-            $paramsWithRealNames = $paramNames;
-        }
 
         $aliases = collect($paramNames)->mapWithKeys(fn ($name, $i) => [$name => $paramsWithRealNames[$i]])->all();
 
