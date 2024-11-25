@@ -243,3 +243,9 @@ it('resolves invokable call from parent class', function () {
 
     expect($type->toString())->toBe('string(foo)');
 });
+
+it('handles invokable call to Closure type without failing (#636)', function () {
+    $type = getStatementType('(new \Closure)("foo")');
+
+    expect($type->toString())->toBe('unknown');
+});
