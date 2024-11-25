@@ -29,15 +29,12 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
 use Illuminate\Routing\ImplicitRouteBinding;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Reflector;
 use Illuminate\Support\Str;
-use Laravel\SerializableClosure\Support\ReflectionClosure;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ParamTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionException;
@@ -211,8 +208,8 @@ class RequestEssentialsExtension extends OperationExtension
                     ->first(function (ReflectionParameter $rp) use ($paramsValuesClasses, $boundParamType) {
                         $type = $rp->getType();
 
-                        if (! $boundParamType) {
-                            return !$type instanceof ReflectionNamedType || $type->isBuiltin();
+                        if (!$type instanceof ReflectionNamedType || $type->isBuiltin()) {
+                            return true;
                         }
 
                         $className = Reflector::getParameterClassName($rp);
