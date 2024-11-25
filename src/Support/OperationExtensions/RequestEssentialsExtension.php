@@ -244,7 +244,8 @@ class RequestEssentialsExtension extends OperationExtension
          * 2. PhpDoc Typehint
          * 3. String (?)
          */
-        $params = array_map(function (string $paramName) use ($routeInfo, $route, $aliases, $reflectionParamsByKeys, $phpDocTypehintParam) {
+        $params = array_map(function (string $paramName) use ($routeInfo, $route, $aliases, $reflectionParamsByKeys, $phpDocTypehintParam, $paramsValuesClasses) {
+            $originalParamName = $paramName;
             $paramName = $aliases[$paramName];
 
             $description = $phpDocTypehintParam[$paramName]?->description ?? '';
@@ -255,6 +256,7 @@ class RequestEssentialsExtension extends OperationExtension
                 $route,
                 $phpDocTypehintParam[$paramName] ?? null,
                 $reflectionParamsByKeys[$paramName] ?? null,
+                $paramsValuesClasses[$originalParamName] ?? null,
             );
 
             $param = Parameter::make($paramName, 'path')
@@ -300,9 +302,16 @@ class RequestEssentialsExtension extends OperationExtension
         return null;
     }
 
-    private function getParameterType(string $paramName, string $description, RouteInfo $routeInfo, Route $route, ?ParamTagValueNode $phpDocParam, ?ReflectionParameter $reflectionParam)
-    {
-        $type = new UnknownType;
+    private function getParameterType(
+        string $paramName,
+        string $description,
+        RouteInfo $routeInfo,
+        Route $route,
+        ?ParamTagValueNode $phpDocParam,
+        ?ReflectionParameter $reflectionParam,
+        ?string $boundClass,
+    ) {
+        $type = $boundClass ? new ObjectType($boundClass) : new UnknownType;
         if ($routeInfo->reflectionMethod()) {
             $type->setAttribute('file', $routeInfo->reflectionMethod()->getFileName());
             $type->setAttribute('line', $routeInfo->reflectionMethod()->getStartLine());
