@@ -4,6 +4,13 @@
   </a>
 </p>
 
+<p align="center">
+    <a href="https://github.com/dedoc/scramble/actions"><img src="https://github.com/dedoc/scramble/actions/workflows/run-tests.yml/badge.svg" alt="Build Status"></a>
+    <a href="https://packagist.org/packages/dedoc/scramble"><img src="https://img.shields.io/packagist/dt/dedoc/scramble" alt="Total Downloads"></a>
+    <a href="https://packagist.org/packages/dedoc/scramble"><img src="https://img.shields.io/packagist/v/dedoc/scramble" alt="Latest Stable Version"></a>
+    <a href="https://packagist.org/packages/dedoc/scramble"><img src="https://img.shields.io/packagist/l/dedoc/scramble" alt="License"></a>
+</p>
+
 # Scramble
 
 Scramble generates API documentation for Laravel project. Without requiring you to manually write PHPDoc annotations. Docs are generated in OpenAPI 3.1.0 format.
