@@ -35,6 +35,16 @@ After install you will have 2 routes added to your application:
 
 By default, these routes are available only in `local` environment. You can change this behavior by defining `viewApiDocs` gate.
 
+## Contributing
+
+We appreciate your feedback and contributions to this library! Before you get started, please review following guidelines.
+
+### Reporting Issues or Bugs
+If you've encountered a bug or have suggestions for improvement, [please raise an issue](https://github.com/dedoc/scramble/issues). Provide as much detail as possible to help us address the issue efficiently.
+
+### Submitting Changes
+To contribute code changes or enhancements, follow the guidelines in the [Contribution Guide](./.github/CONTRIBUTING.md). This ensures your contributions align with the pr
+
 ---
 
 <p>
