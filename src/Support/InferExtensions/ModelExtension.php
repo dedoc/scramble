@@ -218,7 +218,8 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             $reflectionMethod = new \ReflectionMethod($className, 'toArray');
 
             return $reflectionMethod->getDeclaringClass()->getName();
-        } catch (Throwable) {}
+        } catch (Throwable) {
+        }
 
         return $event->methodDefiningClassName;
     }
