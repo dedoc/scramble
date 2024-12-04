@@ -51,7 +51,7 @@ class ObjectType extends AbstractType
         return $classDefinition?->getMethodDefinition($methodName, $scope);
     }
 
-    public function getMethodReturnType(string $methodName, array $arguments = [], Scope $scope = new GlobalScope): ?Type
+    public function getMethodReturnType(string $methodName, array $arguments = [], Scope $scope = new GlobalScope): Type
     {
         $classDefinition = $scope->index->getClassDefinition($this->name);
 
@@ -60,13 +60,16 @@ class ObjectType extends AbstractType
             name: $methodName,
             scope: $scope,
             arguments: $arguments,
-            methodDefiningClassName: $classDefinition ? $classDefinition->getMethodDefiningClassName($methodName, $scope->index) : $this->name,
+            methodDefiningClassName: $definingClassName = $classDefinition ? $classDefinition->getMethodDefiningClassName($methodName, $scope->index) : $this->name,
         ))) {
             return $returnType;
         }
 
+        /*
+         * For now, when parent class is in `vendor`, we may do not know that certain definition exists.
+         */
         if (! $methodDefinition = $this->getMethodDefinition($methodName)) {
-            return null;
+            return new UnknownType("No method {$definingClassName}@{$methodName} definition found, it may be located in `vendor` which is not analyzed.");
         }
 
         $returnType = $methodDefinition->type->getReturnType();
