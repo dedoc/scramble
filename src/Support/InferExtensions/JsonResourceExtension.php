@@ -33,7 +33,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MergeValue;
 use Illuminate\Http\Resources\MissingValue;
-use function Pest\Laravel\instance;
 
 class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 {
@@ -107,7 +106,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
             ]),
 
             'whenNull' => Union::wrap([
-                new NullType(),
+                new NullType,
                 $this->value($event->getArg('default', 1, new ObjectType(MissingValue::class))),
             ]),
 

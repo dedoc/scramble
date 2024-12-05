@@ -18,11 +18,10 @@ beforeEach(function () {
 });
 
 /**
- * @param Infer $infer
- * @param string $class
  * @return array{0: \Dedoc\Scramble\Support\Generator\Types\Type, 1: Components}
  */
-function JsonResourceExtensionTest_analyze (Infer $infer, string $class) {
+function JsonResourceExtensionTest_analyze(Infer $infer, string $class)
+{
     $transformer = new TypeTransformer($infer, $components = new Components, [
         ModelToSchema::class,
         JsonResourceTypeToSchema::class,
@@ -40,33 +39,34 @@ it('supports whenHas', function () {
     [$schema] = JsonResourceExtensionTest_analyze($this->infer, JsonResourceExtensionTest_WhenHas::class);
 
     expect($schema->toArray())->toBe([
-        "type" => "object",
-        "properties" => [
-            "user" => [
-                '$ref' => "#/components/schemas/SampleUserModel",
+        'type' => 'object',
+        'properties' => [
+            'user' => [
+                '$ref' => '#/components/schemas/SampleUserModel',
             ],
-            "value" => [
-                "type" => "integer",
-                "example" => 42,
+            'value' => [
+                'type' => 'integer',
+                'example' => 42,
             ],
-            "default" => [
-                "anyOf" => [
+            'default' => [
+                'anyOf' => [
                     [
-                        "type" => "string",
-                        "enum" => ["foo"],
+                        'type' => 'string',
+                        'enum' => ['foo'],
                     ],
                     [
-                        "type" => "integer",
-                        "enum" => [42],
+                        'type' => 'integer',
+                        'enum' => [42],
                     ],
                 ],
             ],
         ],
-        "required" => ["default"],
+        'required' => ['default'],
     ]);
 });
 /** @mixin SamplePostModel */
-class JsonResourceExtensionTest_WhenHas extends JsonResource {
+class JsonResourceExtensionTest_WhenHas extends JsonResource
+{
     public function toArray(Request $request)
     {
         return [
