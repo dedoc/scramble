@@ -48,6 +48,13 @@ class Scramble
     public static array $extensions = [];
 
     /**
+     * Whether to throw exceptions on validation errors in testing environment.
+     *
+     * @var bool
+     */
+    protected bool $throwOnError = true;
+
+    /**
      * Disables registration of default API documentation routes.
      */
     public static function ignoreDefaultRoutes(): void
@@ -130,8 +137,8 @@ class Scramble
         $forbiddenSchemas = Arr::wrap($schemaTypes);
 
         static::enforceSchema(
-            fn ($schema, $path) => ! in_array($schema::class, $forbiddenSchemas),
-            fn ($schema) => 'Schema ['.$schema::class.'] is not allowed.',
+            fn($schema, $path) => ! in_array($schema::class, $forbiddenSchemas),
+            fn($schema) => 'Schema [' . $schema::class . '] is not allowed.',
             $ignorePaths,
             $throw,
         );
@@ -184,5 +191,17 @@ class Scramble
         }
 
         return Scramble::$apis[$api];
+    }
+
+    public function throwOnError(bool $throw = true): self
+    {
+        $this->throwOnError = $throw;
+
+        return $this;
+    }
+
+    public function shouldThrowOnError(): bool
+    {
+        return $this->throwOnError;
     }
 }
