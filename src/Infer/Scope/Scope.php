@@ -16,7 +16,6 @@ use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
@@ -119,14 +118,10 @@ class Scope
                 ? new MethodCallEvent($calleeType, $node->name->name, $this, $this->getArgsTypes($node->args), $calleeType->name)
                 : null;
 
-            $type = ($event ? app(ExtensionsBroker::class)->getMethodReturnType($event) : null)
-                ?: new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args));
-
             $exceptions = $event ? app(ExtensionsBroker::class)->getMethodCallExceptions($event) : [];
 
             if (
                 $calleeType instanceof TemplateType
-                && $type instanceof AbstractReferenceType
                 && ! $exceptions
             ) {
                 // @todo
@@ -136,12 +131,14 @@ class Scope
                 return $this->setType($node, new UnknownType("Cannot infer type of method [{$node->name->name}] call on template type: not supported yet."));
             }
 
+            $referenceType = new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args));
+
             /*
              * When inside a constructor, we want to add a side effect to the constructor definition, so we can track
              * how the properties are being set.
              */
-            if ($this->functionDefinition()?->type->name === '__construct' && $type instanceof AbstractReferenceType) {
-                $this->functionDefinition()->sideEffects[] = $type;
+            if ($this->functionDefinition()?->type->name === '__construct') {
+                $this->functionDefinition()->sideEffects[] = $referenceType;
             }
 
             if ($this->functionDefinition()) {
@@ -151,7 +148,7 @@ class Scope
                 );
             }
 
-            return $this->setType($node, $type);
+            return $this->setType($node, $referenceType);
         }
 
         if ($node instanceof Node\Expr\StaticCall) {
