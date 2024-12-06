@@ -48,11 +48,12 @@ class Scramble
     public static array $extensions = [];
 
     /**
-     * Whether to throw exceptions on validation errors in testing environment.
-     *
-     * @var bool
+     * Whether to throw an exception during docs generation. When `false`, 
+     * documentation will be generated and issues added to the endpoint description 
+     * that failed generation. When `true`, the exception will be thrown and docs 
+     * generation will fail.
      */
-    protected bool $throwOnError = true;
+    public static bool $throwOnError = false;
 
     /**
      * Disables registration of default API documentation routes.
