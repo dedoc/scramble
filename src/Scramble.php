@@ -194,15 +194,13 @@ class Scramble
         return Scramble::$apis[$api];
     }
 
-    public function throwOnError(bool $throw = true): self
+    public static function throwOnError(bool $throw = true): void
     {
-        $this->throwOnError = $throw;
-
-        return $this;
+        static::$throwOnError = $throw;
     }
 
     public function shouldThrowOnError(): bool
     {
-        return $this->throwOnError;
+        return static::$throwOnError;
     }
 }
