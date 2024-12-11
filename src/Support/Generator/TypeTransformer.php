@@ -217,6 +217,10 @@ class TypeTransformer
             $openApiType->setAttribute('line', $type->getAttribute('line'));
         }
 
+        if ($type->hasAttribute('enumExcept')) {
+            $openApiType->setAttribute('enumExcept', $type->getAttribute('enumExcept'));
+        }
+
         return $openApiType;
     }
 

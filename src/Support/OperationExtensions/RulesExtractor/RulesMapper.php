@@ -168,9 +168,11 @@ class RulesMapper
 
         $enumName = $getProtectedValue($rule, 'type');
 
-        return $this->openApiTransformer->transform(
-            new ObjectType($enumName)
-        );
+        $objectType = new ObjectType($enumName);
+
+        $objectType->setAttribute('enumExcept', $getProtectedValue($rule, 'except'));
+
+        return $this->openApiTransformer->transform($objectType);
     }
 
     public function image(Type $type)
