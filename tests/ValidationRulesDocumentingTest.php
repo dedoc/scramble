@@ -92,7 +92,7 @@ it('extract rules from enum rule with only', function () {
         'enum' => [
             'draft',
             'archived',
-        ]
+        ],
     ]);
 });
 
@@ -108,7 +108,7 @@ it('extract rules from enum rule with except', function () {
         'enum' => [
             'published',
             'archived',
-        ]
+        ],
     ]);
 });
 

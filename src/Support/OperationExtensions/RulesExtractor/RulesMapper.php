@@ -178,7 +178,7 @@ class RulesMapper
         if ($except || $only) {
             $cases = collect($enumName::cases())
                 ->reject(fn ($case) => in_array($case, $except))
-                ->filter(fn ($case) => !$only || in_array($case, $only));
+                ->filter(fn ($case) => ! $only || in_array($case, $only));
 
             if (! isset($cases->first()?->value)) {
                 return new UnknownType("$enumName enum doesnt have values (only/except context)");
