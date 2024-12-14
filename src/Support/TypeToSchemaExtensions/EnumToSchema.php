@@ -26,18 +26,11 @@ class EnumToSchema extends TypeToSchemaExtension
     {
         $name = $type->name;
 
-        $values = [];
-        $except = $type->hasAttribute('enumExcept') ? $type->getAttribute('enumExcept') : [];
-
-        foreach ($name::cases() as $case) {
-            if (!in_array($case, $except, true)) {
-                $values[] = $case->value;
-            }
-        }
-
-        if ($values === []) {
+        if (! isset($name::cases()[0]->value)) {
             return new UnknownType("$type->name enum doesnt have values");
         }
+
+        $values = array_map(fn ($s) => $s->value, $name::cases());
 
         $schemaType = is_string($values[0]) ? new StringType : new IntegerType;
         $schemaType->enum($values);
