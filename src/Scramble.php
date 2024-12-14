@@ -48,9 +48,9 @@ class Scramble
     public static array $extensions = [];
 
     /**
-     * Whether to throw an exception during docs generation. When `false`, 
-     * documentation will be generated and issues added to the endpoint description 
-     * that failed generation. When `true`, the exception will be thrown and docs 
+     * Whether to throw an exception during docs generation. When `false`,
+     * documentation will be generated and issues added to the endpoint description
+     * that failed generation. When `true`, the exception will be thrown and docs
      * generation will fail.
      */
     public static bool $throwOnError = false;
