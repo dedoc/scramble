@@ -16,6 +16,7 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
@@ -38,6 +39,7 @@ use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\Type\VoidType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -475,6 +477,20 @@ class ReferenceTypeResolver
         }
 
         $classDefinition = $this->index->getClassDefinition($type->name);
+
+        $typeBeingConstructed = ! $classDefinition->templateTypes
+            ? new ObjectType($type->name)
+            : new Generic($type->name, array_map(fn () => new MixedType, $classDefinition->templateTypes));
+
+        if (Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
+            instance: $typeBeingConstructed,
+            name: '__construct',
+            scope: $scope,
+            arguments: $type->arguments,
+            methodDefiningClassName: $type->name,
+        )) instanceof VoidType) {
+            return $typeBeingConstructed;
+        }
 
         if (! $classDefinition->templateTypes) {
             return new ObjectType($type->name);
