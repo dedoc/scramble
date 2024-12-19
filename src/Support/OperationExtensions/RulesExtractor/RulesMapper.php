@@ -172,8 +172,8 @@ class RulesMapper
 
         $objectType = new ObjectType($enumName);
 
-        $except = $getProtectedValue($rule, 'except');
-        $only = $getProtectedValue($rule, 'only');
+        $except = method_exists(Enum::class, 'except') ? $getProtectedValue($rule, 'except') : [];
+        $only = method_exists(Enum::class, 'only') ? $getProtectedValue($rule, 'only') : [];
 
         if ($except || $only) {
             $cases = collect($enumName::cases())
