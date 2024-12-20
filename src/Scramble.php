@@ -199,7 +199,7 @@ class Scramble
         static::$throwOnError = $throw;
     }
 
-    public function shouldThrowOnError(): bool
+    public static function shouldThrowOnError(): bool
     {
         return static::$throwOnError;
     }
