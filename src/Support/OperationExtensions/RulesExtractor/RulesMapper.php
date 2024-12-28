@@ -46,6 +46,11 @@ class RulesMapper
         return (new NumberType)->addProperties($prevType);
     }
 
+    public function decimal(Type $prevType)
+    {
+        return (new NumberType)->addProperties($prevType);
+    }
+
     public function int(Type $prevType)
     {
         return (new IntegerType)->addProperties($prevType);
