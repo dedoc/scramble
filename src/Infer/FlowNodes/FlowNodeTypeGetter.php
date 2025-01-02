@@ -297,8 +297,8 @@ class FlowNodeTypeGetter
     protected function makeIncompleteArguments(array $arguments, FlowNode $flowNode)
     {
         // The possible optimization here is to make some sort of promise and postpone the arguments
-        // types resolution till the moment we actually need them - if the function return type includes
-        // some argument types. Unless that, we don't need to analyze it at all!
+        // incomplete types resolution till the moment we actually need them - if the function return type includes
+        // some argument template types. Unless that, we don't need to analyze it at all!
 
         // @todo: variadic placeholder support (represents `...` in `foo(...)`)
         // @todo: unpack
