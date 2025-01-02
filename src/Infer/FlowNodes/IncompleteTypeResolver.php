@@ -5,15 +5,23 @@ namespace Dedoc\Scramble\Infer\FlowNodes;
 use Dedoc\Scramble\Infer\Contracts\Index;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use WeakMap;
 
 class IncompleteTypeResolver
 {
-    public function __construct(private readonly Index $index) {}
+    private WeakMap $visitedNodes;
+
+    public function __construct(private readonly Index $index)
+    {
+        $this->visitedNodes = new WeakMap;
+    }
 
     public function resolve(Type $type)
     {
@@ -26,7 +34,7 @@ class IncompleteTypeResolver
                  * When mapping function type, we don't want to affect arguments of the function types, just the return type.
                  */
                 if ($t instanceof FunctionType) {
-                    return array_values(array_filter($nodes, fn ($n) => $n !== 'arguments'));
+                    return [];
                 }
                 return $nodes;
             },
@@ -35,16 +43,31 @@ class IncompleteTypeResolver
 
     public function doResolve(Type $type): Type
     {
+        if ($this->visitedNodes->offsetExists($type)) {
+            return new UnknownType('Recursive resolution');
+        }
+        $this->visitedNodes->offsetSet($type, true);
+
+        if ($type instanceof FunctionType) {
+            return $this->resolveFunctionType($type);
+        }
+
         if (! $type instanceof AbstractReferenceType) {
             return $type;
         }
 
         if ($type instanceof CallableCallReferenceType) {
-            $functionType = $this->resolve(
-                $type->callee instanceof CallableStringType
-                    ? $this->index->getFunction($type->callee->name)
-                    : $type->callee
-            );
+            $callee = $type->callee instanceof CallableStringType
+                ? $this->index->getFunction($type->callee->name)
+                : $type->callee;
+
+            $functionType = $callee
+                ? $this->resolve($callee)
+                : new UnknownType;
+
+            if ($functionType instanceof TemplateType) {
+                $functionType = $functionType->is ?: new MixedType;
+            }
 
             if ($functionType instanceof FunctionType) {
                 return $this->resolveFunctionLikeCall(
@@ -61,8 +84,98 @@ class IncompleteTypeResolver
     {
         $returnType = $functionType->returnType;
 
-        // if no templates - no need to resolve individual arguments!
+        $returnedTemplateTypes = $functionType->getAttribute('returnedTemplateTypes') ?: [];
+        $functionTemplatesInReturn = collect($functionType->templates)
+            ->filter(fn ($t) => in_array($t, $returnedTemplateTypes))
+            ->all();
 
-        return $returnType;
+        // if no templates in return - no need to resolve individual arguments!
+        if (! $functionTemplatesInReturn) {
+            return $returnType;
+        }
+
+        $inferredTemplateTypes = $this->inferTemplateTypesFromCall($functionType, $arguments, $functionTemplatesInReturn);
+
+        return (new TypeWalker)->map(
+            $returnType,
+            fn (Type $t) => $t instanceof TemplateType
+                ? $inferredTemplateTypes[$t->name] ?? $t
+                : $t,
+        );
+    }
+
+    private function inferTemplateTypesFromCall(FunctionType $functionType, array|callable $arguments, array $templatesToInfer)
+    {
+        $arguments = is_callable($arguments) ? $arguments() : $arguments;
+
+        $parametersOfTemplates = collect($functionType->arguments) // these are PARAMETERS!!!
+            ->map(fn ($type, $name) => [$name, $type])
+            ->values()
+            ->map(fn ($nameTypeTuple, $i) => [$i, ...$nameTypeTuple])
+            ->filter(fn ($indexNameTypeTuple, $i) => (new TypeWalker)->first($indexNameTypeTuple[2], fn ($t) => in_array($t, $templatesToInfer)))
+            ->all();
+
+        // first we map parameters to arguments
+        $parameterArgumentPairs = [];
+        foreach ($parametersOfTemplates as $parametersOfTemplate) {
+            [$index, $name, $parameterType] = $parametersOfTemplate;
+            $argumentType = $arguments[$index] ?? $arguments[$name] ?? new MixedType; // @todo just use the default here!!!
+            $parameterArgumentPairs[] = [$parameterType, $argumentType];
+        }
+
+        /*
+         * Now as we have parameters mapped, we can start resolve templates. Templates are inferred in the
+         * order of parameters declaration.
+         */
+        $result = [];
+        foreach ($parameterArgumentPairs as [$parameterType, $argumentType]) {
+            foreach ($templatesToInfer as $templateType) {
+                $parameterTypePath = (new TypeWalker)->findPathToFirst($parameterType, fn ($t) => $t === $templateType);
+                if ($parameterTypePath === null) {
+                    continue;
+                }
+                try {
+                    $templateInferredType = (new TypeWalker)->getTypeByPath($argumentType, $parameterTypePath);
+                } catch (\Throwable $e) {
+                    // @todo proper exception
+                    $templateInferredType = new UnknownType('Cannot get a type by path');
+                }
+                $result[$templateType->name] = $templateInferredType;
+            }
+        }
+
+        return $result;
+    }
+
+    private function resolveFunctionType(FunctionType $type): FunctionType
+    {
+        if ($resolvedType = $type->getAttribute('resolvedType')) {
+            return $resolvedType;
+        }
+
+        $resolvedReturnType = $this->resolve($type->returnType);
+
+        $templateTypes = (new TypeWalker)->findAll(
+            $resolvedReturnType,
+            fn (Type $t) => $t instanceof TemplateType,
+        );
+
+        $functionType = clone $type;
+        $functionType->templates = array_values(array_filter(
+            $functionType->templates,
+            fn ($t) => in_array($t, $templateTypes),
+        ));
+        $functionType->arguments = array_map(
+            fn ($t) => $t instanceof TemplateType
+                ? in_array($t, $templateTypes) ? $t : ($t->is ?: new MixedType)
+                : $t,
+            $functionType->arguments
+        );
+        $functionType->returnType = $resolvedReturnType;
+        $functionType->setAttribute('returnedTemplateTypes', $templateTypes);
+
+        $type->setAttribute('resolvedType', $functionType);
+
+        return $functionType;
     }
 }

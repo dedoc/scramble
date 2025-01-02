@@ -2,15 +2,19 @@
 
 namespace Dedoc\Scramble\Infer\FlowNodes;
 
-use Dedoc\Scramble\Support\Type\MixedType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
+use Illuminate\Support\Str;
 use PhpParser\Node\ClosureUse;
 use PhpParser\Node\Expr;
 use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Param;
+use WeakMap;
 
 class EnterFunctionLikeFlowNode extends AbstractFlowNode
 {
+    private WeakMap $typesCache;
+
     public function __construct(
         public readonly array $parameters,
         public readonly FunctionLike $node,
@@ -19,6 +23,7 @@ class EnterFunctionLikeFlowNode extends AbstractFlowNode
     )
     {
         parent::__construct($antecedents);
+        $this->typesCache = new WeakMap;
     }
 
     public function hasAccessToParent(Expr $expression): bool
@@ -57,9 +62,26 @@ class EnterFunctionLikeFlowNode extends AbstractFlowNode
         );
     }
 
+    public function getParameterType(Param $parameter)
+    {
+        if ($this->typesCache->offsetExists($parameter)) {
+            return $this->typesCache->offsetGet($parameter);
+        }
+
+        $templateType = new TemplateType('T'.Str::ucfirst($parameter->var->name));
+
+        if ($parameter->type) {
+            $templateType->is = TypeHelper::createTypeFromTypeNode($parameter->type);
+        }
+
+        $this->typesCache->offsetSet($parameter, $templateType);
+
+        return $templateType;
+    }
+
     public function getParametersTypesDeclaration()
     {
-        return collect($this->parameters)
+        $parameters = collect($this->parameters)
             ->mapWithKeys(function (Param $p) {
                 if (
                     ! $p->var instanceof Expr\Variable
@@ -67,8 +89,16 @@ class EnterFunctionLikeFlowNode extends AbstractFlowNode
                 ) {
                     return [];
                 }
-                return [$p->var->name => $p->type ? TypeHelper::createTypeFromTypeNode($p->type) : new MixedType()];
+
+                return [$p->var->name => $this->getParameterType($p)];
             })
             ->all();
+
+        $templateTypes = collect($parameters)
+            ->values()
+            ->whereInstanceOf(TemplateType::class)
+            ->all();
+
+        return [$templateTypes, $parameters];
     }
 }

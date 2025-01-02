@@ -4,50 +4,54 @@ use Dedoc\Scramble\Infer\FlowNodes\FlowBuildingVisitor;
 use Dedoc\Scramble\Infer\FlowNodes\IncompleteTypeGetter;
 use Dedoc\Scramble\Infer\FlowNodes\IncompleteTypeResolver;
 use Dedoc\Scramble\Infer\FlowNodes\LazyIndex;
+use Dedoc\Scramble\Infer\Reflector\FunctionReflector;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 
-it('builds flow nodes', function () {
-    $parser = (new PhpParser\ParserFactory())->createForHostVersion();
+function wow () {
+    return nice();
+}
 
-    $code = <<<'EOF'
+function nice () {
+    return wow();
+}
+
+it('builds flow nodes', function () {
+    $funcReflector = FunctionReflector::makeFromCodeString(
+        'iffy',
+        <<<'EOF'
 <?php
 
-function iffy () {
-  return foo();
+function iffy (array $a) {
+  return nice();
 }
-EOF;
-
-    $traverser = new NodeTraverser(
-//        new PhpParser\NodeVisitor\ParentConnectingVisitor(),
-//        new \PhpParser\NodeVisitor\NameResolver(),
+EOF,
+        new LazyIndex(),
     );
-    $traverser->addVisitor($flowVisitor = new FlowBuildingVisitor($traverser));
 
+//    $funcReflector->getIncompleteType();
+//
+//    $funcReflector->getType();
 
-    $traverser->traverse($ast = $parser->parse($code));
-
-    $fooFlowNodes = $flowVisitor->symbolsFlowNodes['iffy']->nodes;
-
-    $index = new LazyIndex();
-    $incompleteTypesResolver = new IncompleteTypeResolver($index);
-
-    $returnType = (new IncompleteTypeGetter())->getFunctionReturnType($fooFlowNodes);
-
-    dd([$returnType->toString() => $incompleteTypesResolver->resolve($returnType)->toString()]);
-
-    dd((new IncompleteTypeGetter())->getFunctionReturnType($fooFlowNodes)->toString());
+    dd([
+        $funcReflector->getIncompleteType()->toString() => $funcReflector->getType()->toString(),
+    ]);
 });
 
 //    \Illuminate\Support\Benchmark::dd(fn () => $traverser->traverse(

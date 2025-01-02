@@ -105,4 +105,84 @@ class TypeWalker
 
         return $mappedSubject;
     }
+
+    public function findAll(Type $type, callable $cb): array
+    {
+        $result = [];
+
+        if ($cb($type)) {
+            $result[] = $type;
+        }
+
+        if (in_array($type, $this->visitedNodes)) {
+            return $result;
+        }
+        $this->visitedNodes[] = $type;
+
+        $nodeNames = $type->nodes();
+
+        foreach ($nodeNames as $propertyWithNode) {
+            $node = $type->$propertyWithNode;
+            if (! is_array($node)) {
+                $result = array_merge($result, $this->findAll($node, $cb));
+            } else {
+                foreach ($node as $item) {
+                    $result = array_merge($result, $this->findAll($item, $cb));
+                }
+            }
+        }
+
+        return $result;
+
+    }
+
+    /**
+     * @param callable(Type): boolean $cb
+     * @return string[]|null
+     */
+    public function findPathToFirst(Type $type, callable $cb): ?array
+    {
+        $result = null;
+
+        if ($cb($type)) {
+            $result = [];
+        }
+
+        if (in_array($type, $this->visitedNodes)) {
+            return $result;
+        }
+        $this->visitedNodes[] = $type;
+
+        $nodeNames = $type->nodes();
+
+        foreach ($nodeNames as $propertyWithNode) {
+            $node = $type->$propertyWithNode;
+            if (! is_array($node)) {
+                $localResult = $this->findPathToFirst($node, $cb);
+                if ($localResult !== null) {
+                    return [$propertyWithNode, ...$localResult];
+                }
+            } else {
+                foreach ($node as $index => $item) {
+                    $localResult = $this->findPathToFirst($item, $cb);
+                    if ($localResult !== null) {
+                        return [$propertyWithNode, $index, ...$localResult];
+                    }
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    public function getTypeByPath(Type $type, array $path)
+    {
+        $result = $type;
+
+        while (($pointer = array_shift($path)) !== null) {
+            $result = is_int($pointer) ? $result[$pointer] : $result->$pointer;
+        }
+
+        return $result;
+    }
 }

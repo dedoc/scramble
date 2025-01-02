@@ -6,14 +6,12 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FloatType;
-use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
-use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
@@ -23,7 +21,6 @@ use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node\Arg;
@@ -131,11 +128,7 @@ class FlowNodeTypeGetter
             return null;
         }
 
-        if ($parameter->type) {
-            return TypeHelper::createTypeFromTypeNode($parameter->type);
-        }
-
-        return new MixedType;
+        return $flowNode->getParameterType($parameter);
     }
 
     protected function getBranchFlowType(BranchLabel $flowNode)
@@ -296,9 +289,10 @@ class FlowNodeTypeGetter
 
     protected function makeIncompleteArguments(array $arguments, FlowNode $flowNode)
     {
-        // The possible optimization here is to make some sort of promise and postpone the arguments
-        // incomplete types resolution till the moment we actually need them - if the function return type includes
-        // some argument template types. Unless that, we don't need to analyze it at all!
+        // The possible optimization here is to make some sort of promise and postpone even the arguments
+        // *incomplete* types resolution till the moment we actually need them - if the function return type includes
+        // some argument template types. Unless that, we don't need to analyze it at all! This promise may even work on
+        // individual argument level so only those arguments seen in return type are traversed at all!
 
         // @todo: variadic placeholder support (represents `...` in `foo(...)`)
         // @todo: unpack
@@ -310,7 +304,7 @@ class FlowNodeTypeGetter
         $result = [];
         /** @var Arg $argument  */
         foreach ($arguments as $index => $argument) {
-            $result[$argument->name ?: $index] = $this->getExpressionFlowType($argument->value, $flowNode);
+            $result[$argument->name ? $argument->name->name : $index] = $this->getExpressionFlowType($argument->value, $flowNode);
         }
         return $result;
     }
@@ -372,23 +366,8 @@ class FlowNodeTypeGetter
         return null;
     }
 
-    private function getAnonymousFunctionType(Expr\Closure|Expr\ArrowFunction $expression)
+    public function getAnonymousFunctionType(Expr\Closure|Expr\ArrowFunction $expression)
     {
-        if (! $flowContainer = $expression->getAttribute('flowContainer')) {
-            return null;
-        }
-
-        /** @var FlowNodes $flowContainer */
-
-        $returnType = (new IncompleteTypeGetter())->getFunctionReturnType($flowContainer->nodes);
-        $parameters = $flowContainer->nodes[0] instanceof EnterFunctionLikeFlowNode
-            ? $flowContainer->nodes[0]->getParametersTypesDeclaration()
-            : [];
-
-        return new FunctionType(
-            'anonymous',
-            $parameters,
-            $returnType,
-        );
+        return (new IncompleteTypeGetter())->getFunctionType($expression, 'anonymous');
     }
 }
