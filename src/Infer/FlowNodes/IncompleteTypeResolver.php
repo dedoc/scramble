@@ -40,9 +40,11 @@ class IncompleteTypeResolver
         }
 
         if ($type instanceof CallableCallReferenceType) {
-            $functionType = $type->callee instanceof CallableStringType
-                ? $this->index->getFunction($type->callee->name)
-                : $this->resolve($type->callee);
+            $functionType = $this->resolve(
+                $type->callee instanceof CallableStringType
+                    ? $this->index->getFunction($type->callee->name)
+                    : $type->callee
+            );
 
             if ($functionType instanceof FunctionType) {
                 return $this->resolveFunctionLikeCall(

@@ -24,9 +24,8 @@ it('builds flow nodes', function () {
     $code = <<<'EOF'
 <?php
 
-function iffy (string $a) {
-  $b = fn () => 42;
-  return $b();
+function iffy () {
+  return foo();
 }
 EOF;
 

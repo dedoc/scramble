@@ -3,8 +3,10 @@
 namespace Dedoc\Scramble\Infer\FlowNodes;
 
 use Dedoc\Scramble\Infer\Contracts\Index;
+use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\MixedType;
+use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use ReflectionFunction;
@@ -20,6 +22,16 @@ class LazyIndex implements Index
         private array $functions = [],
     )
     {
+        $this->functions = [
+            'foo' => new FunctionType(
+                'foo',
+                [],
+                new CallableCallReferenceType(
+                    new CallableStringType('count'),
+                    []
+                )
+            )
+        ];
     }
 
     public function getFunction(string $name): ?FunctionType
