@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\FlowNodes;
 
 use Dedoc\Scramble\Infer\Contracts\Index;
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Reflector\FunctionReflector;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -19,9 +20,11 @@ class LazyIndex implements Index
 {
     /**
      * @param array<string, FunctionType> $functions
+     * @param array<string, ClassDefinition> $classes
      */
     public function __construct(
         private array $functions = [],
+        private array $classes = [],
     )
     {}
 
@@ -74,6 +77,17 @@ class LazyIndex implements Index
             : new UnknownType();
 
         return $this->functions[$name] = new FunctionType($name, $parameters, $returnType);
+    }
+
+    public function getClass(string $name): ?ClassDefinition
+    {
+        if (isset($this->classes[$name])) {
+            return $this->classes[$name];
+        }
+
+        // @todo shallowly analyze
+
+        return null;
     }
 
     private function shouldAnalyzeAstByPath(string $filePath): bool

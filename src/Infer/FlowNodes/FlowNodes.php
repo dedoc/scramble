@@ -18,6 +18,12 @@ class FlowNodes
     {
     }
 
+    public function setNodes(array $nodes)
+    {
+        $this->nodes = $nodes;
+        return $this;
+    }
+
     public function push($node, callable $flowNodeGetter)
     {
         $lastNodes = array_values(array_filter(

@@ -3,15 +3,21 @@
 namespace Dedoc\Scramble\Infer\FlowNodes;
 
 use Dedoc\Scramble\Infer\Contracts\Index;
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\MixedType;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\Type\VoidType;
 use WeakMap;
 
 class IncompleteTypeResolver
@@ -41,7 +47,7 @@ class IncompleteTypeResolver
         );
     }
 
-    public function doResolve(Type $type): Type
+    protected function doResolve(Type $type): Type
     {
         if ($this->visitedNodes->offsetExists($type)) {
             return new UnknownType('Recursive resolution');
@@ -77,10 +83,52 @@ class IncompleteTypeResolver
             }
         }
 
+        if ($type instanceof NewCallReferenceType) {
+            $classDefinition = $this->index->getClass($type->name);
+
+            if (! $classDefinition?->templateTypes) {
+                return new ObjectType($type->name);
+            }
+
+            return new Generic(
+                $type->name,
+                array_values($this->inferClassTemplateTypesFromNewCall($classDefinition, $type->arguments)),
+            );
+        }
+//
+//        if ($type instanceof MethodCallReferenceType) {
+//            $callee = $this->resolve($type->callee);
+//
+//            if ($callee instanceof TemplateType) {
+//                $callee = $callee->is ?: new MixedType;
+//            }
+//
+//            if ($callee instanceof ObjectType) {
+//                $classDefinition = $this->index->getClass($callee->name);
+//
+//                $functionType = $classDefinition?->getMethod($type->methodName);
+//
+//                if ($functionType) {
+//                    $functionType = $this->resolve($functionType);
+//                }
+//
+//                if ($functionType instanceof FunctionType) {
+//                    return $this->resolveFunctionLikeCall(
+//                        $functionType,
+//                        $type->arguments,
+//                        $this->inferTemplateTypesFromObject($classDefinition, $callee),
+//                    );
+//                }
+//            }
+//        }
+
         return new UnknownType('Cannot resolve reference type');
     }
 
-    protected function resolveFunctionLikeCall(FunctionType $functionType, array|callable $arguments)
+    /**
+     * @param FunctionType $functionType *Resolved* function type
+     */
+    private function resolveFunctionLikeCall(FunctionType $functionType, array|callable $arguments, array $inferredTemplateTypes = [])
     {
         $returnType = $functionType->returnType;
 
@@ -90,11 +138,14 @@ class IncompleteTypeResolver
             ->all();
 
         // if no templates in return - no need to resolve individual arguments!
-        if (! $functionTemplatesInReturn) {
+        if (! $functionTemplatesInReturn && ! $inferredTemplateTypes) {
             return $returnType;
         }
 
-        $inferredTemplateTypes = $this->inferTemplateTypesFromCall($functionType, $arguments, $functionTemplatesInReturn);
+        $inferredTemplateTypes = array_merge(
+            $inferredTemplateTypes,
+            $this->inferTemplateTypesFromCall($functionType, $arguments, $functionTemplatesInReturn),
+        );
 
         return (new TypeWalker)->map(
             $returnType,
@@ -104,7 +155,54 @@ class IncompleteTypeResolver
         );
     }
 
-    private function inferTemplateTypesFromCall(FunctionType $functionType, array|callable $arguments, array $templatesToInfer)
+    /**
+     * Used to prepare the list of concrete template types when an object is constructed using new
+     * keyword. For example, given the call (new Foo)(int(34)), this function will return
+     * [
+     *   'TA' => int(34)
+     * ]
+     * assuming that TA is a template type of a class and is accepted in constructor.
+     *
+     * @param ClassDefinition $classDefinition
+     * @param array|callable $arguments
+     * @return array
+     */
+    private function inferClassTemplateTypesFromNewCall(ClassDefinition $classDefinition, array|callable $arguments): array
+    {
+        $classDefinition->ensureFullyAnalyzed($this->index);
+
+        // traverse through template default types and resolve them all
+
+        $constructorDefinition = $classDefinition->getMethodDefinitionWithoutAnalysis('__construct');
+        $constructorType = $constructorDefinition
+            ? $this->resolve($constructorDefinition->type)
+            : new FunctionType('__construct', returnType: new VoidType);
+
+        $newCallInferredTemplates = $this->inferTemplateTypesFromCall($constructorType, $arguments, [
+            ...$classDefinition->templateTypes,
+            ...$constructorType->templates,
+        ]);
+
+        $classInferredTemplates = [];
+        // merge default template types, keep in mind that they in turn can also be the template types
+        foreach ($classDefinition->templateTypes as $templateType) {
+            if (array_key_exists($templateType->name, $newCallInferredTemplates)) {
+                $classInferredTemplates[$templateType->name] = $newCallInferredTemplates[$templateType->name];
+                continue;
+            }
+
+            $classInferredTemplates[$templateType->name] = (new TypeWalker)->map(
+                $templateType->default ?: new MixedType,
+                fn (Type $t) => $t instanceof TemplateType
+                    ? $newCallInferredTemplates[$t->name] ?? $t
+                    : $t,
+            );
+        }
+
+        return $classInferredTemplates;
+    }
+
+    private function inferTemplateTypesFromCall(FunctionType $functionType, array|callable $arguments, array $templatesToInfer): array
     {
         $arguments = is_callable($arguments) ? $arguments() : $arguments;
 
@@ -119,7 +217,7 @@ class IncompleteTypeResolver
         $parameterArgumentPairs = [];
         foreach ($parametersOfTemplates as $parametersOfTemplate) {
             [$index, $name, $parameterType] = $parametersOfTemplate;
-            $argumentType = $arguments[$index] ?? $arguments[$name] ?? new MixedType; // @todo just use the default here!!!
+            $argumentType = $arguments[$index] ?? $arguments[$name] ?? new MixedType; // @todo just use the argument default here!!!
             $parameterArgumentPairs[] = [$parameterType, $argumentType];
         }
 

@@ -19,6 +19,7 @@ class EnterFunctionLikeFlowNode extends AbstractFlowNode
         public readonly array $parameters,
         public readonly FunctionLike $node,
         public readonly ?FlowNode $containerAntecedent,
+        public readonly TemplateTypeNameGetter $templateTypeNameGetter,
         array $antecedents,
     )
     {
@@ -68,7 +69,9 @@ class EnterFunctionLikeFlowNode extends AbstractFlowNode
             return $this->typesCache->offsetGet($parameter);
         }
 
-        $templateType = new TemplateType('T'.Str::ucfirst($parameter->var->name));
+        $uniqueTemplateName = $this->templateTypeNameGetter->get('T'.Str::ucfirst($parameter->var->name));
+
+        $templateType = new TemplateType($uniqueTemplateName);
 
         if ($parameter->type) {
             $templateType->is = TypeHelper::createTypeFromTypeNode($parameter->type);

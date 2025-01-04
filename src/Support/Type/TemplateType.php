@@ -6,11 +6,11 @@ class TemplateType extends AbstractType
 {
     public function __construct(
         public string $name,
-        /**
-         * The name of a class/method/function this template is declared.
-         */
-        //        public string $parentName,
         public ?Type $is = null,
+        /**
+         * @todo Should be a part of something else, like "template definition"
+         */
+        public ?Type $default = null,
     ) {}
 
     public function isSame(Type $type)

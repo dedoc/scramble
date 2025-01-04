@@ -18,6 +18,7 @@ class FlowBuildingVisitor extends NodeVisitorAbstract
 
     public function __construct(
         private NodeTraverser $traverser,
+        private TemplateTypeNameGetter $templateTypeNameGetter = new TemplateTypeNameGetter,
         private WeakMap $handledExpressions = new WeakMap(),
         private WeakMap $functionLikeFlowContainers = new WeakMap(),
         private WeakMap $skipNodes = new WeakMap(),
@@ -32,14 +33,19 @@ class FlowBuildingVisitor extends NodeVisitorAbstract
         }
 
         if ($node instanceof Node\FunctionLike) {
-            $this->currentFlowNodes = new FlowNodes([
-                new EnterFunctionLikeFlowNode(
-                    parameters: $node->getParams(),
-                    node: $node,
-                    containerAntecedent: $this->currentFlowNodes?->lastFlowable(),
-                    antecedents: [],
-                ),
-            ]);
+            $parentTemplateTypeNameGetter = ($this->currentFlowNodes?->nodes[0]->templateTypeNameGetter ?? null) ?: $this->templateTypeNameGetter;
+
+            $prevFlowNodes = $this->currentFlowNodes;
+            $this->currentFlowNodes = new FlowNodes([]);
+            $enterNode = new EnterFunctionLikeFlowNode(
+                parameters: $node->getParams(),
+                node: $node,
+                containerAntecedent: $prevFlowNodes?->lastFlowable(),
+                templateTypeNameGetter: new TemplateTypeNameGetter($this->currentFlowNodes, $parentTemplateTypeNameGetter),
+                antecedents: [],
+            );
+            $this->currentFlowNodes->setNodes([$enterNode]);
+
             $this->flowNodesStack[] = $this->currentFlowNodes;
 
             $this->functionLikeFlowContainers->offsetSet($node, $this->currentFlowNodes);

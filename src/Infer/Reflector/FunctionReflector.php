@@ -40,14 +40,11 @@ class FunctionReflector
     public function getIncompleteType(): FunctionType
     {
         $parser = (new ParserFactory())->createForHostVersion();
-
         $ast = $parser->parse($this->code);
-
         $functionNode = (new NodeFinder)->findFirst(
             $ast,
             fn ($n) => $n instanceof Function_ && (($n->name->name ?? null) === $this->name),
         );
-
         if (! $functionNode) {
             throw new \LogicException("Cannot locate [$this->name] function node in AST");
         }
@@ -55,8 +52,8 @@ class FunctionReflector
         /** @var Function_ $functionNode */
 
         $traverser = new NodeTraverser(
-//        new PhpParser\NodeVisitor\ParentConnectingVisitor(),
-//        new \PhpParser\NodeVisitor\NameResolver(),
+            // new PhpParser\NodeVisitor\ParentConnectingVisitor(),
+            // new \PhpParser\NodeVisitor\NameResolver(),
         );
         $traverser->addVisitor($flowVisitor = new FlowBuildingVisitor($traverser));
 
