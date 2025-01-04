@@ -4,16 +4,12 @@ namespace Dedoc\Scramble\Infer\FlowNodes;
 
 use Dedoc\Scramble\Infer\Contracts\Index;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
-use Dedoc\Scramble\Infer\Reflector\FunctionReflector;
-use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
+use Dedoc\Scramble\Infer\Reflection\ReflectionFunction as ScrambleReflectionFunction;
 use Dedoc\Scramble\Support\Type\FunctionType;
-use Dedoc\Scramble\Support\Type\MixedType;
-use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
-use Dedoc\Scramble\Support\Type\TypeHelper;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
+use PhpParser\Parser;
 use ReflectionFunction;
-use ReflectionParameter;
 use Throwable;
 
 class LazyIndex implements Index
@@ -23,6 +19,7 @@ class LazyIndex implements Index
      * @param array<string, ClassDefinition> $classes
      */
     public function __construct(
+        private Parser $parser,
         private array $functions = [],
         private array $classes = [],
     )
@@ -40,43 +37,27 @@ class LazyIndex implements Index
             return null;
         }
 
+        $reflectionFunction = ScrambleReflectionFunction::createFromName($name, $this, $this->parser);
+
         if (
             ($filePath = $reflection->getFileName())
             && $this->shouldAnalyzeAstByPath($filePath)
         ) {
-            $functionReflector = FunctionReflector::makeFromCodeString(
-                $name,
-                file_get_contents($filePath),
-                $this,
-            );
-
             try {
-                $functionType = $functionReflector->getIncompleteType();
+                $functionDefinition = $reflectionFunction->getDefinition();
             } catch (\LogicException $e) {
                 // @todo log/dump
-                $functionType = null;
+                $functionDefinition = null;
             }
 
-            if ($functionType) {
-                $this->functions[$name] = $functionType;
+            if ($functionDefinition) {
+                return $this->functions[$name] = $functionDefinition->getType();
             }
 
-            return $functionType;
-        };
+            return null;
+        }
 
-        $parameters = collect($reflection->getParameters())
-            ->mapWithKeys(fn (ReflectionParameter $p) => [
-                $p->name => ($paramType = $p->getType())
-                    ? TypeHelper::createTypeFromReflectionType($paramType)
-                    : new MixedType,
-            ])
-            ->all();
-
-        $returnType = ($retType = $reflection->getReturnType())
-            ? TypeHelper::createTypeFromReflectionType($retType)
-            : new UnknownType();
-
-        return $this->functions[$name] = new FunctionType($name, $parameters, $returnType);
+        return $this->functions[$name] = (new FunctionLikeReflectionDefinitionBuilder($reflectionFunction))->build()->getType();
     }
 
     public function getClass(string $name): ?ClassDefinition
