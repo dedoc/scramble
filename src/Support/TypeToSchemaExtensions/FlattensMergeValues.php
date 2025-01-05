@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\Type\VoidType;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\MergeValue;
@@ -61,27 +62,30 @@ trait FlattensMergeValues
                     }
                 }
 
+                $isUnionWithMissingValue = fn ($type) => $type instanceof Union
+                    && (bool) array_filter($type->types, fn (Type $t) => $t->isInstanceOf(MissingValue::class));
+
                 if (
                     $item->value instanceof Union
-                    && (new TypeWalker)->first($item->value, fn (Type $t) => $t->isInstanceOf(MissingValue::class))
+                    && (new TypeWalker)->first($item->value, $isUnionWithMissingValue)
                 ) {
-                    $newType = array_values(
-                        array_filter($item->value->types, fn (Type $t) => ! $t->isInstanceOf(MissingValue::class))
-                    );
+                    $newType = (new TypeWalker)->replace($item->value, function (Type $t) use ($isUnionWithMissingValue) {
+                        if (! $isUnionWithMissingValue($t)) {
+                            return null;
+                        }
 
-                    if (! count($newType)) {
+                        return Union::wrap(array_values(
+                            array_filter($t->types, fn (Type $t) => ! $t->isInstanceOf(MissingValue::class))
+                        ));
+                    });
+
+                    if ($newType instanceof VoidType) {
                         return [];
                     }
 
                     $item->isOptional = true;
 
-                    if (count($newType) === 1) {
-                        $item->value = $newType[0];
-
-                        return $this->flattenMergeValues([$item]);
-                    }
-
-                    $item->value = new Union($newType);
+                    $item->value = $newType;
 
                     return $this->flattenMergeValues([$item]);
                 }
