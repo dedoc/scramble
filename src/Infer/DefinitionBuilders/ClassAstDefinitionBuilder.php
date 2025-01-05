@@ -113,7 +113,6 @@ class ClassAstDefinitionBuilder implements ClassDefinitionBuilder
                 $classDefinition,
                 $methodNode,
             );
-
         }
 
         return $classDefinition;
