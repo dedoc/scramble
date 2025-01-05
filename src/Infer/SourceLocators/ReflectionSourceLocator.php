@@ -22,6 +22,11 @@ class ReflectionSourceLocator implements SourceLocator
             return file_get_contents($reflection->getFileName());
         }
 
+        if ($symbol->kind === Symbol::KIND_CLASS_METHOD) {
+            $reflection = new \ReflectionClass($symbol->className);
+            return file_get_contents($reflection->getFileName());
+        }
+
         throw new \LogicException("Cannot locate symbol [$symbol->name] source of kind [$symbol->kind]");
     }
 }

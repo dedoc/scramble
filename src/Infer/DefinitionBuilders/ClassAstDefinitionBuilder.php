@@ -24,6 +24,7 @@ use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Stmt\ClassLike;
+use PhpParser\Node\Stmt\Class_;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitorAbstract;
@@ -73,11 +74,23 @@ class ClassAstDefinitionBuilder implements ClassDefinitionBuilder
         if (! $classNode) {
             throw new \LogicException("Cannot locate [{$this->name}] class node in AST");
         }
+
+        // Build parent definition first
+        $parentDefinition = ($parentName = $this->getParentName($classNode))
+            ? (new self($parentName, $this->astLocator))->build()
+            : new ClassDefinitionData(name: '');
+
+        // Create class definition with parent's data
+        $classDefinition = new ClassDefinitionData(
+            name: $this->name,
+            templateTypes: $parentDefinition->templateTypes,
+            properties: array_map(fn ($pd) => clone $pd, $parentDefinition->properties ?: []),
+            methods: $parentDefinition->methods ?: [],
+            parentFqn: $parentName ?? null,
+            parentClassDefinition: $parentDefinition->name ? $parentDefinition : null,
+        );
+
         $classMembers = $this->getClassMembersNodes($classNode);
-
-        $classDefinition = new ClassDefinitionData(name: $this->name);
-        $templateTypeNamesGetter = new TemplateTypeNameGetter($classDefinition);
-
         $methodNodes = [];
         foreach ($classMembers as $node) {
             if ($node instanceof Node\Stmt\Property) {
@@ -212,5 +225,10 @@ class ClassAstDefinitionBuilder implements ClassDefinitionBuilder
         $constructFunction->type = $resolvedConstructFunctionType;
         // By setting the attribute, we prevent the constructor method from being resolved (at it will remove template types from args)
         $resolvedConstructFunctionType->setAttribute('resolvedType', $resolvedConstructFunctionType);
+    }
+
+    private function getParentName(ClassLike $classNode): ?string
+    {
+        return $classNode instanceof Class_ ? $classNode->extends?->toString() : null;
     }
 }

@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Infer\SourceLocators;
 use Dedoc\Scramble\Infer\Contracts\AstLocator as AstLocatorContract;
 use Dedoc\Scramble\Infer\Contracts\SourceLocator;
 use Dedoc\Scramble\Infer\Symbol;
+use Illuminate\Support\Str;
 use PhpParser\Node;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\Function_;
@@ -32,9 +33,10 @@ class AstLocator implements AstLocatorContract
         }
 
         if ($symbol->kind === Symbol::KIND_CLASS_METHOD) {
+            $shortClassName = Str::afterLast($symbol->className, '\\');
             $classNode = (new NodeFinder)->findFirst(
                 $ast,
-                fn ($n) => $n instanceof ClassLike && (($n->name->name ?? null) === $symbol->className),
+                fn ($n) => $n instanceof ClassLike && (($n->name->name ?? null) === $shortClassName),
             );
 
             return (new NodeFinder)->findFirst(
@@ -44,9 +46,10 @@ class AstLocator implements AstLocatorContract
         }
 
         if ($symbol->kind === Symbol::KIND_CLASS) {
+            $shortClassName = Str::afterLast($symbol->name, '\\');
             return (new NodeFinder)->findFirst(
                 $ast,
-                fn ($n) => $n instanceof ClassLike && (($n->name->name ?? null) === $symbol->name),
+                fn ($n) => $n instanceof ClassLike && (($n->name->name ?? null) === $shortClassName),
             );
         }
 
