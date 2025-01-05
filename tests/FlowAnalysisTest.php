@@ -4,6 +4,7 @@ use Dedoc\Scramble\Infer\FlowNodes\FlowBuildingVisitor;
 use Dedoc\Scramble\Infer\FlowNodes\IncompleteTypeGetter;
 use Dedoc\Scramble\Infer\FlowNodes\IncompleteTypeResolver;
 use Dedoc\Scramble\Infer\FlowNodes\LazyIndex;
+use Dedoc\Scramble\Infer\Reflection\ReflectionClass as ScrambleReflectionClass;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector_V2;
 use Dedoc\Scramble\Infer\Reflector\FunctionReflector;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
@@ -25,48 +26,23 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Tests\Utils\TestUtils;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
+use PhpParser\ParserFactory;
 
-
-class Foo {
-    public $a;
-    public $b;
-    public function __construct($a) {
-        $this->a = $a;
-        $this->b = ['wow' => $a];
-    }
-}
-
-$var = new Foo("a");
-
-
+beforeEach(function () {
+    $this->parser = (new ParserFactory())->createForHostVersion();
+    $this->index = new LazyIndex(parser: $this->parser);
+    $this->testUtils = new TestUtils($this->index, $this->parser);
+});
 
 function array_maker ($a) {
     return ['a' => $a];
 }
 
 it('builds flow nodes', function () {
-//    $function = FunctionReflector::makeFromCodeString(
-//        'foo',
-//        <<<'EOF'
-//<?php
-//function foo ($a) {
-//    return fn ($a) => $a;
-//}
-//EOF,
-//        new LazyIndex(),
-//    );
-//
-//    expect($function->getIncompleteType()->toString())->toBe('<TA>(TA): <TA_>(TA_): TA_');
-//
-//    dd(
-//        $function->getIncompleteType()->toString(),
-//    );
-
-
-    $result = TestUtils::getExpressionType(
+    $result = $this->testUtils->getExpressionType(
         'new Foo("a")',
         classesDefinitions: [
-            'Foo' => $definition = ClassReflector_V2::makeFromCodeString('Foo', <<<'EOF'
+            'Foo' => $definition = ScrambleReflectionClass::createFromSource('Foo', <<<'EOF'
 <?php
 class Foo {
     public $a;
@@ -76,7 +52,7 @@ class Foo {
         $this->b = ['wow' => $a];
     }
 }
-EOF)->getDefinition()
+EOF, $this->index, $this->parser)->getDefinition()->definition
         ],
     );
 

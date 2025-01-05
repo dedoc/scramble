@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Contracts;
 
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Support\Type\FunctionType;
 
 interface Index
@@ -12,5 +12,5 @@ interface Index
      */
     public function getFunction(string $name): ?FunctionType;
 
-    public function getClass(string $name): ?ClassDefinition;
+    public function getClass(string $name): ?ClassDefinitionContract;
 }

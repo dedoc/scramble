@@ -3,7 +3,7 @@
 namespace Dedoc\Scramble\Infer\FlowNodes;
 
 use Dedoc\Scramble\Infer\Contracts\Index;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\Reflection\ReflectionFunction as ScrambleReflectionFunction;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -16,7 +16,7 @@ class LazyIndex implements Index
 {
     /**
      * @param array<string, FunctionType> $functions
-     * @param array<string, ClassDefinition> $classes
+     * @param array<string, ClassDefinitionContract> $classes
      */
     public function __construct(
         private Parser $parser,
@@ -60,7 +60,7 @@ class LazyIndex implements Index
         return $this->functions[$name] = (new FunctionLikeReflectionDefinitionBuilder($name))->build()->getType();
     }
 
-    public function getClass(string $name): ?ClassDefinition
+    public function getClass(string $name): ?ClassDefinitionContract
     {
         if (isset($this->classes[$name])) {
             return $this->classes[$name];

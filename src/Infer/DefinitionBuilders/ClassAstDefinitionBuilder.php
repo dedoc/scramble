@@ -210,5 +210,7 @@ class ClassAstDefinitionBuilder implements ClassDefinitionBuilder
         }
 
         $constructFunction->type = $resolvedConstructFunctionType;
+        // By setting the attribute, we prevent the constructor method from being resolved (at it will remove template types from args)
+        $resolvedConstructFunctionType->setAttribute('resolvedType', $resolvedConstructFunctionType);
     }
 }

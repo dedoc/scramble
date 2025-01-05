@@ -2,8 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\FlowNodes;
 
+use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Infer\Contracts\Index;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -86,7 +86,7 @@ class IncompleteTypeResolver
         if ($type instanceof NewCallReferenceType) {
             $classDefinition = $this->index->getClass($type->name);
 
-            if (! $classDefinition?->templateTypes) {
+            if (! $classDefinition?->getData()->templateTypes) {
                 return new ObjectType($type->name);
             }
 
@@ -163,29 +163,27 @@ class IncompleteTypeResolver
      * ]
      * assuming that TA is a template type of a class and is accepted in constructor.
      *
-     * @param ClassDefinition $classDefinition
+     * @param ClassDefinitionContract $classDefinition
      * @param array|callable $arguments
      * @return array
      */
-    private function inferClassTemplateTypesFromNewCall(ClassDefinition $classDefinition, array|callable $arguments): array
+    private function inferClassTemplateTypesFromNewCall(ClassDefinitionContract $classDefinition, array|callable $arguments): array
     {
-        $classDefinition->ensureFullyAnalyzed($this->index);
+        $constructorDefinition = $classDefinition->getMethod('__construct');
 
-        // traverse through template default types and resolve them all
-
-        $constructorDefinition = $classDefinition->getMethodDefinitionWithoutAnalysis('__construct');
+        // Unlike other places, `__construct` is a special function that is not resolved.
         $constructorType = $constructorDefinition
-            ? $this->resolve($constructorDefinition->type)
+            ? $constructorDefinition->getType()
             : new FunctionType('__construct', returnType: new VoidType);
 
         $newCallInferredTemplates = $this->inferTemplateTypesFromCall($constructorType, $arguments, [
-            ...$classDefinition->templateTypes,
+            ...$classDefinition->getData()->templateTypes,
             ...$constructorType->templates,
         ]);
 
         $classInferredTemplates = [];
         // merge default template types, keep in mind that they in turn can also be the template types
-        foreach ($classDefinition->templateTypes as $templateType) {
+        foreach ($classDefinition->getData()->templateTypes as $templateType) {
             if (array_key_exists($templateType->name, $newCallInferredTemplates)) {
                 $classInferredTemplates[$templateType->name] = $newCallInferredTemplates[$templateType->name];
                 continue;
