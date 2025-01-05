@@ -5,7 +5,7 @@ namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinition as FunctionLikeDefinitionContract;
 use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinitionBuilder;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
-use Dedoc\Scramble\Infer\SourceLocators\AstLocator;
+use Dedoc\Scramble\Infer\Contracts\AstLocator;
 use Dedoc\Scramble\Infer\Symbol;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\MixedType;

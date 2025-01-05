@@ -34,6 +34,7 @@ class ClassDefinition implements ClassDefinitionContract
         /** @var array<string, FunctionLikeDefinition> $methods */
         public array $methods = [],
         public ?string $parentFqn = null,
+        public ?ClassDefinition $parentClassDefinition = null,
     ) {}
 
     public function isInstanceOf(string $className)
