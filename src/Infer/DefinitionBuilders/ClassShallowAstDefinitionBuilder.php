@@ -24,9 +24,7 @@ class ClassShallowAstDefinitionBuilder implements ClassDefinitionBuilder
     public function __construct(
         private string $name,
         private AstLocator $astLocator,
-    )
-    {
-    }
+    ) {}
 
     public function build(): ClassDefinition
     {
@@ -50,20 +48,23 @@ class ClassShallowAstDefinitionBuilder implements ClassDefinitionBuilder
         );
 
         $traverser = new NodeTraverser(
-        // new PhpParser\NodeVisitor\ParentConnectingVisitor(),
-        // new \PhpParser\NodeVisitor\NameResolver(),
-            new class ($classDefinition) extends NodeVisitorAbstract {
+            // new PhpParser\NodeVisitor\ParentConnectingVisitor(),
+            // new \PhpParser\NodeVisitor\NameResolver(),
+            new class($classDefinition) extends NodeVisitorAbstract
+            {
                 public function __construct(private ClassDefinition $classDefinition) {}
+
                 public function enterNode(Node $node)
                 {
                     if ($node instanceof Node\Stmt\Property) {
                         foreach ($node->props as $prop) {
                             $this->classDefinition->properties[$prop->name->name] = new ClassPropertyDefinition(
                                 type: $template = new TemplateType('T'.Str::ucfirst($prop->name->name), $node->type ? TypeHelper::createTypeFromTypeNode($node->type) : null),
-                                defaultType: null, //@todo
+                                defaultType: null, // @todo
                             );
                             $this->classDefinition->templateTypes[] = $template;
                         }
+
                         return NodeVisitor::DONT_TRAVERSE_CURRENT_AND_CHILDREN;
                     }
                     if ($node instanceof Node\Stmt\ClassMethod) {
@@ -75,6 +76,7 @@ class ClassShallowAstDefinitionBuilder implements ClassDefinitionBuilder
                             definingClassName: $this->classDefinition->name,
                             isStatic: $node->isStatic(),
                         );
+
                         return NodeVisitor::DONT_TRAVERSE_CURRENT_AND_CHILDREN;
                     }
                 }

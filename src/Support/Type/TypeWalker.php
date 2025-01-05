@@ -8,6 +8,7 @@ use WeakMap;
 class TypeWalker
 {
     private array $visitedNodes = [];
+
     private WeakMap $visitedNodesWeakMap;
 
     public function __construct()
@@ -66,16 +67,15 @@ class TypeWalker
      * Maps a type to a new type. This method is not mutating passed type, hence
      * the callback mush always return a type.
      *
-     * @param callable(Type): Type $cb
-     * @param (callable(Type): (string[]))|null $nodesNamesGetter
+     * @param  callable(Type): Type  $cb
+     * @param  (callable(Type): (string[]))|null  $nodesNamesGetter
      */
     public function map(
         Type $subject,
         callable $cb,
         ?callable $nodesNamesGetter = null,
         bool $preserveAttributes = true,
-    ): Type
-    {
+    ): Type {
         $nodesNamesGetter ??= fn (Type $t) => $t->nodes();
 
         if ($this->visitedNodesWeakMap->offsetExists($subject)) {
@@ -137,7 +137,7 @@ class TypeWalker
     }
 
     /**
-     * @param callable(Type): boolean $cb
+     * @param  callable(Type): bool  $cb
      * @return string[]|null
      */
     public function findPathToFirst(Type $type, callable $cb): ?array

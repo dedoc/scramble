@@ -29,6 +29,7 @@ class IncompleteTypeGetter
 
         $type = new FunctionType($name, $parameters, $returnType);
         $type->templates = $templates;
+
         return $type;
     }
 

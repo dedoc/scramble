@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Validator;
 
 class Sample
 {
-    function handleUserRequest(Request $request, int $userId): \Illuminate\Http\JsonResponse
+    public function handleUserRequest(Request $request, int $userId): \Illuminate\Http\JsonResponse
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
@@ -21,7 +21,7 @@ class Sample
 
         $user = SampleUserModel::find($userId);
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'User not found'], 404);
         }
 
@@ -43,7 +43,7 @@ class Sample
         ], 200);
     }
 
-    function calculateUserStats(SampleUserModel $user): array
+    public function calculateUserStats(SampleUserModel $user): array
     {
         $postsCount = $user->posts()->count();
         $commentsCount = $user->comments()->count();
@@ -56,7 +56,7 @@ class Sample
         ];
     }
 
-    function handleBatchUserUpdates(Request $request): \Illuminate\Http\JsonResponse
+    public function handleBatchUserUpdates(Request $request): \Illuminate\Http\JsonResponse
     {
         $userUpdates = $request->input('users', []);
         $results = [];
@@ -75,18 +75,20 @@ class Sample
                     'status' => 'failed',
                     'errors' => $validator->errors()->all(),
                 ];
+
                 continue;
             }
 
             $data = $validator->validated();
             $user = SampleUserModel::find($data['user_id']);
 
-            if (!$user) {
+            if (! $user) {
                 $results[] = [
                     'user_id' => $data['user_id'],
                     'status' => 'failed',
                     'errors' => ['User not found.'],
                 ];
+
                 continue;
             }
 

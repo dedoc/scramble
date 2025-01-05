@@ -16,9 +16,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
     public function __construct(
         public readonly string $name,
         public readonly AstLocator $astLocator,
-    )
-    {
-    }
+    ) {}
 
     public function build(): FunctionLikeDefinition
     {
@@ -28,15 +26,14 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             throw new \LogicException("Cannot locate [{$this->name}] function node in AST");
         }
 
-        $traverser = new NodeTraverser(
-            // new PhpParser\NodeVisitor\ParentConnectingVisitor(),
-            // new \PhpParser\NodeVisitor\NameResolver(),
-        );
+        $traverser = new NodeTraverser;
+        // new PhpParser\NodeVisitor\ParentConnectingVisitor(),
+        // new \PhpParser\NodeVisitor\NameResolver(),
         $traverser->addVisitor($flowVisitor = new FlowBuildingVisitor($traverser));
 
         $traverser->traverse([$functionNode]);
 
-        $incompleteFunctionType = (new IncompleteTypeGetter())->getFunctionType($functionNode, $this->name);
+        $incompleteFunctionType = (new IncompleteTypeGetter)->getFunctionType($functionNode, $this->name);
 
         if (! $incompleteFunctionType) {
             throw new \LogicException("Cannot locate flow node container in [{$this->name}] function AST node");

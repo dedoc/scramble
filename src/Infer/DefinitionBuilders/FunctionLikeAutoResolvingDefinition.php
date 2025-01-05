@@ -16,9 +16,7 @@ class FunctionLikeAutoResolvingDefinition implements FunctionLikeAutoResolvingDe
     public function __construct(
         public readonly FunctionLikeDefinitionContract $definition,
         public readonly Index $index,
-    )
-    {
-    }
+    ) {}
 
     public function getData(): FunctionLikeDefinitionData
     {

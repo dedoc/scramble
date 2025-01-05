@@ -15,9 +15,7 @@ class ClassDeferredDefinition implements ClassDefinitionContract
         public ClassDefinitionContract $definition,
         private ClassAstDefinitionBuilder $builder,
         private AstLocator $astLocator,
-    )
-    {
-    }
+    ) {}
 
     public function getData(): ClassDefinitionData
     {

@@ -86,6 +86,7 @@ class ClassDefinition implements ClassDefinitionContract
         if (! array_key_exists($name, $this->methods)) {
             return null;
         }
+
         return $this->methods[$name];
     }
 

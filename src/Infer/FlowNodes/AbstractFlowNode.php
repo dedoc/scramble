@@ -8,9 +8,7 @@ class AbstractFlowNode implements FlowNode
 {
     public function __construct(
         public array $antecedents,
-    )
-    {
-    }
+    ) {}
 
     public function getAllAntecedents(): LazyCollection
     {
@@ -18,7 +16,7 @@ class AbstractFlowNode implements FlowNode
             $visited = [];
             $queue = $this->antecedents;
 
-            while (!empty($queue)) {
+            while (! empty($queue)) {
                 $node = array_shift($queue);
 
                 // Avoid revisiting nodes

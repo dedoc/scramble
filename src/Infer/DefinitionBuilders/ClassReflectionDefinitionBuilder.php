@@ -15,9 +15,7 @@ class ClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 {
     public function __construct(
         public string $name,
-    )
-    {
-    }
+    ) {}
 
     public function build(): ClassDefinition
     {

@@ -11,9 +11,7 @@ class FunctionLikeDeferredDefinitionBuilder implements DefinitionBuilder
     public function __construct(
         public readonly string $name,
         public readonly AstLocator $astLocator,
-    )
-    {
-    }
+    ) {}
 
     public function build(): FunctionLikeDeferredDefinition
     {

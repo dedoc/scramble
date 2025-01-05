@@ -17,9 +17,7 @@ class AstLocator implements AstLocatorContract
     public function __construct(
         private Parser $parser,
         public readonly SourceLocator $sourceLocator,
-    )
-    {
-    }
+    ) {}
 
     public function getSource(Symbol $symbol): ?Node
     {
@@ -47,6 +45,7 @@ class AstLocator implements AstLocatorContract
 
         if ($symbol->kind === Symbol::KIND_CLASS) {
             $shortClassName = Str::afterLast($symbol->name, '\\');
+
             return (new NodeFinder)->findFirst(
                 $ast,
                 fn ($n) => $n instanceof ClassLike && (($n->name->name ?? null) === $shortClassName),

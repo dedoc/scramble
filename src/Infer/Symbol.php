@@ -5,17 +5,18 @@ namespace Dedoc\Scramble\Infer;
 class Symbol
 {
     const KIND_FUNCTION = 0;
+
     const KIND_CLASS = 1;
+
     const KIND_CLASS_METHOD = 2;
+
     const KIND_CONSTANT = 3;
 
     public function __construct(
         public readonly string $name,
         public readonly int $kind,
         public readonly ?string $className = null,
-    )
-    {
-    }
+    ) {}
 
     public static function createForFunction(string $name)
     {

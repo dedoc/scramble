@@ -13,9 +13,7 @@ class FunctionLikeDeferredDefinition implements FunctionLikeDefinitionContract
     public function __construct(
         public readonly FunctionLikeDefinitionContract $definition,
         public readonly FunctionLikeAstDefinitionBuilder $builder,
-    )
-    {
-    }
+    ) {}
 
     public function getData(): FunctionLikeDefinitionData
     {

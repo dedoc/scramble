@@ -42,6 +42,7 @@ class IncompleteTypeResolver
                 if ($t instanceof FunctionType) {
                     return [];
                 }
+
                 return $nodes;
             },
         );
@@ -95,38 +96,38 @@ class IncompleteTypeResolver
                 array_values($this->inferClassTemplateTypesFromNewCall($classDefinition, $type->arguments)),
             );
         }
-//
-//        if ($type instanceof MethodCallReferenceType) {
-//            $callee = $this->resolve($type->callee);
-//
-//            if ($callee instanceof TemplateType) {
-//                $callee = $callee->is ?: new MixedType;
-//            }
-//
-//            if ($callee instanceof ObjectType) {
-//                $classDefinition = $this->index->getClass($callee->name);
-//
-//                $functionType = $classDefinition?->getMethod($type->methodName);
-//
-//                if ($functionType) {
-//                    $functionType = $this->resolve($functionType);
-//                }
-//
-//                if ($functionType instanceof FunctionType) {
-//                    return $this->resolveFunctionLikeCall(
-//                        $functionType,
-//                        $type->arguments,
-//                        $this->inferTemplateTypesFromObject($classDefinition, $callee),
-//                    );
-//                }
-//            }
-//        }
+        //
+        //        if ($type instanceof MethodCallReferenceType) {
+        //            $callee = $this->resolve($type->callee);
+        //
+        //            if ($callee instanceof TemplateType) {
+        //                $callee = $callee->is ?: new MixedType;
+        //            }
+        //
+        //            if ($callee instanceof ObjectType) {
+        //                $classDefinition = $this->index->getClass($callee->name);
+        //
+        //                $functionType = $classDefinition?->getMethod($type->methodName);
+        //
+        //                if ($functionType) {
+        //                    $functionType = $this->resolve($functionType);
+        //                }
+        //
+        //                if ($functionType instanceof FunctionType) {
+        //                    return $this->resolveFunctionLikeCall(
+        //                        $functionType,
+        //                        $type->arguments,
+        //                        $this->inferTemplateTypesFromObject($classDefinition, $callee),
+        //                    );
+        //                }
+        //            }
+        //        }
 
         return new UnknownType('Cannot resolve reference type');
     }
 
     /**
-     * @param FunctionType $functionType *Resolved* function type
+     * @param  FunctionType  $functionType  *Resolved* function type
      */
     private function resolveFunctionLikeCall(FunctionType $functionType, array|callable $arguments, array $inferredTemplateTypes = [])
     {
@@ -162,10 +163,6 @@ class IncompleteTypeResolver
      *   'TA' => int(34)
      * ]
      * assuming that TA is a template type of a class and is accepted in constructor.
-     *
-     * @param ClassDefinitionContract $classDefinition
-     * @param array|callable $arguments
-     * @return array
      */
     private function inferClassTemplateTypesFromNewCall(ClassDefinitionContract $classDefinition, array|callable $arguments): array
     {
@@ -186,6 +183,7 @@ class IncompleteTypeResolver
         foreach ($classDefinition->getData()->templateTypes as $templateType) {
             if (array_key_exists($templateType->name, $newCallInferredTemplates)) {
                 $classInferredTemplates[$templateType->name] = $newCallInferredTemplates[$templateType->name];
+
                 continue;
             }
 

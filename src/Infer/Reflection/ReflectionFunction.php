@@ -3,14 +3,12 @@
 namespace Dedoc\Scramble\Infer\Reflection;
 
 use Dedoc\Scramble\Infer\Contracts\FunctionLikeAutoResolvingDefinition as FunctionLikeAutoResolvingDefinitionContract;
-use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinition as FunctionLikeDefinitionContract;
 use Dedoc\Scramble\Infer\Contracts\Index;
 use Dedoc\Scramble\Infer\Contracts\SourceLocator;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAutoResolvingDefinition;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeDeferredDefinitionBuilder;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\SourceLocators\AstLocator;
-use Dedoc\Scramble\Infer\SourceLocators\NullSourceLocator;
 use Dedoc\Scramble\Infer\SourceLocators\ReflectionSourceLocator;
 use Dedoc\Scramble\Infer\SourceLocators\StringSourceLocator;
 use PhpParser\Parser;
@@ -23,10 +21,7 @@ class ReflectionFunction
         public readonly ?SourceLocator $sourceLocator,
         public readonly Index $index,
         public readonly Parser $parser,
-    )
-    {
-
-    }
+    ) {}
 
     public static function createFromSource(string $name, string $source, ?Index $index = null, ?Parser $parser = null)
     {
@@ -44,10 +39,11 @@ class ReflectionFunction
         $nativeReflection = null;
         try {
             $nativeReflection = new \ReflectionFunction($name);
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
 
         $source = $nativeReflection?->getFileName();
-        $sourceLocator = $source ? new ReflectionSourceLocator() : null;
+        $sourceLocator = $source ? new ReflectionSourceLocator : null;
 
         return new self($name, $sourceLocator, $index, $parser);
     }

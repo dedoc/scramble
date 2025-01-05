@@ -20,6 +20,7 @@ test('builds class definition', function () {
 class Foo_ClassReflectionDefinitionBuilderTest
 {
     public string $foo;
+
     public function __construct(string $foo) {}
 }
 
@@ -37,5 +38,6 @@ test('builds a parent class definition', function () {
 class Bar_ClassReflectionDefinitionBuilderTest extends Foo_ClassReflectionDefinitionBuilderTest
 {
     public string $bar;
+
     public function __construct(string $bar) {}
 }

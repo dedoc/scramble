@@ -18,18 +18,16 @@ class FunctionReflector
         private readonly Index $index,
         public readonly string $name,
         private readonly string $code, // @todo
-    )
-    {
-    }
+    ) {}
 
     public static function makeFromCodeString(string $name, string $code, Index $index): static
     {
-//        $sourceLocator = new CodeStringSourceLocator($code);
+        //        $sourceLocator = new CodeStringSourceLocator($code);
 
         return new static(
             $index,
             $name,
-//            $sourceLocator->getFunctionAst($name),
+            //            $sourceLocator->getFunctionAst($name),
             $code,
         );
     }
@@ -39,7 +37,7 @@ class FunctionReflector
      */
     public function getIncompleteType(): FunctionType
     {
-        $parser = (new ParserFactory())->createForHostVersion();
+        $parser = (new ParserFactory)->createForHostVersion();
         $ast = $parser->parse($this->code);
         $functionNode = (new NodeFinder)->findFirst(
             $ast,
@@ -50,16 +48,14 @@ class FunctionReflector
         }
 
         /** @var Function_ $functionNode */
-
-        $traverser = new NodeTraverser(
-            // new PhpParser\NodeVisitor\ParentConnectingVisitor(),
-            // new \PhpParser\NodeVisitor\NameResolver(),
-        );
+        $traverser = new NodeTraverser;
+        // new PhpParser\NodeVisitor\ParentConnectingVisitor(),
+        // new \PhpParser\NodeVisitor\NameResolver(),
         $traverser->addVisitor($flowVisitor = new FlowBuildingVisitor($traverser));
 
         $traverser->traverse([$functionNode]);
 
-        $incompleteFunctionType = (new IncompleteTypeGetter())->getFunctionType($functionNode, $this->name);
+        $incompleteFunctionType = (new IncompleteTypeGetter)->getFunctionType($functionNode, $this->name);
 
         if (! $incompleteFunctionType) {
             throw new \LogicException("Cannot locate flow node container in [$this->name] function AST node");

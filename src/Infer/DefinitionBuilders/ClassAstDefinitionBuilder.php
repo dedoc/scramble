@@ -10,7 +10,6 @@ use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\FlowNodes\AssignmentFlowNode;
 use Dedoc\Scramble\Infer\FlowNodes\FlowNode;
 use Dedoc\Scramble\Infer\FlowNodes\FlowNodeTypeGetter;
-use Dedoc\Scramble\Infer\FlowNodes\TemplateTypeNameGetter;
 use Dedoc\Scramble\Infer\SourceLocators\BypassAstLocator;
 use Dedoc\Scramble\Infer\Symbol;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -23,8 +22,8 @@ use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
-use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitorAbstract;
@@ -34,27 +33,27 @@ class ClassAstDefinitionBuilder implements ClassDefinitionBuilder
     public function __construct(
         private string $name,
         private AstLocator $astLocator,
-    )
-    {
-    }
+    ) {}
 
     /**
      * @return Node\Stmt[]
      */
     private function getClassMembersNodes(ClassLike $node): array
     {
-        $visitor = new class extends NodeVisitorAbstract {
-            public function __construct(public array $members = [])
-            {
-            }
+        $visitor = new class extends NodeVisitorAbstract
+        {
+            public function __construct(public array $members = []) {}
+
             public function enterNode(Node $node)
             {
                 if ($node instanceof Node\Stmt\Property) {
                     $this->members[] = $node;
+
                     return NodeVisitor::DONT_TRAVERSE_CURRENT_AND_CHILDREN;
                 }
                 if ($node instanceof Node\Stmt\ClassMethod) {
                     $this->members[] = $node;
+
                     return NodeVisitor::DONT_TRAVERSE_CURRENT_AND_CHILDREN;
                 }
             }
@@ -65,6 +64,7 @@ class ClassAstDefinitionBuilder implements ClassDefinitionBuilder
             $visitor,
         );
         $traverser->traverse([$node]);
+
         return $visitor->members;
     }
 
@@ -97,7 +97,7 @@ class ClassAstDefinitionBuilder implements ClassDefinitionBuilder
                 foreach ($node->props as $prop) {
                     $classDefinition->properties[$prop->name->name] = new ClassPropertyDefinition(
                         type: $template = new TemplateType('T'.Str::ucfirst($prop->name->name), $node->type ? TypeHelper::createTypeFromTypeNode($node->type) : null),
-                        defaultType: null, //@todo
+                        defaultType: null, // @todo
                     );
                     $classDefinition->templateTypes[] = $template;
                 }
@@ -121,8 +121,7 @@ class ClassAstDefinitionBuilder implements ClassDefinitionBuilder
     public function buildMethodDefinitionAndUpdateClassDefinitionData(
         ClassDefinitionData $classDefinition,
         Node\Stmt\ClassMethod $methodNode,
-    ): FunctionLikeDefinitionContract
-    {
+    ): FunctionLikeDefinitionContract {
         $methodDefinition = (new FunctionLikeAstDefinitionBuilder(
             $methodNode->name->name,
             new BypassAstLocator($methodNode),

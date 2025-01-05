@@ -9,8 +9,7 @@ class BasicFlowNode extends AbstractFlowNode
     public function __construct(
         public readonly Stmt $statement,
         array $antecedents,
-    )
-    {
+    ) {
         parent::__construct($antecedents);
     }
 }

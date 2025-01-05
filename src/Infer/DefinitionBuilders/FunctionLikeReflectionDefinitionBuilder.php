@@ -15,8 +15,7 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
     public function __construct(
         public string $name,
         private \ReflectionFunction|\ReflectionMethod|null $reflection = null
-    )
-    {
+    ) {
         if (! $this->reflection) {
             $this->reflection = new \ReflectionFunction($this->name);
         }
@@ -34,7 +33,7 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
 
         $returnType = ($retType = $this->reflection->getReturnType())
             ? TypeHelper::createTypeFromReflectionType($retType)
-            : new UnknownType();
+            : new UnknownType;
 
         $type = new FunctionType($this->name, $parameters, $returnType);
 

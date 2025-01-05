@@ -17,8 +17,7 @@ class AssignmentFlowNode extends AbstractFlowNode
         public readonly Assign|AssignOp $expression,
         public readonly int $kind,
         array $antecedents,
-    )
-    {
+    ) {
         parent::__construct($antecedents);
     }
 

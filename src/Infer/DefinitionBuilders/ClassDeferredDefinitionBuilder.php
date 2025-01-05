@@ -12,9 +12,7 @@ class ClassDeferredDefinitionBuilder implements ClassDefinitionBuilder
     public function __construct(
         private string $name,
         private AstLocator $astLocator,
-    )
-    {
-    }
+    ) {}
 
     public function build(): ClassDefinitionContract
     {

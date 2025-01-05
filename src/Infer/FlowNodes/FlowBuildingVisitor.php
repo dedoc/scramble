@@ -19,12 +19,10 @@ class FlowBuildingVisitor extends NodeVisitorAbstract
     public function __construct(
         private NodeTraverser $traverser,
         private TemplateTypeNameGetter $templateTypeNameGetter = new TemplateTypeNameGetter,
-        private WeakMap $handledExpressions = new WeakMap(),
-        private WeakMap $functionLikeFlowContainers = new WeakMap(),
-        private WeakMap $skipNodes = new WeakMap(),
-    )
-    {
-    }
+        private WeakMap $handledExpressions = new WeakMap,
+        private WeakMap $functionLikeFlowContainers = new WeakMap,
+        private WeakMap $skipNodes = new WeakMap,
+    ) {}
 
     public function enterNode(Node $node)
     {
@@ -195,7 +193,7 @@ class FlowBuildingVisitor extends NodeVisitorAbstract
                 && collect($conditionNodes)->contains(fn (ConditionFlowNode $f) => $f->isTrue === false)
             );
             // Make sure to preserve the control flow if there is no if/else pair
-            if ($poppingFlow->head && !$containsIfElse) {
+            if ($poppingFlow->head && ! $containsIfElse) {
                 if (! in_array($poppingFlow->head, $leafNodes)) {
                     $leafNodes[] = $poppingFlow->head;
                 }

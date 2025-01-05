@@ -2,10 +2,10 @@
 
 namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 
+use Dedoc\Scramble\Infer\Contracts\AstLocator;
 use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinition as FunctionLikeDefinitionContract;
 use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinitionBuilder;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
-use Dedoc\Scramble\Infer\Contracts\AstLocator;
 use Dedoc\Scramble\Infer\Symbol;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\MixedType;
@@ -18,9 +18,7 @@ class FunctionLikeShallowAstDefinitionBuilder implements FunctionLikeDefinitionB
     public function __construct(
         public readonly string $name,
         public readonly AstLocator $astLocator,
-    )
-    {
-    }
+    ) {}
 
     public function build(): FunctionLikeDefinitionContract
     {

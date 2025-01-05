@@ -16,7 +16,7 @@ beforeEach(function () {
 test('builds class definition', function () {
     $builder = new ClassDeferredDefinitionBuilder(
         Foo_ClassDeferredDefinitionBuilderTest::class,
-        new AstLocator($this->parser, new ReflectionSourceLocator()),
+        new AstLocator($this->parser, new ReflectionSourceLocator),
     );
     $definition = $builder->build();
 
@@ -31,13 +31,14 @@ test('builds class definition', function () {
 class Foo_ClassDeferredDefinitionBuilderTest
 {
     public string $foo;
+
     public function __construct(string $foo) {}
 }
 
 test('builds parent class definition', function () {
     $builder = new ClassDeferredDefinitionBuilder(
         Bar_ClassDeferredDefinitionBuilderTest::class,
-        new AstLocator($this->parser, new ReflectionSourceLocator()),
+        new AstLocator($this->parser, new ReflectionSourceLocator),
     );
     $definition = $builder->build();
 
@@ -50,5 +51,6 @@ test('builds parent class definition', function () {
 class Bar_ClassDeferredDefinitionBuilderTest extends Foo_ClassDeferredDefinitionBuilderTest
 {
     public string $bar;
+
     public function __construct(string $bar) {}
-} 
+}

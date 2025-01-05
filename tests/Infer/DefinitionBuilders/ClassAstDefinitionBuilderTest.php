@@ -54,4 +54,4 @@ test('builds parent class definition', function () {
         ->and($definition->templateTypes[0]->name)->toBe('TFoo')
         ->and($definition->templateTypes[1]->name)->toBe('TBar')
         ->and($definition->properties['bar']->type)->toBe($definition->templateTypes[1]);
-}); 
+});

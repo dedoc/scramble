@@ -21,10 +21,7 @@ class ReflectionClass
         public readonly SourceLocator $sourceLocator,
         public readonly Index $index,
         public readonly Parser $parser,
-    )
-    {
-
-    }
+    ) {}
 
     public static function createFromSource(string $name, string $source, ?Index $index = null, ?Parser $parser = null)
     {
@@ -42,10 +39,11 @@ class ReflectionClass
         $nativeReflection = null;
         try {
             $nativeReflection = new \ReflectionClass($name);
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
 
         $source = $nativeReflection?->getFileName();
-        $sourceLocator = $source ? new ReflectionSourceLocator() : null;
+        $sourceLocator = $source ? new ReflectionSourceLocator : null;
 
         return new self($name, $sourceLocator, $index, $parser);
     }

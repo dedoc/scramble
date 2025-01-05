@@ -21,8 +21,7 @@ class EnterFunctionLikeFlowNode extends AbstractFlowNode
         public readonly ?FlowNode $containerAntecedent,
         public readonly TemplateTypeNameGetter $templateTypeNameGetter,
         array $antecedents,
-    )
-    {
+    ) {
         parent::__construct($antecedents);
         $this->typesCache = new WeakMap;
     }
@@ -45,7 +44,7 @@ class EnterFunctionLikeFlowNode extends AbstractFlowNode
 
     public function hasParameter(Expr $expression): bool
     {
-        return !! $this->getParameter($expression);
+        return (bool) $this->getParameter($expression);
     }
 
     public function getParameter(Expr $expression): ?Param

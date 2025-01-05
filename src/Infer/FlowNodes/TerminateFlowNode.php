@@ -12,8 +12,7 @@ class TerminateFlowNode extends AbstractFlowNode
         public readonly ?Expr $expression,
         public readonly int $kind,
         array $antecedents,
-    )
-    {
+    ) {
         parent::__construct($antecedents);
     }
 }

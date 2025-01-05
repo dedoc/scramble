@@ -10,9 +10,7 @@ class BypassAstLocator implements AstLocatorContract
 {
     public function __construct(
         private Node $node,
-    )
-    {
-    }
+    ) {}
 
     public function getSource(Symbol $symbol): ?Node
     {

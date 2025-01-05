@@ -20,9 +20,7 @@ class ClassAutoResolvingDefinition implements ClassAutoResolvingDefinitionContra
     public function __construct(
         public readonly ClassDefinitionContract $definition,
         private readonly Index $index,
-    )
-    {
-    }
+    ) {}
 
     public function getData(): ClassDefinitionData
     {

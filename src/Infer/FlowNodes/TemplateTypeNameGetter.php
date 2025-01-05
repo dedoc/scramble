@@ -9,9 +9,7 @@ class TemplateTypeNameGetter
     public function __construct(
         private FlowNodes|ClassDefinition|null $templateTypesContainer = null,
         private ?TemplateTypeNameGetter $parent = null,
-    )
-    {
-    }
+    ) {}
 
     private function getDefinedTemplates(): array
     {

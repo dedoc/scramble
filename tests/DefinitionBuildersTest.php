@@ -14,7 +14,7 @@ use Dedoc\Scramble\Infer\SourceLocators\AstLocator;
 use PhpParser\ParserFactory;
 
 beforeEach(function () {
-    $this->parser = (new ParserFactory())->createForHostVersion();
+    $this->parser = (new ParserFactory)->createForHostVersion();
     $this->index = new LazyIndex(parser: $this->parser);
 });
 

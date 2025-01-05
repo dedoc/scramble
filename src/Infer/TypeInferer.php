@@ -48,15 +48,15 @@ class TypeInferer extends NodeVisitorAbstract
             new ArrayItemHandler,
             new ReturnHandler,
             new ThrowHandler,
-//            new ExpressionTypeInferringExtensions(array_values(array_filter(
-//                $extensions,
-//                fn ($ext) => $ext instanceof ExpressionTypeInferExtension,
-//            ))),
-//            new ExceptionInferringExtensions(array_values(array_filter(
-//                $extensions,
-//                fn ($ext) => $ext instanceof ExpressionExceptionExtension,
-//            ))),
-//            new PhpDocHandler,
+            //            new ExpressionTypeInferringExtensions(array_values(array_filter(
+            //                $extensions,
+            //                fn ($ext) => $ext instanceof ExpressionTypeInferExtension,
+            //            ))),
+            //            new ExceptionInferringExtensions(array_values(array_filter(
+            //                $extensions,
+            //                fn ($ext) => $ext instanceof ExpressionExceptionExtension,
+            //            ))),
+            //            new PhpDocHandler,
             ...$handlers,
         ];
     }

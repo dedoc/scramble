@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Tests\Infer\DefinitionBuilders;
 
 use Dedoc\Scramble\Infer\DefinitionBuilders\ClassShallowAstDefinitionBuilder;
-use Dedoc\Scramble\Infer\Dumpers\StubDumper;
 use Dedoc\Scramble\Infer\FlowNodes\LazyIndex;
 use Dedoc\Scramble\Infer\Reflection\ReflectionClass;
 use Dedoc\Scramble\Infer\SourceLocators\AstLocator;

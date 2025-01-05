@@ -2,7 +2,4 @@
 
 namespace Dedoc\Scramble\Infer\Contracts;
 
-interface Definition
-{
-
-}
+interface Definition {}

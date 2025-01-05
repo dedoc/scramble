@@ -10,17 +10,16 @@ class FlowNodes
         public array $nodes = [],
         public ?FlowNode $head = null,
 
-        public WeakMap $nodesFlowNodes = new WeakMap(),
+        public WeakMap $nodesFlowNodes = new WeakMap,
 
         private ?FlowNode $currentConditionFlow = null,
-        private ?WeakMap $conditionFlowStacksLeafs = new WeakMap(),
-    )
-    {
-    }
+        private ?WeakMap $conditionFlowStacksLeafs = new WeakMap,
+    ) {}
 
     public function setNodes(array $nodes)
     {
         $this->nodes = $nodes;
+
         return $this;
     }
 
@@ -28,7 +27,7 @@ class FlowNodes
     {
         $lastNodes = array_values(array_filter(
             [$this->nodes[count($this->nodes) - 1] ?? $this->head],
-            fn($flowNode) => $flowNode && !$flowNode instanceof TerminateFlowNode,
+            fn ($flowNode) => $flowNode && ! $flowNode instanceof TerminateFlowNode,
         ));
         $this->nodes[] = $flowNode = $flowNodeGetter($lastNodes);
         if ($node) {
@@ -74,6 +73,7 @@ class FlowNodes
             $conditions[] = $condition;
             $newAntecedents[] = $newAntecedent;
         }
+
         return $newAntecedents;
     }
 
@@ -85,6 +85,7 @@ class FlowNodes
             $conditions[] = $condition;
             $newAntecedents[] = $newAntecedent;
         }
+
         return $conditions;
     }
 
@@ -97,6 +98,7 @@ class FlowNodes
     {
         $ifFlow = $this->push($node, $flowNodeGetter);
         $this->ifFlowStack = [$ifFlow, ...$this->ifFlowStack];
+
         return $ifFlow;
     }
 
@@ -119,6 +121,6 @@ class FlowNodes
 
         // @todo check if terminate in new antecedents and avoid branch label if there is one non-terminate antecedent
 
-        $this->push(null, fn() => new BranchLabel($newAntecedents));
+        $this->push(null, fn () => new BranchLabel($newAntecedents));
     }
 }

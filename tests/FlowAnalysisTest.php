@@ -7,7 +7,7 @@ use Dedoc\Scramble\Tests\Utils\TestUtils;
 use PhpParser\ParserFactory;
 
 beforeEach(function () {
-    $this->parser = (new ParserFactory())->createForHostVersion();
+    $this->parser = (new ParserFactory)->createForHostVersion();
     $this->index = new LazyIndex(parser: $this->parser);
     $this->testUtils = new TestUtils($this->index, $this->parser);
 });
@@ -26,7 +26,7 @@ class Foo {
         $this->b = ['wow' => $a];
     }
 }
-EOF, $this->index, $this->parser)->getDefinition()->definition
+EOF, $this->index, $this->parser)->getDefinition()->definition,
         ],
     );
 

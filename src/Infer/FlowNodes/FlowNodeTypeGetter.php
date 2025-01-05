@@ -37,9 +37,7 @@ class FlowNodeTypeGetter
     public function __construct(
         public readonly ?Expr $expression,
         public readonly FlowNode $flowNode,
-    )
-    {
-    }
+    ) {}
 
     public function getType(): Type
     {
@@ -76,6 +74,7 @@ class FlowNodeTypeGetter
 
             if ($flowNode instanceof TerminateFlowNode) {
                 $flowNode = $flowNode->antecedents[0] ?? null;
+
                 continue;
             }
 
@@ -83,6 +82,7 @@ class FlowNodeTypeGetter
                 $type = $this->getAssignmentFlowType($flowNode);
                 if (! $type) {
                     $flowNode = $flowNode->antecedents[0] ?? null;
+
                     continue;
                 }
             }
@@ -93,11 +93,13 @@ class FlowNodeTypeGetter
 
             if ($flowNode instanceof BasicFlowNode) {
                 $flowNode = $flowNode->antecedents[0] ?? null;
+
                 continue;
             }
 
             if ($flowNode instanceof ConditionFlowNode) {
                 $flowNode = $flowNode->antecedents[0] ?? null;
+
                 continue;
             }
 
@@ -113,6 +115,7 @@ class FlowNodeTypeGetter
                 && $flowNode->hasAccessToParent($this->expression)
             ) {
                 $flowNode = $flowNode->containerAntecedent;
+
                 continue;
             }
 
@@ -166,7 +169,7 @@ class FlowNodeTypeGetter
     protected function getExpressionType(Expr $expression, FlowNode $flowNode): ?Type
     {
         if (! isset(static::$_alreadySeen)) {
-            static::$_alreadySeen = new WeakMap();
+            static::$_alreadySeen = new WeakMap;
         }
 
         if ($localType = $this->getLocalExpressionType($expression)) {
@@ -179,6 +182,7 @@ class FlowNodeTypeGetter
 
         $remember = function ($type) use ($expression) {
             static::$_alreadySeen->offsetSet($expression, $type);
+
             return $type;
         };
 
@@ -217,6 +221,7 @@ class FlowNodeTypeGetter
                 ),
                 $expression->items,
             );
+
             return $remember(new KeyedArrayType($arrayItems));
         }
 
@@ -302,10 +307,11 @@ class FlowNodeTypeGetter
         ));
 
         $result = [];
-        /** @var Arg $argument  */
+        /** @var Arg $argument */
         foreach ($arguments as $index => $argument) {
             $result[$argument->name ? $argument->name->name : $index] = $this->getExpressionFlowType($argument->value, $flowNode);
         }
+
         return $result;
     }
 
@@ -368,6 +374,6 @@ class FlowNodeTypeGetter
 
     public function getAnonymousFunctionType(Expr\Closure|Expr\ArrowFunction $expression)
     {
-        return (new IncompleteTypeGetter())->getFunctionType($expression, 'anonymous');
+        return (new IncompleteTypeGetter)->getFunctionType($expression, 'anonymous');
     }
 }

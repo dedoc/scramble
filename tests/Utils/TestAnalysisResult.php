@@ -10,7 +10,5 @@ class TestAnalysisResult
     public function __construct(
         public readonly Type $type,
         public readonly Index $index,
-    )
-    {
-    }
+    ) {}
 }

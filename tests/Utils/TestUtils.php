@@ -13,9 +13,7 @@ class TestUtils
     public function __construct(
         public readonly Index $index,
         public readonly Parser $parser,
-    )
-    {
-    }
+    ) {}
 
     public function getExpressionType(string $expressionCode, array $functionsDefinitions = [], array $classesDefinitions = []): TestAnalysisResult
     {
