@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinition as FunctionLikeDefinitionContract;
 use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinitionBuilder;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
-use Dedoc\Scramble\Infer\Reflection\ReflectionFunction;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
@@ -14,13 +13,13 @@ use ReflectionParameter;
 
 class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionBuilder
 {
-    public function __construct(public readonly ReflectionFunction $reflectionFunction)
+    public function __construct(public string $name)
     {
     }
 
     public function build(): FunctionLikeDefinitionContract
     {
-        $reflection = new \ReflectionFunction($this->reflectionFunction->name);
+        $reflection = new \ReflectionFunction($this->name);
 
         $parameters = collect($reflection->getParameters())
             ->mapWithKeys(fn (ReflectionParameter $p) => [
@@ -34,7 +33,7 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
             ? TypeHelper::createTypeFromReflectionType($retType)
             : new UnknownType();
 
-        $type = new FunctionType($this->reflectionFunction->name, $parameters, $returnType);
+        $type = new FunctionType($this->name, $parameters, $returnType);
 
         return new FunctionLikeDefinition($type);
     }

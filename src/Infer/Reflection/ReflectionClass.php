@@ -2,25 +2,23 @@
 
 namespace Dedoc\Scramble\Infer\Reflection;
 
-use Dedoc\Scramble\Infer\Contracts\FunctionLikeAutoResolvingDefinition as FunctionLikeAutoResolvingDefinitionContract;
-use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinition as FunctionLikeDefinitionContract;
+use Dedoc\Scramble\Infer\Contracts\ClassAutoResolvingDefinition as ClassAutoResolvingDefinitionContract;
 use Dedoc\Scramble\Infer\Contracts\Index;
 use Dedoc\Scramble\Infer\Contracts\SourceLocator;
-use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAutoResolvingDefinition;
-use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeDeferredDefinitionBuilder;
-use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
+use Dedoc\Scramble\Infer\DefinitionBuilders\ClassAutoResolvingDefinition;
+use Dedoc\Scramble\Infer\DefinitionBuilders\ClassDeferredDefinitionBuilder;
+use Dedoc\Scramble\Infer\DefinitionBuilders\ClassReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\SourceLocators\AstLocator;
-use Dedoc\Scramble\Infer\SourceLocators\NullSourceLocator;
 use Dedoc\Scramble\Infer\SourceLocators\ReflectionSourceLocator;
 use Dedoc\Scramble\Infer\SourceLocators\StringSourceLocator;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
 
-class ReflectionFunction
+class ReflectionClass
 {
     private function __construct(
         public readonly string $name,
-        public readonly ?SourceLocator $sourceLocator,
+        public readonly SourceLocator $sourceLocator,
         public readonly Index $index,
         public readonly Parser $parser,
     )
@@ -43,7 +41,7 @@ class ReflectionFunction
 
         $nativeReflection = null;
         try {
-            $nativeReflection = new \ReflectionFunction($name);
+            $nativeReflection = new \ReflectionClass($name);
         } catch (\Throwable) {}
 
         $source = $nativeReflection?->getFileName();
@@ -52,14 +50,14 @@ class ReflectionFunction
         return new self($name, $sourceLocator, $index, $parser);
     }
 
-    public function getDefinition(): FunctionLikeAutoResolvingDefinitionContract
+    public function getDefinition(): ClassAutoResolvingDefinitionContract
     {
-        $definitionBuilder = ! $this->sourceLocator // this is a built-in fn
-            ? new FunctionLikeReflectionDefinitionBuilder($this->name)
-            : new FunctionLikeDeferredDefinitionBuilder($this->name, new AstLocator($this->parser, $this->sourceLocator));
+        $definitionBuilder = ! $this->sourceLocator // this is a built-in class
+            ? new ClassReflectionDefinitionBuilder($this->name)
+            : new ClassDeferredDefinitionBuilder($this->name, new AstLocator($this->parser, $this->sourceLocator));
 
-        return new FunctionLikeAutoResolvingDefinition(
-            $definitionBuilder->build(),
+        return new ClassAutoResolvingDefinition(
+            definition: $definitionBuilder->build(),
             index: $this->index,
         );
     }

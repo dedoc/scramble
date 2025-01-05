@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\SourceLocators;
 
+use Dedoc\Scramble\Infer\Contracts\SourceLocator;
 use Dedoc\Scramble\Infer\Symbol;
 
 class ReflectionSourceLocator implements SourceLocator

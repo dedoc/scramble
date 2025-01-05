@@ -3,42 +3,31 @@
 namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 
 use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinition as FunctionLikeDefinitionContract;
-use Dedoc\Scramble\Infer\Contracts\Index;
-use Dedoc\Scramble\Infer\FlowNodes\IncompleteTypeResolver;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition as FunctionLikeDefinitionData;
 use Dedoc\Scramble\Support\Type\FunctionType;
 
 class FunctionLikeDeferredDefinition implements FunctionLikeDefinitionContract
 {
-    private ?FunctionType $resolvedIncompleteType = null;
-    private ?FunctionType $resolvedType = null;
+    private ?FunctionType $astAnalyzedType = null;
 
     public function __construct(
         public readonly FunctionLikeDefinitionContract $definition,
         public readonly FunctionLikeAstDefinitionBuilder $builder,
-        public readonly Index $index,
     )
     {
     }
 
-    public function getType(): FunctionType
+    public function getData(): FunctionLikeDefinitionData
     {
-        if ($this->resolvedType) {
-            return $this->resolvedType;
-        }
-
-        $incompleteType = $this->getIncompleteType();
-
-        return $this->resolvedType = (new IncompleteTypeResolver($this->index))->resolve($incompleteType);
+        return $this->definition->getData();
     }
 
-    public function getIncompleteType(): FunctionType
+    public function getType(): FunctionType
     {
-        if ($this->resolvedIncompleteType) {
-            return $this->resolvedIncompleteType;
+        if ($this->astAnalyzedType) {
+            return $this->astAnalyzedType;
         }
 
-        $definition = $this->builder->build();
-
-        return $this->resolvedIncompleteType = $definition->getType();
+        return $this->astAnalyzedType = $this->builder->build()->getType();
     }
 }

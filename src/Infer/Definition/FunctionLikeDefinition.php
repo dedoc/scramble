@@ -5,9 +5,12 @@ namespace Dedoc\Scramble\Infer\Definition;
 use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinition as FunctionLikeDefinitionContract;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeAttributes;
 
 class FunctionLikeDefinition implements FunctionLikeDefinitionContract
 {
+    use TypeAttributes;
+
     public bool $isFullyAnalyzed = false;
 
     /**
@@ -24,6 +27,11 @@ class FunctionLikeDefinition implements FunctionLikeDefinitionContract
     public function getType(): FunctionType
     {
         return $this->type;
+    }
+
+    public function getData(): static
+    {
+        return $this;
     }
 
     public function isFullyAnalyzed(): bool

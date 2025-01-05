@@ -51,13 +51,13 @@ class LazyIndex implements Index
             }
 
             if ($functionDefinition) {
-                return $this->functions[$name] = $functionDefinition->getType();
+                return $this->functions[$name] = $functionDefinition->getIncompleteType();
             }
 
             return null;
         }
 
-        return $this->functions[$name] = (new FunctionLikeReflectionDefinitionBuilder($reflectionFunction))->build()->getType();
+        return $this->functions[$name] = (new FunctionLikeReflectionDefinitionBuilder($name))->build()->getType();
     }
 
     public function getClass(string $name): ?ClassDefinition

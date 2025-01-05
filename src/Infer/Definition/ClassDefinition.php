@@ -3,6 +3,8 @@
 namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
+use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
+use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\FlowNodes\AssignmentFlowNode;
 use Dedoc\Scramble\Infer\FlowNodes\FlowNode;
 use Dedoc\Scramble\Infer\FlowNodes\FlowNodeTypeGetter;
@@ -30,7 +32,7 @@ use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
 
-class ClassDefinition
+class ClassDefinition implements ClassDefinitionContract
 {
     public function __construct(
         // FQ name
@@ -86,6 +88,19 @@ class ClassDefinition
         }
 
         return $lastLookedUpClassName;
+    }
+
+    public function getMethod(string $name): ?FunctionLikeDefinition
+    {
+        if (! array_key_exists($name, $this->methods)) {
+            return null;
+        }
+        return $this->methods[$name];
+    }
+
+    public function getData(): ClassDefinition
+    {
+        return $this;
     }
 
     public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [])

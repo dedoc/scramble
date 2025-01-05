@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Infer\SourceLocators;
+namespace Dedoc\Scramble\Infer\Contracts;
 
 use Dedoc\Scramble\Infer\Symbol;
 

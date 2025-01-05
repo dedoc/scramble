@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\SourceLocators;
 
+use Dedoc\Scramble\Infer\Contracts\SourceLocator;
 use Dedoc\Scramble\Infer\Symbol;
 
 class StringSourceLocator implements SourceLocator
@@ -14,6 +15,6 @@ class StringSourceLocator implements SourceLocator
 
     public function getSource(Symbol $symbol): string
     {
-       return $this->source;
+        return $this->source;
     }
 }

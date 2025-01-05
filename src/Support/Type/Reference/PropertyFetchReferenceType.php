@@ -19,6 +19,11 @@ class PropertyFetchReferenceType extends AbstractReferenceType
         return "(#{$this->object->toString()}).{$this->propertyName}";
     }
 
+    public function nodes(): array
+    {
+        return ['object'];
+    }
+
     public function dependencies(): array
     {
         if ($this->object instanceof AbstractReferenceType) {

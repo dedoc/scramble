@@ -26,6 +26,11 @@ class CallableCallReferenceType extends AbstractReferenceType
         return "(λ{$calleeString})($argsTypes)";
     }
 
+    public function nodes(): array
+    {
+        return ['callee', 'arguments'];
+    }
+
     public function dependencies(): array
     {
         if ($this->callee instanceof AbstractReferenceType) {
