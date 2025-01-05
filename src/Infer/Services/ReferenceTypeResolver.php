@@ -113,7 +113,7 @@ class ReferenceTypeResolver
         }
 
         $resultingType = RecursionGuard::run(
-            $type,//->toString(),
+            $type,// ->toString(),
             fn () => (new TypeWalker)->replace(
                 $type,
                 fn (Type $t) => $this->doResolve($t, $type, $scope)?->mergeAttributes($t->attributes()),
@@ -122,7 +122,7 @@ class ReferenceTypeResolver
         );
 
         return deep_copy(RecursionGuard::run(
-            $resultingType,//->toString(),
+            $resultingType,// ->toString(),
             fn () => (new TypeWalker)->replace(
                 $resultingType,
                 fn (Type $t) => $t instanceof Union

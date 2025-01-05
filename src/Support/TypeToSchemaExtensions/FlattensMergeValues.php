@@ -63,7 +63,7 @@ trait FlattensMergeValues
                 }
 
                 $isUnionWithMissingValue = fn ($type) => $type instanceof Union
-                    && !! array_filter($type->types, fn (Type $t) => $t->isInstanceOf(MissingValue::class));
+                    && (bool) array_filter($type->types, fn (Type $t) => $t->isInstanceOf(MissingValue::class));
 
                 if (
                     $item->value instanceof Union
@@ -73,6 +73,7 @@ trait FlattensMergeValues
                         if (! $isUnionWithMissingValue($t)) {
                             return null;
                         }
+
                         return Union::wrap(array_values(
                             array_filter($t->types, fn (Type $t) => ! $t->isInstanceOf(MissingValue::class))
                         ));
