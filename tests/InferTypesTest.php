@@ -4,7 +4,7 @@ use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SamplePostModelWithToArray;
@@ -40,7 +40,7 @@ it('gets json resource type with enum', function () {
 it('infers model type', function () {
     $transformer = new TypeTransformer($this->infer, $components = new Components, [
         ModelToSchema::class,
-        EloquentCollectionToSchema::class,
+        CollectionToSchema::class,
     ]);
     $extension = new ModelToSchema($this->infer, $transformer, $components);
 
@@ -54,7 +54,7 @@ it('infers model type', function () {
 it('infers model type when toArray is implemented', function () {
     $transformer = new TypeTransformer($infer = $this->infer, $components = new Components, [
         ModelToSchema::class,
-        EloquentCollectionToSchema::class,
+        CollectionToSchema::class,
     ]);
     $extension = new ModelToSchema($infer, $transformer, $components);
 
