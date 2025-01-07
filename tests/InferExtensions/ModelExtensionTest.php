@@ -34,7 +34,7 @@ it('adds models attributes to the model class definition as properties', functio
         /* Relations */
         'user' => 'SampleUserModel',
         'parent' => 'SamplePostModel',
-        'children' => 'Illuminate\Database\Eloquent\Collection<SamplePostModel>',
+        'children' => 'Illuminate\Database\Eloquent\Collection<int, SamplePostModel>',
         /* other properties from model class are ommited here but exist on type */
     ];
 
@@ -79,6 +79,6 @@ if (method_exists(AsEnumCollection::class, 'of')) {
         $propertyType = $object->getPropertyType('roles');
 
         expect(Str::replace('Dedoc\\Scramble\\Tests\\Files\\', '', $propertyType->toString()))
-            ->toBe('Illuminate\Support\Collection<Role>');
+            ->toBe('Illuminate\Support\Collection<int, Role>');
     });
 }
