@@ -111,7 +111,7 @@ it('can fetch properties from vendor Role model', function () {
     foreach ($expectedProperties as $name => $type) {
         $propertyType = ReferenceTypeResolver::getInstance()
             ->resolve(
-                new Infer\Scope\GlobalScope(),
+                new Infer\Scope\GlobalScope,
                 new PropertyFetchReferenceType($object, $name)
             );
 
