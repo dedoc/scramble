@@ -236,3 +236,35 @@ class JsonResourceTypeToSchemaTest_WithDefault extends \Illuminate\Http\Resource
         ];
     }
 }
+
+it('handles additional data with custom status code', function () {
+    $openApiDocument = generateForRoute(function () {
+        return Route::get('api/test', [JsonResourceTypeToSchemaTest_AdditionalController::class, 'index']);
+    });
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+    
+    expect($responses)
+        ->toHaveKey('202')
+        ->not->toHaveKey('200')
+        ->and($responses['202']['content']['application/json']['schema']['properties'])
+        ->toHaveKeys(['data', 'meta'])
+        ->and($responses['202']['content']['application/json']['schema']['properties']['data']['$ref'] ?? null)
+        ->toBe('#/components/schemas/JsonResourceTypeToSchemaTest_Sample')
+        ->and($responses['202']['content']['application/json']['schema']['properties']['meta'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => ['foo' => ['type' => 'string', 'example' => 'bar']],
+            'required' => ['foo'],
+        ]);
+});
+class JsonResourceTypeToSchemaTest_AdditionalController
+{
+    public function index()
+    {
+        return (new JsonResourceTypeToSchemaTest_Sample())
+            ->additional(['meta' => ['foo' => 'bar']])
+            ->response()
+            ->setStatusCode(202);
+    }
+}
