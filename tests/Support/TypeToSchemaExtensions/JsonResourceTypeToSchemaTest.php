@@ -158,7 +158,7 @@ class JsonResourceTypeToSchemaTest_StatusCodeController
 {
     public function __invoke()
     {
-        return (new JsonResourceTypeToSchemaTest_WithResponseSample())
+        return (new JsonResourceTypeToSchemaTest_WithResponseSample)
             ->response()
             ->setStatusCode(201);
     }
@@ -243,7 +243,7 @@ it('handles additional data with custom status code', function () {
     });
 
     $responses = $openApiDocument['paths']['/test']['get']['responses'];
-    
+
     expect($responses)
         ->toHaveKey('202')
         ->not->toHaveKey('200')
@@ -262,7 +262,7 @@ class JsonResourceTypeToSchemaTest_AdditionalController
 {
     public function index()
     {
-        return (new JsonResourceTypeToSchemaTest_Sample())
+        return (new JsonResourceTypeToSchemaTest_Sample)
             ->additional(['meta' => ['foo' => 'bar']])
             ->response()
             ->setStatusCode(202);
