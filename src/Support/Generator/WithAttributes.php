@@ -20,16 +20,13 @@ trait WithAttributes
         return array_key_exists($key, $this->attributes);
     }
 
-    /**
-     * @return mixed
-     */
-    public function getAttribute(string $key)
+    public function getAttribute(string $key, mixed $default = null)
     {
         if ($this->hasAttribute($key)) {
             return $this->attributes[$key];
         }
 
-        return null;
+        return $default;
     }
 
     public function attributes()
