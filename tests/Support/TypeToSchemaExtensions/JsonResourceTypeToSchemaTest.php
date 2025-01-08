@@ -8,6 +8,7 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
+use Illuminate\Support\Facades\Route;
 
 it('supports call to method', function () {
     $type = new Generic(JsonResourceTypeToSchemaTest_WithInteger::class, [new UnknownType]);
@@ -134,6 +135,32 @@ class JsonResourceTypeToSchemaTest_WithResponseSample extends \Illuminate\Http\R
     public function withResponse(\Illuminate\Http\Request $request, \Illuminate\Http\JsonResponse $response)
     {
         $response->setStatusCode(429);
+    }
+}
+
+it('properly handles custom status code', function () {
+    $openApiDocument = generateForRoute(function () {
+        return Route::get('api/test', JsonResourceTypeToSchemaTest_StatusCodeController::class);
+    });
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses)
+        ->toHaveKey('201')
+        ->not->toHaveKey('429')
+        ->and($responses['201']['content']['application/json']['schema'])
+        ->toHaveKey('properties')
+        ->and($responses['201']['content']['application/json']['schema']['properties']['data']['$ref'] ?? null)
+        ->toBe('#/components/schemas/JsonResourceTypeToSchemaTest_WithResponseSample');
+});
+
+class JsonResourceTypeToSchemaTest_StatusCodeController
+{
+    public function __invoke()
+    {
+        return (new JsonResourceTypeToSchemaTest_WithResponseSample())
+            ->response()
+            ->setStatusCode(201);
     }
 }
 
