@@ -106,7 +106,9 @@ class Scramble
      */
     public static function registerExtension(string|callable $extension): void
     {
-        static::$extensions[] = is_string($extension) ? $extension : $extension(...);
+        $extension = is_string($extension) ? $extension : $extension(...);
+
+        static::$extensions[] = array_merge(static::$extensions, [$extension]);
     }
 
     /**
