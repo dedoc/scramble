@@ -59,7 +59,7 @@ class RequestEssentialsExtension extends OperationExtension
     {
         $defaultName = Str::of(class_basename($routeInfo->className()))->replace('Controller', '');
 
-        if ($groupAttrs = $routeInfo->reflectionMethod()->getDeclaringClass()->getAttributes(Group::class)) {
+        if ($groupAttrs = $routeInfo->reflectionMethod()?->getDeclaringClass()->getAttributes(Group::class)) {
             /** @var Group $attributeInstance */
             $attributeInstance = $groupAttrs[0]->newInstance();
 
