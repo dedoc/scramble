@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements@8.3.4/styles.min.css">
 
     <script>
-        const onChange = ({
+        const onThemeChange = ({
             matches
         }) => {
             const pref = document.documentElement.getAttribute('data-theme-pref')
@@ -20,9 +20,9 @@
             }
         };
 
-        onChange(window.matchMedia('(prefers-color-scheme: dark)'));
-        window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', onChange);
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onChange);
+        onThemeChange(window.matchMedia('(prefers-color-scheme: dark)'));
+        window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', onThemeChange);
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onThemeChange);
     </script>
 
     <script>
