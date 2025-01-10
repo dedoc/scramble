@@ -8,6 +8,7 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
+use Illuminate\Support\Facades\Route;
 
 it('supports call to method', function () {
     $type = new Generic(JsonResourceTypeToSchemaTest_WithInteger::class, [new UnknownType]);
@@ -37,6 +38,16 @@ it('supports parent toArray class', function (string $className, array $expected
 
     expect($extension->toSchema($type)->toArray())->toBe($expectedSchemaArray);
 })->with([
+    [JsonResourceTypeToSchemaTest_NestedSample::class, [
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'integer'],
+            'name' => ['type' => 'string'],
+            'foo' => ['type' => 'string', 'example' => 'bar'],
+            'nested' => ['type' => 'string', 'example' => 'true'],
+        ],
+        'required' => ['id', 'name', 'foo', 'nested'],
+    ]],
     [JsonResourceTypeToSchemaTest_Sample::class, [
         'type' => 'object',
         'properties' => [
@@ -72,11 +83,24 @@ class JsonResourceTypeToSchemaTest_NoToArraySample extends \Illuminate\Http\Reso
  */
 class JsonResourceTypeToSchemaTest_SpreadSample extends \Illuminate\Http\Resources\Json\JsonResource
 {
-    public function toArray($request)
+    public function toArray($request): array
     {
         return [
             ...parent::toArray($request),
             'foo' => 'bar',
+        ];
+    }
+}
+/**
+ * @property JsonResourceTypeToSchemaTest_User $resource
+ */
+class JsonResourceTypeToSchemaTest_NestedSample extends JsonResourceTypeToSchemaTest_SpreadSample
+{
+    public function toArray($request): array
+    {
+        return [
+            ...parent::toArray($request),
+            'nested' => 'true',
         ];
     }
 }
@@ -111,6 +135,32 @@ class JsonResourceTypeToSchemaTest_WithResponseSample extends \Illuminate\Http\R
     public function withResponse(\Illuminate\Http\Request $request, \Illuminate\Http\JsonResponse $response)
     {
         $response->setStatusCode(429);
+    }
+}
+
+it('properly handles custom status code', function () {
+    $openApiDocument = generateForRoute(function () {
+        return Route::get('api/test', JsonResourceTypeToSchemaTest_StatusCodeController::class);
+    });
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses)
+        ->toHaveKey('201')
+        ->not->toHaveKey('429')
+        ->and($responses['201']['content']['application/json']['schema'])
+        ->toHaveKey('properties')
+        ->and($responses['201']['content']['application/json']['schema']['properties']['data']['$ref'] ?? null)
+        ->toBe('#/components/schemas/JsonResourceTypeToSchemaTest_WithResponseSample');
+});
+
+class JsonResourceTypeToSchemaTest_StatusCodeController
+{
+    public function __invoke()
+    {
+        return (new JsonResourceTypeToSchemaTest_WithResponseSample)
+            ->response()
+            ->setStatusCode(201);
     }
 }
 
@@ -184,5 +234,37 @@ class JsonResourceTypeToSchemaTest_WithDefault extends \Illuminate\Http\Resource
              */
             'foo' => $this->resource->foo,
         ];
+    }
+}
+
+it('handles additional data with custom status code', function () {
+    $openApiDocument = generateForRoute(function () {
+        return Route::get('api/test', [JsonResourceTypeToSchemaTest_AdditionalController::class, 'index']);
+    });
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses)
+        ->toHaveKey('202')
+        ->not->toHaveKey('200')
+        ->and($responses['202']['content']['application/json']['schema']['properties'])
+        ->toHaveKeys(['data', 'meta'])
+        ->and($responses['202']['content']['application/json']['schema']['properties']['data']['$ref'] ?? null)
+        ->toBe('#/components/schemas/JsonResourceTypeToSchemaTest_Sample')
+        ->and($responses['202']['content']['application/json']['schema']['properties']['meta'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => ['foo' => ['type' => 'string', 'example' => 'bar']],
+            'required' => ['foo'],
+        ]);
+});
+class JsonResourceTypeToSchemaTest_AdditionalController
+{
+    public function index()
+    {
+        return (new JsonResourceTypeToSchemaTest_Sample)
+            ->additional(['meta' => ['foo' => 'bar']])
+            ->response()
+            ->setStatusCode(202);
     }
 }

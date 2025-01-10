@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
@@ -17,7 +18,6 @@ use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtracti
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RequestMethodCallsExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ValidateCallExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
-use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -42,7 +42,7 @@ class RequestBodyExtension extends OperationExtension
         try {
             $rulesResults = collect($this->extractRouteRequestValidationRules($routeInfo, $routeInfo->methodNode()));
         } catch (Throwable $exception) {
-            if (app()->environment('testing')) {
+            if (Scramble::shouldThrowOnError()) {
                 throw $exception;
             }
             $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());

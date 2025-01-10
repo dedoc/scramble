@@ -36,7 +36,7 @@ function analyzeFile(
         );
     }
 
-    $index = app(Index::class); //new Index;
+    $index = app(Index::class); // new Index;
 
     $traverser = new NodeTraverser;
     $traverser->addVisitor($nameResolver = new NameResolver);

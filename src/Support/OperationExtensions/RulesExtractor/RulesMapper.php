@@ -11,6 +11,8 @@ use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\TypeHelper;
+use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 use Illuminate\Validation\Rules\Enum;
@@ -40,6 +42,11 @@ class RulesMapper
     }
 
     public function numeric(Type $prevType)
+    {
+        return (new NumberType)->addProperties($prevType);
+    }
+
+    public function decimal(Type $prevType)
     {
         return (new NumberType)->addProperties($prevType);
     }
@@ -168,9 +175,26 @@ class RulesMapper
 
         $enumName = $getProtectedValue($rule, 'type');
 
-        return $this->openApiTransformer->transform(
-            new ObjectType($enumName)
-        );
+        $objectType = new ObjectType($enumName);
+
+        $except = method_exists(Enum::class, 'except') ? $getProtectedValue($rule, 'except') : [];
+        $only = method_exists(Enum::class, 'only') ? $getProtectedValue($rule, 'only') : [];
+
+        if ($except || $only) {
+            $cases = collect($enumName::cases())
+                ->reject(fn ($case) => in_array($case, $except))
+                ->filter(fn ($case) => ! $only || in_array($case, $only));
+
+            if (! isset($cases->first()?->value)) {
+                return new UnknownType("$enumName enum doesnt have values (only/except context)");
+            }
+
+            return $this->openApiTransformer->transform(Union::wrap(
+                $cases->map(fn ($c) => TypeHelper::createTypeFromValue($c->value))->all()
+            ));
+        }
+
+        return $this->openApiTransformer->transform($objectType);
     }
 
     public function image(Type $type)

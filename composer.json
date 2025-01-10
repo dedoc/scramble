@@ -20,7 +20,7 @@
         "illuminate/contracts": "^10.0|^11.0",
         "myclabs/deep-copy": "^1.12",
         "nikic/php-parser": "^5.0",
-        "phpstan/phpdoc-parser": "^1.0",
+        "phpstan/phpdoc-parser": "^1.0|^2.0",
         "spatie/laravel-package-tools": "^1.9.2"
     },
     "require-dev": {
@@ -30,6 +30,7 @@
         "pestphp/pest": "^2.34",
         "pestphp/pest-plugin-laravel": "^2.3",
         "phpunit/phpunit": "^10.5",
+        "spatie/laravel-permission": "^6.10",
         "spatie/pest-plugin-snapshots": "^2.1"
     },
     "autoload": {

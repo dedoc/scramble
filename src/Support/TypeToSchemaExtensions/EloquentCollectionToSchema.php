@@ -9,6 +9,9 @@ use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @deprecated Will be removed in 1.0 – Handled by collection extension due to the goal of matching template definitions.
+ */
 class EloquentCollectionToSchema extends TypeToSchemaExtension
 {
     public function shouldHandle(Type $type)

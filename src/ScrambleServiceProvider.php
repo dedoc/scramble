@@ -30,6 +30,7 @@ use Dedoc\Scramble\Support\InferExtensions\JsonResponseMethodReturnTypeExtension
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\ResourceResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
@@ -42,6 +43,7 @@ use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
 use Dedoc\Scramble\Support\ServerFactory;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
@@ -49,6 +51,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\PaginatorTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\VoidTypeToSchema;
 use PhpParser\ParserFactory;
@@ -100,6 +103,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 $inferExtensionsClasses = array_merge([
                     ResponseMethodReturnTypeExtension::class,
                     JsonResourceExtension::class,
+                    ResourceResponseMethodReturnTypeExtension::class,
                     JsonResponseMethodReturnTypeExtension::class,
                     ModelExtension::class,
                 ], $inferExtensionsClasses);
@@ -184,12 +188,14 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     EnumToSchema::class,
                     JsonResourceTypeToSchema::class,
                     ModelToSchema::class,
+                    CollectionToSchema::class,
                     EloquentCollectionToSchema::class,
                     AnonymousResourceCollectionTypeToSchema::class,
                     CursorPaginatorTypeToSchema::class,
                     PaginatorTypeToSchema::class,
                     LengthAwarePaginatorTypeToSchema::class,
                     ResponseTypeToSchema::class,
+                    ResourceResponseTypeToSchema::class,
                     VoidTypeToSchema::class,
                 ], $typesToSchemaExtensions),
                 array_merge([

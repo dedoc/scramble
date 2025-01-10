@@ -132,7 +132,15 @@ test('automated response status code inference when using ->response->setStatusC
     $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestSix::class, 'single']));
 
     expect($openApiDocument['paths']['/test']['get']['responses'][201]['content']['application/json']['schema'])
-        ->toBe(['$ref' => '#/components/schemas/Foo_TestFiveResource']);
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                'data' => [
+                    '$ref' => '#/components/schemas/Foo_TestFiveResource',
+                ],
+            ],
+            'required' => ['data'],
+        ]);
 });
 
 test('automated response status code inference when using collection ->response->setStatusCode method', function () {
@@ -140,8 +148,16 @@ test('automated response status code inference when using collection ->response-
 
     expect($openApiDocument['paths']['/test']['get']['responses'][201]['content']['application/json']['schema'])
         ->toBe([
-            'type' => 'array',
-            'items' => ['$ref' => '#/components/schemas/Foo_TestFiveResource'],
+            'type' => 'object',
+            'properties' => [
+                'data' => [
+                    'type' => 'array',
+                    'items' => ['$ref' => '#/components/schemas/Foo_TestFiveResource'],
+                ],
+            ],
+            'required' => [
+                0 => 'data',
+            ],
         ]);
 });
 class Foo_TestSix
