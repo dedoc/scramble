@@ -54,9 +54,12 @@ class Generator
         $openApi = $this->makeOpenApi($config);
 
         $this->getRoutes($config)
-            ->map(function (Route $route) use ($openApi, $config) {
+            ->map(function (Route $route, int $index) use ($openApi, $config) {
                 try {
-                    return $this->routeToOperation($openApi, $route, $config);
+                    $operation = $this->routeToOperation($openApi, $route, $config);
+                    $operation->setAttribute('index', $index);
+
+                    return $operation;
                 } catch (Throwable $e) {
                     if ($e instanceof RouteAware) {
                         $e->setRoute($route);
@@ -74,7 +77,7 @@ class Generator
                 }
             })
             ->filter() // Closure based routes are filtered out for now, right here
-            ->sortBy(fn (Operation $o) => $o->tags[0] ?? $o->description)
+            ->sortBy($this->createOperationsSorter())
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
                     (string) Str::of($operation->path)
@@ -93,6 +96,18 @@ class Generator
         }
 
         return $openApi->toArray();
+    }
+
+    private function createOperationsSorter(): array
+    {
+        $defaultSortValue = fn (Operation $o) => $o->tags[0];
+
+        return [
+            fn (Operation $a, Operation $b) => $a->getAttribute('groupWeight', INF) <=> $b->getAttribute('groupWeight', INF),
+            fn (Operation $a, Operation $b) => $a->getAttribute('weight', INF) <=> $b->getAttribute('weight', INF), // @todo manual endpoint sorting
+            fn (Operation $a, Operation $b) => $defaultSortValue($a) <=> $defaultSortValue($b),
+            fn (Operation $a, Operation $b) => $a->getAttribute('index', INF) <=> $b->getAttribute('index', INF),
+        ];
     }
 
     private function makeOpenApi(GeneratorConfig $config)

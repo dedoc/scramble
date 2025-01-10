@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
+use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
@@ -54,16 +55,32 @@ class RequestEssentialsExtension extends OperationExtension
         parent::__construct($infer, $openApiTransformer, $config);
     }
 
+    private function getDefaultTags(Operation $operation, RouteInfo $routeInfo)
+    {
+        $defaultName = Str::of(class_basename($routeInfo->className()))->replace('Controller', '');
+
+        if ($groupAttrs = $routeInfo->reflectionMethod()?->getDeclaringClass()->getAttributes(Group::class)) {
+            /** @var Group $attributeInstance */
+            $attributeInstance = $groupAttrs[0]->newInstance();
+
+            $operation->setAttribute('groupWeight', $attributeInstance->weight);
+
+            return [
+                $attributeInstance->name ?: $defaultName,
+            ];
+        }
+
+        return array_unique([
+            ...$this->extractTagsForMethod($routeInfo),
+            $defaultName,
+        ]);
+    }
+
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
         [$pathParams, $pathAliases] = $this->getRoutePathParameters($routeInfo);
 
-        $tagResolver = Scramble::$tagResolver ?? function (RouteInfo $routeInfo) {
-            return array_unique([
-                ...$this->extractTagsForMethod($routeInfo),
-                Str::of(class_basename($routeInfo->className()))->replace('Controller', ''),
-            ]);
-        };
+        $tagResolver = Scramble::$tagResolver ?? fn () => $this->getDefaultTags($operation, $routeInfo);
 
         $uriWithoutOptionalParams = Str::replace('?}', '}', $routeInfo->route->uri);
 
