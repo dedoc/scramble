@@ -18,7 +18,5 @@ class Group
          * by the name (with `SORT_LOCALE_STRING` sorting flag).
          */
         public readonly int|float $weight = INF,
-    )
-    {
-    }
+    ) {}
 }

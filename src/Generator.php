@@ -58,6 +58,7 @@ class Generator
                 try {
                     $operation = $this->routeToOperation($openApi, $route, $config);
                     $operation->setAttribute('index', $index);
+
                     return $operation;
                 } catch (Throwable $e) {
                     if ($e instanceof RouteAware) {

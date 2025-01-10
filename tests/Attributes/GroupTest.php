@@ -21,15 +21,15 @@ it('allows sorting groups', function () {
 #[Group(weight: 2)]
 class GroupTest_A_Controller
 {
-    public function __invoke(){}
+    public function __invoke() {}
 }
 #[Group(weight: 1)]
 class GroupTest_B_Controller
 {
-    public function __invoke(){}
+    public function __invoke() {}
 }
 #[Group(weight: 0)]
 class GroupTest_C_Controller
 {
-    public function __invoke(){}
+    public function __invoke() {}
 }

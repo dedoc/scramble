@@ -16,7 +16,5 @@ class Endpoint
          * by the order of their declaration.
          */
         public readonly int $weight = INF,
-    )
-    {
-    }
+    ) {}
 }
