@@ -13,7 +13,7 @@ class Endpoint
     public function __construct(
         /**
          * Determines the ordering of the endpoints. Endpoints with the same weight, are sorted
-         * by the operationId (with `SORT_LOCALE_STRING` sorting flag).
+         * by the order of their declaration.
          */
         public readonly int $weight = INF,
     )
