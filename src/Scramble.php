@@ -8,7 +8,6 @@ use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 use Dedoc\Scramble\Infer\Extensions\InferExtension;
-use Dedoc\Scramble\Support\ClassBasedSchemaNameResolver;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
@@ -19,9 +18,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use LogicException;
 
-/**
- * @phpstan-import-type NameResolver from ClassBasedSchemaNameResolver
- */
 class Scramble
 {
     public static $routeResolver = null;
@@ -78,11 +74,6 @@ class Scramble
         $generatorConfig->afterOpenApiGenerated(Scramble::$openApiExtender);
 
         return $generatorConfig;
-    }
-
-    public static function nameClassBasedSchemaUsing(Closure $cb): void
-    {
-        app(ClassBasedSchemaNameResolver::class)->addNameResolver($cb);
     }
 
     /**

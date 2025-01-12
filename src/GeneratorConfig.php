@@ -12,7 +12,7 @@ class GeneratorConfig
     public function __construct(
         private array $config = [],
         private ?Closure $routeResolver = null,
-        private ?Closure $afterOpenApiGenerated = null,
+        private array $afterOpenApiGenerated = [],
     ) {}
 
     public function config(array $config)
@@ -43,13 +43,15 @@ class GeneratorConfig
             && (! $expectedDomain || $route->getDomain() === $expectedDomain);
     }
 
-    public function afterOpenApiGenerated(?Closure $afterOpenApiGenerated = null)
+    public function afterOpenApiGenerated(callable $afterOpenApiGenerated = null)
     {
         if (count(func_get_args()) === 0) {
             return $this->afterOpenApiGenerated;
         }
 
-        $this->afterOpenApiGenerated = $afterOpenApiGenerated;
+        if ($afterOpenApiGenerated) {
+            $this->afterOpenApiGenerated[] = $afterOpenApiGenerated;
+        }
 
         return $this;
     }

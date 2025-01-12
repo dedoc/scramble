@@ -208,9 +208,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             $this->package->hasRoute('web');
         }
 
-        Scramble::registerApi('default', config('scramble'))
-            ->routes(Scramble::$routeResolver)
-            ->afterOpenApiGenerated(Scramble::$openApiExtender);
+        Scramble::registerApi('default', config('scramble'));
 
         $this->app->booted(function () {
             Scramble::getGeneratorConfig('default')

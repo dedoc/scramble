@@ -94,7 +94,9 @@ class Generator
         $this->moveSameAlternativeServersToPath($openApi);
 
         if ($afterOpenApiGenerated = $config->afterOpenApiGenerated()) {
-            $afterOpenApiGenerated($openApi);
+            foreach ($afterOpenApiGenerated as $openApiTransformer) {
+                $openApiTransformer($openApi, $context);
+            }
         }
 
         return $openApi->toArray();
