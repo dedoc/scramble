@@ -219,12 +219,12 @@ class TypeTransformer
         $referenceExtension = $extensions->last();
 
         /** @var Reference|null $reference */
-        $originalReference = $reference = $referenceExtension && method_exists($referenceExtension, 'reference')
+        $reference = $referenceExtension && method_exists($referenceExtension, 'reference')
             ? $referenceExtension->reference($type)
             : null;
 
         if ($reference && $this->context->references->schemas->has($reference->fullName)) {
-            return $this->context->references->schemas->get($reference->fullName);
+            return $this->context->references->schemas->add($reference->fullName, $reference);
         }
 
         if ($reference) {
@@ -246,8 +246,6 @@ class TypeTransformer
         * If we couldn't handle a type, the reference is removed.
         */
         if (! $handledType && $reference) {
-            $this->context->references->schemas->remove($originalReference->fullName);
-
             $this->getComponents()->removeSchema($reference->fullName);
         }
 

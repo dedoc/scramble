@@ -17,7 +17,7 @@ class ClassBasedReference
         return new Reference($referenceType, $className, $components, static::getClassBasedName($className, input: true));
     }
 
-    private static function getClassBasedName(string $className, bool $input = false): string
+    private static function getClassBasedName(string $className, bool $input = false): ?string
     {
         $reflectionClass = new ReflectionClass($className);
 
@@ -25,6 +25,6 @@ class ClassBasedReference
 
         return $schemaNameAttribute
             ? ($input && $schemaNameAttribute->input ? $schemaNameAttribute->input : $schemaNameAttribute->name)
-            : $className;
+            : null;
     }
 }
