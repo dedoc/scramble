@@ -5,8 +5,16 @@ namespace Dedoc\Scramble;
 use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
 use Dedoc\Scramble\Exceptions\RouteAware;
+use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
+use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\OpenApiVisitor\SchemaEnforceVisitor;
+use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthenticationExceptionToResponseExtension;
+use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthorizationExceptionToResponseExtension;
+use Dedoc\Scramble\Support\ExceptionToResponseExtensions\HttpExceptionToResponseExtension;
+use Dedoc\Scramble\Support\ExceptionToResponseExtensions\NotFoundExceptionToResponseExtension;
+use Dedoc\Scramble\Support\ExceptionToResponseExtensions\ValidationExceptionToResponseExtension;
+use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
@@ -18,6 +26,18 @@ use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\PaginatorTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceResponseTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\VoidTypeToSchema;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
@@ -31,7 +51,6 @@ class Generator
     protected bool $throwExceptions = true;
 
     public function __construct(
-        private TypeTransformer $transformer,
         private OperationBuilder $operationBuilder,
         private ServerFactory $serverFactory,
         private FileParser $fileParser,
@@ -52,11 +71,13 @@ class Generator
             ->afterOpenApiGenerated(Scramble::$openApiExtender);
 
         $openApi = $this->makeOpenApi($config);
+        $context = new OpenApiContext($openApi, $config);
+        $typeTransformer = $this->buildTypeTransformer($context);
 
         $this->getRoutes($config)
-            ->map(function (Route $route, int $index) use ($openApi, $config) {
+            ->map(function (Route $route, int $index) use ($openApi, $config, $typeTransformer) {
                 try {
-                    $operation = $this->routeToOperation($openApi, $route, $config);
+                    $operation = $this->routeToOperation($openApi, $route, $config, $typeTransformer);
                     $operation->setAttribute('index', $index);
 
                     return $operation;
@@ -113,7 +134,7 @@ class Generator
     private function makeOpenApi(GeneratorConfig $config)
     {
         $openApi = OpenApi::make('3.1.0')
-            ->setComponents($this->transformer->getComponents())
+            ->setComponents(new Components)
             ->setInfo(
                 InfoObject::make($config->get('ui.title', $default = config('app.name')) ?: $default)
                     ->setVersion($config->get('info.version', '0.0.1'))
@@ -191,15 +212,22 @@ class Generator
             ->values();
     }
 
-    private function routeToOperation(OpenApi $openApi, Route $route, GeneratorConfig $config)
+    private function buildTypeTransformer(OpenApiContext $context): TypeTransformer
     {
-        $routeInfo = new RouteInfo($route, $this->fileParser, $this->infer);
+        return app()->make(TypeTransformer::class, [
+            'context' => $context,
+        ]);
+    }
+
+    private function routeToOperation(OpenApi $openApi, Route $route, GeneratorConfig $config, TypeTransformer $typeTransformer)
+    {
+        $routeInfo = new RouteInfo($route, $this->infer, $typeTransformer);
 
         if (! $routeInfo->isClassBased()) {
             return null;
         }
 
-        $operation = $this->operationBuilder->build($routeInfo, $openApi, $config);
+        $operation = $this->operationBuilder->build($routeInfo, $openApi, $config, $typeTransformer);
 
         $this->ensureSchemaTypes($route, $operation);
 

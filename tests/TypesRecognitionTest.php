@@ -1,13 +1,17 @@
 <?php
 
+use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
+
 
 // @todo move all tests into PhpDoc/PhpDocTypeHelperTest
 
@@ -16,8 +20,9 @@ function getTypeFromDoc(string $phpDoc)
     $docNode = PhpDoc::parse($phpDoc);
     $varNode = $docNode->getVarTagValues()[0];
 
-    return (new TypeTransformer(new Infer(new Index), new Components))
-        ->transform(PhpDocTypeHelper::toType($varNode->type));
+    return app()->make(TypeTransformer::class, [
+        'context' => new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig),
+    ])->transform(PhpDocTypeHelper::toType($varNode->type));
 }
 
 function getPhpTypeFromDoc(string $phpDoc)

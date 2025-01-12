@@ -64,7 +64,7 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
         }
 
         return Response::make(200)
-            ->description('Paginated set of `'.$this->components->uniqueSchemaName($collectingClassType->name).'`')
+            ->description('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectingClassType->name).'`')
             ->setContent('application/json', Schema::fromType($this->openApiTransformer->transform($type)));
     }
 }

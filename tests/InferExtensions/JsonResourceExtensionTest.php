@@ -1,7 +1,10 @@
 <?php
 
+use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
@@ -15,28 +18,29 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->infer = app(Infer::class);
+    $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
 });
 
 /**
  * @return array{0: \Dedoc\Scramble\Support\Generator\Types\Type, 1: Components}
  */
-function JsonResourceExtensionTest_analyze(Infer $infer, string $class)
+function JsonResourceExtensionTest_analyze(Infer $infer, OpenApiContext $context, string $class)
 {
-    $transformer = new TypeTransformer($infer, $components = new Components, [
+    $transformer = new TypeTransformer($infer, $context, [
         ModelToSchema::class,
         JsonResourceTypeToSchema::class,
     ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $context->openApi->components, $context);
 
     $type = new ObjectType($class);
 
     $openApiType = $extension->toSchema($type);
 
-    return [$openApiType, $components];
+    return [$openApiType, $context->openApi->components];
 }
 
 it('supports whenHas', function () {
-    [$schema] = JsonResourceExtensionTest_analyze($this->infer, JsonResourceExtensionTest_WhenHas::class);
+    [$schema] = JsonResourceExtensionTest_analyze($this->infer, $this->context, JsonResourceExtensionTest_WhenHas::class);
 
     expect($schema->toArray())->toBe([
         'type' => 'object',

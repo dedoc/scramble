@@ -10,15 +10,26 @@ class Reference extends Type
 {
     public string $referenceType;
 
+    public ?string $shortName;
+
+    /**
+     * This must be a unique name across all the references with the same type!
+     */
     public string $fullName;
 
     private Components $components;
 
-    public function __construct(string $referenceType, string $fullName, Components $components)
+    public function __construct(
+        string $referenceType,
+        string $fullName,
+        Components $components,
+        string $shortName = null,
+    )
     {
         $this->referenceType = $referenceType;
         $this->fullName = $fullName;
         $this->components = $components;
+        $this->shortName = $shortName;
     }
 
     public function resolve()
@@ -28,7 +39,7 @@ class Reference extends Type
 
     public function getUniqueName()
     {
-        return $this->components->uniqueSchemaName($this->fullName);
+        return $this->components->uniqueSchemaName($this->shortName ?: $this->fullName);
     }
 
     public function toArray()

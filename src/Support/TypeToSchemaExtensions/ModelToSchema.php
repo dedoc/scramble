@@ -3,11 +3,9 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
-use Dedoc\Scramble\Support\ClassBasedSchemaNameResolver;
-use Dedoc\Scramble\Support\Generator\Reference;
+use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\SchemaClassDocReflector;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Database\Eloquent\Model;
@@ -39,7 +37,7 @@ class ModelToSchema extends TypeToSchemaExtension
     public function toResponse(Type $type)
     {
         return Response::make(200)
-            ->description('`'.$this->components->uniqueSchemaName($type->name).'`')
+            ->description('`'.$this->openApiContext->references->schemas->uniqueName($type->name).'`')
             ->setContent(
                 'application/json',
                 Schema::fromType($this->openApiTransformer->transform($type)),
@@ -48,12 +46,6 @@ class ModelToSchema extends TypeToSchemaExtension
 
     public function reference(ObjectType $type)
     {
-        $defaultName = app(ClassBasedSchemaNameResolver::class)->resolve($type->name);
-
-        return new Reference(
-            'schemas',
-            SchemaClassDocReflector::createFromClassName($type->name)->getSchemaName($defaultName),
-            $this->components,
-        );
+        return ClassBasedReference::create('schemas', $type->name, $this->components);
     }
 }

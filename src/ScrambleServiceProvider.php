@@ -12,13 +12,11 @@ use Dedoc\Scramble\Infer\Extensions\IndexBuildingBroker;
 use Dedoc\Scramble\Infer\Extensions\InferExtension;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\FileParser;
-use Dedoc\Scramble\Support\ClassBasedSchemaNameResolver;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthenticationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthorizationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\HttpExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\NotFoundExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\ValidationExceptionToResponseExtension;
-use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
@@ -54,16 +52,13 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\PaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\VoidTypeToSchema;
+use Illuminate\Contracts\Foundation\Application;
 use PhpParser\ParserFactory;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class ScrambleServiceProvider extends PackageServiceProvider
 {
-    public $singletons = [
-        ClassBasedSchemaNameResolver::class => ClassBasedSchemaNameResolver::class,
-    ];
-
     public function configurePackage(Package $package): void
     {
         $package
@@ -121,9 +116,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                         new ArrayMergeReturnTypeExtension,
 
-                        /*
-                         * Keep this extension last, so the trace info is preserved.
-                         */
+                        /* Keep this extension last, so the trace info is preserved. */
                         new TypeTraceInfer,
                     ],
                     array_map(function ($class) {
@@ -168,7 +161,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(ServerFactory::class);
 
-        $this->app->singleton(TypeTransformer::class, function () {
+        $this->app->bind(TypeTransformer::class, function (Application $application, array $parameters) {
             $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
 
             $typesToSchemaExtensions = array_values(array_filter(
@@ -182,9 +175,9 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ));
 
             return new TypeTransformer(
-                app()->make(Infer::class),
-                new Components,
-                array_merge([
+                $parameters['infer'] ?? $application->make(Infer::class),
+                $parameters['context'],
+                typeToSchemaExtensions: $parameters['typeToSchemaExtensions'] ?? array_merge([
                     EnumToSchema::class,
                     JsonResourceTypeToSchema::class,
                     ModelToSchema::class,
@@ -198,7 +191,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ResourceResponseTypeToSchema::class,
                     VoidTypeToSchema::class,
                 ], $typesToSchemaExtensions),
-                array_merge([
+                exceptionToResponseExtensions: $parameters['exceptionToResponseExtensions'] ?? array_merge([
                     ValidationExceptionToResponseExtension::class,
                     AuthorizationExceptionToResponseExtension::class,
                     AuthenticationExceptionToResponseExtension::class,
