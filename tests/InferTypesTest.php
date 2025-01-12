@@ -52,7 +52,7 @@ it('infers model type', function () {
     $type = new ObjectType(SamplePostModel::class);
     $openApiType = $extension->toSchema($type);
 
-    expect($this->components->schemas)->toHaveLength(2)->toHaveKeys([SamplePostModel::class, SampleUserModel::class]);
+    expect($this->components->schemas)->toHaveLength(2)->toHaveKeys(['SamplePostModel', 'SampleUserModel']);
     assertMatchesSnapshot($openApiType->toArray());
 });
 
@@ -66,7 +66,7 @@ it('infers model type when toArray is implemented', function () {
     $type = new ObjectType(SamplePostModelWithToArray::class);
     $openApiType = $extension->toSchema($type);
 
-    expect($this->components->schemas)->toHaveLength(2)->toHaveKeys([SamplePostModelWithToArray::class, SampleUserModel::class]);
+    expect($this->components->schemas)->toHaveLength(2)->toHaveKeys(['SamplePostModelWithToArray', 'SampleUserModel']);
     assertMatchesSnapshot($openApiType->toArray());
 });
 
