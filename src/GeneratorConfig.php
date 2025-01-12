@@ -43,7 +43,7 @@ class GeneratorConfig
             && (! $expectedDomain || $route->getDomain() === $expectedDomain);
     }
 
-    public function afterOpenApiGenerated(callable $afterOpenApiGenerated = null)
+    public function afterOpenApiGenerated(?callable $afterOpenApiGenerated = null)
     {
         if (count(func_get_args()) === 0) {
             return $this->afterOpenApiGenerated;

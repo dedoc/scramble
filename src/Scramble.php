@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble;
 
-use Closure;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
