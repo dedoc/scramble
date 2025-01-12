@@ -38,8 +38,7 @@ class TypeTransformer
         private OpenApiContext $context,
         private array $typeToSchemaExtensions = [],
         private array $exceptionToResponseExtensions = []
-    ) {
-    }
+    ) {}
 
     public function getComponents(): Components
     {

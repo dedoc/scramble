@@ -30,8 +30,7 @@ class RouteInfo
         public readonly Route $route,
         private Infer $infer,
         private readonly TypeTransformer $typeTransformer
-    )
-    {
+    ) {
         $this->requestParametersFromCalls = new Bag;
         $this->indexBuildingBroker = app(Infer\Extensions\IndexBuildingBroker::class);
     }

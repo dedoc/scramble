@@ -1,17 +1,13 @@
 <?php
 
 use Dedoc\Scramble\GeneratorConfig;
-use Dedoc\Scramble\Infer;
-use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
-
 
 // @todo move all tests into PhpDoc/PhpDocTypeHelperTest
 

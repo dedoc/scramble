@@ -108,6 +108,7 @@ class Components
 
     /**
      * @internal
+     *
      * @deprecated
      */
     public static function slug(string $name)

@@ -4,7 +4,6 @@ use Dedoc\Scramble\Attributes\SchemaName;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
-use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
@@ -304,7 +303,7 @@ class JsonResourceTypeToSchemaTest_CustomSchemaTest
 {
     public function index()
     {
-        return (new JsonResourceTypeToSchemaTest_WithCustomName);
+        return new JsonResourceTypeToSchemaTest_WithCustomName;
     }
 }
 #[SchemaName('CustomName')]

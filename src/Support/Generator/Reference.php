@@ -23,9 +23,8 @@ class Reference extends Type
         string $referenceType,
         string $fullName,
         Components $components,
-        string $shortName = null,
-    )
-    {
+        ?string $shortName = null,
+    ) {
         $this->referenceType = $referenceType;
         $this->fullName = $fullName;
         $this->components = $components;

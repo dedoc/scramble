@@ -17,7 +17,5 @@ class SchemaName
          * explicitly name the schema when is in input context.
          */
         public readonly ?string $input = null,
-    )
-    {
-    }
+    ) {}
 }

@@ -3,7 +3,6 @@
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
-use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
@@ -27,7 +26,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 beforeEach(function () {
-    $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig());
+    $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
 });
 
 it('transforms simple types', function ($type, $openApiArrayed) {

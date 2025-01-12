@@ -11,13 +11,11 @@ class ContextReferencesCollection
     private array $tempNames = [];
 
     /**
-     * @param array<string, Reference> $items The key is reference ID and the value is a reference.
+     * @param  array<string, Reference>  $items  The key is reference ID and the value is a reference.
      */
     public function __construct(
         public array $items = [],
-    )
-    {
-    }
+    ) {}
 
     public function has(string $referenceId): bool
     {

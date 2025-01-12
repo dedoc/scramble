@@ -14,7 +14,7 @@ use function Spatie\Snapshots\assertMatchesSnapshot;
 
 beforeEach(function () {
     $this->components = new Components;
-    $this->context = new OpenApiContext((new OpenApi('3.1.0'))->setComponents($this->components), new GeneratorConfig());
+    $this->context = new OpenApiContext((new OpenApi('3.1.0'))->setComponents($this->components), new GeneratorConfig);
 });
 
 test('transforms collection with toArray only', function () {

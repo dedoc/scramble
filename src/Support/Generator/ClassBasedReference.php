@@ -9,7 +9,7 @@ class ClassBasedReference
 {
     public static function create(string $referenceType, string $className, Components $components)
     {
-        return new Reference($referenceType, $className, $components,  static::getClassBasedName($className));
+        return new Reference($referenceType, $className, $components, static::getClassBasedName($className));
     }
 
     public static function createInput(string $referenceType, string $className, Components $components)
