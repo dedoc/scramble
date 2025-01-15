@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
@@ -77,13 +78,13 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     {
         $resourceResponseType = new Generic(ResourceResponse::class, [$type]);
 
-        return (new ResourceResponseTypeToSchema($this->infer, $this->openApiTransformer, $this->components))
+        return (new ResourceResponseTypeToSchema($this->infer, $this->openApiTransformer, $this->components, $this->openApiContext))
             ->toResponse($resourceResponseType);
     }
 
     public function reference(ObjectType $type)
     {
-        return new Reference('schemas', $type->name, $this->components);
+        return ClassBasedReference::create('schemas', $type->name, $this->components);
 
         /*
          * @todo: Allow (enforce) user to explicitly pass short and unique names for the reference and avoid passing components.

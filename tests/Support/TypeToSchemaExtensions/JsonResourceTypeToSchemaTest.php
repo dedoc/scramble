@@ -1,22 +1,31 @@
 <?php
 
+use Dedoc\Scramble\Attributes\SchemaName;
+use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
-use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Route;
+
+beforeEach(function () {
+    $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
+});
 
 it('supports call to method', function () {
     $type = new Generic(JsonResourceTypeToSchemaTest_WithInteger::class, [new UnknownType]);
 
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
     ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
     expect($extension->toSchema($type)->toArray())->toBe([
         'type' => 'object',
@@ -31,10 +40,10 @@ it('supports call to method', function () {
 it('supports parent toArray class', function (string $className, array $expectedSchemaArray) {
     $type = new Generic($className, [new UnknownType]);
 
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
     ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
     expect($extension->toSchema($type)->toArray())->toBe($expectedSchemaArray);
 })->with([
@@ -77,11 +86,11 @@ it('supports parent toArray class', function (string $className, array $expected
 /**
  * @property JsonResourceTypeToSchemaTest_User $resource
  */
-class JsonResourceTypeToSchemaTest_NoToArraySample extends \Illuminate\Http\Resources\Json\JsonResource {}
+class JsonResourceTypeToSchemaTest_NoToArraySample extends JsonResource {}
 /**
  * @property JsonResourceTypeToSchemaTest_User $resource
  */
-class JsonResourceTypeToSchemaTest_SpreadSample extends \Illuminate\Http\Resources\Json\JsonResource
+class JsonResourceTypeToSchemaTest_SpreadSample extends JsonResource
 {
     public function toArray($request): array
     {
@@ -107,7 +116,7 @@ class JsonResourceTypeToSchemaTest_NestedSample extends JsonResourceTypeToSchema
 /**
  * @property JsonResourceTypeToSchemaTest_User $resource
  */
-class JsonResourceTypeToSchemaTest_Sample extends \Illuminate\Http\Resources\Json\JsonResource
+class JsonResourceTypeToSchemaTest_Sample extends JsonResource
 {
     public function toArray($request)
     {
@@ -118,11 +127,11 @@ class JsonResourceTypeToSchemaTest_Sample extends \Illuminate\Http\Resources\Jso
 it('handles withResponse for json api resource', function () {
     $type = new Generic(JsonResourceTypeToSchemaTest_WithResponseSample::class, [new UnknownType]);
 
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
         ResponseTypeToSchema::class,
     ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
     expect($extension->toResponse($type)->code)->toBe(429);
 });
@@ -130,9 +139,9 @@ it('handles withResponse for json api resource', function () {
 /**
  * @property JsonResourceTypeToSchemaTest_User $resource
  */
-class JsonResourceTypeToSchemaTest_WithResponseSample extends \Illuminate\Http\Resources\Json\JsonResource
+class JsonResourceTypeToSchemaTest_WithResponseSample extends JsonResource
 {
-    public function withResponse(\Illuminate\Http\Request $request, \Illuminate\Http\JsonResponse $response)
+    public function withResponse(Request $request, \Illuminate\Http\JsonResponse $response)
     {
         $response->setStatusCode(429);
     }
@@ -167,9 +176,9 @@ class JsonResourceTypeToSchemaTest_StatusCodeController
 /**
  * @property JsonResourceTypeToSchemaTest_User $resource
  */
-class JsonResourceTypeToSchemaTest_WithInteger extends \Illuminate\Http\Resources\Json\JsonResource
+class JsonResourceTypeToSchemaTest_WithInteger extends JsonResource
 {
-    public function toArray(\Illuminate\Http\Request $request)
+    public function toArray(Request $request)
     {
         return [
             'res_int' => $this->resource->getInteger(),
@@ -190,7 +199,7 @@ it('gets the underlying model when mixin is inline', function () {
 });
 
 /** @mixin JsonResourceTypeToSchemaTest_User */
-class JsonResourceTypeToSchemaTest_WithIntegerInline extends \Illuminate\Http\Resources\Json\JsonResource {}
+class JsonResourceTypeToSchemaTest_WithIntegerInline extends JsonResource {}
 
 class JsonResourceTypeToSchemaTest_User extends \Illuminate\Database\Eloquent\Model
 {
@@ -207,11 +216,11 @@ class JsonResourceTypeToSchemaTest_User extends \Illuminate\Database\Eloquent\Mo
 it('handles default in json api resource', function () {
     $type = new Generic(JsonResourceTypeToSchemaTest_WithDefault::class, [new UnknownType]);
 
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
         ResponseTypeToSchema::class,
     ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
     expect($extension->toSchema($type)->toArray())->toBe([
         'type' => 'object',
@@ -224,9 +233,9 @@ it('handles default in json api resource', function () {
         'required' => ['foo'],
     ]);
 });
-class JsonResourceTypeToSchemaTest_WithDefault extends \Illuminate\Http\Resources\Json\JsonResource
+class JsonResourceTypeToSchemaTest_WithDefault extends JsonResource
 {
-    public function toArray(\Illuminate\Http\Request $request)
+    public function toArray(Request $request)
     {
         return [
             /**
@@ -266,5 +275,42 @@ class JsonResourceTypeToSchemaTest_AdditionalController
             ->additional(['meta' => ['foo' => 'bar']])
             ->response()
             ->setStatusCode(202);
+    }
+}
+
+it('handles supports custom schema name', function () {
+    $openApiDocument = generateForRoute(function () {
+        return Route::get('api/test', [JsonResourceTypeToSchemaTest_CustomSchemaTest::class, 'index']);
+    });
+
+    $responses = dd($openApiDocument)['paths']['/test']['get']['responses'];
+
+    expect($responses)
+        ->toHaveKey('202')
+        ->not->toHaveKey('200')
+        ->and($responses['202']['content']['application/json']['schema']['properties'])
+        ->toHaveKeys(['data', 'meta'])
+        ->and($responses['202']['content']['application/json']['schema']['properties']['data']['$ref'] ?? null)
+        ->toBe('#/components/schemas/JsonResourceTypeToSchemaTest_Sample')
+        ->and($responses['202']['content']['application/json']['schema']['properties']['meta'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => ['foo' => ['type' => 'string', 'example' => 'bar']],
+            'required' => ['foo'],
+        ]);
+})->skip();
+class JsonResourceTypeToSchemaTest_CustomSchemaTest
+{
+    public function index()
+    {
+        return new JsonResourceTypeToSchemaTest_WithCustomName;
+    }
+}
+#[SchemaName('CustomName')]
+class JsonResourceTypeToSchemaTest_WithCustomName extends JsonResource
+{
+    public function toArray(Request $request)
+    {
+        return ['foo' => 'bar'];
     }
 }

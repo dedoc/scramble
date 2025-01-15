@@ -7,6 +7,7 @@ use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\OpenApiVisitor\SchemaEnforceVisitor;
+use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
@@ -31,7 +32,6 @@ class Generator
     protected bool $throwExceptions = true;
 
     public function __construct(
-        private TypeTransformer $transformer,
         private OperationBuilder $operationBuilder,
         private ServerFactory $serverFactory,
         private FileParser $fileParser,
@@ -52,11 +52,13 @@ class Generator
             ->afterOpenApiGenerated(Scramble::$openApiExtender);
 
         $openApi = $this->makeOpenApi($config);
+        $context = new OpenApiContext($openApi, $config);
+        $typeTransformer = $this->buildTypeTransformer($context);
 
         $this->getRoutes($config)
-            ->map(function (Route $route, int $index) use ($openApi, $config) {
+            ->map(function (Route $route, int $index) use ($openApi, $config, $typeTransformer) {
                 try {
-                    $operation = $this->routeToOperation($openApi, $route, $config);
+                    $operation = $this->routeToOperation($openApi, $route, $config, $typeTransformer);
                     $operation->setAttribute('index', $index);
 
                     return $operation;
@@ -92,7 +94,9 @@ class Generator
         $this->moveSameAlternativeServersToPath($openApi);
 
         if ($afterOpenApiGenerated = $config->afterOpenApiGenerated()) {
-            $afterOpenApiGenerated($openApi);
+            foreach ($afterOpenApiGenerated as $openApiTransformer) {
+                $openApiTransformer($openApi, $context);
+            }
         }
 
         return $openApi->toArray();
@@ -113,7 +117,7 @@ class Generator
     private function makeOpenApi(GeneratorConfig $config)
     {
         $openApi = OpenApi::make('3.1.0')
-            ->setComponents($this->transformer->getComponents())
+            ->setComponents(new Components)
             ->setInfo(
                 InfoObject::make($config->get('ui.title', $default = config('app.name')) ?: $default)
                     ->setVersion($config->get('info.version', '0.0.1'))
@@ -191,15 +195,22 @@ class Generator
             ->values();
     }
 
-    private function routeToOperation(OpenApi $openApi, Route $route, GeneratorConfig $config)
+    private function buildTypeTransformer(OpenApiContext $context): TypeTransformer
     {
-        $routeInfo = new RouteInfo($route, $this->fileParser, $this->infer);
+        return app()->make(TypeTransformer::class, [
+            'context' => $context,
+        ]);
+    }
+
+    private function routeToOperation(OpenApi $openApi, Route $route, GeneratorConfig $config, TypeTransformer $typeTransformer)
+    {
+        $routeInfo = new RouteInfo($route, $this->infer, $typeTransformer);
 
         if (! $routeInfo->isClassBased()) {
             return null;
         }
 
-        $operation = $this->operationBuilder->build($routeInfo, $openApi, $config);
+        $operation = $this->operationBuilder->build($routeInfo, $openApi, $config, $typeTransformer);
 
         $this->ensureSchemaTypes($route, $operation);
 

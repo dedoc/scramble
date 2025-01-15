@@ -28,7 +28,10 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RequestParametersBuilder implements IndexBuilder
 {
-    public function __construct(public readonly Bag $bag) {}
+    public function __construct(
+        public readonly Bag $bag,
+        private readonly TypeTransformer $typeTransformer
+    ) {}
 
     public function afterAnalyzedNode(Scope $scope, Node $node): void
     {
@@ -95,7 +98,7 @@ class RequestParametersBuilder implements IndexBuilder
         $parameter
             ->description($this->makeDescriptionFromComments($commentHolderNode))
             ->setSchema(Schema::fromType(
-                app(TypeTransformer::class)
+                $this->typeTransformer
                     ->transform($parameterType)
                     ->default($parameterDefault ?? new MissingExample)
             ));
