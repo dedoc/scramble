@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\FormRequestRulesExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\AttributesParametersExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RequestMethodCallsExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ValidateCallExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
@@ -211,16 +212,42 @@ class RequestBodyExtension extends OperationExtension
          * Also, it is useful for additional details.
          */
         $detailsExtractor = new RequestMethodCallsExtractor;
-
         $methodCallsExtractedResults = $detailsExtractor->extract($routeInfo);
 
-        return $this->mergeExtractedProperties($validationRulesExtractedResults, $methodCallsExtractedResults);
+        $automaticallyExtractedParameters = $this->mergeAutomaticallyExtractedParameters($validationRulesExtractedResults, $methodCallsExtractedResults);
+
+        /*
+         * Manual attributes will override automatically inferred data.
+         */
+        $attributesExtractor = new AttributesParametersExtractor($automaticallyExtractedParameters, $this->openApiTransformer);
+        $attributesExtractedResults = $attributesExtractor->extract($routeInfo);
+
+        return $this->mergeParameters($automaticallyExtractedParameters, $attributesExtractedResults);
+    }
+
+    /**
+     * @param  ParametersExtractionResult[]  $automaticallyExtractedParametersSet
+     * @return ParametersExtractionResult[]
+     */
+    protected function mergeParameters(array $automaticallyExtractedParametersSet, ParametersExtractionResult $attributesExtractedParameters): array
+    {
+        $extractedAttributes = collect($attributesExtractedParameters->parameters)->map->name->all();
+
+        foreach ($automaticallyExtractedParametersSet as $automaticallyExtractedParameters) {
+            $automaticallyExtractedParameters->parameters = collect($automaticallyExtractedParameters->parameters)
+                ->filter(fn (Parameter $p) => ! in_array($p->name, $extractedAttributes))
+                ->values()
+                ->all();
+        }
+
+        return [...$automaticallyExtractedParametersSet, $attributesExtractedParameters];
     }
 
     /**
      * @param  ParametersExtractionResult[]  $rulesExtractedResults
+     * @return ParametersExtractionResult[]
      */
-    protected function mergeExtractedProperties(array $rulesExtractedResults, ParametersExtractionResult $methodCallsExtractedResult)
+    protected function mergeAutomaticallyExtractedParameters(array $rulesExtractedResults, ParametersExtractionResult $methodCallsExtractedResult): array
     {
         $rulesParameters = collect($rulesExtractedResults)->flatMap->parameters->keyBy('name');
 

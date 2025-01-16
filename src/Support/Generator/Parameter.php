@@ -32,6 +32,9 @@ class Parameter
     /** @var array|scalar|null|MissingExample */
     public $example;
 
+    /** @var array<string, Example> */
+    public array $examples = [];
+
     public bool $deprecated = false;
 
     public bool $allowEmptyValue = false;
@@ -71,12 +74,23 @@ class Parameter
             $result['schema'] = $this->schema->toArray();
         }
 
+        $examples = [];
+        if ($this->examples) {
+            foreach ($this->examples as $key => $example) {
+                $serializedExample = $example->toArray();
+                if ($serializedExample) {
+                    $examples[$key] = $serializedExample;
+                }
+            }
+        }
+
         return array_merge(
             $result,
             $this->example instanceof MissingExample ? [] : ['example' => $this->example],
             ! is_null($this->explode) ? [
                 'explode' => $this->explode,
             ] : [],
+            $examples ? ['examples' => $examples] : [],
             $this->extensionPropertiesToArray(),
         );
     }
