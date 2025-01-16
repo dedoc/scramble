@@ -37,7 +37,7 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
     }
 
     /**
-     * @param  ObjectType  $type
+     * @param ObjectType $type
      */
     public function toResponse(Type $type)
     {
@@ -58,13 +58,15 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
         $responseBodyType = (new OpenApiTypes\ObjectType)
             ->addProperty(
                 'message',
-                tap((new OpenApiTypes\StringType)->setDescription('Error overview.'), function (OpenApiTypes\StringType $t) use ($type) {
-                    $messageType = $type->templateTypes[1] ?? null;
-                    if (! $messageType instanceof LiteralStringType) {
-                        return;
+                tap(
+                    (new OpenApiTypes\StringType)->setDescription('Error overview.'), function (OpenApiTypes\StringType $t) use ($type) {
+                        $messageType = $type->templateTypes[1] ?? null;
+                        if (! $messageType instanceof LiteralStringType) {
+                            return;
+                        }
+                        $t->example($messageType->value);
                     }
-                    $t->example($messageType->value);
-                })
+                )
             )
             ->setRequired(['message']);
 
@@ -88,7 +90,6 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
                 $type->isInstanceOf(LockedHttpException::class) => 423,
                 $type->isInstanceOf(MethodNotAllowedHttpException::class) => 405,
                 $type->isInstanceOf(NotAcceptableHttpException::class) => 406,
-                $type->isInstanceOf(NotFoundHttpException::class) => 404,
                 $type->isInstanceOf(PreconditionFailedHttpException::class) => 412,
                 $type->isInstanceOf(PreconditionRequiredHttpException::class) => 428,
                 $type->isInstanceOf(ServiceUnavailableHttpException::class) => 503,
