@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
@@ -36,6 +37,8 @@ use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\OperationExtensions\DeprecationExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ErrorResponsesExtension;
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\AttributesParametersExtractor;
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\MethodCallsParametersExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
@@ -54,11 +57,16 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\VoidTypeToSchema;
 use Illuminate\Contracts\Foundation\Application;
 use PhpParser\ParserFactory;
+use PhpParser\PrettyPrinter;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class ScrambleServiceProvider extends PackageServiceProvider
 {
+    public $singletons = [
+        PrettyPrinter::class => PrettyPrinter\Standard::class,
+    ];
+
     public function configurePackage(Package $package): void
     {
         $package
@@ -200,6 +208,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ], $exceptionToResponseExtensions),
             );
         });
+
+        Scramble::registerApi(Scramble::DEFAULT_API);
     }
 
     public function bootingPackage()
@@ -208,12 +218,16 @@ class ScrambleServiceProvider extends PackageServiceProvider
             $this->package->hasRoute('web');
         }
 
-        Scramble::registerApi('default', config('scramble'));
+        Scramble::configure()->useConfig(config('scramble'));
 
         $this->app->booted(function () {
-            Scramble::getGeneratorConfig('default')
-                ->routes(Scramble::$routeResolver)
-                ->afterOpenApiGenerated(Scramble::$openApiExtender);
+            Scramble::configure()
+                ->withParametersExtractors(function (ParametersExtractors $parametersExtractors) {
+                    $parametersExtractors->append([
+                        MethodCallsParametersExtractor::class,
+                        AttributesParametersExtractor::class,
+                    ]);
+                });
         });
     }
 }

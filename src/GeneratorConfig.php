@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble;
 
 use Closure;
+use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -13,6 +14,7 @@ class GeneratorConfig
         private array $config = [],
         private ?Closure $routeResolver = null,
         private array $afterOpenApiGenerated = [],
+        public readonly ParametersExtractors $parametersExtractors = new ParametersExtractors,
     ) {}
 
     public function config(array $config)
@@ -52,6 +54,20 @@ class GeneratorConfig
         if ($afterOpenApiGenerated) {
             $this->afterOpenApiGenerated[] = $afterOpenApiGenerated;
         }
+
+        return $this;
+    }
+
+    public function useConfig(array $config): static
+    {
+        $this->config = $config;
+
+        return $this;
+    }
+
+    public function withParametersExtractors(callable $callback): static
+    {
+        $callback($this->parametersExtractors);
 
         return $this;
     }
