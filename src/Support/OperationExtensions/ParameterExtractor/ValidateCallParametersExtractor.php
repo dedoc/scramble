@@ -21,9 +21,7 @@ class ValidateCallParametersExtractor implements ParameterExtractor
     public function __construct(
         private PrettyPrinter $printer,
         private TypeTransformer $openApiTransformer,
-    )
-    {
-    }
+    ) {}
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
     {
@@ -34,7 +32,7 @@ class ValidateCallParametersExtractor implements ParameterExtractor
         [$callToValidate, $validationRules] = $this->getCallToValidateAndValidationRulesNodes($astNode);
 
         if (! $validationRules) {
-            return  $parameterExtractionResults;
+            return $parameterExtractionResults;
         }
 
         $validationRulesNode = $validationRules instanceof Node\Arg ? $validationRules->value : $validationRules;

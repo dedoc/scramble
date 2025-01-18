@@ -22,9 +22,7 @@ class AttributesParametersExtractor implements ParameterExtractor
 {
     public function __construct(
         private TypeTransformer $openApiTransformer,
-    )
-    {
-    }
+    ) {}
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
     {
@@ -49,9 +47,8 @@ class AttributesParametersExtractor implements ParameterExtractor
         return [...$parameterExtractionResults, new ParametersExtractionResult($parameters)];
     }
 
-
     /**
-     * @param ParametersExtractionResult[] $extractedParameters
+     * @param  ParametersExtractionResult[]  $extractedParameters
      */
     private function createParameter(array $extractedParameters, ParameterAttribute $attribute, array $attributeArguments): Parameter
     {
@@ -113,7 +110,7 @@ class AttributesParametersExtractor implements ParameterExtractor
             PhpDocTypeHelper::toType(
                 PhpDoc::parse("/** @return $attribute->type */")->getReturnTagValues()[0]->type ?? new IdentifierTypeNode('mixed')
             )
-        ) : new MixedType();
+        ) : new MixedType;
 
         $parameter = Parameter::make($attribute->name, $attribute->in)
             ->description($attribute->description ?: '')
@@ -139,7 +136,7 @@ class AttributesParametersExtractor implements ParameterExtractor
     }
 
     /**
-     * @param ParametersExtractionResult[] $extractedParameters
+     * @param  ParametersExtractionResult[]  $extractedParameters
      */
     private function getParameterFromAutomaticallyInferred(array $extractedParameters, string $in, string $name): ?Parameter
     {

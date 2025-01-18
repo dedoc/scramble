@@ -10,9 +10,7 @@ use Dedoc\Scramble\Support\Generator\Parameter;
 class ParametersExtractionResult
 {
     /**
-     * @param Parameter[] $parameters
-     * @param string|null $schemaName
-     * @param string|null $description
+     * @param  Parameter[]  $parameters
      */
     public function __construct(
         public array $parameters,

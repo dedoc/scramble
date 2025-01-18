@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Tests\Attributes;
 use Dedoc\Scramble\Attributes\Example;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\Parameter;
-use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 
@@ -14,20 +13,18 @@ it('retrieves parameters from Parameter annotations', function () {
 
     expect($openApi['paths']['/test']['get']['parameters'][0])
         ->toBe([
-            "name" => "per_page",
-            "in" => "query",
-            "schema" => [
-                "type" => "integer",
-                "default" => 15,
-            ]
+            'name' => 'per_page',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'integer',
+                'default' => 15,
+            ],
         ]);
 });
 class ParameterController_ParameterAnnotationsTest
 {
     #[Parameter('query', 'per_page', type: 'int', default: 15)]
-    public function __invoke()
-    {
-    }
+    public function __invoke() {}
 }
 
 it('supports simple example for Parameter annotations', function () {
@@ -35,11 +32,11 @@ it('supports simple example for Parameter annotations', function () {
 
     expect($openApi['paths']['/test']['get']['parameters'][0])
         ->toBe([
-            "name" => "per_page",
-            "in" => "query",
-            "schema" => [
-                "type" => "integer",
-                "default" => 15,
+            'name' => 'per_page',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'integer',
+                'default' => 15,
             ],
             'example' => 10,
         ]);
@@ -47,9 +44,7 @@ it('supports simple example for Parameter annotations', function () {
 class ParameterSimpleExampleController_ParameterAnnotationsTest
 {
     #[Parameter('query', 'per_page', type: 'int', default: 15, example: 10)]
-    public function __invoke()
-    {
-    }
+    public function __invoke() {}
 }
 
 it('supports complex examples for Parameter annotations', function () {
@@ -57,27 +52,25 @@ it('supports complex examples for Parameter annotations', function () {
 
     expect($openApi['paths']['/test']['get']['parameters'][0])
         ->toBe([
-            "name" => "per_page",
-            "in" => "query",
-            "schema" => [
-                "type" => "integer",
-                "default" => 15,
+            'name' => 'per_page',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'integer',
+                'default' => 15,
             ],
             'examples' => [
                 'max' => [
                     'value' => 99,
                     'summary' => 'Max amount of stuff',
                     'description' => 'Really big item',
-                ]
+                ],
             ],
         ]);
 });
 class ParameterComplexExampleController_ParameterAnnotationsTest
 {
     #[Parameter('query', 'per_page', type: 'int', default: 15, examples: ['max' => new Example(99, 'Max amount of stuff', 'Really big item')])]
-    public function __invoke()
-    {
-    }
+    public function __invoke() {}
 }
 
 it('merges parameter data with the data inferred from Parameter annotations', function () {
@@ -85,12 +78,12 @@ it('merges parameter data with the data inferred from Parameter annotations', fu
 
     expect($openApi['paths']['/test']['get']['parameters'][0])
         ->toBe([
-            "name" => "per_page",
-            "in" => "query",
-            "schema" => [
-                "type" => "integer",
-                "default" => 15,
-            ]
+            'name' => 'per_page',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'integer',
+                'default' => 15,
+            ],
         ]);
 });
 class ParameterOverridingController_ParameterAnnotationsTest
@@ -107,20 +100,18 @@ it('supports subclass Parameter annotations', function () {
 
     expect($openApi['paths']['/test']['get']['parameters'][0])
         ->toBe([
-            "name" => "per_page",
-            "in" => "header",
-            "schema" => [
-                "type" => "integer",
-                "default" => 15,
-            ]
+            'name' => 'per_page',
+            'in' => 'header',
+            'schema' => [
+                'type' => 'integer',
+                'default' => 15,
+            ],
         ]);
 });
 class QueryParameterController_ParameterAnnotationsTest
 {
     #[HeaderParameter('per_page', type: 'int', default: 15)]
-    public function __invoke()
-    {
-    }
+    public function __invoke() {}
 }
 
 //  body parameters test, pay attention to required property!

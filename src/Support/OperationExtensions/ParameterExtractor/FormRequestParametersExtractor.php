@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
+use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\GeneratesParametersFromRules;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
@@ -16,7 +17,6 @@ use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionParameter;
 use Spatie\LaravelData\Contracts\BaseData;
-use Dedoc\Scramble\Infer;
 
 class FormRequestParametersExtractor implements ParameterExtractor
 {
@@ -24,9 +24,7 @@ class FormRequestParametersExtractor implements ParameterExtractor
 
     public function __construct(
         private TypeTransformer $openApiTransformer,
-    )
-    {
-    }
+    ) {}
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
     {

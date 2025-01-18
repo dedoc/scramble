@@ -2,7 +2,4 @@
 
 namespace Dedoc\Scramble\Attributes;
 
-class MissingValue
-{
-
-}
+class MissingValue {}

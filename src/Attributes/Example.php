@@ -18,7 +18,7 @@ class Example
     {
         if ($example instanceof static) {
             return new OpenApiExample(
-                value: $example->value instanceof MissingValue ? new OpenApiMissingValue() : $example->value,
+                value: $example->value instanceof MissingValue ? new OpenApiMissingValue : $example->value,
                 summary: $example->summary,
                 description: $example->description,
                 externalValue: $example->externalValue,

@@ -4,7 +4,7 @@ namespace Dedoc\Scramble\Attributes;
 
 use Attribute;
 
-#[Attribute(Attribute::IS_REPEATABLE|Attribute::TARGET_ALL)]
+#[Attribute(Attribute::IS_REPEATABLE | Attribute::TARGET_ALL)]
 class HeaderParameter extends Parameter
 {
     public readonly bool $required;
@@ -19,8 +19,7 @@ class HeaderParameter extends Parameter
         mixed $default = new MissingValue,
         mixed $example = new MissingValue,
         array $examples = [],
-    )
-    {
+    ) {
         parent::__construct('header', $name, $description, $required, $deprecated, $type, $infer, $default, $example, $examples);
     }
 }

@@ -9,9 +9,7 @@ class Example
         public ?string $summary = null,
         public ?string $description = null,
         public ?string $externalValue = null,
-    )
-    {
-    }
+    ) {}
 
     public function toArray()
     {

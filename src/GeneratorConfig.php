@@ -14,7 +14,7 @@ class GeneratorConfig
         private array $config = [],
         private ?Closure $routeResolver = null,
         private array $afterOpenApiGenerated = [],
-        public readonly ParametersExtractors $parametersExtractors = new ParametersExtractors(),
+        public readonly ParametersExtractors $parametersExtractors = new ParametersExtractors,
     ) {}
 
     public function config(array $config)

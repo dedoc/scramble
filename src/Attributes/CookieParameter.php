@@ -4,7 +4,7 @@ namespace Dedoc\Scramble\Attributes;
 
 use Attribute;
 
-#[Attribute(Attribute::IS_REPEATABLE|Attribute::TARGET_ALL)]
+#[Attribute(Attribute::IS_REPEATABLE | Attribute::TARGET_ALL)]
 class CookieParameter extends Parameter
 {
     public readonly bool $required;
@@ -19,8 +19,7 @@ class CookieParameter extends Parameter
         mixed $default = new MissingValue,
         mixed $example = new MissingValue,
         array $examples = [],
-    )
-    {
+    ) {
         parent::__construct('cookie', $name, $description, $required, $deprecated, $type, $infer, $default, $example, $examples);
     }
 }

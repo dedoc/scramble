@@ -212,8 +212,8 @@ class RequestBodyExtension extends OperationExtension
 
     /**
      * @template T of ParameterExtractor
-     * @param class-string<T> $class
-     * @param array $contextfulBindings
+     *
+     * @param  class-string<T>  $class
      * @return T
      */
     private function buildContextfulExtractor(string $class, array $contextfulBindings): ParameterExtractor
