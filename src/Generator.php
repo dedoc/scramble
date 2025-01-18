@@ -47,9 +47,7 @@ class Generator
 
     public function __invoke(?GeneratorConfig $config = null)
     {
-        $config ??= (new GeneratorConfig(config('scramble')))
-            ->routes(Scramble::$routeResolver)
-            ->afterOpenApiGenerated(Scramble::$openApiExtender);
+        $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
         $openApi = $this->makeOpenApi($config);
         $context = new OpenApiContext($openApi, $config);

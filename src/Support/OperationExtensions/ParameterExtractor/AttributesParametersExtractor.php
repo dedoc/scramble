@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
+namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
 use Dedoc\Scramble\Attributes\Example;
 use Dedoc\Scramble\Attributes\MissingValue;
@@ -11,44 +11,49 @@ use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\MixedType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\RouteInfo;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use ReflectionAttribute;
 use ReflectionClass;
 
-class AttributesParametersExtractor implements RulesExtractor
+class AttributesParametersExtractor implements ParameterExtractor
 {
-    /**
-     * @param ParametersExtractionResult[] $automaticallyExtractedParameters
-     */
     public function __construct(
-        private array $automaticallyExtractedParameters,
         private TypeTransformer $openApiTransformer,
     )
     {
     }
 
-    public function shouldHandle(): bool
-    {
-        return true;
-    }
-
-    public function extract(RouteInfo $routeInfo): ParametersExtractionResult
+    public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
     {
         if (! $reflectionMethod = $routeInfo->reflectionMethod()) {
-            return new ParametersExtractionResult([]);
+            return $parameterExtractionResults;
         }
 
         $parameters = collect($reflectionMethod->getAttributes(ParameterAttribute::class, ReflectionAttribute::IS_INSTANCEOF))
             ->values()
-            ->map(fn (ReflectionAttribute $ra) => $this->createParameter($ra->newInstance(), $ra->getArguments()))
+            ->map(fn (ReflectionAttribute $ra) => $this->createParameter($parameterExtractionResults, $ra->newInstance(), $ra->getArguments()))
             ->all();
 
-        return new ParametersExtractionResult($parameters);
+        $extractedAttributes = collect($parameters)->map->name->all();
+
+        foreach ($parameterExtractionResults as $automaticallyExtractedParameters) {
+            $automaticallyExtractedParameters->parameters = collect($automaticallyExtractedParameters->parameters)
+                ->filter(fn (Parameter $p) => ! in_array($p->name, $extractedAttributes))
+                ->values()
+                ->all();
+        }
+
+        return [...$parameterExtractionResults, new ParametersExtractionResult($parameters)];
     }
 
-    private function createParameter(ParameterAttribute $attribute, array $attributeArguments): Parameter
+
+    /**
+     * @param ParametersExtractionResult[] $extractedParameters
+     */
+    private function createParameter(array $extractedParameters, ParameterAttribute $attribute, array $attributeArguments): Parameter
     {
         $attributeParameter = $this->createParameterFromAttribute($attribute);
 
@@ -56,7 +61,7 @@ class AttributesParametersExtractor implements RulesExtractor
             return $attributeParameter;
         }
 
-        if (! $inferredParameter = $this->getParameterFromAutomaticallyInferred($attribute->in, $attribute->name)) {
+        if (! $inferredParameter = $this->getParameterFromAutomaticallyInferred($extractedParameters, $attribute->in, $attribute->name)) {
             return $attributeParameter;
         }
 
@@ -79,6 +84,10 @@ class AttributesParametersExtractor implements RulesExtractor
 
             if ($name === 'deprecated') {
                 $parameter->deprecated = $attributeParameter->deprecated;
+            }
+
+            if ($name === 'description') {
+                $parameter->description = $attributeParameter->description;
             }
 
             if ($name === 'required') {
@@ -129,9 +138,12 @@ class AttributesParametersExtractor implements RulesExtractor
         return $parameter;
     }
 
-    private function getParameterFromAutomaticallyInferred(string $in, string $name): ?Parameter
+    /**
+     * @param ParametersExtractionResult[] $extractedParameters
+     */
+    private function getParameterFromAutomaticallyInferred(array $extractedParameters, string $in, string $name): ?Parameter
     {
-        foreach ($this->automaticallyExtractedParameters as $automaticallyExtractedParameters) {
+        foreach ($extractedParameters as $automaticallyExtractedParameters) {
             foreach ($automaticallyExtractedParameters->parameters as $parameter) {
                 if (
                     $parameter->in === $in

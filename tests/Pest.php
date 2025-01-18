@@ -116,7 +116,9 @@ function generateForRoute(Closure $param)
 {
     $route = $param(app(Router::class));
 
-    Scramble::routes(fn (Route $r) => $r->uri === $route->uri);
+    $config = Scramble::configure()
+        ->useConfig(config('scramble'))
+        ->routes(fn (Route $r) => $r->uri === $route->uri);
 
-    return app()->make(\Dedoc\Scramble\Generator::class)();
+    return app()->make(\Dedoc\Scramble\Generator::class)($config);
 }

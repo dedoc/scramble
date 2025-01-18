@@ -10,11 +10,11 @@ class Parameter
     public string $name;
 
     /**
-     * Possible values are "query", "header", "path" or "cookie".
+     * Possible values are "query", "header", "path", "cookie", or `null` when should be default.
      *
-     * @var "query"|"header"|"path"|"cookie".
+     * @var "query"|"header"|"path"|"cookie"|null.
      */
-    public string $in;
+    public ?string $in = null;
 
     public bool $required = false;
 
@@ -41,7 +41,7 @@ class Parameter
 
     public ?Schema $schema = null;
 
-    public function __construct(string $name, string $in)
+    public function __construct(string $name, ?string $in = null)
     {
         $this->name = $name;
         $this->in = $in;
