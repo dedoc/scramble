@@ -11,14 +11,7 @@ class MethodCallsParametersExtractor implements ParameterExtractor
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
     {
         $extractedParameters = new ParametersExtractionResult(
-            parameters: array_map(
-                function (Parameter $p) {
-                    $p->setAttribute('isFromMethodCall', true);
-
-                    return $p;
-                },
-                array_values($routeInfo->requestParametersFromCalls->data),
-            ),
+            parameters: array_values($routeInfo->requestParametersFromCalls->data),
         );
 
         $previouslyExtractedParameters = collect($parameterExtractionResults)->flatMap->parameters->keyBy('name');
