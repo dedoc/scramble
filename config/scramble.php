@@ -30,7 +30,10 @@ return [
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
         'description' => '',
+
+        'import_file' => '',
     ],
+
 
     /*
      * Customize Stoplight Elements UI

@@ -112,6 +112,20 @@ class Generator
         ];
     }
 
+    private function getDescriptionString(GeneratorConfig $config): string
+    {
+        $file = $config->get('info.import_file', '');
+        if(filled($file)){
+            $paths = config('view.paths');
+            foreach($paths as $path){
+                if(file_exists($path . '/' . $file)){
+                    return file_get_contents($path . '/' . $file);
+                }
+            }
+        }
+        return $config->get('info.description', '');
+    }
+
     private function makeOpenApi(GeneratorConfig $config)
     {
         $openApi = OpenApi::make('3.1.0')
@@ -119,7 +133,7 @@ class Generator
             ->setInfo(
                 InfoObject::make($config->get('ui.title', $default = config('app.name')) ?: $default)
                     ->setVersion($config->get('info.version', '0.0.1'))
-                    ->setDescription($config->get('info.description', ''))
+                    ->setDescription($this->getDescriptionString($config))
             );
 
         [$defaultProtocol] = explode('://', url('/'));
