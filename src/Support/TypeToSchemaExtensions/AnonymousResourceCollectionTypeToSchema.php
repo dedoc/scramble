@@ -84,7 +84,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
         }
 
         return Response::make(200)
-            ->description('Array of `'.$this->components->uniqueSchemaName($collectingResourceType->name).'`')
+            ->description('Array of `'.$this->openApiContext->references->schemas->uniqueName($collectingResourceType->name).'`')
             ->setContent('application/json', Schema::fromType($openApiType));
     }
 
@@ -131,7 +131,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
             ->setRequired([$wrapKey, 'links', 'meta']);
 
         return Response::make(200)
-            ->description('Paginated set of `'.$this->components->uniqueSchemaName($collectingClassType->name).'`')
+            ->description('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectingClassType->name).'`')
             ->setContent('application/json', Schema::fromType($responseType));
     }
 

@@ -1,9 +1,12 @@
 <?php
 
+use Dedoc\Scramble\GeneratorConfig;
+use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\ApiKeySecurityScheme;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Illuminate\Http\Request;
@@ -16,13 +19,112 @@ use Illuminate\Validation\Rules\Enum;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
-function validationRulesToDocumentationWithDeep(array $rules)
+beforeEach(function () {
+    $this->openApiTransformer = $openApiTransformer = app()->make(TypeTransformer::class, [
+        'context' => new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig),
+    ]);
+    $this->buildRulesToParameters = function (array $rules) use ($openApiTransformer): RulesToParameters {
+        return new RulesToParameters($rules, [], $openApiTransformer);
+    };
+});
+
+function validationRulesToDocumentationWithDeep($rulesToParameters)
 {
-    return (new DeepParametersMerger(collect(app()->make(RulesToParameters::class, ['rules' => $rules])->handle())))
+    return (new DeepParametersMerger(collect($rulesToParameters->handle())))
         ->handle();
 }
 
 // @todo: move rules from here to Generator/Request/ValidationRulesDocumentation test
+
+it('supports confirmed rule', function () {
+    $rules = [
+        'password' => ['required', 'min:8', 'confirmed'],
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(2)
+        ->and($params[1])
+        ->toMatchArray(['name' => 'password_confirmation']);
+});
+
+it('supports confirmed rule in array', function () {
+    $rules = [
+        'user.password' => ['required', 'min:8', 'confirmed'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'password' => ['type' => 'string', 'minLength' => 8],
+                    'password_confirmation' => ['type' => 'string', 'minLength' => 8],
+                ],
+                'required' => ['password', 'password_confirmation'],
+            ],
+        ]);
+});
+
+it('supports multiple confirmed rule', function () {
+    $rules = [
+        'password' => ['required', 'min:8', 'confirmed'],
+        'email' => ['required', 'email', 'confirmed'],
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(4)
+        ->and($params[2])
+        ->toMatchArray(['name' => 'password_confirmation'])
+        ->and($params[3])
+        ->toMatchArray(['name' => 'email_confirmation']);
+});
+
+it('works when last validation item is items array', function () {
+    $rules = [
+        'items.*.name' => 'required|string',
+        'items.*.email' => 'email',
+        'items.*' => 'array',
+        'items' => ['array', 'min:1', 'max:10'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toBe([
+            [
+                'name' => 'items',
+                'in' => 'query',
+                'schema' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'name' => [
+                                'type' => 'string',
+                            ],
+                            'email' => [
+                                'type' => 'string',
+                                'format' => 'email',
+                            ],
+                        ],
+                        'required' => [
+                            0 => 'name',
+                        ],
+                    ],
+                    'minItems' => 1.0,
+                    'maxItems' => 10.0,
+                ],
+            ],
+        ]);
+});
 
 it('extract rules from array like rules', function () {
     $rules = [
@@ -32,7 +134,7 @@ it('extract rules from array like rules', function () {
         'some.*.name' => 'string',
     ];
 
-    $params = validationRulesToDocumentationWithDeep($rules);
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -43,7 +145,7 @@ it('extract rules from array rules', function () {
         'foo.id' => 'int',
     ];
 
-    $params = validationRulesToDocumentationWithDeep($rules);
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -55,7 +157,7 @@ it('supports array rule details', function () {
         'destination.lon' => 'numeric|required|min:20|max:28.5',
     ];
 
-    $params = validationRulesToDocumentationWithDeep($rules);
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
 
     assertMatchesSnapshot(json_encode(collect($params)->map->toArray()->all()));
 });
@@ -65,7 +167,7 @@ it('supports array rule params', function () {
         'destination' => 'array:lat,lon|required',
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = ($this->buildRulesToParameters)($rules)->handle();
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -75,7 +177,7 @@ it('extract rules from enum rule', function () {
         'status' => new Enum(StatusValidationEnum::class),
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = ($this->buildRulesToParameters)($rules)->handle();
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -86,7 +188,7 @@ if (method_exists(Enum::class, 'only')) {
             'status' => (new Enum(StatusValidationEnum::class))->only([StatusValidationEnum::DRAFT, StatusValidationEnum::ARCHIVED]),
         ];
 
-        $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+        $params = ($this->buildRulesToParameters)($rules)->handle();
 
         expect($params[0]->toArray()['schema'])->toBe([
             'type' => 'string',
@@ -102,7 +204,7 @@ if (method_exists(Enum::class, 'only')) {
             'status' => (new Enum(StatusValidationEnum::class))->except(StatusValidationEnum::DRAFT),
         ];
 
-        $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+        $params = ($this->buildRulesToParameters)($rules)->handle();
 
         expect($params[0]->toArray()['schema'])->toBe([
             'type' => 'string',
@@ -121,7 +223,7 @@ it('extract rules from object like rules', function () {
         'channels.agency.name' => 'nullable|string',
     ];
 
-    $params = $params = validationRulesToDocumentationWithDeep($rules);
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -131,7 +233,7 @@ it('supports uuid', function () {
         'foo' => ['required', 'uuid', 'exists:App\Models\Section,id'],
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = ($this->buildRulesToParameters)($rules)->handle();
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -148,7 +250,7 @@ it('extract rules from object like rules heavy case', function () {
         'channels.agency.name' => 'nullable|string',
     ];
 
-    $params = $params = validationRulesToDocumentationWithDeep($rules);
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -159,7 +261,7 @@ it('extract rules from object like rules with explicit array', function () {
         'channels.publisher.id' => 'int',
     ];
 
-    $params = validationRulesToDocumentationWithDeep($rules);
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
@@ -169,7 +271,7 @@ it('supports exists rule', function () {
         'email' => 'required|email|exists:users,email',
     ];
 
-    $type = app()->make(RulesToParameters::class, ['rules' => $rules])->handle()[0]->schema->type;
+    $type = ($this->buildRulesToParameters)($rules)->handle()[0]->schema->type;
 
     expect($type)->toBeInstanceOf(StringType::class)
         ->and($type->format)->toBe('email');
@@ -180,7 +282,7 @@ it('supports image rule', function () {
         'image' => 'required|image',
     ];
 
-    $type = app()->make(RulesToParameters::class, ['rules' => $rules])->handle()[0]->schema->type;
+    $type = ($this->buildRulesToParameters)($rules)->handle()[0]->schema->type;
 
     expect($type)->toBeInstanceOf(StringType::class)
         ->and($type->contentMediaType)->toBe('application/octet-stream');
@@ -191,7 +293,7 @@ it('supports file rule', function () {
         'file' => 'required|file',
     ];
 
-    $type = app()->make(RulesToParameters::class, ['rules' => $rules])->handle()[0]->schema->type;
+    $type = ($this->buildRulesToParameters)($rules)->handle()[0]->schema->type;
 
     expect($type)->toBeInstanceOf(StringType::class)
         ->and($type->contentMediaType)->toBe('application/octet-stream');
@@ -202,7 +304,7 @@ it('converts min rule into "minimum" for numeric fields', function () {
         'num' => ['int', 'min:8'],
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = ($this->buildRulesToParameters)($rules)->handle();
 
     expect($params = collect($params)->all())
         ->toHaveCount(1)
@@ -216,7 +318,7 @@ it('converts max rule into "maximum" for numeric fields', function () {
         'num' => ['int', 'max:8'],
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = ($this->buildRulesToParameters)($rules)->handle();
 
     expect($params = collect($params)->all())
         ->toHaveCount(1)
@@ -230,7 +332,7 @@ it('converts min rule into "minLength" for string fields', function () {
         'str' => ['string', 'min:8'],
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = ($this->buildRulesToParameters)($rules)->handle();
 
     expect($params = collect($params)->all())
         ->toHaveCount(1)
@@ -244,7 +346,7 @@ it('converts max rule into "maxLength" for string fields', function () {
         'str' => ['string', 'max:8'],
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = ($this->buildRulesToParameters)($rules)->handle();
 
     expect($params = collect($params)->all())
         ->toHaveCount(1)
@@ -258,7 +360,7 @@ it('converts min rule into "minItems" for array fields', function () {
         'num' => ['array', 'min:8'],
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = ($this->buildRulesToParameters)($rules)->handle();
 
     expect($params = collect($params)->all())
         ->toHaveCount(1)
@@ -272,7 +374,7 @@ it('converts max rule into "maxItems" for array fields', function () {
         'num' => ['array', 'max:8'],
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = ($this->buildRulesToParameters)($rules)->handle();
 
     expect($params = collect($params)->all())
         ->toHaveCount(1)
@@ -286,7 +388,7 @@ it('documents nullable uri rule', function () {
         'page_url' => ['nullable', 'url'],
     ];
 
-    $params = app()->make(RulesToParameters::class, ['rules' => $rules])->handle();
+    $params = ($this->buildRulesToParameters)($rules)->handle();
 
     expect($params = collect($params)->all())
         ->toHaveCount(1)

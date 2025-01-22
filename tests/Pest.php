@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Tests\TestCase;
 use Dedoc\Scramble\Tests\Utils\AnalysisResult;
 use Illuminate\Routing\Route;
+use Illuminate\Routing\Router;
 use PhpParser\ErrorHandler\Throwing;
 use PhpParser\NameContext;
 use PhpParser\NodeTraverser;
@@ -113,9 +114,11 @@ dataset('extendableTemplateTypes', [
 
 function generateForRoute(Closure $param)
 {
-    $route = $param();
+    $route = $param(app(Router::class));
 
-    Scramble::routes(fn (Route $r) => $r->uri === $route->uri);
+    $config = Scramble::configure()
+        ->useConfig(config('scramble'))
+        ->routes(fn (Route $r) => $r->uri === $route->uri);
 
-    return app()->make(\Dedoc\Scramble\Generator::class)();
+    return app()->make(\Dedoc\Scramble\Generator::class)($config);
 }

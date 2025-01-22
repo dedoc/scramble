@@ -12,15 +12,17 @@ use Dedoc\Scramble\Support\Generator\RequestBodyObject;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\ParameterExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\FormRequestRulesExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RequestMethodCallsExtractor;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ValidateCallExtractor;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use ReflectionClass;
+use ReflectionNamedType;
+use ReflectionParameter;
 use Throwable;
 
 class RequestBodyExtension extends OperationExtension
@@ -40,7 +42,7 @@ class RequestBodyExtension extends OperationExtension
         $rulesResults = collect();
 
         try {
-            $rulesResults = collect($this->extractRouteRequestValidationRules($routeInfo, $routeInfo->methodNode()));
+            $rulesResults = collect($this->extractParameters($operation, $routeInfo));
         } catch (Throwable $exception) {
             if (Scramble::shouldThrowOnError()) {
                 throw $exception;
@@ -73,6 +75,10 @@ class RequestBodyExtension extends OperationExtension
             ->map->toArray();
 
         $operation->addParameters($this->convertDotNamedParamsToComplexStructures($queryParams));
+
+        if (! $bodyParams) {
+            return;
+        }
 
         [$schemaResults, $schemalessResults] = $rulesResults->partition('schemaName');
         $schemalessResults = collect([$this->mergeSchemalessRulesResults($schemalessResults->values())]);
@@ -189,50 +195,45 @@ class RequestBodyExtension extends OperationExtension
         });
     }
 
-    protected function extractRouteRequestValidationRules(RouteInfo $routeInfo, $methodNode)
+    private function extractParameters(Operation $operation, RouteInfo $routeInfo)
     {
-        /*
-         * These are the extractors that are getting types from the validation rules, so it is
-         * certain that a property must have the extracted type.
-         */
-        $typeDefiningHandlers = [
-            new FormRequestRulesExtractor($methodNode, $this->openApiTransformer),
-            new ValidateCallExtractor($methodNode, $this->openApiTransformer),
-        ];
+        $result = [];
+        foreach ($this->config->parametersExtractors->all() as $extractorClass) {
+            $extractor = $this->buildContextfulExtractor($extractorClass, [
+                TypeTransformer::class => $this->openApiTransformer,
+                Operation::class => $operation,
+            ]);
 
-        $validationRulesExtractedResults = collect($typeDefiningHandlers)
-            ->filter(fn ($h) => $h->shouldHandle())
-            ->map(fn ($h) => $h->extract($routeInfo))
-            ->values()
-            ->toArray();
+            $result = $extractor->handle($routeInfo, $result);
+        }
 
-        /*
-         * This is the extractor that cannot re-define the incoming type but can add new properties.
-         * Also, it is useful for additional details.
-         */
-        $detailsExtractor = new RequestMethodCallsExtractor;
-
-        $methodCallsExtractedResults = $detailsExtractor->extract($routeInfo);
-
-        return $this->mergeExtractedProperties($validationRulesExtractedResults, $methodCallsExtractedResults);
+        return $result;
     }
 
     /**
-     * @param  ParametersExtractionResult[]  $rulesExtractedResults
+     * @template T of ParameterExtractor
+     *
+     * @param  class-string<T>  $class
+     * @return T
      */
-    protected function mergeExtractedProperties(array $rulesExtractedResults, ParametersExtractionResult $methodCallsExtractedResult)
+    private function buildContextfulExtractor(string $class, array $contextfulBindings): ParameterExtractor
     {
-        $rulesParameters = collect($rulesExtractedResults)->flatMap->parameters->keyBy('name');
+        $reflectionClass = new ReflectionClass($class);
 
-        $methodCallsExtractedResult->parameters = collect($methodCallsExtractedResult->parameters)
-            ->filter(fn (Parameter $p) => ! $rulesParameters->has($p->name))
-            ->values()
+        $parameters = $reflectionClass->getConstructor()?->getParameters() ?? [];
+
+        $contextfulArguments = collect($parameters)
+            ->mapWithKeys(function (ReflectionParameter $p) use ($contextfulBindings) {
+                $parameterClass = $p->getType() instanceof ReflectionNamedType
+                    ? $p->getType()->getName()
+                    : null;
+
+                return $parameterClass && isset($contextfulBindings[$parameterClass]) ? [
+                    $p->name => $contextfulBindings[$parameterClass],
+                ] : [];
+            })
             ->all();
 
-        /*
-         * Possible improvements here: using defaults when merging results, etc.
-         */
-
-        return [...$rulesExtractedResults, $methodCallsExtractedResult];
+        return app()->make($class, $contextfulArguments);
     }
 }

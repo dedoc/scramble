@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
@@ -22,11 +23,9 @@ use LogicException;
  */
 class Scramble
 {
-    public static $routeResolver = null;
+    const DEFAULT_API = 'default';
 
     public static $tagResolver = null;
-
-    public static $openApiExtender = null;
 
     public static bool $defaultRoutesIgnored = false;
 
@@ -69,13 +68,18 @@ class Scramble
     public static function registerApi(string $name, array $config = []): GeneratorConfig
     {
         static::$apis[$name] = $generatorConfig = new GeneratorConfig(
-            config: array_merge(config('scramble'), $config),
+            config: array_merge(config('scramble') ?: [], $config),
+            parametersExtractors: isset(static::$apis['default'])
+                ? static::$apis['default']->parametersExtractors
+                : new ParametersExtractors,
         );
 
-        // By default, afterOpenApiGenerated is the same for all APIs.
-        $generatorConfig->afterOpenApiGenerated(Scramble::$openApiExtender);
-
         return $generatorConfig;
+    }
+
+    public static function configure(string $api = self::DEFAULT_API): GeneratorConfig
+    {
+        return static::getGeneratorConfig($api);
     }
 
     /**
@@ -85,7 +89,7 @@ class Scramble
      */
     public static function extendOpenApi(callable $openApiExtender)
     {
-        static::$openApiExtender = $openApiExtender;
+        static::afterOpenApiGenerated($openApiExtender);
     }
 
     /**
@@ -93,12 +97,12 @@ class Scramble
      */
     public static function afterOpenApiGenerated(callable $afterOpenApiGenerated)
     {
-        static::$openApiExtender = $afterOpenApiGenerated;
+        static::configure()->afterOpenApiGenerated($afterOpenApiGenerated);
     }
 
     public static function routes(callable $routeResolver)
     {
-        static::$routeResolver = $routeResolver;
+        static::configure()->routes($routeResolver);
     }
 
     /**

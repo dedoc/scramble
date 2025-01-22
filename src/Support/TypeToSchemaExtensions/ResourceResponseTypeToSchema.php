@@ -65,7 +65,7 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
         $response = $this->openApiTransformer->toResponse($this->makeBaseResponse($resourceType));
 
         return $response
-            ->description('`'.$this->components->uniqueSchemaName($resourceType->name).'`')
+            ->description('`'.$this->openApiContext->references->schemas->uniqueName($resourceType->name).'`')
             ->setContent(
                 'application/json',
                 Schema::fromType($openApiType),
