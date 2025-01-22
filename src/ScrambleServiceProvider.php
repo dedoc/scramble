@@ -199,13 +199,13 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ResourceResponseTypeToSchema::class,
                     VoidTypeToSchema::class,
                 ], $typesToSchemaExtensions),
-                exceptionToResponseExtensions: $parameters['exceptionToResponseExtensions'] ?? array_merge([
+                exceptionToResponseExtensions: $parameters['exceptionToResponseExtensions'] ?? array_merge($exceptionToResponseExtensions, [
                     ValidationExceptionToResponseExtension::class,
                     AuthorizationExceptionToResponseExtension::class,
                     AuthenticationExceptionToResponseExtension::class,
                     NotFoundExceptionToResponseExtension::class,
                     HttpExceptionToResponseExtension::class,
-                ], $exceptionToResponseExtensions),
+                ]),
             );
         });
 
