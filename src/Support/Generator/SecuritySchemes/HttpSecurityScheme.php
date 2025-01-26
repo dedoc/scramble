@@ -20,9 +20,9 @@ class HttpSecurityScheme extends SecurityScheme
 
     public function toArray()
     {
-        return array_merge(parent::toArray(), [
+        return array_merge(parent::toArray(), array_filter([
             'scheme' => $this->scheme,
             'bearerFormat' => $this->bearerFormat,
-        ]);
+        ]));
     }
 }

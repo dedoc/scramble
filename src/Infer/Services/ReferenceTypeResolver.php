@@ -10,6 +10,7 @@ use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -529,15 +530,6 @@ class ReferenceTypeResolver
         $objectType = $this->resolve($scope, $type->object);
 
         if (
-            ($objectType instanceof ObjectType)
-            && ! array_key_exists($objectType->name, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClass($objectType->name)
-        ) {
-            // Class is not indexed, and we simply cannot get an info from it.
-            return $type;
-        }
-
-        if (
             $objectType instanceof AbstractReferenceType
             || $objectType instanceof TemplateType
         ) {
@@ -545,8 +537,23 @@ class ReferenceTypeResolver
             return $type;
         }
 
-        if (! $objectType instanceof ObjectType && ! $objectType instanceof SelfType) {
+        if (! $objectType instanceof ObjectType) {
             return new UnknownType;
+        }
+
+        if ($propertyType = Context::getInstance()->extensionsBroker->getPropertyType(new PropertyFetchEvent(
+            instance: $objectType,
+            name: $type->propertyName,
+            scope: $scope,
+        ))) {
+            return $propertyType;
+        }
+
+        if (
+            ! array_key_exists($objectType->name, $this->index->classesDefinitions)
+            && ! $this->resolveUnknownClass($objectType->name)
+        ) {
+            return new UnknownType("Cannot get property [$type->propertyName] type on [{$objectType->name}]");
         }
 
         $classDefinition = $objectType instanceof SelfType && $scope->isInClass()

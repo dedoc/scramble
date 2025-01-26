@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Extensions;
 
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
@@ -12,18 +13,7 @@ use Dedoc\Scramble\Support\Type\Type;
 
 abstract class TypeToSchemaExtension
 {
-    protected Infer $infer;
-
-    protected TypeTransformer $openApiTransformer;
-
-    protected Components $components;
-
-    public function __construct(Infer $infer, TypeTransformer $openApiTransformer, Components $components)
-    {
-        $this->infer = $infer;
-        $this->openApiTransformer = $openApiTransformer;
-        $this->components = $components;
-    }
+    public function __construct(protected Infer $infer, protected TypeTransformer $openApiTransformer, protected Components $components, protected OpenApiContext $openApiContext) {}
 
     /**
      * @param  Type  $type  The type being transformed to schema.

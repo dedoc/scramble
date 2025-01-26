@@ -153,6 +153,13 @@ class TypeHelper
             return new LiteralBooleanType($value);
         }
 
+        if (is_array($value)) {
+            return new KeyedArrayType(array_map(
+                fn ($key) => new ArrayItemType_($key, static::createTypeFromValue($value[$key])),
+                array_keys($value),
+            ));
+        }
+
         return null; // @todo: object
     }
 

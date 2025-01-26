@@ -128,6 +128,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             'object' => new ObjectType('\stdClass'),
             'collection' => new ObjectType(Collection::class),
             'Illuminate\Database\Eloquent\Casts\AsEnumCollection' => new Generic(Collection::class, [
+                new IntegerType, // @todo array-key
                 new TemplateType($castAsParameters->first()),
             ]),
             'date', 'datetime', 'custom_datetime' => new ObjectType(Carbon::class),
@@ -141,7 +142,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         if ($isManyRelation = Str::contains($relation['type'], 'Many')) {
             return new Generic(
                 \Illuminate\Database\Eloquent\Collection::class,
-                [new ObjectType($relation['related'])]
+                [new IntegerType, new ObjectType($relation['related'])]
             );
         }
 

@@ -1,7 +1,10 @@
 <?php
 
+use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
@@ -9,11 +12,16 @@ use Illuminate\Support\Facades\Route as RouteFacade;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
+beforeEach(function () {
+    $this->components = new Components;
+    $this->context = new OpenApiContext((new OpenApi('3.1.0'))->setComponents($this->components), new GeneratorConfig);
+});
+
 test('transforms collection with toArray only', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
     ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->components, $this->context);
 
     $type = new ObjectType(UserCollection_One::class);
 
@@ -36,10 +44,10 @@ class UserCollection_One extends \Illuminate\Http\Resources\Json\ResourceCollect
 }
 
 test('transforms collection with toArray and with', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
     ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->components, $this->context);
 
     $type = new ObjectType(UserCollection_Two::class);
 
@@ -69,16 +77,16 @@ class UserCollection_Two extends \Illuminate\Http\Resources\Json\ResourceCollect
 }
 
 test('transforms collection without proper toArray implementation', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
     ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->components, $this->context);
 
     $type = new ObjectType(UserCollection_Three::class);
 
     assertMatchesSnapshot([
         'response' => $extension->toResponse($type)->toArray(),
-        'components' => $components->toArray(),
+        'components' => $this->components->toArray(),
     ]);
 });
 class UserCollection_Three extends \Illuminate\Http\Resources\Json\ResourceCollection
@@ -92,16 +100,16 @@ class UserCollection_Three extends \Illuminate\Http\Resources\Json\ResourceColle
 }
 
 test('transforms collection without toArray implementation', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
     ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->components, $this->context);
 
     $type = new ObjectType(UserCollection_Four::class);
 
     assertMatchesSnapshot([
         'response' => $extension->toResponse($type)->toArray(),
-        'components' => $components->toArray(),
+        'components' => $this->components->toArray(),
     ]);
 });
 class UserCollection_Four extends \Illuminate\Http\Resources\Json\ResourceCollection

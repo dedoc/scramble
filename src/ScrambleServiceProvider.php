@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
@@ -17,7 +18,6 @@ use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthorizationExceptionT
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\HttpExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\NotFoundExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\ValidationExceptionToResponseExtension;
-use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
@@ -29,6 +29,7 @@ use Dedoc\Scramble\Support\InferExtensions\JsonResponseMethodReturnTypeExtension
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\ResourceResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
@@ -36,11 +37,14 @@ use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\OperationExtensions\DeprecationExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ErrorResponsesExtension;
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\AttributesParametersExtractor;
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\MethodCallsParametersExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
 use Dedoc\Scramble\Support\ServerFactory;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
@@ -48,14 +52,21 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\PaginatorTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\VoidTypeToSchema;
+use Illuminate\Contracts\Foundation\Application;
 use PhpParser\ParserFactory;
+use PhpParser\PrettyPrinter;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class ScrambleServiceProvider extends PackageServiceProvider
 {
+    public $singletons = [
+        PrettyPrinter::class => PrettyPrinter\Standard::class,
+    ];
+
     public function configurePackage(Package $package): void
     {
         $package
@@ -95,6 +106,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 $inferExtensionsClasses = array_merge([
                     ResponseMethodReturnTypeExtension::class,
                     JsonResourceExtension::class,
+                    ResourceResponseMethodReturnTypeExtension::class,
                     JsonResponseMethodReturnTypeExtension::class,
                     ModelExtension::class,
                 ], $inferExtensionsClasses);
@@ -112,9 +124,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                         new ArrayMergeReturnTypeExtension,
 
-                        /*
-                         * Keep this extension last, so the trace info is preserved.
-                         */
+                        /* Keep this extension last, so the trace info is preserved. */
                         new TypeTraceInfer,
                     ],
                     array_map(function ($class) {
@@ -159,7 +169,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(ServerFactory::class);
 
-        $this->app->singleton(TypeTransformer::class, function () {
+        $this->app->bind(TypeTransformer::class, function (Application $application, array $parameters) {
             $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
 
             $typesToSchemaExtensions = array_values(array_filter(
@@ -173,21 +183,23 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ));
 
             return new TypeTransformer(
-                app()->make(Infer::class),
-                new Components,
-                array_merge([
+                $parameters['infer'] ?? $application->make(Infer::class),
+                $parameters['context'],
+                typeToSchemaExtensions: $parameters['typeToSchemaExtensions'] ?? array_merge([
                     EnumToSchema::class,
                     JsonResourceTypeToSchema::class,
                     ModelToSchema::class,
+                    CollectionToSchema::class,
                     EloquentCollectionToSchema::class,
                     AnonymousResourceCollectionTypeToSchema::class,
                     CursorPaginatorTypeToSchema::class,
                     PaginatorTypeToSchema::class,
                     LengthAwarePaginatorTypeToSchema::class,
                     ResponseTypeToSchema::class,
+                    ResourceResponseTypeToSchema::class,
                     VoidTypeToSchema::class,
                 ], $typesToSchemaExtensions),
-                array_merge([
+                exceptionToResponseExtensions: $parameters['exceptionToResponseExtensions'] ?? array_merge([
                     ValidationExceptionToResponseExtension::class,
                     AuthorizationExceptionToResponseExtension::class,
                     AuthenticationExceptionToResponseExtension::class,
@@ -196,6 +208,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ], $exceptionToResponseExtensions),
             );
         });
+
+        Scramble::registerApi(Scramble::DEFAULT_API);
     }
 
     public function bootingPackage()
@@ -204,14 +218,16 @@ class ScrambleServiceProvider extends PackageServiceProvider
             $this->package->hasRoute('web');
         }
 
-        Scramble::registerApi('default', config('scramble'))
-            ->routes(Scramble::$routeResolver)
-            ->afterOpenApiGenerated(Scramble::$openApiExtender);
+        Scramble::configure()->useConfig(config('scramble'));
 
         $this->app->booted(function () {
-            Scramble::getGeneratorConfig('default')
-                ->routes(Scramble::$routeResolver)
-                ->afterOpenApiGenerated(Scramble::$openApiExtender);
+            Scramble::configure()
+                ->withParametersExtractors(function (ParametersExtractors $parametersExtractors) {
+                    $parametersExtractors->append([
+                        MethodCallsParametersExtractor::class,
+                        AttributesParametersExtractor::class,
+                    ]);
+                });
         });
     }
 }

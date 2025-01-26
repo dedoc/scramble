@@ -6,7 +6,9 @@ use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 
+/** @internal */
 class OperationBuilder
 {
     /** @var class-string<OperationExtension> */
@@ -17,7 +19,7 @@ class OperationBuilder
         $this->extensionsClasses = $extensionsClasses;
     }
 
-    public function build(RouteInfo $routeInfo, OpenApi $openApi, GeneratorConfig $config)
+    public function build(RouteInfo $routeInfo, OpenApi $openApi, GeneratorConfig $config, TypeTransformer $typeTransformer)
     {
         $operation = new Operation('get');
 
@@ -25,6 +27,7 @@ class OperationBuilder
             $extension = app()->make($extensionClass, [
                 'openApi' => $openApi,
                 'config' => $config,
+                'openApiTransformer' => $typeTransformer,
             ]);
 
             $extension->handle($operation, $routeInfo);
