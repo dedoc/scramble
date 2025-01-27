@@ -49,9 +49,8 @@ class GeneratorConfig
     }
 
     /**
-     * @param (Closure(Router, mixed): Route)|string|false $ui
-     * @param (Closure(Router, mixed): Route)|string|false $document
-     * @return static
+     * @param  (Closure(Router, mixed): Route)|string|false  $ui
+     * @param  (Closure(Router, mixed): Route)|string|false  $document
      */
     public function expose(Closure|string|false $ui = false, Closure|string|false $document = false): static
     {

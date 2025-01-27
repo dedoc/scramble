@@ -143,9 +143,7 @@ class WithProviders implements Invokable
 {
     public function __construct(
         public readonly array $prependedProviders = [],
-    )
-    {
-    }
+    ) {}
 
     public function __invoke($app)
     {

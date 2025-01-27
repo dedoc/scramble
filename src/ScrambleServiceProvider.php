@@ -59,7 +59,6 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\VoidTypeToSchema;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Routing\Router;
-use Illuminate\Support\Str;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter;
 use Spatie\LaravelPackageTools\Package;

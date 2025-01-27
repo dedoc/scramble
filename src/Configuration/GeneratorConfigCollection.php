@@ -31,6 +31,7 @@ class GeneratorConfigCollection
         if (! array_key_exists($name, $this->apis)) {
             throw new LogicException("$name API is not registered. Register the API using `Scramble::registerApi` first.");
         }
+
         return $this->apis[$name];
     }
 

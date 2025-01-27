@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble;
 
 use Dedoc\Scramble\Configuration\GeneratorConfigCollection;
-use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
@@ -17,7 +16,6 @@ use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route as RouteFacade;
-use LogicException;
 
 class Scramble
 {
