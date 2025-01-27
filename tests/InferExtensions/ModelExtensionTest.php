@@ -27,8 +27,8 @@ it('adds models attributes to the model class definition as properties', functio
         'title' => 'string',
         'settings' => 'array<mixed>|null',
         'body' => 'string',
-        'created_at' => 'Carbon\Carbon|null',
-        'updated_at' => 'Carbon\Carbon|null',
+        'created_at' => 'string|null',
+        'updated_at' => 'string|null',
         /* Appended attributes */
         'read_time' => 'unknown',
         /* Relations */
