@@ -130,8 +130,8 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             'Illuminate\Database\Eloquent\Casts\AsEnumCollection' => new Generic(Collection::class, [
                 new TemplateType($castAsParameters->first()),
             ]),
-            'date', 'datetime', 'custom_datetime' => new ObjectType(Carbon::class),
-            'immutable_date', 'immutable_datetime', 'immutable_custom_datetime' => new ObjectType(CarbonImmutable::class),
+            'date', 'datetime', 'custom_datetime' => new StringType('date-time'),
+            'immutable_date', 'immutable_datetime', 'immutable_custom_datetime' => new StringType('date-time'),
             default => null,
         };
     }
