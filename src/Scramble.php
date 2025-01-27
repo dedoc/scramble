@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Configuration\GeneratorConfigCollection;
 use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
@@ -24,20 +25,10 @@ class Scramble
 
     public static $tagResolver = null;
 
-    public static bool $defaultRoutesIgnored = false;
-
     /**
      * @var array<int, array{callable(OpenApiType, string): bool, string|(callable(OpenApiType, string): string), string[], bool}>
      */
     public static array $enforceSchemaRules = [];
-
-    /**
-     * Registered APIs for which Scramble generates documentation. The key is API name
-     * and the value is API's configuration.
-     *
-     * @var array<string, GeneratorConfig>
-     */
-    public static array $apis = [];
 
     /**
      * Extensions registered using programmatic API.
@@ -59,19 +50,12 @@ class Scramble
      */
     public static function ignoreDefaultRoutes(): void
     {
-        static::$defaultRoutesIgnored = true;
+        static::configure()->expose(false);
     }
 
     public static function registerApi(string $name, array $config = []): GeneratorConfig
     {
-        static::$apis[$name] = $generatorConfig = new GeneratorConfig(
-            config: array_merge(config('scramble') ?: [], $config),
-            parametersExtractors: isset(static::$apis['default'])
-                ? static::$apis['default']->parametersExtractors
-                : new ParametersExtractors,
-        );
-
-        return $generatorConfig;
+        return static::getConfigurationsInstance()->register($name, $config);
     }
 
     public static function configure(string $api = self::DEFAULT_API): GeneratorConfig
@@ -191,11 +175,13 @@ class Scramble
 
     public static function getGeneratorConfig(string $api)
     {
-        if (! array_key_exists($api, Scramble::$apis)) {
-            throw new LogicException("$api API is not registered. Register the API using `Scramble::registerApi` first.");
-        }
+        return static::getConfigurationsInstance()->get($api);
+    }
 
-        return Scramble::$apis[$api];
+    /** @internal */
+    public static function getConfigurationsInstance(): GeneratorConfigCollection
+    {
+        return app(GeneratorConfigCollection::class);
     }
 
     public static function throwOnError(bool $throw = true): void

@@ -32,7 +32,6 @@ class TestCase extends Orchestra
     {
         Context::reset();
 
-        Scramble::$defaultRoutesIgnored = false;
         Scramble::$tagResolver = null;
         Scramble::$enforceSchemaRules = [];
 
