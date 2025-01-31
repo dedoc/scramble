@@ -39,7 +39,6 @@ use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\AttributesParametersExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\MethodCallsParametersExtractor;
-use Dedoc\Scramble\Support\ServerFactory;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
@@ -146,8 +145,6 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     return app($class);
                 }, $indexBuilders);
             });
-
-        $this->app->singleton(ServerFactory::class);
 
         $this->app->bind(TypeTransformer::class, function (Application $application, array $parameters) {
             $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);

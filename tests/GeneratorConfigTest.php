@@ -14,6 +14,15 @@ use Orchestra\Testbench\Features\TestingFeature;
 
 class GeneratorConfigTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        if (! class_exists(TestingFeature::class)) {
+            $this->markTestSkipped('TestingFeature class does not exist');
+        }
+
+        parent::setUp();
+    }
+
     protected function resolveApplicationConfiguration($app)
     {
         parent::resolveApplicationConfiguration($app);
