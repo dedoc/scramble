@@ -22,6 +22,7 @@ use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthorizationExceptionT
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\HttpExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\NotFoundExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\ValidationExceptionToResponseExtension;
+use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
@@ -38,7 +39,6 @@ use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
-use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\OperationExtensions\DeprecationExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ErrorResponsesExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\AttributesParametersExtractor;
@@ -46,6 +46,7 @@ use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\MethodCallsPar
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
+use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
@@ -139,25 +140,6 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 );
             });
 
-        $this->app->when(OperationBuilder::class)
-            ->needs('$extensionsClasses')
-            ->give(function () {
-                $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
-
-                $operationExtensions = array_values(array_filter(
-                    $extensions,
-                    fn ($e) => is_a($e, OperationExtension::class, true),
-                ));
-
-                return array_merge([
-                    RequestEssentialsExtension::class,
-                    RequestBodyExtension::class,
-                    ErrorResponsesExtension::class,
-                    ResponseExtension::class,
-                    DeprecationExtension::class,
-                ], $operationExtensions);
-            });
-
         $this->app->when(IndexBuildingBroker::class)
             ->needs('$indexBuilders')
             ->give(function () {
@@ -214,12 +196,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ], $exceptionToResponseExtensions),
             );
         });
-    }
 
-    public function bootingPackage()
-    {
         Scramble::configure()
-            ->useConfig(config('scramble'))
             ->withOperationTransformers(function (OperationTransformers $transformers) {
                 $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
 
@@ -228,18 +206,14 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     fn ($e) => is_a($e, OperationExtension::class, true),
                 ));
 
-                $operationExtensions = array_merge([
-                    RequestEssentialsExtension::class,
-                    RequestBodyExtension::class,
-                    ErrorResponsesExtension::class,
-                    ResponseExtension::class,
-                    DeprecationExtension::class,
-                ], $operationExtensions);
-
-                $transformers->append(array_map(function ($extension) {
-                    return new ExtensionWrapperTransformer($extension);
-                }, $operationExtensions));
+                $transformers->append($operationExtensions);
             });
+    }
+
+    public function bootingPackage()
+    {
+        Scramble::configure()
+            ->useConfig(config('scramble'));
 
         $this->app->booted(function (Application $app) {
             Scramble::configure()

@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Configuration;
 
+use Dedoc\Scramble\Support\OperationExtensions\DeprecationExtension;
+use Dedoc\Scramble\Support\OperationExtensions\ErrorResponsesExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
@@ -47,13 +49,15 @@ class OperationTransformers
         $base = $this->transformers ?: [
             RequestEssentialsExtension::class,
             RequestBodyExtension::class,
+            ErrorResponsesExtension::class,
             ResponseExtension::class,
+            DeprecationExtension::class,
         ];
 
         return array_values(array_unique([
             ...$this->prepends,
             ...$base,
             ...$this->appends,
-        ]));
+        ], SORT_REGULAR));
     }
 }
