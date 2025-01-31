@@ -4,25 +4,24 @@ namespace Dedoc\Scramble\Support\Generator;
 
 class ServerVariable
 {
-    public string $default;
+    use WithExtensions;
 
-    public array $enum = [];
-
-    public ?string $description = null;
-
+    /**
+     * @param non-empty-array<string>|null $enum
+     */
     public function __construct(
-        string $default,
-        array $enum = [],
-        ?string $description = null
+        public string $default,
+        public ?array $enum = null,
+        public ?string $description = null
     ) {
-        $this->default = $default;
-        $this->enum = $enum;
-        $this->description = $description;
     }
 
+    /**
+     * @param non-empty-array<string>|null $enum
+     */
     public static function make(
         string $default,
-        array $enum = [],
+        ?array $enum = null,
         ?string $description = null
     ) {
         return new self($default, $enum, $description);
@@ -32,7 +31,7 @@ class ServerVariable
     {
         return array_filter([
             'default' => $this->default,
-            'enum' => count($this->enum) ? $this->enum : null,
+            'enum' => $this->enum && count($this->enum) ? $this->enum : null,
             'description' => $this->description,
         ]);
     }

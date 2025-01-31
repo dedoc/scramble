@@ -21,13 +21,11 @@ class GeneratorConfigCollection
 
     private function buildDefaultApiConfiguration(): GeneratorConfig
     {
-        return (new GeneratorConfig(
-            parametersExtractors: new ParametersExtractors,
-            operationTransformers: new OperationTransformers,
-        ))->expose(
-            ui: fn (Router $router, $action) => $router->get('docs/api', $action)->name('scramble.docs.ui'),
-            document: fn (Router $router, $action) => $router->get('docs/api.json', $action)->name('scramble.docs.document'),
-        );
+        return (new GeneratorConfig)
+            ->expose(
+                ui: fn (Router $router, $action) => $router->get('docs/api', $action)->name('scramble.docs.ui'),
+                document: fn (Router $router, $action) => $router->get('docs/api.json', $action)->name('scramble.docs.document'),
+            );
     }
 
     public function get(string $name): GeneratorConfig
@@ -45,6 +43,8 @@ class GeneratorConfigCollection
             config: array_merge(config('scramble') ?: [], $config),
             parametersExtractors: $this->apis[Scramble::DEFAULT_API]->parametersExtractors,
             operationTransformers: $this->apis[Scramble::DEFAULT_API]->operationTransformers,
+            documentTransformers: $this->apis[Scramble::DEFAULT_API]->documentTransformers,
+            serverVariables: $this->apis[Scramble::DEFAULT_API]->serverVariables,
         );
 
         return $generatorConfig;

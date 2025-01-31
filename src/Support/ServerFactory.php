@@ -19,16 +19,6 @@ class ServerFactory
         $this->variables = $variables;
     }
 
-    /**
-     * @param  array<string, ServerVariable>  $variables
-     */
-    public function variables(array $variables = [])
-    {
-        $this->variables = $variables;
-
-        return $this;
-    }
-
     public function make(string $url, string $description = '')
     {
         return (new Server($url))

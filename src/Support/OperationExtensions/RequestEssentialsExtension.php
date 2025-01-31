@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Server;
+use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -50,7 +51,6 @@ class RequestEssentialsExtension extends OperationExtension
         TypeTransformer $openApiTransformer,
         GeneratorConfig $config,
         private OpenApi $openApi,
-        private ServerFactory $serverFactory
     ) {
         parent::__construct($infer, $openApiTransformer, $config);
     }
@@ -115,7 +115,8 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         [$protocol] = explode('://', url('/'));
-        $expectedServer = $this->serverFactory->make($protocol.'://'.$route->getDomain().'/'.$this->config->get('api_path', 'api'));
+        $expectedServer = (new ServerFactory($this->config->serverVariables->all()))
+            ->make($protocol.'://'.$route->getDomain().'/'.$this->config->get('api_path', 'api'));
 
         if ($this->isServerMatchesAllGivenServers($expectedServer, $this->openApi->servers)) {
             return [];
@@ -462,5 +463,19 @@ class RequestEssentialsExtension extends OperationExtension
                 ->values()
                 ->toArray(),
         );
+    }
+
+    private function getServerVariablesInUrl(string $url): array
+    {
+        $variables = $this->config->serverVariables->all();
+
+        $params = Str::of($url)->matchAll('/\{(.*?)\}/');
+
+        return collect($variables)
+            ->only($params)
+            ->merge($params->reject(fn ($p) => array_key_exists($p, $variables))->mapWithKeys(fn ($p) => [
+                $p => ServerVariable::make('example'),
+            ]))
+            ->toArray();
     }
 }

@@ -6,7 +6,9 @@ use Closure;
 use Dedoc\Scramble\Configuration\DocumentTransformers;
 use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Configuration\ParametersExtractors;
+use Dedoc\Scramble\Configuration\ServerVariables;
 use Dedoc\Scramble\Contracts\DocumentTransformer;
+use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
@@ -32,6 +34,7 @@ class GeneratorConfig
         public readonly ParametersExtractors $parametersExtractors = new ParametersExtractors,
         public readonly OperationTransformers $operationTransformers = new OperationTransformers,
         public readonly DocumentTransformers $documentTransformers = new DocumentTransformers,
+        public readonly ServerVariables $serverVariables = new ServerVariables,
     ) {}
 
     public function config(array $config)
@@ -158,6 +161,22 @@ class GeneratorConfig
         return count($reflection->getParameters()) === 1
             && $reflection->getParameters()[0]->getType() instanceof ReflectionNamedType
             && is_a($reflection->getParameters()[0]->getType()->getName(), DocumentTransformer::class, true);
+    }
+
+    /**
+     * @param  (callable(ServerVariables): void)|array<string, ServerVariable>  $variables
+     */
+    public function withServerVariables(callable|array $variables)
+    {
+        if (is_callable($variables)) {
+            $variables($this->serverVariables);
+
+            return $this;
+        }
+
+        $this->serverVariables->use($variables);
+
+        return $this;
     }
 
     public function get(string $key, mixed $default = null)

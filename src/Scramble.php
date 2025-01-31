@@ -141,7 +141,7 @@ class Scramble
      */
     public static function defineServerVariables(array $variables)
     {
-        app(ServerFactory::class)->variables($variables);
+        static::configure()->withServerVariables($variables);
     }
 
     public static function registerUiRoute(string $path, string $api = 'default'): Route
