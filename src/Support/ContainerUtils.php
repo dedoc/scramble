@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support;
 
-use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\ParameterExtractor;
 use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionParameter;
