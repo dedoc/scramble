@@ -7,17 +7,16 @@ class ServerVariable
     use WithExtensions;
 
     /**
-     * @param non-empty-array<string>|null $enum
+     * @param  non-empty-array<string>|null  $enum
      */
     public function __construct(
         public string $default,
         public ?array $enum = null,
         public ?string $description = null
-    ) {
-    }
+    ) {}
 
     /**
-     * @param non-empty-array<string>|null $enum
+     * @param  non-empty-array<string>|null  $enum
      */
     public static function make(
         string $default,
