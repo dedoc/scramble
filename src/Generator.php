@@ -7,6 +7,7 @@ use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\OpenApiVisitor\SchemaEnforceVisitor;
+use Dedoc\Scramble\Support\ContainerUtils;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
@@ -91,10 +92,14 @@ class Generator
 
         $this->moveSameAlternativeServersToPath($openApi);
 
-        if ($afterOpenApiGenerated = $config->afterOpenApiGenerated()) {
-            foreach ($afterOpenApiGenerated as $openApiTransformer) {
-                $openApiTransformer($openApi, $context);
-            }
+        foreach ($config->documentTransformers->all() as $openApiTransformer) {
+            $openApiTransformer = is_callable($openApiTransformer)
+                ? $openApiTransformer
+                : ContainerUtils::makeContextable($openApiTransformer, [
+                    TypeTransformer::class => $typeTransformer,
+                ]);
+
+            $openApiTransformer($openApi, $context);
         }
 
         return $openApi->toArray();

@@ -7,6 +7,7 @@ use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use InvalidArgumentException;
 
 /** @internal */
 class OperationBuilder
@@ -36,7 +37,7 @@ class OperationBuilder
                 continue;
             }
 
-            // throw here.
+            throw new InvalidArgumentException('(callable(Operation, RouteInfo): void)|OperationTransformer type for operation transformer expected, received '.$instance::class);
         }
 
         return $operation;

@@ -3,8 +3,10 @@
 namespace Dedoc\Scramble;
 
 use Closure;
+use Dedoc\Scramble\Configuration\DocumentTransformers;
 use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Configuration\ParametersExtractors;
+use Dedoc\Scramble\Contracts\DocumentTransformer;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
@@ -27,9 +29,9 @@ class GeneratorConfig
     public function __construct(
         private array $config = [],
         private ?Closure $routeResolver = null,
-        private array $afterOpenApiGenerated = [],
         public readonly ParametersExtractors $parametersExtractors = new ParametersExtractors,
         public readonly OperationTransformers $operationTransformers = new OperationTransformers,
+        public readonly DocumentTransformers $documentTransformers = new DocumentTransformers,
     ) {}
 
     public function config(array $config)
@@ -82,11 +84,11 @@ class GeneratorConfig
     public function afterOpenApiGenerated(?callable $afterOpenApiGenerated = null)
     {
         if (count(func_get_args()) === 0) {
-            return $this->afterOpenApiGenerated;
+            return $this->documentTransformers->all();
         }
 
         if ($afterOpenApiGenerated) {
-            $this->afterOpenApiGenerated[] = $afterOpenApiGenerated;
+            $this->documentTransformers->append($afterOpenApiGenerated);
         }
 
         return $this;
@@ -114,11 +116,7 @@ class GeneratorConfig
             return $this;
         }
 
-        $cb = function (OperationTransformers $transformers) use ($cb) {
-            $transformers->append($cb);
-        };
-
-        $cb($this->operationTransformers);
+        $this->operationTransformers->append($cb);
 
         return $this;
     }
@@ -134,6 +132,32 @@ class GeneratorConfig
         return count($reflection->getParameters()) === 1
             && $reflection->getParameters()[0]->getType() instanceof ReflectionNamedType
             && is_a($reflection->getParameters()[0]->getType()->getName(), OperationTransformers::class, true);
+    }
+
+    public function withDocumentTransformers(array|string|callable $cb): static
+    {
+        if ($this->isDocumentTransformerMapper($cb)) {
+            $cb($this->documentTransformers);
+
+            return $this;
+        }
+
+        $this->documentTransformers->append($cb);
+
+        return $this;
+    }
+
+    private function isDocumentTransformerMapper($cb): bool
+    {
+        if (! $cb instanceof Closure) {
+            return false;
+        }
+
+        $reflection = new ReflectionFunction($cb);
+
+        return count($reflection->getParameters()) === 1
+            && $reflection->getParameters()[0]->getType() instanceof ReflectionNamedType
+            && is_a($reflection->getParameters()[0]->getType()->getName(), DocumentTransformer::class, true);
     }
 
     public function get(string $key, mixed $default = null)

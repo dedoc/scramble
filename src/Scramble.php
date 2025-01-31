@@ -76,7 +76,7 @@ class Scramble
      */
     public static function afterOpenApiGenerated(callable $afterOpenApiGenerated)
     {
-        static::configure()->afterOpenApiGenerated($afterOpenApiGenerated);
+        static::configure()->withDocumentTransformers($afterOpenApiGenerated);
     }
 
     public static function routes(callable $routeResolver)
