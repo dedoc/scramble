@@ -2,12 +2,15 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Configuration\GeneratorConfigCollection;
+use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Dedoc\Scramble\Infer\Extensions\IndexBuildingBroker;
 use Dedoc\Scramble\Infer\Extensions\InferExtension;
@@ -34,15 +37,8 @@ use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
-use Dedoc\Scramble\Support\OperationBuilder;
-use Dedoc\Scramble\Support\OperationExtensions\DeprecationExtension;
-use Dedoc\Scramble\Support\OperationExtensions\ErrorResponsesExtension;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\AttributesParametersExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\MethodCallsParametersExtractor;
-use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
-use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
-use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
-use Dedoc\Scramble\Support\ServerFactory;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
@@ -56,6 +52,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\VoidTypeToSchema;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Routing\Router;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter;
 use Spatie\LaravelPackageTools\Package;
@@ -65,6 +62,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 {
     public $singletons = [
         PrettyPrinter::class => PrettyPrinter\Standard::class,
+        GeneratorConfigCollection::class => GeneratorConfigCollection::class,
     ];
 
     public function configurePackage(Package $package): void
@@ -133,25 +131,6 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 );
             });
 
-        $this->app->when(OperationBuilder::class)
-            ->needs('$extensionsClasses')
-            ->give(function () {
-                $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
-
-                $operationExtensions = array_values(array_filter(
-                    $extensions,
-                    fn ($e) => is_a($e, OperationExtension::class, true),
-                ));
-
-                return array_merge([
-                    RequestEssentialsExtension::class,
-                    RequestBodyExtension::class,
-                    ErrorResponsesExtension::class,
-                    ResponseExtension::class,
-                    DeprecationExtension::class,
-                ], $operationExtensions);
-            });
-
         $this->app->when(IndexBuildingBroker::class)
             ->needs('$indexBuilders')
             ->give(function () {
@@ -166,8 +145,6 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     return app($class);
                 }, $indexBuilders);
             });
-
-        $this->app->singleton(ServerFactory::class);
 
         $this->app->bind(TypeTransformer::class, function (Application $application, array $parameters) {
             $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
@@ -209,18 +186,25 @@ class ScrambleServiceProvider extends PackageServiceProvider
             );
         });
 
-        Scramble::registerApi(Scramble::DEFAULT_API);
+        Scramble::configure()
+            ->withOperationTransformers(function (OperationTransformers $transformers) {
+                $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
+
+                $operationExtensions = array_values(array_filter(
+                    $extensions,
+                    fn ($e) => is_a($e, OperationExtension::class, true),
+                ));
+
+                $transformers->append($operationExtensions);
+            });
     }
 
     public function bootingPackage()
     {
-        if (! Scramble::$defaultRoutesIgnored) {
-            $this->package->hasRoute('web');
-        }
+        Scramble::configure()
+            ->useConfig(config('scramble'));
 
-        Scramble::configure()->useConfig(config('scramble'));
-
-        $this->app->booted(function () {
+        $this->app->booted(function (Application $app) {
             Scramble::configure()
                 ->withParametersExtractors(function (ParametersExtractors $parametersExtractors) {
                     $parametersExtractors->append([
@@ -228,6 +212,43 @@ class ScrambleServiceProvider extends PackageServiceProvider
                         AttributesParametersExtractor::class,
                     ]);
                 });
+
+            $this->registerRoutes();
         });
+    }
+
+    private function registerRoutes(): void
+    {
+        foreach (Scramble::getConfigurationsInstance()->all() as $api => $generatorConfig) {
+            /** @var Router $router */
+            $router = $this->app->get(Router::class);
+
+            if ($generatorConfig->uiRoute) {
+                $cb = is_callable($generatorConfig->uiRoute)
+                    ? $generatorConfig->uiRoute
+                    : fn ($router, $action) => $router->get($generatorConfig->uiRoute, $action);
+
+                $cb($router, function (Generator $generator) use ($api) {
+                    $config = Scramble::getGeneratorConfig($api);
+
+                    return view('scramble::docs', [
+                        'spec' => $generator($config),
+                        'config' => $config,
+                    ]);
+                })->middleware($generatorConfig->get('middleware', [RestrictedDocsAccess::class]));
+            }
+
+            if ($generatorConfig->documentRoute) {
+                $cb = is_callable($generatorConfig->documentRoute)
+                    ? $generatorConfig->documentRoute
+                    : fn ($router, $action) => $router->get($generatorConfig->documentRoute, $action);
+
+                $cb($router, function (Generator $generator) use ($api) {
+                    $config = Scramble::getGeneratorConfig($api);
+
+                    return response()->json($generator($config), options: JSON_PRETTY_PRINT);
+                })->middleware($generatorConfig->get('middleware', [RestrictedDocsAccess::class]));
+            }
+        }
     }
 }

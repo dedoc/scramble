@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble;
 
-use Dedoc\Scramble\Configuration\ParametersExtractors;
+use Dedoc\Scramble\Configuration\GeneratorConfigCollection;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
@@ -12,11 +12,9 @@ use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\RouteInfo;
-use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route as RouteFacade;
-use LogicException;
 
 class Scramble
 {
@@ -24,20 +22,10 @@ class Scramble
 
     public static $tagResolver = null;
 
-    public static bool $defaultRoutesIgnored = false;
-
     /**
      * @var array<int, array{callable(OpenApiType, string): bool, string|(callable(OpenApiType, string): string), string[], bool}>
      */
     public static array $enforceSchemaRules = [];
-
-    /**
-     * Registered APIs for which Scramble generates documentation. The key is API name
-     * and the value is API's configuration.
-     *
-     * @var array<string, GeneratorConfig>
-     */
-    public static array $apis = [];
 
     /**
      * Extensions registered using programmatic API.
@@ -59,19 +47,12 @@ class Scramble
      */
     public static function ignoreDefaultRoutes(): void
     {
-        static::$defaultRoutesIgnored = true;
+        static::configure()->expose(false);
     }
 
     public static function registerApi(string $name, array $config = []): GeneratorConfig
     {
-        static::$apis[$name] = $generatorConfig = new GeneratorConfig(
-            config: array_merge(config('scramble') ?: [], $config),
-            parametersExtractors: isset(static::$apis['default'])
-                ? static::$apis['default']->parametersExtractors
-                : new ParametersExtractors,
-        );
-
-        return $generatorConfig;
+        return static::getConfigurationsInstance()->register($name, $config);
     }
 
     public static function configure(string $api = self::DEFAULT_API): GeneratorConfig
@@ -94,7 +75,7 @@ class Scramble
      */
     public static function afterOpenApiGenerated(callable $afterOpenApiGenerated)
     {
-        static::configure()->afterOpenApiGenerated($afterOpenApiGenerated);
+        static::configure()->withDocumentTransformers($afterOpenApiGenerated);
     }
 
     public static function routes(callable $routeResolver)
@@ -159,7 +140,7 @@ class Scramble
      */
     public static function defineServerVariables(array $variables)
     {
-        app(ServerFactory::class)->variables($variables);
+        static::configure()->withServerVariables($variables);
     }
 
     public static function registerUiRoute(string $path, string $api = 'default'): Route
@@ -191,11 +172,13 @@ class Scramble
 
     public static function getGeneratorConfig(string $api)
     {
-        if (! array_key_exists($api, Scramble::$apis)) {
-            throw new LogicException("$api API is not registered. Register the API using `Scramble::registerApi` first.");
-        }
+        return static::getConfigurationsInstance()->get($api);
+    }
 
-        return Scramble::$apis[$api];
+    /** @internal */
+    public static function getConfigurationsInstance(): GeneratorConfigCollection
+    {
+        return app(GeneratorConfigCollection::class);
     }
 
     public static function throwOnError(bool $throw = true): void

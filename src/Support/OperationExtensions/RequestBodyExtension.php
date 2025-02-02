@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\ContainerUtils;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
@@ -13,16 +14,12 @@ use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\ParameterExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use ReflectionClass;
-use ReflectionNamedType;
-use ReflectionParameter;
 use Throwable;
 
 class RequestBodyExtension extends OperationExtension
@@ -199,7 +196,7 @@ class RequestBodyExtension extends OperationExtension
     {
         $result = [];
         foreach ($this->config->parametersExtractors->all() as $extractorClass) {
-            $extractor = $this->buildContextfulExtractor($extractorClass, [
+            $extractor = ContainerUtils::makeContextable($extractorClass, [
                 TypeTransformer::class => $this->openApiTransformer,
                 Operation::class => $operation,
             ]);
@@ -208,32 +205,5 @@ class RequestBodyExtension extends OperationExtension
         }
 
         return $result;
-    }
-
-    /**
-     * @template T of ParameterExtractor
-     *
-     * @param  class-string<T>  $class
-     * @return T
-     */
-    private function buildContextfulExtractor(string $class, array $contextfulBindings): ParameterExtractor
-    {
-        $reflectionClass = new ReflectionClass($class);
-
-        $parameters = $reflectionClass->getConstructor()?->getParameters() ?? [];
-
-        $contextfulArguments = collect($parameters)
-            ->mapWithKeys(function (ReflectionParameter $p) use ($contextfulBindings) {
-                $parameterClass = $p->getType() instanceof ReflectionNamedType
-                    ? $p->getType()->getName()
-                    : null;
-
-                return $parameterClass && isset($contextfulBindings[$parameterClass]) ? [
-                    $p->name => $contextfulBindings[$parameterClass],
-                ] : [];
-            })
-            ->all();
-
-        return app()->make($class, $contextfulArguments);
     }
 }
