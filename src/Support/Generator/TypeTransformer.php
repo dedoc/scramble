@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
@@ -181,7 +183,11 @@ class TypeTransformer
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\MixedType) {
             $openApiType = new MixedType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\ObjectType) {
-            $openApiType = new ObjectType;
+            if ($type->isInstanceOf(Carbon::class) || $type->isInstanceOf(CarbonImmutable::class)) {
+                $openApiType = (new StringType)->format('date-time');
+            } else {
+                $openApiType = new ObjectType;
+            }
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntersectionType) {
             $openApiType = (new AllOf)->setItems(array_filter(array_map(
                 fn ($t) => $this->transform($t),

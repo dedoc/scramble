@@ -21,6 +21,7 @@ class CreatePostsTable extends Migration
             $table->json('settings')->nullable();
             $table->text('body');
             $table->timestamps();
+            $table->dateTime('another_date');
         });
     }
 
