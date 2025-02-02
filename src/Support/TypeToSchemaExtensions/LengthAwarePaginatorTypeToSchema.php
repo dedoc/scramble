@@ -3,6 +3,9 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
@@ -10,6 +13,7 @@ use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -19,6 +23,16 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
 {
+    public function __construct(
+        Infer $infer,
+        TypeTransformer $openApiTransformer,
+        Components $components,
+        protected OpenApiContext $openApiContext
+    )
+    {
+        parent::__construct($infer, $openApiTransformer, $components);
+    }
+
     public function shouldHandle(Type $type)
     {
         return $type instanceof Generic

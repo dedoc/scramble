@@ -3,15 +3,29 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
+use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Database\Eloquent\Model;
 
 class ModelToSchema extends TypeToSchemaExtension
 {
+    public function __construct(
+        Infer $infer,
+        TypeTransformer $openApiTransformer,
+        Components $components,
+        protected OpenApiContext $openApiContext
+    )
+    {
+        parent::__construct($infer, $openApiTransformer, $components);
+    }
+
     public function shouldHandle(Type $type)
     {
         return $type instanceof ObjectType

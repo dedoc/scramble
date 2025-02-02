@@ -13,7 +13,7 @@ use Dedoc\Scramble\Support\Type\Type;
 
 abstract class TypeToSchemaExtension
 {
-    public function __construct(protected Infer $infer, protected TypeTransformer $openApiTransformer, protected Components $components, protected OpenApiContext $openApiContext) {}
+    public function __construct(protected Infer $infer, protected TypeTransformer $openApiTransformer, protected Components $components) {}
 
     /**
      * @param  Type  $type  The type being transformed to schema.

@@ -3,12 +3,16 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Analyzer\MethodQuery;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
+use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
@@ -23,6 +27,16 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 {
     use FlattensMergeValues;
     use MergesOpenApiObjects;
+
+    public function __construct(
+        Infer $infer,
+        TypeTransformer $openApiTransformer,
+        Components $components,
+        protected OpenApiContext $openApiContext
+    )
+    {
+        parent::__construct($infer, $openApiTransformer, $components);
+    }
 
     public function shouldHandle(Type $type)
     {
