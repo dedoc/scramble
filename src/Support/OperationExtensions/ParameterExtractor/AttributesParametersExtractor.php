@@ -79,6 +79,10 @@ class AttributesParametersExtractor implements ParameterExtractor
                 $parameter->schema->type = $attributeParameter->schema->type;
             }
 
+            if ($name === 'format') {
+                $parameter->schema->type->format = $attributeParameter->schema->type->format;
+            }
+
             if ($name === 'deprecated') {
                 $parameter->deprecated = $attributeParameter->deprecated;
             }
@@ -98,6 +102,8 @@ class AttributesParametersExtractor implements ParameterExtractor
             if ($name === 'examples') {
                 $parameter->examples = $attributeParameter->examples;
             }
+
+            $parameter->setAttribute('nonBody', $attributeParameter->getAttribute('nonBody'));
         }
 
         return $parameter;
@@ -119,6 +125,8 @@ class AttributesParametersExtractor implements ParameterExtractor
             ))
             ->required($attribute->required);
 
+        $parameter->setAttribute('nonBody', $attribute->in !== 'body');
+
         $parameter->deprecated = $attribute->deprecated;
 
         if (! $attribute->example instanceof MissingValue) {
@@ -130,6 +138,10 @@ class AttributesParametersExtractor implements ParameterExtractor
                 fn (Example $e) => Example::toOpenApiExample($e),
                 $attribute->examples,
             );
+        }
+
+        if ($attribute->format) {
+            $type->format = $attribute->format;
         }
 
         return $parameter;

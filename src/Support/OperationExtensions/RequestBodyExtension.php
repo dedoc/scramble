@@ -67,11 +67,11 @@ class RequestBodyExtension extends OperationExtension
             return;
         }
 
-        [$queryParams, $bodyParams] = collect($allParams)
-            ->partition(fn (Parameter $p) => $p->getAttribute('isInQuery'))
+        [$nonBodyParams, $bodyParams] = collect($allParams)
+            ->partition(fn (Parameter $p) => $p->getAttribute('isInQuery') || $p->getAttribute('nonBody'))
             ->map->toArray();
 
-        $operation->addParameters($this->convertDotNamedParamsToComplexStructures($queryParams));
+        $operation->addParameters($this->convertDotNamedParamsToComplexStructures($nonBodyParams));
 
         if (! $bodyParams) {
             return;
@@ -82,8 +82,8 @@ class RequestBodyExtension extends OperationExtension
 
         $schemas = $schemaResults->merge($schemalessResults)
             ->filter(fn (ParametersExtractionResult $r) => count($r->parameters) || $r->schemaName)
-            ->map(function (ParametersExtractionResult $r) use ($queryParams) {
-                $qpNames = collect($queryParams)->keyBy('name');
+            ->map(function (ParametersExtractionResult $r) use ($nonBodyParams) {
+                $qpNames = collect($nonBodyParams)->keyBy('name');
 
                 $r->parameters = collect($r->parameters)->filter(fn ($p) => ! $qpNames->has($p->name))->values()->all();
 

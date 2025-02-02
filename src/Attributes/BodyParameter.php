@@ -5,7 +5,7 @@ namespace Dedoc\Scramble\Attributes;
 use Attribute;
 
 #[Attribute(Attribute::IS_REPEATABLE | Attribute::TARGET_ALL)]
-class CookieParameter extends Parameter
+class BodyParameter extends Parameter
 {
     public function __construct(
         string $name,
@@ -19,6 +19,6 @@ class CookieParameter extends Parameter
         mixed $example = new MissingValue,
         array $examples = [],
     ) {
-        parent::__construct('cookie', $name, $description, $required, $deprecated, $type, $format, $infer, $default, $example, $examples);
+        parent::__construct('body', $name, $description, $required, $deprecated, $type, $format, $infer, $default, $example, $examples);
     }
 }
