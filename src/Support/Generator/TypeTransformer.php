@@ -317,8 +317,11 @@ class TypeTransformer
             );
         }
 
+        // We want latter registered extensions to have a higher priority to allow custom extensions to override default ones.
+        $priorityExtensions = array_reverse($this->exceptionToResponseExtensions);
+
         return array_reduce(
-            $this->exceptionToResponseExtensions,
+            $priorityExtensions,
             function ($acc, $extensionClass) use ($type) {
                 $extension = new $extensionClass($this->infer, $this, $this->getComponents(), $this->context);
 
