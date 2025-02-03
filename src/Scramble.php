@@ -27,6 +27,8 @@ class Scramble
      */
     public static array $enforceSchemaRules = [];
 
+    public static bool $defaultRoutesIgnored = false;
+
     /**
      * Extensions registered using programmatic API.
      *
@@ -47,7 +49,7 @@ class Scramble
      */
     public static function ignoreDefaultRoutes(): void
     {
-        static::configure()->expose(false);
+        static::$defaultRoutesIgnored = true;
     }
 
     public static function registerApi(string $name, array $config = []): GeneratorConfig
