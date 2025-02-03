@@ -185,8 +185,12 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ], $exceptionToResponseExtensions),
             );
         });
+    }
 
+    public function bootingPackage()
+    {
         Scramble::configure()
+            ->useConfig(config('scramble'))
             ->withOperationTransformers(function (OperationTransformers $transformers) {
                 $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
 
@@ -197,12 +201,6 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                 $transformers->append($operationExtensions);
             });
-    }
-
-    public function bootingPackage()
-    {
-        Scramble::configure()
-            ->useConfig(config('scramble'));
 
         $this->app->booted(function (Application $app) {
             Scramble::configure()
