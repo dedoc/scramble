@@ -27,8 +27,7 @@ class PaginatorTypeToSchema extends TypeToSchemaExtension
         TypeTransformer $openApiTransformer,
         Components $components,
         protected OpenApiContext $openApiContext
-    )
-    {
+    ) {
         parent::__construct($infer, $openApiTransformer, $components);
     }
 
