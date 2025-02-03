@@ -202,6 +202,10 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 $transformers->append($operationExtensions);
             });
 
+        if (Scramble::$defaultRoutesIgnored) {
+            Scramble::configure()->expose(false);
+        }
+
         $this->app->booted(function (Application $app) {
             Scramble::configure()
                 ->withParametersExtractors(function (ParametersExtractors $parametersExtractors) {
