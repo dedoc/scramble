@@ -41,10 +41,10 @@ class GeneratorConfigCollection
     {
         $this->apis[$name] = $generatorConfig = new GeneratorConfig(
             config: array_merge(config('scramble') ?: [], $config),
-            parametersExtractors: $this->apis[Scramble::DEFAULT_API]->parametersExtractors,
-            operationTransformers: $this->apis[Scramble::DEFAULT_API]->operationTransformers,
-            documentTransformers: $this->apis[Scramble::DEFAULT_API]->documentTransformers,
-            serverVariables: $this->apis[Scramble::DEFAULT_API]->serverVariables,
+            parametersExtractors: clone $this->apis[Scramble::DEFAULT_API]->parametersExtractors,
+            operationTransformers: clone $this->apis[Scramble::DEFAULT_API]->operationTransformers,
+            documentTransformers: clone $this->apis[Scramble::DEFAULT_API]->documentTransformers,
+            serverVariables: clone $this->apis[Scramble::DEFAULT_API]->serverVariables,
         );
 
         return $generatorConfig;

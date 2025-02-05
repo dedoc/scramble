@@ -102,6 +102,17 @@ class GeneratorConfigTest extends TestCase
             collect($routes->getRoutes())->firstWhere('uri', 'docs/v2/openapi.json')
         );
     }
+
+    /** @test */
+    #[WithProviders([UsesCommonConfiguration_GeneratorConfigTest::class])]
+    public function uses_common_configurations()
+    {
+        $defaultConfig = Scramble::getConfigurationsInstance()->get('default');
+        $v2Config = Scramble::getConfigurationsInstance()->get('v2');
+
+        $this->assertEquals(['common', 'only-default'], $defaultConfig->documentTransformers->all());
+        $this->assertEquals(['common', 'only-v2'], $v2Config->documentTransformers->all());
+    }
 }
 
 class DisablesExposedRoutes_GeneratorConfigTest extends ServiceProvider
@@ -144,6 +155,18 @@ class RegistersExposedApi_GeneratorConfigTest extends ServiceProvider
             ui: 'docs/v2',
             document: 'docs/v2/openapi.json',
         );
+    }
+}
+
+class UsesCommonConfiguration_GeneratorConfigTest extends ServiceProvider
+{
+    public function boot()
+    {
+        Scramble::configure()->withDocumentTransformers('common');
+
+        Scramble::registerApi('v2')->withDocumentTransformers('only-v2');
+
+        Scramble::configure()->withDocumentTransformers('only-default');
     }
 }
 
