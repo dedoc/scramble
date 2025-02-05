@@ -64,6 +64,14 @@ class TypeHelper
                 );
             }
 
+            if ($typeNode->name === 'null') {
+                return new NullType;
+            }
+
+            if (in_array($typeNode->name, ['true', 'false'])) {
+                return new LiteralBooleanType($typeNode->name === 'true');
+            }
+
             return new ObjectType($typeNode->toString());
         }
 
