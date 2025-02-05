@@ -160,7 +160,22 @@ class TypeHelper
             ));
         }
 
-        return null; // @todo: object
+        if ($value === null) {
+            return new NullType;
+        }
+
+        if (is_object($value)) {
+            if (enum_exists($value::class)) {
+                return new EnumCaseType(
+                    $value::class,
+                    $value->name,
+                );
+            }
+
+            return new ObjectType($value::class); // @todo generics
+        }
+
+        return new MixedType;
     }
 
     public static function createTypeFromReflectionType(ReflectionType $reflectionType, bool $handleNullable = true)
