@@ -175,7 +175,7 @@ class TypeHelper
             return new ObjectType($value::class); // @todo generics
         }
 
-        return new MixedType();
+        return new MixedType;
     }
 
     public static function createTypeFromReflectionType(ReflectionType $reflectionType, bool $handleNullable = true)

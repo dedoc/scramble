@@ -11,7 +11,7 @@ test('create type from value', function ($value, string $expectedType) {
 })->with([
     [1, 'int(1)'],
     ['foo', 'string(foo)'],
-    [[1,2,3], 'list{int(1), int(2), int(3)}'],
+    [[1, 2, 3], 'list{int(1), int(2), int(3)}'],
 ]);
 
 test('create type from enum value', function () {
