@@ -4,6 +4,7 @@ namespace Dedoc\Scramble;
 
 use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
+use Dedoc\Scramble\Contracts\DocumentTransformer;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\OpenApiVisitor\SchemaEnforceVisitor;
 use Dedoc\Scramble\Support\ContainerUtils;
@@ -23,6 +24,7 @@ use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Throwable;
 
 class Generator
@@ -96,7 +98,19 @@ class Generator
                     TypeTransformer::class => $typeTransformer,
                 ]);
 
-            $openApiTransformer($openApi, $context);
+            if (is_callable($openApiTransformer)) {
+                $openApiTransformer($openApi, $context);
+
+                continue;
+            }
+
+            if ($openApiTransformer instanceof DocumentTransformer) {
+                $openApiTransformer->handle($openApi, $context);
+
+                continue;
+            }
+
+            throw new InvalidArgumentException('(callable(OpenApi, OpenApiContext): void)|DocumentTransformer type for document transformer expected, received '.$openApiTransformer::class);
         }
 
         return $openApi->toArray();
