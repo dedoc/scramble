@@ -121,6 +121,7 @@ it('analyzes new call on class constants', function () {
 
     expect($type->toString())->toBe('ConstFetchStaticCallFoo_ClassAnalyzerTest');
 });
+
 class ConstFetchStaticCallParent_ClassAnalyzerTest
 {
     public function staticMethodCall()
