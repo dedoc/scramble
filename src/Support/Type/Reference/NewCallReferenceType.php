@@ -8,7 +8,7 @@ use Dedoc\Scramble\Support\Type\Type;
 class NewCallReferenceType extends AbstractReferenceType
 {
     public function __construct(
-        public string $name,
+        public string|Type $name,
         /** @var Type[] $arguments */
         public array $arguments,
     ) {}
@@ -20,7 +20,7 @@ class NewCallReferenceType extends AbstractReferenceType
 
     public function isInstanceOf(string $className)
     {
-        return is_a($this->name, $className, true);
+        return is_string($this->name) && is_a($this->name, $className, true);
     }
 
     public function toString(): string
@@ -30,13 +30,23 @@ class NewCallReferenceType extends AbstractReferenceType
             array_map(fn ($t) => $t->toString(), $this->arguments),
         );
 
-        return "(new {$this->name})($argsTypes)";
+        $name = is_string($this->name) ? $this->name : $this->name->toString();
+
+        return "(new {$name})($argsTypes)";
     }
 
     public function dependencies(): array
     {
-        return [
-            new ClassDependency($this->name),
-        ];
+        if ($this->name instanceof AbstractReferenceType) {
+            return $this->name->dependencies();
+        }
+
+        if (is_string($this->name)) {
+            return [
+                new ClassDependency($this->name),
+            ];
+        }
+
+        return [];
     }
 }

@@ -474,6 +474,16 @@ class ReferenceTypeResolver
             $type->arguments,
         );
 
+        if ($type->name instanceof Type) {
+            $resolvedNameType = $this->resolve($scope, $type->name);
+
+            if ($resolvedNameType instanceof LiteralStringType) {
+                $type->name = $resolvedNameType->value;
+            } else {
+                return new UnknownType;
+            }
+        }
+
         $contextualClassName = $this->resolveClassName($scope, $type->name);
         if (! $contextualClassName) {
             return new UnknownType;

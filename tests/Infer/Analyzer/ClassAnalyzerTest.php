@@ -107,9 +107,40 @@ it('analyzes call to parent setter methods in child constructor', function () {
 });
 
 it('analyzes static method call on class constants', function () {
-    $this->classAnalyzer->analyze(ChildParentThis::class);
+    $this->classAnalyzer->analyze(ConstFetchStaticCallChild_ClassAnalyzerTest::class);
 
-    $type = getStatementType('(new Dedoc\Scramble\Tests\Infer\stubs\ChildParentThis())->getThis()');
+    $type = getStatementType('(new ConstFetchStaticCallChild_ClassAnalyzerTest)->staticMethodCall()');
 
-    expect($type->toString())->toBe('Dedoc\Scramble\Tests\Infer\stubs\ChildParentThis');
+    expect($type->toString())->toBe('int(42)');
 });
+
+it('analyzes new call on class constants', function () {
+    $this->classAnalyzer->analyze(ConstFetchStaticCallChild_ClassAnalyzerTest::class);
+
+    $type = getStatementType('(new ConstFetchStaticCallChild_ClassAnalyzerTest)->newCall()');
+
+    expect($type->toString())->toBe('ConstFetchStaticCallFoo_ClassAnalyzerTest');
+});
+class ConstFetchStaticCallParent_ClassAnalyzerTest
+{
+    public function staticMethodCall()
+    {
+        return (static::FOO_CLASS)::foo();
+    }
+
+    public function newCall()
+    {
+        return new (static::FOO_CLASS);
+    }
+}
+class ConstFetchStaticCallChild_ClassAnalyzerTest extends ConstFetchStaticCallParent_ClassAnalyzerTest
+{
+    public const FOO_CLASS = ConstFetchStaticCallFoo_ClassAnalyzerTest::class;
+}
+class ConstFetchStaticCallFoo_ClassAnalyzerTest
+{
+    public static function foo()
+    {
+        return 42;
+    }
+}
