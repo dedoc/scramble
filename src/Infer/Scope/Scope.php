@@ -97,7 +97,10 @@ class Scope
 
         if ($node instanceof Node\Expr\New_) {
             if (! $node->class instanceof Node\Name) {
-                return $type;
+                return $this->setType(
+                    $node,
+                    new NewCallReferenceType($this->getType($node->class), $this->getArgsTypes($node->args)),
+                );
             }
 
             return $this->setType(
@@ -157,9 +160,11 @@ class Scope
                 return $type;
             }
 
-            // Only string class names support.
             if (! $node->class instanceof Node\Name) {
-                return $type;
+                return $this->setType(
+                    $node,
+                    new StaticMethodCallReferenceType($this->getType($node->class), $node->name->name, $this->getArgsTypes($node->args)),
+                );
             }
 
             if (

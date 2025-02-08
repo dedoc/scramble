@@ -43,7 +43,7 @@ class RouteInfo
     public function className(): ?string
     {
         return $this->isClassBased()
-            ? explode('@', $this->route->getAction('uses'))[0]
+            ? ltrim(explode('@', $this->route->getAction('uses'))[0], '\\')
             : null;
     }
 
@@ -108,7 +108,7 @@ class RouteInfo
         }
 
         if (! $this->methodType) {
-            $def = $this->infer->analyzeClass($this->reflectionMethod()->getDeclaringClass()->getName());
+            $def = $this->infer->analyzeClass($this->className());
 
             /*
              * Here the final resolution of the method types may happen.
