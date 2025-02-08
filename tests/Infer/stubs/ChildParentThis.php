@@ -10,6 +10,4 @@ class _ParentThis
     }
 }
 
-class ChildParentThis extends _ParentThis
-{
-}
+class ChildParentThis extends _ParentThis {}
