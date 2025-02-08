@@ -17,6 +17,7 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
@@ -321,14 +322,27 @@ class ReferenceTypeResolver
         );
 
         $calleeName = $type->callee;
-        $contextualClassName = $this->resolveClassName($scope, $type->callee);
+
+        if ($calleeName instanceof Type) {
+            $calleeType = $this->resolve($scope, $type->callee);
+
+            if ($calleeType instanceof LiteralStringType) {
+                $calleeName = $calleeType->value;
+            }
+
+            if (! is_string($calleeName)) {
+                return new UnknownType;
+            }
+        }
+
+        $contextualClassName = $this->resolveClassName($scope, $calleeName);
         if (! $contextualClassName) {
             return new UnknownType;
         }
-        $type->callee = $contextualClassName;
+        $calleeName = $contextualClassName;
 
-        $isStaticCall = ! in_array($calleeName, StaticReference::KEYWORDS)
-            || (in_array($calleeName, StaticReference::KEYWORDS) && $scope->context->functionDefinition?->isStatic);
+        $isStaticCall = ! in_array($type->callee, StaticReference::KEYWORDS)
+            || (in_array($type->callee, StaticReference::KEYWORDS) && $scope->context->functionDefinition?->isStatic);
 
         // Assuming callee here can be only string of known name. Reality is more complex than
         // that, but it is fine for now.
@@ -336,11 +350,11 @@ class ReferenceTypeResolver
         /*
          * Doing a deep dive into the dependent class, if it has not been analyzed.
          */
-        $this->resolveUnknownClass($type->callee);
+        $this->resolveUnknownClass($calleeName);
 
         // Attempting extensions broker before potentially giving up on type inference
         if ($isStaticCall && $returnType = Context::getInstance()->extensionsBroker->getStaticMethodReturnType(new StaticMethodCallEvent(
-            callee: $type->callee,
+            callee: $calleeName,
             name: $type->methodName,
             scope: $scope,
             arguments: $type->arguments,
@@ -367,15 +381,15 @@ class ReferenceTypeResolver
             }
         }
 
-        if (! array_key_exists($type->callee, $this->index->classesDefinitions)) {
+        if (! array_key_exists($calleeName, $this->index->classesDefinitions)) {
             return new UnknownType;
         }
 
         /** @var ClassDefinition $calleeDefinition */
-        $calleeDefinition = $this->index->getClassDefinition($type->callee);
+        $calleeDefinition = $this->index->getClassDefinition($calleeName);
 
         if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
-            return new UnknownType("Cannot get a method type [$type->methodName] on type [$type->callee]");
+            return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeName]");
         }
 
         return $this->getFunctionCallResult($methodDefinition, $type->arguments);

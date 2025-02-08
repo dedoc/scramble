@@ -8,7 +8,7 @@ use Dedoc\Scramble\Support\Type\Type;
 class StaticMethodCallReferenceType extends AbstractReferenceType
 {
     public function __construct(
-        public string $callee,
+        public string|Type $callee,
         public string $methodName,
         /** @var Type[] $arguments */
         public array $arguments,
@@ -26,13 +26,23 @@ class StaticMethodCallReferenceType extends AbstractReferenceType
             array_map(fn ($t) => $t->toString(), $this->arguments),
         );
 
-        return "(#{$this->callee})::{$this->methodName}($argsTypes)";
+        $calleeType = is_string($this->callee) ? $this->callee : $this->callee->toString();
+
+        return "(#{$calleeType})::{$this->methodName}($argsTypes)";
     }
 
     public function dependencies(): array
     {
-        return [
-            new MethodDependency($this->callee, $this->methodName),
-        ];
+        if ($this->callee instanceof AbstractReferenceType) {
+            return $this->callee->dependencies();
+        }
+
+        if (is_string($this->callee)) {
+            return [
+                new MethodDependency($this->callee, $this->methodName),
+            ];
+        }
+
+        return [];
     }
 }

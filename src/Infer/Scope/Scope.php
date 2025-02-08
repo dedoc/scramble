@@ -157,9 +157,11 @@ class Scope
                 return $type;
             }
 
-            // Only string class names support.
             if (! $node->class instanceof Node\Name) {
-                return $type;
+                return $this->setType(
+                    $node,
+                    new StaticMethodCallReferenceType($this->getType($node->class), $node->name->name, $this->getArgsTypes($node->args)),
+                );
             }
 
             if (

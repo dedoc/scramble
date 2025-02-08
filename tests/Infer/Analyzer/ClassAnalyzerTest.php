@@ -9,6 +9,7 @@ use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Tests\Infer\stubs\Bar;
 use Dedoc\Scramble\Tests\Infer\stubs\Child;
 use Dedoc\Scramble\Tests\Infer\stubs\ChildParentSetterCalls;
+use Dedoc\Scramble\Tests\Infer\stubs\ChildParentThis;
 use Dedoc\Scramble\Tests\Infer\stubs\ChildPromotion;
 use Dedoc\Scramble\Tests\Infer\stubs\DeepChild;
 use Dedoc\Scramble\Tests\Infer\stubs\Foo;
@@ -103,4 +104,12 @@ it('analyzes call to parent setter methods in child constructor', function () {
     $type = getStatementType('new Dedoc\Scramble\Tests\Infer\stubs\ChildParentSetterCalls("some", "wow")');
 
     expect($type->toString())->toBe('Dedoc\Scramble\Tests\Infer\stubs\ChildParentSetterCalls<string(from ChildParentSetterCalls constructor), string(from ChildParentSetterCalls wow), string(some)>');
+});
+
+it('analyzes static method call on class constants', function () {
+    $this->classAnalyzer->analyze(ChildParentThis::class);
+
+    $type = getStatementType('(new Dedoc\Scramble\Tests\Infer\stubs\ChildParentThis())->getThis()');
+
+    expect($type->toString())->toBe('Dedoc\Scramble\Tests\Infer\stubs\ChildParentThis');
 });
