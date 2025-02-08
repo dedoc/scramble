@@ -158,6 +158,10 @@ class Generator
         return collect(RouteFacade::getRoutes())
             ->pipe(function (Collection $c) {
                 $onlyRoute = $c->first(function (Route $route) {
+                    if (! is_string($route->getAction('controller'))) {
+                        return false;
+                    }
+
                     if (! is_string($route->getAction('uses'))) {
                         return false;
                     }
