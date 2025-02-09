@@ -41,6 +41,7 @@ class OpenApi
     {
         $this->components->addSecurityScheme($securityScheme->schemeName, $securityScheme);
 
+        $this->security ??= [];
         $this->security[] = new SecurityRequirement([$securityScheme->schemeName => []]);
 
         return $this;
