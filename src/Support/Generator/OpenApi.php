@@ -16,7 +16,8 @@ class OpenApi
     /** @var Path[] */
     public array $paths = [];
 
-    private ?Security $defaultSecurity = null;
+    /** @var SecurityRequirement[] */
+    public array $security = [];
 
     public function __construct(string $version)
     {
@@ -38,12 +39,9 @@ class OpenApi
 
     public function secure(SecurityScheme $securityScheme)
     {
-        $securityScheme->default();
-
         $this->components->addSecurityScheme($securityScheme->schemeName, $securityScheme);
-        if ($securityScheme->default) {
-            $this->defaultSecurity(new Security($securityScheme->schemeName));
-        }
+
+        $this->security[] = new SecurityRequirement([$securityScheme->schemeName => []]);
 
         return $this;
     }
@@ -79,13 +77,6 @@ class OpenApi
         return $this;
     }
 
-    public function defaultSecurity(Security $security)
-    {
-        $this->defaultSecurity = $security;
-
-        return $this;
-    }
-
     public function toArray()
     {
         $result = [
@@ -100,8 +91,11 @@ class OpenApi
             );
         }
 
-        if ($this->defaultSecurity) {
-            $result['security'] = [$this->defaultSecurity->toArray()];
+        if (isset($this->security)) {
+            $result['security'] = array_map(
+                fn (SecurityRequirement $sr) => $sr->toArray(),
+                $this->security,
+            );
         }
 
         if (count($this->paths)) {

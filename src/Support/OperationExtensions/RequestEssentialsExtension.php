@@ -96,7 +96,7 @@ class RequestEssentialsExtension extends OperationExtension
             ->addParameters($pathParams);
 
         if (count($routeInfo->phpDoc()->getTagsByName('@unauthenticated'))) {
-            $operation->addSecurity([]);
+            $operation->security = [];
         }
 
         $operation->setAttribute('operationId', $this->getOperationId($routeInfo));
