@@ -17,7 +17,7 @@ class OpenApi
     public array $paths = [];
 
     /** @var SecurityRequirement[]|null */
-    public array|null $security = [];
+    public ?array $security = [];
 
     public function __construct(string $version)
     {

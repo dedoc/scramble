@@ -5,7 +5,7 @@ namespace Dedoc\Scramble\Support\Generator;
 class SecurityRequirement
 {
     /**
-     * @var array<string, string[]> $items
+     * @var array<string, string[]>
      */
     private array $items = [];
 
