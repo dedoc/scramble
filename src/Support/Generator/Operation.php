@@ -19,8 +19,8 @@ class Operation
 
     public bool $deprecated = false;
 
-    /** @var array<SecurityRequirement> */
-    public array $security;
+    /** @var array<SecurityRequirement>|null */
+    public ?array $security = null;
 
     public array $tags = [];
 
@@ -186,7 +186,7 @@ class Operation
             $result['responses'] = $responses;
         }
 
-        if (isset($this->security)) {
+        if ($this->security !== null) {
             $result['security'] = array_map(
                 fn ($s) => $s->toArray(),
                 $this->security,

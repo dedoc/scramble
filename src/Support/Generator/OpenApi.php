@@ -16,8 +16,8 @@ class OpenApi
     /** @var Path[] */
     public array $paths = [];
 
-    /** @var SecurityRequirement[] */
-    public array $security = [];
+    /** @var SecurityRequirement[]|null */
+    public array|null $security = [];
 
     public function __construct(string $version)
     {
@@ -91,7 +91,7 @@ class OpenApi
             );
         }
 
-        if (isset($this->security)) {
+        if ($this->security) {
             $result['security'] = array_map(
                 fn (SecurityRequirement $sr) => $sr->toArray(),
                 $this->security,
