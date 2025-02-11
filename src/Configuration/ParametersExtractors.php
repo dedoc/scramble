@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Configuration;
 
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\FormRequestParametersExtractor;
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\PathParametersExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\ValidateCallParametersExtractor;
 use Illuminate\Support\Arr;
 
@@ -44,6 +45,7 @@ class ParametersExtractors
     public function all(): array
     {
         $base = $this->extractors ?: [
+            PathParametersExtractor::class,
             FormRequestParametersExtractor::class,
             ValidateCallParametersExtractor::class,
         ];
