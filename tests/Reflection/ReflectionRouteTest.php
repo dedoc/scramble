@@ -41,5 +41,4 @@ test('gets bound params types', function () {
         'test_id' => User_ReflectionRouteTest::class,
     ]);
 });
-class User_ReflectionRouteTest extends Model
-{}
+class User_ReflectionRouteTest extends Model {}

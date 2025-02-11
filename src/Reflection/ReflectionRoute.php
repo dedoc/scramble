@@ -20,13 +20,11 @@ class ReflectionRoute
 {
     private static WeakMap $cache;
 
-    private function __construct(private Route $route)
-    {
-    }
+    private function __construct(private Route $route) {}
 
     public static function createFromRoute(Route $route): static
     {
-        static::$cache ??= new WeakMap();
+        static::$cache ??= new WeakMap;
 
         return static::$cache[$route] ??= new static($route);
     }
