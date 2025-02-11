@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Tests\Attributes;
 use Dedoc\Scramble\Attributes\Example;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\Parameter;
+use Dedoc\Scramble\Attributes\PathParameter;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 
@@ -25,6 +26,26 @@ class ParameterController_ParameterAnnotationsTest
 {
     #[Parameter('query', 'per_page', type: 'int', default: 15)]
     public function __invoke() {}
+}
+
+it('supports path parameters attributes', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->get('api/test/{testId}', ParameterController_PathParameterTest::class));
+
+    expect($openApi['paths']['/test/{testId}']['get']['parameters'][0])
+        ->toBe([
+            'name' => 'testId',
+            'in' => 'path',
+            'required' => true,
+            'description' => 'Nice test ID',
+            'schema' => [
+                'type' => 'string',
+            ],
+        ]);
+});
+class ParameterController_PathParameterTest
+{
+    #[PathParameter('testId', 'Nice test ID')]
+    public function __invoke(string $testId) {}
 }
 
 it('supports simple example for Parameter annotations', function () {
