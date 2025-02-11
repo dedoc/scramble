@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Attributes\Group;
+use Dedoc\Scramble\Attributes\OperationId;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
@@ -39,6 +40,8 @@ use Illuminate\Support\Reflector;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ParamTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTagNode;
+use ReflectionAttribute;
 use ReflectionException;
 use ReflectionFunction;
 use ReflectionNamedType;
@@ -434,8 +437,9 @@ class RequestEssentialsExtension extends OperationExtension
             eloquent: (function () use ($routeInfo) {
                 // Manual operation ID setting.
                 if (
-                    ($operationId = $routeInfo->phpDoc()->getTagsByName('@operationId'))
-                    && ($value = trim(Arr::first($operationId)?->value?->value))
+                    ($operationId = $this->getOperationIdAttributes($routeInfo)
+                        ?: $this->getOperationIdTags($routeInfo))
+                    && ($value = trim(Arr::first($operationId)))
                 ) {
                     return $value;
                 }
@@ -462,6 +466,28 @@ class RequestEssentialsExtension extends OperationExtension
                 ->reject(fn ($p) => in_array(Str::lower($p), ['app', 'http', 'api', 'controllers', 'invoke']))
                 ->values()
                 ->toArray(),
+        );
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getOperationIdAttributes(RouteInfo $routeInfo): array
+    {
+        return Arr::map(
+            $routeInfo->reflectionMethod()->getAttributes(OperationId::class),
+            fn (ReflectionAttribute $attr): string => $attr->newInstance()->id,
+        );
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getOperationIdTags(RouteInfo $routeInfo): array
+    {
+        return Arr::map(
+            $routeInfo->phpDoc()->getTagsByName('@operationId'),
+            fn (PhpDocTagNode $node): string => $node->value,
         );
     }
 

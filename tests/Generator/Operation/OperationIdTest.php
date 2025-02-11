@@ -76,12 +76,30 @@ it('documents operation id based phpdoc param', function () {
     expect($openApiDocument['paths']['/test']['get'])
         ->toHaveKey('operationId', 'manualOperationId');
 });
+
+it('documents operation id based attribute', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ManualOperationIdDocumentationTestController::class, 'b'])->name('someNameOfRoute');
+    });
+
+    expect($openApiDocument['paths']['/test']['get'])
+        ->toHaveKey('operationId', 'manualOperationId');
+});
 class ManualOperationIdDocumentationTestController extends \Illuminate\Routing\Controller
 {
     /**
      * @operationId manualOperationId
      */
     public function a(): Illuminate\Http\Resources\Json\JsonResource
+    {
+        return $this->unknown_fn();
+    }
+
+    /**
+     * @operationId manualOperationId
+     */
+    #[\Dedoc\Scramble\Attributes\OperationId('manualOperationId')]
+    public function b(): Illuminate\Http\Resources\Json\JsonResource
     {
         return $this->unknown_fn();
     }
