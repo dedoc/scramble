@@ -6,6 +6,7 @@ use Dedoc\Scramble\Attributes\Example;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\Parameter;
 use Dedoc\Scramble\Attributes\PathParameter;
+use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 
@@ -65,6 +66,23 @@ it('supports simple example for Parameter annotations', function () {
 class ParameterSimpleExampleController_ParameterAnnotationsTest
 {
     #[Parameter('query', 'per_page', type: 'int', default: 15, example: 10)]
+    public function __invoke() {}
+}
+
+it('allows annotating parameters with the same names', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->get('api/test', SameNameParametersController_ParameterAnnotationsTest::class));
+
+    expect($parameters = $openApi['paths']['/test']['get']['parameters'])
+        ->toHaveCount(2)
+        ->and($parameters[0]['name'])->toBe('per_page')
+        ->and($parameters[1]['name'])->toBe('per_page')
+        ->and($parameters[0]['in'])->toBe('query')
+        ->and($parameters[1]['in'])->toBe('header');
+});
+class SameNameParametersController_ParameterAnnotationsTest
+{
+    #[QueryParameter('per_page')]
+    #[HeaderParameter('per_page')]
     public function __invoke() {}
 }
 

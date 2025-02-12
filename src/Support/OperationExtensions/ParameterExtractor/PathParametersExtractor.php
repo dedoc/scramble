@@ -74,6 +74,8 @@ class PathParametersExtractor implements ParameterExtractor
                 $param->setExtensionProperty('optional', true);
             }
 
+            $param->setAttribute('nonBody', true);
+
             return $param;
         }, array_values(array_diff($route->parameterNames(), $this->getParametersFromString($route->getDomain()))));
 
