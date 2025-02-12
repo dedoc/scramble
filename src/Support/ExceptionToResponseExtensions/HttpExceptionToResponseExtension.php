@@ -10,20 +10,20 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\GoneHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\LengthRequiredHttpException;
 use Symfony\Component\HttpKernel\Exception\LockedHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\NotAcceptableHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
 use Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException;
-use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
@@ -37,7 +37,7 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
     }
 
     /**
-     * @param ObjectType $type
+     * @param  ObjectType  $type
      */
     public function toResponse(Type $type)
     {
@@ -104,6 +104,7 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
 
         return $codeType->value;
     }
+
     protected function parseDescription(Type $type): string
     {
 
