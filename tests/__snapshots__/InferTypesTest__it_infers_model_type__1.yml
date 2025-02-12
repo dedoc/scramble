@@ -6,6 +6,7 @@ properties:
     title: { type: string }
     settings: { type: [array, 'null'], items: {  } }
     body: { type: string }
+    approved_at: { type: [string, 'null'], format: date-time }
     created_at: { type: [string, 'null'], format: date-time }
     updated_at: { type: [string, 'null'], format: date-time }
     parent: { $ref: '#/components/schemas/SamplePostModel' }
@@ -18,5 +19,6 @@ required:
     - title
     - settings
     - body
+    - approved_at
     - created_at
     - updated_at
