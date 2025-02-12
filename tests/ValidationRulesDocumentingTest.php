@@ -398,6 +398,20 @@ it('documents nullable uri rule', function () {
         ->toHaveProperty('nullable', true);
 });
 
+it('documents date rule', function () {
+    $rules = [
+        'some_date' => 'date',
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params = collect($params)->all())
+        ->toHaveCount(1)
+        ->and($params[0]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toHaveProperty('format', 'date-time');
+});
+
 it('extracts rules from request->validate call', function () {
     RouteFacade::get('api/test', [ValidationRulesDocumenting_Test::class, 'index']);
 
