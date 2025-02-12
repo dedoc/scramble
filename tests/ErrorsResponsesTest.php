@@ -7,7 +7,21 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
-
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use Symfony\Component\HttpKernel\Exception\GoneHttpException;
+use Symfony\Component\HttpKernel\Exception\LengthRequiredHttpException;
+use Symfony\Component\HttpKernel\Exception\LockedHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotAcceptableHttpException;
+use Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
+use Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 it('adds validation error response', function () {
@@ -92,6 +106,42 @@ it('adds http error response exception extending HTTP exception is thrown', func
 
     expect($openApiDocument['paths']['/test']['get']['responses'][409])->toHaveKey('content.application/json.schema.type', 'object');
 });
+
+
+it('adds http error response exception extending sympony HTTP exception is thrown', function () {
+    $openApiDocument = generateForRoute(fn() => RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'symfony_http_exception_response']));
+
+    // AccessDeniedHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][403])->toHaveKey('content.application/json.schema.type', 'object');
+    // BadRequestHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][400])->toHaveKey('content.application/json.schema.type', 'object');
+    // ConflictHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][409])->toHaveKey('content.application/json.schema.type', 'object');
+    // GoneHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][410])->toHaveKey('content.application/json.schema.type', 'object');
+    // LengthRequiredHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][411])->toHaveKey('content.application/json.schema.type', 'object');
+    // LockedHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][423])->toHaveKey('content.application/json.schema.type', 'object');
+    // MethodNotAllowedHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][405])->toHaveKey('content.application/json.schema.type', 'object');
+    // NotAcceptableHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][406])->toHaveKey('content.application/json.schema.type', 'object');
+    // PreconditionFailedHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][412])->toHaveKey('content.application/json.schema.type', 'object');
+    // PreconditionRequiredHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][428])->toHaveKey('content.application/json.schema.type', 'object');
+    // ServiceUnavailableHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][503])->toHaveKey('content.application/json.schema.type', 'object');
+    // TooManyRequestsHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][429])->toHaveKey('content.application/json.schema.type', 'object');
+    // UnauthorizedHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][401])->toHaveKey('content.application/json.schema.type', 'object');
+    // UnprocessableEntityHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][422])->toHaveKey('content.application/json.schema.type', 'object');
+    // UnsupportedMediaTypeHttpException
+    expect($openApiDocument['paths']['/test']['get']['responses'][415])->toHaveKey('content.application/json.schema.type', 'object');
+});
 class ErrorsResponsesTest_Controller extends Controller
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
@@ -128,6 +178,13 @@ class ErrorsResponsesTest_Controller extends Controller
     public function custom_exception_response(Illuminate\Http\Request $request)
     {
         throw new BusinessException('The business error');
+    }
+
+    /**
+     * @throws AccessDeniedHttpException|BadRequestHttpException|ConflictHttpException|GoneHttpException|LengthRequiredHttpException|LockedHttpException|MethodNotAllowedHttpException|NotAcceptableHttpException|PreconditionFailedHttpException|PreconditionRequiredHttpException|ServiceUnavailableHttpException|TooManyRequestsHttpException|UnauthorizedHttpException|UnprocessableEntityHttpException|UnsupportedMediaTypeHttpException
+     */
+    public function symfony_http_exception_response(Illuminate\Http\Request $request)
+    {
     }
 }
 
