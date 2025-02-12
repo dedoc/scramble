@@ -4,7 +4,6 @@ namespace Dedoc\Scramble;
 
 use Dedoc\Scramble\Configuration\GeneratorConfigCollection;
 use Dedoc\Scramble\Configuration\OperationTransformers;
-use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
@@ -37,8 +36,6 @@ use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
-use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\AttributesParametersExtractor;
-use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\MethodCallsParametersExtractor;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
@@ -206,15 +203,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             Scramble::configure()->expose(false);
         }
 
-        $this->app->booted(function (Application $app) {
-            Scramble::configure()
-                ->withParametersExtractors(function (ParametersExtractors $parametersExtractors) {
-                    $parametersExtractors->append([
-                        MethodCallsParametersExtractor::class,
-                        AttributesParametersExtractor::class,
-                    ]);
-                });
-
+        $this->app->booted(function () {
             $this->registerRoutes();
         });
     }
