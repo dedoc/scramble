@@ -86,6 +86,22 @@ class SameNameParametersController_ParameterAnnotationsTest
     public function __invoke() {}
 }
 
+it('allows defining parameters with the same names as inferred in different locations', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->get('api/test/{test}', SameNameParametersAsInferredController_ParameterAnnotationsTest::class));
+
+    expect($parameters = $openApi['paths']['/test/{test}']['get']['parameters'])
+        ->toHaveCount(2)
+        ->and($parameters[0]['name'])->toBe('test')
+        ->and($parameters[1]['name'])->toBe('test')
+        ->and($parameters[0]['in'])->toBe('path')
+        ->and($parameters[1]['in'])->toBe('query');
+});
+class SameNameParametersAsInferredController_ParameterAnnotationsTest
+{
+    #[QueryParameter('test')]
+    public function __invoke(string $test) {}
+}
+
 it('supports complex examples for Parameter annotations', function () {
     $openApi = generateForRoute(fn (Router $r) => $r->get('api/test', ParameterComplexExampleController_ParameterAnnotationsTest::class));
 
