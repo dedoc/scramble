@@ -22,6 +22,7 @@ use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
+
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 it('adds validation error response', function () {
@@ -107,9 +108,8 @@ it('adds http error response exception extending HTTP exception is thrown', func
     expect($openApiDocument['paths']['/test']['get']['responses'][409])->toHaveKey('content.application/json.schema.type', 'object');
 });
 
-
 it('adds http error response exception extending sympony HTTP exception is thrown', function () {
-    $openApiDocument = generateForRoute(fn() => RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'symfony_http_exception_response']));
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'symfony_http_exception_response']));
 
     // AccessDeniedHttpException
     expect($openApiDocument['paths']['/test']['get']['responses'][403])->toHaveKey('content.application/json.schema.type', 'object');
@@ -183,9 +183,7 @@ class ErrorsResponsesTest_Controller extends Controller
     /**
      * @throws AccessDeniedHttpException|BadRequestHttpException|ConflictHttpException|GoneHttpException|LengthRequiredHttpException|LockedHttpException|MethodNotAllowedHttpException|NotAcceptableHttpException|PreconditionFailedHttpException|PreconditionRequiredHttpException|ServiceUnavailableHttpException|TooManyRequestsHttpException|UnauthorizedHttpException|UnprocessableEntityHttpException|UnsupportedMediaTypeHttpException
      */
-    public function symfony_http_exception_response(Illuminate\Http\Request $request)
-    {
-    }
+    public function symfony_http_exception_response(Illuminate\Http\Request $request) {}
 }
 
 class BusinessException extends \Symfony\Component\HttpKernel\Exception\HttpException
