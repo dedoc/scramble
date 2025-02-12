@@ -28,7 +28,6 @@ class ResponseExtension extends OperationExtension
 
         $responses = collect($returnTypes)
             ->merge(optional($routeInfo->getMethodType())->exceptions ?: [])
-//            ->dd()
             ->map($this->openApiTransformer->toResponse(...))
             ->filter()
             ->unique(fn ($response) => ($response instanceof Response ? $response->code : 'ref').':'.json_encode($response->toArray()))

@@ -19,8 +19,8 @@ class Operation
 
     public bool $deprecated = false;
 
-    /** @var array<Security|array> */
-    public array $security = [];
+    /** @var array<SecurityRequirement>|null */
+    public ?array $security = null;
 
     public array $tags = [];
 
@@ -74,6 +74,11 @@ class Operation
 
     public function addSecurity($security)
     {
+        if ($security === []) {
+            $security = new SecurityRequirement([]);
+        }
+
+        $this->security ??= [];
         $this->security[] = $security;
 
         return $this;
@@ -181,12 +186,11 @@ class Operation
             $result['responses'] = $responses;
         }
 
-        if (count($this->security)) {
-            $securities = [];
-            foreach ($this->security as $security) {
-                $securities[] = (object) (is_array($security) ? $security : $security->toArray());
-            }
-            $result['security'] = $securities;
+        if ($this->security !== null) {
+            $result['security'] = array_map(
+                fn ($s) => $s->toArray(),
+                $this->security,
+            );
         }
 
         if (count($this->servers)) {

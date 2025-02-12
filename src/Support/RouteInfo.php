@@ -4,7 +4,7 @@ namespace Dedoc\Scramble\Support;
 
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Reflector\MethodReflector;
-use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\IndexBuilders\Bag;
 use Dedoc\Scramble\Support\IndexBuilders\RequestParametersBuilder;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -16,27 +16,21 @@ use ReflectionMethod;
 
 class RouteInfo
 {
-    public Route $route;
-
     public ?FunctionType $methodType = null;
 
     private ?PhpDocNode $phpDoc = null;
 
     private ?ClassMethod $methodNode = null;
 
-    private FileParser $parser;
-
-    private Infer $infer;
-
     public readonly Bag $requestParametersFromCalls;
 
     public readonly Infer\Extensions\IndexBuildingBroker $indexBuildingBroker;
 
-    public function __construct(Route $route, FileParser $fileParser, Infer $infer)
-    {
-        $this->route = $route;
-        $this->parser = $fileParser;
-        $this->infer = $infer;
+    public function __construct(
+        public readonly Route $route,
+        private Infer $infer,
+        private readonly TypeTransformer $typeTransformer
+    ) {
         $this->requestParametersFromCalls = new Bag;
         $this->indexBuildingBroker = app(Infer\Extensions\IndexBuildingBroker::class);
     }
@@ -49,7 +43,7 @@ class RouteInfo
     public function className(): ?string
     {
         return $this->isClassBased()
-            ? explode('@', $this->route->getAction('uses'))[0]
+            ? ltrim(explode('@', $this->route->getAction('uses'))[0], '\\')
             : null;
     }
 
@@ -114,13 +108,13 @@ class RouteInfo
         }
 
         if (! $this->methodType) {
-            $def = $this->infer->analyzeClass($this->reflectionMethod()->getDeclaringClass()->getName());
+            $def = $this->infer->analyzeClass($this->className());
 
             /*
              * Here the final resolution of the method types may happen.
              */
             $this->methodType = $def->getMethodDefinition($this->methodName(), indexBuilders: [
-                new RequestParametersBuilder($this->requestParametersFromCalls),
+                new RequestParametersBuilder($this->requestParametersFromCalls, $this->typeTransformer),
                 ...$this->indexBuildingBroker->indexBuilders,
             ])->type;
         }

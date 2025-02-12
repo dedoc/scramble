@@ -80,7 +80,7 @@ class RouteResponseTypeRetriever
             return null;
         }
 
-        return (new ObjectType($this->routeInfo->reflectionMethod()->getDeclaringClass()->getName()))
+        return (new ObjectType($this->routeInfo->className()))
             ->getMethodReturnType($this->routeInfo->methodName());
     }
 

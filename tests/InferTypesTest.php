@@ -1,7 +1,10 @@
 <?php
 
+use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
@@ -19,6 +22,8 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->infer = app(Infer::class);
+    $this->components = new Components;
+    $this->context = new OpenApiContext((new OpenApi('3.1.0'))->setComponents($this->components), new GeneratorConfig);
 });
 
 it('gets json resource type', function () {
@@ -38,30 +43,30 @@ it('gets json resource type with enum', function () {
 });
 
 it('infers model type', function () {
-    $transformer = new TypeTransformer($this->infer, $components = new Components, [
+    $transformer = new TypeTransformer($this->infer, $this->context, [
         ModelToSchema::class,
         CollectionToSchema::class,
     ]);
-    $extension = new ModelToSchema($this->infer, $transformer, $components);
+    $extension = new ModelToSchema($this->infer, $transformer, $this->components, $this->context);
 
     $type = new ObjectType(SamplePostModel::class);
     $openApiType = $extension->toSchema($type);
 
-    expect($components->schemas)->toHaveLength(2)->toHaveKeys([SamplePostModel::class, SampleUserModel::class]);
+    expect($this->components->schemas)->toHaveLength(2)->toHaveKeys(['SamplePostModel', 'SampleUserModel']);
     assertMatchesSnapshot($openApiType->toArray());
 });
 
 it('infers model type when toArray is implemented', function () {
-    $transformer = new TypeTransformer($infer = $this->infer, $components = new Components, [
+    $transformer = new TypeTransformer($infer = $this->infer, $this->context, [
         ModelToSchema::class,
         CollectionToSchema::class,
     ]);
-    $extension = new ModelToSchema($infer, $transformer, $components);
+    $extension = new ModelToSchema($infer, $transformer, $this->components, $this->context);
 
     $type = new ObjectType(SamplePostModelWithToArray::class);
     $openApiType = $extension->toSchema($type);
 
-    expect($components->schemas)->toHaveLength(2)->toHaveKeys([SamplePostModelWithToArray::class, SampleUserModel::class]);
+    expect($this->components->schemas)->toHaveLength(2)->toHaveKeys(['SamplePostModelWithToArray', 'SampleUserModel']);
     assertMatchesSnapshot($openApiType->toArray());
 });
 

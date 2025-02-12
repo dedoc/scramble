@@ -64,6 +64,14 @@ class TypeHelper
                 );
             }
 
+            if ($typeNode->name === 'null') {
+                return new NullType;
+            }
+
+            if (in_array($typeNode->name, ['true', 'false'])) {
+                return new LiteralBooleanType($typeNode->name === 'true');
+            }
+
             return new ObjectType($typeNode->toString());
         }
 
@@ -153,7 +161,29 @@ class TypeHelper
             return new LiteralBooleanType($value);
         }
 
-        return null; // @todo: object
+        if (is_array($value)) {
+            return new KeyedArrayType(array_map(
+                fn ($key) => new ArrayItemType_($key, static::createTypeFromValue($value[$key])),
+                array_keys($value),
+            ));
+        }
+
+        if ($value === null) {
+            return new NullType;
+        }
+
+        if (is_object($value)) {
+            if (enum_exists($value::class)) {
+                return new EnumCaseType(
+                    $value::class,
+                    $value->name,
+                );
+            }
+
+            return new ObjectType($value::class); // @todo generics
+        }
+
+        return new MixedType;
     }
 
     public static function createTypeFromReflectionType(ReflectionType $reflectionType, bool $handleNullable = true)

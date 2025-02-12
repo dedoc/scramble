@@ -2,7 +2,9 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Carbon\CarbonInterface;
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
@@ -32,29 +34,16 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
  */
 class TypeTransformer
 {
-    private Infer $infer;
-
-    private Components $components;
-
-    private array $typeToSchemaExtensions;
-
-    private array $exceptionToResponseExtensions;
-
     public function __construct(
-        Infer $infer,
-        Components $components,
-        array $typeToSchemaExtensions = [],
-        array $exceptionToResponseExtensions = []
-    ) {
-        $this->infer = $infer;
-        $this->components = $components;
-        $this->typeToSchemaExtensions = $typeToSchemaExtensions;
-        $this->exceptionToResponseExtensions = $exceptionToResponseExtensions;
-    }
+        private Infer $infer,
+        private OpenApiContext $context,
+        private array $typeToSchemaExtensions = [],
+        private array $exceptionToResponseExtensions = []
+    ) {}
 
     public function getComponents(): Components
     {
-        return $this->components;
+        return $this->context->openApi->components;
     }
 
     public function transform(Type $type)
@@ -193,7 +182,11 @@ class TypeTransformer
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\MixedType) {
             $openApiType = new MixedType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\ObjectType) {
-            $openApiType = new ObjectType;
+            if ($type->isInstanceOf(CarbonInterface::class)) {
+                $openApiType = (new StringType)->format('date-time');
+            } else {
+                $openApiType = new ObjectType;
+            }
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntersectionType) {
             $openApiType = (new AllOf)->setItems(array_filter(array_map(
                 fn ($t) => $this->transform($t),
@@ -224,7 +217,7 @@ class TypeTransformer
     {
         /** @var Collection $extensions */
         $extensions = collect($this->typeToSchemaExtensions)
-            ->map(fn ($extensionClass) => new $extensionClass($this->infer, $this, $this->components))
+            ->map(fn ($extensionClass) => new $extensionClass($this->infer, $this, $this->getComponents(), $this->context))
             ->filter->shouldHandle($type)
             ->values();
 
@@ -235,12 +228,14 @@ class TypeTransformer
             ? $referenceExtension->reference($type)
             : null;
 
-        if ($reference && $this->components->hasSchema($reference->fullName)) {
-            return $reference;
+        if ($reference && $this->context->references->schemas->has($reference->fullName)) {
+            return $this->context->references->schemas->add($reference->fullName, $reference);
         }
 
         if ($reference) {
-            $this->components->addSchema($reference->fullName, Schema::fromType(new UnknownType('Reference is being analyzed.')));
+            $reference = $this->context->references->schemas->add($reference->fullName, $reference);
+
+            $this->getComponents()->addSchema($reference->fullName, Schema::fromType(new UnknownType('Reference is being analyzed.')));
         }
 
         $handledType = $extensions
@@ -249,14 +244,14 @@ class TypeTransformer
             });
 
         if ($handledType && $reference) {
-            $reference = $this->components->addSchema($reference->fullName, Schema::fromType($handledType));
+            $this->getComponents()->addSchema($reference->fullName, Schema::fromType($handledType));
         }
 
         /*
         * If we couldn't handle a type, the reference is removed.
         */
         if (! $handledType && $reference) {
-            $this->components->removeSchema($reference->fullName);
+            $this->getComponents()->removeSchema($reference->fullName);
         }
 
         return $reference ?: $handledType;
@@ -312,7 +307,7 @@ class TypeTransformer
             return array_reduce(
                 $this->typeToSchemaExtensions,
                 function ($acc, $extensionClass) use ($type) {
-                    $extension = new $extensionClass($this->infer, $this, $this->components);
+                    $extension = new $extensionClass($this->infer, $this, $this->getComponents(), $this->context);
 
                     if (! $extension->shouldHandle($type)) {
                         return $acc;
@@ -327,10 +322,13 @@ class TypeTransformer
             );
         }
 
+        // We want latter registered extensions to have a higher priority to allow custom extensions to override default ones.
+        $priorityExtensions = array_reverse($this->exceptionToResponseExtensions);
+
         return array_reduce(
-            $this->exceptionToResponseExtensions,
+            $priorityExtensions,
             function ($acc, $extensionClass) use ($type) {
-                $extension = new $extensionClass($this->infer, $this, $this->components);
+                $extension = new $extensionClass($this->infer, $this, $this->getComponents(), $this->context);
 
                 if (! $extension->shouldHandle($type)) {
                     return $acc;
@@ -341,13 +339,13 @@ class TypeTransformer
                     ? $extension->reference($type)
                     : null;
 
-                if ($reference && $this->components->has($reference)) {
+                if ($reference && $this->getComponents()->has($reference)) {
                     return $reference;
                 }
 
                 if ($response = $extension->toResponse($type, $acc)) {
                     if ($reference) {
-                        return $this->components->add($reference, $response);
+                        return $this->getComponents()->add($reference, $response);
                     }
 
                     return $response;

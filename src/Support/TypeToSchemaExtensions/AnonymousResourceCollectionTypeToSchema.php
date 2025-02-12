@@ -3,12 +3,16 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType as OpenApiArrayType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -25,6 +29,15 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
 {
     use FlattensMergeValues;
     use MergesOpenApiObjects;
+
+    public function __construct(
+        Infer $infer,
+        TypeTransformer $openApiTransformer,
+        Components $components,
+        protected OpenApiContext $openApiContext
+    ) {
+        parent::__construct($infer, $openApiTransformer, $components);
+    }
 
     public function shouldHandle(Type $type)
     {
@@ -84,7 +97,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
         }
 
         return Response::make(200)
-            ->description('Array of `'.$this->components->uniqueSchemaName($collectingResourceType->name).'`')
+            ->description('Array of `'.$this->openApiContext->references->schemas->uniqueName($collectingResourceType->name).'`')
             ->setContent('application/json', Schema::fromType($openApiType));
     }
 
@@ -131,7 +144,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
             ->setRequired([$wrapKey, 'links', 'meta']);
 
         return Response::make(200)
-            ->description('Paginated set of `'.$this->components->uniqueSchemaName($collectingClassType->name).'`')
+            ->description('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectingClassType->name).'`')
             ->setContent('application/json', Schema::fromType($responseType));
     }
 

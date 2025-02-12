@@ -32,11 +32,9 @@ class TestCase extends Orchestra
     {
         Context::reset();
 
-        Scramble::$defaultRoutesIgnored = false;
-        Scramble::$routeResolver = null;
-        Scramble::$openApiExtender = null;
         Scramble::$tagResolver = null;
         Scramble::$enforceSchemaRules = [];
+        Scramble::$defaultRoutesIgnored = false;
 
         parent::tearDown();
     }

@@ -1,7 +1,9 @@
 <?php
 
+use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
-use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
@@ -23,8 +25,14 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
+beforeEach(function () {
+    $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
+});
+
 it('transforms simple types', function ($type, $openApiArrayed) {
-    $transformer = app(TypeTransformer::class);
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
 
     expect(json_encode($transformer->transform($type)->toArray()))->toBe(json_encode($openApiArrayed));
 })->with([
@@ -64,8 +72,8 @@ it('transforms simple types', function ($type, $openApiArrayed) {
 ]);
 
 it('gets json resource type', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
     $type = new ObjectType(ComplexTypeHandlersTest_SampleType::class);
 
@@ -73,8 +81,8 @@ it('gets json resource type', function () {
 });
 
 it('gets enum with values type', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [EnumToSchema::class]);
-    $extension = new EnumToSchema($infer, $transformer, $components);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [EnumToSchema::class]);
+    $extension = new EnumToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
     $type = new ObjectType(StatusTwo::class);
 
@@ -82,8 +90,8 @@ it('gets enum with values type', function () {
 });
 
 it('gets json resource type with nested merges', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
     $type = new ObjectType(ComplexTypeHandlersWithNestedTest_SampleType::class);
 
@@ -91,8 +99,8 @@ it('gets json resource type with nested merges', function () {
 });
 
 it('gets json resource type with when', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
     $type = new ObjectType(ComplexTypeHandlersWithWhen_SampleType::class);
 
@@ -100,11 +108,11 @@ it('gets json resource type with when', function () {
 });
 
 it('gets json resource type with when loaded', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
         AnonymousResourceCollectionTypeToSchema::class,
     ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
     $type = new ObjectType(ComplexTypeHandlersWithWhenLoaded_SampleType::class);
 
@@ -112,11 +120,11 @@ it('gets json resource type with when loaded', function () {
 });
 
 it('gets json resource type with when counted', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
         AnonymousResourceCollectionTypeToSchema::class,
     ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $components);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
     $type = new ObjectType(ComplexTypeHandlersWithWhenCounted_SampleType::class);
 
@@ -124,7 +132,7 @@ it('gets json resource type with when counted', function () {
 });
 
 it('gets json resource type reference', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
 
     $type = new ObjectType(ComplexTypeHandlersTest_SampleType::class);
 
@@ -132,11 +140,11 @@ it('gets json resource type reference', function () {
         '$ref' => '#/components/schemas/ComplexTypeHandlersTest_SampleType',
     ]);
 
-    assertMatchesSnapshot($components->getSchema(ComplexTypeHandlersTest_SampleType::class)->toArray());
+    assertMatchesSnapshot($this->context->openApi->components->getSchema(ComplexTypeHandlersTest_SampleType::class)->toArray());
 });
 
 it('gets nullable type reference', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
 
     $type = new Union([
         new ObjectType(ComplexTypeHandlersTest_SampleType::class),
@@ -152,7 +160,7 @@ it('gets nullable type reference', function () {
 });
 
 it('infers date column directly referenced in json as date-time', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
 
     $type = new ObjectType(InferTypesTest_JsonResourceWithCarbonAttribute::class);
 
@@ -160,14 +168,14 @@ it('infers date column directly referenced in json as date-time', function () {
         '$ref' => '#/components/schemas/InferTypesTest_JsonResourceWithCarbonAttribute',
     ]);
 
-    expect($components->getSchema(InferTypesTest_JsonResourceWithCarbonAttribute::class)->toArray()['properties']['created_at'])->toBe([
+    expect($this->context->openApi->components->getSchema(InferTypesTest_JsonResourceWithCarbonAttribute::class)->toArray()['properties']['created_at'])->toBe([
         'type' => ['string', 'null'],
         'format' => 'date-time',
     ]);
 });
 
 it('supports @example tag in api resource', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
 
     $type = new ObjectType(ApiResourceTest_ResourceWithExamples::class);
 
@@ -175,7 +183,7 @@ it('supports @example tag in api resource', function () {
         '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithExamples',
     ]);
 
-    expect($components->getSchema(ApiResourceTest_ResourceWithExamples::class)->toArray()['properties']['id'])->toBe([
+    expect($this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithExamples::class)->toArray()['properties']['id'])->toBe([
         'type' => 'integer',
         'examples' => [
             'Foo',
@@ -185,7 +193,7 @@ it('supports @example tag in api resource', function () {
 });
 
 it('supports @format tag in api resource', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
 
     $type = new ObjectType(ApiResourceTest_ResourceWithFormat::class);
 
@@ -193,14 +201,14 @@ it('supports @format tag in api resource', function () {
         '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithFormat',
     ]);
 
-    expect($components->getSchema(ApiResourceTest_ResourceWithFormat::class)->toArray()['properties']['now'])->toBe([
+    expect($this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithFormat::class)->toArray()['properties']['now'])->toBe([
         'type' => 'string',
         'format' => 'date-time',
     ]);
 });
 
 it('supports simple comments descriptions in api resource', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $components = new Components, [JsonResourceTypeToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
 
     $type = new ObjectType(ApiResourceTest_ResourceWithSimpleDescription::class);
 
@@ -208,11 +216,11 @@ it('supports simple comments descriptions in api resource', function () {
         '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithSimpleDescription',
     ]);
 
-    expect($components->getSchema(ApiResourceTest_ResourceWithSimpleDescription::class)->toArray()['properties']['now'])->toBe([
+    expect($this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithSimpleDescription::class)->toArray()['properties']['now'])->toBe([
         'type' => 'string',
         'description' => 'The date of the current moment.',
     ]);
-    expect($components->getSchema(ApiResourceTest_ResourceWithSimpleDescription::class)->toArray()['properties']['now2'])->toBe([
+    expect($this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithSimpleDescription::class)->toArray()['properties']['now2'])->toBe([
         'type' => 'string',
         'description' => 'Inline comments are also supported.',
     ]);
