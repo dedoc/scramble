@@ -35,11 +35,11 @@ class AttributesParametersExtractor implements ParameterExtractor
             ->map(fn (ReflectionAttribute $ra) => $this->createParameter($parameterExtractionResults, $ra->newInstance(), $ra->getArguments()))
             ->all();
 
-        $extractedAttributes = collect($parameters)->map->name->all();
+        $extractedAttributes = collect($parameters)->map(fn ($p) => "$p->name.$p->in")->all();
 
         foreach ($parameterExtractionResults as $automaticallyExtractedParameters) {
             $automaticallyExtractedParameters->parameters = collect($automaticallyExtractedParameters->parameters)
-                ->filter(fn (Parameter $p) => ! in_array($p->name, $extractedAttributes))
+                ->filter(fn (Parameter $p) => ! in_array("$p->name.$p->in", $extractedAttributes))
                 ->values()
                 ->all();
         }

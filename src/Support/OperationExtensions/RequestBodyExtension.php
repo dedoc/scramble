@@ -51,7 +51,7 @@ class RequestBodyExtension extends OperationExtension
             ->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'))
             ->description($description);
 
-        $allParams = $rulesResults->flatMap->parameters->unique('name')->values()->all();
+        $allParams = $rulesResults->flatMap->parameters->unique(fn ($p) => "$p->name.$p->in")->values()->all();
 
         $mediaType = $this->getMediaType($operation, $routeInfo, $allParams);
 
@@ -81,15 +81,14 @@ class RequestBodyExtension extends OperationExtension
         $schemalessResults = collect([$this->mergeSchemalessRulesResults($schemalessResults->values())]);
 
         $schemas = $schemaResults->merge($schemalessResults)
-            ->filter(fn (ParametersExtractionResult $r) => count($r->parameters) || $r->schemaName)
             ->map(function (ParametersExtractionResult $r) use ($nonBodyParams) {
-                $qpNames = collect($nonBodyParams)->keyBy('name');
+                $qpNames = collect($nonBodyParams)->keyBy(fn ($p) => "$p->name.$p->in");
 
-                $r->parameters = collect($r->parameters)->filter(fn ($p) => ! $qpNames->has($p->name))->values()->all();
+                $r->parameters = collect($r->parameters)->filter(fn ($p) => ! $qpNames->has("$p->name.$p->in"))->values()->all();
 
                 return $r;
             })
-            ->values()
+            ->filter(fn (ParametersExtractionResult $r) => count($r->parameters) || $r->schemaName)
             ->map($this->makeSchemaFromResults(...));
 
         if ($schemas->isEmpty()) {
@@ -155,7 +154,7 @@ class RequestBodyExtension extends OperationExtension
     protected function mergeSchemalessRulesResults(Collection $schemalessResults): ParametersExtractionResult
     {
         return new ParametersExtractionResult(
-            parameters: $this->convertDotNamedParamsToComplexStructures($schemalessResults->values()->flatMap->parameters->unique('name')->values()->all()),
+            parameters: $this->convertDotNamedParamsToComplexStructures($schemalessResults->values()->flatMap->parameters->unique(fn ($p) => "$p->name.$p->in")->values()->all()),
         );
     }
 

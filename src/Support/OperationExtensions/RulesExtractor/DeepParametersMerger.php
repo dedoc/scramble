@@ -17,7 +17,9 @@ class DeepParametersMerger
 
     public function handle()
     {
-        return $this->handleNested($this->parameters->keyBy('name'))
+        return $this->parameters->groupBy('in')
+            ->map(fn ($parameters) => $this->handleNested($parameters->keyBy('name'))->values())
+            ->flatten()
             ->values()
             ->all();
     }
