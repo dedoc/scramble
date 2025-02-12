@@ -22,13 +22,12 @@ use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
-
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 it('adds validation error response', function () {
     RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_validation_error_response']);
 
-    Scramble::routes(fn(Route $r) => $r->uri === 'api/test');
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
     $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
@@ -37,7 +36,7 @@ it('adds validation error response', function () {
 it('adds validation error response with facade made validators', function () {
     RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_validation_error_response_with_facade_made_validators']);
 
-    Scramble::routes(fn(Route $r) => $r->uri === 'api/test');
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
     $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
@@ -46,18 +45,16 @@ it('adds validation error response with facade made validators', function () {
 it('adds errors responses with custom requests', function () {
     RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_errors_with_custom_request']);
 
-    Scramble::routes(fn(Route $r) => $r->uri === 'api/test');
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
     $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });
 
 it('doesnt add errors with custom request when errors producing methods are not defined', function () {
-    $openApiDocument = generateForRoute(
-        function () {
-            return RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'doesnt_add_errors_with_custom_request_when_errors_producing_methods_not_defined']);
-        }
-    );
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'doesnt_add_errors_with_custom_request_when_errors_producing_methods_not_defined']);
+    });
 
     expect($openApiDocument['paths']['/test']['get']['responses'])
         ->toHaveKeys([200])
@@ -65,17 +62,18 @@ it('doesnt add errors with custom request when errors producing methods are not 
 });
 
 it('adds authorization error response', function () {
-    $openApiDocument = generateForRoute(
-        function () {
-            return RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_authorization_error_response']);
-        }
-    );
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_authorization_error_response']);
+    });
 
     assertMatchesSnapshot($openApiDocument);
 });
 
 it('adds authentication error response', function () {
-    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_authorization_error_response'])->middleware('auth'));
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_authorization_error_response'])
+            ->middleware('auth');
+    });
 
     expect($openApiDocument)
         ->toHaveKey('components.responses.AuthenticationException')
@@ -86,7 +84,10 @@ it('adds authentication error response', function () {
 });
 
 it('adds not found error response', function () {
-    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test/{user}', [ErrorsResponsesTest_Controller::class, 'adds_not_found_error_response'])->middleware('can:update,post'));
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test/{user}', [ErrorsResponsesTest_Controller::class, 'adds_not_found_error_response'])
+            ->middleware('can:update,post');
+    });
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -94,17 +95,18 @@ it('adds not found error response', function () {
 it('adds validation error response when documented in phpdoc', function () {
     RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'phpdoc_exception_response']);
 
-    Scramble::routes(fn(Route $r) => $r->uri === 'api/test');
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
     $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });
 
 it('adds http error response exception extending HTTP exception is thrown', function () {
-    $openApiDocument = generateForRoute(fn() => RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'custom_exception_response']));
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'custom_exception_response']));
 
     expect($openApiDocument['paths']['/test']['get']['responses'][409])->toHaveKey('content.application/json.schema.type', 'object');
 });
+
 
 it('adds http error response exception extending sympony HTTP exception is thrown', function () {
     $openApiDocument = generateForRoute(fn() => RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'symfony_http_exception_response']));
@@ -140,7 +142,6 @@ it('adds http error response exception extending sympony HTTP exception is throw
     // UnsupportedMediaTypeHttpException
     expect($openApiDocument['paths']['/test']['get']['responses'][415])->toHaveKey('content.application/json.schema.type', 'object');
 });
-
 class ErrorsResponsesTest_Controller extends Controller
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
@@ -156,33 +157,23 @@ class ErrorsResponsesTest_Controller extends Controller
             ->validate();
     }
 
-    public function adds_errors_with_custom_request(ErrorsResponsesTest_Controller_CustomRequest $request)
-    {
-    }
+    public function adds_errors_with_custom_request(ErrorsResponsesTest_Controller_CustomRequest $request) {}
 
-    public function doesnt_add_errors_with_custom_request_when_errors_producing_methods_not_defined(ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods $request)
-    {
-    }
+    public function doesnt_add_errors_with_custom_request_when_errors_producing_methods_not_defined(ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods $request) {}
 
     public function adds_authorization_error_response(Illuminate\Http\Request $request)
     {
         $this->authorize('read');
     }
 
-    public function adds_authentication_error_response(Illuminate\Http\Request $request)
-    {
-    }
+    public function adds_authentication_error_response(Illuminate\Http\Request $request) {}
 
-    public function adds_not_found_error_response(Illuminate\Http\Request $request, UserModel_ErrorsResponsesTest $user)
-    {
-    }
+    public function adds_not_found_error_response(Illuminate\Http\Request $request, UserModel_ErrorsResponsesTest $user) {}
 
     /**
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function phpdoc_exception_response(Illuminate\Http\Request $request)
-    {
-    }
+    public function phpdoc_exception_response(Illuminate\Http\Request $request) {}
 
     public function custom_exception_response(Illuminate\Http\Request $request)
     {
@@ -205,9 +196,7 @@ class BusinessException extends \Symfony\Component\HttpKernel\Exception\HttpExce
     }
 }
 
-class UserModel_ErrorsResponsesTest extends \Illuminate\Database\Eloquent\Model
-{
-}
+class UserModel_ErrorsResponsesTest extends \Illuminate\Database\Eloquent\Model {}
 
 class ErrorsResponsesTest_Controller_CustomRequest extends \Illuminate\Foundation\Http\FormRequest
 {
@@ -222,6 +211,4 @@ class ErrorsResponsesTest_Controller_CustomRequest extends \Illuminate\Foundatio
     }
 }
 
-class ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods extends \Illuminate\Foundation\Http\FormRequest
-{
-}
+class ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods extends \Illuminate\Foundation\Http\FormRequest {}
