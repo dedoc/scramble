@@ -18,7 +18,7 @@ class SamplePostModel extends Model
         'read_time' => 'int',
         'status' => Status::class,
         'settings' => 'array',
-        'another_date' => 'datetime',
+        'approved_at' => 'datetime',
     ];
 
     public function getReadTimeAttribute()

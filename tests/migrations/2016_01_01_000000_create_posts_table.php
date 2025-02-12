@@ -20,8 +20,8 @@ class CreatePostsTable extends Migration
             $table->string('title');
             $table->json('settings')->nullable();
             $table->text('body');
+            $table->dateTime('approved_at')->nullable();
             $table->timestamps();
-            $table->dateTime('another_date');
         });
     }
 

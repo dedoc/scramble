@@ -30,11 +30,11 @@ it('adds models attributes to the model class definition as properties', functio
         'title' => 'string',
         'settings' => 'array<mixed>|null',
         'body' => 'string',
+        'approved_at' => 'Carbon\Carbon|null',
         'created_at' => 'Carbon\Carbon|null',
         'updated_at' => 'Carbon\Carbon|null',
         /* Appended attributes */
         'read_time' => 'unknown',
-        'another_date' => 'Carbon\Carbon',
         /* Relations */
         'user' => 'SampleUserModel',
         'parent' => 'SamplePostModel',
