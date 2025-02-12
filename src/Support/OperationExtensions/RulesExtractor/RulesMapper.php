@@ -219,4 +219,17 @@ class RulesMapper
 
         return $type->format('uri');
     }
+
+    public function date(Type $type, $params)
+    {
+        if ($type instanceof UnknownType) {
+            $type = $this->string($type);
+        }
+
+        if ($params[0] ?? '' === 'Y-m-d') {
+            return $type->format('date');
+        }
+
+        return $type->format('date-time');
+    }
 }
