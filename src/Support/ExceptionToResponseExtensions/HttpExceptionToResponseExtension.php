@@ -50,7 +50,7 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
             ? ($type->templateTypes[7] ?? null)
             : ($type->templateTypes[0] ?? null);
 
-        $responseCode = $this->parseResponseCode($codeType, $type);
+        $responseCode = $this->getResponseCode($codeType, $type);
         if ($responseCode === null) {
             return null;
         }
@@ -71,14 +71,14 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
             ->setRequired(['message']);
 
         return Response::make($responseCode)
-            ->description($this->parseDescription($type))
+            ->description($this->getDescription($type))
             ->setContent(
                 'application/json',
                 Schema::fromType($responseBodyType)
             );
     }
 
-    protected function parseResponseCode(?Type $codeType, Type $type): ?int
+    protected function getResponseCode(?Type $codeType, Type $type): ?int
     {
         if (! $codeType instanceof LiteralIntegerType) {
             return match (true) {
@@ -97,36 +97,33 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
                 $type->isInstanceOf(UnauthorizedHttpException::class) => 401,
                 $type->isInstanceOf(UnprocessableEntityHttpException::class) => 422,
                 $type->isInstanceOf(UnsupportedMediaTypeHttpException::class) => 415,
-
-                default => 500,
+                default => null,
             };
         }
 
         return $codeType->value;
     }
 
-    protected function parseDescription(Type $type): string
+    protected function getDescription(Type $type): string
     {
-
         return match (true) {
-            $type->isInstanceOf(AccessDeniedHttpException::class) => 'Access Denied',
-            $type->isInstanceOf(BadRequestHttpException::class) => 'Bad Request',
+            $type->isInstanceOf(AccessDeniedHttpException::class) => 'Access denied',
+            $type->isInstanceOf(BadRequestHttpException::class) => 'Bad request',
             $type->isInstanceOf(ConflictHttpException::class) => 'Conflict',
             $type->isInstanceOf(GoneHttpException::class) => 'Gone',
-            $type->isInstanceOf(LengthRequiredHttpException::class) => 'Length Required',
+            $type->isInstanceOf(LengthRequiredHttpException::class) => 'Length required',
             $type->isInstanceOf(LockedHttpException::class) => 'Locked',
-            $type->isInstanceOf(MethodNotAllowedHttpException::class) => 'Method Not Allowed',
-            $type->isInstanceOf(NotAcceptableHttpException::class) => 'Not Acceptable',
-            $type->isInstanceOf(NotFoundHttpException::class) => 'Not Found',
-            $type->isInstanceOf(PreconditionFailedHttpException::class) => 'Precondition Failed',
-            $type->isInstanceOf(PreconditionRequiredHttpException::class) => 'Precondition Required',
-            $type->isInstanceOf(ServiceUnavailableHttpException::class) => 'Service Unavailable',
-            $type->isInstanceOf(TooManyRequestsHttpException::class) => 'Too Many Requests',
+            $type->isInstanceOf(MethodNotAllowedHttpException::class) => 'Method not allowed',
+            $type->isInstanceOf(NotAcceptableHttpException::class) => 'Not acceptable',
+            $type->isInstanceOf(NotFoundHttpException::class) => 'Not found',
+            $type->isInstanceOf(PreconditionFailedHttpException::class) => 'Precondition failed',
+            $type->isInstanceOf(PreconditionRequiredHttpException::class) => 'Precondition required',
+            $type->isInstanceOf(ServiceUnavailableHttpException::class) => 'Service unavailable',
+            $type->isInstanceOf(TooManyRequestsHttpException::class) => 'Too many requests',
             $type->isInstanceOf(UnauthorizedHttpException::class) => 'Unauthorized',
-            $type->isInstanceOf(UnprocessableEntityHttpException::class) => 'Unprocessable Entity',
-            $type->isInstanceOf(UnsupportedMediaTypeHttpException::class) => 'Unsupported Media Type',
-
-            default => 'An Error',
+            $type->isInstanceOf(UnprocessableEntityHttpException::class) => 'Unprocessable entity',
+            $type->isInstanceOf(UnsupportedMediaTypeHttpException::class) => 'Unsupported media type',
+            default => 'An error',
         };
     }
 }
