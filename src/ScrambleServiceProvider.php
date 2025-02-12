@@ -206,15 +206,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             Scramble::configure()->expose(false);
         }
 
-        $this->app->booted(function (Application $app) {
-            Scramble::configure()
-                ->withParametersExtractors(function (ParametersExtractors $parametersExtractors) {
-                    $parametersExtractors->append([
-                        MethodCallsParametersExtractor::class,
-                        AttributesParametersExtractor::class,
-                    ]);
-                });
-
+        $this->app->booted(function () {
             $this->registerRoutes();
         });
     }

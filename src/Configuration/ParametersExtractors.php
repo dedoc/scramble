@@ -2,7 +2,9 @@
 
 namespace Dedoc\Scramble\Configuration;
 
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\AttributesParametersExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\FormRequestParametersExtractor;
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\MethodCallsParametersExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\PathParametersExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\ValidateCallParametersExtractor;
 use Illuminate\Support\Arr;
@@ -50,10 +52,16 @@ class ParametersExtractors
             ValidateCallParametersExtractor::class,
         ];
 
+        $defaultAppends = [
+            MethodCallsParametersExtractor::class,
+            AttributesParametersExtractor::class,
+        ];
+
         return array_values(array_unique([
             ...$this->prepends,
             ...$base,
             ...$this->appends,
+            ...$defaultAppends,
         ]));
     }
 }
