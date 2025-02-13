@@ -6,7 +6,7 @@ use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
+use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -34,7 +34,7 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
             return $responsableResponse;
         }
 
-        if (! $type->templateTypes[1] instanceof LiteralIntegerType) {
+        if (! $type->templateTypes[1] instanceof IntegerType) {
             return null;
         }
 
