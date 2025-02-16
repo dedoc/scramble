@@ -4,19 +4,22 @@ namespace Dedoc\Scramble\Support\Generator;
 
 class Response
 {
-    public ?int $code = null;
+    public int|string|null $code = null;
 
     /** @var array<string, Schema|Reference|null> */
     public array $content;
 
+    /** @var array<string, Schema|Reference|null> */
+    public array $headers = [];
+
     public string $description = '';
 
-    public function __construct(?int $code)
+    public function __construct(int|string|null $code)
     {
         $this->code = $code;
     }
 
-    public static function make(?int $code)
+    public static function make(int|string|null $code)
     {
         return new self($code);
     }
@@ -27,6 +30,16 @@ class Response
     public function setContent(string $type, $schema)
     {
         $this->content[$type] = $schema;
+
+        return $this;
+    }
+
+    /**
+     * @param  Schema|Reference|null  $schema
+     */
+    public function setHeaders(string $type, $schema)
+    {
+        $this->headers[$type] = $schema;
 
         return $this;
     }
@@ -43,6 +56,13 @@ class Response
                 $content[$mediaType] = $schema ? ['schema' => $schema->toArray()] : (object) [];
             }
             $result['content'] = $content;
+        }
+
+        if (isset($this->headers)) {
+            $headers = array_map(function ($schema) {
+                return $schema ? ['schema' => $schema->toArray()] : (object)[];
+            }, $this->headers);
+            $result['headers'] = $headers;
         }
 
         return $result;
