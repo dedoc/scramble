@@ -112,23 +112,30 @@ it('analyzes fluent setters called in constructor', function () {
 
     expect($type->toString())->toBe('Foo_ClassAnalyzerTest<int(42), string(baz)>');
 });
-class Foo_ClassAnalyzerTest {
+class Foo_ClassAnalyzerTest
+{
     public int $foo;
+
     public string $bar;
+
     public function __construct()
     {
         $this
             ->setFoo(42)
             ->setBar('baz');
     }
+
     public function setFoo($number)
     {
         $this->foo = $number;
+
         return $this;
     }
+
     public function setBar($string)
     {
         $this->bar = $string;
+
         return $this;
     }
 }
@@ -140,18 +147,23 @@ it('analyzes not fluent setters called in constructor', function () {
 
     expect($type->toString())->toBe('FooNotFluent_ClassAnalyzerTest<int(42), string(baz)>');
 });
-class FooNotFluent_ClassAnalyzerTest {
+class FooNotFluent_ClassAnalyzerTest
+{
     public int $foo;
+
     public string $bar;
+
     public function __construct()
     {
         $this->setFoo(42);
         $this->setBar('baz');
     }
+
     public function setFoo($number)
     {
         $this->foo = $number;
     }
+
     public function setBar($string)
     {
         $this->bar = $string;
