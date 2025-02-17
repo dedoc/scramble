@@ -815,13 +815,22 @@ class ReferenceTypeResolver
                 continue;
             }
 
-            $type = $this->getFunctionCallResult($methodDefinition, $se->arguments, $type, new MethodCallEvent(
+            $event = new MethodCallEvent(
                 instance: $type,
                 name: $se->methodName,
                 scope: $scope,
                 arguments: $se->arguments,
                 methodDefiningClassName: $type->name,
-            ));
+            );
+
+            foreach ($methodDefinition->sideEffects as $sideEffect) {
+                if (
+                    $sideEffect instanceof SelfTemplateDefinition
+                    && $type instanceof Generic
+                ) {
+                    $sideEffect->apply($type, $event);
+                }
+            }
         }
 
         return $type;
