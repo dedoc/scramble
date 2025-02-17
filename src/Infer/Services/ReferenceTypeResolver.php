@@ -545,10 +545,6 @@ class ReferenceTypeResolver
                 ->map(fn (TemplateType $t) => $inferredTemplates->get($t->name, new UnknownType))
                 ->toArray(),
         );
-//        dd(
-//            $type,
-//            $this->getMethodCallsSideEffectIntroducedTypesInConstructor($type, $scope, $classDefinition, $constructorDefinition)
-//        );
 
         return $this->getMethodCallsSideEffectIntroducedTypesInConstructor($type, $scope, $classDefinition, $constructorDefinition);
     }
