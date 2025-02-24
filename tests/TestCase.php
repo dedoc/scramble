@@ -28,6 +28,16 @@ class TestCase extends Orchestra
         );
     }
 
+    protected function getScrambleRoutes()
+    {
+        $routes = \Illuminate\Support\Facades\Route::getRoutes()->getRoutes();
+
+        return array_values(array_filter(
+            $routes,
+            fn ($r) => ! $r->named('storage.local'),
+        ));
+    }
+
     protected function tearDown(): void
     {
         Context::reset();

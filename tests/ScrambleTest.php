@@ -33,7 +33,7 @@ class ScrambleTest extends TestCase
     /** @test */
     public function caches_routes_when_closure_resolver_set()
     {
-        $this->assertCount(2, $routes = Route::getRoutes()->getRoutes());
+        $this->assertCount(2, $routes = $this->getScrambleRoutes());
 
         $this->assertRoutesAreCacheable($routes);
     }
@@ -41,7 +41,7 @@ class ScrambleTest extends TestCase
     /** @test */
     public function caches_default_routes()
     {
-        $this->assertCount(2, $routes = Route::getRoutes()->getRoutes());
+        $this->assertCount(2, $routes = $this->getScrambleRoutes());
 
         $this->assertRoutesAreCacheable($routes);
     }
@@ -55,7 +55,7 @@ class ScrambleTest extends TestCase
     /** @test */
     public function registers_routes_for_default_api()
     {
-        expect($routes = Route::getRoutes()->getRoutes())
+        expect($routes = $this->getScrambleRoutes())
             ->toHaveCount(2)
             ->and($routes[0]->uri)->toBe('docs/api')
             ->and($routes[0]->methods)->toBe(['GET', 'HEAD'])
