@@ -54,7 +54,7 @@ jobs:
       - name: Install dependencies
         run: |
           composer config --no-plugins allow-plugins.pestphp/pest-plugin true
-          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.phpdoc-parser }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
+          composer require "laravel/framework:${{ matrix.laravel }}" "phpstan/phpdoc-parser:${{ matrix.phpdoc-parser }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
           composer update --${{ matrix.stability }} --prefer-dist --no-interaction
 
       - name: Execute tests
