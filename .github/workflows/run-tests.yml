@@ -18,7 +18,7 @@ jobs:
         os: [ubuntu-latest]
         php: [8.1, 8.2]
         laravel: ['10.*', '11.*', '12.*']
-        phpdoc-parser: ['1.*', '2.*', '8.2', '8.3', '8.4']
+        phpdoc-parser: ['1.*', '2.*']
         stability: [prefer-lowest, prefer-stable]
         include:
           - laravel: 10.*
