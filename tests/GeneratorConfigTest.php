@@ -39,7 +39,7 @@ class GeneratorConfigTest extends TestCase
         /** @var RouteCollectionInterface $routes */
         $routes = app()->get(Router::class)->getRoutes();
 
-        $this->assertCount(2, $routes->getRoutes());
+        $this->assertCount(2, $this->getScrambleRoutes());
 
         $this->assertNotNull($routes->getByName('scramble.docs.ui'));
         $this->assertNotNull($routes->getByName('scramble.docs.document'));
@@ -49,29 +49,27 @@ class GeneratorConfigTest extends TestCase
     #[WithProviders([DisablesExposedRoutes_GeneratorConfigTest::class])]
     public function allows_disabling_routes_with_expose()
     {
-        /** @var RouteCollectionInterface $routes */
-        $routes = app()->get(Router::class)->getRoutes();
+        $routes = $this->getScrambleRoutes();
 
-        $this->assertCount(0, $routes->getRoutes());
+        $this->assertCount(0, $routes);
     }
 
     /** @test */
     #[WithProviders([RegistersCustomRoutesForDefault_GeneratorConfigTest::class])]
     public function allows_exposing_default_documentation_with_custom_routes()
     {
-        /** @var RouteCollectionInterface $routes */
-        $routes = app()->get(Router::class)->getRoutes();
+        $routes = $this->getScrambleRoutes();
 
-        $this->assertCount(2, $routes->getRoutes());
+        $this->assertCount(2, $routes);
 
         /** @var Route|null $uiRoute */
-        $uiRoute = collect($routes->getRoutes())->firstWhere('uri', 'documentation');
+        $uiRoute = collect($routes)->firstWhere('uri', 'documentation');
 
         $this->assertNotNull($uiRoute);
         $this->assertEquals('GET', $uiRoute->methods()[0]);
 
         /** @var Route|null $documentRoute */
-        $documentRoute = collect($routes->getRoutes())->firstWhere('uri', 'openapi.json');
+        $documentRoute = collect($routes)->firstWhere('uri', 'openapi.json');
 
         $this->assertNotNull($documentRoute);
         $this->assertEquals('GET', $documentRoute->methods()[0]);
@@ -81,25 +79,21 @@ class GeneratorConfigTest extends TestCase
     #[WithProviders([RegistersNotExposedApi_GeneratorConfigTest::class])]
     public function registered_api_isnt_exposed_by_default()
     {
-        /** @var RouteCollectionInterface $routes */
-        $routes = app()->get(Router::class)->getRoutes();
-
-        $this->assertCount(0, $routes->getRoutes());
+        $this->assertCount(0, $this->getScrambleRoutes());
     }
 
     /** @test */
     #[WithProviders([RegistersExposedApi_GeneratorConfigTest::class])]
     public function registered_api_exposed_explicitly()
     {
-        /** @var RouteCollectionInterface $routes */
-        $routes = app()->get(Router::class)->getRoutes();
+        $routes = $this->getScrambleRoutes();
 
-        $this->assertCount(2, $routes->getRoutes());
+        $this->assertCount(2, $routes);
         $this->assertNotNull(
-            collect($routes->getRoutes())->firstWhere('uri', 'docs/v2')
+            collect($routes)->firstWhere('uri', 'docs/v2')
         );
         $this->assertNotNull(
-            collect($routes->getRoutes())->firstWhere('uri', 'docs/v2/openapi.json')
+            collect($routes)->firstWhere('uri', 'docs/v2/openapi.json')
         );
     }
 
