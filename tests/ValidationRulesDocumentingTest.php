@@ -414,7 +414,7 @@ it('documents date rule', function () {
 
 it('documents date rule with Y-m-d format', function () {
     $rules = [
-        'some_date' => 'date:Y-m-d',
+        'some_date' => 'date_format:Y-m-d',
     ];
 
     $params = ($this->buildRulesToParameters)($rules)->handle();
