@@ -235,14 +235,6 @@ class RulesMapper
 
     public function date_format(Type $type, $params)
     {
-        if ($type instanceof UnknownType) {
-            $type = $this->string($type);
-        }
-
-        if ($params[0] ?? '' === 'Y-m-d') {
-            return $type->format('date');
-        }
-
-        return $type->format('date-time');
+        return $this->date($type, $params);
     }
 }
