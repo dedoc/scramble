@@ -414,6 +414,20 @@ it('documents date rule', function () {
 
 it('documents date rule with Y-m-d format', function () {
     $rules = [
+        'some_date' => 'date:Y-m-d',
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params = collect($params)->all())
+        ->toHaveCount(1)
+        ->and($params[0]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toHaveProperty('format', 'date');
+});
+
+it('documents date_format rule with Y-m-d format', function () {
+    $rules = [
         'some_date' => 'date_format:Y-m-d',
     ];
 
