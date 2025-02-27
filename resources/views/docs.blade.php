@@ -54,6 +54,7 @@
     tryItCredentialsPolicy="{{ $config->get('ui.try_it_credentials_policy', 'include') }}"
     router="hash"
     @if($config->get('ui.hide_try_it')) hideTryIt="true" @endif
+    @if($config->get('ui.hide_schemas')) hideSchemas="true" @endif
     logo="{{ $config->get('ui.logo') }}"
 />
 <script>
