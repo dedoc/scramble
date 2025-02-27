@@ -233,7 +233,7 @@ class RulesMapper
         return $type->format('date-time');
     }
 
-    public function date(Type $type, $params)
+    public function date_format(Type $type, $params)
     {
         if ($type instanceof UnknownType) {
             $type = $this->string($type);
