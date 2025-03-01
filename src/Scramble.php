@@ -14,6 +14,7 @@ use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 class Scramble
@@ -148,6 +149,10 @@ class Scramble
     public static function registerUiRoute(string $path, string $api = 'default'): Route
     {
         $config = static::getGeneratorConfig($api);
+
+        if (Context::hasHidden('scramble-all-access')) {
+            $config->set('ignore_exclude_attributes', true);
+        }
 
         return RouteFacade::get($path, function (Generator $generator) use ($api) {
             $config = static::getGeneratorConfig($api);
