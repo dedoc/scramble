@@ -169,6 +169,10 @@ class Scramble
     {
         $config = static::getGeneratorConfig($api);
 
+        if (Context::hasHidden('scramble-all-access')) {
+            $config->set('ignore_exclude_attributes', true);
+        }
+
         return RouteFacade::get($path, function (Generator $generator) use ($api) {
             $config = static::getGeneratorConfig($api);
 
