@@ -398,6 +398,17 @@ it('documents nullable uri rule', function () {
         ->toHaveProperty('nullable', true);
 });
 
+it('documents required enum rule', function () {
+    $rules = [
+        'pizza.status' => ['required',  Rule::enum(StatusValidationEnum::class)],
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params[0]->schema->type->required)
+        ->toBe(['status']);
+});
+
 it('documents date rule', function () {
     $rules = [
         'some_date' => 'date',

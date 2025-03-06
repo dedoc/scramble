@@ -60,7 +60,7 @@ class DeepParametersMerger
                     $this->setDeepType(
                         $baseParam->schema->type,
                         $param->name,
-                        $this->extractTypeFromParameter($param),
+                        $param,
                     );
                 }
 
@@ -72,8 +72,10 @@ class DeepParametersMerger
             ->merge($nested);
     }
 
-    private function setDeepType(Type &$base, string $key, Type $typeToSet)
+    private function setDeepType(Type &$base, string $key, Parameter $parameter)
     {
+        $typeToSet = $this->extractTypeFromParameter($parameter);
+
         $containingType = $this->getOrCreateDeepTypeContainer(
             $base,
             collect(explode('.', $key))->splice(1)->values()->all(),
@@ -105,7 +107,7 @@ class DeepParametersMerger
         if (! $isSettingArrayItems && $containingType instanceof ObjectType) {
             $containingType
                 ->addProperty($settingKey, $typeToSet)
-                ->addRequired($typeToSet->getAttribute('required') ? [$settingKey] : []);
+                ->addRequired($parameter->required ? [$settingKey] : []);
         }
     }
 
