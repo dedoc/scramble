@@ -33,6 +33,7 @@ class RequestBodyExtension extends OperationExtension
         /*
          * Making sure to analyze the route.
          * @todo rename the method
+         * @todo if this methods returns null, make sure to notify users about this.
          */
         $routeInfo->getMethodType();
 
@@ -44,7 +45,7 @@ class RequestBodyExtension extends OperationExtension
             if (Scramble::shouldThrowOnError()) {
                 throw $exception;
             }
-            $description = $description->append('⚠️Cannot generate request documentation: '.$exception->getMessage());
+            $description = $description->append('⚠️ Cannot generate request documentation: '.$exception->getMessage());
         }
 
         $operation
