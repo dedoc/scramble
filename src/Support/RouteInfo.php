@@ -111,12 +111,10 @@ class RouteInfo
             $def = $this->infer->analyzeClass($this->className());
 
             /*
-             * Here the final resolution of the method types may happen.
-             *
              * Sometimes method type may be null if route registered method name has the casing that
-             * is different from the method name in the controller.
+             * is different from the method name in the controller hence reflection is used here.
              */
-            $this->methodType = $def->getMethodDefinition($this->methodName(), indexBuilders: [
+            $this->methodType = $def->getMethodDefinition($this->reflectionMethod()->getName(), indexBuilders: [
                 new RequestParametersBuilder($this->requestParametersFromCalls, $this->typeTransformer),
                 ...$this->indexBuildingBroker->indexBuilders,
             ])?->type;

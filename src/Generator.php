@@ -25,6 +25,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use ReflectionException;
+use ReflectionMethod;
 use Throwable;
 
 class Generator
@@ -167,7 +169,7 @@ class Generator
                     }
 
                     try {
-                        $reflection = new \ReflectionMethod(...explode('@', $route->getAction('uses')));
+                        $reflection = new ReflectionMethod(...explode('@', $route->getAction('uses')));
 
                         if (str_contains($reflection->getDocComment() ?: '', '@only-docs')) {
                             return true;
@@ -191,21 +193,21 @@ class Generator
                 }
 
                 try {
-                    $classReflection = new \ReflectionClass(explode('@', $route->getAction('uses'))[0]);
-
-                    if (count($classReflection->getAttributes(ExcludeAllRoutesFromDocs::class))) {
-                        return false;
-                    }
-                } catch (Throwable) {
+                    $reflection = new ReflectionMethod(...explode('@', $route->getAction('uses')));
+                } catch (ReflectionException) {
+                    /*
+                     * If route is registered but route method doesn't exist, it will not be included
+                     * in the resulting documentation.
+                     */
+                    return false;
                 }
 
-                try {
-                    $reflection = new \ReflectionMethod(...explode('@', $route->getAction('uses')));
+                if (count($reflection->getAttributes(ExcludeRouteFromDocs::class))) {
+                    return false;
+                }
 
-                    if (count($reflection->getAttributes(ExcludeRouteFromDocs::class))) {
-                        return false;
-                    }
-                } catch (Throwable) {
+                if (count($reflection->getDeclaringClass()->getAttributes(ExcludeAllRoutesFromDocs::class))) {
+                    return false;
                 }
 
                 return true;

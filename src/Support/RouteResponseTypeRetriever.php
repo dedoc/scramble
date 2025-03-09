@@ -76,12 +76,12 @@ class RouteResponseTypeRetriever
 
     private function getInferredType()
     {
-        if (! $this->routeInfo->getMethodType()) {
+        if (! $methodType = $this->routeInfo->getMethodType()) {
             return null;
         }
 
         return (new ObjectType($this->routeInfo->className()))
-            ->getMethodReturnType($this->routeInfo->methodName());
+            ->getMethodReturnType($methodType->name);
     }
 
     private function getMethodPhpDocReturnType()
