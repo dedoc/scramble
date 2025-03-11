@@ -88,5 +88,7 @@ return [
         RestrictedDocsAccess::class,
     ],
 
+    'guard' => 'web',
+
     'extensions' => [],
 ];

@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Http\Middleware;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 class RestrictedDocsAccess
@@ -12,7 +13,8 @@ class RestrictedDocsAccess
             return $next($request);
         }
 
-        if (Gate::allows('viewApiDocs')) {
+        $user = Auth::guard(config('scramble.guard'))->user();
+        if (Gate::forUser($user)->allows('viewApiDocs')) {
             return $next($request);
         }
 
