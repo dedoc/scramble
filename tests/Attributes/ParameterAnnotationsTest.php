@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Tests\Attributes;
 
+use Dedoc\Scramble\Attributes\BodyParameter;
 use Dedoc\Scramble\Attributes\Example;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\Parameter;
@@ -9,6 +10,30 @@ use Dedoc\Scramble\Attributes\PathParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
+
+it('body parameters attaches info to inferred params', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->post('api/test', BodyParameterController_ParameterAnnotationsTest::class));
+
+    expect($openApi['paths']['/test']['post']['parameters'][0])
+        ->toBe([
+            'name' => 'per_page',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'integer',
+                'default' => 15,
+            ],
+        ]);
+});
+class BodyParameterController_ParameterAnnotationsTest
+{
+    #[BodyParameter('name', 'The name of the company')]
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            'name' => ['required', 'string'],
+        ]);
+    }
+}
 
 it('retrieves parameters from Parameter annotations', function () {
     $openApi = generateForRoute(fn (Router $r) => $r->get('api/test', ParameterController_ParameterAnnotationsTest::class));
