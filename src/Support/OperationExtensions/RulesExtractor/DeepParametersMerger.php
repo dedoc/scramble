@@ -8,7 +8,6 @@ use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -76,7 +75,7 @@ class DeepParametersMerger
         $containingType = $this->getOrCreateDeepTypeContainer(
             $base,
             (explode('.', $key)[0] ?? '') === '*'
-                ?  explode('.', $key)
+                ? explode('.', $key)
                 : collect(explode('.', $key))
                     ->splice(1)
                     ->values()
