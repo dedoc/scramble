@@ -47,11 +47,7 @@ class DeepParametersMerger
                 $baseParam = $params->get(
                     $groupName,
                     Parameter::make($groupName, $params->first()->in)
-                        ->setSchema(Schema::fromType(
-                            $params->keys()->contains(fn ($k) => Str::contains($k, "$groupName.*"))
-                                ? new ArrayType
-                                : new ObjectType
-                        ))
+                        ->setSchema(Schema::fromType(new ObjectType))
                 );
 
                 $params->offsetUnset($groupName);
@@ -78,7 +74,12 @@ class DeepParametersMerger
 
         $containingType = $this->getOrCreateDeepTypeContainer(
             $base,
-            collect(explode('.', $key))->splice(1)->values()->all(),
+            (explode('.', $key)[0] ?? '') === '*'
+                ? explode('.', $key)
+                : collect(explode('.', $key))
+                    ->splice(1)
+                    ->values()
+                    ->all(),
         );
 
         if (! $containingType) {

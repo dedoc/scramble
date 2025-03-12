@@ -409,6 +409,34 @@ it('documents required enum rule', function () {
         ->toBe(['status']);
 });
 
+it('documents root arrays', function () {
+    $rules = [
+        '*.parentId' => 'required|string',
+        '*.childId' => 'string',
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect(($type = $params[0]->schema->type->toArray()))
+        ->toBe([
+            'type' => 'array',
+            'items' => [
+                'type' => 'object',
+                'properties' => [
+                    'parentId' => [
+                        'type' => 'string',
+                    ],
+                    'childId' => [
+                        'type' => 'string',
+                    ],
+                ],
+                'required' => [
+                    'parentId',
+                ],
+            ],
+        ]);
+});
+
 it('documents date rule', function () {
     $rules = [
         'some_date' => 'date',
