@@ -78,7 +78,12 @@ class DeepParametersMerger
 
         $containingType = $this->getOrCreateDeepTypeContainer(
             $base,
-            collect(explode('.', $key))->splice(1)->values()->all(),
+            (explode('.', $key)[0] ?? '') === '*'
+                ?  explode('.', $key)
+                : collect(explode('.', $key))
+                    ->splice(1)
+                    ->values()
+                    ->all(),
         );
 
         if (! $containingType) {
