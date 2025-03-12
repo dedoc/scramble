@@ -8,6 +8,7 @@ use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -47,11 +48,7 @@ class DeepParametersMerger
                 $baseParam = $params->get(
                     $groupName,
                     Parameter::make($groupName, $params->first()->in)
-                        ->setSchema(Schema::fromType(
-                            $params->keys()->contains(fn ($k) => Str::contains($k, "$groupName.*"))
-                                ? new ArrayType
-                                : new ObjectType
-                        ))
+                        ->setSchema(Schema::fromType(new ObjectType))
                 );
 
                 $params->offsetUnset($groupName);
