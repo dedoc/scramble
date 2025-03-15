@@ -220,9 +220,7 @@ it('analyzes call on typed properties', function () {
 
 class InjectedProperty_ClassAnalyzerTest
 {
-    public function __construct(private FooProperty_ClassAnalyzerTest $fooProp)
-    {
-    }
+    public function __construct(private FooProperty_ClassAnalyzerTest $fooProp) {}
 
     public function bar()
     {
