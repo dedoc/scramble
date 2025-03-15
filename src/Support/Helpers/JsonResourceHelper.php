@@ -50,7 +50,7 @@ class JsonResourceHelper
             ->first(fn ($str) => Str::is(['*@property*$resource', '*@mixin*'], $str));
 
         if ($mixinOrPropertyLine) {
-            $modelName = Str::replace(['@property', '$resource', '@mixin', ' ', '*'], '', $mixinOrPropertyLine);
+            $modelName = Str::replace(['@property', '$resource', '@mixin', ' ', '*', "\r"], '', $mixinOrPropertyLine);
 
             $modelClass = $getFqName($modelName);
 
@@ -62,10 +62,17 @@ class JsonResourceHelper
         $modelName = (string) Str::of(Str::of($jsonResourceClassName)->explode('\\')->last())->replace('Resource', '')->singular();
 
         $modelClass = 'App\\Models\\'.$modelName;
-        if (! class_exists($modelClass)) {
-            return null;
+        if (class_exists($modelClass)) {
+            return $modelClass;
+        }
+		
+		$modelName = (string) Str::of(Str::of(Str::beforeLast($jsonResourceClassName,'Resource'))->explode('\\')->last())->replace('Resource', '');
+
+        $modelClass = 'App\\Models\\'.$modelName;
+        if (class_exists($modelClass)) {
+            return $modelClass;
         }
 
-        return $modelClass;
+        return null;
     }
 }
