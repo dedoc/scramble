@@ -209,3 +209,28 @@ class ConstFetchStaticCallFoo_ClassAnalyzerTest
         return 42;
     }
 }
+
+it('analyzes call on typed properties', function () {
+    $this->classAnalyzer->analyze(InjectedProperty_ClassAnalyzerTest::class);
+
+    $type = getStatementType('(new InjectedProperty_ClassAnalyzerTest)->bar()');
+
+    expect($type->toString())->toBe('int(42)');
+});
+
+class InjectedProperty_ClassAnalyzerTest
+{
+    public function __construct(private FooProperty_ClassAnalyzerTest $fooProp) {}
+
+    public function bar()
+    {
+        return $this->fooProp->foo();
+    }
+}
+class FooProperty_ClassAnalyzerTest
+{
+    public function foo()
+    {
+        return 42;
+    }
+}

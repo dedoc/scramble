@@ -283,6 +283,13 @@ class ReferenceTypeResolver
             if ($event && $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType($event)) {
                 return $returnType;
             }
+
+            if ($unwrappedType instanceof ObjectType) {
+                $calleeType = $unwrappedType;
+
+                $this->resolveUnknownClass($calleeType->name);
+            }
+
         }
 
         // (#TName).listTableDetails()

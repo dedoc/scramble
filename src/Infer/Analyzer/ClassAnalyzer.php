@@ -87,7 +87,10 @@ class ClassAnalyzer
                 );
             } else {
                 $classDefinition->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
-                    type: $t = new TemplateType('T'.Str::studly($reflectionProperty->name)),
+                    type: $t = new TemplateType(
+                        'T'.Str::studly($reflectionProperty->name),
+                        is: $reflectionProperty->hasType() ? TypeHelper::createTypeFromReflectionType($reflectionProperty->getType()) : new UnknownType,
+                    ),
                     defaultType: $reflectionProperty->hasDefaultValue()
                         ? TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue())
                         : null,
