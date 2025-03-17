@@ -88,7 +88,12 @@ class ReferenceTypeResolver
         }
 
         $annotatedTypeCanAcceptAnyInferredType = collect($types)
-            ->some(fn (Type $t) => $annotatedReturnType->accepts($t));
+            ->some(function (Type $t) use ($annotatedReturnType) {
+                if ($annotatedReturnType->accepts($t)) {
+                    return true;
+                }
+                return $t->acceptedBy($annotatedReturnType);
+            });
 
         if (! $annotatedTypeCanAcceptAnyInferredType) {
             $types = [$annotatedReturnType];

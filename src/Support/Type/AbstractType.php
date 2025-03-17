@@ -22,6 +22,11 @@ abstract class AbstractType implements Type
 
     public function accepts(Type $otherType): bool
     {
+        return is_a($otherType::class, $this::class, true);
+    }
+
+    public function acceptedBy(Type $otherType): bool
+    {
         return is_a($this::class, $otherType::class, true);
     }
 
