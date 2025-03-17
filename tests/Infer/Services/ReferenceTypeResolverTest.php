@@ -123,7 +123,8 @@ EOD)->getExpressionType("Foo::foo(...['a' => 'wow'])");
 it('allows overriding types accepted by another type', function () {
     $functionType = new FunctionType(
         'wow',
-        returnType: $expectedReturnType = new class ('sample') extends ObjectType {
+        returnType: $expectedReturnType = new class('sample') extends ObjectType
+        {
             public function acceptedBy(Type $otherType): bool
             {
                 return $otherType instanceof StringType;
@@ -136,7 +137,7 @@ it('allows overriding types accepted by another type', function () {
     );
 
     (new ReferenceTypeResolver(new Index))->resolveFunctionReturnReferences(
-        new GlobalScope(),
+        new GlobalScope,
         $functionType,
     );
 

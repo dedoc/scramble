@@ -92,6 +92,7 @@ class ReferenceTypeResolver
                 if ($annotatedReturnType->accepts($t)) {
                     return true;
                 }
+
                 return $t->acceptedBy($annotatedReturnType);
             });
 
