@@ -18,6 +18,8 @@ interface Type
 
     public function accepts(Type $otherType): bool;
 
+    public function acceptedBy(Type $otherType): bool;
+
     public function nodes(): array;
 
     public function getPropertyType(string $propertyName, Scope $scope): Type;
