@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
 use Dedoc\Scramble\Support\RouteInfo;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Collection;
 
@@ -28,6 +29,19 @@ class ResponseExtension extends OperationExtension
 
         $responses = collect($returnTypes)
             ->merge(optional($routeInfo->getMethodType())->exceptions ?: [])
+            ->map(function (Type $type) use ($routeInfo) {
+                /*
+                 * Any inline comments on the entire response type that are not originating in the controller,
+                 * should not leak to the resulting documentation.
+                 */
+                $docSource = $type->getAttribute('docNode')?->getAttribute('sourceClass');
+
+                if ($docSource && ($docSource !== $routeInfo->className())) {
+                    $type->setAttribute('docNode', null);
+                }
+
+                return $type;
+            })
             ->map($this->openApiTransformer->toResponse(...))
             ->filter()
             ->unique(fn ($response) => ($response instanceof Response ? $response->code : 'ref').':'.json_encode($response->toArray()))
