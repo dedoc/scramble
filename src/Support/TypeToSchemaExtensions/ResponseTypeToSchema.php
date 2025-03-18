@@ -12,6 +12,7 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\ResourceResponse;
 
 class ResponseTypeToSchema extends TypeToSchemaExtension
 {
@@ -76,6 +77,9 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
         }
 
         $response->code = $responseStatusCode;
+        if (! $data->isInstanceOf(ResourceResponse::class)) {
+            $response->setContent('application/json', $this->openApiTransformer->transform($data));
+        }
 
         return $response;
     }
