@@ -119,7 +119,9 @@ class RulesToParameter
 
     private function getTypeFromStringRule(OpenApiType $type, string $rule)
     {
-        $rulesHandler = new RulesMapper($this->openApiTransformer);
+        $rulesHandler = app(RulesMapper::class, [
+            'typeTransformer' => $this->openApiTransformer,
+        ]);
 
         $explodedRule = explode(':', $rule, 2);
 
@@ -133,7 +135,9 @@ class RulesToParameter
 
     private function getTypeFromObjectRule(OpenApiType $type, $rule)
     {
-        $rulesHandler = new RulesMapper($this->openApiTransformer);
+        $rulesHandler = app(RulesMapper::class, [
+            'typeTransformer' => $this->openApiTransformer,
+        ]);
 
         $methodName = Str::camel(class_basename(get_class($rule)));
 

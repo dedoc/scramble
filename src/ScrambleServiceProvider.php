@@ -36,6 +36,7 @@ use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesMapper;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
@@ -181,6 +182,10 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     HttpExceptionToResponseExtension::class,
                 ], $exceptionToResponseExtensions),
             );
+        });
+
+        $this->app->singleton(RulesMapper::class, function (Application $application, array $parameters): RulesMapper {
+            return new RulesMapper($parameters['typeTransformer']);
         });
     }
 
