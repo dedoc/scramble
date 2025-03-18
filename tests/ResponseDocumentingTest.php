@@ -212,3 +212,36 @@ class Foo_TestSeven
         return new Foo_TestSevenResource(unknown());
     }
 }
+
+test('does not wrap resources when resource is passed to json response explicitly', function () {
+    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', Foo_TestEight::class));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][200]['content']['application/json']['schema'])
+        ->toBe(['$ref' => '#/components/schemas/Foo_TestEightResource']);
+    expect($openApiDocument['components']['schemas']['Foo_TestEightResource'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => ['foo' => ['type' => 'string']],
+            'required' => ['foo'],
+            'title' => 'Foo_TestEightResource',
+        ]);
+});
+
+class Foo_TestEightResource extends \Illuminate\Http\Resources\Json\JsonResource
+{
+    public static $wrap = 'data';
+
+    public function toArray(\Illuminate\Http\Request $request)
+    {
+        return [
+            'foo' => $this->id,
+        ];
+    }
+}
+class Foo_TestEight
+{
+    public function __invoke()
+    {
+        return response()->json(new Foo_TestEightResource(unknown()));
+    }
+}
