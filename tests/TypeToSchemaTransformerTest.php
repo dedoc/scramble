@@ -89,6 +89,55 @@ it('gets enum with values type', function () {
     assertMatchesSnapshot($extension->toSchema($type)->toArray());
 });
 
+it('gets enum with values type and description', function () {
+    config()->set('scramble.enum_cases_description_strategy', 'description');
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [EnumToSchema::class]);
+    $extension = new EnumToSchema($infer, $transformer, $this->context->openApi->components);
+
+    $type = new ObjectType(StatusThree::class);
+
+    expect($extension->toSchema($type)->toArray()['description'])
+        ->toBe(<<<'EOF'
+| |
+|---|
+| `draft` <br/> Drafts are the posts that are not visible by visitors. |
+| `published` <br/> Published posts are visible to visitors. |
+| `archived` <br/> Archived posts are not visible to visitors. |
+EOF);
+});
+
+it('gets enum with values type and description with extensions', function () {
+    config()->set('scramble.enum_cases_description_strategy', 'extension');
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [EnumToSchema::class]);
+    $extension = new EnumToSchema($infer, $transformer, $this->context->openApi->components);
+
+    $type = new ObjectType(StatusThree::class);
+
+    expect($extension->toSchema($type)->toArray()['x-enumDescriptions'])
+        ->toBe([
+            'draft' => 'Drafts are the posts that are not visible by visitors.',
+            'published' => 'Published posts are visible to visitors.',
+            'archived' => 'Archived posts are not visible to visitors.',
+        ]);
+});
+
+it('gets enum with values type and description without cases', function () {
+    config()->set('scramble.enum_cases_description_strategy', false);
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [EnumToSchema::class]);
+    $extension = new EnumToSchema($infer, $transformer, $this->context->openApi->components);
+
+    $type = new ObjectType(StatusThree::class);
+
+    expect($extension->toSchema($type)->toArray())
+        ->toBe([
+            'type' => 'string',
+            'enum' => ['draft', 'published', 'archived'],
+        ]);
+});
+
 it('gets json resource type with nested merges', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
@@ -383,5 +432,21 @@ enum StatusTwo: string
 {
     case DRAFT = 'draft';
     case PUBLISHED = 'published';
+    case ARCHIVED = 'archived';
+}
+
+enum StatusThree: string
+{
+    /**
+     * Drafts are the posts that are not visible by visitors.
+     */
+    case DRAFT = 'draft';
+    /**
+     * Published posts are visible to visitors.
+     */
+    case PUBLISHED = 'published';
+    /**
+     * Archived posts are not visible to visitors.
+     */
     case ARCHIVED = 'archived';
 }
