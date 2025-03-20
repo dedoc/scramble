@@ -98,7 +98,7 @@ it('gets enum with values type and description', function () {
     $type = new ObjectType(StatusThree::class);
 
     expect($extension->toSchema($type)->toArray()['description'])
-        ->toBe(<<<EOF
+        ->toBe(<<<'EOF'
 | |
 |---|
 | `draft` <br/> Drafts are the posts that are not visible by visitors. |

@@ -88,6 +88,7 @@ return [
      * Available options:
      * - 'description' – Case descriptions are stored as the enum schema's description using table formatting.
      * - 'extension' – Case descriptions are stored in the `x-enumDescriptions` enum schema extension.
+     *
      *    @see https://redocly.com/docs-legacy/api-reference-docs/specification-extensions/x-enum-descriptions
      * - false - Case descriptions are ignored.
      */

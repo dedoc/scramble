@@ -4,8 +4,8 @@ namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
-use Dedoc\Scramble\Support\Generator\Types\IntegerType;
 use Dedoc\Scramble\Support\Generator\Types as OpenApi;
+use Dedoc\Scramble\Support\Generator\Types\IntegerType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\PhpDoc;
@@ -61,10 +61,10 @@ class EnumToSchema extends TypeToSchemaExtension
             ->map(function (ReflectionEnumUnitCase|ReflectionEnumBackedCase $case) {
                 $doc = PhpDoc::parse($case->getDocComment() ?: '/** */');
 
-                return trim(Str::replace("\n", " ", $doc->getAttribute('summary') . " " . $doc->getAttribute('description')));
+                return trim(Str::replace("\n", ' ', $doc->getAttribute('summary').' '.$doc->getAttribute('description')));
             });
 
-        if (! $cases->some(fn ($description) => !! $description)) {
+        if (! $cases->some(fn ($description) => (bool) $description)) {
             return;
         }
 
