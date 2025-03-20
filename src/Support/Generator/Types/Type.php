@@ -4,10 +4,12 @@ namespace Dedoc\Scramble\Support\Generator\Types;
 
 use Dedoc\Scramble\Support\Generator\MissingExample;
 use Dedoc\Scramble\Support\Generator\WithAttributes;
+use Dedoc\Scramble\Support\Generator\WithExtensions;
 
 abstract class Type
 {
     use WithAttributes;
+    use WithExtensions;
 
     public string $type;
 
@@ -99,6 +101,7 @@ abstract class Type
                     ->values()
                     ->toArray()
             ) ? ['examples' => $examples] : [],
+            $this->extensionPropertiesToArray(),
         );
     }
 
