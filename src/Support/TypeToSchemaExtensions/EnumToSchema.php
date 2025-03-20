@@ -52,7 +52,7 @@ class EnumToSchema extends TypeToSchemaExtension
         return ClassBasedReference::create('schemas', $type->name, $this->components);
     }
 
-    private function addEnumDescriptions(ObjectType $type, OpenApi\Type $schemaType): void
+    protected function addEnumDescriptions(ObjectType $type, OpenApi\Type $schemaType): void
     {
         $enumReflection = new ReflectionEnum($type->name);
 
@@ -83,7 +83,7 @@ class EnumToSchema extends TypeToSchemaExtension
         }
     }
 
-    private function handleDescriptionEnumStrategy(OpenApi\Type $schema, Collection $cases): void
+    protected function handleDescriptionEnumStrategy(OpenApi\Type $schema, Collection $cases): void
     {
         $description = $cases
             ->map(fn ($description, $value) => "| `{$value}` <br/> {$description} |")
@@ -94,7 +94,7 @@ class EnumToSchema extends TypeToSchemaExtension
         $schema->setDescription($description);
     }
 
-    private function handleExtensionEnumStrategy(OpenApi\Type $schema, Collection $cases): void
+    protected function handleExtensionEnumStrategy(OpenApi\Type $schema, Collection $cases): void
     {
         $schema->setExtensionProperty(
             'enumDescriptions',
