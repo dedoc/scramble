@@ -6,8 +6,8 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 
 trait GeneratesParametersFromRules
 {
-    private function makeParameters($node, $rules, TypeTransformer $typeTransformer)
+    private function makeParameters($node, $rules, TypeTransformer $typeTransformer, string $in = 'query')
     {
-        return (new RulesToParameters($rules, $node, $typeTransformer))->mergeDotNotatedKeys(false)->handle();
+        return (new RulesToParameters($rules, $node, $typeTransformer, $in))->mergeDotNotatedKeys(false)->handle();
     }
 }

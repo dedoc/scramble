@@ -69,7 +69,7 @@ class RequestBodyExtension extends OperationExtension
         }
 
         [$nonBodyParams, $bodyParams] = collect($allParams)
-            ->partition(fn (Parameter $p) => $p->getAttribute('isInQuery') || $p->getAttribute('nonBody'))
+            ->partition(fn (Parameter $p) => $p->in !== 'body' || $p->getAttribute('isInQuery') || $p->getAttribute('nonBody'))
             ->map->toArray();
 
         $operation->addParameters($this->convertDotNamedParamsToComplexStructures($nonBodyParams));
@@ -126,8 +126,12 @@ class RequestBodyExtension extends OperationExtension
     protected function makeSchemaFromResults(ParametersExtractionResult $result): Type
     {
         $requestBodySchema = Schema::createFromParameters(
-            $this->convertDotNamedParamsToComplexStructures($result->parameters),
+            $parameters = $this->convertDotNamedParamsToComplexStructures($result->parameters)
         );
+
+        if (count($parameters) === 1 && $parameters[0]?->name === '*') {
+            $requestBodySchema->type = $parameters[0]->schema->type;
+        }
 
         if (! $result->schemaName) {
             return $requestBodySchema->type;

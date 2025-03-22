@@ -10,19 +10,17 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RulesToParameters
 {
-    private array $rules;
-
     /** @var array<string, PhpDocNode> */
     private array $nodeDocs;
 
-    private TypeTransformer $openApiTransformer;
-
     private bool $mergeDotNotatedKeys = true;
 
-    public function __construct(array $rules, array $validationNodesResults, TypeTransformer $openApiTransformer)
-    {
-        $this->rules = $rules;
-        $this->openApiTransformer = $openApiTransformer;
+    public function __construct(
+        private array $rules,
+        array $validationNodesResults,
+        private TypeTransformer $openApiTransformer,
+        private string $in = 'query',
+    ) {
         $this->nodeDocs = $this->extractNodeDocs($validationNodesResults);
     }
 
@@ -37,7 +35,7 @@ class RulesToParameters
     {
         return collect($this->rules)
             ->pipe($this->handleConfirmed(...))
-            ->map(fn ($rules, $name) => (new RulesToParameter($name, $rules, $this->nodeDocs[$name] ?? null, $this->openApiTransformer))->generate())
+            ->map(fn ($rules, $name) => (new RulesToParameter($name, $rules, $this->nodeDocs[$name] ?? null, $this->openApiTransformer, $this->in))->generate())
             ->filter()
             ->pipe(fn ($c) => $this->mergeDotNotatedKeys ? collect((new DeepParametersMerger($c))->handle()) : $c)
             ->values()

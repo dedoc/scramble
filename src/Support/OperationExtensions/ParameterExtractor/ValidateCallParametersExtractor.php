@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\GeneratesParametersFromRules;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\RouteInfo;
@@ -49,6 +50,9 @@ class ValidateCallParametersExtractor implements ParameterExtractor
                 ),
                 rules: $this->rules($astNode, $validationRulesNode),
                 typeTransformer: $this->openApiTransformer,
+                in: in_array(mb_strtolower($routeInfo->route->methods()[0]), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
+                    ? 'query'
+                    : 'body',
             ),
             schemaName: $phpDocReflector->getSchemaName(),
             description: $phpDocReflector->getDescription(),
