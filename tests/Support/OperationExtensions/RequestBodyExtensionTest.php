@@ -98,6 +98,41 @@ class RequestBodyExtensionTest__automaticall_infers_form_data
     }
 }
 
+it('adds array body', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::post('api/test', RequestBodyExtensionTest__array_body::class);
+    });
+
+    expect($openApiDocument['paths']['/test']['post']['requestBody']['content']['application/json']['schema'])
+        ->toBe([
+            'type' => 'array',
+            'items' => [
+                'type' => 'object',
+                'properties' => [
+                    'foo' => [
+                        'type' => 'string',
+                    ],
+                    'bar' => [
+                        'type' => 'string',
+                    ],
+                ],
+                'required' => ['foo', 'bar'],
+            ]
+        ])
+        ->and($openApiDocument['paths']['/test']['post']['parameters'] ?? [])
+        ->toBeEmpty();
+});
+class RequestBodyExtensionTest__array_body
+{
+    public function __invoke(Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            '*.foo' => ['required', 'string'],
+            '*.bar' => ['required', 'string'],
+        ]);
+    }
+}
+
 it('automatically infers multipart/form-data as request media type when some of body params is binary on a deeper layers', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::post('api/test', [RequestBodyExtensionTest__automaticall_infers_form_data_from_deeper::class, 'index']);
