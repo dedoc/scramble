@@ -27,6 +27,7 @@ class RulesToParameter
         $rules,
         private ?PhpDocNode $docNode,
         private TypeTransformer $openApiTransformer,
+        private string $in = 'query',
     ) {
         $this->rules = Arr::wrap(is_string($rules) ? explode('|', $rules) : $rules);
     }
@@ -55,7 +56,7 @@ class RulesToParameter
         $description = $type->description;
         $type->setDescription('');
 
-        $parameter = Parameter::make($this->name, 'query')
+        $parameter = Parameter::make($this->name, $this->in)
             ->setSchema(Schema::fromType($type))
             ->required($rules->contains('required') && $rules->doesntContain('sometimes'))
             ->description($description);
@@ -99,6 +100,8 @@ class RulesToParameter
 
         if ($this->docNode->getTagsByName('@query')) {
             $parameter->setAttribute('isInQuery', true);
+
+            $parameter->in = 'query';
         }
 
         return $parameter;

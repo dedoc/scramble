@@ -69,7 +69,7 @@ class RequestBodyExtension extends OperationExtension
         }
 
         [$nonBodyParams, $bodyParams] = collect($allParams)
-            ->partition(fn (Parameter $p) => $p->getAttribute('isInQuery') || $p->getAttribute('nonBody'))
+            ->partition(fn (Parameter $p) => $p->in !== 'body' || $p->getAttribute('isInQuery') || $p->getAttribute('nonBody'))
             ->map->toArray();
 
         $operation->addParameters($this->convertDotNamedParamsToComplexStructures($nonBodyParams));

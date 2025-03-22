@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\GeneratesParametersFromRules;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\RouteInfo;
@@ -96,6 +97,9 @@ class FormRequestParametersExtractor implements ParameterExtractor
                 ),
                 rules: $this->rules($requestClassName, $routeInfo->route),
                 typeTransformer: $this->openApiTransformer,
+                in: in_array(mb_strtolower($routeInfo->route->methods()[0]), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
+                    ? 'query'
+                    : 'body',
             ),
             schemaName: $schemaName,
             description: $phpDocReflector->getDescription(),
