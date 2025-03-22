@@ -14,14 +14,16 @@ use Illuminate\Routing\Router;
 it('body parameters attaches info to inferred params', function () {
     $openApi = generateForRoute(fn (Router $r) => $r->post('api/test', BodyParameterController_ParameterAnnotationsTest::class));
 
-    expect($openApi['paths']['/test']['post']['parameters'][0])
+    expect($openApi['paths']['/test']['post']['requestBody']['content']['application/json']['schema'])
         ->toBe([
-            'name' => 'per_page',
-            'in' => 'query',
-            'schema' => [
-                'type' => 'integer',
-                'default' => 15,
+            'type' => 'object',
+            'properties' => [
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'The name of the company',
+                ],
             ],
+            'required' => ['name'],
         ]);
 });
 class BodyParameterController_ParameterAnnotationsTest
