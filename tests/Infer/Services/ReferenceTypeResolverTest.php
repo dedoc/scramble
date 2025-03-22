@@ -1,8 +1,13 @@
 <?php
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\Type;
 
 beforeEach(function () {
     $this->index = app(Index::class);
@@ -110,4 +115,34 @@ class Foo {
 EOD)->getExpressionType("Foo::foo(...['a' => 'wow'])");
 
     expect($type->toString())->toBe('string(wow)');
+});
+
+/*
+ * Ability to override accepted by type and track annotated types
+ */
+it('allows overriding types accepted by another type', function () {
+    $functionType = new FunctionType(
+        'wow',
+        returnType: $expectedReturnType = new class('sample') extends ObjectType
+        {
+            public function acceptedBy(Type $otherType): bool
+            {
+                return $otherType instanceof StringType;
+            }
+        },
+    );
+    $functionType->setAttribute(
+        'annotatedReturnType',
+        new StringType,
+    );
+
+    (new ReferenceTypeResolver(new Index))->resolveFunctionReturnReferences(
+        new GlobalScope,
+        $functionType,
+    );
+
+    expect($actualReturnType = $functionType->getReturnType())
+        ->toBeInstanceOf(ObjectType::class)
+        ->and($actualReturnType->name)
+        ->toBe($expectedReturnType->name);
 });

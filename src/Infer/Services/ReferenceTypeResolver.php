@@ -88,7 +88,13 @@ class ReferenceTypeResolver
         }
 
         $annotatedTypeCanAcceptAnyInferredType = collect($types)
-            ->some(fn (Type $t) => $annotatedReturnType->accepts($t));
+            ->some(function (Type $t) use ($annotatedReturnType) {
+                if ($annotatedReturnType->accepts($t)) {
+                    return true;
+                }
+
+                return $t->acceptedBy($annotatedReturnType);
+            });
 
         if (! $annotatedTypeCanAcceptAnyInferredType) {
             $types = [$annotatedReturnType];
@@ -283,6 +289,13 @@ class ReferenceTypeResolver
             if ($event && $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType($event)) {
                 return $returnType;
             }
+
+            if ($unwrappedType instanceof ObjectType) {
+                $calleeType = $unwrappedType;
+
+                $this->resolveUnknownClass($calleeType->name);
+            }
+
         }
 
         // (#TName).listTableDetails()

@@ -126,7 +126,7 @@ class TypeHelper
                 return $arrayItems;
             }, []);
 
-        return new KeyedArrayType(array_values($unpackedItems));
+        return (new KeyedArrayType(array_values($unpackedItems)))->mergeAttributes($type->attributes());
     }
 
     /**
