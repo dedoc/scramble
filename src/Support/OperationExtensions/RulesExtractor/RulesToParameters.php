@@ -20,8 +20,7 @@ class RulesToParameters
         array $validationNodesResults,
         private TypeTransformer $openApiTransformer,
         private string $in = 'query',
-    )
-    {
+    ) {
         $this->nodeDocs = $this->extractNodeDocs($validationNodesResults);
     }
 

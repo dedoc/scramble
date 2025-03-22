@@ -117,7 +117,7 @@ it('adds array body', function () {
                     ],
                 ],
                 'required' => ['foo', 'bar'],
-            ]
+            ],
         ])
         ->and($openApiDocument['paths']['/test']['post']['parameters'] ?? [])
         ->toBeEmpty();
