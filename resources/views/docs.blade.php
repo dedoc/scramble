@@ -56,6 +56,7 @@
     @if($config->get('ui.hide_try_it')) hideTryIt="true" @endif
     @if($config->get('ui.hide_schemas')) hideSchemas="true" @endif
     logo="{{ $config->get('ui.logo') }}"
+    @if($config->get('ui.layout')) layout="{{ $config->get('ui.layout') }}" @endif
 />
 <script>
     (async () => {
