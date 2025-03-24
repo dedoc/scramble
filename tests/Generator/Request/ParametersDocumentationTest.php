@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Concerns\HasVersion4Uuids;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
@@ -35,6 +36,40 @@ if (trait_exists(HasUuids::class)) {
     class DocumentsModelKeysUuidParametersAsUuids_Model extends \Illuminate\Database\Eloquent\Model
     {
         use HasUuids;
+    }
+}
+
+if (trait_exists(HasVersion4Uuids::class)) {
+    it('documents model keys uuid v4 parameters as uuids', function () {
+        $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test/{model}', [
+            DocumentsModelKeysUuidV4ParametersAsUuids_Test::class, 'index',
+        ]));
+
+        expect($params = $openApiDocument['paths']['/test/{model}']['get']['parameters'])
+            ->toHaveCount(1)
+            ->and($params[0])
+            ->toMatchArray([
+                'name' => 'model',
+                'in' => 'path',
+                'required' => true,
+                'schema' => [
+                    'type' => 'string',
+                    'format' => 'uuid',
+                ],
+            ]);
+    });
+
+    class DocumentsModelKeysUuidV4ParametersAsUuids_Test
+    {
+        public function index(DocumentsModelKeysUuidV4ParametersAsUuids_Model $model)
+        {
+            return response()->json();
+        }
+    }
+
+    class DocumentsModelKeysUuidV4ParametersAsUuids_Model extends \Illuminate\Database\Eloquent\Model
+    {
+        use HasVersion4Uuids;
     }
 }
 
