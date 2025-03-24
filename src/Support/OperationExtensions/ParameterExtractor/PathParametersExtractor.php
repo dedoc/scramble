@@ -19,6 +19,7 @@ use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Concerns\HasVersion4Uuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
@@ -180,7 +181,7 @@ class PathParametersExtractor implements ParameterExtractor
         }
 
         $modelTraits = class_uses($type->name);
-        if ($routeKeyName === $modelKeyName && Arr::has($modelTraits, HasUuids::class)) {
+        if ($routeKeyName === $modelKeyName && Arr::hasAny($modelTraits, [HasUuids::class, HasVersion4Uuids::class])) {
             return [(new StringType)->format('uuid'), $description];
         }
 
