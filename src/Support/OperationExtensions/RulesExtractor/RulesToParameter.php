@@ -53,6 +53,13 @@ class RulesToParameter
                 : $this->getTypeFromObjectRule($type, $rule);
         }, new UnknownType);
 
+        if (
+            $rules->contains('sometimes')
+            && $type->getAttribute('required')
+        ) {
+            $type->setAttribute('required', false);
+        }
+
         $description = $type->description;
         $type->setDescription('');
 
