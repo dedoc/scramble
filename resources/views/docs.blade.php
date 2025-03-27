@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="color-scheme" content="{{ $config->get('ui.theme', 'light') }}">
     <title>{{ $config->get('ui.title', config('app.name') . ' - API Docs') }}</title>
 
     <script src="https://unpkg.com/@stoplight/elements@8.3.4/web-components.min.js"></script>
