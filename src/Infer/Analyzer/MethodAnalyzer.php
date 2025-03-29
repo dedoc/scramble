@@ -16,6 +16,7 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\Services\ShallowTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
+use Dedoc\Scramble\Support\TimeTracker;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
@@ -52,7 +53,9 @@ class MethodAnalyzer
             ->methods[$methodDefinition->type->name];
 
         if ($withSideEffects) {
+            TimeTracker::time('analyzeSideEffects');
             $this->analyzeSideEffects($methodDefinition, $node, $inferer);
+            TimeTracker::timeEnd('analyzeSideEffects');
         }
 
         $methodDefinition->isFullyAnalyzed = true;
@@ -126,7 +129,7 @@ class MethodAnalyzer
         // this part is literally similar with the shallow analysis...
 
         // get shallow method definition (get shallow callee type, get the shallow definition)
-        $calleeType = (new ShallowTypeResolver($this->index, $inferer->nameResolver))->resolve($fnScope->getType($methodCall->var));
+        $calleeType = (new ShallowTypeResolver($this->index, $fnScope->nameResolver))->resolve($fnScope->getType($methodCall->var));
         if ($calleeType instanceof TemplateType && $calleeType->is) {
             $calleeType = $calleeType->is;
         }
@@ -153,7 +156,7 @@ class MethodAnalyzer
         }
 
         // just so analysis happens.
-        (new ShallowTypeResolver($this->index, $inferer->nameResolver))->resolve(new MethodCallReferenceType(
+        (new ShallowTypeResolver($this->index, $fnScope->nameResolver))->resolve(new MethodCallReferenceType(
             $calleeType,
             $methodCall->name->name,
             $arguments = $fnScope->getArgsTypes($methodCall->args),
@@ -194,7 +197,7 @@ class MethodAnalyzer
         }
 
         // just so analysis happens.
-        (new ShallowTypeResolver($this->index, $inferer->nameResolver))->resolve(new StaticMethodCallReferenceType(
+        (new ShallowTypeResolver($this->index, $fnScope->nameResolver))->resolve(new StaticMethodCallReferenceType(
             $class,
             $methodCall->name->name,
             $arguments = $fnScope->getArgsTypes($methodCall->args),

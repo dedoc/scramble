@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\PhpDoc;
@@ -167,7 +168,11 @@ class ShallowTypeResolver
             $definition->type->returnType = $handleStatic(TypeHelper::createTypeFromReflectionType($reflection->getReturnType()));
         }
 
-        $phpDoc = PhpDoc::parse($reflection->getDocComment() ?: '/** */', $this->nameResolver);
+        $nameResolver = $definition->definingClassName
+            ? new FileNameResolver(ClassReflector::make($definition->definingClassName)->getNameContext())
+            : $this->nameResolver;
+
+        $phpDoc = PhpDoc::parse($reflection->getDocComment() ?: '/** */', $nameResolver);
         foreach ($phpDoc->getThrowsTagValues() as $throwsTagValue) {
             $definition->type->exceptions[] = $handleStatic(PhpDocTypeHelper::toType($throwsTagValue->type));
         }
