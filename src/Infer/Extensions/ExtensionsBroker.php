@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\Extensions;
 
+use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
+
 class ExtensionsBroker
 {
     public function __construct(
@@ -98,6 +100,18 @@ class ExtensionsBroker
 
         foreach ($extensions as $extension) {
             $extension->afterClassDefinitionCreated($event);
+        }
+    }
+
+    public function afterSideEffectCallAnalyzed(SideEffectCallEvent $event)
+    {
+        $extensions = array_filter($this->extensions, function ($e) use ($event) {
+            return $e instanceof AfterSideEffectCallAnalyzed
+                && $e->shouldHandle($event);
+        });
+
+        foreach ($extensions as $extension) {
+            $extension->afterSideEffectCallAnalyzed($event);
         }
     }
 }

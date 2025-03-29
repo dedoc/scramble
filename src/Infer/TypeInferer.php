@@ -24,17 +24,24 @@ use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
+use WeakMap;
 
 class TypeInferer extends NodeVisitorAbstract
 {
     private array $handlers;
+
+    public WeakMap $scopes;
+
+    /** @todo: Should be bound to node */
+    /** @var Node\Expr\CallLike[] */
+    private array $calls = [];
 
     /**
      * @param  InferExtension[]  $extensions
      */
     public function __construct(
         private Index $index,
-        private FileNameResolver $nameResolver,
+        public readonly FileNameResolver $nameResolver,
         private ?Scope $scope = null,
         array $extensions = [],
         array $handlers = [],
@@ -59,6 +66,8 @@ class TypeInferer extends NodeVisitorAbstract
             new PhpDocHandler,
             ...$handlers,
         ];
+
+        $this->scopes = new WeakMap();
     }
 
     public function enterNode(Node $node)
@@ -72,6 +81,7 @@ class TypeInferer extends NodeVisitorAbstract
 
             if ($handler instanceof CreatesScope) {
                 $this->scope = $handler->createScope($scope, $node);
+                $this->scopes->offsetSet($node, $this->scope);
             }
 
             if (method_exists($handler, 'enter')) {
@@ -84,6 +94,10 @@ class TypeInferer extends NodeVisitorAbstract
 
     public function leaveNode(Node $node)
     {
+        if ($node instanceof Node\Expr\CallLike) {
+            $this->calls[] = $node;
+        }
+
         $shouldLeaveScope = false;
 
         foreach ($this->handlers as $handler) {
@@ -119,5 +133,15 @@ class TypeInferer extends NodeVisitorAbstract
         }
 
         return $this->scope;
+    }
+
+    public function getFunctionLikeScope(?Node $node): ?Scope
+    {
+        return $node ? $this->scopes->offsetGet($node) : null;
+    }
+
+    public function getMethodCalls()
+    {
+        return $this->calls;
     }
 }

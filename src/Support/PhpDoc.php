@@ -2,7 +2,10 @@
 
 namespace Dedoc\Scramble\Support;
 
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocParser;
+use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
+use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTextNode;
@@ -32,7 +35,7 @@ class PhpDoc
         return [$lexer, new PhpDocParser($typeParser, $constExprParser)];
     }
 
-    public static function parse(string $docComment): PhpDocNode
+    public static function parse(string $docComment, ?FileNameResolver $nameResolver = null): PhpDocNode
     {
         $docComment = Str::replace(['@body'], '@var', $docComment);
 
@@ -43,6 +46,24 @@ class PhpDoc
         $node = $phpDocParser->parse($tokens);
 
         static::addSummaryAttributes($node);
+
+        if ($nameResolver) {
+            $tagValues = [
+                ...$node->getReturnTagValues(),
+                ...$node->getReturnTagValues('@response'),
+                ...$node->getVarTagValues(),
+                ...$node->getThrowsTagValues(),
+            ];
+
+            foreach ($tagValues as $tagValue) {
+                if (! $tagValue->type) {
+                    continue;
+                }
+                PhpDocTypeWalker::traverse($tagValue->type, [
+                    new ResolveFqnPhpDocTypeVisitor($nameResolver),
+                ]);
+            }
+        }
 
         return $node;
     }
