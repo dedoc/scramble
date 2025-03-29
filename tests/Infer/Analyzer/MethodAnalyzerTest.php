@@ -23,6 +23,8 @@ it('analyzes exceptions annotations on method call', function (string $class) {
     [MethodCall_MethodAnalyzerTest::class],
     [MethodCallOnProperty_MethodAnalyzerTest::class],
     [MethodCallOnParameter_MethodAnalyzerTest::class],
+    [StaticMethodCall_MethodAnalyzerTest::class],
+    [StaticMethodCallSelf_MethodAnalyzerTest::class],
 ]);
 
 class MethodCall_MethodAnalyzerTest {
@@ -59,4 +61,26 @@ class MethodCallOnParameter_MethodAnalyzerTest {
      * @throws HttpException
      */
     public function bar() {}
+}
+
+class StaticMethodCall_MethodAnalyzerTest {
+    public static function foo(): void
+    {
+        StaticMethodCall_MethodAnalyzerTest::bar();
+    }
+    /**
+     * @throws HttpException
+     */
+    public static function bar() {}
+}
+
+class StaticMethodCallSelf_MethodAnalyzerTest {
+    public static function foo(): void
+    {
+        self::bar();
+    }
+    /**
+     * @throws HttpException
+     */
+    public static function bar() {}
 }

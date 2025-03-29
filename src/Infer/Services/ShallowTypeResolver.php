@@ -6,14 +6,18 @@ use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\PhpDoc;
+use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
+use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use ReflectionClass;
 use ReflectionFunction;
@@ -29,10 +33,30 @@ class ShallowTypeResolver
 
     public function resolve(Type $type): Type
     {
+        return (new TypeWalker)->map(
+            $type,
+            $this->doResolve(...),
+            function (Type $t) {
+                $nodes = $t->nodes();
+                /*
+                 * When mapping function type, we don't want to affect arguments of the function types, just the return type.
+                 */
+                if ($t instanceof FunctionType) {
+                    return [];
+                }
+
+                return $nodes;
+            },
+        );
+    }
+
+    private function doResolve(Type $type): Type
+    {
         return match (true) {
             $type instanceof SelfType => $type,
             $type instanceof PropertyFetchReferenceType => $this->resolvePropertyFetchReferenceType($type),
             $type instanceof MethodCallReferenceType => $this->resolveMethodCallReferenceType($type),
+            $type instanceof StaticMethodCallReferenceType => $this->resolveStaticMethodCallReferenceType($type),
             default => $type,
         };
     }
@@ -83,8 +107,38 @@ class ShallowTypeResolver
             return new UnknownType("method [{$type->methodName}] is not found on object [{$callee->name}]");
         }
 
-        // @todo this should not appear here and should be the part of basic definition creation unless we want to do it in a lazy way
-        if (! $methodDefinition->isFullyAnalyzed()) { // avoid overriding type inference
+        if (! $methodDefinition->isFullyAnalyzed()) { // avoid overriding type inference (?)
+            $this->attachShallowMethodData($methodDefinition);
+        }
+
+        return $methodDefinition->type->returnType;
+    }
+
+    private function resolveStaticMethodCallReferenceType(StaticMethodCallReferenceType $type): Type
+    {
+        $class = $type->callee instanceof Type
+            ? $this->resolve($type->callee)
+            : $type->callee;
+
+        if ($class instanceof LiteralStringType) {
+            $class = $class->value;
+        }
+
+        if (! is_string($class)) {
+            return new UnknownType();
+        }
+
+        $definition = $this->index->getClassDefinition($class);
+        if (! $definition) {
+            return new UnknownType('cannot find a definition of '.$class);
+        }
+
+        $methodDefinition = $definition->methods[$type->methodName] ?? null;
+        if (! $methodDefinition) {
+            return new UnknownType("method [{$type->methodName}] is not found on object [{$class}]");
+        }
+
+        if (! $methodDefinition->isFullyAnalyzed()) { // avoid overriding type inference (?)
             $this->attachShallowMethodData($methodDefinition);
         }
 
@@ -93,6 +147,11 @@ class ShallowTypeResolver
 
     private function attachShallowMethodData(FunctionLikeDefinition $definition)
     {
+        if ($definition->type->getAttribute('shallowSeen')) {
+            return;
+        }
+        $definition->type->setAttribute('shallowSeen', true);
+
         $reflection = $definition->definingClassName
             ? (new ReflectionClass($definition->definingClassName))->getMethod($definition->type->name)
             : new ReflectionFunction($definition->type->name);

@@ -116,7 +116,7 @@ class Generator
             throw new InvalidArgumentException('(callable(OpenApi, OpenApiContext): void)|DocumentTransformer type for document transformer expected, received '.$openApiTransformer::class);
         }
 
-        var_dump(TimeTracker::$timers);
+        var_dump(TimeTracker::$timers, TimeTracker::$counts);
         die;
 
         return $openApi->toArray();

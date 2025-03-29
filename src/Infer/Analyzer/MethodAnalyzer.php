@@ -13,11 +13,13 @@ use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\Services\ShallowTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Support\TimeTracker;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Illuminate\Support\Arr;
 use PhpParser\Node\Expr\FuncCall;
@@ -95,63 +97,127 @@ class MethodAnalyzer
     {
         $fnScope = $inferer->getFunctionLikeScope($node);
 
-        foreach ($inferer->getMethodCalls() as $methodCall) {
-            if ($methodCall instanceof MethodCall || $methodCall instanceof NullsafeMethodCall) {
-                if (!$methodCall->name instanceof Name && !$methodCall->name instanceof Identifier) {
-                    continue;
-                }
-
-//                info('side effect call analyzing...', [
-//                    $methodCall->name->name,
-//                ]);
-
-                // get shallow method definition (get shallow callee type, get the shallow definition)
-                $calleeType = (new ShallowTypeResolver($this->index, $inferer->nameResolver))->resolve($fnScope->getType($methodCall->var));
-                if ($calleeType instanceof TemplateType && $calleeType->is) {
-                    $calleeType = $calleeType->is;
-                }
-                if (! $calleeType instanceof ObjectType) {
-                    continue;
-                }
-
-                $definition = $this->index->getClassDefinition($calleeType->name) ?: (new ClassAnalyzer($this->index))->analyze($calleeType->name);
-                if (! $definition) {
-                    continue;
-                }
-
-                $shallowMethodDefinition = $definition->getMethodDefinitionWithoutAnalysis($methodCall->name->name);
-                if (! $shallowMethodDefinition) {
-                    continue;
-                }
-
-                // just so analysis happens.
-                (new ShallowTypeResolver($this->index, $inferer->nameResolver))->resolve(new MethodCallReferenceType(
-                    $calleeType,
-                    $methodCall->name->name,
-                    $arguments = $fnScope->getArgsTypes($methodCall->args),
-                ));
-
-                foreach ($shallowMethodDefinition->type->exceptions as $exception) {
-                    $methodDefinition->type->exceptions[] = $exception;
-                }
-
-//                info('side effect call analyzed', [
-//                    $calleeType->name,
-//                    $methodCall->name->name,
-//                    $_result->toString(),
-//                ]);
-
-                Context::getInstance()->extensionsBroker->afterSideEffectCallAnalyzed(new SideEffectCallEvent(
-                    definition: $methodDefinition,
-                    calledDefinition: $shallowMethodDefinition,
-                    node: $methodCall,
-                    scope: $fnScope,
-                    arguments: $arguments,
-                ));
-            }
-            elseif ($methodCall instanceof StaticCall) {}
-            elseif ($methodCall instanceof FuncCall) {}
-            elseif ($methodCall instanceof New_) {}
+        if (! $fnScope) {
+            return;
         }
+
+        foreach ($inferer->getMethodCalls() as $methodCall) {
+            match (true) {
+                $methodCall instanceof MethodCall || $methodCall instanceof NullsafeMethodCall => $this->analyzeMethodCall($methodDefinition, $fnScope, $methodCall, $inferer),
+                $methodCall instanceof StaticCall => $this->analyzeStaticMethodCall($methodDefinition, $fnScope, $methodCall, $inferer),
+                $methodCall instanceof FuncCall => null,
+                $methodCall instanceof New_ => null,
+                default => null,
+            };
+        }
+    }
+
+    private function analyzeMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, MethodCall|NullsafeMethodCall $methodCall, TypeInferer $inferer): void
+    {
+        // 1. ensure method call should be handled
+        /*
+         * Only explicit method calls are supported. So the following is supported:
+         *    $this->foo()
+         * But when the expression is in place, we skip analysis:
+         *     $this->{$var}()
+         */
+        if (!$methodCall->name instanceof Name && !$methodCall->name instanceof Identifier) {
+            return;
+        }
+
+        // 2. get called method definition and if not yet analyzed, analyze shallowly (PHPDoc, type hints)
+        // this part is literally similar with the shallow analysis...
+
+        // get shallow method definition (get shallow callee type, get the shallow definition)
+        $calleeType = (new ShallowTypeResolver($this->index, $inferer->nameResolver))->resolve($fnScope->getType($methodCall->var));
+        if ($calleeType instanceof TemplateType && $calleeType->is) {
+            $calleeType = $calleeType->is;
+        }
+        if (! $calleeType instanceof ObjectType) {
+            return;
+        }
+
+        $class = ReferenceTypeResolver::resolveClassName($fnScope, $calleeType->name);
+        if (! $class) {
+            return;
+        }
+
+        $calleeType = clone $calleeType;
+        $calleeType->name = $class;
+
+        $definition = $this->index->getClassDefinition($calleeType->name) ?: (new ClassAnalyzer($this->index))->analyze($calleeType->name);
+        if (! $definition) {
+            return;
+        }
+
+        $shallowMethodDefinition = $definition->getMethodDefinitionWithoutAnalysis($methodCall->name->name);
+        if (! $shallowMethodDefinition) {
+            return;
+        }
+
+        // just so analysis happens.
+        (new ShallowTypeResolver($this->index, $inferer->nameResolver))->resolve(new MethodCallReferenceType(
+            $calleeType,
+            $methodCall->name->name,
+            $arguments = $fnScope->getArgsTypes($methodCall->args),
+        ));
+
+        $this->applySideEffectsFromCall(new SideEffectCallEvent(
+            definition: $methodDefinition,
+            calledDefinition: $shallowMethodDefinition,
+            node: $methodCall,
+            scope: $fnScope,
+            arguments: $arguments,
+        ));
+    }
+
+    private function analyzeStaticMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, StaticCall $methodCall, TypeInferer $inferer): void
+    {
+        if (!$methodCall->name instanceof Name && !$methodCall->name instanceof Identifier) {
+            return;
+        }
+
+        if (!$methodCall->class instanceof Name) {
+            return;
+        }
+
+        $class = ReferenceTypeResolver::resolveClassName($fnScope, $methodCall->class->name);
+        if (! $class) {
+            return;
+        }
+
+        $definition = $this->index->getClassDefinition($class) ?: (new ClassAnalyzer($this->index))->analyze($class);
+        if (! $definition) {
+            return;
+        }
+
+        $shallowMethodDefinition = $definition->getMethodDefinitionWithoutAnalysis($methodCall->name->name);
+        if (! $shallowMethodDefinition) {
+            return;
+        }
+
+        // just so analysis happens.
+        (new ShallowTypeResolver($this->index, $inferer->nameResolver))->resolve(new StaticMethodCallReferenceType(
+            $class,
+            $methodCall->name->name,
+            $arguments = $fnScope->getArgsTypes($methodCall->args),
+        ));
+
+        $this->applySideEffectsFromCall(new SideEffectCallEvent(
+            definition: $methodDefinition,
+            calledDefinition: $shallowMethodDefinition,
+            node: $methodCall,
+            scope: $fnScope,
+            arguments: $arguments,
+        ));
+    }
+
+    private function applySideEffectsFromCall(SideEffectCallEvent $event): void
+    {
+        foreach ($event->calledDefinition->type->exceptions as $exception) {
+            $event->definition->type->exceptions[] = $exception;
+        }
+
+        Context::getInstance()->extensionsBroker->afterSideEffectCallAnalyzed($event);
     }
 }
