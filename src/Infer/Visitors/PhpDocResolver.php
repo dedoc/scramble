@@ -3,8 +3,6 @@
 namespace Dedoc\Scramble\Infer\Visitors;
 
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
-use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\PhpDoc;
 use Illuminate\Support\Str;
 use PhpParser\Comment;

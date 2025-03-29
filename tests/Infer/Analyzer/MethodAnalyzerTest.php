@@ -1,4 +1,5 @@
 <?php
+
 namespace Dedoc\Scramble\Tests\Infer\Analyzer;
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
@@ -27,58 +28,67 @@ it('analyzes exceptions annotations on method call', function (string $class) {
     [StaticMethodCallSelf_MethodAnalyzerTest::class],
 ]);
 
-class MethodCall_MethodAnalyzerTest {
+class MethodCall_MethodAnalyzerTest
+{
     public function foo(): void
     {
         $this->bar();
     }
+
     /**
      * @throws HttpException
      */
-    public function bar()
-    {
-    }
+    public function bar() {}
 }
 
-class MethodCallOnProperty_MethodAnalyzerTest {
+class MethodCallOnProperty_MethodAnalyzerTest
+{
     public MethodCallOnProperty_MethodAnalyzerTest $item;
+
     public function foo(): void
     {
         $this->item->bar();
     }
+
     /**
      * @throws HttpException
      */
     public function bar() {}
 }
 
-class MethodCallOnParameter_MethodAnalyzerTest {
+class MethodCallOnParameter_MethodAnalyzerTest
+{
     public function foo(MethodCallOnParameter_MethodAnalyzerTest $item): void
     {
         $item->bar();
     }
+
     /**
      * @throws HttpException
      */
     public function bar() {}
 }
 
-class StaticMethodCall_MethodAnalyzerTest {
+class StaticMethodCall_MethodAnalyzerTest
+{
     public static function foo(): void
     {
         StaticMethodCall_MethodAnalyzerTest::bar();
     }
+
     /**
      * @throws HttpException
      */
     public static function bar() {}
 }
 
-class StaticMethodCallSelf_MethodAnalyzerTest {
+class StaticMethodCallSelf_MethodAnalyzerTest
+{
     public static function foo(): void
     {
         self::bar();
     }
+
     /**
      * @throws HttpException
      */

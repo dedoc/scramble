@@ -63,8 +63,6 @@ class TypeWalker
         return $subject;
     }
 
-
-
     /**
      * Maps a type to a new type. This method is not mutating passed type, hence
      * the callback mush always return a type.

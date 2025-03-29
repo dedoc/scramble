@@ -67,7 +67,7 @@ class TypeInferer extends NodeVisitorAbstract
             ...$handlers,
         ];
 
-        $this->scopes = new WeakMap();
+        $this->scopes = new WeakMap;
     }
 
     public function enterNode(Node $node)

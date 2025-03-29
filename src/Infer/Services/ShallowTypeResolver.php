@@ -27,9 +27,7 @@ class ShallowTypeResolver
     public function __construct(
         private Index $index,
         private FileNameResolver $nameResolver,
-    )
-    {
-    }
+    ) {}
 
     public function resolve(Type $type): Type
     {
@@ -125,7 +123,7 @@ class ShallowTypeResolver
         }
 
         if (! is_string($class)) {
-            return new UnknownType();
+            return new UnknownType;
         }
 
         $definition = $this->index->getClassDefinition($class);

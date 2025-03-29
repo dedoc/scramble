@@ -14,7 +14,5 @@ class SideEffectCallEvent
         public readonly CallLike $node,
         public readonly Scope $scope,
         public readonly array $arguments,
-    )
-    {
-    }
+    ) {}
 }

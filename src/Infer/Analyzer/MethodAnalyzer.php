@@ -118,7 +118,7 @@ class MethodAnalyzer
          * But when the expression is in place, we skip analysis:
          *     $this->{$var}()
          */
-        if (!$methodCall->name instanceof Name && !$methodCall->name instanceof Identifier) {
+        if (! $methodCall->name instanceof Name && ! $methodCall->name instanceof Identifier) {
             return;
         }
 
@@ -170,11 +170,11 @@ class MethodAnalyzer
 
     private function analyzeStaticMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, StaticCall $methodCall, TypeInferer $inferer): void
     {
-        if (!$methodCall->name instanceof Name && !$methodCall->name instanceof Identifier) {
+        if (! $methodCall->name instanceof Name && ! $methodCall->name instanceof Identifier) {
             return;
         }
 
-        if (!$methodCall->class instanceof Name) {
+        if (! $methodCall->class instanceof Name) {
             return;
         }
 
