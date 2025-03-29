@@ -3,8 +3,6 @@
 namespace Dedoc\Scramble\Infer\Visitors;
 
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
-use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
 use Dedoc\Scramble\Support\PhpDoc;
 use Illuminate\Support\Str;
 use PhpParser\Comment;
@@ -68,24 +66,6 @@ class PhpDocResolver extends NodeVisitorAbstract
 
     private function parseDocs(Doc $doc)
     {
-        $docNode = PhpDoc::parse($doc->getText());
-
-        $tagValues = [
-            ...$docNode->getReturnTagValues(),
-            ...$docNode->getReturnTagValues('@response'),
-            ...$docNode->getVarTagValues(),
-            ...$docNode->getThrowsTagValues(),
-        ];
-
-        foreach ($tagValues as $tagValue) {
-            if (! $tagValue->type) {
-                continue;
-            }
-            PhpDocTypeWalker::traverse($tagValue->type, [
-                new ResolveFqnPhpDocTypeVisitor($this->nameResolver),
-            ]);
-        }
-
-        return $docNode;
+        return PhpDoc::parse($doc->getText(), $this->nameResolver);
     }
 }

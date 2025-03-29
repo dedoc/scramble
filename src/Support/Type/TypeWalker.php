@@ -3,10 +3,18 @@
 namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Infer\Services\RecursionGuard;
+use WeakMap;
 
 class TypeWalker
 {
     private array $visitedNodes = [];
+
+    private WeakMap $visitedNodesWeakMap;
+
+    public function __construct()
+    {
+        $this->visitedNodesWeakMap = new WeakMap;
+    }
 
     public function first(Type $type, callable $lookup): ?Type
     {
@@ -53,5 +61,48 @@ class TypeWalker
         }
 
         return $subject;
+    }
+
+    /**
+     * Maps a type to a new type. This method is not mutating passed type, hence
+     * the callback mush always return a type.
+     *
+     * @param  callable(Type): Type  $cb
+     * @param  (callable(Type): (string[]))|null  $nodesNamesGetter
+     */
+    public function map(
+        Type $subject,
+        callable $cb,
+        ?callable $nodesNamesGetter = null,
+        bool $preserveAttributes = true,
+    ): Type {
+        $nodesNamesGetter ??= fn (Type $t) => $t->nodes();
+
+        if ($this->visitedNodesWeakMap->offsetExists($subject)) {
+            return $this->visitedNodesWeakMap->offsetGet($subject);
+        }
+
+        $subNodes = $nodesNamesGetter($subject);
+
+        $mappedSubject = $cb($subNodes ? clone $subject : $subject);
+
+        if ($preserveAttributes) {
+            $mappedSubject->mergeAttributes($subject->attributes());
+        }
+
+        $this->visitedNodesWeakMap->offsetSet($subject, $mappedSubject);
+
+        foreach ($nodesNamesGetter($mappedSubject) as $propertyWithNode) {
+            $node = $mappedSubject->$propertyWithNode;
+            if (! is_array($node)) {
+                $mappedSubject->$propertyWithNode = $this->map($node, $cb, $nodesNamesGetter, $preserveAttributes);
+            } else {
+                foreach ($node as $index => $item) {
+                    $mappedSubject->$propertyWithNode[$index] = $this->map($item, $cb, $nodesNamesGetter, $preserveAttributes);
+                }
+            }
+        }
+
+        return $mappedSubject;
     }
 }

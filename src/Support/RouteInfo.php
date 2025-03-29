@@ -117,7 +117,7 @@ class RouteInfo
             $this->methodType = $def->getMethodDefinition($this->reflectionMethod()->getName(), indexBuilders: [
                 new RequestParametersBuilder($this->requestParametersFromCalls, $this->typeTransformer),
                 ...$this->indexBuildingBroker->indexBuilders,
-            ])?->type;
+            ], withSideEffects: true)?->type;
         }
 
         return $this->methodType;

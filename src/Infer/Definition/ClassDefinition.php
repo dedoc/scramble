@@ -78,7 +78,7 @@ class ClassDefinition
         return $lastLookedUpClassName;
     }
 
-    public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [])
+    public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [], bool $withSideEffects = false)
     {
         if (! array_key_exists($name, $this->methods)) {
             return null;
@@ -90,7 +90,7 @@ class ClassDefinition
             $this->methods[$name] = (new MethodAnalyzer(
                 $scope->index,
                 $this
-            ))->analyze($methodDefinition, $indexBuilders);
+            ))->analyze($methodDefinition, $indexBuilders, $withSideEffects);
         }
 
         $methodScope = new Scope(
