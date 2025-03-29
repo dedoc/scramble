@@ -16,7 +16,6 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\Services\ShallowTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
-use Dedoc\Scramble\Support\TimeTracker;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
@@ -53,9 +52,7 @@ class MethodAnalyzer
             ->methods[$methodDefinition->type->name];
 
         if ($withSideEffects) {
-            TimeTracker::time('analyzeSideEffects');
             $this->analyzeSideEffects($methodDefinition, $node, $inferer);
-            TimeTracker::timeEnd('analyzeSideEffects');
         }
 
         $methodDefinition->isFullyAnalyzed = true;
