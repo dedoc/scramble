@@ -60,6 +60,9 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
             $type->exceptions[] =  $handleStatic(PhpDocTypeHelper::toType($throwsTagValue->type));
         }
 
-        return new FunctionLikeDefinition($type);
+        return new FunctionLikeDefinition(
+            $type,
+            definingClassName: $className,
+        );
     }
 }

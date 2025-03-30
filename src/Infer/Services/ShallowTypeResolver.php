@@ -3,6 +3,8 @@
 namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
@@ -101,17 +103,7 @@ class ShallowTypeResolver
             return new UnknownType("method [{$type->methodName}] is not found on object [{$callee->name}]");
         }
 
-        $returnType = $methodDefinition->type->returnType;
-        if ($returnType instanceof ObjectType) {
-            $returnType = clone $returnType;
-            $returnType->name = match ($returnType->name) {
-                StaticReference::SELF, StaticReference::STATIC => $definition->getData()->name,
-                StaticReference::PARENT => $definition->getData()->parentFqn ?: $returnType->name,
-                default => $returnType->name,
-            };
-        }
-
-        return $returnType;
+        return $this->resolveStaticBinding($definition->getData(), $methodDefinition, $methodDefinition->type->returnType);
     }
 
     private function resolveStaticMethodCallReferenceType(StaticMethodCallReferenceType $type): Type
@@ -138,16 +130,29 @@ class ShallowTypeResolver
             return new UnknownType("method [{$type->methodName}] is not found on object [{$class}]");
         }
 
-        $returnType = $methodDefinition->type->returnType;
-        if ($returnType instanceof ObjectType) {
-            $returnType = clone $returnType;
-            $returnType->name = match ($returnType->name) {
-                StaticReference::SELF, StaticReference::STATIC => $class,
-                StaticReference::PARENT => $definition->getData()->parentFqn ?: $returnType->name,
-                default => $returnType->name,
-            };
+        return $this->resolveStaticBinding($definition->getData(), $methodDefinition, $methodDefinition->type->returnType);
+    }
+
+    /**
+     * When passed an object with `self`, `static`, or `parent` name resolves the correct class name.
+     */
+    private function resolveStaticBinding(
+        ClassDefinition $classDefinitionData,
+        FunctionLikeDefinition $methodDefinition,
+        Type $type,
+    ): Type
+    {
+        if (! $type instanceof ObjectType) {
+            return $type;
         }
 
-        return $returnType;
+        return match ($type->name) {
+            StaticReference::SELF => tap(clone $type, fn ($t) => $t->name = $methodDefinition->definingClassName ?: $classDefinitionData->name),
+            StaticReference::STATIC => tap(clone $type, fn ($t) => $t->name = $classDefinitionData->name),
+            StaticReference::PARENT => $classDefinitionData->parentFqn
+                ? tap(clone $type, fn ($t) => $t->name = $classDefinitionData->parentFqn)
+                : new UnknownType,
+            default => $type,
+        };
     }
 }

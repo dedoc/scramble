@@ -6,7 +6,6 @@ use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
 use Dedoc\Scramble\Contracts\DocumentTransformer;
 use Dedoc\Scramble\Exceptions\RouteAware;
-use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\OpenApiVisitor\SchemaEnforceVisitor;
 use Dedoc\Scramble\Support\ContainerUtils;
 use Dedoc\Scramble\Support\Generator\Components;
@@ -21,7 +20,6 @@ use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
-use Dedoc\Scramble\Support\TimeTracker;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
@@ -51,7 +49,6 @@ class Generator
 
     public function __invoke(?GeneratorConfig $config = null)
     {
-        TimeTracker::time('total');
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
         $openApi = $this->makeOpenApi($config);
@@ -118,13 +115,6 @@ class Generator
             throw new InvalidArgumentException('(callable(OpenApi, OpenApiContext): void)|DocumentTransformer type for document transformer expected, received '.$openApiTransformer::class);
         }
 
-        TimeTracker::timeEnd('total');
-
-//        dd(app(Index::class)->getClassDefinition('App\Http\Agency\Events\Controllers\AddUncontractedEventController'));
-
-//        var_dump(TimeTracker::$timers, TimeTracker::$counts);
-//        die;
-//
         return $openApi->toArray();
     }
 

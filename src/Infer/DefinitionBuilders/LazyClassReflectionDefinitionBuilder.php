@@ -11,24 +11,23 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
+use ReflectionClass;
 
 class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 {
     public function __construct(
         public IndexContract $index,
-        public string $name,
+        public ReflectionClass $reflection,
     ) {}
 
     public function build(): LazyShallowClassDefinition
     {
-        $classReflection = new \ReflectionClass($this->name);
-
-        $parentDefinition = ($parentName = ($classReflection->getParentClass() ?: null)?->name)
+        $parentDefinition = ($parentName = ($this->reflection->getParentClass() ?: null)?->name)
             ? ($this->index->getClass($parentName)?->getData() ?? new ClassDefinition(name: ''))
             : new ClassDefinition(name: '');
 
         $classDefinitionData = new ClassDefinition(
-            name: $this->name,
+            name: $this->reflection->name,
             templateTypes: $parentDefinition->templateTypes,
             properties: array_map(fn ($pd) => clone $pd, $parentDefinition->properties ?: []),
             methods: $parentDefinition->methods ?: [],
@@ -40,8 +39,8 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
          * reflection methods get copied into the class that uses the trait.
          */
 
-        foreach ($classReflection->getProperties() as $reflectionProperty) {
-            if ($reflectionProperty->class !== $this->name) {
+        foreach ($this->reflection->getProperties() as $reflectionProperty) {
+            if ($reflectionProperty->class !== $this->reflection->name) {
                 continue;
             }
 

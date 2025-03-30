@@ -17,7 +17,6 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\Services\ShallowTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
-use Dedoc\Scramble\Support\TimeTracker;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Illuminate\Support\Arr;
@@ -57,9 +56,7 @@ class MethodAnalyzer
             ->methods[$methodDefinition->type->name];
 
         if ($withSideEffects) {
-            TimeTracker::time('analyzeSideEffects');
             $this->analyzeSideEffects($methodDefinition, $node, $inferer);
-            TimeTracker::timeEnd('analyzeSideEffects');
         }
 
         $methodDefinition->isFullyAnalyzed = true;
@@ -81,7 +78,7 @@ class MethodAnalyzer
         $traverser->addVisitor($inferer = new TypeInferer(
             $this->index,
             $nameResolver,
-            $scope = new Scope($this->index, new NodeTypesResolver, new ScopeContext($this->classDefinition), $nameResolver),
+            new Scope($this->index, new NodeTypesResolver, new ScopeContext($this->classDefinition), $nameResolver),
             Context::getInstance()->extensionsBroker->extensions,
             [new IndexBuildingHandler($indexBuilders)],
         ));
@@ -107,8 +104,8 @@ class MethodAnalyzer
 
         foreach ($inferer->getMethodCalls() as $methodCall) {
             match (true) {
-                $methodCall instanceof MethodCall || $methodCall instanceof NullsafeMethodCall => $this->analyzeMethodCall($methodDefinition, $fnScope, $methodCall, $inferer),
-                $methodCall instanceof StaticCall => $this->analyzeStaticMethodCall($methodDefinition, $fnScope, $methodCall, $inferer),
+                $methodCall instanceof MethodCall || $methodCall instanceof NullsafeMethodCall => $this->analyzeMethodCall($methodDefinition, $fnScope, $methodCall),
+                $methodCall instanceof StaticCall => $this->analyzeStaticMethodCall($methodDefinition, $fnScope, $methodCall),
                 $methodCall instanceof FuncCall => null,
                 $methodCall instanceof New_ => null,
                 default => null,
@@ -116,7 +113,7 @@ class MethodAnalyzer
         }
     }
 
-    private function analyzeMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, MethodCall|NullsafeMethodCall $methodCall, TypeInferer $inferer): void
+    private function analyzeMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, MethodCall|NullsafeMethodCall $methodCall): void
     {
         // 1. ensure method call should be handled
         /*
@@ -130,13 +127,9 @@ class MethodAnalyzer
         }
 
         // 2. get called method definition and if not yet analyzed, analyze shallowly (PHPDoc, type hints)
-        // this part is literally similar with the shallow analysis...
 
         // get shallow method definition (get shallow callee type, get the shallow definition)
-        $calleeType = (new ShallowTypeResolver($this->shallowIndex))->resolve($t = $fnScope->getType($methodCall->var));
-//        dump([
-//            $t->toString() => $calleeType,
-//        ]);
+        $calleeType = (new ShallowTypeResolver($this->shallowIndex))->resolve($fnScope->getType($methodCall->var));
         if ($calleeType instanceof TemplateType && $calleeType->is) {
             $calleeType = $calleeType->is;
         }
@@ -171,7 +164,7 @@ class MethodAnalyzer
         ));
     }
 
-    private function analyzeStaticMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, StaticCall $methodCall, TypeInferer $inferer): void
+    private function analyzeStaticMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, StaticCall $methodCall): void
     {
         if (! $methodCall->name instanceof Name && ! $methodCall->name instanceof Identifier) {
             return;

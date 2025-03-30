@@ -5,6 +5,8 @@ namespace Dedoc\Scramble\Infer\Definition;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition as ClassDefinitionData;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
+use ReflectionClass;
+use ReflectionException;
 
 class LazyShallowClassDefinition implements ClassDefinitionContract
 {
@@ -23,8 +25,8 @@ class LazyShallowClassDefinition implements ClassDefinitionContract
         }
 
         try {
-            $reflection = (new \ReflectionClass($data->name))->getMethod($name);
-        } catch (\ReflectionException) {
+            $reflection = (new ReflectionClass($data->name))->getMethod($name);
+        } catch (ReflectionException) {
             return null;
         }
 
