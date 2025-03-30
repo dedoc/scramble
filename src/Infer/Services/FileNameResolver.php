@@ -10,11 +10,9 @@ use PhpParser\NodeVisitor\NameResolver;
 
 class FileNameResolver
 {
-    static $nameContextCache = [];
+    public static $nameContextCache = [];
 
-    public function __construct(public readonly NameContext $nameContext)
-    {
-    }
+    public function __construct(public readonly NameContext $nameContext) {}
 
     public static function createForFile(string $fileName): self
     {
@@ -22,10 +20,10 @@ class FileNameResolver
             return new self(static::$nameContextCache[$fileName]);
         }
 
-//        $content = file_get_contents($fileName);
+        //        $content = file_get_contents($fileName);
         $content = ($path = $fileName)
             ? file_get_contents($path)
-            : "<? class Foo {}"; // @todo add extends, implements, etc. Maybe make name context manually.
+            : '<? class Foo {}'; // @todo add extends, implements, etc. Maybe make name context manually.
 
         preg_match(
             '/(class|enum|interface|trait)\s+?(.*?)\s+?{/m',

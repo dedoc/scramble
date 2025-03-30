@@ -4,10 +4,7 @@ namespace Dedoc\Scramble\Infer\Reflector;
 
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
-use Illuminate\Support\Str;
 use PhpParser\NameContext;
-use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\NameResolver;
 use ReflectionClass;
 
 class ClassReflector

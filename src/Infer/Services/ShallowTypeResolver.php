@@ -23,9 +23,7 @@ class ShallowTypeResolver
 {
     public function __construct(
         private IndexContract $index,
-    )
-    {
-    }
+    ) {}
 
     public function resolve(Type $type): Type
     {
@@ -140,8 +138,7 @@ class ShallowTypeResolver
         ClassDefinition $classDefinitionData,
         FunctionLikeDefinition $methodDefinition,
         Type $type,
-    ): Type
-    {
+    ): Type {
         if (! $type instanceof ObjectType) {
             return $type;
         }

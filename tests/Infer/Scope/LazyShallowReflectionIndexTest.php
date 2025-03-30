@@ -26,7 +26,5 @@ class Foo_LazyShallowReflectionIndexTest
 {
     public int $foo = 42;
 
-    public function foo(): int
-    {
-    }
+    public function foo(): int {}
 }

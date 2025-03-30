@@ -17,15 +17,13 @@ use ReflectionException;
 class LazyShallowReflectionIndex implements IndexContract
 {
     /**
-     * @param array<string, ClassDefinitionContract> $classes
-     * @param array<string, FunctionLikeDefinition> $functions
+     * @param  array<string, ClassDefinitionContract>  $classes
+     * @param  array<string, FunctionLikeDefinition>  $functions
      */
     public function __construct(
         public array $classes = [],
         public array $functions = [],
-    )
-    {
-    }
+    ) {}
 
     public function getClass(string $name): ?ClassDefinitionContract
     {

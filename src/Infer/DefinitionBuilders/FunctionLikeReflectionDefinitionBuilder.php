@@ -57,7 +57,7 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
         $nameResolver = FileNameResolver::createForFile($this->reflection->getFileName());
         $phpDoc = PhpDoc::parse($this->reflection->getDocComment() ?: '/** */', $nameResolver);
         foreach ($phpDoc->getThrowsTagValues() as $throwsTagValue) {
-            $type->exceptions[] =  $handleStatic(PhpDocTypeHelper::toType($throwsTagValue->type));
+            $type->exceptions[] = $handleStatic(PhpDocTypeHelper::toType($throwsTagValue->type));
         }
 
         return new FunctionLikeDefinition(

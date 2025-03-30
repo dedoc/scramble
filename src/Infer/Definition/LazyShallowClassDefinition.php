@@ -12,9 +12,7 @@ class LazyShallowClassDefinition implements ClassDefinitionContract
 {
     public function __construct(
         public ClassDefinitionContract $definition,
-    )
-    {
-    }
+    ) {}
 
     public function getMethod(string $name): ?FunctionLikeDefinition
     {

@@ -40,16 +40,11 @@ it('handles parent return annotation', function () {
 
 class Foo_ShallowTypeResolverTest extends Bar_ShallowTypeResolverTest
 {
-    public function returnsParent(): parent
-    {
-    }
+    public function returnsParent(): parent {}
 }
 class Bar_ShallowTypeResolverTest
 {
-    public function returnsSelf(): self
-    {
-    }
-    public function returnsStatic(): static
-    {
-    }
+    public function returnsSelf(): self {}
+
+    public function returnsStatic(): static {}
 }

@@ -38,8 +38,7 @@ class MethodAnalyzer
     public function __construct(
         private Index $index,
         private ClassDefinition $classDefinition,
-    )
-    {
+    ) {
         $this->shallowIndex = app(LazyShallowReflectionIndex::class);
     }
 
