@@ -9,6 +9,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
 use Dedoc\Scramble\Infer\Handler\IndexBuildingHandler;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
@@ -18,8 +19,6 @@ use Dedoc\Scramble\Infer\Services\ShallowTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Support\TimeTracker;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
-use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Illuminate\Support\Arr;
 use PhpParser\Node\Expr\FuncCall;
@@ -35,10 +34,15 @@ use PhpParser\NodeTraverser;
 
 class MethodAnalyzer
 {
+    private LazyShallowReflectionIndex $shallowIndex;
+
     public function __construct(
         private Index $index,
         private ClassDefinition $classDefinition,
-    ) {}
+    )
+    {
+        $this->shallowIndex = app(LazyShallowReflectionIndex::class);
+    }
 
     public function analyze(FunctionLikeDefinition $methodDefinition, array $indexBuilders = [], bool $withSideEffects = false)
     {
@@ -129,7 +133,10 @@ class MethodAnalyzer
         // this part is literally similar with the shallow analysis...
 
         // get shallow method definition (get shallow callee type, get the shallow definition)
-        $calleeType = (new ShallowTypeResolver($this->index, $fnScope->nameResolver))->resolve($fnScope->getType($methodCall->var));
+        $calleeType = (new ShallowTypeResolver($this->shallowIndex))->resolve($t = $fnScope->getType($methodCall->var));
+//        dump([
+//            $t->toString() => $calleeType,
+//        ]);
         if ($calleeType instanceof TemplateType && $calleeType->is) {
             $calleeType = $calleeType->is;
         }
@@ -145,29 +152,22 @@ class MethodAnalyzer
         $calleeType = clone $calleeType;
         $calleeType->name = $class;
 
-        $definition = $this->index->getClassDefinition($calleeType->name) ?: (new ClassAnalyzer($this->index))->analyze($calleeType->name);
+        $definition = $this->shallowIndex->getClass($calleeType->name);
         if (! $definition) {
             return;
         }
 
-        $shallowMethodDefinition = $definition->getMethodDefinitionWithoutAnalysis($methodCall->name->name);
+        $shallowMethodDefinition = $definition->getMethod($methodCall->name->name);
         if (! $shallowMethodDefinition) {
             return;
         }
-
-        // just so analysis happens.
-        (new ShallowTypeResolver($this->index, $fnScope->nameResolver))->resolve(new MethodCallReferenceType(
-            $calleeType,
-            $methodCall->name->name,
-            $arguments = $fnScope->getArgsTypes($methodCall->args),
-        ));
 
         $this->applySideEffectsFromCall(new SideEffectCallEvent(
             definition: $methodDefinition,
             calledDefinition: $shallowMethodDefinition,
             node: $methodCall,
             scope: $fnScope,
-            arguments: $arguments,
+            arguments: $fnScope->getArgsTypes($methodCall->args),
         ));
     }
 
@@ -186,29 +186,22 @@ class MethodAnalyzer
             return;
         }
 
-        $definition = $this->index->getClassDefinition($class) ?: (new ClassAnalyzer($this->index))->analyze($class);
+        $definition = $this->shallowIndex->getClass($class);
         if (! $definition) {
             return;
         }
 
-        $shallowMethodDefinition = $definition->getMethodDefinitionWithoutAnalysis($methodCall->name->name);
+        $shallowMethodDefinition = $definition->getMethod($methodCall->name->name);
         if (! $shallowMethodDefinition) {
             return;
         }
-
-        // just so analysis happens.
-        (new ShallowTypeResolver($this->index, $fnScope->nameResolver))->resolve(new StaticMethodCallReferenceType(
-            $class,
-            $methodCall->name->name,
-            $arguments = $fnScope->getArgsTypes($methodCall->args),
-        ));
 
         $this->applySideEffectsFromCall(new SideEffectCallEvent(
             definition: $methodDefinition,
             calledDefinition: $shallowMethodDefinition,
             node: $methodCall,
             scope: $fnScope,
-            arguments: $arguments,
+            arguments: $fnScope->getArgsTypes($methodCall->args),
         ));
     }
 

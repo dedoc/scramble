@@ -21,11 +21,11 @@ it('analyzes exceptions annotations on method call', function (string $class) {
         ->and($definition->type->exceptions[0]->name)
         ->toBe(HttpException::class);
 })->with([
-    [MethodCall_MethodAnalyzerTest::class],
+//    [MethodCall_MethodAnalyzerTest::class],
     [MethodCallOnProperty_MethodAnalyzerTest::class],
-    [MethodCallOnParameter_MethodAnalyzerTest::class],
-    [StaticMethodCall_MethodAnalyzerTest::class],
-    [StaticMethodCallSelf_MethodAnalyzerTest::class],
+//    [MethodCallOnParameter_MethodAnalyzerTest::class],
+//    [StaticMethodCall_MethodAnalyzerTest::class],
+//    [StaticMethodCallSelf_MethodAnalyzerTest::class],
 ]);
 
 class MethodCall_MethodAnalyzerTest

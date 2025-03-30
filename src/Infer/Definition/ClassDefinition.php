@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
+use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
@@ -20,7 +21,7 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\ErrorHandler\Throwing;
 use PhpParser\NameContext;
 
-class ClassDefinition
+class ClassDefinition implements ClassDefinitionContract
 {
     public function __construct(
         // FQ name
@@ -157,5 +158,15 @@ class ClassDefinition
         }
 
         return $type;
+    }
+
+    public function getMethod(string $name): ?FunctionLikeDefinition
+    {
+        return $this->getMethodDefinition($name);
+    }
+
+    public function getData(): ClassDefinition
+    {
+        return $this;
     }
 }
