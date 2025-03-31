@@ -136,14 +136,6 @@ class MethodAnalyzer
             return;
         }
 
-        $class = ReferenceTypeResolver::resolveClassName($fnScope, $calleeType->name);
-        if (! $class) {
-            return;
-        }
-
-        $calleeType = clone $calleeType;
-        $calleeType->name = $class;
-
         $definition = $this->shallowIndex->getClass($calleeType->name);
         if (! $definition) {
             return;
