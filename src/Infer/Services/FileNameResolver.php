@@ -20,7 +20,6 @@ class FileNameResolver
             return new self(static::$nameContextCache[$fileName]);
         }
 
-        //        $content = file_get_contents($fileName);
         $content = ($path = $fileName)
             ? file_get_contents($path)
             : '<? class Foo {}'; // @todo add extends, implements, etc. Maybe make name context manually.
