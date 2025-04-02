@@ -102,7 +102,6 @@ class ExtensionsBroker
             }
         }
 
-
         return $exceptions;
     }
 
