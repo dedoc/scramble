@@ -33,12 +33,14 @@ class Scope
 {
     /**
      * @internal
+     *
      * @var array<string, array{line: int, type: Type}[]>
      */
     public array $variables = [];
 
     /**
      * @internal
+     *
      * @var Node\Expr\CallLike[]
      */
     public array $calls = [];
