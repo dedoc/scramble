@@ -101,7 +101,7 @@ class MethodAnalyzer
             return;
         }
 
-        foreach ($inferer->getMethodCalls() as $methodCall) {
+        foreach ($fnScope->getMethodCalls() as $methodCall) {
             match (true) {
                 $methodCall instanceof MethodCall || $methodCall instanceof NullsafeMethodCall => $this->analyzeMethodCall($methodDefinition, $fnScope, $methodCall),
                 $methodCall instanceof StaticCall => $this->analyzeStaticMethodCall($methodDefinition, $fnScope, $methodCall),

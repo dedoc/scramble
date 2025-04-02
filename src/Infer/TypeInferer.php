@@ -32,10 +32,6 @@ class TypeInferer extends NodeVisitorAbstract
 
     public WeakMap $scopes;
 
-    /** @todo: Should be bound to node */
-    /** @var Node\Expr\CallLike[] */
-    private array $calls = [];
-
     /**
      * @param  InferExtension[]  $extensions
      */
@@ -94,8 +90,8 @@ class TypeInferer extends NodeVisitorAbstract
 
     public function leaveNode(Node $node)
     {
-        if ($node instanceof Node\Expr\CallLike) {
-            $this->calls[] = $node;
+        if ($node instanceof Node\Expr\CallLike && $this->scope) {
+            $this->scope->calls[] = $node;
         }
 
         $shouldLeaveScope = false;
@@ -138,10 +134,5 @@ class TypeInferer extends NodeVisitorAbstract
     public function getFunctionLikeScope(?Node $node): ?Scope
     {
         return $node ? $this->scopes->offsetGet($node) : null;
-    }
-
-    public function getMethodCalls()
-    {
-        return $this->calls;
     }
 }
