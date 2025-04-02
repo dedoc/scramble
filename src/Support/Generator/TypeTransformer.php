@@ -3,6 +3,8 @@
 namespace Dedoc\Scramble\Support\Generator;
 
 use Carbon\CarbonInterface;
+use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
+use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
@@ -34,12 +36,30 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
  */
 class TypeTransformer
 {
+    /** @var TypeToSchemaExtension[] */
+    private array $typeToSchemaExtensions = [];
+
+    /** @var ExceptionToResponseExtension[] */
+    private array $exceptionToResponseExtensions = [];
+
     public function __construct(
         private Infer $infer,
         private OpenApiContext $context,
-        private array $typeToSchemaExtensions = [],
-        private array $exceptionToResponseExtensions = []
-    ) {}
+        array $typeToSchemaExtensionsClasses = [],
+        array $exceptionToResponseExtensionsClasses = []
+    ) {
+        $this->typeToSchemaExtensions = collect($typeToSchemaExtensionsClasses)
+            ->map(function ($extensionClass) {
+                return new $extensionClass($this->infer, $this, $this->getComponents(), $this->context);
+            })
+            ->all();
+
+        $this->exceptionToResponseExtensions = collect($exceptionToResponseExtensionsClasses)
+            ->map(function ($extensionClass) {
+                return new $extensionClass($this->infer, $this, $this->getComponents(), $this->context);
+            })
+            ->all();
+    }
 
     public function getComponents(): Components
     {
@@ -217,7 +237,6 @@ class TypeTransformer
     {
         /** @var Collection $extensions */
         $extensions = collect($this->typeToSchemaExtensions)
-            ->map(fn ($extensionClass) => new $extensionClass($this->infer, $this, $this->getComponents(), $this->context))
             ->filter->shouldHandle($type)
             ->values();
 
@@ -306,9 +325,7 @@ class TypeTransformer
         if (! $type->isInstanceOf(\Throwable::class)) {
             return array_reduce(
                 $this->typeToSchemaExtensions,
-                function ($acc, $extensionClass) use ($type) {
-                    $extension = new $extensionClass($this->infer, $this, $this->getComponents(), $this->context);
-
+                function ($acc, $extension) use ($type) {
                     if (! $extension->shouldHandle($type)) {
                         return $acc;
                     }
@@ -327,9 +344,7 @@ class TypeTransformer
 
         return array_reduce(
             $priorityExtensions,
-            function ($acc, $extensionClass) use ($type) {
-                $extension = new $extensionClass($this->infer, $this, $this->getComponents(), $this->context);
-
+            function ($acc, $extension) use ($type) {
                 if (! $extension->shouldHandle($type)) {
                     return $acc;
                 }
