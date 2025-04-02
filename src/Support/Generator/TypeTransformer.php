@@ -37,10 +37,10 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 class TypeTransformer
 {
     /** @var TypeToSchemaExtension[] */
-    private array $typeToSchemaExtensions = [];
+    private array $typeToSchemaExtensions;
 
     /** @var ExceptionToResponseExtension[] */
-    private array $exceptionToResponseExtensions = [];
+    private array $exceptionToResponseExtensions;
 
     public function __construct(
         private Infer $infer,
