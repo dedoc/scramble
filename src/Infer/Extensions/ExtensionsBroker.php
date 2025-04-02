@@ -2,20 +2,69 @@
 
 namespace Dedoc\Scramble\Infer\Extensions;
 
+use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
+
 class ExtensionsBroker
 {
-    public function __construct(
-        public readonly array $extensions = [],
-    ) {}
+    /** @var PropertyTypeExtension[] */
+    private array $propertyTypeExtensions;
+
+    /** @var MethodReturnTypeExtension[] */
+    private array $methodReturnTypeExtensions;
+
+    /** @var MethodCallExceptionsExtension[] */
+    private array $methodCallExceptionsExtensions;
+
+    /** @var StaticMethodReturnTypeExtension[] */
+    private array $staticMethodReturnTypeExtensions;
+
+    /** @var FunctionReturnTypeExtension[] */
+    private array $functionReturnTypeExtensions;
+
+    /** @var AfterClassDefinitionCreatedExtension[] */
+    private array $afterClassDefinitionCreatedExtensions;
+
+    /** @var AfterSideEffectCallAnalyzed[] */
+    private array $afterSideEffectCallAnalyzedExtensions;
+
+    public function __construct(public readonly array $extensions = [])
+    {
+        $this->propertyTypeExtensions = array_filter($extensions, function ($e) {
+            return $e instanceof PropertyTypeExtension;
+        });
+
+        $this->methodReturnTypeExtensions = array_filter($extensions, function ($e) {
+            return $e instanceof MethodReturnTypeExtension;
+        });
+
+        $this->methodCallExceptionsExtensions = array_filter($extensions, function ($e) {
+            return $e instanceof MethodCallExceptionsExtension;
+        });
+
+        $this->staticMethodReturnTypeExtensions = array_filter($extensions, function ($e) {
+            return $e instanceof StaticMethodReturnTypeExtension;
+        });
+
+        $this->functionReturnTypeExtensions = array_filter($extensions, function ($e) {
+            return $e instanceof FunctionReturnTypeExtension;
+        });
+
+        $this->afterClassDefinitionCreatedExtensions = array_filter($extensions, function ($e) {
+            return $e instanceof AfterClassDefinitionCreatedExtension;
+        });
+
+        $this->afterSideEffectCallAnalyzedExtensions = array_filter($extensions, function ($e) {
+            return $e instanceof AfterSideEffectCallAnalyzed;
+        });
+    }
 
     public function getPropertyType($event)
     {
-        $extensions = array_filter($this->extensions, function ($e) use ($event) {
-            return $e instanceof PropertyTypeExtension
-                && $e->shouldHandle($event->getInstance());
-        });
+        foreach ($this->propertyTypeExtensions as $extension) {
+            if (! $extension->shouldHandle($event->getInstance())) {
+                continue;
+            }
 
-        foreach ($extensions as $extension) {
             if ($propertyType = $extension->getPropertyType($event)) {
                 return $propertyType;
             }
@@ -26,14 +75,13 @@ class ExtensionsBroker
 
     public function getMethodReturnType($event)
     {
-        $extensions = array_filter($this->extensions, function ($e) use ($event) {
-            return $e instanceof MethodReturnTypeExtension
-                && $e->shouldHandle($event->getInstance());
-        });
+        foreach ($this->methodReturnTypeExtensions as $extension) {
+            if (! $extension->shouldHandle($event->getInstance())) {
+                continue;
+            }
 
-        foreach ($extensions as $extension) {
-            if ($propertyType = $extension->getMethodReturnType($event)) {
-                return $propertyType;
+            if ($returnType = $extension->getMethodReturnType($event)) {
+                return $returnType;
             }
         }
 
@@ -42,13 +90,13 @@ class ExtensionsBroker
 
     public function getMethodCallExceptions($event)
     {
-        $extensions = array_filter($this->extensions, function ($e) use ($event) {
-            return $e instanceof MethodCallExceptionsExtension
-                && $e->shouldHandle($event->getInstance());
-        });
-
         $exceptions = [];
-        foreach ($extensions as $extension) {
+
+        foreach ($this->methodCallExceptionsExtensions as $extension) {
+            if (! $extension->shouldHandle($event->getInstance())) {
+                continue;
+            }
+
             if ($extensionExceptions = $extension->getMethodCallExceptions($event)) {
                 $exceptions = array_merge($exceptions, $extensionExceptions);
             }
@@ -59,14 +107,13 @@ class ExtensionsBroker
 
     public function getStaticMethodReturnType($event)
     {
-        $extensions = array_filter($this->extensions, function ($e) use ($event) {
-            return $e instanceof StaticMethodReturnTypeExtension
-                && $e->shouldHandle($event->getCallee());
-        });
+        foreach ($this->staticMethodReturnTypeExtensions as $extension) {
+            if (! $extension->shouldHandle($event->getCallee())) {
+                continue;
+            }
 
-        foreach ($extensions as $extension) {
-            if ($propertyType = $extension->getStaticMethodReturnType($event)) {
-                return $propertyType;
+            if ($returnType = $extension->getStaticMethodReturnType($event)) {
+                return $returnType;
             }
         }
 
@@ -75,14 +122,13 @@ class ExtensionsBroker
 
     public function getFunctionReturnType($event)
     {
-        $extensions = array_filter($this->extensions, function ($e) use ($event) {
-            return $e instanceof FunctionReturnTypeExtension
-                && $e->shouldHandle($event->getName());
-        });
+        foreach ($this->functionReturnTypeExtensions as $extension) {
+            if (! $extension->shouldHandle($event->getName())) {
+                continue;
+            }
 
-        foreach ($extensions as $extension) {
-            if ($propertyType = $extension->getFunctionReturnType($event)) {
-                return $propertyType;
+            if ($returnType = $extension->getFunctionReturnType($event)) {
+                return $returnType;
             }
         }
 
@@ -91,13 +137,23 @@ class ExtensionsBroker
 
     public function afterClassDefinitionCreated($event)
     {
-        $extensions = array_filter($this->extensions, function ($e) use ($event) {
-            return $e instanceof AfterClassDefinitionCreatedExtension
-                && $e->shouldHandle($event->name);
-        });
+        foreach ($this->afterClassDefinitionCreatedExtensions as $extension) {
+            if (! $extension->shouldHandle($event->name)) {
+                continue;
+            }
 
-        foreach ($extensions as $extension) {
             $extension->afterClassDefinitionCreated($event);
+        }
+    }
+
+    public function afterSideEffectCallAnalyzed(SideEffectCallEvent $event)
+    {
+        foreach ($this->afterSideEffectCallAnalyzedExtensions as $extension) {
+            if (! $extension->shouldHandle($event)) {
+                continue;
+            }
+
+            $extension->afterSideEffectCallAnalyzed($event);
         }
     }
 }

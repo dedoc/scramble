@@ -32,9 +32,18 @@ use PhpParser\Node;
 class Scope
 {
     /**
+     * @internal
+     *
      * @var array<string, array{line: int, type: Type}[]>
      */
     public array $variables = [];
+
+    /**
+     * @internal
+     *
+     * @var Node\Expr\CallLike[]
+     */
+    public array $calls = [];
 
     public function __construct(
         public Index $index,
@@ -339,5 +348,13 @@ class Scope
         }
 
         return $type;
+    }
+
+    /**
+     * @internal
+     */
+    public function getMethodCalls(): array
+    {
+        return $this->calls;
     }
 }
