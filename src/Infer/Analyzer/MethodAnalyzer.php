@@ -128,7 +128,7 @@ class MethodAnalyzer
         // 2. get called method definition and if not yet analyzed, analyze shallowly (PHPDoc, type hints)
 
         // get shallow method definition (get shallow callee type, get the shallow definition)
-        $calleeType = (new ShallowTypeResolver($this->shallowIndex))->resolve($fnScope->getType($methodCall->var));
+        $calleeType = (new ShallowTypeResolver($this->shallowIndex))->resolve($fnScope, $fnScope->getType($methodCall->var));
         if ($calleeType instanceof TemplateType && $calleeType->is) {
             $calleeType = $calleeType->is;
         }
