@@ -55,9 +55,13 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
             }
         });
         $nameResolver = FileNameResolver::createForFile($this->reflection->getFileName());
+
         $phpDoc = PhpDoc::parse($this->reflection->getDocComment() ?: '/** */', $nameResolver);
         foreach ($phpDoc->getThrowsTagValues() as $throwsTagValue) {
             $type->exceptions[] = $handleStatic(PhpDocTypeHelper::toType($throwsTagValue->type));
+        }
+        if ($returnTagValues = array_values($phpDoc->getReturnTagValues())) {
+            $type->returnType = $handleStatic(PhpDocTypeHelper::toType($returnTagValues[0]->type));
         }
 
         return new FunctionLikeDefinition(
