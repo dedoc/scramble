@@ -83,10 +83,14 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(LazyShallowReflectionIndex::class, function () {
             return new LazyShallowReflectionIndex(
+                // Abort helpers are handled in the extension and these definitions are needed to avoid leaking the
+                // annotated exceptions to the caller's definitions.
                 functions: [
                     'abort' => $abortType = new FunctionLikeDefinition(type: new FunctionType('abort', returnType: new VoidType)),
                     'abort_if' => $abortType,
                     'abort_unless' => $abortType,
+                    'throw_if' => $throwType = new FunctionLikeDefinition(type: new FunctionType('throw_if', returnType: new VoidType)),
+                    'throw_unless' => $throwType,
                 ]
             );
         });
