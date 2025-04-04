@@ -10,6 +10,7 @@ use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Dedoc\Scramble\Infer\Extensions\IndexBuildingBroker;
 use Dedoc\Scramble\Infer\Extensions\InferExtension;
@@ -37,6 +38,8 @@ use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
+use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\VoidType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
@@ -61,7 +64,6 @@ class ScrambleServiceProvider extends PackageServiceProvider
     public $singletons = [
         PrettyPrinter::class => PrettyPrinter\Standard::class,
         GeneratorConfigCollection::class => GeneratorConfigCollection::class,
-        LazyShallowReflectionIndex::class => LazyShallowReflectionIndex::class,
     ];
 
     public function configurePackage(Package $package): void
@@ -76,6 +78,20 @@ class ScrambleServiceProvider extends PackageServiceProvider
         $this->app->singleton(FileParser::class, function () {
             return new FileParser(
                 (new ParserFactory)->createForHostVersion()
+            );
+        });
+
+        $this->app->singleton(LazyShallowReflectionIndex::class, function () {
+            return new LazyShallowReflectionIndex(
+                // Abort helpers are handled in the extension and these definitions are needed to avoid leaking the
+                // annotated exceptions to the caller's definitions.
+                functions: [
+                    'abort' => $abortType = new FunctionLikeDefinition(type: new FunctionType('abort', returnType: new VoidType)),
+                    'abort_if' => $abortType,
+                    'abort_unless' => $abortType,
+                    'throw_if' => $throwType = new FunctionLikeDefinition(type: new FunctionType('throw_if', returnType: new VoidType)),
+                    'throw_unless' => $throwType,
+                ]
             );
         });
 

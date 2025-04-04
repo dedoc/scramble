@@ -5,9 +5,11 @@ namespace Dedoc\Scramble\Infer\Scope;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\DefinitionBuilders\LazyClassReflectionDefinitionBuilder;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionFunction;
 
 /**
  * This index stores lazily built definitions of classes and functions. These are extremely light definitions
@@ -42,6 +44,16 @@ class LazyShallowReflectionIndex implements IndexContract
 
     public function getFunction(string $name): ?FunctionLikeDefinition
     {
-        return $this->functions[$name] ?? null;
+        if (isset($this->functions[$name])) {
+            return $this->functions[$name];
+        }
+
+        try {
+            $reflection = new ReflectionFunction($name);
+        } catch (ReflectionException) {
+            return null;
+        }
+
+        return $this->functions[$name] = (new FunctionLikeReflectionDefinitionBuilder($name, $reflection))->build();
     }
 }
