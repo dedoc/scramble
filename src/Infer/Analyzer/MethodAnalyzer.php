@@ -105,7 +105,7 @@ class MethodAnalyzer
             match (true) {
                 $methodCall instanceof MethodCall || $methodCall instanceof NullsafeMethodCall => $this->analyzeMethodCall($methodDefinition, $fnScope, $methodCall),
                 $methodCall instanceof StaticCall => $this->analyzeStaticMethodCall($methodDefinition, $fnScope, $methodCall),
-                $methodCall instanceof FuncCall => null,
+                $methodCall instanceof FuncCall => $this->analyzeFuncCall($methodDefinition, $fnScope, $methodCall),
                 $methodCall instanceof New_ => null,
                 default => null,
             };
@@ -186,6 +186,27 @@ class MethodAnalyzer
             node: $methodCall,
             scope: $fnScope,
             arguments: $fnScope->getArgsTypes($methodCall->args),
+        ));
+    }
+
+    private function analyzeFuncCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, FuncCall $call): void
+    {
+        $name = $call->name->getAttribute('namespacedName', $call->name);
+        if (! $name instanceof Name) {
+            return;
+        }
+
+        $functionDefinition = $this->shallowIndex->getFunction($name);
+        if (! $functionDefinition) {
+            return;
+        }
+
+        $this->applySideEffectsFromCall(new SideEffectCallEvent(
+            definition: $methodDefinition,
+            calledDefinition: $functionDefinition,
+            node: $call,
+            scope: $fnScope,
+            arguments: $fnScope->getArgsTypes($call->args),
         ));
     }
 
