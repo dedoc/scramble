@@ -23,7 +23,7 @@ class ExportDocumentation extends Command
 
         $config = Scramble::getGeneratorConfig($api);
 
-        $specification = json_encode($generator($config), JSON_PRETTY_PRINT);
+        $specification = json_encode($generator($config), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
         /** @var string $filename */
         $filename = $path ?: $config->get('export_path') ?? 'api'.($api === 'default' ? '' : "-$api").'.json';
