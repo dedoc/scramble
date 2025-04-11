@@ -18,12 +18,15 @@ class ExportDocumentation extends Command
 
     public function handle(Generator $generator): void
     {
-        $config = Scramble::getGeneratorConfig($api = $this->option('api'));
+        $api = $this->option('api');
+        $path = $this->option('path');
+
+        $config = Scramble::getGeneratorConfig($api);
 
         $specification = json_encode($generator($config), JSON_PRETTY_PRINT);
 
         /** @var string $filename */
-        $filename = $this->option('path') ?? $config->get('export_path', 'api'.($api === 'default' ? '' : "-$api").'.json');
+        $filename = $path ?: $config->get('export_path') ?? 'api'.($api === 'default' ? '' : "-$api").'.json';
 
         File::put($filename, $specification);
 
