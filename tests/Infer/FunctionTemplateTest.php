@@ -40,7 +40,7 @@ it('infers a return type of call of a function with argument default const', fun
 function foo (int $a = \Illuminate\Http\Response::HTTP_CREATED) {
     return $a;
 }
-EOD)->getExpressionType("foo()");
+EOD)->getExpressionType('foo()');
 
     expect($type->toString())->toBe('int(201)');
 });

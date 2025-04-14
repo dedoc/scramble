@@ -69,4 +69,4 @@ class Bar_ShallowTypeResolverTest
 
     public function returnsStatic(): static {}
 }
-function fn_ShallowTypeResolverTest (): int {}
+function fn_ShallowTypeResolverTest(): int {}
