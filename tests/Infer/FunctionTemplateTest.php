@@ -33,3 +33,14 @@ it('adds a type constraint onto template type for some types', function ($paramT
         expect($def->type->templates[0]->toDefinitionString())->toBe($expectedTemplateDefinitionType);
     }
 })->with('extendableTemplateTypes');
+
+it('infers a return type of call of a function with argument default const', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+function foo (int $a = \Illuminate\Http\Response::HTTP_CREATED) {
+    return $a;
+}
+EOD)->getExpressionType("foo()");
+
+    expect($type->toString())->toBe('int(201)');
+});

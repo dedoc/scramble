@@ -103,9 +103,9 @@ function getStatementType(string $statement, array $extensions = []): ?Type
 }
 
 dataset('extendableTemplateTypes', [
-    ['int', 'int'],
-    ['bool', 'boolean'],
-    ['float', 'float'],
+    ['int', 'TA', 'TA is int'],
+    ['bool', 'TA', 'TA is boolean'],
+    ['float', 'TA', 'TA is float'],
     ['', 'TA', 'TA'],
     ['string', 'TA', 'TA is string'],
     ['SomeClass', 'TA', 'TA is SomeClass'],

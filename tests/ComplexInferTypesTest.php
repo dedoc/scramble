@@ -10,7 +10,7 @@ EOD;
 
     $result = analyzeFile($code);
 
-    expect($result->getFunctionDefinition('foo')->type->getReturnType()->toString())->toBe('int');
+    expect($result->getFunctionDefinition('foo')->type->getReturnType()->toString())->toBe('TA');
 });
 
 it('infers type from assignment', function () {
