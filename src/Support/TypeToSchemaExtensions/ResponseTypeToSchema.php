@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -39,7 +40,8 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
             return null;
         }
 
-        $emptyContent = ($type->templateTypes[0]->value ?? null) === '';
+        $emptyContent = $type->templateTypes[0] instanceof NullType
+            || ($type->templateTypes[0]->value ?? null) === '';
 
         $response = Response::make($code = $type->templateTypes[1]->value)
             ->description($code === 204 ? 'No content' : '');
