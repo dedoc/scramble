@@ -6,8 +6,8 @@
     <meta name="color-scheme" content="{{ $config->get('ui.theme', 'light') }}">
     <title>{{ $config->get('ui.title', config('app.name') . ' - API Docs') }}</title>
 
-    <script src="https://unpkg.com/@stoplight/elements@8.3.4/web-components.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements@8.3.4/styles.min.css">
+    <script src="{{ $config->get('ui.js', 'https://unpkg.com/@stoplight/elements@8.3.4/web-components.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ $config->get('ui.css', 'https://unpkg.com/@stoplight/elements@8.3.4/styles.min.css') }}">
 
     <script>
         const originalFetch = window.fetch;

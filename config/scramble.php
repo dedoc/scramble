@@ -73,6 +73,26 @@ return [
          * - stacked - Everything in a single column, making integrations with existing websites that have their own sidebar or other columns already.
          */
         'layout' => 'responsive',
+
+        /*
+         * CDN url for documentation rendering style
+         * 
+         * This can be useful if you need to access your documentation offline. 
+         * In this case, you need to download the file "https://unpkg.com/@stoplight/elements@8.3.4/styles.min.css" and save it locally.
+         * 
+         * @example /scramble/styles.min.css
+         */
+        // 'css' => ''
+
+        /*
+         * CDN url for documentation rendering script
+         * 
+         * This can be useful if you need to access your documentation offline. 
+         * In this case, you need to download the file "https://unpkg.com/@stoplight/elements@8.3.4/web-components.min.js" and save it locally.
+         * 
+         * @example /scramble/web-components.min.js
+         */
+        // 'js' => ''
     ],
 
     /*
