@@ -12,6 +12,7 @@ use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Collection;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTagNode;
 
 class ResponseExtension extends OperationExtension
 {
@@ -41,6 +42,25 @@ class ResponseExtension extends OperationExtension
                 }
 
                 return $type;
+            })
+            ->flatMap(function (Type $type) use ($routeInfo) {
+                /** @var PhpDocTagNode[] $statusTags */
+                $statusTags = $type->getAttribute('docNode')?->getTagsByName('@status');
+
+                if(empty($statusTags)) {
+                    return [$type];
+                }
+
+                return array_map(function ($code) use ($type) {
+                    $docNode = $type->getAttribute('docNode');
+                    $singleStatusNode = (clone $docNode);
+                    $singleStatusNode->children = collect($docNode->getTags())
+                        ->filter(fn($tag) => $tag->name !== '@status' || $tag->value?->value === $code->value?->value)
+                        ->values()
+                        ->all();
+
+                    return tap(clone $type)->setAttribute('docNode', $singleStatusNode);
+                }, $statusTags);
             })
             ->map($this->openApiTransformer->toResponse(...))
             ->filter()

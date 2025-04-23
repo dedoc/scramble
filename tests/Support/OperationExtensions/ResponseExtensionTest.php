@@ -40,3 +40,22 @@ class Foo_ResponseExtensionAnnotationTest__Controller
         return unknown();
     }
 }
+
+it('splits out multiple responses for multiple status annotations', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [Foo_ResponseExtensionStatusAnnotationTest__Controller::class, 'foo']));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'])
+        ->toHaveKey('200')
+        ->toHaveKey('201');
+});
+class Foo_ResponseExtensionStatusAnnotationTest__Controller
+{
+    public function foo(): unknown
+    {
+        /**
+         * @status 200
+         * @status 201
+         */
+        return unknown();
+    }
+}
