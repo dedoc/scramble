@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Optional;
 use PhpParser\ConstExprEvaluator;
 use PhpParser\Node;
 use PhpParser\Node\FunctionLike;
@@ -42,7 +43,9 @@ class NodeRulesEvaluator implements RulesEvaluator
                         $param->var->name => $value,
                     ];
                 } catch (\Throwable $e) {
-                    return [];
+                    return [
+                        $param->var->name => new Optional(null),
+                    ];
                 }
             })
             ->all();
@@ -56,10 +59,19 @@ class NodeRulesEvaluator implements RulesEvaluator
                 return eval("\$request = request(); return $code;");
             } catch (\Throwable $e) {
             }
-        }))->evaluateSilently($this->rulesNode);
+
+            return null;
+        }))->evaluateDirectly($this->rulesNode);
 
         foreach ($rules as $name => &$item) {
-            $item = is_string($item) ? trim($item, '|') : array_values(array_filter($item));
+            if (is_string($item)) {
+                $item = trim($item, '|');
+                continue;
+            }
+
+            if (is_array($item)) {
+                $item = array_values(array_filter($item));
+            }
         }
 
         return $rules ?? [];
