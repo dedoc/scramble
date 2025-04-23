@@ -71,6 +71,29 @@ it('supports confirmed rule in array', function () {
         ]);
 });
 
+it('supports sometimes rule before required', function () {
+    $rules = [
+        'user.param1' => ['sometimes', 'required', 'min:8'],
+        'user.param2' => ['required', 'min:8'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'param1' => ['type' => 'string', 'minLength' => 8],
+                    'param2' => ['type' => 'string', 'minLength' => 8],
+                ],
+                'required' => ['param2'],
+            ],
+        ]);
+});
+
 it('supports multiple confirmed rule', function () {
     $rules = [
         'password' => ['required', 'min:8', 'confirmed'],
