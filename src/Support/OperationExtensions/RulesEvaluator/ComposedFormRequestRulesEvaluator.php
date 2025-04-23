@@ -31,16 +31,14 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
             new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode),
         ];
 
-        $exceptions = [];
         foreach ($evaluators as $evaluator) {
             try {
                 return $evaluator->handle();
             } catch (\Throwable $e) {
-                $exceptions[] = $e;
-                // todo: reporting
+                // @todo communicate error
             }
         }
 
-        throw $exceptions[count($exceptions) - 1] ?? new \RuntimeException('No rules evaluator could be used to extract rules from the request.');
+        return [];
     }
 }

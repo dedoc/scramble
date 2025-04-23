@@ -42,6 +42,7 @@ class NodeRulesEvaluator implements RulesEvaluator
                         $param->var->name => $value,
                     ];
                 } catch (\Throwable $e) {
+                    // @todo communicate warning
                     return [
                         $param->var->name => new Optional(null),
                     ];
@@ -57,14 +58,15 @@ class NodeRulesEvaluator implements RulesEvaluator
             try {
                 return eval("\$request = request(); return $code;");
             } catch (\Throwable $e) {
+                // @todo communicate error
             }
 
             return null;
         }))->evaluateDirectly($this->rulesNode);
 
-        foreach ($rules as $name => &$item) {
+        foreach ($rules as &$item) {
             if (is_string($item)) {
-                $item = trim($item, '|');
+                $item = trim($item, '|,');
 
                 continue;
             }
