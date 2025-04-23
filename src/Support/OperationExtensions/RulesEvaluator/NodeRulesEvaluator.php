@@ -15,9 +15,8 @@ class NodeRulesEvaluator implements RulesEvaluator
         private PrettyPrinter $printer,
         private FunctionLike $functionLikeNode,
         private ?Node $rulesNode,
-    )
-    {
-    }
+    ) {}
+
     public function handle(): array
     {
         if (! $this->rulesNode) {
@@ -66,6 +65,7 @@ class NodeRulesEvaluator implements RulesEvaluator
         foreach ($rules as $name => &$item) {
             if (is_string($item)) {
                 $item = trim($item, '|');
+
                 continue;
             }
 

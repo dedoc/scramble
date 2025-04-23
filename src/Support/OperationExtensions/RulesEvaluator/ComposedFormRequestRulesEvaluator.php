@@ -15,22 +15,20 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
         private PrettyPrinter $printer,
         private ClassReflector $classReflector,
         private Route $route,
-    )
-    {
-    }
+    ) {}
 
     public function handle(): array
     {
         $rulesMethodNode = $this->classReflector->getMethod('rules')->getAstNode();
 
-        $returnNode = (new NodeFinder())->findFirst(
+        $returnNode = (new NodeFinder)->findFirst(
             $rulesMethodNode ? [$rulesMethodNode] : [],
             fn ($node) => $node instanceof Return_ && $node->expr instanceof Array_
         )?->expr ?? null;
 
         $evaluators = [
             new FormRequestRulesEvaluator($this->classReflector, $this->route),
-            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode)
+            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode),
         ];
 
         $exceptions = [];

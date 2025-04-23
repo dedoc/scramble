@@ -38,8 +38,7 @@ it('extracts parameters with route parameter bindings', function () {
 });
 class ControllerB_FormRequestRulesExtractorPestTest
 {
-    public function __invoke(FormRequestB_FormRequestRulesExtractorPestTest $request, User_FormRequestRulesExtractorPestTest $user)
-    {}
+    public function __invoke(FormRequestB_FormRequestRulesExtractorPestTest $request, User_FormRequestRulesExtractorPestTest $user) {}
 }
 class FormRequestB_FormRequestRulesExtractorPestTest
 {
@@ -61,8 +60,7 @@ it('extracts parameters with route parameter bindings in concat', function () {
 });
 class ControllerC_FormRequestRulesExtractorPestTest
 {
-    public function __invoke(FormRequestC_FormRequestRulesExtractorPestTest $request, User_FormRequestRulesExtractorPestTest $user)
-    {}
+    public function __invoke(FormRequestC_FormRequestRulesExtractorPestTest $request, User_FormRequestRulesExtractorPestTest $user) {}
 }
 class FormRequestC_FormRequestRulesExtractorPestTest
 {

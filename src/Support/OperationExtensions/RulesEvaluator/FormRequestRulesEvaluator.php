@@ -11,9 +11,7 @@ class FormRequestRulesEvaluator implements RulesEvaluator
     public function __construct(
         private ClassReflector $classReflector,
         private Route $route,
-    )
-    {
-    }
+    ) {}
 
     public function handle(): array
     {
