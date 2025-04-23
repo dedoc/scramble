@@ -5,15 +5,15 @@ namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
+use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\ComposedFormRequestRulesEvaluator;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\GeneratesParametersFromRules;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\SchemaClassDocReflector;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
+use PhpParser\PrettyPrinter;
 use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionParameter;
@@ -24,6 +24,7 @@ class FormRequestParametersExtractor implements ParameterExtractor
     use GeneratesParametersFromRules;
 
     public function __construct(
+        private PrettyPrinter $printer,
         private TypeTransformer $openApiTransformer,
     ) {}
 
@@ -95,7 +96,7 @@ class FormRequestParametersExtractor implements ParameterExtractor
                         && $node->key instanceof Node\Scalar\String_
                         && $node->getAttribute('parsedPhpDoc'),
                 ),
-                rules: $this->rules($requestClassName, $routeInfo->route),
+                rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->route))->handle(),
                 typeTransformer: $this->openApiTransformer,
                 in: in_array(mb_strtolower($routeInfo->route->methods()[0]), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
                     ? 'query'
@@ -104,23 +105,5 @@ class FormRequestParametersExtractor implements ParameterExtractor
             schemaName: $schemaName,
             description: $phpDocReflector->getDescription(),
         );
-    }
-
-    protected function rules(string $requestClassName, Route $route)
-    {
-        /** @var Request $request */
-        $request = (new $requestClassName);
-
-        $rules = [];
-
-        if (method_exists($request, 'setMethod')) {
-            $request->setMethod($route->methods()[0]);
-        }
-
-        if (method_exists($request, 'rules')) {
-            $rules = $request->rules();
-        }
-
-        return $rules;
     }
 }
