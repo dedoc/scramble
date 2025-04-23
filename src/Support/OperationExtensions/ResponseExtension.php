@@ -43,11 +43,11 @@ class ResponseExtension extends OperationExtension
 
                 return $type;
             })
-            ->flatMap(function (Type $type) use ($routeInfo) {
+            ->flatMap(function (Type $type) {
                 /** @var PhpDocTagNode[] $statusTags */
                 $statusTags = $type->getAttribute('docNode')?->getTagsByName('@status');
 
-                if(empty($statusTags)) {
+                if (empty($statusTags)) {
                     return [$type];
                 }
 
@@ -55,7 +55,7 @@ class ResponseExtension extends OperationExtension
                     $docNode = $type->getAttribute('docNode');
                     $singleStatusNode = (clone $docNode);
                     $singleStatusNode->children = collect($docNode->getTags())
-                        ->filter(fn($tag) => $tag->name !== '@status' || $tag->value?->value === $code->value?->value)
+                        ->filter(fn ($tag) => $tag->name !== '@status' || $tag->value?->value === $code->value?->value)
                         ->values()
                         ->all();
 
