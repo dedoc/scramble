@@ -10,9 +10,9 @@ class Parameter
     public string $name;
 
     /**
-     * Possible values are "query", "header", "path", or "cookie".
+     * Possible values are "query", "header", "body-header", "path", or "cookie".
      *
-     * @var "query"|"header"|"path"|"cookie".
+     * @var "query"|"header"|"path"|"cookie"|"body-header".
      */
     public string $in;
 

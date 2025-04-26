@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\Support\Generator\Types\Type;
+
 class Response
 {
     public ?int $code = null;
@@ -10,6 +12,9 @@ class Response
     public array $content;
 
     public string $description = '';
+
+    /** @var array<string, Parameter> */
+    public array $headers = [];
 
     public function __construct(?int $code)
     {
@@ -31,6 +36,15 @@ class Response
         return $this;
     }
 
+    public function addHeader(string $name, ?string $description, Type $type)
+    {
+        $this->headers[$name] = Parameter::make($name, 'body-header')
+            ->description($description)
+            ->schema(Schema::fromType($type));
+
+        return $this;
+    }
+
     public function toArray()
     {
         $result = [
@@ -45,12 +59,28 @@ class Response
             $result['content'] = $content;
         }
 
+        if (count($this->headers) > 0) {
+            $headers = collect($this->headers)->mapWithKeys(fn (Parameter $header, $key) => [
+                $header->name => [
+                    'description' => $header->description,
+                    'schema' => $header->schema->toArray()
+                ]
+            ])
+                ->toArray();
+            $result['headers'] = $headers;
+        }
+
         return $result;
     }
 
     public function getContent(string $mediaType)
     {
         return $this->content[$mediaType];
+    }
+
+    public function getHeader(string $header)
+    {
+        return $this->headers[$header];
     }
 
     public function description(string $string)

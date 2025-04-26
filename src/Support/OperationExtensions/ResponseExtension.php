@@ -49,7 +49,18 @@ class ResponseExtension extends OperationExtension
 
         [$responses, $references] = $responses->partition(fn ($r) => $r instanceof Response);
 
+        $headers = collect($operation->parameters)
+            ->filter(fn ($parameter) => is_a($parameter, \Dedoc\Scramble\Support\Generator\Parameter::class) && $parameter->in === 'body-header')
+            ->values()
+            ->toArray();
         $responses = $responses
+            ->when(
+                count($headers) > 0,
+                fn (Collection $responses) => $responses->each(function ($response) use ($headers) {
+                    if ($response instanceof Response) {
+                        $response->headers = array_merge($response->headers, $headers);
+                    }
+            }))
             ->groupBy('code')
             ->map(function (Collection $responses, $code) {
                 if (count($responses) === 1) {

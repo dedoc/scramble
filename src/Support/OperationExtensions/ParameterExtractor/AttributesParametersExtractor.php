@@ -125,7 +125,7 @@ class AttributesParametersExtractor implements ParameterExtractor
             ))
             ->required($attribute->required);
 
-        $parameter->setAttribute('nonBody', $attribute->in !== 'body');
+        $parameter->setAttribute('nonBody', $attribute->in !== 'body' && $attribute->in !== 'body-header');
 
         $parameter->deprecated = $attribute->deprecated;
 

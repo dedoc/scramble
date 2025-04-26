@@ -10,7 +10,7 @@ class Parameter
     public readonly bool $required;
 
     /**
-     * @param  'query'|'path'|'header'|'cookie'|'body'  $in
+     * @param  'query'|'path'|'header'|'cookie'|'body'|'body-header'  $in
      * @param  scalar|array|object|MissingValue  $example
      * @param  array<string, Example>  $examples  The key is a distinct name and the value is an example object.
      */
