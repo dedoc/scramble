@@ -36,11 +36,11 @@ class Response
         return $this;
     }
 
-    public function addHeader(string $name, ?string $description, Type $type)
+    public function registerHeader(string $name, ?string $description, Type $type)
     {
         $this->headers[$name] = Parameter::make($name, 'body-header')
             ->description($description)
-            ->schema(Schema::fromType($type));
+            ->setSchema(Schema::fromType($type));
 
         return $this;
     }
