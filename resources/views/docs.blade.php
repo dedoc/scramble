@@ -48,8 +48,36 @@
             return originalFetch(url, options);
         };
     </script>
+    <style>
+        body {
+            height: 100vh;
+            overflow-y: hidden;
+        }
+
+        body.layout-stacked {
+            overflow-y: visible;
+            margin-left: 12px !important;
+            margin-right: 12px !important;
+        }
+
+        @media print {
+            body {
+                height: auto !important;
+                overflow-y: visible !important;
+                background: #fff !important;
+                color: #000 !important;
+            }
+
+            .sl-elements-api>div.sl-flex {
+                display: none !important;
+
+            }
+        }
+    </style>
+
 </head>
-<body style="height: 100vh; overflow-y: hidden">
+
+<body class="layout-{{ $config->get('ui.layout', 'responsive') }}">
 <elements-api
     id="docs"
     tryItCredentialsPolicy="{{ $config->get('ui.try_it_credentials_policy', 'include') }}"
