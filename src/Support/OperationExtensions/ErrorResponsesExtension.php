@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -56,7 +57,7 @@ class ErrorResponsesExtension extends OperationExtension
 
     private function attachAuthorizationException(RouteInfo $routeInfo, FunctionType $methodType)
     {
-        if (! collect($routeInfo->route->gatherMiddleware())->contains(fn ($m) => is_string($m) && Str::startsWith($m, 'can:'))) {
+        if (! collect($routeInfo->route->gatherMiddleware())->contains(fn ($m) => is_string($m) && Str::startsWith($m, ['can:', Authorize::class . ':']))) {
             return;
         }
 
