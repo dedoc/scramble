@@ -1,6 +1,7 @@
 <?php
 
 use Dedoc\Scramble\Scramble;
+use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -84,10 +85,19 @@ it('adds authentication error response', function () {
         ]);
 });
 
-it('adds not found error response', function () {
+it('adds not found error response with can directive', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::get('api/test/{user}', [ErrorsResponsesTest_Controller::class, 'adds_not_found_error_response'])
             ->middleware('can:update,post');
+    });
+
+    assertMatchesSnapshot($openApiDocument);
+});
+
+it('adds not found error response with Authorize::using', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test/{user}', [ErrorsResponsesTest_Controller::class, 'adds_not_found_error_response'])
+            ->middleware(Authorize::using('update', 'post'));
     });
 
     assertMatchesSnapshot($openApiDocument);
