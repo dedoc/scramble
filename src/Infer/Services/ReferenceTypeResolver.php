@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
@@ -274,6 +275,27 @@ class ReferenceTypeResolver
             $this->resolveUnknownClass($calleeType->name);
         }
 
+        $normalizedCalleeType = $calleeType instanceof TemplateType
+            ? $calleeType->is
+            : $calleeType;
+
+        $classDefinition = null;
+        if ($normalizedCalleeType instanceof ObjectType) {
+            $classDefinition = $this->index->getClassDefinition($normalizedCalleeType->name);
+        }
+
+        if ($returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
+            instance: $normalizedCalleeType,
+            name: $type->methodName,
+            scope: $scope,
+            arguments: $type->arguments,
+            methodDefiningClassName: $classDefinition
+                ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index)
+                : ($normalizedCalleeType instanceof ObjectType ? $normalizedCalleeType->name : null),
+        ))) {
+            return $returnType;
+        }
+
         $event = null;
 
         // Attempting extensions broker before potentially giving up on type inference
@@ -303,7 +325,6 @@ class ReferenceTypeResolver
 
                 $this->resolveUnknownClass($calleeType->name);
             }
-
         }
 
         // (#TName).listTableDetails()

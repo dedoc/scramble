@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Extensions;
 
+use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
 
 class ExtensionsBroker
@@ -11,6 +12,9 @@ class ExtensionsBroker
 
     /** @var MethodReturnTypeExtension[] */
     private array $methodReturnTypeExtensions;
+
+    /** @var AnyMethodReturnTypeExtension[] */
+    private array $anyMethodReturnTypeExtensions;
 
     /** @var MethodCallExceptionsExtension[] */
     private array $methodCallExceptionsExtensions;
@@ -35,6 +39,10 @@ class ExtensionsBroker
 
         $this->methodReturnTypeExtensions = array_filter($extensions, function ($e) {
             return $e instanceof MethodReturnTypeExtension;
+        });
+
+        $this->anyMethodReturnTypeExtensions = array_filter($extensions, function ($e) {
+            return $e instanceof AnyMethodReturnTypeExtension;
         });
 
         $this->methodCallExceptionsExtensions = array_filter($extensions, function ($e) {
@@ -155,5 +163,16 @@ class ExtensionsBroker
 
             $extension->afterSideEffectCallAnalyzed($event);
         }
+    }
+
+    public function getAnyMethodReturnType(AnyMethodCallEvent $event)
+    {
+        foreach ($this->anyMethodReturnTypeExtensions as $extension) {
+            if ($returnType = $extension->getMethodReturnType($event)) {
+                return $returnType;
+            }
+        }
+
+        return null;
     }
 }
