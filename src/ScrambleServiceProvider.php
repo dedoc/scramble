@@ -129,7 +129,6 @@ class ScrambleServiceProvider extends PackageServiceProvider
                         new PossibleExceptionInfer,
                         new AbortHelpersExceptionInfer,
 
-                        new JsonResourceCallsTypeInfer,
                         new JsonResourceCreationInfer,
                         new ValidatorTypeInfer,
                         new ResourceCollectionTypeInfer,

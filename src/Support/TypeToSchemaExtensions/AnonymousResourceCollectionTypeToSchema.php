@@ -18,6 +18,7 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\PaginatedResourceResponse;
@@ -152,7 +153,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     {
         // In case of paginated resource, we still want to get to the underlying JsonResource.
         return (new TypeWalker)->first(
-            $type->templateTypes[0],
+            new Union([$type->templateTypes[0], $type->templateTypes[1] ?? new UnknownType]),
             fn (Type $t) => $t->isInstanceOf(JsonResource::class),
         );
     }
