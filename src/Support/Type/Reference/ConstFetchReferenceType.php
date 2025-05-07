@@ -15,9 +15,4 @@ class ConstFetchReferenceType extends AbstractReferenceType
 
         return "(#{$callee})::{$this->constName}";
     }
-
-    public function dependencies(): array
-    {
-        return [];
-    }
 }

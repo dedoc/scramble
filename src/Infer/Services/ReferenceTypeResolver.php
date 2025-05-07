@@ -24,10 +24,6 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
-use Dedoc\Scramble\Support\Type\Reference\Dependency\ClassDependency;
-use Dedoc\Scramble\Support\Type\Reference\Dependency\FunctionDependency;
-use Dedoc\Scramble\Support\Type\Reference\Dependency\MethodDependency;
-use Dedoc\Scramble\Support\Type\Reference\Dependency\PropertyDependency;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
@@ -118,13 +114,6 @@ class ReferenceTypeResolver
             return $resolvedType;
         }
 
-        if (
-            $type instanceof AbstractReferenceType
-            && ! $this->checkDependencies($type)
-        ) {
-            //      ????      return new UnknownType();
-        }
-
         $resultingType = RecursionGuard::run(
             $type,// ->toString(),
             fn () => (new TypeWalker)->replace(
@@ -148,40 +137,6 @@ class ReferenceTypeResolver
         $type->setAttribute('resolvedType', $resolvedType);
 
         return $resolvedType;
-    }
-
-    private function checkDependencies(AbstractReferenceType $type)
-    {
-        if (! $dependencies = $type->dependencies()) {
-            return true;
-        }
-
-        foreach ($dependencies as $dependency) {
-            if ($dependency instanceof FunctionDependency) {
-                return (bool) $this->index->getFunctionDefinition($dependency->name);
-            }
-
-            if ($dependency instanceof PropertyDependency || $dependency instanceof MethodDependency || $dependency instanceof ClassDependency) {
-                if (! $classDefinition = $this->index->getClassDefinition($dependency->class)) {
-                    // Maybe here the resolution can happen
-                    return false;
-                }
-
-                if ($dependency instanceof PropertyDependency) {
-                    return array_key_exists($dependency->name, $classDefinition->properties);
-                }
-
-                if ($dependency instanceof MethodDependency) {
-                    return array_key_exists($dependency->name, $classDefinition->methods);
-                }
-
-                if ($dependency instanceof ClassDependency) {
-                    return true;
-                }
-            }
-        }
-
-        throw new \LogicException('There are unhandled dependencies. This should not happen.');
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope)
@@ -624,9 +579,7 @@ class ReferenceTypeResolver
 
         $classDefinition = $objectType instanceof SelfType && $scope->isInClass()
             ? $scope->classDefinition()
-            : ($objectType instanceof ObjectType
-                ? $this->index->getClassDefinition($objectType->name)
-                : null);
+            : $this->index->getClassDefinition($objectType->name);
 
         if (! $classDefinition) {
             $name = $objectType instanceof SelfType ? 'self' : $objectType->name;
@@ -845,8 +798,8 @@ class ReferenceTypeResolver
 
             $mappo->offsetSet($se, $resultingType);
 
-            $methodDefinition = ($methodDependency = collect($se->dependencies())->first(fn ($d) => $d instanceof MethodDependency))
-                ? $this->index->getClassDefinition($methodDependency->class)?->getMethodDefinition($methodDependency->name)
+            $methodDefinition = $se->callee instanceof ObjectType
+                ? $this->index->getClassDefinition($se->callee->name)?->getMethodDefinition($se->methodName)
                 : null;
 
             if (! $methodDefinition) {
