@@ -3,8 +3,6 @@
 namespace Dedoc\Scramble\Support\Type\Reference;
 
 use Dedoc\Scramble\Support\Type\AbstractType;
-use Dedoc\Scramble\Support\Type\Reference\Dependency\Dependency;
-use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\Type;
 
 abstract class AbstractReferenceType extends AbstractType
