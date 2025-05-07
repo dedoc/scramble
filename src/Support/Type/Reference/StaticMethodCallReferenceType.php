@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Type\Reference;
 
-use Dedoc\Scramble\Support\Type\Reference\Dependency\MethodDependency;
 use Dedoc\Scramble\Support\Type\Type;
 
 class StaticMethodCallReferenceType extends AbstractReferenceType
@@ -29,20 +28,5 @@ class StaticMethodCallReferenceType extends AbstractReferenceType
         $calleeType = is_string($this->callee) ? $this->callee : $this->callee->toString();
 
         return "(#{$calleeType})::{$this->methodName}($argsTypes)";
-    }
-
-    public function dependencies(): array
-    {
-        if ($this->callee instanceof AbstractReferenceType) {
-            return $this->callee->dependencies();
-        }
-
-        if (is_string($this->callee)) {
-            return [
-                new MethodDependency($this->callee, $this->methodName),
-            ];
-        }
-
-        return [];
     }
 }

@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Type\Reference;
 
-use Dedoc\Scramble\Support\Type\Reference\Dependency\ClassDependency;
 use Dedoc\Scramble\Support\Type\Type;
 
 class NewCallReferenceType extends AbstractReferenceType
@@ -33,20 +32,5 @@ class NewCallReferenceType extends AbstractReferenceType
         $name = is_string($this->name) ? $this->name : $this->name->toString();
 
         return "(new {$name})($argsTypes)";
-    }
-
-    public function dependencies(): array
-    {
-        if ($this->name instanceof AbstractReferenceType) {
-            return $this->name->dependencies();
-        }
-
-        if (is_string($this->name)) {
-            return [
-                new ClassDependency($this->name),
-            ];
-        }
-
-        return [];
     }
 }
