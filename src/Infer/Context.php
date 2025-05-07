@@ -15,10 +15,6 @@ class Context
     public static function configure(
         ExtensionsBroker $extensionsBroker,
     ) {
-        if (static::$instance) {
-            throw new \LogicException('Context is already configured.');
-        }
-
         static::$instance = new static(
             $extensionsBroker,
         );
