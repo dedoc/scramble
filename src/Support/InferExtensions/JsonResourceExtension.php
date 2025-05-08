@@ -32,6 +32,8 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -173,10 +175,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
     public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
     {
         return match ($event->getName()) {
-            'collection' =>  new Generic(
-                AnonymousResourceCollection::class,
-                [new Generic($event->getCallee(), [$event->getArg('resource', 0)])],
-            ),
+            'collection' =>  $this->buildAnonymousResourceCollectionType($event),
             'make' => new Generic($event->getCallee(), [$event->getArg('resource', 0)]),
             default => null,
         };
@@ -262,5 +261,24 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                     ->all()
             ),
         ]);
+    }
+
+    private function buildAnonymousResourceCollectionType(StaticMethodCallEvent $event)
+    {
+        $argument = $event->getArg('resource', 0);
+
+        $isInferredPaginator = $argument instanceof Generic
+            && ($argument->isInstanceOf(Paginator::class) || $argument->isInstanceOf(CursorPaginator::class))
+            && count($argument->templateTypes) === 2;
+
+        if ($isInferredPaginator) {
+            $argument = clone $argument;
+            $argument->templateTypes = [new ObjectType($event->getCallee())];
+        }
+
+        return new Generic(
+            AnonymousResourceCollection::class,
+            [$isInferredPaginator ? $argument : new Generic($event->getCallee(), [$event->getArg('resource', 0)])],
+        );
     }
 }

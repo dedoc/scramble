@@ -24,12 +24,14 @@ use Dedoc\Scramble\Support\ExceptionToResponseExtensions\NotFoundExceptionToResp
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\ValidationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
+use Dedoc\Scramble\Support\IndexBuilders\PaginatorsCandidatesBuilder;
 use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCreationInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
+use Dedoc\Scramble\Support\InferExtensions\PaginateMethodsReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceResponseMethodReturnTypeExtension;
@@ -128,6 +130,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
                         new PossibleExceptionInfer,
                         new AbortHelpersExceptionInfer,
 
+                        new PaginateMethodsReturnTypeExtension,
+
                         new JsonResourceCreationInfer,
                         new ValidatorTypeInfer,
                         new ResourceCollectionTypeInfer,
@@ -156,7 +160,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                 return array_map(function ($class) {
                     return app($class);
-                }, $indexBuilders);
+                }, array_merge([PaginatorsCandidatesBuilder::class], $indexBuilders));
             });
 
         $this->app->bind(TypeTransformer::class, function (Application $application, array $parameters) {
