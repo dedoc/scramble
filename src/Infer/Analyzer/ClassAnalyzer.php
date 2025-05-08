@@ -92,7 +92,7 @@ class ClassAnalyzer
                         is: $reflectionProperty->hasType() ? TypeHelper::createTypeFromReflectionType($reflectionProperty->getType()) : new UnknownType,
                     ),
                     defaultType: $reflectionProperty->hasDefaultValue()
-                        ? TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue())
+                        ? PropertyAnalyzer::from($reflectionProperty)->getDefaultType()
                         : null,
                 );
                 $classDefinition->templateTypes[] = $t;

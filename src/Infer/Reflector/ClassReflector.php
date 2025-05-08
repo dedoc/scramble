@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use PhpParser\NameContext;
 use ReflectionClass;
+use RuntimeException;
 
 class ClassReflector
 {
@@ -41,5 +42,27 @@ class ClassReflector
     public function getNameContext(): NameContext
     {
         return $this->nameContext ??= FileNameResolver::createForFile($this->getReflection()->getFileName())->nameContext;
+    }
+
+    public function getSource()
+    {
+        $refClass = $this->getReflection();
+
+        $fileName = $refClass->getFileName();
+        if ($fileName === false) {
+            throw new RuntimeException("Class {$refClass->getName()} is internal or not user-defined.");
+        }
+
+        $startLine = $refClass->getStartLine();
+        $endLine = $refClass->getEndLine();
+
+        $lines = file($fileName);
+        if ($lines === false) {
+            throw new RuntimeException("Unable to read file: $fileName");
+        }
+
+        $classLines = array_slice($lines, $startLine - 1, $endLine - $startLine + 1);
+
+        return implode('', $classLines);
     }
 }
