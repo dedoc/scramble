@@ -29,7 +29,6 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Pagination\CursorPaginator;
@@ -175,7 +174,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
     public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
     {
         return match ($event->getName()) {
-            'collection' =>  $this->buildAnonymousResourceCollectionType($event),
+            'collection' => $this->buildAnonymousResourceCollectionType($event),
             'make' => new Generic($event->getCallee(), [$event->getArg('resource', 0)]),
             default => null,
         };

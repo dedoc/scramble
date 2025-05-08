@@ -42,7 +42,7 @@ class ExtensionsBroker
     }
 
     /**
-     * @param string<InferExtension>[] $extensions
+     * @param  string<InferExtension>[]  $extensions
      */
     public function priority(array $priority)
     {
@@ -93,8 +93,8 @@ class ExtensionsBroker
     private function sortExtensionsInOrder(array $arrayToSort, array $arrayToSortWithItems): array
     {
         // 1) Figure out which items match any of the given “order” patterns
-        $isMatched      = []; // parallel boolean array
-        $matchedItems   = []; // will collect items for sorting
+        $isMatched = []; // parallel boolean array
+        $matchedItems = []; // will collect items for sorting
         foreach ($arrayToSort as $item) {
             $found = false;
             foreach ($arrayToSortWithItems as $pattern) {
@@ -110,17 +110,19 @@ class ExtensionsBroker
         }
 
         // 2) Sort the matched-items list by the order of patterns
-        usort($matchedItems, function($a, $b) use ($arrayToSortWithItems) {
+        usort($matchedItems, function ($a, $b) use ($arrayToSortWithItems) {
             $rank = array_flip($arrayToSortWithItems);
             // Find the first pattern each item matches
-            $getRank = function($item) use ($rank) {
+            $getRank = function ($item) use ($rank) {
                 foreach ($rank as $pattern => $idx) {
                     if ($item::class === $pattern) {
                         return $idx;
                     }
                 }
+
                 return PHP_INT_MAX; // fallback (should not happen)
             };
+
             return $getRank($a) <=> $getRank($b);
         });
 
