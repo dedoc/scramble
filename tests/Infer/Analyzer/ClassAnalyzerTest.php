@@ -6,12 +6,14 @@ use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Tests\Infer\stubs\Bar;
 use Dedoc\Scramble\Tests\Infer\stubs\Child;
 use Dedoc\Scramble\Tests\Infer\stubs\ChildParentSetterCalls;
 use Dedoc\Scramble\Tests\Infer\stubs\ChildPromotion;
 use Dedoc\Scramble\Tests\Infer\stubs\DeepChild;
 use Dedoc\Scramble\Tests\Infer\stubs\Foo;
+use Dedoc\Scramble\Tests\Infer\stubs\FooWithDefaultProperties;
 use Dedoc\Scramble\Tests\Infer\stubs\FooWithTrait;
 
 beforeEach(function () {
@@ -71,6 +73,20 @@ it('analyzes traits', function () {
         'methodBaz',
         'methodInvokingFooTraitMethod',
     ]);
+});
+
+it('preserves comments in property defaults', function () {
+    $classDef = $this->classAnalyzer->analyze(FooWithDefaultProperties::class);
+
+    /** @var KeyedArrayType $defaultType */
+    $defaultType = $classDef->properties['default']->defaultType;
+
+    expect($defaultType)
+        ->toBeInstanceOf(KeyedArrayType::class)
+        ->and($defaultType->items[0]->getAttribute('docNode'))
+        ->not->toBeNull()
+        ->and($defaultType->items[1]->getAttribute('docNode'))
+        ->not->toBeNull();
 });
 
 it('analyzes parent instantiation', function () {
