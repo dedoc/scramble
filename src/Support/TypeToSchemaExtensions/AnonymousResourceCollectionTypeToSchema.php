@@ -8,12 +8,12 @@ use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
-use \Dedoc\Scramble\Support\Type as InferType;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType as OpenApiArrayType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Type as InferType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -66,7 +66,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
-        $additional = $type->templateTypes[1 /* TAdditional */] ?? new InferType\UnknownType();
+        $additional = $type->templateTypes[1 /* TAdditional */] ?? new InferType\UnknownType;
 
         if ($additional instanceof KeyedArrayType) {
             $additional->items = $this->flattenMergeValues($additional->items);
