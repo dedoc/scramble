@@ -4,10 +4,7 @@ namespace Dedoc\Scramble\Infer\Analyzer;
 
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
-use Dedoc\Scramble\Infer\Handler\IndexBuildingHandler;
-use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Reflector\PropertyReflector;
-use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -17,16 +14,12 @@ use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Support\Arr;
 use PhpParser\Node\PropertyItem;
-use PhpParser\Node\Stmt\ClassMethod;
-use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use ReflectionProperty;
 
 class PropertyAnalyzer
 {
-    public function __construct(private ReflectionProperty $reflectionProperty)
-    {
-    }
+    public function __construct(private ReflectionProperty $reflectionProperty) {}
 
     public static function from(ReflectionProperty $reflectionProperty)
     {
@@ -74,7 +67,6 @@ class PropertyAnalyzer
         if (! $propertyItem->default) {
             return null;
         }
-
 
         return $scope->getType($propertyItem->default);
     }

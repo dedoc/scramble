@@ -9,6 +9,7 @@ class FooWithDefaultProperties
         'value',
         /**
          * From PHPDoc
+         *
          * @var string
          */
         'foo' => 'bar',

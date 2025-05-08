@@ -62,6 +62,7 @@ class ClassReflector
         }
 
         $classLines = array_slice($lines, $startLine - 1, $endLine - $startLine + 1);
+
         return implode('', $classLines);
     }
 }

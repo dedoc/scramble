@@ -10,7 +10,6 @@ use PhpParser\Node\Stmt\Property;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
-use ReflectionMethod;
 use ReflectionProperty;
 
 class PropertyReflector
@@ -48,20 +47,20 @@ class PropertyReflector
     {
         $tokens = token_get_all($code = "<?php\n".$this->getClassReflector()->getSource());
 
-        $tokens             = token_get_all($code);
-        $inClass            = false;
-        $braceLevel         = 0;
-        $collect            = false;
-        $inFunctionDecl     = false;
-        $inParamList        = false;
-        $paramParenDepth    = 0;
-        $result             = '';
+        $tokens = token_get_all($code);
+        $inClass = false;
+        $braceLevel = 0;
+        $collect = false;
+        $inFunctionDecl = false;
+        $inParamList = false;
+        $paramParenDepth = 0;
+        $result = '';
 
         foreach ($tokens as $t) {
             if (is_array($t)) {
                 [$id, $text] = $t;
             } else {
-                $id   = null;
+                $id = null;
                 $text = $t;
             }
 
@@ -89,7 +88,7 @@ class PropertyReflector
 
             // when in a function decl, track parentheses
             if ($inFunctionDecl && $text === '(') {
-                $inParamList     = true;
+                $inParamList = true;
                 $paramParenDepth = 1;
             } elseif ($inParamList && $text === '(') {
                 $paramParenDepth++;
@@ -97,7 +96,7 @@ class PropertyReflector
                 $paramParenDepth--;
                 if ($paramParenDepth === 0) {
                     // end of parameter list
-                    $inParamList    = false;
+                    $inParamList = false;
                     $inFunctionDecl = false;
                 }
             }
@@ -105,14 +104,15 @@ class PropertyReflector
             // start collecting when we see the right variable,
             // but only if we're at top-level of class body and not inside a param list
             if ($inClass
-                && !$collect
-                && !$inParamList
+                && ! $collect
+                && ! $inParamList
                 && $id === T_VARIABLE
-                && $text === '$' . $this->name
+                && $text === '$'.$this->name
                 && $braceLevel === 1
             ) {
-                $collect       = true;
-                $result       .= $text;
+                $collect = true;
+                $result .= $text;
+
                 continue;
             }
 
@@ -156,7 +156,7 @@ EOD;
         $node = (new NodeFinder)
             ->findFirst(
                 $statements,
-                fn (Node $node) => $node instanceof Property && !! collect($node->props)->first(fn (Node\PropertyItem $p) => $p->name->name === $this->name),
+                fn (Node $node) => $node instanceof Property && (bool) collect($node->props)->first(fn (Node\PropertyItem $p) => $p->name->name === $this->name),
             );
 
         $traverser = new NodeTraverser;
