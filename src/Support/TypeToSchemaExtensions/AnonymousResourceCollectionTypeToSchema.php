@@ -8,6 +8,7 @@ use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
+use \Dedoc\Scramble\Support\Type as InferType;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType as OpenApiArrayType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
@@ -65,7 +66,8 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
-        $additional = $type->templateTypes[1 /* TAdditional */] ?? new UnknownType;
+        $additional = $type->templateTypes[1 /* TAdditional */] ?? new InferType\UnknownType();
+
         if ($additional instanceof KeyedArrayType) {
             $additional->items = $this->flattenMergeValues($additional->items);
         }
@@ -80,7 +82,12 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
 
         // In case of paginated resource, we want to get pagination response.
         if ($type->templateTypes[0] instanceof Generic && ! $type->templateTypes[0]->isInstanceOf(JsonResource::class)) {
-            return $this->getPaginatedCollectionResponse($type->templateTypes[0], $collectingResourceType, $wrapKey);
+            return $this->getPaginatedCollectionResponse(
+                $type->templateTypes[0],
+                $collectingResourceType,
+                $wrapKey,
+                $additional,
+            );
         }
 
         $jsonResourceOpenApiType = $this->openApiTransformer->transform($collectingResourceType);
@@ -105,7 +112,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     /**
      * @see PaginatedResourceResponse
      */
-    private function getPaginatedCollectionResponse(Generic $type, ObjectType $collectingClassType, string $wrapKey)
+    private function getPaginatedCollectionResponse(Generic $type, ObjectType $collectingClassType, string $wrapKey, Type $additional)
     {
         if (! $type->isInstanceOf(AbstractPaginator::class) && ! $type->isInstanceOf(AbstractCursorPaginator::class)) {
             return null;
@@ -143,6 +150,10 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
                 $type->setRequired(array_keys($type->properties));
             }))
             ->setRequired([$wrapKey, 'links', 'meta']);
+
+        if ($additional instanceof KeyedArrayType) {
+            $this->mergeOpenApiObjects($responseType, $this->openApiTransformer->transform($additional));
+        }
 
         return Response::make(200)
             ->description('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectingClassType->name).'`')
