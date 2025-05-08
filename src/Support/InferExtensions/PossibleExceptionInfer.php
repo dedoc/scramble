@@ -8,9 +8,11 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Identifier;
+use PhpParser\Node\Name\FullyQualified;
 
 class PossibleExceptionInfer implements ExpressionExceptionExtension
 {
@@ -37,6 +39,21 @@ class PossibleExceptionInfer implements ExpressionExceptionExtension
             if (
                 $node->name instanceof Identifier && $node->name->name === 'authorize'
                 && ($node->var instanceof Expr\Variable && ($node->var->name ?? null) === 'this') // $this
+            ) {
+                return [
+                    new ObjectType(AuthorizationException::class),
+                ];
+            }
+        }
+
+        // Gate::authorize
+        if ($node instanceof Expr\StaticCall) {
+            $isCallToAuthorize = $node->name instanceof Identifier && $node->name->name === 'authorize';
+
+            if (
+                $isCallToAuthorize
+                && $node->class instanceof FullyQualified
+                && is_a($node->class->toString(), Gate::class, true)
             ) {
                 return [
                     new ObjectType(AuthorizationException::class),
