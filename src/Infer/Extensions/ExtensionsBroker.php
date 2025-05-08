@@ -31,8 +31,32 @@ class ExtensionsBroker
     /** @var AfterSideEffectCallAnalyzed[] */
     private array $afterSideEffectCallAnalyzedExtensions;
 
+    /**
+     * @var string<InferExtension>[]
+     */
+    private array $priorities = [];
+
     public function __construct(public readonly array $extensions = [])
     {
+        $this->buildExtensions();
+    }
+
+    /**
+     * @param  string<InferExtension>[]  $extensions
+     */
+    public function priority(array $priority)
+    {
+        $this->priorities = array_merge($this->priorities, $priority);
+
+        $this->buildExtensions();
+
+        return $this;
+    }
+
+    private function buildExtensions()
+    {
+        $extensions = $this->sortExtensionsInOrder($this->extensions, $this->priorities);
+
         $this->propertyTypeExtensions = array_filter($extensions, function ($e) {
             return $e instanceof PropertyTypeExtension;
         });
@@ -64,6 +88,58 @@ class ExtensionsBroker
         $this->afterSideEffectCallAnalyzedExtensions = array_filter($extensions, function ($e) {
             return $e instanceof AfterSideEffectCallAnalyzed;
         });
+    }
+
+    private function sortExtensionsInOrder(array $arrayToSort, array $arrayToSortWithItems): array
+    {
+        // 1) Figure out which items match any of the given “order” patterns
+        $isMatched = []; // parallel boolean array
+        $matchedItems = []; // will collect items for sorting
+        foreach ($arrayToSort as $item) {
+            $found = false;
+            foreach ($arrayToSortWithItems as $pattern) {
+                if ($item::class === $pattern) {
+                    $found = true;
+                    break;
+                }
+            }
+            $isMatched[] = $found;
+            if ($found) {
+                $matchedItems[] = $item;
+            }
+        }
+
+        // 2) Sort the matched-items list by the order of patterns
+        usort($matchedItems, function ($a, $b) use ($arrayToSortWithItems) {
+            $rank = array_flip($arrayToSortWithItems);
+            // Find the first pattern each item matches
+            $getRank = function ($item) use ($rank) {
+                foreach ($rank as $pattern => $idx) {
+                    if ($item::class === $pattern) {
+                        return $idx;
+                    }
+                }
+
+                return PHP_INT_MAX; // fallback (should not happen)
+            };
+
+            return $getRank($a) <=> $getRank($b);
+        });
+
+        // 3) Rebuild the final array
+        $result = [];
+        $mIndex = 0;
+        foreach ($arrayToSort as $i => $item) {
+            if ($isMatched[$i]) {
+                // pull from the sorted‐matches list
+                $result[] = $matchedItems[$mIndex++];
+            } else {
+                // untouched item
+                $result[] = $item;
+            }
+        }
+
+        return $result;
     }
 
     public function getPropertyType($event)

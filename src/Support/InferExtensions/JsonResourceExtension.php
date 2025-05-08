@@ -5,8 +5,10 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
+use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
@@ -29,13 +31,16 @@ use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceResponse;
 use Illuminate\Http\Resources\MergeValue;
 use Illuminate\Http\Resources\MissingValue;
 
-class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeExtension
+class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeExtension, StaticMethodReturnTypeExtension
 {
     public function shouldHandle(ObjectType|string $type): bool
     {
@@ -152,9 +157,26 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
 
             'attributes' => $this->getAttributesMethodReturnType($event),
 
+            'additional' => $event->getInstance() instanceof Generic
+                ? tap($event->getInstance(), function (Generic $type) use ($event) {
+                    $type->templateTypes = array_merge($type->templateTypes, [
+                        /* TAdditional */ 1 => $event->getArg('data', 0),
+                    ]);
+                })
+                : null,
+
             default => ! $event->getDefinition() || $event->getDefinition()->hasMethodDefinition($event->name)
                 ? null
                 : $this->proxyMethodCallToModel($event),
+        };
+    }
+
+    public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
+    {
+        return match ($event->getName()) {
+            'collection' => $this->buildAnonymousResourceCollectionType($event),
+            'make' => new Generic($event->getCallee(), [$event->getArg('resource', 0)]),
+            default => null,
         };
     }
 
@@ -238,5 +260,24 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                     ->all()
             ),
         ]);
+    }
+
+    private function buildAnonymousResourceCollectionType(StaticMethodCallEvent $event)
+    {
+        $argument = $event->getArg('resource', 0);
+
+        $isInferredPaginator = $argument instanceof Generic
+            && ($argument->isInstanceOf(Paginator::class) || $argument->isInstanceOf(CursorPaginator::class))
+            && count($argument->templateTypes) === 2;
+
+        if ($isInferredPaginator) {
+            $argument = clone $argument;
+            $argument->templateTypes = [new ObjectType($event->getCallee())];
+        }
+
+        return new Generic(
+            AnonymousResourceCollection::class,
+            [$isInferredPaginator ? $argument : new Generic($event->getCallee(), [$event->getArg('resource', 0)])],
+        );
     }
 }
