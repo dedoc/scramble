@@ -19,7 +19,12 @@ class AllOf extends Type
 
     public function toArray()
     {
+        $parentArray = parent::toArray();
+
+        unset($parentArray['type']);
+
         return [
+            ...$parentArray,
             'allOf' => array_map(
                 fn ($item) => $item->toArray(),
                 $this->items,

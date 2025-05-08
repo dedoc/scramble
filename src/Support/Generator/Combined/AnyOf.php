@@ -19,7 +19,12 @@ class AnyOf extends Type
 
     public function toArray()
     {
+        $parentArray = parent::toArray();
+
+        unset($parentArray['type']);
+
         return [
+            ...$parentArray,
             'anyOf' => array_map(
                 fn ($item) => $item->toArray(),
                 $this->items,
