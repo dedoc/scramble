@@ -7,6 +7,7 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -66,6 +67,14 @@ it('doesnt add errors with custom request when errors producing methods are not 
 it('adds authorization error response', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_authorization_error_response']);
+    });
+
+    assertMatchesSnapshot($openApiDocument);
+});
+
+it('adds authorization error response for gate authorize', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_authorization_error_response_gate']);
     });
 
     assertMatchesSnapshot($openApiDocument);
@@ -174,6 +183,11 @@ class ErrorsResponsesTest_Controller extends Controller
     public function adds_authorization_error_response(Illuminate\Http\Request $request)
     {
         $this->authorize('read');
+    }
+
+    public function adds_authorization_error_response_gate()
+    {
+        Gate::authorize('read');
     }
 
     public function adds_authentication_error_response(Illuminate\Http\Request $request) {}
