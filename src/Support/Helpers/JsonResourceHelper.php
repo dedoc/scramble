@@ -50,7 +50,7 @@ class JsonResourceHelper
             ->first(fn ($str) => Str::is(['*@property*$resource', '*@mixin*'], $str));
 
         if ($mixinOrPropertyLine) {
-            $modelName = Str::replace(['@property', '$resource', '@mixin', ' ', '*', "\r"], '', $mixinOrPropertyLine);
+            $modelName = Str::replace(['@property-read', '@property', '$resource', '@mixin', ' ', '*', "\r"], '', $mixinOrPropertyLine);
 
             $modelClass = $getFqName($modelName);
 
