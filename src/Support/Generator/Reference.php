@@ -25,6 +25,7 @@ class Reference extends Type
         Components $components,
         ?string $shortName = null,
     ) {
+        $this->type = '$ref';
         $this->referenceType = $referenceType;
         $this->fullName = $fullName;
         $this->components = $components;
@@ -47,8 +48,11 @@ class Reference extends Type
             return (new AnyOf)->setItems([(clone $this)->nullable(false), new NullType])->toArray();
         }
 
+        $parentArray = parent::toArray();
+        unset($parentArray['type']);
+
         return array_filter([
-            'description' => $this->description,
+            ...$parentArray,
             '$ref' => "#/components/{$this->referenceType}/{$this->getUniqueName()}",
         ]);
     }
