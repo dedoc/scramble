@@ -84,7 +84,7 @@ it('supports parent toArray class', function (string $className, array $expected
     ]],
 ]);
 /**
- * @property JsonResourceTypeToSchemaTest_User $resource
+ * @property-read JsonResourceTypeToSchemaTest_User $resource
  */
 class JsonResourceTypeToSchemaTest_NoToArraySample extends JsonResource {}
 /**
