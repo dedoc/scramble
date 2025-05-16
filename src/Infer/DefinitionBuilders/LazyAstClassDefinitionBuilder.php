@@ -1,9 +1,11 @@
 <?php
 
-namespace Dedoc\Scramble\Infer\Analyzer;
+namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 
+use Dedoc\Scramble\Infer\Analyzer\PropertyAnalyzer;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
+use Dedoc\Scramble\Infer\Contracts\ClassDefinitionBuilder;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
@@ -16,54 +18,23 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
 use ReflectionClass;
 
-class ClassAnalyzer
+class LazyAstClassDefinitionBuilder implements ClassDefinitionBuilder
 {
-    public function __construct(private IndexContract $index) {}
+    public function __construct(
+        private IndexContract $index,
+        private string $name,
+    ) {}
 
-    private function shouldAnalyzeParentClass(ReflectionClass $parentClassReflection): bool
+    public function build(): ClassDefinitionContract
     {
-        if ($this->index->getClass($parentClassReflection->name)) {
-            return true;
-        }
+        $classReflection = new ReflectionClass($this->name);
 
-        /*
-         * Classes from `vendor` aren't analyzed at the moment. Instead, it is up to developers to provide
-         * definitions for them using the dictionaries.
-         */
-        return ! str_contains($parentClassReflection->getFileName(), DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR);
-    }
+        $parentDefinition = $classReflection->getParentClass()
+            ? $this->index->getClass($parentName = $classReflection->getParentClass()->name)
+            : null;
 
-    /**
-     * @throws \ReflectionException
-     */
-    public function analyze(string $name): ClassDefinitionContract
-    {
-//        if ($definition = $this->index->getClass($name)) {
-//            return $definition;
-//        }
-
-        $classReflection = new ReflectionClass($name);
-
-        $parentDefinition = null;
-
-        if ($classReflection->getParentClass() && $this->shouldAnalyzeParentClass($classReflection->getParentClass())) {
-            $parentDefinition = $this->analyze($parentName = $classReflection->getParentClass()->name);
-        } elseif ($classReflection->getParentClass() && ! $this->shouldAnalyzeParentClass($classReflection->getParentClass())) {
-            // @todo: Here we still want to fire the event, so we can add some details to the definition.
-            $parentDefinition = new ClassDefinition($parentName = $classReflection->getParentClass()->name);
-
-            Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($parentDefinition->name, $parentDefinition));
-
-            // In case parent definition is added in an extension.
-            $parentDefinition = $this->index->getClassDefinition($parentName) ?: $parentDefinition;
-        }
-
-        /*
-         * @todo consider more advanced cloning implementation.
-         * Currently just cloning property definition feels alright as only its `defaultType` may change.
-         */
         $classDefinition = new ClassDefinition(
-            name: $name,
+            name: $this->name,
             templateTypes: $parentDefinition?->templateTypes ?: [],
             properties: array_map(fn ($pd) => clone $pd, $parentDefinition?->properties ?: []),
             methods: $parentDefinition?->methods ?: [],
@@ -74,9 +45,8 @@ class ClassAnalyzer
          * Traits get analyzed by embracing default behavior of PHP reflection: reflection properties and
          * reflection methods get copied into the class that uses the trait.
          */
-
         foreach ($classReflection->getProperties() as $reflectionProperty) {
-            if ($reflectionProperty->class !== $name) {
+            if ($reflectionProperty->class !== $this->name) {
                 continue;
             }
 
@@ -101,7 +71,7 @@ class ClassAnalyzer
         }
 
         foreach ($classReflection->getMethods() as $reflectionMethod) {
-            if ($reflectionMethod->class !== $name) {
+            if ($reflectionMethod->class !== $this->name) {
                 continue;
             }
 
@@ -111,12 +81,10 @@ class ClassAnalyzer
                     arguments: [],
                     returnType: new UnknownType,
                 ),
-                definingClassName: $name,
+                definingClassName: $this->name,
                 isStatic: $reflectionMethod->isStatic(),
             );
         }
-
-//        $this->index->registerClassDefinition($classDefinition);
 
         Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($classDefinition->name, $classDefinition));
 

@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\Scope;
 
+use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
+use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 
@@ -10,7 +12,7 @@ use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
  * The index exists per run and stores all the information, so it can be accessed
  * during analysis. Index contains all classes/fns/constants found in the analyzed file.
  */
-class Index
+class Index implements IndexContract
 {
     /**
      * @var array<string, ClassDefinition>
@@ -40,5 +42,15 @@ class Index
     public function getFunctionDefinition(string $fnName): ?FunctionLikeDefinition
     {
         return $this->functionsDefinitions[$fnName] ?? null;
+    }
+
+    public function getFunction(string $name): ?FunctionLikeDefinition
+    {
+        return $this->getFunctionDefinition($name);
+    }
+
+    public function getClass(string $name): ?ClassDefinitionContract
+    {
+        return $this->getClassDefinition($name);
     }
 }
