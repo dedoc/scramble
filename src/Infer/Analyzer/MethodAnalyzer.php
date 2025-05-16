@@ -54,7 +54,6 @@ class MethodAnalyzer
             ->getClassDefinition($this->classDefinition->name)
             ->methods[$methodDefinition->type->name];
 
-
         if ($withSideEffects) {
             $this->analyzeSideEffects($methodDefinition, $node, $inferer);
         }

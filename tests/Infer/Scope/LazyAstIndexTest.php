@@ -4,13 +4,11 @@ namespace Dedoc\Scramble\Tests\Infer\Scope;
 
 use Dedoc\Scramble\Infer\Scope\LazyAstIndex;
 
-class Foo {
-}
+class Foo {}
 
-class Bar {
-    public function bar()
-    {
-    }
+class Bar
+{
+    public function bar() {}
 }
 
 beforeEach(function () {

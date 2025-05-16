@@ -9,16 +9,14 @@ use Illuminate\Database\Eloquent\Model;
 
 beforeEach(function () {
     $this->index = new ProjectIndex(
-        reflectionIndex: new LazyShallowReflectionIndex(),
-        astIndex: new LazyAstIndex(),
+        reflectionIndex: new LazyShallowReflectionIndex,
+        astIndex: new LazyAstIndex,
     );
 });
 
-class ProjectIndexTest_Foo {
-    public function foo()
-    {
-
-    }
+class ProjectIndexTest_Foo
+{
+    public function foo() {}
 }
 
 test('analyzes local with ast', function () {

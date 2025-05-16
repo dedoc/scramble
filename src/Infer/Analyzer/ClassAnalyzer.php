@@ -4,11 +4,11 @@ namespace Dedoc\Scramble\Infer\Analyzer;
 
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
+use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
-use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
@@ -38,9 +38,9 @@ class ClassAnalyzer
      */
     public function analyze(string $name): ClassDefinitionContract
     {
-//        if ($definition = $this->index->getClass($name)) {
-//            return $definition;
-//        }
+        //        if ($definition = $this->index->getClass($name)) {
+        //            return $definition;
+        //        }
 
         $classReflection = new ReflectionClass($name);
 
@@ -116,7 +116,7 @@ class ClassAnalyzer
             );
         }
 
-//        $this->index->registerClassDefinition($classDefinition);
+        //        $this->index->registerClassDefinition($classDefinition);
 
         Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($classDefinition->name, $classDefinition));
 
