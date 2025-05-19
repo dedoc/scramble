@@ -27,7 +27,7 @@ beforeEach(function () {
 it('creates a definition from the given class', function () {
     $definition = $this->classAnalyzer->analyze(Foo::class);
 
-    expect($this->index->classesDefinitions)
+    expect($this->index->classes)
         ->toHaveKeys([Foo::class, Bar::class])
         ->and($definition->methods)->toHaveKey('foo')
         ->and(($fooRawDef = $definition->methods['foo'])->isFullyAnalyzed())->toBeFalse()

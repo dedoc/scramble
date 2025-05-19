@@ -74,7 +74,7 @@ function analyzeClass(string $className, array $extensions = []): AnalysisResult
 
 function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolver)
 {
-    foreach ($index->functionsDefinitions as $functionDefinition) {
+    foreach ($index->functions as $functionDefinition) {
         $fnScope = new Scope(
             $index,
             new NodeTypesResolver,
@@ -84,7 +84,7 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
         $referenceResolver->resolveFunctionReturnReferences($fnScope, $functionDefinition->type);
     }
 
-    foreach ($index->classesDefinitions as $classDefinition) {
+    foreach ($index->classes as $classDefinition) {
         foreach ($classDefinition->methods as $name => $methodDefinition) {
             $methodScope = new Scope(
                 $index,

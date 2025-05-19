@@ -2,13 +2,11 @@
 
 namespace Dedoc\Scramble\Infer\Services;
 
-use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
-use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
@@ -40,7 +38,6 @@ use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 use function DeepCopy\deep_copy;
 
@@ -223,20 +220,13 @@ class ReferenceTypeResolver
             throw new \LogicException('Should not happen.');
         }
 
-        /*
-         * Doing a deep dive into the dependent class, if it has not been analyzed.
-         */
-        if ($calleeType instanceof ObjectType) {
-            $this->resolveUnknownClass($calleeType->name);
-        }
-
         $normalizedCalleeType = $calleeType instanceof TemplateType
             ? $calleeType->is
             : $calleeType;
 
         $classDefinition = null;
         if ($normalizedCalleeType instanceof ObjectType) {
-            $classDefinition = $this->index->getClassDefinition($normalizedCalleeType->name);
+            $classDefinition = $this->index->getClass($normalizedCalleeType->name);
         }
 
         if ($returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
@@ -260,7 +250,7 @@ class ReferenceTypeResolver
                 : $calleeType;
 
             if ($unwrappedType instanceof ObjectType) {
-                $classDefinition = $this->index->getClassDefinition($unwrappedType->name);
+                $classDefinition = $this->index->getClass($unwrappedType->name);
 
                 $event = new MethodCallEvent(
                     instance: $unwrappedType,
@@ -277,8 +267,6 @@ class ReferenceTypeResolver
 
             if ($unwrappedType instanceof ObjectType) {
                 $calleeType = $unwrappedType;
-
-                $this->resolveUnknownClass($calleeType->name);
             }
         }
 
@@ -290,10 +278,7 @@ class ReferenceTypeResolver
             return $type;
         }
 
-        if (
-            ($calleeType instanceof ObjectType)
-            && ! array_key_exists($calleeType->name, $this->index->classesDefinitions)
-        ) {
+        if (! $classDefinition) {
             return new UnknownType;
         }
 
@@ -344,11 +329,6 @@ class ReferenceTypeResolver
         // Assuming callee here can be only string of known name. Reality is more complex than
         // that, but it is fine for now.
 
-        /*
-         * Doing a deep dive into the dependent class, if it has not been analyzed.
-         */
-        $this->resolveUnknownClass($calleeName);
-
         // Attempting extensions broker before potentially giving up on type inference
         if ($isStaticCall && $returnType = Context::getInstance()->extensionsBroker->getStaticMethodReturnType(new StaticMethodCallEvent(
             callee: $calleeName,
@@ -361,7 +341,7 @@ class ReferenceTypeResolver
 
         // Attempting extensions broker before potentially giving up on type inference
         if (! $isStaticCall && $scope->context->classDefinition) {
-            $definingMethodName = ($definingClass = $scope->index->getClassDefinition($contextualClassName))
+            $definingMethodName = ($definingClass = $scope->index->getClass($contextualClassName))
                 ? $definingClass->getMethodDefiningClassName($type->methodName, $scope->index)
                 : $contextualClassName;
 
@@ -378,36 +358,15 @@ class ReferenceTypeResolver
             }
         }
 
-        if (! array_key_exists($calleeName, $this->index->classesDefinitions)) {
+        if (! $calleeDefinition = $this->index->getClass($calleeName)) {
             return new UnknownType;
         }
-
-        /** @var ClassDefinition $calleeDefinition */
-        $calleeDefinition = $this->index->getClassDefinition($calleeName);
 
         if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeName]");
         }
 
         return $this->getFunctionCallResult($methodDefinition, $type->arguments);
-    }
-
-    private function resolveUnknownClass(string $className): ?ClassDefinition
-    {
-        try {
-            $reflection = new \ReflectionClass($className);
-
-            if (Str::contains($reflection->getFileName(), DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR)) {
-                Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($className, new ClassDefinition($className)));
-
-                return $this->index->getClassDefinition($className);
-            }
-
-            return (new ClassAnalyzer($this->index))->analyze($className);
-        } catch (\ReflectionException) {
-        }
-
-        return null;
     }
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)
@@ -443,7 +402,7 @@ class ReferenceTypeResolver
         }
 
         $calleeType = $callee instanceof CallableStringType
-            ? $this->index->getFunctionDefinition($type->callee->name)
+            ? $this->index->getFunction($type->callee->name)
             : $this->resolve($scope, $type->callee);
 
         if (! $calleeType) {
@@ -487,18 +446,13 @@ class ReferenceTypeResolver
         }
         $type->name = $contextualClassName;
 
-        if (
-            ! array_key_exists($type->name, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClass($type->name)
-        ) {
+        if (! $classDefinition = $this->index->getClass($type->name)) {
             /*
              * Usually in this case we want to return UnknownType. But we certainly know that using `new` will produce
              * an object of a type being created.
              */
             return new ObjectType($type->name);
         }
-
-        $classDefinition = $this->index->getClassDefinition($type->name);
 
         $typeBeingConstructed = ! $classDefinition->templateTypes
             ? new ObjectType($type->name)
@@ -570,16 +524,9 @@ class ReferenceTypeResolver
             return $propertyType;
         }
 
-        if (
-            ! array_key_exists($objectType->name, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClass($objectType->name)
-        ) {
-            return new UnknownType("Cannot get property [$type->propertyName] type on [{$objectType->name}]");
-        }
-
         $classDefinition = $objectType instanceof SelfType && $scope->isInClass()
             ? $scope->classDefinition()
-            : $this->index->getClassDefinition($objectType->name);
+            : $this->index->getClass($objectType->name);
 
         if (! $classDefinition) {
             $name = $objectType instanceof SelfType ? 'self' : $objectType->name;
@@ -605,7 +552,7 @@ class ReferenceTypeResolver
             $returnType = $calledOnType;
         }
 
-        $templateNameToIndexMap = $calledOnType instanceof Generic && ($classDefinition = $this->index->getClassDefinition($calledOnType->name))
+        $templateNameToIndexMap = $calledOnType instanceof Generic && ($classDefinition = $this->index->getClass($calledOnType->name))
             ? array_flip(array_map(fn ($t) => $t->name, $classDefinition->templateTypes))
             : [];
         /** @var array<string, Type> $inferredTemplates */
@@ -758,7 +705,7 @@ class ReferenceTypeResolver
             return collect();
         }
 
-        $parentClassDefinition = $this->index->getClassDefinition($classDefinition->parentFqn);
+        $parentClassDefinition = $this->index->getClass($classDefinition->parentFqn);
 
         if (! $parentClassDefinition) {
             return collect();
@@ -799,7 +746,7 @@ class ReferenceTypeResolver
             $mappo->offsetSet($se, $resultingType);
 
             $methodDefinition = $se->callee instanceof ObjectType
-                ? $this->index->getClassDefinition($se->callee->name)?->getMethodDefinition($se->methodName)
+                ? $this->index->getClass($se->callee->name)?->getMethodDefinition($se->methodName)
                 : null;
 
             if (! $methodDefinition) {
