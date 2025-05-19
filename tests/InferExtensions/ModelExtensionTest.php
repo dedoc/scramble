@@ -14,7 +14,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 beforeEach(function () {
-    $this->infer = new Infer(new Infer\Scope\Index);
+    $this->infer = new Infer(new Infer\Scope\Index(new Infer\Scope\LazyShallowReflectionIndex));
 });
 
 it('adds models attributes to the model class definition as properties', function () {

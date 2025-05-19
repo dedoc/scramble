@@ -5,10 +5,11 @@ namespace Dedoc\Scramble\Tests\Infer\Analyzer;
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 it('analyzes exceptions annotations on method call', function (string $class) {
-    $definition = (new ClassAnalyzer($index = new Index))
+    $definition = (new ClassAnalyzer($index = new Index(new LazyShallowReflectionIndex())))
         ->analyze($class)
         ->getMethodDefinition(
             'foo',

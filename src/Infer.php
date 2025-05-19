@@ -2,8 +2,7 @@
 
 namespace Dedoc\Scramble;
 
-use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Infer\Scope\Index;
 
 class Infer
@@ -12,14 +11,12 @@ class Infer
         public Index $index
     ) {}
 
-    public function analyzeClass(string $class): ClassDefinition
+    public function analyzeClass(string $class): ClassDefinitionContract
     {
-        if (! $this->index->getClassDefinition($class)) {
-            $this->index->registerClassDefinition(
-                (new ClassAnalyzer($this->index))->analyze($class)
-            );
+        if (! $classDefinition = $this->index->getClass($class)) {
+            throw new \RuntimeException("Definition of $class is not found in index");
         }
 
-        return $this->index->getClassDefinition($class);
+        return $classDefinition;
     }
 }

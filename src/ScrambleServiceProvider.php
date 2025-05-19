@@ -96,8 +96,9 @@ class ScrambleServiceProvider extends PackageServiceProvider
             );
         });
 
-        $this->app->singleton(Index::class, function () {
-            $index = new Index;
+        $this->app->singleton(Index::class, function ($app) {
+            $index = new Index($app->get(LazyShallowReflectionIndex::class));
+
             foreach ((require __DIR__.'/../dictionaries/classMap.php') ?: [] as $className => $serializedClassDefinition) {
                 $index->classes[$className] = unserialize($serializedClassDefinition);
             }

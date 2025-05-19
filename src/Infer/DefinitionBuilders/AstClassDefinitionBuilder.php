@@ -32,6 +32,8 @@ class AstClassDefinitionBuilder implements ClassDefinitionBuilder
             $parentDefinition = $this->index->getClass($parentName = $this->reflection->getParentClass()->name);
         }
 
+        $parentDefinition = $parentDefinition?->getData();
+
         /*
          * @todo consider more advanced cloning implementation.
          * Currently just cloning property definition feels alright as only its `defaultType` may change.

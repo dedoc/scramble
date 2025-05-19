@@ -35,7 +35,7 @@ class ObjectType extends AbstractType
             return $propertyType;
         }
 
-        $definition = $scope->index->getClassDefinition($this->name);
+        $definition = $scope->index->getClass($this->name)?->getData();
 
         if (! $propertyDefinition = $definition?->getPropertyDefinition($propertyName)) {
             return new UnknownType("Cannot get a property type [$propertyName] on type [{$this->name}]");
@@ -46,21 +46,21 @@ class ObjectType extends AbstractType
 
     public function getMethodDefinition(string $methodName, Scope $scope = new GlobalScope): ?FunctionLikeDefinition
     {
-        $classDefinition = $scope->index->getClassDefinition($this->name);
+        $classDefinition = $scope->index->getClass($this->name);
 
-        return $classDefinition?->getMethodDefinition($methodName, $scope);
+        return $classDefinition?->getMethod($methodName, $scope);
     }
 
     public function getMethodReturnType(string $methodName, array $arguments = [], Scope $scope = new GlobalScope): Type
     {
-        $classDefinition = $scope->index->getClassDefinition($this->name);
+        $classDefinition = $scope->index->getClass($this->name);
 
         if ($returnType = app(ExtensionsBroker::class)->getMethodReturnType(new MethodCallEvent(
             instance: $this,
             name: $methodName,
             scope: $scope,
             arguments: $arguments,
-            methodDefiningClassName: $definingClassName = $classDefinition ? $classDefinition->getMethodDefiningClassName($methodName, $scope->index) : $this->name,
+            methodDefiningClassName: $definingClassName = $classDefinition ? $classDefinition->getData()->getMethodDefiningClassName($methodName, $scope->index) : $this->name,
         ))) {
             return $returnType;
         }

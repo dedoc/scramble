@@ -235,7 +235,7 @@ class ReferenceTypeResolver
             scope: $scope,
             arguments: $type->arguments,
             methodDefiningClassName: $classDefinition
-                ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index)
+                ? $classDefinition->getData()->getMethodDefiningClassName($type->methodName, $scope->index)
                 : ($normalizedCalleeType instanceof ObjectType ? $normalizedCalleeType->name : null),
         ))) {
             return $returnType;
@@ -257,7 +257,7 @@ class ReferenceTypeResolver
                     name: $type->methodName,
                     scope: $scope,
                     arguments: $type->arguments,
-                    methodDefiningClassName: $classDefinition ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index) : $unwrappedType->name,
+                    methodDefiningClassName: $classDefinition ? $classDefinition->getData()->getMethodDefiningClassName($type->methodName, $scope->index) : $unwrappedType->name,
                 );
             }
 
@@ -342,7 +342,7 @@ class ReferenceTypeResolver
         // Attempting extensions broker before potentially giving up on type inference
         if (! $isStaticCall && $scope->context->classDefinition) {
             $definingMethodName = ($definingClass = $scope->index->getClass($contextualClassName))
-                ? $definingClass->getMethodDefiningClassName($type->methodName, $scope->index)
+                ? $definingClass->getData()->getMethodDefiningClassName($type->methodName, $scope->index)
                 : $contextualClassName;
 
             $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType($e = new MethodCallEvent(
@@ -362,7 +362,7 @@ class ReferenceTypeResolver
             return new UnknownType;
         }
 
-        if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
+        if (! $methodDefinition = $calleeDefinition->getMethod($type->methodName, $scope)) {
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeName]");
         }
 
@@ -453,6 +453,8 @@ class ReferenceTypeResolver
              */
             return new ObjectType($type->name);
         }
+
+        $classDefinition = $classDefinition->getData();
 
         $typeBeingConstructed = ! $classDefinition->templateTypes
             ? new ObjectType($type->name)
@@ -553,7 +555,7 @@ class ReferenceTypeResolver
         }
 
         $templateNameToIndexMap = $calledOnType instanceof Generic && ($classDefinition = $this->index->getClass($calledOnType->name))
-            ? array_flip(array_map(fn ($t) => $t->name, $classDefinition->templateTypes))
+            ? array_flip(array_map(fn ($t) => $t->name, $classDefinition->getData()->templateTypes))
             : [];
         /** @var array<string, Type> $inferredTemplates */
         $inferredTemplates = $calledOnType instanceof Generic
@@ -713,12 +715,12 @@ class ReferenceTypeResolver
 
         $templateArgs = collect($this->resolveTypesTemplatesFromArguments(
             $parentClassDefinition->templateTypes,
-            $parentClassDefinition->getMethodDefinition('__construct')?->type->arguments ?? [],
-            $this->prepareArguments($parentClassDefinition->getMethodDefinition('__construct'), $firstParentConstructorCall->arguments),
+            $parentClassDefinition->getMethod('__construct')?->type->arguments ?? [],
+            $this->prepareArguments($parentClassDefinition->getMethod('__construct'), $firstParentConstructorCall->arguments),
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
 
         return $this
-            ->getParentConstructCallsTypes($parentClassDefinition, $parentClassDefinition->getMethodDefinition('__construct'))
+            ->getParentConstructCallsTypes($parentClassDefinition, $parentClassDefinition->getMethod('__construct'))
             ->merge($templateArgs);
     }
 
@@ -746,7 +748,7 @@ class ReferenceTypeResolver
             $mappo->offsetSet($se, $resultingType);
 
             $methodDefinition = $se->callee instanceof ObjectType
-                ? $this->index->getClass($se->callee->name)?->getMethodDefinition($se->methodName)
+                ? $this->index->getClass($se->callee->name)?->getMethod($se->methodName)
                 : null;
 
             if (! $methodDefinition) {

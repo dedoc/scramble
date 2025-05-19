@@ -45,7 +45,13 @@ class PropertyReflector
 
     private function getPropertyNodeDeclarationSource()
     {
-        $tokens = token_get_all($code = "<?php\n".$this->getClassReflector()->getSource());
+        try {
+            $sourcePart = $this->getClassReflector()->getSource();
+        } catch (\Throwable) {
+            return '';
+        }
+
+        $code = "<?php\n".$sourcePart;
 
         $tokens = token_get_all($code);
         $inClass = false;

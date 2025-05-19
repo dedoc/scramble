@@ -2,52 +2,48 @@
 
 namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 
+use Dedoc\Scramble\Infer\Analyzer\PropertyAnalyzer;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinitionBuilder;
 use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
-use Dedoc\Scramble\Infer\Definition\LazyShallowClassDefinition;
+use Dedoc\Scramble\Infer\Definition\LazyClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
-use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
-use PHPStan\PhpDocParser\Ast\PhpDoc\TemplateTagValueNode;
 use ReflectionClass;
 
-class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
+class LazyClassDefinitionBuilder implements ClassDefinitionBuilder
 {
     public function __construct(
         public IndexContract $index,
         public ReflectionClass $reflection,
     ) {}
 
-    public function build(): LazyShallowClassDefinition
+    public function build(): LazyClassDefinition
     {
-        $parentDefinition = ($parentName = ($this->reflection->getParentClass() ?: null)?->name)
-            ? ($this->index->getClass($parentName)?->getData() ?? new ClassDefinition(name: ''))
-            : new ClassDefinition(name: '');
+        $parentDefinition = null;
 
-        $classPhpDoc = PhpDoc::parse($this->reflection->getDocComment() ?: '/** */');
+        if ($this->reflection->getParentClass()) {
+            $parentDefinition = $this->index->getClass($parentName = $this->reflection->getParentClass()->name);
+        }
 
-        $classTemplates = collect($classPhpDoc->getTemplateTagValues())
-            ->values()
-            ->map(fn (TemplateTagValueNode $n) => new TemplateType(
-                name: $n->name,
-                is: PhpDocTypeHelper::toType($n->bound),
-            ))
-            ->keyBy('name');
+        $parentDefinition = $parentDefinition?->getData();
 
-        $classDefinitionData = new ClassDefinition(
+        /*
+         * @todo consider more advanced cloning implementation.
+         * Currently just cloning property definition feels alright as only its `defaultType` may change.
+         */
+        $classDefinition = new ClassDefinition(
             name: $this->reflection->name,
-            templateTypes: $classTemplates->values()->all(),
-            properties: array_map(fn ($pd) => clone $pd, $parentDefinition->properties ?: []),
-            methods: $parentDefinition->methods ?: [],
+            templateTypes: $parentDefinition?->templateTypes ?: [],
+            properties: array_map(fn ($pd) => clone $pd, $parentDefinition?->properties ?: []),
+            methods: $parentDefinition?->methods ?: [],
             parentFqn: $parentName ?? null,
         );
 
@@ -62,19 +58,22 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             }
 
             if ($reflectionProperty->isStatic()) {
-                $classDefinitionData->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
+                $classDefinition->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
                     type: $reflectionProperty->hasDefaultValue()
                         ? (TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue()) ?: new UnknownType)
                         : new UnknownType,
                 );
             } else {
-                $classDefinitionData->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
-                    type: $reflectionProperty->hasType() ? TypeHelper::createTypeFromReflectionType($reflectionProperty->getType()) : new UnknownType,
+                $classDefinition->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
+                    type: $t = new TemplateType(
+                        'T'.Str::studly($reflectionProperty->name),
+                        is: $reflectionProperty->hasType() ? TypeHelper::createTypeFromReflectionType($reflectionProperty->getType()) : new UnknownType,
+                    ),
                     defaultType: $reflectionProperty->hasDefaultValue()
-                        ? TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue())
+                        ? PropertyAnalyzer::from($reflectionProperty)->getDefaultType()
                         : null,
                 );
-                // @todo: handle templates
+                $classDefinition->templateTypes[] = $t;
             }
         }
 
@@ -83,7 +82,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                 continue;
             }
 
-            $classDefinitionData->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
+            $classDefinition->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
                 new FunctionType(
                     $reflectionMethod->name,
                     arguments: [],
@@ -94,10 +93,8 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             );
         }
 
-        $classDefinition = new LazyShallowClassDefinition($classDefinitionData);
+        Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($classDefinition->name, $classDefinition));
 
-//        Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($this->reflection->name, $classDefinition));
-
-        return $classDefinition;
+        return new LazyClassDefinition($this->index, $classDefinition);
     }
 }

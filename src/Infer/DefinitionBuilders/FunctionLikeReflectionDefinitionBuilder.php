@@ -64,9 +64,13 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
             $type->returnType = $handleStatic(PhpDocTypeHelper::toType($returnTagValues[0]->type));
         }
 
-        return new FunctionLikeDefinition(
+        $functionDefinition = new FunctionLikeDefinition(
             $type,
             definingClassName: $className,
         );
+
+        $functionDefinition->isFullyAnalyzed = true;
+
+        return $functionDefinition;
     }
 }

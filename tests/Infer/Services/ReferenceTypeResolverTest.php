@@ -3,6 +3,7 @@
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -136,7 +137,7 @@ it('allows overriding types accepted by another type', function () {
         new StringType,
     );
 
-    (new ReferenceTypeResolver(new Index))->resolveFunctionReturnReferences(
+    (new ReferenceTypeResolver(new Index(new LazyShallowReflectionIndex)))->resolveFunctionReturnReferences(
         new GlobalScope,
         $functionType,
     );

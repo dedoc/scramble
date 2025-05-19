@@ -8,6 +8,8 @@ use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\DefinitionBuilders\AstClassDefinitionBuilder;
+use Dedoc\Scramble\Infer\DefinitionBuilders\LazyClassDefinitionBuilder;
+use Dedoc\Scramble\Infer\DefinitionBuilders\LazyClassReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Illuminate\Support\Str;
 use ReflectionClass;
@@ -20,6 +22,7 @@ use ReflectionClass;
 class Index implements IndexContract
 {
     public function __construct(
+        public LazyShallowReflectionIndex $shallowIndex,
         public array $classes = [],
         public array $functions = [],
     )
@@ -66,15 +69,17 @@ class Index implements IndexContract
         $path = $reflectionClass->getFileName();
 
         if (! $this->shouldAnalyzeAst($path)) {
-            Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($name, new ClassDefinition($name)));
+//            Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($name, $definition = new ClassDefinition($name)));
 
-            return $this->getClassDefinition($name);
+            return $this->classes[$name] = (new LazyClassReflectionDefinitionBuilder($this, $reflectionClass))->build();
         }
 
-        return $this->classes[$name] = (new AstClassDefinitionBuilder($this, $reflectionClass))->build();
+        $lazyDefinition = (new LazyClassDefinitionBuilder($this, $reflectionClass))->build();
+
+        return $this->classes[$name] = $lazyDefinition;
     }
 
-    protected function shouldAnalyzeAst(string $path): bool
+    public static function shouldAnalyzeAst(string $path): bool
     {
         return ! Str::contains($path, DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR);
     }

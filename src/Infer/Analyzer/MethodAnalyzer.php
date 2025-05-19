@@ -51,7 +51,8 @@ class MethodAnalyzer
         );
 
         $methodDefinition = $this->index
-            ->getClassDefinition($this->classDefinition->name)
+            ->getClass($this->classDefinition->name)
+            ->getData()
             ->methods[$methodDefinition->type->name];
 
         if ($withSideEffects) {

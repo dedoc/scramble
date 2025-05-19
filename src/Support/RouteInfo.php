@@ -114,10 +114,10 @@ class RouteInfo
              * Sometimes method type may be null if route registered method name has the casing that
              * is different from the method name in the controller hence reflection is used here.
              */
-            $this->methodType = $def->getMethodDefinition($this->reflectionMethod()->getName(), indexBuilders: [
+            $this->methodType = $def->getMethod($this->reflectionMethod()->getName(), [
                 new RequestParametersBuilder($this->requestParametersFromCalls, $this->typeTransformer),
                 ...$this->indexBuildingBroker->indexBuilders,
-            ], withSideEffects: true)?->type;
+            ], true)?->type;
         }
 
         return $this->methodType;

@@ -62,7 +62,7 @@ class ClassDefinition implements ClassDefinitionContract
     public function getMethodDefiningClassName(string $name, Index $index)
     {
         $lastLookedUpClassName = $this->name;
-        while ($lastLookedUpClassDefinition = $index->getClassDefinition($lastLookedUpClassName)) {
+        while ($lastLookedUpClassDefinition = $index->getClass($lastLookedUpClassName)?->getData()) {
             if ($methodDefinition = $lastLookedUpClassDefinition->getMethodDefinitionWithoutAnalysis($name)) {
                 return $methodDefinition->definingClassName;
             }
