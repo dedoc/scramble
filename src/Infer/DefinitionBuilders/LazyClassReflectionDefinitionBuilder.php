@@ -16,7 +16,6 @@ use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\TemplateTagValueNode;
 use ReflectionClass;
 
@@ -96,7 +95,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 
         $classDefinition = new LazyShallowClassDefinition($classDefinitionData);
 
-//        Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($this->reflection->name, $classDefinition));
+        //        Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($this->reflection->name, $classDefinition));
 
         return $classDefinition;
     }

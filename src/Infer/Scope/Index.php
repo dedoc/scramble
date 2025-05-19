@@ -7,7 +7,6 @@ use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
-use Dedoc\Scramble\Infer\DefinitionBuilders\AstClassDefinitionBuilder;
 use Dedoc\Scramble\Infer\DefinitionBuilders\LazyClassDefinitionBuilder;
 use Dedoc\Scramble\Infer\DefinitionBuilders\LazyClassReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
@@ -25,9 +24,7 @@ class Index implements IndexContract
         public LazyShallowReflectionIndex $shallowIndex,
         public array $classes = [],
         public array $functions = [],
-    )
-    {
-    }
+    ) {}
 
     public function registerClassDefinition(ClassDefinition $classDefinition): void
     {
@@ -60,7 +57,7 @@ class Index implements IndexContract
             return $this->classes[$name];
         }
 
-        $reflectionClass =  rescue(fn () => new ReflectionClass($name));
+        $reflectionClass = rescue(fn () => new ReflectionClass($name));
 
         if (! $reflectionClass) {
             return null;
@@ -69,7 +66,7 @@ class Index implements IndexContract
         $path = $reflectionClass->getFileName();
 
         if (! $this->shouldAnalyzeAst($path)) {
-//            Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($name, $definition = new ClassDefinition($name)));
+            //            Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($name, $definition = new ClassDefinition($name)));
 
             return $this->classes[$name] = (new LazyClassReflectionDefinitionBuilder($this, $reflectionClass))->build();
         }

@@ -9,7 +9,7 @@ use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 it('analyzes exceptions annotations on method call', function (string $class) {
-    $definition = (new ClassAnalyzer($index = new Index(new LazyShallowReflectionIndex())))
+    $definition = (new ClassAnalyzer($index = new Index(new LazyShallowReflectionIndex)))
         ->analyze($class)
         ->getMethodDefinition(
             'foo',

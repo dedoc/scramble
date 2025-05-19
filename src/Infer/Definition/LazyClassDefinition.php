@@ -17,7 +17,6 @@ use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use PhpParser\ErrorHandler\Throwing;
 use PhpParser\NameContext;
 use ReflectionClass;
-use ReflectionException;
 
 /**
  * This class definition combines the behavior of class' definitions created by both AST
@@ -35,6 +34,7 @@ use ReflectionException;
  *
  * For example, if there is a concrete model class that is the part of the app, it's incomplete methods will be the
  * part of the LazyClassDefinition, and the methods of the parent class will also be available when requested.
+ *
  * @todo how interfaces are handled!?
  */
 class LazyClassDefinition implements ClassDefinitionContract
@@ -63,7 +63,6 @@ class LazyClassDefinition implements ClassDefinitionContract
         }
 
         return $data->methods[$name] = (new FunctionLikeReflectionDefinitionBuilder($name, $reflectionMethod))->build();
-
 
     }
 
