@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 
 use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinitionBuilder;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition as ClassDefinitionData;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
@@ -53,12 +52,12 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
 
         // add phpdoc annotations
         $className = $this->reflection instanceof ReflectionMethod ? $this->reflection->class : null;
-//        $handleStatic = fn (Type $type) => tap($type, function (Type $type) use ($className) {
-//            if ($type instanceof ObjectType) {
-//                $type->name = ltrim($type->name, '\\');
-//            }
-//        });
-        $handleStatic = fn (Type $type) => (new TypeWalker())->map($type, function (Type $t) {
+        //        $handleStatic = fn (Type $type) => tap($type, function (Type $type) use ($className) {
+        //            if ($type instanceof ObjectType) {
+        //                $type->name = ltrim($type->name, '\\');
+        //            }
+        //        });
+        $handleStatic = fn (Type $type) => (new TypeWalker)->map($type, function (Type $t) {
             if ($t instanceof ObjectType) {
                 $newType = clone $t;
                 $newType->name = ltrim($t->name, '\\');
