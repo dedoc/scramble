@@ -62,7 +62,11 @@ class LazyClassDefinition implements ClassDefinitionContract
             return $data->methods[$name] = $this->buildCompleteMethodDefinition($data->methods[$name], $name);
         }
 
-        return $data->methods[$name] = (new FunctionLikeReflectionDefinitionBuilder($name, $reflectionMethod))->build();
+        return $data->methods[$name] = (new FunctionLikeReflectionDefinitionBuilder(
+            $name,
+            $reflectionMethod,
+            collect($data->templateTypes)->keyBy('name'),
+        ))->build();
 
     }
 

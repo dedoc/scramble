@@ -22,10 +22,11 @@ it('builds definition', function () {
 });
 
 it('infers query method of the model', function () {
-    dd(app(Index::class)->getClass(\Illuminate\Database\Eloquent\Builder::class));
+//    dd(app(Index::class)->getClass(\Illuminate\Database\Eloquent\Builder::class)->getMethod('firstOrNew'));
+//
+    $type = getStatementType(UserModel_IndexTest::class.'::query()->firstWhere([], [])');
 
-    //    $type = getStatementType(UserModel_IndexTest::class.'::query()->firstOrNew([], [])');
-    $type = getStatementType(UserModel_IndexTest::class.'::query()');
+//    $type = getStatementType(UserModel_IndexTest::class.'::query()');
 
     expect($type->toString())->toBe('Illuminate\Database\Eloquent\Builder<'.UserModel_IndexTest::class.'>');
 });

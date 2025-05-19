@@ -13,11 +13,18 @@ use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\MixedType;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
+use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Support\Collection;
 use PHPStan\PhpDocParser\Ast\PhpDoc\TemplateTagValueNode;
+use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use ReflectionClass;
+use ReflectionProperty;
 
 class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 {
@@ -60,21 +67,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                 continue;
             }
 
-            if ($reflectionProperty->isStatic()) {
-                $classDefinitionData->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
-                    type: $reflectionProperty->hasDefaultValue()
-                        ? (TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue()) ?: new UnknownType)
-                        : new UnknownType,
-                );
-            } else {
-                $classDefinitionData->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
-                    type: $reflectionProperty->hasType() ? TypeHelper::createTypeFromReflectionType($reflectionProperty->getType()) : new UnknownType,
-                    defaultType: $reflectionProperty->hasDefaultValue()
-                        ? TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue())
-                        : null,
-                );
-                // @todo: handle templates
-            }
+            $classDefinitionData->properties[$reflectionProperty->name] = $this->buildPropertyDefinition($reflectionProperty, $classTemplates);
         }
 
         foreach ($this->reflection->getMethods() as $reflectionMethod) {
@@ -98,5 +91,43 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
         //        Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($this->reflection->name, $classDefinition));
 
         return $classDefinition;
+    }
+
+    private function buildPropertyDefinition(ReflectionProperty $reflectionProperty, Collection $classTemplates)
+    {
+        $propertyPhpDoc = PhpDoc::parse($reflectionProperty->getDocComment() ?: '/** */');
+
+        if ($reflectionProperty->isStatic()) {
+            return new ClassPropertyDefinition(
+                type: $reflectionProperty->hasDefaultValue()
+                    ? (TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue()) ?: new UnknownType)
+                    : new UnknownType,
+            );
+        }
+
+        $propertyPhpDocType = $this->toInferType(collect($propertyPhpDoc->getVarTagValues())->first()?->type, $classTemplates);
+        $typeHintType = $reflectionProperty->hasType() ? TypeHelper::createTypeFromReflectionType($reflectionProperty->getType()) : null;
+
+        return new ClassPropertyDefinition(
+            type: $propertyPhpDocType ?? $typeHintType ?? new MixedType,
+            defaultType: $reflectionProperty->hasDefaultValue()
+                ? TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue())
+                : null,
+        );
+    }
+
+    private function toInferType(?TypeNode $type, Collection $classTemplates): ?Type
+    {
+        if (! $type) {
+            return null;
+        }
+
+        $inferType = PhpDocTypeHelper::toType($type);
+
+        return (new TypeWalker)
+            ->map(
+                $inferType,
+                fn (Type $t) => $t instanceof ObjectType && $classTemplates->has($t->name) ? $classTemplates->get($t->name) : $t,
+            );
     }
 }

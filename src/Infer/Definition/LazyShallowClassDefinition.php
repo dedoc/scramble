@@ -28,7 +28,11 @@ class LazyShallowClassDefinition implements ClassDefinitionContract
             return null;
         }
 
-        return $data->methods[$name] = (new FunctionLikeReflectionDefinitionBuilder($name, $reflection))->build();
+        return $data->methods[$name] = (new FunctionLikeReflectionDefinitionBuilder(
+            $name,
+            $reflection,
+            collect($data->templateTypes)->keyBy('name'),
+        ))->build();
     }
 
     public function getData(): ClassDefinitionData
