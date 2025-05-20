@@ -288,7 +288,10 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$name]");
         }
 
-        return $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType, $event);
+        return $this->finalizeStatic(
+            $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType, $event),
+            $calleeType,
+        );
     }
 
     private function resolveStaticMethodCallReferenceType(Scope $scope, StaticMethodCallReferenceType $type)
@@ -366,7 +369,21 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeName]");
         }
 
-        return $this->getFunctionCallResult($methodDefinition, $type->arguments);
+        return $this->finalizeStatic(
+            $this->getFunctionCallResult($methodDefinition, $type->arguments),
+            new ObjectType($contextualClassName),
+        );
+    }
+
+    private function finalizeStatic(Type $type, Type $staticType)
+    {
+        return (new TypeWalker())
+            ->map(
+                $type,
+                fn (Type $t) => $t instanceof ObjectType && $t->name === 'static'
+                    ? $staticType
+                    : $t,
+            );
     }
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)

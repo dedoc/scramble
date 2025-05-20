@@ -52,11 +52,7 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
 
         // add phpdoc annotations
         $className = $this->reflection instanceof ReflectionMethod ? $this->reflection->class : null;
-        //        $handleStatic = fn (Type $type) => tap($type, function (Type $type) use ($className) {
-        //            if ($type instanceof ObjectType) {
-        //                $type->name = ltrim($type->name, '\\');
-        //            }
-        //        });
+
         $handleStatic = fn (Type $type) => (new TypeWalker)->map($type, function (Type $t) {
             if ($t instanceof ObjectType) {
                 $newType = clone $t;

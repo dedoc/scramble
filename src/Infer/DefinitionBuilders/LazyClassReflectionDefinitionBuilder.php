@@ -13,6 +13,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -21,6 +22,8 @@ use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Collection;
+use League\Uri\UriTemplate\Template;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\TemplateTagValueNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use ReflectionClass;
@@ -42,10 +45,11 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
         $classPhpDoc = PhpDoc::parse($this->reflection->getDocComment() ?: '/** */');
 
         $classTemplates = collect($classPhpDoc->getTemplateTagValues())
+            ->merge($classPhpDoc->getTemplateTagValues('@template-covariant'))
             ->values()
             ->map(fn (TemplateTagValueNode $n) => new TemplateType(
                 name: $n->name,
-                is: PhpDocTypeHelper::toType($n->bound),
+                is: $n->bound ? PhpDocTypeHelper::toType($n->bound) : null,
             ))
             ->keyBy('name');
 
@@ -86,7 +90,11 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             );
         }
 
-        $classDefinition = new LazyShallowClassDefinition($classDefinitionData);
+        $classDefinition = new LazyShallowClassDefinition(
+            $classDefinitionData,
+            parentDefinedTemplates: $this->getParentDefinedTemplates($parentDefinition, $classPhpDoc, $classDefinitionData->templateTypes),
+            interfacesDefinedTemplates: [],
+        );
 
         //        Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($this->reflection->name, $classDefinition));
 
@@ -129,5 +137,36 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                 $inferType,
                 fn (Type $t) => $t instanceof ObjectType && $classTemplates->has($t->name) ? $classTemplates->get($t->name) : $t,
             );
+    }
+
+    /**
+     * @param TemplateType[] $definitionTemplates
+     *
+     * @return array<string, Type>
+     */
+    private function getParentDefinedTemplates(?ClassDefinition $parentDefinition, PhpDocNode $doc, array $definitionTemplates): array
+    {
+        if (! $extendsNodes = $doc->getExtendsTagValues()) {
+            return [];
+        }
+
+        $extendsNode = array_values($extendsNodes)[0];
+
+        $extendedType = $this->toInferType(
+            $extendsNode->type,
+            collect($definitionTemplates)->keyBy('name'),
+        );
+
+        if (! $extendedType instanceof Generic) {
+            return [];
+        }
+
+        return collect($parentDefinition->templateTypes)
+            ->mapWithKeys(function ($parentTemplateType, int $i) use ($extendedType) {
+                return [
+                    $parentTemplateType->name => $extendedType->templateTypes[$i] ?? new UnknownType()
+                ];
+            })
+            ->all();
     }
 }

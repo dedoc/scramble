@@ -1,0 +1,59 @@
+<?php
+
+namespace Dedoc\Scramble\Tests\Infer\DefinitionBuilders;
+
+use Dedoc\Scramble\Infer\DefinitionBuilders\LazyClassDefinitionBuilder;
+use Dedoc\Scramble\Infer\DefinitionBuilders\LazyClassReflectionDefinitionBuilder;
+use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
+use Illuminate\Support\Benchmark;
+use Illuminate\Support\Collection;
+
+/**
+ * @template TValue
+ */
+class Foo_LazyClassReflectionDefinitionBuilderTest
+{
+    /**
+     * @return TValue
+     */
+    public function get()
+    {
+    }
+}
+
+/**
+ * @extends Foo_LazyClassReflectionDefinitionBuilderTest<int>
+ */
+class Bar_LazyClassReflectionDefinitionBuilderTest extends Foo_LazyClassReflectionDefinitionBuilderTest
+{
+}
+
+beforeEach(function () {
+    $this->index = new LazyShallowReflectionIndex;
+});
+
+test('builds class definition', function () {
+    $definition = (new LazyClassReflectionDefinitionBuilder(
+        $this->index,
+        new \ReflectionClass(Bar_LazyClassReflectionDefinitionBuilderTest::class),
+    ))->build();
+
+    expect($definition->getMethod('get')->type->toString())->toBe('(): int');
+});
+
+test('builds vendor definition', function () {
+    Benchmark::dd(
+        fn () => (new LazyClassReflectionDefinitionBuilder(
+            $this->index,
+            new \ReflectionClass(Collection::class),
+        ))->build(),
+        100,
+    );
+
+    $definition = (new LazyClassReflectionDefinitionBuilder(
+        $this->index,
+        new \ReflectionClass(Collection::class),
+    ))->build();
+
+    expect($definition->getMethod('get')->type->getReturnType()->toString())->toBe('int');
+});
