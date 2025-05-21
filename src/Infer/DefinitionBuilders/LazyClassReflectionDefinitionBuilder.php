@@ -90,6 +90,8 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             );
         }
 
+        $this->applyMixins($classPhpDoc, $classDefinitionData);
+
         $classDefinition = new LazyShallowClassDefinition(
             $classDefinitionData,
             parentDefinedTemplates: $this->getParentDefinedTemplates($parentDefinition, $classPhpDoc, $classDefinitionData->templateTypes),
@@ -168,5 +170,19 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                 ];
             })
             ->all();
+    }
+
+    private function applyMixins(PhpDocNode $classPhpDoc, ClassDefinition $classDefinitionData)
+    {
+        $mixins = array_values($classPhpDoc->getMixinTagValues());
+
+        foreach ($mixins as $mixin) {
+            $type = $this->toInferType($mixin->type, collect($classDefinitionData->templateTypes)->keyBy('name'));
+
+
+            dd(1);
+        }
+
+        dd(1);
     }
 }

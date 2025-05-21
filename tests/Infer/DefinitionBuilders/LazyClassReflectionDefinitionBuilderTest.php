@@ -8,6 +8,10 @@ use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Illuminate\Support\Benchmark;
 use Illuminate\Support\Collection;
 
+beforeEach(function () {
+    $this->index = new LazyShallowReflectionIndex;
+});
+
 /**
  * @template TValue
  */
@@ -28,14 +32,29 @@ class Bar_LazyClassReflectionDefinitionBuilderTest extends Foo_LazyClassReflecti
 {
 }
 
-beforeEach(function () {
-    $this->index = new LazyShallowReflectionIndex;
-});
-
 test('builds class definition', function () {
     $definition = (new LazyClassReflectionDefinitionBuilder(
         $this->index,
         new \ReflectionClass(Bar_LazyClassReflectionDefinitionBuilderTest::class),
+    ))->build();
+
+    expect($definition->getMethod('get')->type->toString())->toBe('(): int');
+});
+
+class FooMixin_LazyClassReflectionDefinitionBuilderTest
+{
+    public function get(): int {}
+}
+
+/**
+ * @mixin FooMixin_LazyClassReflectionDefinitionBuilderTest
+ */
+class BarMixin_LazyClassReflectionDefinitionBuilderTest {}
+
+test('builds class definition with mixins', function () {
+    $definition = (new LazyClassReflectionDefinitionBuilder(
+        $this->index,
+        new \ReflectionClass(BarMixin_LazyClassReflectionDefinitionBuilderTest::class),
     ))->build();
 
     expect($definition->getMethod('get')->type->toString())->toBe('(): int');
