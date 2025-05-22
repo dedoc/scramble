@@ -16,6 +16,9 @@ use PHPStan\PhpDocParser\Parser\TypeParser;
 
 class PhpDoc
 {
+    /**
+     * @return array{0: Lexer, 1: PhpDocParser}
+     */
     private static function getTokenizerAndParser()
     {
         if (class_exists(\PHPStan\PhpDocParser\ParserConfig::class)) {
@@ -49,6 +52,7 @@ class PhpDoc
 
         if ($nameResolver) {
             $tagValues = [
+                ...$node->getMixinTagValues(),
                 ...$node->getReturnTagValues(),
                 ...$node->getReturnTagValues('@response'),
                 ...$node->getVarTagValues(),

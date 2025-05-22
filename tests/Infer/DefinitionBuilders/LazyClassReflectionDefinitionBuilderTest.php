@@ -60,6 +60,32 @@ test('builds class definition with mixins', function () {
     expect($definition->getMethod('get')->type->toString())->toBe('(): int');
 });
 
+/**
+ * @template T
+ */
+class FooTemplateMixin_LazyClassReflectionDefinitionBuilderTest
+{
+    /**
+     * @return T
+     */
+    public function get(): mixed {}
+}
+
+/**
+ * @template TBar
+ * @mixin FooTemplateMixin_LazyClassReflectionDefinitionBuilderTest<TBar>
+ */
+class BarTemplatedMixin_LazyClassReflectionDefinitionBuilderTest {}
+
+test('builds class definition with template mixins', function () {
+    $definition = (new LazyClassReflectionDefinitionBuilder(
+        $this->index,
+        new \ReflectionClass(BarTemplatedMixin_LazyClassReflectionDefinitionBuilderTest::class),
+    ))->build();
+
+    expect($definition->getMethod('get')->type->toString())->toBe('(): TBar');
+});
+
 test('builds vendor definition', function () {
     Benchmark::dd(
         fn () => (new LazyClassReflectionDefinitionBuilder(

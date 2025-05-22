@@ -10,6 +10,8 @@ use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Definition\LazyShallowClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
+use Dedoc\Scramble\Infer\Reflector\ClassReflector;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -42,7 +44,9 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             ? ($this->index->getClass($parentName)?->getData() ?? new ClassDefinition(name: ''))
             : new ClassDefinition(name: '');
 
-        $classPhpDoc = PhpDoc::parse($this->reflection->getDocComment() ?: '/** */');
+        $classPhpDoc = ($comment = $this->reflection->getDocComment())
+            ? PhpDoc::parse($comment, FileNameResolver::createForFile($this->reflection->getFileName()))
+            : new PhpDocNode([]);
 
         $classTemplates = collect($classPhpDoc->getTemplateTagValues())
             ->merge($classPhpDoc->getTemplateTagValues('@template-covariant'))
@@ -60,6 +64,8 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             methods: $parentDefinition->methods ?: [],
             parentFqn: $parentName ?? null,
         );
+
+        $mixinsDefinedTemplates = $this->applyMixins($classPhpDoc, $classDefinitionData);
 
         /*
          * Traits get analyzed by embracing default behavior of PHP reflection: reflection properties and
@@ -90,11 +96,10 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             );
         }
 
-        $this->applyMixins($classPhpDoc, $classDefinitionData);
-
         $classDefinition = new LazyShallowClassDefinition(
             $classDefinitionData,
             parentDefinedTemplates: $this->getParentDefinedTemplates($parentDefinition, $classPhpDoc, $classDefinitionData->templateTypes),
+            mixinsDefinedTemplates: $mixinsDefinedTemplates,
             interfacesDefinedTemplates: [],
         );
 
@@ -174,15 +179,57 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 
     private function applyMixins(PhpDocNode $classPhpDoc, ClassDefinition $classDefinitionData)
     {
+        $mixinsDefinedTemplates = [];
+
         $mixins = array_values($classPhpDoc->getMixinTagValues());
 
         foreach ($mixins as $mixin) {
             $type = $this->toInferType($mixin->type, collect($classDefinitionData->templateTypes)->keyBy('name'));
 
+            if (! $type instanceof ObjectType) {
+                // @todo Maybe throw here: Mixin type must be an object
+                continue;
+            }
 
-            dd(1);
+            $mixinsDefinedTemplates[$type->name] = $this->applyConcreteMixin($classDefinitionData, $type);
         }
 
-        dd(1);
+        return $mixinsDefinedTemplates;
+    }
+
+    private function applyConcreteMixin(ClassDefinition $classDefinitionData, ObjectType $type)
+    {
+        if(! $mixinDefinition = $this->index->getClass($type->name)) {
+            return [];
+        }
+
+        $classDefinitionData->methods = array_merge(
+            $classDefinitionData->methods,
+            $mixinDefinition->getData()->methods,
+        );
+
+        $classDefinitionData->properties = array_merge(
+            $classDefinitionData->properties,
+            $mixinDefinition->getData()->properties,
+        );
+
+        // @todo template types!?
+
+        return $this->getDefinedTemplates($mixinDefinition->getData(), $type);
+    }
+
+    private function getDefinedTemplates(ClassDefinition $classDefinitionData, ObjectType $type): array
+    {
+        return collect($classDefinitionData->templateTypes)
+        ->mapWithKeys(function ($templateType, int $i) use ($classDefinitionData, $type) {
+            $concreteType = $type instanceof Generic
+                ? ($type->templateTypes[$i] ?? new UnknownType('no expected generic type'))
+                : new UnknownType('expected generic got object');
+
+            return [
+                $templateType->name => $concreteType
+            ];
+        })
+        ->all();
     }
 }

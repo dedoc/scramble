@@ -14,11 +14,13 @@ class LazyShallowClassDefinition implements ClassDefinitionContract
     /**
      * @param ClassDefinitionContract $definition
      * @param array<string, Type> $parentDefinedTemplates
-     * @param array<string, Type>[] $interfacesDefinedTemplates
+     * @param array<string, array<string, Type>> $mixinsDefinedTemplates
+     * @param array<string, array<string, Type>> $interfacesDefinedTemplates
      */
     public function __construct(
         public ClassDefinitionContract $definition,
         public array $parentDefinedTemplates = [],
+        public array $mixinsDefinedTemplates = [],
         public array $interfacesDefinedTemplates = [],
     ) {}
 
@@ -30,8 +32,10 @@ class LazyShallowClassDefinition implements ClassDefinitionContract
             return $data->methods[$name];
         }
 
+        $methodDefinition = $data->methods[$name];
+
         try {
-            $reflection = (new ReflectionClass($data->name))->getMethod($name);
+            $reflection = (new ReflectionClass($methodDefinition->definingClassName))->getMethod($methodDefinition->type->name);
         } catch (ReflectionException) {
             return null;
         }
@@ -39,7 +43,11 @@ class LazyShallowClassDefinition implements ClassDefinitionContract
         return $data->methods[$name] = (new FunctionLikeReflectionDefinitionBuilder(
             $name,
             $reflection,
-            collect($data->templateTypes)->keyBy('name')->merge($this->parentDefinedTemplates),
+            collect($data->templateTypes)
+                ->keyBy('name')
+                ->merge($this->parentDefinedTemplates)
+                ->merge($this->mixinsDefinedTemplates[$methodDefinition->definingClassName] ?? [])
+                ->merge($this->interfacesDefinedTemplates[$methodDefinition->definingClassName] ?? []),
         ))->build();
     }
 
