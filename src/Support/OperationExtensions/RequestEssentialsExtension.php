@@ -215,7 +215,7 @@ class RequestEssentialsExtension extends OperationExtension
                 continue;
             }
 
-            $isNewTagMoreSpecific = !($alreadyExistingTag->name && $alreadyExistingTag->description);
+            $isNewTagMoreSpecific = ! ($alreadyExistingTag->name && $alreadyExistingTag->description);
 
             if (! $isNewTagMoreSpecific) {
                 continue;
@@ -225,6 +225,7 @@ class RequestEssentialsExtension extends OperationExtension
                 ->reduce(function (array $acc, Tag $tag) use ($group): array {
                     if ($tag->name !== $group->name) {
                         $acc[] = $tag;
+
                         return $acc;
                     }
 
