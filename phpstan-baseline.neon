@@ -4606,12 +4606,6 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
 
 		-
-			message: '#^Dead catch \- Throwable is never thrown in the try block\.$#'
-			identifier: catch.neverThrown
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:getCallToValidateAndValidationRulesNodes\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
