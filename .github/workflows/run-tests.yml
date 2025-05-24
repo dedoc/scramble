@@ -53,7 +53,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer remove pestphp/pest larastan/larastan phpstan/extension-installer phpstan/phpstan-deprecation-rules phpstan/phpstan-phpunit
+          composer remove --dev pestphp/pest larastan/larastan phpstan/extension-installer phpstan/phpstan-deprecation-rules phpstan/phpstan-phpunit
           composer config --no-plugins allow-plugins.pestphp/pest-plugin true
           composer require "laravel/framework:${{ matrix.laravel }}" "phpstan/phpdoc-parser:${{ matrix.phpdoc-parser }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
           composer update --${{ matrix.stability }} --prefer-dist --no-interaction
