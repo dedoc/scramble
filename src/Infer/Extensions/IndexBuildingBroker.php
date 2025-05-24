@@ -11,15 +11,21 @@ class IndexBuildingBroker
         public readonly array $indexBuilders = [],
     ) {}
 
+    /**
+     * @template T of array<string, mixed>
+     *
+     * @param  class-string<IndexBuilder<T>>  $builderClassName
+     * @return Bag<T>
+     */
     public function getIndex(string $builderClassName): Bag
     {
         foreach ($this->indexBuilders as $indexBuilder) {
             if (is_a($indexBuilder, $builderClassName)) {
-                return $indexBuilder->bag;
+                return $indexBuilder->bag; // @phpstan-ignore-line
             }
         }
 
-        return new Bag;
+        return new Bag; // @phpstan-ignore-line
     }
 
     public function handleEvent($event)

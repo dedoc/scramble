@@ -224,7 +224,7 @@ class Generator
 
     private function routeToOperation(OpenApi $openApi, Route $route, GeneratorConfig $config, TypeTransformer $typeTransformer)
     {
-        $routeInfo = new RouteInfo($route, $this->infer, $typeTransformer);
+        $routeInfo = new RouteInfo($route, $this->infer);
 
         if (! $routeInfo->isClassBased()) {
             return null;
