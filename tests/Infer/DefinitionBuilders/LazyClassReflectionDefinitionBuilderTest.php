@@ -85,6 +85,37 @@ test('builds class definition with template mixins', function () {
 
     expect($definition->getMethod('get')->type->toString())->toBe('(): TBar');
 });
+/**
+ * @template T
+ */
+trait FooTemplateTrait_LazyClassReflectionDefinitionBuilderTest
+{
+    /**
+     * @return T
+     */
+    public function get(): mixed {}
+}
+
+/**
+ * @template TBar
+ */
+class BarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest {
+    /** @use FooTemplateTrait_LazyClassReflectionDefinitionBuilderTest<TBar> */
+    use FooTemplateTrait_LazyClassReflectionDefinitionBuilderTest;
+}
+
+test('builds class definition with use annotation', function () {
+    dd(
+        (new \ReflectionClass(BarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest::class))
+        ->get()
+    );
+    $definition = (new LazyClassReflectionDefinitionBuilder(
+        $this->index,
+        new \ReflectionClass(BarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest::class),
+    ))->build();
+
+    expect($definition->getMethod('get')->type->toString())->toBe('(): TBar');
+});
 
 test('builds vendor definition', function () {
     Benchmark::dd(
