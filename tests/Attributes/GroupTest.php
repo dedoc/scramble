@@ -34,8 +34,6 @@ class GroupTest_C_Controller
     public function __invoke() {}
 }
 
-
-
 it('allows sorting ds', function () {
     $openApiDoc = generateForRoute(fn () => RouteFacade::get('api/d', GroupTest_D_Controller::class));
 

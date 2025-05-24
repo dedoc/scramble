@@ -9,9 +9,7 @@ class Tag
     public function __construct(
         public string $name,
         public ?string $description = null,
-    )
-    {
-    }
+    ) {}
 
     public function toArray(): mixed
     {

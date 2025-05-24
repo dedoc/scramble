@@ -35,7 +35,7 @@ trait WithExtensions
     }
 
     /**
-     * @param array<string, mixed> $extensionsProperties
+     * @param  array<string, mixed>  $extensionsProperties
      */
     public function mergeExtensionProperties(array $extensionsProperties): self
     {
