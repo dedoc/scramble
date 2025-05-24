@@ -52,8 +52,8 @@ it('supports parent toArray class', function (string $className, array $expected
         'properties' => [
             'id' => ['type' => 'integer'],
             'name' => ['type' => 'string'],
-            'foo' => ['type' => 'string', 'example' => 'bar'],
-            'nested' => ['type' => 'string', 'example' => 'true'],
+            'foo' => ['type' => 'string', 'enum' => ['bar']],
+            'nested' => ['type' => 'string', 'enum' => ['true']],
         ],
         'required' => ['id', 'name', 'foo', 'nested'],
     ]],
@@ -70,7 +70,7 @@ it('supports parent toArray class', function (string $className, array $expected
         'properties' => [
             'id' => ['type' => 'integer'],
             'name' => ['type' => 'string'],
-            'foo' => ['type' => 'string', 'example' => 'bar'],
+            'foo' => ['type' => 'string', 'enum' => ['bar']],
         ],
         'required' => ['id', 'name', 'foo'],
     ]],
@@ -263,7 +263,7 @@ it('handles additional data with custom status code', function () {
         ->and($responses['202']['content']['application/json']['schema']['properties']['meta'])
         ->toBe([
             'type' => 'object',
-            'properties' => ['foo' => ['type' => 'string', 'example' => 'bar']],
+            'properties' => ['foo' => ['type' => 'string', 'enum' => ['bar']]],
             'required' => ['foo'],
         ]);
 });
