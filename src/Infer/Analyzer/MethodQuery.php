@@ -48,8 +48,8 @@ class MethodQuery
                 new class($bag, $this->argumentsOverrides) implements IndexBuilder
                 {
                     /**
-                     * @param Bag<array{scope: Scope, types: Type[], _hasReplaced: bool}> $bag
-                     * @param array<array-key, mixed> $argumentsOverrides
+                     * @param  Bag<array{scope: Scope, types: Type[], _hasReplaced: bool}>  $bag
+                     * @param  array<array-key, mixed>  $argumentsOverrides
                      */
                     public function __construct(private Bag $bag, private array $argumentsOverrides = []) {}
 

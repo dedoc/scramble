@@ -8,7 +8,7 @@ namespace Dedoc\Scramble\Support\IndexBuilders;
 class Bag
 {
     /**
-     * @param T $data
+     * @param  T  $data
      */
     public function __construct(
         public array $data = []
@@ -16,7 +16,8 @@ class Bag
 
     /**
      * @template TKey of key-of<T>
-     * @param TKey $key
+     *
+     * @param  TKey  $key
      * @param T[TKey] $value
      * @return $this
      */

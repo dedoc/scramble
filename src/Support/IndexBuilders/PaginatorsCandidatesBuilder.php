@@ -8,12 +8,13 @@ use PhpParser\Node;
 
 /**
  * @phpstan-type PaginatorsCandidatesIndexBag array{scope: Scope, paginatorCandidates: (Node\Expr\StaticCall|Node\Expr\MethodCall)[]}
+ *
  * @implements IndexBuilder<PaginatorsCandidatesIndexBag>
  */
 class PaginatorsCandidatesBuilder implements IndexBuilder
 {
     /**
-     * @param Bag<PaginatorsCandidatesIndexBag> $bag
+     * @param  Bag<PaginatorsCandidatesIndexBag>  $bag
      */
     public function __construct(public readonly Bag $bag) {}
 

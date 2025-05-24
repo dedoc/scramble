@@ -16,9 +16,7 @@ class InferredParameter
         public ?string $description = null,
         public Type $type = new UnknownType,
         public mixed $default = new MissingExample,
-    )
-    {
-    }
+    ) {}
 
     public function toOpenApiParameter(TypeTransformer $transformer): Parameter
     {

@@ -246,7 +246,7 @@ it('doesnt create a schema for enum if it was overridden in rules', function () 
         ->and($properties['status'])
         ->toBe([
             'type' => 'string',
-            'enum' => ['clubs']
+            'enum' => ['clubs'],
         ])
         ->and($openApiDocument['components']['schemas'] ?? [])
         ->not->toHaveKey('RequestBodyExtensionTest__Status_Params_Extraction');

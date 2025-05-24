@@ -13,7 +13,8 @@ class IndexBuildingBroker
 
     /**
      * @template T of array<string, mixed>
-     * @param class-string<IndexBuilder<T>> $builderClassName
+     *
+     * @param  class-string<IndexBuilder<T>>  $builderClassName
      * @return Bag<T>
      */
     public function getIndex(string $builderClassName): Bag
