@@ -19,6 +19,9 @@ class OpenApi
     /** @var SecurityRequirement[]|null */
     public ?array $security = [];
 
+    /** @var Tag[] */
+    public array $tags = [];
+
     public function __construct(string $version)
     {
         $this->version = $version;
@@ -89,6 +92,13 @@ class OpenApi
             $result['servers'] = array_map(
                 fn (Server $s) => $s->toArray(),
                 $this->servers,
+            );
+        }
+
+        if (count($this->tags)) {
+            $result['tags'] = array_map(
+                fn (Tag $s) => $s->toArray(),
+                $this->tags,
             );
         }
 

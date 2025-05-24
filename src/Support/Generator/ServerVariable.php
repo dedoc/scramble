@@ -28,10 +28,15 @@ class ServerVariable
 
     public function toArray()
     {
-        return array_filter([
+        $result = array_filter([
             'default' => $this->default,
             'enum' => $this->enum && count($this->enum) ? $this->enum : null,
             'description' => $this->description,
         ]);
+
+        return array_merge(
+            $result,
+            $this->extensionPropertiesToArray()
+        );
     }
 }

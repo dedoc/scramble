@@ -3019,18 +3019,6 @@ parameters:
 			path: src/Support/Generator/Operation.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Operation\:\:extensionProperties\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Operation.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Operation\:\:extensionPropertiesToArray\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Generator/Operation.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Operation\:\:getAttribute\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -3050,18 +3038,6 @@ parameters:
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Operation\:\:mergeAttributes\(\) has parameter \$attributes with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/Generator/Operation.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Operation\:\:mergeExtensionProperties\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Operation.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Operation\:\:mergeExtensionProperties\(\) has parameter \$extensionsProperties with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
 			path: src/Support/Generator/Operation.php
@@ -3157,18 +3133,6 @@ parameters:
 			path: src/Support/Generator/Parameter.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:extensionProperties\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Parameter.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:extensionPropertiesToArray\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Generator/Parameter.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:getAttribute\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -3188,18 +3152,6 @@ parameters:
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:mergeAttributes\(\) has parameter \$attributes with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/Generator/Parameter.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:mergeExtensionProperties\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Parameter.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:mergeExtensionProperties\(\) has parameter \$extensionsProperties with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
 			path: src/Support/Generator/Parameter.php
@@ -3526,32 +3478,8 @@ parameters:
 			path: src/Support/Generator/Server.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\ServerVariable\:\:extensionProperties\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/ServerVariable.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\ServerVariable\:\:extensionPropertiesToArray\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Generator/ServerVariable.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\ServerVariable\:\:make\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/ServerVariable.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\ServerVariable\:\:mergeExtensionProperties\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/ServerVariable.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\ServerVariable\:\:mergeExtensionProperties\(\) has parameter \$extensionsProperties with no type specified\.$#'
-			identifier: missingType.parameter
 			count: 1
 			path: src/Support/Generator/ServerVariable.php
 
@@ -4018,18 +3946,6 @@ parameters:
 			path: src/Support/Generator/Types/Type.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:extensionProperties\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Types/Type.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:extensionPropertiesToArray\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Generator/Types/Type.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:format\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -4049,18 +3965,6 @@ parameters:
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:mergeAttributes\(\) has parameter \$attributes with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/Generator/Types/Type.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:mergeExtensionProperties\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Types/Type.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:mergeExtensionProperties\(\) has parameter \$extensionsProperties with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
 			path: src/Support/Generator/Types/Type.php
