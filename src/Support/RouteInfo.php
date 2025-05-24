@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\IndexBuilders\Bag;
 use Dedoc\Scramble\Support\IndexBuilders\RequestParametersBuilder;
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\InferredParameter;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Illuminate\Routing\Route;
 use PhpParser\Node\Stmt\ClassMethod;
@@ -22,6 +23,7 @@ class RouteInfo
 
     private ?ClassMethod $methodNode = null;
 
+    /** @var Bag<array<string, InferredParameter>> */
     public readonly Bag $requestParametersFromCalls;
 
     public readonly Infer\Extensions\IndexBuildingBroker $indexBuildingBroker;
@@ -29,9 +31,10 @@ class RouteInfo
     public function __construct(
         public readonly Route $route,
         private Infer $infer,
-        private readonly TypeTransformer $typeTransformer
     ) {
-        $this->requestParametersFromCalls = new Bag;
+        /** @var Bag<array<string, InferredParameter>> $bag */
+        $bag = new Bag;
+        $this->requestParametersFromCalls = $bag;
         $this->indexBuildingBroker = app(Infer\Extensions\IndexBuildingBroker::class);
     }
 
@@ -115,7 +118,7 @@ class RouteInfo
              * is different from the method name in the controller hence reflection is used here.
              */
             $this->methodType = $def->getMethodDefinition($this->reflectionMethod()->getName(), indexBuilders: [
-                new RequestParametersBuilder($this->requestParametersFromCalls, $this->typeTransformer),
+                new RequestParametersBuilder($this->requestParametersFromCalls),
                 ...$this->indexBuildingBroker->indexBuilders,
             ], withSideEffects: true)?->type;
         }

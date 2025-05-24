@@ -41,35 +41,35 @@ abstract class Type
         $this->default = new MissingExample;
     }
 
-    public function nullable(bool $nullable)
+    public function nullable(bool $nullable): self
     {
         $this->nullable = $nullable;
 
         return $this;
     }
 
-    public function format(string $format)
+    public function format(string $format): self
     {
         $this->format = $format;
 
         return $this;
     }
 
-    public function contentMediaType(string $mediaType)
+    public function contentMediaType(string $mediaType): self
     {
         $this->contentMediaType = $mediaType;
 
         return $this;
     }
 
-    public function contentEncoding(string $encoding)
+    public function contentEncoding(string $encoding): self
     {
         $this->contentEncoding = $encoding;
 
         return $this;
     }
 
-    public function addProperties(Type $fromType)
+    public function addProperties(Type $fromType): self
     {
         $this->attributes = $fromType->attributes;
 
@@ -105,14 +105,14 @@ abstract class Type
         );
     }
 
-    public function setDescription(string $description): Type
+    public function setDescription(string $description): self
     {
         $this->description = $description;
 
         return $this;
     }
 
-    public function enum(array $enum): Type
+    public function enum(array $enum): self
     {
         $this->enum = $enum;
 
@@ -122,7 +122,7 @@ abstract class Type
     /**
      * @param  array|scalar|null|MissingExample  $example
      */
-    public function example($example)
+    public function example($example): self
     {
         $this->example = $example;
 
@@ -132,7 +132,7 @@ abstract class Type
     /**
      * @param  array|scalar|null|MissingExample  $default
      */
-    public function default($default)
+    public function default($default): self
     {
         $this->default = $default;
 
@@ -142,7 +142,7 @@ abstract class Type
     /**
      * @param  array<array|scalar|null|MissingExample>  $examples
      */
-    public function examples(array $examples)
+    public function examples(array $examples): self
     {
         $this->examples = $examples;
 

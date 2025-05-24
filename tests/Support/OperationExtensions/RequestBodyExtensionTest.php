@@ -5,6 +5,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
+use Illuminate\Validation\Rule;
 
 it('doesnt add body when empty', function () {
     $openApiDocument = generateForRoute(function () {
@@ -233,6 +234,33 @@ enum RequestBodyExtensionTest__Status_Params_Extraction: string
     case Diamonds = 'diamonds';
     case Hearts = 'hearts';
     case Spades = 'spades';
+}
+
+it('doesnt create a schema for enum if it was overridden in rules', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::post('api/test', [RequestBodyExtensionTest__doesnt_create_the_enum_schema::class, 'index']);
+    });
+
+    expect($properties = $openApiDocument['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'])
+        ->toHaveLength(1)
+        ->and($properties['status'])
+        ->toBe([
+            'type' => 'string',
+            'enum' => ['clubs']
+        ])
+        ->and($openApiDocument['components']['schemas'] ?? [])
+        ->not->toHaveKey('RequestBodyExtensionTest__Status_Params_Extraction');
+});
+class RequestBodyExtensionTest__doesnt_create_the_enum_schema
+{
+    public function index(Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'status' => Rule::in(['clubs']),
+        ]);
+
+        $request->enum('status', RequestBodyExtensionTest__Status_Params_Extraction::class);
+    }
 }
 
 it('extracts parameters, their defaults, and descriptions from calling request parameters retrieving methods with query', function () {
