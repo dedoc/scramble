@@ -3640,12 +3640,6 @@ parameters:
 			path: src/Support/Generator/TypeTransformer.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\TypeTransformer\:\:transform\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/TypeTransformer.php
-
-		-
 			message: '#^PHPDoc tag @var for variable \$extensions contains generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
 			identifier: missingType.generics
 			count: 1
@@ -3659,12 +3653,6 @@ parameters:
 
 		-
 			message: '#^Property Dedoc\\Scramble\\Support\\Generator\\TypeTransformer\:\:\$typeToSchemaExtensions \(array\<Dedoc\\Scramble\\Extensions\\TypeToSchemaExtension\>\) does not accept array\<object\>\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: src/Support/Generator/TypeTransformer.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Support\\Generator\\Types\\ObjectType\:\:\$properties \(array\<string, Dedoc\\Scramble\\Support\\Generator\\Types\\Type\|null\>\) does not accept array\<int\|string, mixed\>\.$#'
 			identifier: assign.propertyType
 			count: 1
 			path: src/Support/Generator/TypeTransformer.php
