@@ -377,7 +377,7 @@ class ReferenceTypeResolver
 
     private function finalizeStatic(Type $type, Type $staticType)
     {
-        return (new TypeWalker())
+        return (new TypeWalker)
             ->map(
                 $type,
                 fn (Type $t) => $t instanceof ObjectType && $t->name === 'static'

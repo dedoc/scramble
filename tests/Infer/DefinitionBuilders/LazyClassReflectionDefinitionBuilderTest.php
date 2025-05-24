@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Tests\Infer\DefinitionBuilders;
 
-use Dedoc\Scramble\Infer\DefinitionBuilders\LazyClassDefinitionBuilder;
 use Dedoc\Scramble\Infer\DefinitionBuilders\LazyClassReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Illuminate\Support\Benchmark;
@@ -20,17 +19,13 @@ class Foo_LazyClassReflectionDefinitionBuilderTest
     /**
      * @return TValue
      */
-    public function get()
-    {
-    }
+    public function get() {}
 }
 
 /**
  * @extends Foo_LazyClassReflectionDefinitionBuilderTest<int>
  */
-class Bar_LazyClassReflectionDefinitionBuilderTest extends Foo_LazyClassReflectionDefinitionBuilderTest
-{
-}
+class Bar_LazyClassReflectionDefinitionBuilderTest extends Foo_LazyClassReflectionDefinitionBuilderTest {}
 
 test('builds class definition', function () {
     $definition = (new LazyClassReflectionDefinitionBuilder(
@@ -73,6 +68,7 @@ class FooTemplateMixin_LazyClassReflectionDefinitionBuilderTest
 
 /**
  * @template TBar
+ *
  * @mixin FooTemplateMixin_LazyClassReflectionDefinitionBuilderTest<TBar>
  */
 class BarTemplatedMixin_LazyClassReflectionDefinitionBuilderTest {}
@@ -99,7 +95,8 @@ trait FooTemplateTrait_LazyClassReflectionDefinitionBuilderTest
 /**
  * @template TBar
  */
-class BarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest {
+class BarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest
+{
     /** @use FooTemplateTrait_LazyClassReflectionDefinitionBuilderTest<TBar> */
     use FooTemplateTrait_LazyClassReflectionDefinitionBuilderTest;
 }
@@ -107,7 +104,7 @@ class BarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest {
 test('builds class definition with use annotation', function () {
     dd(
         (new \ReflectionClass(BarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest::class))
-        ->get()
+            ->get()
     );
     $definition = (new LazyClassReflectionDefinitionBuilder(
         $this->index,

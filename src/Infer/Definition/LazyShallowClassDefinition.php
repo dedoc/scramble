@@ -12,10 +12,9 @@ use ReflectionException;
 class LazyShallowClassDefinition implements ClassDefinitionContract
 {
     /**
-     * @param ClassDefinitionContract $definition
-     * @param array<string, Type> $parentDefinedTemplates
-     * @param array<string, array<string, Type>> $mixinsDefinedTemplates
-     * @param array<string, array<string, Type>> $interfacesDefinedTemplates
+     * @param  array<string, Type>  $parentDefinedTemplates
+     * @param  array<string, array<string, Type>>  $mixinsDefinedTemplates
+     * @param  array<string, array<string, Type>>  $interfacesDefinedTemplates
      */
     public function __construct(
         public ClassDefinitionContract $definition,

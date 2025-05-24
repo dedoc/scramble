@@ -38,7 +38,7 @@ it('builds vendor definition', function () {
 });
 
 it('infers query method of the model', function () {
-//        dd(app(Index::class)->getClass(\Illuminate\Database\Eloquent\Builder::class)->getMethod('firstOrNew'));
+    //        dd(app(Index::class)->getClass(\Illuminate\Database\Eloquent\Builder::class)->getMethod('firstOrNew'));
     //
     $type = getStatementType(UserModel_IndexTest::class.'::query()->firstWhere([], [])');
 
@@ -70,7 +70,7 @@ it('handles static method call', function () {
 it('handles chained method call', function () {
     $type = getStatementType(UserModel_IndexTest::class.'::query()->where()->firstOrFail()');
 
-//    dd($type->toString());
+    //    dd($type->toString());
 
     expect($type->toString())->toBe('Illuminate\Database\Eloquent\Builder<'.UserModel_IndexTest::class.'>');
 });

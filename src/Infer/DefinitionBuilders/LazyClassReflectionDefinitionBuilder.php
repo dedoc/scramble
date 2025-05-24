@@ -10,7 +10,6 @@ use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Definition\LazyShallowClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
-use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\PhpDoc;
@@ -147,8 +146,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
     }
 
     /**
-     * @param TemplateType[] $definitionTemplates
-     *
+     * @param  TemplateType[]  $definitionTemplates
      * @return array<string, Type>
      */
     private function getParentDefinedTemplates(?ClassDefinition $parentDefinition, PhpDocNode $doc, array $definitionTemplates): array
@@ -171,7 +169,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
         return collect($parentDefinition->templateTypes)
             ->mapWithKeys(function ($parentTemplateType, int $i) use ($extendedType) {
                 return [
-                    $parentTemplateType->name => $extendedType->templateTypes[$i] ?? new UnknownType()
+                    $parentTemplateType->name => $extendedType->templateTypes[$i] ?? new UnknownType,
                 ];
             })
             ->all();
@@ -199,7 +197,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 
     private function applyConcreteMixin(ClassDefinition $classDefinitionData, ObjectType $type)
     {
-        if(! $mixinDefinition = $this->index->getClass($type->name)) {
+        if (! $mixinDefinition = $this->index->getClass($type->name)) {
             return [];
         }
 
@@ -221,15 +219,15 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
     private function getDefinedTemplates(ClassDefinition $classDefinitionData, ObjectType $type): array
     {
         return collect($classDefinitionData->templateTypes)
-        ->mapWithKeys(function ($templateType, int $i) use ($classDefinitionData, $type) {
-            $concreteType = $type instanceof Generic
-                ? ($type->templateTypes[$i] ?? new UnknownType('no expected generic type'))
-                : new UnknownType('expected generic got object');
+            ->mapWithKeys(function ($templateType, int $i) use ($type) {
+                $concreteType = $type instanceof Generic
+                    ? ($type->templateTypes[$i] ?? new UnknownType('no expected generic type'))
+                    : new UnknownType('expected generic got object');
 
-            return [
-                $templateType->name => $concreteType
-            ];
-        })
-        ->all();
+                return [
+                    $templateType->name => $concreteType,
+                ];
+            })
+            ->all();
     }
 }
