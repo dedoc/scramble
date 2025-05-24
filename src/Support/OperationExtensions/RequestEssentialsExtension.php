@@ -204,10 +204,37 @@ class RequestEssentialsExtension extends OperationExtension
                 continue;
             }
 
-            $this->openApi->tags[] = new Tag(
-                name: $group->name,
-                description: $group->description,
-            );
+            $alreadyExistingTag = collect($this->openApi->tags)->firstWhere('name', $group->name);
+
+            if (! $alreadyExistingTag) {
+                $this->openApi->tags[] = new Tag(
+                    name: $group->name,
+                    description: $group->description,
+                );
+
+                continue;
+            }
+
+            $isNewTagMoreSpecific = !($alreadyExistingTag->name && $alreadyExistingTag->description);
+
+            if (! $isNewTagMoreSpecific) {
+                continue;
+            }
+
+            $this->openApi->tags = collect($this->openApi->tags)
+                ->reduce(function (array $acc, Tag $tag) use ($group): array {
+                    if ($tag->name !== $group->name) {
+                        $acc[] = $tag;
+                        return $acc;
+                    }
+
+                    $acc[] = new Tag(
+                        name: $group->name,
+                        description: $group->description,
+                    );
+
+                    return $acc;
+                }, []);
         }
     }
 }
