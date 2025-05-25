@@ -12,17 +12,15 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 class RulesNodes
 {
     /**
-     * @param Node\Expr\ArrayItem[] $nodes
+     * @param  Node\Expr\ArrayItem[]  $nodes
      */
     public function __construct(
         public readonly array $nodes,
         public readonly ?string $className = null,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Node[] $statements
+     * @param  Node[]  $statements
      */
     public static function makeFromStatements(array $statements, ?string $className = null): self
     {
@@ -61,7 +59,7 @@ class RulesNodes
 
     private function buildEvaluator(): ConstExprEvaluator
     {
-        return (new ConstExprEvaluator(function ($expr) {
+        return new ConstExprEvaluator(function ($expr) {
             if ($evaluatedConstFetch = (new ConstFetchEvaluator([
                 'self' => $this->className,
                 'static' => $this->className,
@@ -70,7 +68,6 @@ class RulesNodes
             }
 
             return null;
-        }));
+        });
     }
-
 }

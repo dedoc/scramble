@@ -570,7 +570,6 @@ it('extracts rules docs when using consts in form request', function ($action) {
     [[FormRequestsValidationRulesWithConstsDocs_Test::class, '_self']],
 ]);
 
-
 it('extracts rules from Validator::make facade call', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::get('api/test', [ValidationFacadeRulesDocumenting_Test::class, 'index']);

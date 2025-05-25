@@ -7,11 +7,9 @@ use PhpParser\Node;
 class ConstFetchEvaluator
 {
     /**
-     * @param array<string, string> $classMap
+     * @param  array<string, string>  $classMap
      */
-    public function __construct(public readonly array $classMap)
-    {
-    }
+    public function __construct(public readonly array $classMap) {}
 
     public function evaluate(Node\Expr $expr): mixed
     {

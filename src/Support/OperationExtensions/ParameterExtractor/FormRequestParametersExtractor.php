@@ -11,8 +11,6 @@ use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtracti
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\SchemaClassDocReflector;
 use Illuminate\Support\Arr;
-use PhpParser\Node;
-use PhpParser\NodeFinder;
 use PhpParser\PrettyPrinter;
 use ReflectionClass;
 use ReflectionNamedType;
