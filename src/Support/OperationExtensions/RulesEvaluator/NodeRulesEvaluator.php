@@ -53,7 +53,7 @@ class NodeRulesEvaluator implements RulesEvaluator
             ->all();
 
         $rules = (new ConstExprEvaluator(function ($expr) use ($injectableParams) {
-            $default = new stdClass();
+            $default = new stdClass;
 
             $evaluatedConstFetch = (new ConstFetchEvaluator([
                 'self' => $this->className,

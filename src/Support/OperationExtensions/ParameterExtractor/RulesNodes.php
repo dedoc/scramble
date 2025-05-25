@@ -61,7 +61,7 @@ class RulesNodes
     private function buildEvaluator(): ConstExprEvaluator
     {
         return new ConstExprEvaluator(function ($expr) {
-            $default = new stdClass();
+            $default = new stdClass;
 
             $evaluatedConstFetch = (new ConstFetchEvaluator([
                 'self' => $this->className,
