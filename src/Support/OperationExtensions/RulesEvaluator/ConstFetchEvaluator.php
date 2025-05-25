@@ -11,10 +11,10 @@ class ConstFetchEvaluator
      */
     public function __construct(public readonly array $classMap) {}
 
-    public function evaluate(Node\Expr $expr): mixed
+    public function evaluate(Node\Expr $expr, mixed $default = null): mixed
     {
         if (! $expr instanceof Node\Expr\ClassConstFetch) {
-            return null;
+            return $default;
         }
 
         $className = $expr->class instanceof Node\Name
@@ -30,7 +30,7 @@ class ConstFetchEvaluator
         }
 
         if (! $className || ! $constName) {
-            return null;
+            return $default;
         }
 
         return constant("$className::$constName");

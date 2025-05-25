@@ -8,6 +8,7 @@ use PhpParser\ConstExprEvaluator;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+use stdClass;
 
 class RulesNodes
 {
@@ -60,10 +61,14 @@ class RulesNodes
     private function buildEvaluator(): ConstExprEvaluator
     {
         return new ConstExprEvaluator(function ($expr) {
-            if ($evaluatedConstFetch = (new ConstFetchEvaluator([
+            $default = new stdClass();
+
+            $evaluatedConstFetch = (new ConstFetchEvaluator([
                 'self' => $this->className,
                 'static' => $this->className,
-            ]))->evaluate($expr)) {
+            ]))->evaluate($expr, $default);
+
+            if ($evaluatedConstFetch !== $default) {
                 return $evaluatedConstFetch;
             }
 
