@@ -21,8 +21,8 @@ class RulesToParameters
     private bool $mergeDotNotatedKeys = true;
 
     /**
-     * @param array<string, Rules> $rules
-     * @param Node\Expr\ArrayItem[] $validationNodesResults
+     * @param  array<string, Rules>  $rules
+     * @param  Node\Expr\ArrayItem[]  $validationNodesResults
      */
     public function __construct(
         private array $rules,
@@ -55,7 +55,7 @@ class RulesToParameters
     }
 
     /**
-     * @param Collection<string, Rules> $rules
+     * @param  Collection<string, Rules>  $rules
      * @return Collection<string, Rules>
      */
     private function handleConfirmed(Collection $rules): Collection
@@ -75,7 +75,7 @@ class RulesToParameters
     }
 
     /**
-     * @param Node\Expr\ArrayItem[] $validationNodesResults
+     * @param  Node\Expr\ArrayItem[]  $validationNodesResults
      * @return array<string, ?PhpDocNode>
      */
     private function extractNodeDocs(array $validationNodesResults): array

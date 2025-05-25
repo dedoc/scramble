@@ -511,15 +511,16 @@ it('supports prohibited if rule evaluation', function () {
         'schema' => ['type' => 'string'],
     ]);
 });
-class ProhibitedIf_ValidationRulesDocumentingTest {
+class ProhibitedIf_ValidationRulesDocumentingTest
+{
     public function __invoke(Request $request)
     {
         $request->validate([
             'foo' => [
                 Rule::prohibitedIf(
                     fn (): bool => ! $this->user()->can('create', Some::class)
-                )
-            ]
+                ),
+            ],
         ]);
     }
 }

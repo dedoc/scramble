@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 class DeepParametersMerger
 {
     /**
-     * @param Collection<string, Parameter> $parameters
+     * @param  Collection<string, Parameter>  $parameters
      */
     public function __construct(private Collection $parameters) {}
 
