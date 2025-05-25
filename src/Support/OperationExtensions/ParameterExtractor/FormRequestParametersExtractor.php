@@ -93,7 +93,6 @@ class FormRequestParametersExtractor implements ParameterExtractor
                 node: (new NodeFinder)->find(
                     Arr::wrap($classReflector->getMethod('rules')->getAstNode()->stmts),
                     fn (Node $node) => $node instanceof Node\Expr\ArrayItem
-                        && $node->key instanceof Node\Scalar\String_
                         && $node->getAttribute('parsedPhpDoc'),
                 ),
                 rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->route))->handle(),

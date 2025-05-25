@@ -7,6 +7,8 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use PhpParser\ConstExprEvaluationException;
+use PhpParser\ConstExprEvaluator;
 use PhpParser\Node;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
@@ -81,9 +83,37 @@ class RulesToParameters
     private function extractNodeDocs(array $validationNodesResults): array
     {
         return collect($validationNodesResults)
-            ->mapWithKeys(fn (Node\Expr\ArrayItem $item) => [
-                $item->key->value => $item->getAttribute('parsedPhpDoc'), // @phpstan-ignore property.notFound
-            ])
+            ->mapWithKeys(function (Node\Expr\ArrayItem $item) {
+                try {
+                    $key = (new ConstExprEvaluator(function ($expr) {
+                        if ($expr instanceof Node\Expr\ClassConstFetch) {
+                            $className = $expr->class instanceof Node\Name
+                                ? $expr->class->toString()
+                                : null;
+
+                            $constName = $expr->name instanceof Node\Identifier
+                                ? $expr->name->toString()
+                                : null;
+
+                            if (! $className || ! $constName) {
+                                return null;
+                            }
+
+                            return $className::{$constName};
+                        }
+                    }))->evaluateSilently($item->key);
+                } catch (ConstExprEvaluationException $e) {
+                    return [];
+                }
+
+                if (! is_string($key)) {
+                    return [];
+                }
+
+                return [
+                    $key => $item->getAttribute('parsedPhpDoc'),
+                ];
+            })
             ->toArray();
     }
 }

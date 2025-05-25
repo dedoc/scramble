@@ -552,6 +552,19 @@ it('extracts rules docs from form request', function () {
     assertMatchesSnapshot($openApiDocument['paths']['/test']['get']['parameters']);
 });
 
+it('extracts rules docs when using consts in form request', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [FormRequestsValidationRulesWithConstsDocs_Test::class, 'index']));
+
+    expect($openApiDocument['paths']['/test']['get']['parameters'][0])->toBe([
+        'name' => 'foo',
+        'in' => 'query',
+        'required' => true,
+        'description' => 'A foo prop.',
+        'schema' => ['type' => 'string'],
+        'example' => 'wow',
+    ]);
+});
+
 it('extracts rules from Validator::make facade call', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::get('api/test', [ValidationFacadeRulesDocumenting_Test::class, 'index']);
@@ -647,6 +660,23 @@ class ValidationRulesWithDocsAndFormRequest_Test
              * @example wow
              */
             'foo' => ['required', 'string'],
+        ]);
+    }
+}
+
+class FormRequestsValidationRulesWithConstsDocs_Test
+{
+    const TEST = 'foo';
+
+    public function index(Request $request)
+    {
+        $request->validate([
+            /**
+             * A foo prop.
+             *
+             * @example wow
+             */
+            FormRequestsValidationRulesWithConstsDocs_Test::TEST => ['required', 'string'],
         ]);
     }
 }

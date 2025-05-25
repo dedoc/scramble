@@ -46,7 +46,6 @@ class ValidateCallParametersExtractor implements ParameterExtractor
                 node: (new NodeFinder)->find(
                     $validationRulesNode instanceof Node\Expr\Array_ ? $validationRulesNode->items : [],
                     fn (Node $node) => $node instanceof Node\Expr\ArrayItem
-                        && $node->key instanceof Node\Scalar\String_
                         && $node->getAttribute('parsedPhpDoc'),
                 ),
                 rules: (new NodeRulesEvaluator($this->printer, $astNode, $validationRulesNode))->handle(),
