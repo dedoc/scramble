@@ -502,6 +502,28 @@ it('documents date_format rule with Y-m-d format', function () {
         ->toHaveProperty('format', 'date');
 });
 
+it('supports prohibited if rule evaluation', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', ProhibitedIf_ValidationRulesDocumentingTest::class));
+
+    expect($openApiDocument['paths']['/test']['get']['parameters'][0])->toBe([
+        'name' => 'foo',
+        'in' => 'query',
+        'schema' => ['type' => 'string'],
+    ]);
+});
+class ProhibitedIf_ValidationRulesDocumentingTest {
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            'foo' => [
+                Rule::prohibitedIf(
+                    fn (): bool => ! $this->user()->can('create', Some::class)
+                )
+            ]
+        ]);
+    }
+}
+
 it('extracts rules from request->validate call', function () {
     RouteFacade::get('api/test', [ValidationRulesDocumenting_Test::class, 'index']);
 

@@ -2221,12 +2221,6 @@ parameters:
 			path: src/Infer/Visitors/PhpDocResolver.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Visitors\\PhpDocResolver\:\:parseDocs\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Visitors/PhpDocResolver.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\OpenApiTraverser\:\:__construct\(\) has parameter \$visitors with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -4780,12 +4774,6 @@ parameters:
 			path: src/Support/OperationExtensions/RulesEvaluator/RulesEvaluator.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\DeepParametersMerger\:\:__construct\(\) has parameter \$parameters with generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\DeepParametersMerger\:\:extractTypeFromParameter\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -4806,12 +4794,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\DeepParametersMerger\:\:getOrCreateDeepTypeContainer\(\) has parameter \$path with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\DeepParametersMerger\:\:handle\(\) has no return type specified\.$#'
-			identifier: missingType.return
 			count: 1
 			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
 
@@ -5092,12 +5074,6 @@ parameters:
 			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameter.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesToParameter\:\:generate\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameter.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesToParameter\:\:getTypeFromObjectRule\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -5132,78 +5108,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameter.php
-
-		-
-			message: '#^Access to an undefined property PhpParser\\Node\\Expr\:\:\$value\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameters.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesToParameters\:\:__construct\(\) has parameter \$rules with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameters.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesToParameters\:\:__construct\(\) has parameter \$validationNodesResults with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameters.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesToParameters\:\:extractNodeDocs\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameters.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesToParameters\:\:extractNodeDocs\(\) has parameter \$validationNodesResults with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameters.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesToParameters\:\:handle\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameters.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesToParameters\:\:handleConfirmed\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameters.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesToParameters\:\:handleConfirmed\(\) has parameter \$rules with generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameters.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesToParameters\:\:mergeDotNotatedKeys\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameters.php
-
-		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameters.php
-
-		-
-			message: '#^Unable to resolve the template type TKey in call to function collect$#'
-			identifier: argument.templateType
-			count: 2
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameters.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function collect$#'
-			identifier: argument.templateType
-			count: 2
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameters.php
 
 		-
 			message: '#^Class Dedoc\\Scramble\\PhpDoc\\PhpDocParser constructor invoked with 2 parameters, 3 required\.$#'

@@ -13,9 +13,15 @@ use Illuminate\Support\Str;
 
 class DeepParametersMerger
 {
+    /**
+     * @param Collection<string, Parameter> $parameters
+     */
     public function __construct(private Collection $parameters) {}
 
-    public function handle()
+    /**
+     * @return array<string, Parameter>
+     */
+    public function handle(): array
     {
         return $this->parameters->groupBy('in')
             ->map(fn ($parameters) => $this->handleNested($parameters->keyBy('name'))->values())
