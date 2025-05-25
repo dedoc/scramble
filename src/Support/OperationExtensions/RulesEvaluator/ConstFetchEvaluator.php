@@ -35,6 +35,6 @@ class ConstFetchEvaluator
             return null;
         }
 
-        return $className::{$constName};
+        return constant("$className::$constName");
     }
 }
