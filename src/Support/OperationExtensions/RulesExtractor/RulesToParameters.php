@@ -4,10 +4,10 @@ namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\RulesNodes;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use PhpParser\Node;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 /**
@@ -22,15 +22,14 @@ class RulesToParameters
 
     /**
      * @param  array<string, Rules>  $rules
-     * @param  Node\Expr\ArrayItem[]  $validationNodesResults
      */
     public function __construct(
         private array $rules,
-        array $validationNodesResults,
+        RulesNodes $validationNodesResults,
         private TypeTransformer $openApiTransformer,
         private string $in = 'query',
     ) {
-        $this->nodeDocs = $this->extractNodeDocs($validationNodesResults);
+        $this->nodeDocs = $validationNodesResults->getDocNodes();
     }
 
     public function mergeDotNotatedKeys(bool $mergeDotNotatedKeys = true): self
@@ -72,18 +71,5 @@ class RulesToParameters
         }
 
         return $rules;
-    }
-
-    /**
-     * @param  Node\Expr\ArrayItem[]  $validationNodesResults
-     * @return array<string, ?PhpDocNode>
-     */
-    private function extractNodeDocs(array $validationNodesResults): array
-    {
-        return collect($validationNodesResults)
-            ->mapWithKeys(fn (Node\Expr\ArrayItem $item) => [
-                $item->key->value => $item->getAttribute('parsedPhpDoc'), // @phpstan-ignore property.notFound
-            ])
-            ->toArray();
     }
 }

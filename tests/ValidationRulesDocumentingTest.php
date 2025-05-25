@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\ApiKeySecurityScheme;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\RulesNodes;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Illuminate\Http\Request;
@@ -24,7 +25,7 @@ beforeEach(function () {
         'context' => new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig),
     ]);
     $this->buildRulesToParameters = function (array $rules) use ($openApiTransformer): RulesToParameters {
-        return new RulesToParameters($rules, [], $openApiTransformer);
+        return new RulesToParameters($rules, RulesNodes::makeFromStatements([]), $openApiTransformer);
     };
 });
 
@@ -552,6 +553,23 @@ it('extracts rules docs from form request', function () {
     assertMatchesSnapshot($openApiDocument['paths']['/test']['get']['parameters']);
 });
 
+it('extracts rules docs when using consts in form request', function ($action) {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', $action));
+
+    expect($openApiDocument['paths']['/test']['get']['parameters'][0])->toBe([
+        'name' => 'foo',
+        'in' => 'query',
+        'required' => true,
+        'description' => 'A foo prop.',
+        'schema' => ['type' => 'string'],
+        'example' => 'wow',
+    ]);
+})->with([
+    [[FormRequestsValidationRulesWithConstsDocs_Test::class, 'index']],
+    [[FormRequestsValidationRulesWithConstsDocs_Test::class, '_static']],
+    [[FormRequestsValidationRulesWithConstsDocs_Test::class, '_self']],
+]);
+
 it('extracts rules from Validator::make facade call', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::get('api/test', [ValidationFacadeRulesDocumenting_Test::class, 'index']);
@@ -647,6 +665,47 @@ class ValidationRulesWithDocsAndFormRequest_Test
              * @example wow
              */
             'foo' => ['required', 'string'],
+        ]);
+    }
+}
+
+class FormRequestsValidationRulesWithConstsDocs_Test
+{
+    const TEST = 'foo';
+
+    public function index(Request $request)
+    {
+        $request->validate([
+            /**
+             * A foo prop.
+             *
+             * @example wow
+             */
+            FormRequestsValidationRulesWithConstsDocs_Test::TEST => ['required', 'string'],
+        ]);
+    }
+
+    public function _static(Request $request)
+    {
+        $request->validate([
+            /**
+             * A foo prop.
+             *
+             * @example wow
+             */
+            static::TEST => ['required', 'string'],
+        ]);
+    }
+
+    public function _self(Request $request)
+    {
+        $request->validate([
+            /**
+             * A foo prop.
+             *
+             * @example wow
+             */
+            self::TEST => ['required', 'string'],
         ]);
     }
 }

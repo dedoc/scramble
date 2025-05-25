@@ -11,8 +11,6 @@ use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtracti
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\SchemaClassDocReflector;
 use Illuminate\Support\Arr;
-use PhpParser\Node;
-use PhpParser\NodeFinder;
 use PhpParser\PrettyPrinter;
 use ReflectionClass;
 use ReflectionNamedType;
@@ -90,11 +88,9 @@ class FormRequestParametersExtractor implements ParameterExtractor
 
         return new ParametersExtractionResult(
             parameters: $this->makeParameters(
-                node: (new NodeFinder)->find(
-                    Arr::wrap($classReflector->getMethod('rules')->getAstNode()->stmts),
-                    fn (Node $node) => $node instanceof Node\Expr\ArrayItem
-                        && $node->key instanceof Node\Scalar\String_
-                        && $node->getAttribute('parsedPhpDoc'),
+                node: RulesNodes::makeFromStatements(
+                    statements: Arr::wrap($classReflector->getMethod('rules')->getAstNode()->stmts),
+                    className: $classReflector->className,
                 ),
                 rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->route))->handle(),
                 typeTransformer: $this->openApiTransformer,
