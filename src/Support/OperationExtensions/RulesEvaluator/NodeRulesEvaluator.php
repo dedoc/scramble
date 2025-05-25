@@ -15,6 +15,7 @@ class NodeRulesEvaluator implements RulesEvaluator
         private PrettyPrinter $printer,
         private FunctionLike $functionLikeNode,
         private ?Node $rulesNode,
+        private ?string $className,
     ) {}
 
     public function handle(): array
@@ -51,6 +52,13 @@ class NodeRulesEvaluator implements RulesEvaluator
             ->all();
 
         $rules = (new ConstExprEvaluator(function ($expr) use ($injectableParams) {
+            if ($evaluatedConstFetch = (new ConstFetchEvaluator([
+                'self' => $this->className,
+                'static' => $this->className,
+            ]))->evaluate($expr)) {
+                return $evaluatedConstFetch;
+            }
+
             $code = $this->printer->prettyPrint([$expr]);
 
             extract($injectableParams);
