@@ -13,6 +13,7 @@ use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -80,6 +81,19 @@ class Scope
 
         if ($node instanceof Node\Expr\ClassConstFetch) {
             return (new ClassConstFetchTypeGetter)($node, $this);
+        }
+
+        if (
+            $node instanceof Node\Expr\BinaryOp\Equal
+            || $node instanceof Node\Expr\BinaryOp\Identical
+            || $node instanceof Node\Expr\BinaryOp\NotEqual
+            || $node instanceof Node\Expr\BinaryOp\NotIdentical
+            || $node instanceof Node\Expr\BinaryOp\Greater
+            || $node instanceof Node\Expr\BinaryOp\GreaterOrEqual
+            || $node instanceof Node\Expr\BinaryOp\Smaller
+            || $node instanceof Node\Expr\BinaryOp\SmallerOrEqual
+        ) {
+            return new BooleanType;
         }
 
         if ($node instanceof Node\Expr\BooleanNot) {
