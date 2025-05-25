@@ -745,36 +745,6 @@ parameters:
 			path: src/Infer/Analyzer/MethodQuery.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\PropertyAnalyzer\:\:from\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Analyzer/PropertyAnalyzer.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\PropertyAnalyzer\:\:getDefaultType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Analyzer/PropertyAnalyzer.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\PropertyAnalyzer\:\:getDefaultTypeFromAst\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Analyzer/PropertyAnalyzer.php
-
-		-
-			message: '#^Unable to resolve the template type TKey in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Infer/Analyzer/PropertyAnalyzer.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Infer/Analyzer/PropertyAnalyzer.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Context\:\:configure\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -925,38 +895,8 @@ parameters:
 			path: src/Infer/Extensions/AfterSideEffectCallAnalyzed.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\AnyMethodCallEvent\:\:__construct\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Extensions/Event/AnyMethodCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\AnyMethodCallEvent\:\:getArg\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/AnyMethodCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\AnyMethodCallEvent\:\:getInstance\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/AnyMethodCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\AnyMethodCallEvent\:\:getName\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/AnyMethodCallEvent.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\FunctionCallEvent\:\:__construct\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Extensions/Event/FunctionCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\FunctionCallEvent\:\:getArg\(\) has no return type specified\.$#'
-			identifier: missingType.return
 			count: 1
 			path: src/Infer/Extensions/Event/FunctionCallEvent.php
 
@@ -975,12 +915,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\MethodCallEvent\:\:__construct\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Extensions/Event/MethodCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\MethodCallEvent\:\:getArg\(\) has no return type specified\.$#'
-			identifier: missingType.return
 			count: 1
 			path: src/Infer/Extensions/Event/MethodCallEvent.php
 
@@ -1033,12 +967,6 @@ parameters:
 			path: src/Infer/Extensions/Event/StaticMethodCallEvent.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\StaticMethodCallEvent\:\:getArg\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/StaticMethodCallEvent.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\StaticMethodCallEvent\:\:getCallee\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -1063,38 +991,8 @@ parameters:
 			path: src/Infer/Extensions/ExtensionsBroker.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:afterClassDefinitionCreated\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:afterClassDefinitionCreated\(\) has parameter \$event with no type specified\.$#'
 			identifier: missingType.parameter
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:afterSideEffectCallAnalyzed\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:buildExtensions\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:getAnyMethodReturnType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:getFunctionReturnType\(\) has no return type specified\.$#'
-			identifier: missingType.return
 			count: 1
 			path: src/Infer/Extensions/ExtensionsBroker.php
 
@@ -1105,20 +1003,8 @@ parameters:
 			path: src/Infer/Extensions/ExtensionsBroker.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:getMethodCallExceptions\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:getMethodCallExceptions\(\) has parameter \$event with no type specified\.$#'
 			identifier: missingType.parameter
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:getMethodReturnType\(\) has no return type specified\.$#'
-			identifier: missingType.return
 			count: 1
 			path: src/Infer/Extensions/ExtensionsBroker.php
 
@@ -1129,74 +1015,14 @@ parameters:
 			path: src/Infer/Extensions/ExtensionsBroker.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:getPropertyType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:getPropertyType\(\) has parameter \$event with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
 			path: src/Infer/Extensions/ExtensionsBroker.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:getStaticMethodReturnType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:getStaticMethodReturnType\(\) has parameter \$event with no type specified\.$#'
 			identifier: missingType.parameter
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:priority\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:priority\(\) has parameter \$priority with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:sortExtensionsInOrder\(\) has parameter \$arrayToSort with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:sortExtensionsInOrder\(\) has parameter \$arrayToSortWithItems with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:sortExtensionsInOrder\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
-			message: '#^PHPDoc tag @param references unknown parameter\: \$extensions$#'
-			identifier: parameter.notFound
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
-			message: '#^PHPDoc tag @var for property Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:\$priorities contains unresolvable type\.$#'
-			identifier: property.unresolvableType
-			count: 1
-			path: src/Infer/Extensions/ExtensionsBroker.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Infer\\Extensions\\ExtensionsBroker\:\:\$priorities type has no value type specified in iterable type array\<mixed\>\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Infer/Extensions/ExtensionsBroker.php
 
@@ -1549,12 +1375,6 @@ parameters:
 			path: src/Infer/Reflector/ClassReflector.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Reflector\\ClassReflector\:\:getSource\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Reflector/ClassReflector.php
-
-		-
 			message: '#^Parameter \#1 \$fileName of static method Dedoc\\Scramble\\Infer\\Services\\FileNameResolver\:\:createForFile\(\) expects string, string\|false given\.$#'
 			identifier: argument.type
 			count: 1
@@ -1655,66 +1475,6 @@ parameters:
 			identifier: new.static
 			count: 1
 			path: src/Infer/Reflector/MethodReflector.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Reflector\\PropertyReflector\:\:getAstNode\(\) should return PhpParser\\Node\\Stmt\\Property\|null but returns PhpParser\\Node\|null\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Infer/Reflector/PropertyReflector.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Reflector\\PropertyReflector\:\:getPropertyNodeDeclarationSource\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Reflector/PropertyReflector.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Reflector\\PropertyReflector\:\:make\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Reflector/PropertyReflector.php
-
-		-
-			message: '#^Method PhpParser\\NodeVisitor\\NameResolver@anonymous/src/Infer/Reflector/PropertyReflector\.php\:164\:\:__construct\(\) has parameter \$nameContext with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Infer/Reflector/PropertyReflector.php
-
-		-
-			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Reflector/PropertyReflector.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Infer\\Reflector\\PropertyReflector\:\:\$cache type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Reflector/PropertyReflector.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Infer\\Reflector\\PropertyReflector\:\:\$properyNode \(PhpParser\\Node\\Stmt\\Property\|null\) does not accept PhpParser\\Node\|null\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: src/Infer/Reflector/PropertyReflector.php
-
-		-
-			message: '#^Static property Dedoc\\Scramble\\Infer\\Reflector\\PropertyReflector\:\:\$cache is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Infer/Reflector/PropertyReflector.php
-
-		-
-			message: '#^Unsafe access to private property Dedoc\\Scramble\\Infer\\Reflector\\PropertyReflector\:\:\$cache through static\:\:\.$#'
-			identifier: staticClassAccess.privateProperty
-			count: 1
-			path: src/Infer/Reflector/PropertyReflector.php
-
-		-
-			message: '#^Unsafe usage of new static\(\)\.$#'
-			identifier: new.static
-			count: 1
-			path: src/Infer/Reflector/PropertyReflector.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Index\:\:registerFunctionDefinition\(\) has no return type specified\.$#'
@@ -4090,50 +3850,8 @@ parameters:
 			path: src/Support/InferExtensions/JsonResourceCreationInfer.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\JsonResourceExtension\:\:buildAnonymousResourceCollectionType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/InferExtensions/JsonResourceExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\JsonResourceExtension\:\:getAttributesMethodReturnType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/InferExtensions/JsonResourceExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\JsonResourceExtension\:\:getModelMethodReturn\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/InferExtensions/JsonResourceExtension.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\JsonResourceExtension\:\:getModelMethodReturn\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/InferExtensions/JsonResourceExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\JsonResourceExtension\:\:getModelPropertyType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/InferExtensions/JsonResourceExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\JsonResourceExtension\:\:proxyMethodCallToModel\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/InferExtensions/JsonResourceExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\JsonResourceExtension\:\:removeNullFromUnion\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/InferExtensions/JsonResourceExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\JsonResourceExtension\:\:value\(\) has no return type specified\.$#'
-			identifier: missingType.return
 			count: 1
 			path: src/Support/InferExtensions/JsonResourceExtension.php
 
@@ -4208,12 +3926,6 @@ parameters:
 			identifier: staticClassAccess.privateProperty
 			count: 1
 			path: src/Support/InferExtensions/ModelExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\PaginateMethodsReturnTypeExtension\:\:getPaginatorType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/InferExtensions/PaginateMethodsReturnTypeExtension.php
 
 		-
 			message: '#^Property PhpParser\\Node\\Expr\\Variable\:\:\$name \(PhpParser\\Node\\Expr\|string\) on left side of \?\? is not nullable\.$#'

@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Infer\Extensions;
 
 use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
+use Dedoc\Scramble\Support\Type\Type;
 
 class ExtensionsBroker
 {
@@ -32,7 +33,7 @@ class ExtensionsBroker
     private array $afterSideEffectCallAnalyzedExtensions;
 
     /**
-     * @var string<InferExtension>[]
+     * @var class-string<InferExtension>[]
      */
     private array $priorities = [];
 
@@ -42,9 +43,9 @@ class ExtensionsBroker
     }
 
     /**
-     * @param  string<InferExtension>[]  $extensions
+     * @param  class-string<InferExtension>[]  $priority
      */
-    public function priority(array $priority)
+    public function priority(array $priority): self
     {
         $this->priorities = array_merge($this->priorities, $priority);
 
@@ -53,7 +54,7 @@ class ExtensionsBroker
         return $this;
     }
 
-    private function buildExtensions()
+    private function buildExtensions(): void
     {
         $extensions = $this->sortExtensionsInOrder($this->extensions, $this->priorities);
 
@@ -90,6 +91,11 @@ class ExtensionsBroker
         });
     }
 
+    /**
+     * @param InferExtension[] $arrayToSort
+     * @param class-string<InferExtension>[] $arrayToSortWithItems
+     * @return InferExtension[]
+     */
     private function sortExtensionsInOrder(array $arrayToSort, array $arrayToSortWithItems): array
     {
         // 1) Figure out which items match any of the given “order” patterns
@@ -142,7 +148,7 @@ class ExtensionsBroker
         return $result;
     }
 
-    public function getPropertyType($event)
+    public function getPropertyType($event): ?Type
     {
         foreach ($this->propertyTypeExtensions as $extension) {
             if (! $extension->shouldHandle($event->getInstance())) {
@@ -157,7 +163,7 @@ class ExtensionsBroker
         return null;
     }
 
-    public function getMethodReturnType($event)
+    public function getMethodReturnType($event): ?Type
     {
         foreach ($this->methodReturnTypeExtensions as $extension) {
             if (! $extension->shouldHandle($event->getInstance())) {
@@ -172,7 +178,10 @@ class ExtensionsBroker
         return null;
     }
 
-    public function getMethodCallExceptions($event)
+    /**
+     * @return Type[]
+     */
+    public function getMethodCallExceptions($event): array
     {
         $exceptions = [];
 
@@ -189,7 +198,7 @@ class ExtensionsBroker
         return $exceptions;
     }
 
-    public function getStaticMethodReturnType($event)
+    public function getStaticMethodReturnType($event): ?Type
     {
         foreach ($this->staticMethodReturnTypeExtensions as $extension) {
             if (! $extension->shouldHandle($event->getCallee())) {
@@ -204,7 +213,7 @@ class ExtensionsBroker
         return null;
     }
 
-    public function getFunctionReturnType($event)
+    public function getFunctionReturnType($event): ?Type
     {
         foreach ($this->functionReturnTypeExtensions as $extension) {
             if (! $extension->shouldHandle($event->getName())) {
@@ -219,7 +228,7 @@ class ExtensionsBroker
         return null;
     }
 
-    public function afterClassDefinitionCreated($event)
+    public function afterClassDefinitionCreated($event): void
     {
         foreach ($this->afterClassDefinitionCreatedExtensions as $extension) {
             if (! $extension->shouldHandle($event->name)) {
@@ -230,7 +239,7 @@ class ExtensionsBroker
         }
     }
 
-    public function afterSideEffectCallAnalyzed(SideEffectCallEvent $event)
+    public function afterSideEffectCallAnalyzed(SideEffectCallEvent $event): void
     {
         foreach ($this->afterSideEffectCallAnalyzedExtensions as $extension) {
             if (! $extension->shouldHandle($event)) {
@@ -241,7 +250,7 @@ class ExtensionsBroker
         }
     }
 
-    public function getAnyMethodReturnType(AnyMethodCallEvent $event)
+    public function getAnyMethodReturnType(AnyMethodCallEvent $event): ?Type
     {
         foreach ($this->anyMethodReturnTypeExtensions as $extension) {
             if ($returnType = $extension->getMethodReturnType($event)) {

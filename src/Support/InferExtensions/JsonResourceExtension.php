@@ -190,7 +190,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         };
     }
 
-    private function getModelPropertyType(ClassDefinition $jsonResourceDefinition, string $name, Scope $scope)
+    private function getModelPropertyType(ClassDefinition $jsonResourceDefinition, string $name, Scope $scope): Type
     {
         return ReferenceTypeResolver::getInstance()->resolve(
             $scope,
@@ -201,12 +201,12 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         );
     }
 
-    private function proxyMethodCallToModel(MethodCallEvent $event)
+    private function proxyMethodCallToModel(MethodCallEvent $event): Type
     {
         return $this->getModelMethodReturn($event->getInstance()->name, $event->name, $event->arguments, $event->scope);
     }
 
-    private function getModelMethodReturn(string $resourceClassName, string $methodName, array $arguments, Scope $scope)
+    private function getModelMethodReturn(string $resourceClassName, string $methodName, array $arguments, Scope $scope): Type
     {
         $modelType = JsonResourceHelper::modelType($scope->index->getClassDefinition($resourceClassName), $scope);
 
@@ -216,12 +216,12 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         );
     }
 
-    private function value(Type $type)
+    private function value(Type $type): Type
     {
         return $type instanceof FunctionType ? $type->getReturnType() : $type;
     }
 
-    private function removeNullFromUnion(Type $type)
+    private function removeNullFromUnion(Type $type): Type
     {
         $type = Union::wrap(
             ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type)
@@ -234,7 +234,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         );
     }
 
-    private function getAttributesMethodReturnType(MethodCallEvent $event)
+    private function getAttributesMethodReturnType(MethodCallEvent $event): Generic
     {
         $argument = $event->getArg('attributes', 0);
 
@@ -262,7 +262,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         ]);
     }
 
-    private function buildAnonymousResourceCollectionType(StaticMethodCallEvent $event)
+    private function buildAnonymousResourceCollectionType(StaticMethodCallEvent $event): Generic
     {
         $argument = $event->getArg('resource', 0);
 

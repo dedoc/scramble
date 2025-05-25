@@ -12,6 +12,9 @@ class AnyMethodCallEvent
 {
     use ArgumentTypesAware;
 
+    /**
+     * @param array<array-key, Type> $arguments
+     */
     public function __construct(
         public readonly Type $instance,
         public readonly string $name,
@@ -27,12 +30,12 @@ class AnyMethodCallEvent
             : null;
     }
 
-    public function getInstance()
+    public function getInstance(): Type
     {
         return $this->instance;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }

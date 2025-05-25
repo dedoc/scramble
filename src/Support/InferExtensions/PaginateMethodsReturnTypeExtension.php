@@ -61,7 +61,7 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
         return $this->getPaginatorType($event->name);
     }
 
-    private function getPaginatorType(string $name)
+    private function getPaginatorType(string $name): Generic
     {
         $valueType = new UnknownType;
 
