@@ -10,6 +10,7 @@ use PhpParser\Comment\Doc;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\NodeVisitorAbstract;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class PhpDocResolver extends NodeVisitorAbstract
 {
@@ -64,7 +65,7 @@ class PhpDocResolver extends NodeVisitorAbstract
         }
     }
 
-    private function parseDocs(Doc $doc)
+    private function parseDocs(Doc $doc): PhpDocNode
     {
         return PhpDoc::parse($doc->getText(), $this->nameResolver);
     }
