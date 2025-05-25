@@ -92,8 +92,8 @@ class ExtensionsBroker
     }
 
     /**
-     * @param InferExtension[] $arrayToSort
-     * @param class-string<InferExtension>[] $arrayToSortWithItems
+     * @param  InferExtension[]  $arrayToSort
+     * @param  class-string<InferExtension>[]  $arrayToSortWithItems
      * @return InferExtension[]
      */
     private function sortExtensionsInOrder(array $arrayToSort, array $arrayToSortWithItems): array

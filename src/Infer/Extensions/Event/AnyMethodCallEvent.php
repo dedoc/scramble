@@ -13,7 +13,7 @@ class AnyMethodCallEvent
     use ArgumentTypesAware;
 
     /**
-     * @param array<array-key, Type> $arguments
+     * @param  array<array-key, Type>  $arguments
      */
     public function __construct(
         public readonly Type $instance,

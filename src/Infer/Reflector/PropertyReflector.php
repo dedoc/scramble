@@ -23,7 +23,7 @@ class PropertyReflector
     private ?Property $properyNode = null;
 
     /**
-     * @param class-string $className
+     * @param  class-string  $className
      */
     private function __construct(
         private FileParser $parser,
@@ -32,7 +32,7 @@ class PropertyReflector
     ) {}
 
     /**
-     * @param class-string $className
+     * @param  class-string  $className
      */
     public static function make(string $className, string $name): self
     {
