@@ -131,7 +131,7 @@ class Mc_Bar
 it('resolves call to parent class', function () {
     $type = analyzeClass(Cp_Foo::class)->getClassDefinition('Cp_Foo');
 
-    expect($type->getMethodDefinition('foo')->type->toString())->toBe('(): int(2)');
+    expect($type->getMethod('foo')->type->toString())->toBe('(): int(2)');
 });
 class Cp_Foo extends Cp_Bar
 {

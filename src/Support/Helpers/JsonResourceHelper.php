@@ -10,23 +10,27 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use ReflectionClass;
 
 class JsonResourceHelper
 {
+    /**
+     * @var array<string, Type>
+     */
     public static $jsonResourcesModelTypesCache = [];
 
     /**
      * @internal
      */
-    public static function modelType(ClassDefinition $jsonClass, Scope $scope): ?Type
+    public static function modelType(ClassDefinition $jsonClass, Scope $scope): Type
     {
-        if ($cachedModelType = static::$jsonResourcesModelTypesCache[$jsonClass->name] ?? null) {
+        if ($cachedModelType = self::$jsonResourcesModelTypesCache[$jsonClass->name] ?? null) {
             return $cachedModelType;
         }
 
-        $modelClass = static::getModelName(
+        $modelClass = self::getModelName(
             $jsonClass->name,
-            new \ReflectionClass($jsonClass->name),
+            new ReflectionClass($jsonClass->name), // @phpstan-ignore argument.type
             $scope->nameResolver,
         );
 
@@ -35,12 +39,15 @@ class JsonResourceHelper
             $modelType = new ObjectType($modelClass);
         }
 
-        static::$jsonResourcesModelTypesCache[$jsonClass->name] = $modelType;
+        self::$jsonResourcesModelTypesCache[$jsonClass->name] = $modelType;
 
         return $modelType;
     }
 
-    private static function getModelName(string $jsonResourceClassName, \ReflectionClass $reflectionClass, FileNameResolver $getFqName)
+    /**
+     * @param ReflectionClass<object> $reflectionClass
+     */
+    private static function getModelName(string $jsonResourceClassName, ReflectionClass $reflectionClass, FileNameResolver $getFqName): ?string
     {
         $phpDoc = $reflectionClass->getDocComment() ?: '';
 
@@ -59,7 +66,7 @@ class JsonResourceHelper
             }
         }
 
-        $modelName = (string) Str::of(Str::of($jsonResourceClassName)->explode('\\')->last())->replace('Resource', '')->singular();
+        $modelName = (string) Str::of(Str::of($jsonResourceClassName)->explode('\\')->last() ?: '')->replace('Resource', '')->singular();
 
         $modelClass = 'App\\Models\\'.$modelName;
         if (! class_exists($modelClass)) {

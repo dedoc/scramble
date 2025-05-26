@@ -28,6 +28,7 @@ beforeEach(function () {
 it('infers new calls on parent class', function (string $method, string $expectedType) {
     $methodDef = $this->classAnalyzer
         ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo::class)
+        ->getData()
         ->getMethodDefinition($method);
     expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
 })->with([
@@ -38,6 +39,7 @@ it('infers new calls on parent class', function (string $method, string $expecte
 it('infers new calls on child class', function (string $method, string $expectedType) {
     $methodDef = $this->classAnalyzer
         ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class)
+        ->getData()
         ->getMethodDefinition($method);
     expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
 })->with([
@@ -52,6 +54,7 @@ it('infers new calls on child class', function (string $method, string $expected
 it('infers static method calls on parent class', function (string $method, string $expectedType) {
     $methodDef = $this->classAnalyzer
         ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo::class)
+        ->getData()
         ->getMethodDefinition($method);
     expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
 })->with([
@@ -62,6 +65,7 @@ it('infers static method calls on parent class', function (string $method, strin
 it('infers static method calls on child class', function (string $method, string $expectedType) {
     $methodDef = $this->classAnalyzer
         ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class)
+        ->getData()
         ->getMethodDefinition($method);
     expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
 })->with([

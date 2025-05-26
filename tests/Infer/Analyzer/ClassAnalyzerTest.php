@@ -25,7 +25,7 @@ beforeEach(function () {
 });
 
 it('creates a definition from the given class', function () {
-    $definition = $this->classAnalyzer->analyze(Foo::class);
+    $definition = $this->classAnalyzer->analyze(Foo::class)->getData();
 
     expect($this->index->classes)
         ->toHaveKeys([Foo::class, Bar::class])
@@ -37,7 +37,7 @@ it('creates a definition from the given class', function () {
 it('resolves function return type after explicitly requested', function () {
     $fooDef = $this->classAnalyzer
         ->analyze(Foo::class)
-        ->getMethodDefinition('bar');
+        ->getMethod('bar');
 
     expect($fooDef->type->getReturnType()->toString())->toBe('int(243)');
 });
@@ -45,7 +45,7 @@ it('resolves function return type after explicitly requested', function () {
 it('resolves fully qualified names', function () {
     $fqnDef = $this->classAnalyzer
         ->analyze(Foo::class)
-        ->getMethodDefinition('fqn');
+        ->getMethod('fqn');
 
     expect($fqnDef->type->getReturnType()->toString())->toBe('string('.Foo::class.')');
 });
@@ -53,9 +53,9 @@ it('resolves fully qualified names', function () {
 it('resolves pending returns lazily', function () {
     $classDefinition = $this->classAnalyzer->analyze(Foo::class);
 
-    $barDef = $classDefinition->getMethodDefinition('bar');
+    $barDef = $classDefinition->getMethod('bar');
     $barReturnType = $this->resolver->resolve(
-        new Scope($this->index, new NodeTypesResolver, new ScopeContext($classDefinition), new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing))),
+        new Scope($this->index, new NodeTypesResolver, new ScopeContext($classDefinition->getData()), new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing))),
         $barDef->type->getReturnType(),
     );
 
@@ -63,7 +63,7 @@ it('resolves pending returns lazily', function () {
 });
 
 it('analyzes traits', function () {
-    $classDef = $this->classAnalyzer->analyze(FooWithTrait::class);
+    $classDef = $this->classAnalyzer->analyze(FooWithTrait::class)->getData();
 
     expect($classDef->properties)->toHaveCount(1)->toHaveKeys([
         'propBaz',
@@ -76,7 +76,7 @@ it('analyzes traits', function () {
 });
 
 it('preserves comments in property defaults', function () {
-    $classDef = $this->classAnalyzer->analyze(FooWithDefaultProperties::class);
+    $classDef = $this->classAnalyzer->analyze(FooWithDefaultProperties::class)->getData();
 
     /** @var KeyedArrayType $defaultType */
     $defaultType = $classDef->properties['default']->defaultType;

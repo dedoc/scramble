@@ -191,7 +191,7 @@ it('gets the underlying model when mixin is inline', function () {
     $infer = app(Infer::class);
 
     $model = JsonResourceHelper::modelType(
-        $infer->analyzeClass(JsonResourceTypeToSchemaTest_WithIntegerInline::class),
+        $infer->analyzeClass(JsonResourceTypeToSchemaTest_WithIntegerInline::class)->getData(),
         new Infer\Scope\GlobalScope,
     );
 

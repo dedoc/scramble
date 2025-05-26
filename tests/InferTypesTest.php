@@ -29,7 +29,7 @@ beforeEach(function () {
 it('gets json resource type', function () {
     $def = $this->infer->analyzeClass(InferTypesTest_SampleJsonResource::class);
 
-    $returnType = $def->getMethodDefinition('toArray')->type->getReturnType();
+    $returnType = $def->getMethod('toArray')->type->getReturnType();
 
     assertMatchesTextSnapshot($returnType->toString());
 });
@@ -37,7 +37,7 @@ it('gets json resource type', function () {
 it('gets json resource type with enum', function () {
     $def = $this->infer->analyzeClass(InferTypesTest_SampleTwoPostJsonResource::class);
 
-    $returnType = $def->getMethodDefinition('toArray')->type->getReturnType();
+    $returnType = $def->getMethod('toArray')->type->getReturnType();
 
     assertMatchesTextSnapshot($returnType->toString());
 });

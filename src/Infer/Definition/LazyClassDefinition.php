@@ -14,6 +14,7 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use PhpParser\ErrorHandler\Throwing;
 use PhpParser\NameContext;
 use ReflectionClass;
@@ -44,7 +45,10 @@ class LazyClassDefinition implements ClassDefinitionContract
         public ClassDefinitionContract $definition,
     ) {}
 
-    public function getMethod(string $name): ?FunctionLikeDefinition
+    /**
+     * @param IndexBuilder<array<string, mixed>>[] $indexBuilders
+     */
+    public function getMethod(string $name, array $indexBuilders = [], bool $withSideEffects = false): ?FunctionLikeDefinition
     {
         $data = $this->getData();
 
@@ -63,7 +67,7 @@ class LazyClassDefinition implements ClassDefinitionContract
         }
 
         if (Index::shouldAnalyzeAst($path)) {
-            return $data->methods[$name] = $this->buildCompleteMethodDefinition($data->methods[$name]);
+            return $data->methods[$name] = $this->buildCompleteMethodDefinition($data->methods[$name], $indexBuilders, );
         }
 
         return $data->methods[$name] = (new FunctionLikeReflectionDefinitionBuilder(
@@ -79,14 +83,18 @@ class LazyClassDefinition implements ClassDefinitionContract
         return $this->definition->getData();
     }
 
-    private function buildCompleteMethodDefinition(FunctionLikeDefinition $methodDefinition): FunctionLikeDefinition
+
+    /**
+     * @param IndexBuilder<array<string, mixed>>[] $indexBuilders
+     */
+    private function buildCompleteMethodDefinition(FunctionLikeDefinition $methodDefinition, array $indexBuilders = [], bool $withSideEffects = false): FunctionLikeDefinition
     {
         $classDefinitionData = $this->getData();
 
         $methodDefinition = (new MethodAnalyzer(
             $this->index,
             $classDefinitionData
-        ))->analyze($methodDefinition, indexBuilders: [], withSideEffects: false);
+        ))->analyze($methodDefinition, indexBuilders: $indexBuilders, withSideEffects: $withSideEffects);
 
         $methodScope = new Scope(
             $this->index,

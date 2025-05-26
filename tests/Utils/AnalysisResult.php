@@ -3,7 +3,7 @@
 namespace Dedoc\Scramble\Tests\Utils;
 
 use Dedoc\Scramble\Infer\Context;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
@@ -20,9 +20,9 @@ class AnalysisResult
 {
     public function __construct(public Index $index) {}
 
-    public function getClassDefinition(string $string): ?ClassDefinition
+    public function getClassDefinition(string $string): ?ClassDefinitionContract
     {
-        return $this->index->getClassDefinition($string);
+        return $this->index->getClass($string);
     }
 
     public function getFunctionDefinition(string $string): ?FunctionLikeDefinition

@@ -12,7 +12,7 @@ it('builds reflection based definition upon request', function () {
     expect($definition->getData()->name)
         ->toBe(Foo_LazyShallowReflectionIndexTest::class)
         ->and(count($definition->getData()->methods))
-        ->toBe(0);
+        ->toBe(1);
 });
 it('builds method definition upon request', function () {
     $index = new LazyShallowReflectionIndex;

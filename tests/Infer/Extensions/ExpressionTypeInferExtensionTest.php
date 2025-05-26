@@ -21,7 +21,7 @@ it('uses expression type infer extension', function () {
 
     $type = analyzeClass(ExpressionTypeInferExtensionTest_Test::class, [$extension])
         ->getClassDefinition(ExpressionTypeInferExtensionTest_Test::class)
-        ->getMethodDefinition('foo')
+        ->getMethod('foo')
         ->type->getReturnType();
 
     expect($type->toString())->toBe('string(wow)');

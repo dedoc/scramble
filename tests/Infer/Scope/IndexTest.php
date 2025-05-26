@@ -22,19 +22,15 @@ it('builds definition', function () {
         ->toBe('(array, array): boolean');
 });
 
-it('builds vendor definition', function () {
+it('returns vendor class definition when requested', function () {
     $index = new Index(new LazyShallowReflectionIndex);
 
     $definition = $index->getClass(Collection::class);
 
     expect($definition->getData()->name)
-        ->toBe(UserModel_IndexTest::class)
-        ->and($definition->getData()->methods['foo']->isFullyAnalyzed)
-        ->toBeFalse()
-        ->and($definition->getData()->methods['fill']->isFullyAnalyzed)
-        ->toBeFalse()
-        ->and($definition->getMethod('update')->type->toString())
-        ->toBe('(array, array): boolean');
+        ->toBe(Collection::class)
+        ->and($definition->getMethod('first'))
+        ->not->toBeNull();
 });
 
 it('infers query method of the model', function () {

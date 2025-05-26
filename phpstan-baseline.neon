@@ -3778,42 +3778,6 @@ parameters:
 			path: src/Support/Helpers/ExamplesExtractor.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Helpers\\JsonResourceHelper\:\:getModelName\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Helpers/JsonResourceHelper.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Helpers\\JsonResourceHelper\:\:getModelName\(\) has parameter \$reflectionClass with generic class ReflectionClass but does not specify its types\: T$#'
-			identifier: missingType.generics
-			count: 1
-			path: src/Support/Helpers/JsonResourceHelper.php
-
-		-
-			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/Helpers/JsonResourceHelper.php
-
-		-
-			message: '#^Parameter \#1 \$string of static method Illuminate\\Support\\Str\:\:of\(\) expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/Helpers/JsonResourceHelper.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Support\\Helpers\\JsonResourceHelper\:\:\$jsonResourcesModelTypesCache has no type specified\.$#'
-			identifier: missingType.property
-			count: 1
-			path: src/Support/Helpers/JsonResourceHelper.php
-
-		-
-			message: '#^Unsafe call to private method Dedoc\\Scramble\\Support\\Helpers\\JsonResourceHelper\:\:getModelName\(\) through static\:\:\.$#'
-			identifier: staticClassAccess.privateMethod
-			count: 1
-			path: src/Support/Helpers/JsonResourceHelper.php
-
-		-
 			message: '#^Access to an undefined property PhpParser\\Node\:\:\$args\.$#'
 			identifier: property.notFound
 			count: 7
@@ -3906,18 +3870,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\JsonResourceExtension\:\:getModelMethodReturn\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/InferExtensions/JsonResourceExtension.php
-
-		-
-			message: '#^Parameter \#1 \$callee of class Dedoc\\Scramble\\Support\\Type\\Reference\\MethodCallReferenceType constructor expects Dedoc\\Scramble\\Support\\Type\\Type, Dedoc\\Scramble\\Support\\Type\\Type\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/InferExtensions/JsonResourceExtension.php
-
-		-
-			message: '#^Parameter \#1 \$object of class Dedoc\\Scramble\\Support\\Type\\Reference\\PropertyFetchReferenceType constructor expects Dedoc\\Scramble\\Support\\Type\\Type, Dedoc\\Scramble\\Support\\Type\\Type\|null given\.$#'
-			identifier: argument.type
 			count: 1
 			path: src/Support/InferExtensions/JsonResourceExtension.php
 

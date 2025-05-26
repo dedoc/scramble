@@ -85,11 +85,11 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
     }
 
     foreach ($index->classes as $classDefinition) {
-        foreach ($classDefinition->methods as $name => $methodDefinition) {
+        foreach ($classDefinition->getData()->methods as $name => $methodDefinition) {
             $methodScope = new Scope(
                 $index,
                 new NodeTypesResolver,
-                new ScopeContext($classDefinition, $methodDefinition),
+                new ScopeContext($classDefinition->getData(), $methodDefinition),
                 new FileNameResolver(new NameContext(new Throwing)),
             );
             $referenceResolver->resolveFunctionReturnReferences($methodScope, $methodDefinition->type);
