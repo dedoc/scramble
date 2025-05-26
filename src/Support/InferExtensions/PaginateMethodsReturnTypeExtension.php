@@ -41,7 +41,7 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
             return null;
         }
 
-        return $this->getPaginatorType($event->name);
+        return $this->getPaginatorType(new UnknownType, $event->name);
     }
 
     public function getMethodReturnType(AnyMethodCallEvent $event): ?Type
@@ -58,12 +58,14 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
             return null;
         }
 
-        return $this->getPaginatorType($event->name);
+        return $this->getPaginatorType($event->getInstance(), $event->name);
     }
 
-    private function getPaginatorType(string $name): Generic
+    private function getPaginatorType(Type $instance, string $name): Generic
     {
-        $valueType = new UnknownType;
+        $valueType = $instance instanceof Generic && $this->isQueryLike($instance)
+            ? ($instance->templateTypes[0] ?? new UnknownType)
+            : new UnknownType;
 
         return match ($name) {
             'paginate', 'fastPaginate' => new Generic(LengthAwarePaginator::class, [new IntegerType, $valueType]),

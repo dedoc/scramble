@@ -34,10 +34,16 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
 
     public function shouldHandle(Type $type)
     {
-        return $type instanceof Generic
-            && $type->name === LengthAwarePaginator::class
-            && count($type->templateTypes) === 1
-            && $type->templateTypes[0] instanceof ObjectType;
+        $isPaginator = $type instanceof Generic && $type->name === LengthAwarePaginator::class;
+
+        if (! $isPaginator) {
+            return false;
+        }
+
+        $isManuallyAnnotatedPaginator = count($type->templateTypes) === 1 &&  $type->templateTypes[0] instanceof ObjectType;
+        $isInferredPaginator = count($type->templateTypes) === 2 && $type->templateTypes[1] instanceof ObjectType;
+
+        return $isManuallyAnnotatedPaginator || $isInferredPaginator;
     }
 
     /**
@@ -45,7 +51,7 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        $collectingClassType = $type->templateTypes[0];
+        $collectingClassType = $type->templateTypes[1] ?? $type->templateTypes[0];
 
         if (! $collectingClassType->isInstanceOf(JsonResource::class) && ! $collectingClassType->isInstanceOf(Model::class)) {
             return null;
@@ -81,7 +87,7 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
-        $collectingClassType = $type->templateTypes[0];
+        $collectingClassType = $type->templateTypes[1] ?? $type->templateTypes[0];
 
         if (! $collectingClassType->isInstanceOf(JsonResource::class) && ! $collectingClassType->isInstanceOf(Model::class)) {
             return null;

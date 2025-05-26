@@ -35,8 +35,8 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
     {
         return $type instanceof Generic
             && $type->name === CursorPaginator::class
-            && count($type->templateTypes) === 1
-            && $type->templateTypes[0] instanceof ObjectType;
+            && (count($type->templateTypes) === 1 || count($type->templateTypes) === 2)
+            && ($type->templateTypes[1] ?? $type->templateTypes[0]) instanceof ObjectType;
     }
 
     /**
@@ -44,7 +44,7 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        $collectingClassType = $type->templateTypes[0];
+        $collectingClassType = $type->templateTypes[1] ?? $type->templateTypes[0];
 
         if (! $collectingClassType->isInstanceOf(JsonResource::class) && ! $collectingClassType->isInstanceOf(Model::class)) {
             return null;
@@ -68,7 +68,7 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
-        $collectingClassType = $type->templateTypes[0];
+        $collectingClassType = $type->templateTypes[1] ?? $type->templateTypes[0];
 
         if (! $collectingClassType->isInstanceOf(JsonResource::class) && ! $collectingClassType->isInstanceOf(Model::class)) {
             return null;

@@ -14,13 +14,13 @@ it('guesses paginate type', function (string $expression, string $expectedTypeSt
     expect($type->toString())->toBe($expectedTypeString);
 })->with([
     [SampleUserModel::class.'::paginate()', LengthAwarePaginator::class.'<int, unknown>'],
-    [SampleUserModel::class.'::query()->paginate()', LengthAwarePaginator::class.'<int, unknown>'],
-    [SampleUserModel::class.'::query()->fastPaginate()', LengthAwarePaginator::class.'<int, unknown>'],
-    [SampleUserModel::class.'::query()->where("foo", "bar")->paginate()', LengthAwarePaginator::class.'<int, unknown>'],
+    [SampleUserModel::class.'::query()->paginate()', LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>'],
+    [SampleUserModel::class.'::query()->fastPaginate()', LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>'],
+    [SampleUserModel::class.'::query()->where("foo", "bar")->paginate()', LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>'],
 
     [SampleUserModel::class.'::cursorPaginate()', CursorPaginator::class.'<int, unknown>'],
-    [SampleUserModel::class.'::query()->cursorPaginate()', CursorPaginator::class.'<int, unknown>'],
+    [SampleUserModel::class.'::query()->cursorPaginate()', CursorPaginator::class.'<int, '.SampleUserModel::class.'>'],
 
     [SampleUserModel::class.'::simplePaginate()', Paginator::class.'<int, unknown>'],
-    [SampleUserModel::class.'::query()->simplePaginate()', Paginator::class.'<int, unknown>'],
+    [SampleUserModel::class.'::query()->simplePaginate()', Paginator::class.'<int, '.SampleUserModel::class.'>'],
 ]);

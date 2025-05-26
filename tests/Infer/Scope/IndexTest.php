@@ -34,9 +34,13 @@ it('returns vendor class definition when requested', function () {
 });
 
 it('infers query method of the model', function () {
-    //            dd(app(Index::class)->getClass(\Illuminate\Database\Eloquent\Builder::class)->getMethod('firstOrNew'));
+//    $def = app(Index::class)->getClass(\Illuminate\Database\Eloquent\Builder::class);
+
+//    dd($def->getMethod('paginate'));
+//                dd(app(Index::class)->getClass(\Illuminate\Database\Eloquent\Builder::class)->getMethod('firstOrNew'));
     //
-    $type = getStatementType(UserModel_IndexTest::class.'::query()->first([], [])');
+    $type = getStatementType(UserModel_IndexTest::class.'::query()->paginate()');
+//    $type = getStatementType(UserModel_IndexTest::class.'::query()');//->paginate()');
 
     //    $type = getStatementType(UserModel_IndexTest::class.'::query()');
 

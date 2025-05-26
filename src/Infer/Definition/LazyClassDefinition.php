@@ -60,7 +60,7 @@ class LazyClassDefinition implements ClassDefinitionContract
             return $data->methods[$name];
         }
 
-        $reflectionMethod = (new ReflectionClass($data->name))->getMethod($name); // @phpstan-ignore argument.type
+        $reflectionMethod = (new ReflectionClass($data->methods[$name]->definingClassName))->getMethod($name); // @phpstan-ignore argument.type
 
         if (! $path = $reflectionMethod->getFileName()) {
             return null;
