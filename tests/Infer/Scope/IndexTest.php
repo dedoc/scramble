@@ -34,7 +34,7 @@ it('returns vendor class definition when requested', function () {
 });
 
 it('infers query method of the model', function () {
-//            dd(app(Index::class)->getClass(\Illuminate\Database\Eloquent\Builder::class)->getMethod('firstOrNew'));
+    //            dd(app(Index::class)->getClass(\Illuminate\Database\Eloquent\Builder::class)->getMethod('firstOrNew'));
     //
     $type = getStatementType(UserModel_IndexTest::class.'::query()->first([], [])');
 

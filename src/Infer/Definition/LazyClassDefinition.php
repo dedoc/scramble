@@ -46,7 +46,7 @@ class LazyClassDefinition implements ClassDefinitionContract
     ) {}
 
     /**
-     * @param IndexBuilder<array<string, mixed>>[] $indexBuilders
+     * @param  IndexBuilder<array<string, mixed>>[]  $indexBuilders
      */
     public function getMethod(string $name, array $indexBuilders = [], bool $withSideEffects = false): ?FunctionLikeDefinition
     {
@@ -67,7 +67,7 @@ class LazyClassDefinition implements ClassDefinitionContract
         }
 
         if (Index::shouldAnalyzeAst($path)) {
-            return $data->methods[$name] = $this->buildCompleteMethodDefinition($data->methods[$name], $indexBuilders, );
+            return $data->methods[$name] = $this->buildCompleteMethodDefinition($data->methods[$name], $indexBuilders);
         }
 
         return $data->methods[$name] = (new FunctionLikeReflectionDefinitionBuilder(
@@ -83,9 +83,8 @@ class LazyClassDefinition implements ClassDefinitionContract
         return $this->definition->getData();
     }
 
-
     /**
-     * @param IndexBuilder<array<string, mixed>>[] $indexBuilders
+     * @param  IndexBuilder<array<string, mixed>>[]  $indexBuilders
      */
     private function buildCompleteMethodDefinition(FunctionLikeDefinition $methodDefinition, array $indexBuilders = [], bool $withSideEffects = false): FunctionLikeDefinition
     {

@@ -37,7 +37,7 @@ use ReflectionProperty;
 class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 {
     /**
-     * @param string[] $ignoreClasses The names of classes that should not be analyzed when analyzing mixins recursively.
+     * @param  string[]  $ignoreClasses  The names of classes that should not be analyzed when analyzing mixins recursively.
      */
     public function __construct(
         public IndexContract $index,
@@ -48,7 +48,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
     public function build(): LazyShallowClassDefinition
     {
         $parentDefinition = ($parentName = ($this->reflection->getParentClass() ?: null)?->name)
-            ? (!in_array($parentName, $this->ignoreClasses) ? ((
+            ? (! in_array($parentName, $this->ignoreClasses) ? ((
                 (new self($this->index, $this->reflection->getParentClass(), [...$this->ignoreClasses, $this->reflection->name]))->build() // @phpstan-ignore argument.type
             )->getData()) : new ClassDefinitionData(name: ''))
             : new ClassDefinitionData(name: '');
@@ -301,6 +301,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                         if ($templateType instanceof TemplateType && array_key_exists($templateType->name, $definedTemplates)) {
                             return $definedTemplates[$templateType->name];
                         }
+
                         return $templateType;
                     })
                     ->all();

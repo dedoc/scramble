@@ -45,7 +45,7 @@ class JsonResourceHelper
     }
 
     /**
-     * @param ReflectionClass<object> $reflectionClass
+     * @param  ReflectionClass<object>  $reflectionClass
      */
     private static function getModelName(string $jsonResourceClassName, ReflectionClass $reflectionClass, FileNameResolver $getFqName): ?string
     {

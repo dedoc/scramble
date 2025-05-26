@@ -4,8 +4,6 @@ namespace Dedoc\Scramble\Tests\Infer\DefinitionBuilders;
 
 use Dedoc\Scramble\Infer\DefinitionBuilders\LazyClassReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
-use Illuminate\Support\Benchmark;
-use Illuminate\Support\Collection;
 
 beforeEach(function () {
     $this->index = new LazyShallowReflectionIndex;
@@ -92,6 +90,7 @@ class Foo1TemplateMixin_LazyClassReflectionDefinitionBuilderTest
 }
 /**
  * @template T2
+ *
  * @mixin Foo1TemplateMixin_LazyClassReflectionDefinitionBuilderTest<T2>
  */
 class Foo2TemplateMixin_LazyClassReflectionDefinitionBuilderTest
@@ -103,6 +102,7 @@ class Foo2TemplateMixin_LazyClassReflectionDefinitionBuilderTest
 }
 /**
  * @template T3
+ *
  * @mixin Foo2TemplateMixin_LazyClassReflectionDefinitionBuilderTest<T3>
  */
 class Foo3TemplateMixin_LazyClassReflectionDefinitionBuilderTest
