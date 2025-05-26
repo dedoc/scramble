@@ -11,6 +11,7 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Support\Arr;
 use PhpParser\Node\PropertyItem;
@@ -21,12 +22,12 @@ class PropertyAnalyzer
 {
     public function __construct(private ReflectionProperty $reflectionProperty) {}
 
-    public static function from(ReflectionProperty $reflectionProperty)
+    public static function from(ReflectionProperty $reflectionProperty): self
     {
         return new self($reflectionProperty);
     }
 
-    public function getDefaultType()
+    public function getDefaultType(): ?Type
     {
         if (! $this->reflectionProperty->hasDefaultValue()) {
             return null;
@@ -39,7 +40,7 @@ class PropertyAnalyzer
         return TypeHelper::createTypeFromValue($this->reflectionProperty->getDefaultValue());
     }
 
-    private function getDefaultTypeFromAst()
+    private function getDefaultTypeFromAst(): ?Type
     {
         $reflector = PropertyReflector::make($this->reflectionProperty->getDeclaringClass()->name, $this->reflectionProperty->name);
 

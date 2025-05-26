@@ -50,9 +50,7 @@ class PaginatorTypeToSchema extends TypeToSchemaExtension
             return null;
         }
 
-        if (! ($collectingType = $this->openApiTransformer->transform($collectingClassType))) {
-            return null;
-        }
+        $collectingType = $this->openApiTransformer->transform($collectingClassType);
 
         return (new OpenApiObjectType)
             ->addProperty('current_page', new IntegerType)

@@ -44,7 +44,7 @@ class ClassReflector
         return $this->nameContext ??= FileNameResolver::createForFile($this->getReflection()->getFileName())->nameContext;
     }
 
-    public function getSource()
+    public function getSource(): string
     {
         $refClass = $this->getReflection();
 

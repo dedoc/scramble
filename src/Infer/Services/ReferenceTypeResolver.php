@@ -229,7 +229,7 @@ class ReferenceTypeResolver
             $classDefinition = $this->index->getClass($normalizedCalleeType->name);
         }
 
-        if ($returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
+        if ($normalizedCalleeType && $returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
             instance: $normalizedCalleeType,
             name: $type->methodName,
             scope: $scope,

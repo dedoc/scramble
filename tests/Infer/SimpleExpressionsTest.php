@@ -18,6 +18,14 @@ it(
 )->with([
     ['! $some', 'boolean'],
     ['!! $some', 'boolean'],
+    ['$a > $b', 'boolean'],
+    ['$a >= $b', 'boolean'],
+    ['$a < $b', 'boolean'],
+    ['$a <= $b', 'boolean'],
+    ['$a != $b', 'boolean'],
+    ['$a !== $b', 'boolean'],
+    ['$a == $b', 'boolean'],
+    ['$a === $b', 'boolean'],
 ]);
 
 it(

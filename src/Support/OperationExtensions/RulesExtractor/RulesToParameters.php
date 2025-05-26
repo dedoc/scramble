@@ -2,12 +2,17 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
+use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\RulesNodes;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use PhpParser\Node;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
+/**
+ * @phpstan-type Rules string|ValidationRule|(string|ValidationRule)[]
+ */
 class RulesToParameters
 {
     /** @var array<string, PhpDocNode> */
@@ -15,23 +20,29 @@ class RulesToParameters
 
     private bool $mergeDotNotatedKeys = true;
 
+    /**
+     * @param  array<string, Rules>  $rules
+     */
     public function __construct(
         private array $rules,
-        array $validationNodesResults,
+        RulesNodes $validationNodesResults,
         private TypeTransformer $openApiTransformer,
         private string $in = 'query',
     ) {
-        $this->nodeDocs = $this->extractNodeDocs($validationNodesResults);
+        $this->nodeDocs = $validationNodesResults->getDocNodes();
     }
 
-    public function mergeDotNotatedKeys(bool $mergeDotNotatedKeys = true)
+    public function mergeDotNotatedKeys(bool $mergeDotNotatedKeys = true): self
     {
         $this->mergeDotNotatedKeys = $mergeDotNotatedKeys;
 
         return $this;
     }
 
-    public function handle()
+    /**
+     * @return Parameter[]
+     */
+    public function handle(): array
     {
         return collect($this->rules)
             ->pipe($this->handleConfirmed(...))
@@ -42,15 +53,15 @@ class RulesToParameters
             ->all();
     }
 
-    private function handleConfirmed(Collection $rules)
+    /**
+     * @param  Collection<string, Rules>  $rules
+     * @return Collection<string, Rules>
+     */
+    private function handleConfirmed(Collection $rules): Collection
     {
         $confirmedParamNameRules = $rules
             ->map(fn ($rules, $name) => [$name, Arr::wrap(is_string($rules) ? explode('|', $rules) : $rules)])
-            ->filter(fn ($nameRules) => in_array('confirmed', $nameRules[1]));
-
-        if (! $confirmedParamNameRules) {
-            return $rules;
-        }
+            ->filter(fn ($nameRules) => in_array('confirmed', $nameRules[1], true));
 
         foreach ($confirmedParamNameRules as $confirmedParamNameRule) {
             $rules->offsetSet(
@@ -60,14 +71,5 @@ class RulesToParameters
         }
 
         return $rules;
-    }
-
-    private function extractNodeDocs($validationNodesResults)
-    {
-        return collect($validationNodesResults)
-            ->mapWithKeys(fn (Node\Expr\ArrayItem $item) => [
-                $item->key->value => $item->getAttribute('parsedPhpDoc'),
-            ])
-            ->toArray();
     }
 }

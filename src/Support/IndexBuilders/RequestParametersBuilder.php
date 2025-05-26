@@ -4,10 +4,8 @@ namespace Dedoc\Scramble\Support\IndexBuilders;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Generator\MissingExample;
-use Dedoc\Scramble\Support\Generator\Parameter;
-use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\InferredParameter;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\IntegerType;
@@ -17,6 +15,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\Type as InferType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Http\Request;
@@ -26,11 +25,16 @@ use PhpParser\Node;
 use PhpParser\NodeAbstract;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
+/**
+ * @implements IndexBuilder<array<string, InferredParameter>>
+ */
 class RequestParametersBuilder implements IndexBuilder
 {
+    /**
+     * @param  Bag<array<string, InferredParameter>>  $bag
+     */
     public function __construct(
         public readonly Bag $bag,
-        private readonly TypeTransformer $typeTransformer
     ) {}
 
     public function afterAnalyzedNode(Scope $scope, Node $node): void
@@ -72,14 +76,12 @@ class RequestParametersBuilder implements IndexBuilder
             return;
         }
 
-        $parameter = Parameter::make($parameterName, 'query'/* @todo: this is just a temp solution */);
-
         [$parameterType, $parameterDefault] = match ($name) {
             'integer' => $this->makeIntegerParameter($scope, $methodCallNode),
             'float' => $this->makeFloatParameter($scope, $methodCallNode),
             'boolean' => $this->makeBooleanParameter($scope, $methodCallNode),
             'enum' => $this->makeEnumParameter($scope, $methodCallNode),
-            'query' => $this->makeQueryParameter($scope, $methodCallNode, $parameter),
+            'query' => $this->makeQueryParameter($scope, $methodCallNode),
             'string', 'str', 'input' => $this->makeStringParameter($scope, $methodCallNode),
             'get', 'post' => $this->makeFlatParameter($scope, $methodCallNode),
             default => [null, null],
@@ -93,21 +95,17 @@ class RequestParametersBuilder implements IndexBuilder
             $parameterDefault = $parameterDefaultFromDoc;
         }
 
-        $this->checkExplicitParameterPlacementInQuery($commentHolderNode, $parameter);
+        $this->ensureExplicitParameterPlacementInQuery($commentHolderNode, $parameterType);
 
-        $parameter
-            ->description($this->makeDescriptionFromComments($commentHolderNode))
-            ->setSchema(Schema::fromType(
-                $this->typeTransformer
-                    ->transform($parameterType)
-                    ->default($parameterDefault ?? new MissingExample)
-            ));
-
-        if ($parameterType->getAttribute('isFlat')) {
-            $parameter->setAttribute('isFlat', true);
-        }
-
-        $this->bag->set($parameterName, $parameter);
+        $this->bag->set(
+            $parameterName,
+            new InferredParameter(
+                name: $parameterName,
+                description: $this->makeDescriptionFromComments($commentHolderNode),
+                type: $parameterType,
+                default: $parameterDefault ?? new MissingExample,
+            )
+        );
     }
 
     private function getNameNodeValue(Scope $scope, Node $nameNode)
@@ -180,17 +178,15 @@ class RequestParametersBuilder implements IndexBuilder
         ];
     }
 
-    private function makeQueryParameter(Scope $scope, Node $node, Parameter $parameter)
+    private function makeQueryParameter(Scope $scope, Node $node)
     {
-        $parameter->setAttribute('isInQuery', true);
-
         return [
-            new UnknownType,
+            tap(new UnknownType, fn (InferType $t) => $t->setAttribute('isInQuery', true)),
             TypeHelper::getArgType($scope, $node->args, ['default', 1])->value ?? null,
         ];
     }
 
-    private function makeDescriptionFromComments(NodeAbstract $node)
+    private function makeDescriptionFromComments(NodeAbstract $node): string
     {
         /*
          * @todo: consider adding only @param annotation support,
@@ -211,7 +207,7 @@ class RequestParametersBuilder implements IndexBuilder
         return '';
     }
 
-    private function shouldIgnoreParameter(NodeAbstract $node)
+    private function shouldIgnoreParameter(NodeAbstract $node): bool
     {
         /** @var PhpDocNode|null $phpDoc */
         $phpDoc = $node->getAttribute('parsedPhpDoc');
@@ -219,7 +215,7 @@ class RequestParametersBuilder implements IndexBuilder
         return (bool) $phpDoc?->getTagsByName('@ignoreParam');
     }
 
-    private function getParameterDefaultFromPhpDoc(NodeAbstract $node)
+    private function getParameterDefaultFromPhpDoc(NodeAbstract $node): mixed
     {
         /** @var PhpDocNode|null $phpDoc */
         $phpDoc = $node->getAttribute('parsedPhpDoc');
@@ -227,13 +223,13 @@ class RequestParametersBuilder implements IndexBuilder
         return ExamplesExtractor::make($phpDoc, '@default')->extract()[0] ?? null;
     }
 
-    private function checkExplicitParameterPlacementInQuery(NodeAbstract $node, Parameter $parameter)
+    private function ensureExplicitParameterPlacementInQuery(NodeAbstract $node, InferType $parameterType): void
     {
         /** @var PhpDocNode|null $phpDoc */
         $phpDoc = $node->getAttribute('parsedPhpDoc');
 
-        if ((bool) $phpDoc?->getTagsByName('@query')) {
-            $parameter->setAttribute('isInQuery', true);
+        if ($phpDoc?->getTagsByName('@query')) {
+            $parameterType->setAttribute('isInQuery', true);
         }
     }
 }

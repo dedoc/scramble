@@ -50,9 +50,7 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
             return null;
         }
 
-        if (! ($collectingType = $this->openApiTransformer->transform($collectingClassType))) {
-            return null;
-        }
+        $collectingType = $this->openApiTransformer->transform($collectingClassType);
 
         return (new OpenApiObjectType)
             ->addProperty('data', (new ArrayType)->setItems($collectingType))

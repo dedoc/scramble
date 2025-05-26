@@ -1,0 +1,11 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 9
+    paths:
+        - src
+        - config
+    tmpDir: build/phpstan
+    checkOctaneCompatibility: true
+    checkModelProperties: true

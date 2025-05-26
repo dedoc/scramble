@@ -11,9 +11,13 @@ use PhpParser\Node;
 
 /**
  * @internal
+ * @phpstan-type NamePosition array{?string, int}
  */
 class MethodQuery
 {
+    /**
+     * @var array{NamePosition, Type}[]
+     */
     private array $argumentsOverrides = [];
 
     private array $types = [];
@@ -27,6 +31,9 @@ class MethodQuery
         return new static($infer);
     }
 
+    /**
+     * @param NamePosition $positionName
+     */
     public function withArgumentType(array $positionName, Type $type): static
     {
         $this->argumentsOverrides[] = [$positionName, $type];
@@ -36,6 +43,7 @@ class MethodQuery
 
     public function from(Infer\Definition\ClassDefinition $classDefinition, string $methodName): static
     {
+        /** @var Bag<array{scope: Scope, types: Type[], _hasReplaced: bool}> $bag */
         $bag = new Bag;
 
         if (! $methodDefinition = $classDefinition->getMethodDefinition($methodName)) {
@@ -46,6 +54,10 @@ class MethodQuery
             ->analyze($methodDefinition, [
                 new class($bag, $this->argumentsOverrides) implements IndexBuilder
                 {
+                    /**
+                     * @param  Bag<array{scope: Scope, types: Type[], _hasReplaced: bool}>  $bag
+                     * @param array{array{?string, int}, Type}[]  $argumentsOverrides
+                     */
                     public function __construct(private Bag $bag, private array $argumentsOverrides = []) {}
 
                     public function afterAnalyzedNode(Scope $scope, Node $node): void
@@ -62,7 +74,7 @@ class MethodQuery
                         $this->bag->set('types', $types);
                     }
 
-                    private function replaceArguments(Scope $scope, Node $node)
+                    private function replaceArguments(Scope $scope, Node $node): void
                     {
                         if ($this->bag->data['_hasReplaced'] ?? false) {
                             return;

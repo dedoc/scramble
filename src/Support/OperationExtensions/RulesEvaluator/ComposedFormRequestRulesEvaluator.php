@@ -28,7 +28,7 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
 
         $evaluators = [
             new FormRequestRulesEvaluator($this->classReflector, $this->route),
-            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode),
+            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->classReflector->className),
         ];
 
         foreach ($evaluators as $evaluator) {

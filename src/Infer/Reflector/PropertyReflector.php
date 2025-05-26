@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Infer\Reflector;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
+use PhpParser\NameContext;
 use PhpParser\Node;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\NodeFinder;
@@ -14,16 +15,28 @@ use ReflectionProperty;
 
 class PropertyReflector
 {
+    /**
+     * @var array<string, self>
+     */
     private static array $cache = [];
 
     private ?Property $properyNode = null;
 
+    /**
+     * @param  class-string  $className
+     */
     private function __construct(
-        private FileParser $parser, public string $className, public string $name) {}
+        private FileParser $parser,
+        public string $className,
+        public string $name,
+    ) {}
 
-    public static function make(string $className, string $name)
+    /**
+     * @param  class-string  $className
+     */
+    public static function make(string $className, string $name): self
     {
-        return static::$cache["$className@$name"] = new static(
+        return self::$cache["$className@$name"] ??= new self(
             app(FileParser::class), // ?
             $className,
             $name,
@@ -43,7 +56,7 @@ class PropertyReflector
         return (new \ReflectionClass($this->className))->getProperty($this->name);
     }
 
-    private function getPropertyNodeDeclarationSource()
+    private function getPropertyNodeDeclarationSource(): string
     {
         try {
             $sourcePart = $this->getClassReflector()->getSource();
@@ -159,17 +172,23 @@ class Foo {
 EOD;
 
         $statements = $this->parser->parseContent($partialClass)->getStatements();
+
+        /** @var Property|null $node */
         $node = (new NodeFinder)
             ->findFirst(
                 $statements,
                 fn (Node $node) => $node instanceof Property && (bool) collect($node->props)->first(fn (Node\PropertyItem $p) => $p->name->name === $this->name),
             );
 
+        if (! $node) {
+            return null;
+        }
+
         $traverser = new NodeTraverser;
 
         $traverser->addVisitor(new class($this->getClassReflector()->getNameContext()) extends NameResolver
         {
-            public function __construct($nameContext)
+            public function __construct(NameContext $nameContext)
             {
                 parent::__construct();
                 $this->nameContext = $nameContext;

@@ -26,18 +26,27 @@ trait WithExtensions
         return null;
     }
 
-    public function extensionProperties()
+    /**
+     * @return array<string, mixed>
+     */
+    public function extensionProperties(): array
     {
         return $this->extensions;
     }
 
-    public function mergeExtensionProperties($extensionsProperties)
+    /**
+     * @param  array<string, mixed>  $extensionsProperties
+     */
+    public function mergeExtensionProperties(array $extensionsProperties): self
     {
         $this->extensions = array_merge($this->extensions, $extensionsProperties);
 
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function extensionPropertiesToArray(): array
     {
         return collect($this->extensions)

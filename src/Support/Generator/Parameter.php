@@ -53,7 +53,7 @@ class Parameter
         }
     }
 
-    public static function make(string $name, string $in)
+    public static function make(string $name, string $in): static
     {
         return new static($name, $in);
     }

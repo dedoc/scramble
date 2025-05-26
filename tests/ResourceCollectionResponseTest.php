@@ -143,7 +143,7 @@ it('attaches additional data to the response documentation for annotation', func
     expect($props = $openApiDocument['paths']['/test']['get']['responses'][200]['content']['application/json']['schema']['properties'])
         ->toHaveKeys(['data', 'something'])
         ->and($props['something']['properties'])
-        ->toBe(['foo' => ['type' => 'string', 'example' => 'bar']]);
+        ->toBe(['foo' => ['type' => 'string', 'enum' => ['bar']]]);
 });
 class AnnotationResourceCollectionResponseTest_Controller
 {
