@@ -34,7 +34,7 @@ class LazyShallowReflectionIndex implements IndexContract
         }
 
         try {
-            $reflection = new ReflectionClass($name);
+            $reflection = new ReflectionClass($name); // @phpstan-ignore argument.type
         } catch (ReflectionException) {
             return null;
         }

@@ -6,6 +6,9 @@ parameters:
     paths:
         - src
         - config
+    stubFiles:
+        - stubs/core.stub
+        - stubs/DeepCopy.stub
     tmpDir: build/phpstan
     checkOctaneCompatibility: true
     checkModelProperties: true

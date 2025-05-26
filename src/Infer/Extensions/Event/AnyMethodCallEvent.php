@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Extensions\Event;
 
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Infer\Extensions\Event\Concerns\ArgumentTypesAware;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -23,10 +23,10 @@ class AnyMethodCallEvent
         public readonly ?string $methodDefiningClassName,
     ) {}
 
-    public function getDefinition(): ?ClassDefinition
+    public function getDefinition(): ?ClassDefinitionContract
     {
         return $this->instance instanceof ObjectType
-            ? $this->scope->index->getClassDefinition($this->instance->name)
+            ? $this->scope->index->getClass($this->instance->name)
             : null;
     }
 

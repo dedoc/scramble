@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Infer\Extensions;
 
 use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 
 class ExtensionsBroker
@@ -179,7 +180,7 @@ class ExtensionsBroker
     }
 
     /**
-     * @return Type[]
+     * @return ObjectType[]
      */
     public function getMethodCallExceptions($event): array
     {

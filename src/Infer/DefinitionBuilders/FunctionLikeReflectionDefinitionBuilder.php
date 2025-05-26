@@ -23,8 +23,12 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
 {
     private ReflectionFunction|ReflectionMethod $reflection;
 
+    /** @var Collection<string, covariant Type> */
     private Collection $classTemplates;
 
+    /**
+     * @param Collection<string, covariant Type>|null $classTemplates
+     */
     public function __construct(
         public string $name,
         ReflectionFunction|ReflectionMethod|null $reflection = null,
@@ -58,8 +62,8 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
                 $newType = clone $t;
                 $newType->name = ltrim($t->name, '\\');
 
-                if ($this->classTemplates->has($newType->name)) {
-                    return $this->classTemplates->get($newType->name);
+                if ($existingType = $this->classTemplates->get($newType->name)) {
+                    return $existingType;
                 }
 
                 return $newType;

@@ -11,7 +11,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
-use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -44,7 +44,7 @@ use function DeepCopy\deep_copy;
 class ReferenceTypeResolver
 {
     public function __construct(
-        private Index $index,
+        private IndexContract $index,
     ) {}
 
     public static function getInstance(): static
@@ -108,6 +108,7 @@ class ReferenceTypeResolver
     public function resolve(Scope $scope, Type $type): Type
     {
         if ($resolvedType = $type->getAttribute('resolvedType')) {
+            /** @var Type $resolvedType */
             return $resolvedType;
         }
 
@@ -365,7 +366,7 @@ class ReferenceTypeResolver
             return new UnknownType;
         }
 
-        if (! $methodDefinition = $calleeDefinition->getMethod($type->methodName, $scope)) {
+        if (! $methodDefinition = $calleeDefinition->getMethod($type->methodName)) {
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeName]");
         }
 
@@ -375,7 +376,7 @@ class ReferenceTypeResolver
         );
     }
 
-    private function finalizeStatic(Type $type, Type $staticType)
+    private function finalizeStatic(Type $type, Type $staticType): Type
     {
         return (new TypeWalker)
             ->map(
@@ -730,14 +731,16 @@ class ReferenceTypeResolver
             return collect();
         }
 
+        $parentClassDefinitionData = $parentClassDefinition->getData();
+
         $templateArgs = collect($this->resolveTypesTemplatesFromArguments(
-            $parentClassDefinition->templateTypes,
+            $parentClassDefinitionData->templateTypes,
             $parentClassDefinition->getMethod('__construct')?->type->arguments ?? [],
             $this->prepareArguments($parentClassDefinition->getMethod('__construct'), $firstParentConstructorCall->arguments),
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
 
         return $this
-            ->getParentConstructCallsTypes($parentClassDefinition, $parentClassDefinition->getMethod('__construct'))
+            ->getParentConstructCallsTypes($parentClassDefinitionData, $parentClassDefinition->getMethod('__construct'))
             ->merge($templateArgs);
     }
 

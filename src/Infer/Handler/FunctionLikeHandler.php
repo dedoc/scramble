@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
@@ -18,7 +19,7 @@ use PhpParser\Node\FunctionLike;
 
 class FunctionLikeHandler implements CreatesScope
 {
-    public function shouldHandle($node)
+    public function shouldHandle($node): bool
     {
         return $node instanceof FunctionLike;
     }
@@ -33,14 +34,14 @@ class FunctionLikeHandler implements CreatesScope
 
         if ($node instanceof Node\Expr\Closure) {
             foreach ($node->uses as $use) {
-                $fnScope->variables[$use->var->name] = $scope->variables[$use->var->name] ?? [];
+                $fnScope->variables[$use->var->name] = $scope->variables[$use->var->name] ?? []; 
             }
         }
 
         return $fnScope;
     }
 
-    public function enter(FunctionLike $node, Scope $scope)
+    public function enter(FunctionLike $node, Scope $scope): void
     {
         // when entering function node, the only thing we need/want to do
         // is to set node param types to scope.
@@ -58,7 +59,7 @@ class FunctionLikeHandler implements CreatesScope
             $scope->setType($node, $fnType);
         }
 
-        if (isset($node->name->name) && $node instanceof Node\Stmt\Function_) {
+        if (isset($node->name->name) && $node instanceof Node\Stmt\Function_ && $scope->index instanceof Index) {
             $scope->index->registerFunctionDefinition($fnDefinition);
         }
 
@@ -121,7 +122,9 @@ class FunctionLikeHandler implements CreatesScope
 
     public function leave(FunctionLike $node, Scope $scope)
     {
-        $fnDefinition = $scope->functionDefinition();
+        if (! $fnDefinition = $scope->functionDefinition()) {
+            return;
+        }
 
         /*
          * @todo
@@ -194,8 +197,9 @@ class FunctionLikeHandler implements CreatesScope
 
         if (
             $callToParentConstruct
-            && ($parentDefinition = $scope->index->getClassDefinition($scope->classDefinition()->parentFqn))
-            && ($parentConstructorDefinition = $parentDefinition->getMethodDefinition('__construct'))
+            && ($parentFqn = $scope->classDefinition()->parentFqn)
+            && ($parentDefinition = $scope->index->getClass($parentFqn))
+            && ($parentConstructorDefinition = $parentDefinition->getMethod('__construct'))
         ) {
             $parentConstructorArguments = $parentConstructorDefinition->type->arguments;
 
@@ -244,7 +248,7 @@ class FunctionLikeHandler implements CreatesScope
         $promotedProperties = collect($node->getParams())
             ->filter(fn (Node\Param $p) => $p->isPromoted())
             ->mapWithKeys(fn (Node\Param $param) => $param->var instanceof Node\Expr\Variable ? [
-                $param->var->name => $scope->classDefinition()->properties[$param->var->name]->type,
+                $param->var->name => $scope->classDefinition()->properties[$param->var->name]->type, // @phpstan-ignore offsetAccess.invalidOffset
             ] : [])
             ->toArray();
 

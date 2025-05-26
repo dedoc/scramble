@@ -17,7 +17,7 @@ use Dedoc\Scramble\Infer\Handler\PhpDocHandler;
 use Dedoc\Scramble\Infer\Handler\PropertyHandler;
 use Dedoc\Scramble\Infer\Handler\ReturnHandler;
 use Dedoc\Scramble\Infer\Handler\ThrowHandler;
-use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
@@ -36,7 +36,7 @@ class TypeInferer extends NodeVisitorAbstract
      * @param  InferExtension[]  $extensions
      */
     public function __construct(
-        private Index $index,
+        private IndexContract $index,
         public readonly FileNameResolver $nameResolver,
         private ?Scope $scope = null,
         array $extensions = [],

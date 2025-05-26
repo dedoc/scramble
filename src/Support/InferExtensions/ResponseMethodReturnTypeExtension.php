@@ -13,9 +13,12 @@ class ResponseMethodReturnTypeExtension implements MethodReturnTypeExtension
 {
     public function shouldHandle(ObjectType $type): bool
     {
-        return $type->isInstanceOf(Response::class);
+        return $type instanceof Generic && $type->isInstanceOf(Response::class);
     }
 
+    /**
+     * @param MethodCallEvent<Generic> $event
+     */
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         return match ($event->name) {

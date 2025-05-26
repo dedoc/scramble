@@ -56,10 +56,14 @@ class LazyClassDefinition implements ClassDefinitionContract
             return $data->methods[$name];
         }
 
-        $reflectionMethod = (new ReflectionClass($data->name))->getMethod($name);
+        $reflectionMethod = (new ReflectionClass($data->name))->getMethod($name); // @phpstan-ignore argument.type
 
-        if (Index::shouldAnalyzeAst($reflectionMethod->getFileName())) {
-            return $data->methods[$name] = $this->buildCompleteMethodDefinition($data->methods[$name], $name);
+        if (! $path = $reflectionMethod->getFileName()) {
+            return null;
+        }
+
+        if (Index::shouldAnalyzeAst($path)) {
+            return $data->methods[$name] = $this->buildCompleteMethodDefinition($data->methods[$name]);
         }
 
         return $data->methods[$name] = (new FunctionLikeReflectionDefinitionBuilder(
@@ -75,7 +79,7 @@ class LazyClassDefinition implements ClassDefinitionContract
         return $this->definition->getData();
     }
 
-    private function buildCompleteMethodDefinition(FunctionLikeDefinition $methodDefinition)
+    private function buildCompleteMethodDefinition(FunctionLikeDefinition $methodDefinition): FunctionLikeDefinition
     {
         $classDefinitionData = $this->getData();
 

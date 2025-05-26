@@ -3,7 +3,8 @@
 namespace Dedoc\Scramble\Infer\Analyzer;
 
 use Dedoc\Scramble\Infer\Context;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
+use Dedoc\Scramble\Infer\Definition\ClassDefinition as ClassDefinitionData;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
@@ -35,9 +36,9 @@ class ClassAnalyzer
     /**
      * @throws \ReflectionException
      */
-    public function analyze(string $name): ClassDefinition
+    public function analyze(string $name): ClassDefinitionContract
     {
-        if ($definition = $this->index->getClassDefinition($name)) {
+        if ($definition = $this->index->getClass($name)) {
             return $definition;
         }
 
@@ -46,22 +47,24 @@ class ClassAnalyzer
         $parentDefinition = null;
 
         if ($classReflection->getParentClass() && $this->shouldAnalyzeParentClass($classReflection->getParentClass())) {
-            $parentDefinition = $this->analyze($parentName = $classReflection->getParentClass()->name);
+            $parentDefinition = $this->analyze($parentName = $classReflection->getParentClass()->name)->getData();
         } elseif ($classReflection->getParentClass() && ! $this->shouldAnalyzeParentClass($classReflection->getParentClass())) {
             // @todo: Here we still want to fire the event, so we can add some details to the definition.
-            $parentDefinition = new ClassDefinition($parentName = $classReflection->getParentClass()->name);
+            $parentDefinition = new ClassDefinitionData($parentName = $classReflection->getParentClass()->name);
 
             Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($parentDefinition->name, $parentDefinition));
 
             // In case parent definition is added in an extension.
-            $parentDefinition = $this->index->getClassDefinition($parentName) ?: $parentDefinition;
+            $parent = $this->index->getClass($parentName) ?: $parentDefinition;
+
+            $parentDefinition = $parent->getData();
         }
 
         /*
          * @todo consider more advanced cloning implementation.
          * Currently just cloning property definition feels alright as only its `defaultType` may change.
          */
-        $classDefinition = new ClassDefinition(
+        $classDefinition = new ClassDefinitionData(
             name: $name,
             templateTypes: $parentDefinition?->templateTypes ?: [],
             properties: array_map(fn ($pd) => clone $pd, $parentDefinition?->properties ?: []),

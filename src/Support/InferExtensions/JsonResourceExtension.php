@@ -67,7 +67,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
             'whenLoaded' => count($event->arguments) === 1
                 ? Union::wrap([
                     $this->getModelPropertyType(
-                        $event->getDefinition(),
+                        $event->getDefinition()?->getData(),
                         $event->getArg('attribute', 0)->value ?? '',
                         $event->scope
                     ),
@@ -95,14 +95,14 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
 
             'whenHas', 'whenAppended' => count($event->arguments) === 1
                 ? Union::wrap([$this->getModelPropertyType(
-                    $event->getDefinition(),
+                    $event->getDefinition()?->getData(),
                     $event->getArg('attribute', 0)->value ?? '',
                     $event->scope
                 ), new ObjectType(MissingValue::class)])
                 : Union::wrap([
                     ($valueType = $event->getArg('value', 1, new NullType)) instanceof NullType
                         ? $this->getModelPropertyType(
-                            $event->getDefinition(),
+                            $event->getDefinition()?->getData(),
                             $event->getArg('attribute', 0)->value ?? '',
                             $event->scope
                         )
@@ -165,7 +165,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                 })
                 : null,
 
-            default => ! $event->getDefinition() || $event->getDefinition()->hasMethodDefinition($event->name)
+            default => ! $event->getDefinition() || $event->getDefinition()->getData()->hasMethodDefinition($event->name)
                 ? null
                 : $this->proxyMethodCallToModel($event),
         };
@@ -183,15 +183,19 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
     public function getPropertyType(PropertyFetchEvent $event): ?Type
     {
         return match ($event->name) {
-            'resource' => JsonResourceHelper::modelType($event->getDefinition(), $event->scope),
-            default => ! $event->getDefinition() || $event->getDefinition()->hasPropertyDefinition($event->name)
+            'resource' => $event->getDefinition() ? JsonResourceHelper::modelType($event->getDefinition()->getData(), $event->scope) : null,
+            default => ! $event->getDefinition() || $event->getDefinition()->getData()->hasPropertyDefinition($event->name)
                 ? null
-                : $this->getModelPropertyType($event->getDefinition(), $event->name, $event->scope),
+                : $this->getModelPropertyType($event->getDefinition()->getData(), $event->name, $event->scope),
         };
     }
 
-    private function getModelPropertyType(ClassDefinition $jsonResourceDefinition, string $name, Scope $scope): Type
+    private function getModelPropertyType(?ClassDefinition $jsonResourceDefinition, string $name, Scope $scope): Type
     {
+        if (! $jsonResourceDefinition) {
+            return new UnknownType;
+        }
+
         return ReferenceTypeResolver::getInstance()->resolve(
             $scope,
             new PropertyFetchReferenceType(
@@ -208,7 +212,10 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
 
     private function getModelMethodReturn(string $resourceClassName, string $methodName, array $arguments, Scope $scope): Type
     {
-        $modelType = JsonResourceHelper::modelType($scope->index->getClassDefinition($resourceClassName), $scope);
+        if (! $classDefinition = $scope->index->getClass($resourceClassName)) {
+            return new UnknownType;
+        }
+        $modelType = JsonResourceHelper::modelType($classDefinition->getData(), $scope);
 
         return ReferenceTypeResolver::getInstance()->resolve(
             $scope,

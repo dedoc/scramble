@@ -2,7 +2,9 @@
 
 namespace Dedoc\Scramble\Infer\Scope;
 
+use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
@@ -47,7 +49,7 @@ class Scope
     public array $calls = [];
 
     public function __construct(
-        public Index $index,
+        public IndexContract $index,
         public NodeTypesResolver $nodeTypesResolver,
         public ScopeContext $context,
         public FileNameResolver $nameResolver,
@@ -105,7 +107,7 @@ class Scope
         }
 
         if ($node instanceof Node\Expr\Variable) {
-            return $this->getVariableType($node) ?: new UnknownType;
+            return $this->getVariableType($node);
         }
 
         $type = $this->nodeTypesResolver->getType($node);
@@ -242,8 +244,12 @@ class Scope
         return $type;
     }
 
-    // @todo: Move to some helper, Scope should be passed as a dependency.
-    public function getArgsTypes(array $args)
+    /**
+     * @todo: Move to some helper, Scope should be passed as a dependency.
+     * @param array<Node\Arg|Node\VariadicPlaceholder> $args
+     * @return array<string, Type>
+     */
+    public function getArgsTypes(array $args): array
     {
         return collect($args)
             ->filter(fn ($arg) => $arg instanceof Node\Arg)
@@ -275,17 +281,17 @@ class Scope
                     ])
                     ->all();
             })
-            ->toArray();
+            ->all();
     }
 
-    public function setType(Node $node, Type $type)
+    public function setType(Node $node, Type $type): Type
     {
         $this->nodeTypesResolver->setType($node, $type);
 
         return $type;
     }
 
-    public function createChildScope(?ScopeContext $context = null)
+    public function createChildScope(?ScopeContext $context = null): Scope
     {
         return new Scope(
             $this->index,
@@ -296,7 +302,10 @@ class Scope
         );
     }
 
-    public function getContextTemplates()
+    /**
+     * @return TemplateType[]
+     */
+    public function getContextTemplates(): array
     {
         return [
             ...($this->classDefinition()?->templateTypes ?: []),
@@ -317,7 +326,10 @@ class Scope
         return $name.($scopeDuplicateTemplates ? count($scopeDuplicateTemplates) : '');
     }
 
-    public function isInClass()
+    /**
+     * @phpstan-assert-if-true !null $this->classDefinition()
+     */
+    public function isInClass(): bool
     {
         return (bool) $this->context->classDefinition;
     }
@@ -327,17 +339,19 @@ class Scope
         return $this->context->classDefinition;
     }
 
-    public function functionDefinition()
+    public function functionDefinition(): ?FunctionLikeDefinition
     {
         return $this->context->functionDefinition;
     }
-
-    public function isInFunction()
+    /**
+     * @phpstan-assert-if-true !null $this->functionDefinition()
+     */
+    public function isInFunction(): bool
     {
         return (bool) $this->context->functionDefinition;
     }
 
-    public function addVariableType(int $line, string $name, Type $type)
+    public function addVariableType(int $line, string $name, Type $type): void
     {
         if (! isset($this->variables[$name])) {
             $this->variables[$name] = [];
@@ -346,8 +360,12 @@ class Scope
         $this->variables[$name][] = compact('line', 'type');
     }
 
-    private function getVariableType(Node\Expr\Variable $node)
+    private function getVariableType(Node\Expr\Variable $node): Type
     {
+        if ($node->name instanceof Node\Expr) {
+            return new UnknownType;
+        }
+
         $name = (string) $node->name;
         $line = $node->getAttribute('startLine', 0);
 
@@ -366,6 +384,7 @@ class Scope
 
     /**
      * @internal
+     * @return Node\Expr\CallLike[]
      */
     public function getMethodCalls(): array
     {

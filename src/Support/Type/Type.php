@@ -12,7 +12,17 @@ interface Type
 
     public function hasAttribute(string $key): bool;
 
-    public function getAttribute(string $key);
+    public function getAttribute(string $key): mixed;
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    public function mergeAttributes(array $attributes): self;
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function attributes(): array;
 
     public function isInstanceOf(string $className);
 

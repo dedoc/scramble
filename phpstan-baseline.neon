@@ -763,12 +763,6 @@ parameters:
 			path: src/Http/Middleware/RestrictedDocsAccess.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\:\:analyzeClass\(\) should return Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition but returns Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Infer.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\ClassAnalyzer\:\:shouldAnalyzeParentClass\(\) has parameter \$parentClassReflection with generic class ReflectionClass but does not specify its types\: T$#'
 			identifier: missingType.generics
 			count: 1
@@ -785,18 +779,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/Infer/Analyzer/ClassAnalyzer.php
-
-		-
-			message: '#^Parameter \#1 \$reflectionType of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:createTypeFromReflectionType\(\) expects ReflectionType, ReflectionType\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Analyzer/ClassAnalyzer.php
-
-		-
-			message: '#^Cannot access property \$methods on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Infer/Analyzer/MethodAnalyzer.php
 
 		-
 			message: '#^Instanceof between PhpParser\\Node\\Expr\|PhpParser\\Node\\Identifier and PhpParser\\Node\\Name will always evaluate to false\.$#'
@@ -885,12 +867,6 @@ parameters:
 		-
 			message: '#^Access to an undefined property Dedoc\\Scramble\\Support\\Type\\Generic\:\:\$templateTypesMap\.$#'
 			identifier: property.notFound
-			count: 1
-			path: src/Infer/Definition/ClassDefinition.php
-
-		-
-			message: '#^Call to an undefined method Dedoc\\Scramble\\Support\\Type\\Type\:\:mergeAttributes\(\)\.$#'
-			identifier: method.notFound
 			count: 1
 			path: src/Infer/Definition/ClassDefinition.php
 
@@ -991,12 +967,6 @@ parameters:
 			path: src/Infer/DefinitionBuilders/LazyClassReflectionDefinitionBuilder.php
 
 		-
-			message: '#^Parameter \#1 \$reflectionType of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:createTypeFromReflectionType\(\) expects ReflectionType, ReflectionType\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/DefinitionBuilders/LazyClassReflectionDefinitionBuilder.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\AfterClassDefinitionCreatedExtension\:\:afterClassDefinitionCreated\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -1015,58 +985,10 @@ parameters:
 			path: src/Infer/Extensions/Event/FunctionCallEvent.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\FunctionCallEvent\:\:getDefinition\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/FunctionCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\FunctionCallEvent\:\:getName\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/FunctionCallEvent.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\MethodCallEvent\:\:__construct\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Infer/Extensions/Event/MethodCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\MethodCallEvent\:\:getDefinition\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/MethodCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\MethodCallEvent\:\:getInstance\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/MethodCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\MethodCallEvent\:\:getName\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/MethodCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\PropertyFetchEvent\:\:getDefinition\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/PropertyFetchEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\PropertyFetchEvent\:\:getInstance\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/PropertyFetchEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\PropertyFetchEvent\:\:getName\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/PropertyFetchEvent.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\SideEffectCallEvent\:\:__construct\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
@@ -1077,24 +999,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\StaticMethodCallEvent\:\:__construct\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Extensions/Event/StaticMethodCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\StaticMethodCallEvent\:\:getCallee\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/StaticMethodCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\StaticMethodCallEvent\:\:getDefinition\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/Event/StaticMethodCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\StaticMethodCallEvent\:\:getName\(\) has no return type specified\.$#'
-			identifier: missingType.return
 			count: 1
 			path: src/Infer/Extensions/Event/StaticMethodCallEvent.php
 
@@ -1249,18 +1153,6 @@ parameters:
 			path: src/Infer/Handler/AssignHandler.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Handler\\ClassHandler\:\:enter\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Handler/ClassHandler.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Handler\\ClassHandler\:\:shouldHandle\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Handler/ClassHandler.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Handler\\ClassHandler\:\:shouldHandle\(\) has parameter \$node with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
@@ -1339,24 +1231,6 @@ parameters:
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
 		-
-			message: '#^Cannot access property \$methods on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
-			message: '#^Cannot access property \$parentFqn on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
-			message: '#^Cannot access property \$properties on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
 			message: '#^Cannot cast PhpParser\\Node\\Expr\|string to string\.$#'
 			identifier: cast.string
 			count: 1
@@ -1365,12 +1239,6 @@ parameters:
 		-
 			message: '#^Instanceof between Dedoc\\Scramble\\Support\\Type\\TemplateType and Dedoc\\Scramble\\Support\\Type\\TemplateType will always evaluate to true\.$#'
 			identifier: instanceof.alwaysTrue
-			count: 1
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Handler\\FunctionLikeHandler\:\:enter\(\) has no return type specified\.$#'
-			identifier: missingType.return
 			count: 1
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
@@ -1387,20 +1255,8 @@ parameters:
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Handler\\FunctionLikeHandler\:\:shouldHandle\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Handler\\FunctionLikeHandler\:\:shouldHandle\(\) has parameter \$node with no type specified\.$#'
 			identifier: missingType.parameter
-			count: 1
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
-			message: '#^Parameter \#1 \$className of method Dedoc\\Scramble\\Infer\\Scope\\Index\:\:getClassDefinition\(\) expects string, string\|null given\.$#'
-			identifier: argument.type
 			count: 1
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
@@ -1645,106 +1501,10 @@ parameters:
 			path: src/Infer/Reflector/MethodReflector.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Index\:\:registerFunctionDefinition\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Index.php
-
-		-
-			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Scope/LazyShallowReflectionIndex.php
-
-		-
 			message: '#^Property Dedoc\\Scramble\\Infer\\Scope\\NodeTypesResolver\:\:\$nodeTypes has no type specified\.$#'
 			identifier: missingType.property
 			count: 1
 			path: src/Infer/Scope/NodeTypesResolver.php
-
-		-
-			message: '#^Cannot cast PhpParser\\Node\\Expr\|string to string\.$#'
-			identifier: cast.string
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:addVariableType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:createChildScope\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:functionDefinition\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:getArgsTypes\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:getArgsTypes\(\) has parameter \$args with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:getContextTemplates\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:getMethodCalls\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:getVariableType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:isInClass\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:isInFunction\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:setType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Unable to resolve the template type TKey in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Infer/Scope/Scope.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\ScopeContext\:\:setFunctionDefinition\(\) has no return type specified\.$#'
@@ -1867,36 +1627,6 @@ parameters:
 			path: src/Infer/Services/ReferenceTypeResolver.php
 
 		-
-			message: '#^Call to an undefined method Dedoc\\Scramble\\Support\\Type\\Type\:\:attributes\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Cannot access property \$name on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Cannot access property \$properties on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Cannot access property \$templateTypes on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 5
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Cannot call method getMethodDefinition\(\) on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
 			message: '#^Instanceof between Dedoc\\Scramble\\Support\\Type\\Generic and Dedoc\\Scramble\\Support\\Type\\Generic will always evaluate to true\.$#'
 			identifier: instanceof.alwaysTrue
 			count: 1
@@ -1941,12 +1671,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:prepareArguments\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:resolve\(\) should return Dedoc\\Scramble\\Support\\Type\\Type but returns mixed\.$#'
-			identifier: return.type
 			count: 1
 			path: src/Infer/Services/ReferenceTypeResolver.php
 
@@ -2017,31 +1741,7 @@ parameters:
 			path: src/Infer/Services/ReferenceTypeResolver.php
 
 		-
-			message: '#^Parameter \#1 \$classDefinition of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:getParentConstructCallsTypes\(\) expects Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition, Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Parameter \#1 \$haystack of static method Illuminate\\Support\\Str\:\:contains\(\) expects string, string\|false given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
 			message: '#^Parameter \#1 \$items of method Illuminate\\Support\\Collection\<string,Dedoc\\Scramble\\Support\\Type\\Type\>\:\:merge\(\) expects Illuminate\\Contracts\\Support\\Arrayable\<string, Dedoc\\Scramble\\Support\\Type\\Type\>\|iterable\<string, Dedoc\\Scramble\\Support\\Type\\Type\>, Illuminate\\Support\\Collection\<\(int\|string\), Dedoc\\Scramble\\Support\\Type\\Type\|null\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Parameter \#1 \$subject of method Dedoc\\Scramble\\Support\\Type\\TypeWalker\:\:replace\(\) expects Dedoc\\Scramble\\Support\\Type\\Type, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Infer/Services/ReferenceTypeResolver.php
@@ -2066,12 +1766,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#3 \$calledOnType of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:getFunctionCallResult\(\) expects Dedoc\\Scramble\\Support\\Type\\ObjectType\|null, Dedoc\\Scramble\\Support\\Type\\Type given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Parameter \#3 \$classDefinition of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:getMethodCallsSideEffectIntroducedTypesInConstructor\(\) expects Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition, Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Infer/Services/ReferenceTypeResolver.php
@@ -2659,12 +2353,6 @@ parameters:
 			message: '#^Parameter \#1 \.\.\.\$arrays of function array_merge expects array, mixed given\.$#'
 			identifier: argument.type
 			count: 4
-			path: src/ScrambleServiceProvider.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Infer\\Scope\\Index\:\:\$classesDefinitions \(array\<string, Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\>\) does not accept array\<mixed\>\.$#'
-			identifier: assign.propertyType
-			count: 1
 			path: src/ScrambleServiceProvider.php
 
 		-
@@ -4228,12 +3916,6 @@ parameters:
 			path: src/Support/InferExtensions/JsonResourceExtension.php
 
 		-
-			message: '#^Parameter \#1 \$jsonClass of static method Dedoc\\Scramble\\Support\\Helpers\\JsonResourceHelper\:\:modelType\(\) expects Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition, Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/InferExtensions/JsonResourceExtension.php
-
-		-
 			message: '#^Parameter \#1 \$object of class Dedoc\\Scramble\\Support\\Type\\Reference\\PropertyFetchReferenceType constructor expects Dedoc\\Scramble\\Support\\Type\\Type, Dedoc\\Scramble\\Support\\Type\\Type\|null given\.$#'
 			identifier: argument.type
 			count: 1
@@ -4386,30 +4068,6 @@ parameters:
 		-
 			message: '#^Cannot access property \$type on Dedoc\\Scramble\\Support\\Generator\\Schema\|null\.$#'
 			identifier: property.nonObject
-			count: 1
-			path: src/Support/OperationExtensions/ErrorResponsesExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ErrorResponsesExtension\:\:attachAuthenticationException\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/ErrorResponsesExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ErrorResponsesExtension\:\:attachAuthorizationException\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/ErrorResponsesExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ErrorResponsesExtension\:\:attachCustomRequestExceptions\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/ErrorResponsesExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ErrorResponsesExtension\:\:attachNotFoundException\(\) has no return type specified\.$#'
-			identifier: missingType.return
 			count: 1
 			path: src/Support/OperationExtensions/ErrorResponsesExtension.php
 
@@ -5308,12 +4966,6 @@ parameters:
 			path: src/Support/PhpDoc.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\PhpDoc\:\:getTokenizerAndParser\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/PhpDoc.php
-
-		-
 			message: '#^Parameter \#1 \$config of class Dedoc\\Scramble\\PhpDoc\\PhpDocParser constructor expects PHPStan\\PhpDocParser\\ParserConfig, PHPStan\\PhpDocParser\\Parser\\TypeParser given\.$#'
 			identifier: argument.type
 			count: 1
@@ -5662,26 +5314,8 @@ parameters:
 			path: src/Support/ServerFactory.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\AbstractType\:\:attributes\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/AbstractType.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\AbstractType\:\:isInstanceOf\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/AbstractType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\AbstractType\:\:mergeAttributes\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/AbstractType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\AbstractType\:\:mergeAttributes\(\) has parameter \$attributes with no type specified\.$#'
-			identifier: missingType.parameter
 			count: 1
 			path: src/Support/Type/AbstractType.php
 
@@ -5974,12 +5608,6 @@ parameters:
 			path: src/Support/Type/TemplateType.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Type\:\:getAttribute\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/Type.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Type\:\:isInstanceOf\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -6086,18 +5714,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/Support/Type/TypeTraverser.php
-
-		-
-			message: '#^Call to an undefined method Dedoc\\Scramble\\Support\\Type\\Type\:\:attributes\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/Support/Type/TypeWalker.php
-
-		-
-			message: '#^Call to an undefined method Dedoc\\Scramble\\Support\\Type\\Type\:\:mergeAttributes\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/Support/Type/TypeWalker.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\TypeWalker\:\:map\(\) should return Dedoc\\Scramble\\Support\\Type\\Type but returns mixed\.$#'

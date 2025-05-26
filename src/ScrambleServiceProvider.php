@@ -65,6 +65,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
     public $singletons = [
         PrettyPrinter::class => PrettyPrinter\Standard::class,
         GeneratorConfigCollection::class => GeneratorConfigCollection::class,
+        \Dedoc\Scramble\Infer\Contracts\Index::class => Index::class,
     ];
 
     public function configurePackage(Package $package): void
@@ -100,7 +101,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             $index = new Index($app->get(LazyShallowReflectionIndex::class));
 
             foreach ((require __DIR__.'/../dictionaries/classMap.php') ?: [] as $className => $serializedClassDefinition) {
-                $index->classes[$className] = unserialize($serializedClassDefinition);
+                $index->classes[$className] = unserialize($serializedClassDefinition); // @phpstan-ignore assign.propertyType
             }
 
             return $index;

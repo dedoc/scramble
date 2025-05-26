@@ -63,7 +63,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
         if (! $array instanceof KeyedArrayType) {
             if ($type->isInstanceOf(ResourceCollection::class)) {
-                $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($definition);
+                $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($definition->getData());
             } else {
                 return new UnknownType;
             }

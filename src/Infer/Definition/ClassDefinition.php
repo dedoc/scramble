@@ -6,7 +6,7 @@ use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
-use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
@@ -59,7 +59,7 @@ class ClassDefinition implements ClassDefinitionContract
         return $this->methods[$name];
     }
 
-    public function getMethodDefiningClassName(string $name, Index $index)
+    public function getMethodDefiningClassName(string $name, IndexContract $index)
     {
         $lastLookedUpClassName = $this->name;
         while ($lastLookedUpClassDefinition = $index->getClass($lastLookedUpClassName)?->getData()) {
@@ -110,9 +110,12 @@ class ClassDefinition implements ClassDefinitionContract
 
         foreach ($this->methods[$name]->type->exceptions as $i => $exceptionType) {
             if (ReferenceTypeResolver::hasResolvableReferences($exceptionType)) {
-                $this->methods[$name]->type->exceptions[$i] = (new ReferenceTypeResolver($scope->index))
+                /** @var ObjectType $resolvedType */
+                $resolvedType = (new ReferenceTypeResolver($scope->index))
                     ->resolve($methodScope, $exceptionType)
                     ->mergeAttributes($exceptionType->attributes());
+
+                $this->methods[$name]->type->exceptions[$i] = $resolvedType;
             }
         }
 

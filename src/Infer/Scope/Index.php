@@ -20,6 +20,11 @@ use ReflectionClass;
  */
 class Index implements IndexContract
 {
+    /**
+     * @param LazyShallowReflectionIndex $shallowIndex
+     * @param array<string, ClassDefinitionContract> $classes
+     * @param array<string, FunctionLikeDefinition> $functions
+     */
     public function __construct(
         public LazyShallowReflectionIndex $shallowIndex,
         public array $classes = [],
@@ -31,12 +36,12 @@ class Index implements IndexContract
         $this->classes[$classDefinition->name] = $classDefinition;
     }
 
-    public function getClassDefinition(string $className): ?ClassDefinition
+    public function getClassDefinition(string $className): ?ClassDefinitionContract
     {
         return $this->classes[$className] ?? null;
     }
 
-    public function registerFunctionDefinition(FunctionLikeDefinition $fnDefinition)
+    public function registerFunctionDefinition(FunctionLikeDefinition $fnDefinition): void
     {
         $this->functions[$fnDefinition->type->name] = $fnDefinition;
     }
@@ -57,16 +62,18 @@ class Index implements IndexContract
             return $this->classes[$name];
         }
 
-        $reflectionClass = rescue(fn () => new ReflectionClass($name));
+        $reflectionClass = rescue(fn () => new ReflectionClass($name)); // @phpstan-ignore argument.type
 
         if (! $reflectionClass) {
             return null;
         }
 
-        $path = $reflectionClass->getFileName();
+        if (! $path = $reflectionClass->getFileName()) {
+            return null;
+        }
 
         if (! $this->shouldAnalyzeAst($path)) {
-            //            Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($name, $definition = new ClassDefinition($name)));
+            // Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($name, $definition = new ClassDefinition($name)));
 
             return $this->classes[$name] = (new LazyClassReflectionDefinitionBuilder($this, $reflectionClass))->build();
         }

@@ -13,9 +13,12 @@ class JsonResponseMethodReturnTypeExtension implements MethodReturnTypeExtension
 {
     public function shouldHandle(ObjectType $type): bool
     {
-        return $type->isInstanceOf(JsonResponse::class);
+        return $type instanceof Generic && $type->isInstanceOf(JsonResponse::class);
     }
 
+    /**
+     * @param MethodCallEvent<Generic> $event
+     */
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         return match ($event->name) {

@@ -51,7 +51,7 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 
         $definition = $this->infer->analyzeClass($resourceType->name);
 
-        $withArray = $definition->getMethodCallType('with');
+        $withArray = $definition->getData()->getMethodCallType('with');
         $additional = $resourceType instanceof Generic ? ($resourceType->templateTypes[1] ?? null) : null;
 
         if ($withArray instanceof KeyedArrayType) {
@@ -93,7 +93,7 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 
         $methodQuery = MethodQuery::make($this->infer)
             ->withArgumentType([null, 1], $responseType)
-            ->from($definition, 'withResponse');
+            ->from($definition->getData(), 'withResponse');
 
         $effectTypes = $methodQuery->getTypes(fn ($t) => (bool) (new TypeWalker)->first($t, fn ($t) => $t === $responseType));
 

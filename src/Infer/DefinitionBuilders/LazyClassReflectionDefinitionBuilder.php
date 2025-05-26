@@ -5,7 +5,7 @@ namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinitionBuilder;
 use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\ClassDefinition as ClassDefinitionData;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Definition\LazyShallowClassDefinition;
@@ -40,8 +40,12 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
     public function build(): LazyShallowClassDefinition
     {
         $parentDefinition = ($parentName = ($this->reflection->getParentClass() ?: null)?->name)
-            ? ($this->index->getClass($parentName)?->getData() ?? new ClassDefinition(name: ''))
-            : new ClassDefinition(name: '');
+            ? ($this->index->getClass($parentName)?->getData() ?? new ClassDefinitionData(name: ''))
+            : new ClassDefinitionData(name: '');
+
+        if (! $this->reflection->getFileName()) {
+            throw new \Exception('Cannot build the definition due to the missing file name.');
+        }
 
         $classPhpDoc = ($comment = $this->reflection->getDocComment())
             ? PhpDoc::parse($comment, FileNameResolver::createForFile($this->reflection->getFileName()))
@@ -56,7 +60,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             ))
             ->keyBy('name');
 
-        $classDefinitionData = new ClassDefinition(
+        $classDefinitionData = new ClassDefinitionData(
             name: $this->reflection->name,
             templateTypes: $classTemplates->values()->all(),
             properties: array_map(fn ($pd) => clone $pd, $parentDefinition->properties ?: []),
@@ -107,7 +111,10 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
         return $classDefinition;
     }
 
-    private function buildPropertyDefinition(ReflectionProperty $reflectionProperty, Collection $classTemplates)
+    /**
+     * @param Collection<string, TemplateType> $classTemplates
+     */
+    private function buildPropertyDefinition(ReflectionProperty $reflectionProperty, Collection $classTemplates): ClassPropertyDefinition
     {
         $propertyPhpDoc = PhpDoc::parse($reflectionProperty->getDocComment() ?: '/** */');
 
@@ -130,6 +137,9 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
         );
     }
 
+    /**
+     * @param Collection<string, TemplateType> $classTemplates
+     */
     private function toInferType(?TypeNode $type, Collection $classTemplates): ?Type
     {
         if (! $type) {
@@ -141,7 +151,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
         return (new TypeWalker)
             ->map(
                 $inferType,
-                fn (Type $t) => $t instanceof ObjectType && $classTemplates->has($t->name) ? $classTemplates->get($t->name) : $t,
+                fn (Type $t) => $t instanceof ObjectType && $classTemplates->has($t->name) ? $classTemplates->get($t->name) : $t, // @phpstan-ignore argument.type
             );
     }
 
@@ -149,7 +159,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
      * @param  TemplateType[]  $definitionTemplates
      * @return array<string, Type>
      */
-    private function getParentDefinedTemplates(?ClassDefinition $parentDefinition, PhpDocNode $doc, array $definitionTemplates): array
+    private function getParentDefinedTemplates(?ClassDefinitionData $parentDefinition, PhpDocNode $doc, array $definitionTemplates): array
     {
         if (! $extendsNodes = $doc->getExtendsTagValues()) {
             return [];
@@ -166,7 +176,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             return [];
         }
 
-        return collect($parentDefinition->templateTypes)
+        return collect($parentDefinition?->templateTypes ?: [])
             ->mapWithKeys(function ($parentTemplateType, int $i) use ($extendedType) {
                 return [
                     $parentTemplateType->name => $extendedType->templateTypes[$i] ?? new UnknownType,
@@ -175,7 +185,10 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             ->all();
     }
 
-    private function applyMixins(PhpDocNode $classPhpDoc, ClassDefinition $classDefinitionData)
+    /**
+     * @return array<string, array<string, Type>>
+     */
+    private function applyMixins(PhpDocNode $classPhpDoc, ClassDefinitionData $classDefinitionData): array
     {
         $mixinsDefinedTemplates = [];
 
@@ -195,7 +208,10 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
         return $mixinsDefinedTemplates;
     }
 
-    private function applyConcreteMixin(ClassDefinition $classDefinitionData, ObjectType $type)
+    /**
+     * @return array<string, Type>
+     */
+    private function applyConcreteMixin(ClassDefinitionData $classDefinitionData, ObjectType $type): array
     {
         if (! $mixinDefinition = $this->index->getClass($type->name)) {
             return [];
@@ -216,7 +232,10 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
         return $this->getDefinedTemplates($mixinDefinition->getData(), $type);
     }
 
-    private function getDefinedTemplates(ClassDefinition $classDefinitionData, ObjectType $type): array
+    /**
+     * @return array<string, Type>
+     */
+    private function getDefinedTemplates(ClassDefinitionData $classDefinitionData, ObjectType $type): array
     {
         return collect($classDefinitionData->templateTypes)
             ->mapWithKeys(function ($templateType, int $i) use ($type) {

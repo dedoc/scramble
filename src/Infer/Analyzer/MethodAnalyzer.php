@@ -8,7 +8,7 @@ use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
 use Dedoc\Scramble\Infer\Handler\IndexBuildingHandler;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
-use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -36,7 +36,7 @@ class MethodAnalyzer
     private LazyShallowReflectionIndex $shallowIndex;
 
     public function __construct(
-        private Index $index,
+        private IndexContract $index,
         private ClassDefinition $classDefinition,
     ) {
         $this->shallowIndex = app(LazyShallowReflectionIndex::class);
@@ -50,7 +50,7 @@ class MethodAnalyzer
             $indexBuilders,
         );
 
-        $methodDefinition = $this->index
+        $methodDefinition = $this->index // @phpstan-ignore method.nonObject
             ->getClass($this->classDefinition->name)
             ->getData()
             ->methods[$methodDefinition->type->name];

@@ -47,6 +47,10 @@ class AssignHandler
             return;
         }
 
+        if (! $scope->isInFunction()) {
+            return;
+        }
+
         if ($scope->functionDefinition()->type->name === '__construct') {
             return;
         }

@@ -37,7 +37,7 @@ class ErrorResponsesExtension extends OperationExtension
         $this->attachCustomRequestExceptions($methodType);
     }
 
-    private function attachNotFoundException(Operation $operation, FunctionType $methodType)
+    private function attachNotFoundException(Operation $operation, FunctionType $methodType): void
     {
         $hasModelParams = collect($operation->parameters)
             ->contains(function (Parameter $parameter) {
@@ -55,7 +55,7 @@ class ErrorResponsesExtension extends OperationExtension
         ];
     }
 
-    private function attachAuthorizationException(RouteInfo $routeInfo, FunctionType $methodType)
+    private function attachAuthorizationException(RouteInfo $routeInfo, FunctionType $methodType): void
     {
         if (! collect($routeInfo->route->gatherMiddleware())->contains(fn ($m) => is_string($m) && Str::startsWith($m, ['can:', Authorize::class.':']))) {
             return;
@@ -71,7 +71,7 @@ class ErrorResponsesExtension extends OperationExtension
         ];
     }
 
-    private function attachAuthenticationException(RouteInfo $routeInfo, FunctionType $methodType)
+    private function attachAuthenticationException(RouteInfo $routeInfo, FunctionType $methodType): void
     {
         if (count($routeInfo->phpDoc()->getTagsByName('@unauthenticated'))) {
             return;
@@ -93,7 +93,7 @@ class ErrorResponsesExtension extends OperationExtension
         ];
     }
 
-    private function attachCustomRequestExceptions(FunctionType $methodType)
+    private function attachCustomRequestExceptions(FunctionType $methodType): void
     {
         if (! $formRequest = collect($methodType->arguments)->first(fn (Type $arg) => $arg->isInstanceOf(FormRequest::class))) {
             return;
@@ -107,7 +107,7 @@ class ErrorResponsesExtension extends OperationExtension
             return;
         }
 
-        $formRequest = $this->infer->analyzeClass($formRequest->name);
+        $formRequest = $this->infer->analyzeClass($formRequest->name)->getData();
 
         if (
             $formRequest->hasMethodDefinition('rules')

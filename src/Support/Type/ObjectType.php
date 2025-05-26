@@ -48,7 +48,7 @@ class ObjectType extends AbstractType
     {
         $classDefinition = $scope->index->getClass($this->name);
 
-        return $classDefinition?->getMethod($methodName, $scope);
+        return $classDefinition?->getMethod($methodName, $scope); // @phpstan-ignore arguments.count
     }
 
     public function getMethodReturnType(string $methodName, array $arguments = [], Scope $scope = new GlobalScope): Type

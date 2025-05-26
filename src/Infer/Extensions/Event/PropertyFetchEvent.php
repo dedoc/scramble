@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Extensions\Event;
 
+use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ObjectType;
 
@@ -13,17 +14,17 @@ class PropertyFetchEvent
         public readonly Scope $scope,
     ) {}
 
-    public function getDefinition()
+    public function getDefinition(): ?ClassDefinitionContract
     {
-        return $this->scope->index->getClassDefinition($this->getInstance()->name);
+        return $this->scope->index->getClass($this->getInstance()->name);
     }
 
-    public function getInstance()
+    public function getInstance(): ObjectType
     {
         return $this->instance;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
