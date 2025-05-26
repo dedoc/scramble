@@ -10,6 +10,7 @@ use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Definition\LazyShallowClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
+use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\PhpDoc;
@@ -23,24 +24,33 @@ use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use League\Uri\UriTemplate\Template;
+use PHPStan\PhpDocParser\Ast\PhpDoc\MixinTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\TemplateTagValueNode;
+use PHPStan\PhpDocParser\Ast\PhpDoc\UsesTagValueNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use ReflectionClass;
 use ReflectionProperty;
 
 class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 {
+    /**
+     * @param string[] $ignoreClasses The names of classes that should not be analyzed when analyzing mixins recursively.
+     */
     public function __construct(
         public IndexContract $index,
         public ReflectionClass $reflection,
+        public array $ignoreClasses = [],
     ) {}
 
     public function build(): LazyShallowClassDefinition
     {
         $parentDefinition = ($parentName = ($this->reflection->getParentClass() ?: null)?->name)
-            ? ($this->index->getClass($parentName)?->getData() ?? new ClassDefinitionData(name: ''))
+            ? (!in_array($parentName, $this->ignoreClasses) ? ((
+                (new self($this->index, $this->reflection->getParentClass(), [...$this->ignoreClasses, $this->reflection->name]))->build() // @phpstan-ignore argument.type
+            )->getData()) : new ClassDefinitionData(name: ''))
             : new ClassDefinitionData(name: '');
 
         if (! $this->reflection->getFileName()) {
@@ -83,9 +93,22 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             $classDefinitionData->properties[$reflectionProperty->name] = $this->buildPropertyDefinition($reflectionProperty, $classTemplates);
         }
 
+        $classSource = ClassReflector::make($this->reflection->name)->getSource();
+
         foreach ($this->reflection->getMethods() as $reflectionMethod) {
             if ($reflectionMethod->class !== $this->reflection->name) {
                 continue;
+            }
+
+            if (array_key_exists($reflectionMethod->name, $classDefinitionData->methods)) {
+                $isDefinedInClass = Str::contains($classSource, [
+                    "function $reflectionMethod->name(",
+                    "function $reflectionMethod->name ",
+                ]);
+
+                if (! $isDefinedInClass) {
+                    continue;
+                }
             }
 
             $classDefinitionData->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
@@ -192,30 +215,73 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
     {
         $mixinsDefinedTemplates = [];
 
-        $mixins = array_values($classPhpDoc->getMixinTagValues());
+        $mixins = $this->getMixinsTypes($classPhpDoc, $classDefinitionData);
 
-        foreach ($mixins as $mixin) {
-            $type = $this->toInferType($mixin->type, collect($classDefinitionData->templateTypes)->keyBy('name'));
-
-            if (! $type instanceof ObjectType) {
-                // @todo Maybe throw here: Mixin type must be an object
-                continue;
-            }
-
-            $mixinsDefinedTemplates[$type->name] = $this->applyConcreteMixin($classDefinitionData, $type);
+        foreach ($mixins as $type) {
+            $mixinsDefinedTemplates = array_merge($mixinsDefinedTemplates, $this->applyConcreteMixin($classDefinitionData, $type));
         }
 
         return $mixinsDefinedTemplates;
     }
 
     /**
-     * @return array<string, Type>
+     * Get the map of applied mixins/traits (including `@mixin` and `@use` tags) recursively.
+     *
+     * @return ObjectType[]
+     */
+    private function getMixinsTypes(PhpDocNode $classPhpDoc, ClassDefinitionData $classDefinitionData): array
+    {
+        $annotatedTypes = [
+            ...$classPhpDoc->getMixinTagValues(),
+            ...$this->getUsesTagValues($classDefinitionData->name),
+        ];
+
+        return array_values(array_filter(
+            array_map(
+                fn (MixinTagValueNode|UsesTagValueNode $node) => $this->toInferType($node->type, collect($classDefinitionData->templateTypes)->keyBy('name')),
+                $annotatedTypes,
+            ),
+            fn ($t) => $t instanceof ObjectType,
+        ));
+    }
+
+    /**
+     * @return UsesTagValueNode[]
+     */
+    private function getUsesTagValues(string $className): array
+    {
+        $reflector = ClassReflector::make($className);
+
+        $usesTags = Str::matchAll(
+            '/@use\s+[^\r\n*]+/',
+            $reflector->getSource(),
+        );
+
+        $comment = "/**\n".$usesTags->join("\n").'*/';
+
+        return PhpDoc::parse($comment, new FileNameResolver($reflector->getNameContext()))->getUsesTagValues();
+    }
+
+    /**
+     * @return array<string, array<string, Type>>
      */
     private function applyConcreteMixin(ClassDefinitionData $classDefinitionData, ObjectType $type): array
     {
-        if (! $mixinDefinition = $this->index->getClass($type->name)) {
+        $shouldApplyMixin = ! in_array($type->name, $this->ignoreClasses);
+
+        if (! $shouldApplyMixin) {
             return [];
         }
+
+        if (! $mixinReflection = rescue(fn () => new ReflectionClass($type->name))) { // @phpstan-ignore argument.type
+            return [];
+        }
+
+        $mixinDefinition = (new self(
+            $this->index,
+            $mixinReflection,
+            ignoreClasses: [...$this->ignoreClasses, $type->name],
+        ))->build();
 
         $classDefinitionData->methods = array_merge(
             $classDefinitionData->methods,
@@ -227,9 +293,26 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             $mixinDefinition->getData()->properties,
         );
 
+        $definedTemplates = $this->getDefinedTemplates($mixinDefinition->getData(), $type);
+        $mixinDefinedTemplates = collect($mixinDefinition->mixinsDefinedTemplates)
+            ->map(function (array $templatesMap) use ($definedTemplates) {
+                return collect($templatesMap)
+                    ->map(function ($templateType) use ($definedTemplates) {
+                        if ($templateType instanceof TemplateType && array_key_exists($templateType->name, $definedTemplates)) {
+                            return $definedTemplates[$templateType->name];
+                        }
+                        return $templateType;
+                    })
+                    ->all();
+            })
+            ->all();
+
         // @todo template types!?
 
-        return $this->getDefinedTemplates($mixinDefinition->getData(), $type);
+        return [
+            ...$mixinDefinedTemplates,
+            $mixinReflection->name => $definedTemplates,
+        ];
     }
 
     /**

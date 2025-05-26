@@ -57,6 +57,7 @@ class PhpDoc
                 ...$node->getReturnTagValues('@response'),
                 ...$node->getVarTagValues(),
                 ...$node->getThrowsTagValues(),
+                ...$node->getUsesTagValues(),
             ];
 
             foreach ($tagValues as $tagValue) {
