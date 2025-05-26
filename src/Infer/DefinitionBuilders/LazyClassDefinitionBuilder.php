@@ -21,7 +21,7 @@ use ReflectionClass;
 class LazyClassDefinitionBuilder implements ClassDefinitionBuilder
 {
     /**
-     * @param ReflectionClass<object> $reflection
+     * @param  ReflectionClass<object>  $reflection
      */
     public function __construct(
         public IndexContract $index,

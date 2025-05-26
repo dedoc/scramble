@@ -102,10 +102,10 @@ class BarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest
 }
 
 test('builds class definition with use annotation', function () {
-//    dd(
-//        (new \ReflectionClass(BarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest::class))
-//            ->get()
-//    );
+    //    dd(
+    //        (new \ReflectionClass(BarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest::class))
+    //            ->get()
+    //    );
     $definition = (new LazyClassReflectionDefinitionBuilder(
         $this->index,
         new \ReflectionClass(BarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest::class),
@@ -115,13 +115,13 @@ test('builds class definition with use annotation', function () {
 });
 
 test('builds vendor definition', function () {
-//    Benchmark::dd(
-//        fn () => (new LazyClassReflectionDefinitionBuilder(
-//            $this->index,
-//            new \ReflectionClass(Collection::class),
-//        ))->build(),
-//        100,
-//    );
+    //    Benchmark::dd(
+    //        fn () => (new LazyClassReflectionDefinitionBuilder(
+    //            $this->index,
+    //            new \ReflectionClass(Collection::class),
+    //        ))->build(),
+    //        100,
+    //    );
 
     $definition = (new LazyClassReflectionDefinitionBuilder(
         $this->index,

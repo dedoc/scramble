@@ -3,12 +3,12 @@
 namespace Dedoc\Scramble\Infer\Analyzer;
 
 use Dedoc\Scramble\Infer\Context;
+use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
 use Dedoc\Scramble\Infer\Handler\IndexBuildingHandler;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
-use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;

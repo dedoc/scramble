@@ -6,7 +6,6 @@ use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition as ClassDefinitionData;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
 use Dedoc\Scramble\Support\Type\Type;
-use Exception;
 use Illuminate\Support\Collection;
 use ReflectionClass;
 use ReflectionException;

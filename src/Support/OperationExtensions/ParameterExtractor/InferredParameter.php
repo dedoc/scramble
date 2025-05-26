@@ -12,7 +12,7 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 class InferredParameter
 {
     /**
-     * @param array<array-key, scalar>|scalar|null|MissingExample $default
+     * @param  array<array-key, scalar>|scalar|null|MissingExample  $default
      */
     public function __construct(
         public string $name,

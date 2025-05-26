@@ -112,7 +112,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
     }
 
     /**
-     * @param Collection<string, TemplateType> $classTemplates
+     * @param  Collection<string, TemplateType>  $classTemplates
      */
     private function buildPropertyDefinition(ReflectionProperty $reflectionProperty, Collection $classTemplates): ClassPropertyDefinition
     {
@@ -138,7 +138,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
     }
 
     /**
-     * @param Collection<string, TemplateType> $classTemplates
+     * @param  Collection<string, TemplateType>  $classTemplates
      */
     private function toInferType(?TypeNode $type, Collection $classTemplates): ?Type
     {

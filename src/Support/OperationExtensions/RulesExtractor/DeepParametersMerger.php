@@ -31,7 +31,7 @@ class DeepParametersMerger
     }
 
     /**
-     * @param Collection<string, Parameter> $parameters
+     * @param  Collection<string, Parameter>  $parameters
      * @return Collection<string, Parameter>
      */
     private function handleNested(Collection $parameters): Collection

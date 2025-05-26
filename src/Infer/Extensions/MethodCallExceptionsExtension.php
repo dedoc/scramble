@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Infer\Extensions;
 
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Type;
 
 interface MethodCallExceptionsExtension extends InferExtension
 {

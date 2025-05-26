@@ -17,7 +17,7 @@ class ResponseMethodReturnTypeExtension implements MethodReturnTypeExtension
     }
 
     /**
-     * @param MethodCallEvent<Generic> $event
+     * @param  MethodCallEvent<Generic>  $event
      */
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {

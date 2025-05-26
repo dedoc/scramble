@@ -15,7 +15,7 @@ interface Type
     public function getAttribute(string $key): mixed;
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     public function mergeAttributes(array $attributes): self;
 

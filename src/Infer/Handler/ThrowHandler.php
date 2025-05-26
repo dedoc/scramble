@@ -27,7 +27,6 @@ class ThrowHandler
         }
 
         /** @var ObjectType $exceptionType */
-
         $fnDefinition = $scope->functionDefinition();
 
         $fnDefinition->type->exceptions = [

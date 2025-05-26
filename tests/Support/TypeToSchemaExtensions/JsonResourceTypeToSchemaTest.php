@@ -283,7 +283,7 @@ it('handles supports custom schema name', function () {
         return Route::get('api/test', [JsonResourceTypeToSchemaTest_CustomSchemaTest::class, 'index']);
     });
 
-//    $responses = dd($openApiDocument)['paths']['/test']['get']['responses'];
+    //    $responses = dd($openApiDocument)['paths']['/test']['get']['responses'];
 
     expect($responses)
         ->toHaveKey('202')

@@ -15,7 +15,7 @@ class MethodCallEvent
     use ArgumentTypesAware;
 
     /**
-     * @param T $instance
+     * @param  T  $instance
      */
     public function __construct(
         public readonly ObjectType $instance,

@@ -34,7 +34,7 @@ class FunctionLikeHandler implements CreatesScope
 
         if ($node instanceof Node\Expr\Closure) {
             foreach ($node->uses as $use) {
-                $fnScope->variables[$use->var->name] = $scope->variables[$use->var->name] ?? []; 
+                $fnScope->variables[$use->var->name] = $scope->variables[$use->var->name] ?? [];
             }
         }
 
