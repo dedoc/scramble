@@ -121,7 +121,7 @@ class AttributesParametersExtractor implements ParameterExtractor
         $parameter = Parameter::make($attribute->name, $attribute->in)
             ->description($attribute->description ?: '')
             ->setSchema(Schema::fromType(
-                $type->default($default)
+                $type->default($default) // @phpstan-ignore argument.type
             ))
             ->required($attribute->required);
 

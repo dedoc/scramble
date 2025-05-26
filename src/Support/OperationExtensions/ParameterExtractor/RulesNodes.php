@@ -41,6 +41,10 @@ class RulesNodes
     {
         return collect($this->nodes)
             ->mapWithKeys(function (Node\Expr\ArrayItem $item) {
+                if (! $item->key) {
+                    return [];
+                }
+
                 try {
                     $key = $this->buildEvaluator()->evaluateSilently($item->key);
                 } catch (ConstExprEvaluationException $e) {
@@ -51,11 +55,14 @@ class RulesNodes
                     return [];
                 }
 
-                return [
-                    $key => $item->getAttribute('parsedPhpDoc'),
-                ];
+                $parsedDoc = $item->getAttribute('parsedPhpDoc');
+                if (! $parsedDoc instanceof PhpDocNode) {
+                    return [];
+                }
+
+                return [$key => $parsedDoc];
             })
-            ->toArray();
+            ->all();
     }
 
     private function buildEvaluator(): ConstExprEvaluator

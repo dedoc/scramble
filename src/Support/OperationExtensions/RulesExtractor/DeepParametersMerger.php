@@ -23,26 +23,42 @@ class DeepParametersMerger
      */
     public function handle(): array
     {
-        return $this->parameters->groupBy('in')
+        return $this->parameters->groupBy('in') // @phpstan-ignore return.type
             ->map(fn ($parameters) => $this->handleNested($parameters->keyBy('name'))->values())
-            ->flatten()
+            ->flatten() // `flatten` type inference is not working hence ignore
             ->values()
             ->all();
     }
 
-    private function handleNested(Collection $parameters)
+    /**
+     * @param Collection<string, Parameter> $parameters
+     * @return Collection<string, Parameter>
+     */
+    private function handleNested(Collection $parameters): Collection
     {
+        /**
+         * @var Collection<string, Parameter> $forcedFlatParameters
+         * @var Collection<string, Parameter> $maybeDeepParameters
+         */
         [$forcedFlatParameters, $maybeDeepParameters] = $parameters->partition(fn (Parameter $p) => $p->getAttribute('isFlat') === true);
 
+        /**
+         * @var Collection<string, Parameter> $nested
+         * @var Collection<string, Parameter> $parameters
+         */
         [$nested, $parameters] = $maybeDeepParameters
             ->sortBy(fn ($_, $key) => count(explode('.', $key)))
             ->partition(fn ($_, $key) => Str::contains($key, '.'));
 
         $nestedParentsKeys = $nested->keys()->map(fn ($key) => explode('.', $key)[0]);
 
+        /**
+         * @var Collection<string, Parameter> $nestedParents
+         * @var Collection<string, Parameter> $parameters
+         */
         [$nestedParents, $parameters] = $parameters->partition(fn ($_, $key) => $nestedParentsKeys->contains($key));
 
-        /** @var Collection $nested */
+        /** @var Collection<string, Parameter> $nested */
         $nested = $nested->merge($nestedParents);
 
         $nested = $nested
@@ -52,7 +68,7 @@ class DeepParametersMerger
 
                 $baseParam = $params->get(
                     $groupName,
-                    Parameter::make($groupName, $params->first()->in)
+                    Parameter::make($groupName, $params->first()->in) // @phpstan-ignore property.nonObject
                         ->setSchema(Schema::fromType(new ObjectType))
                 );
 
@@ -60,7 +76,7 @@ class DeepParametersMerger
 
                 foreach ($params as $param) {
                     $this->setDeepType(
-                        $baseParam->schema->type,
+                        $baseParam->schema->type, // @phpstan-ignore-line
                         $param->name,
                         $param,
                     );

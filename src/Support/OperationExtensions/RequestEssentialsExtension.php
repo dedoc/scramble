@@ -200,7 +200,7 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         foreach ($groups as $group) {
-            if (! $group->name && ! $group->description) {
+            if (! $group->name) {
                 continue;
             }
 

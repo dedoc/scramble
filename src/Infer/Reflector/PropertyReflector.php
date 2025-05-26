@@ -174,6 +174,10 @@ EOD;
                 fn (Node $node) => $node instanceof Property && (bool) collect($node->props)->first(fn (Node\PropertyItem $p) => $p->name->name === $this->name),
             );
 
+        if (! $node) {
+            return null;
+        }
+
         $traverser = new NodeTraverser;
 
         $traverser->addVisitor(new class($this->getClassReflector()->getNameContext()) extends NameResolver

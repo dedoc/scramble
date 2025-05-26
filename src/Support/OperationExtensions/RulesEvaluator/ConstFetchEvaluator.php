@@ -25,7 +25,7 @@ class ConstFetchEvaluator
             ? $expr->name->toString()
             : null;
 
-        if (array_key_exists($className, $this->classMap)) {
+        if ($className && array_key_exists($className, $this->classMap)) {
             $className = $this->classMap[$className];
         }
 

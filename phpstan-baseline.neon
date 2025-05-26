@@ -169,6 +169,18 @@ parameters:
 			path: src/Configuration/GeneratorConfigCollection.php
 
 		-
+			message: '#^Parameter \#1 \.\.\.\$arrays of function array_merge expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Configuration/GeneratorConfigCollection.php
+
+		-
+			message: '#^Parameter \#2 \$action of method Illuminate\\Routing\\Router\:\:get\(\) expects array\|\(callable\(\)\: mixed\)\|string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Configuration/GeneratorConfigCollection.php
+
+		-
 			message: '#^Method Dedoc\\Scramble\\Configuration\\OperationTransformers\:\:all\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -313,6 +325,30 @@ parameters:
 			path: src/Configuration/ServerVariables.php
 
 		-
+			message: '#^Cannot access property \$uri on Illuminate\\Routing\\Route\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Console/Commands/AnalyzeDocumentation.php
+
+		-
+			message: '#^Cannot call method getAction\(\) on Illuminate\\Routing\\Route\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Console/Commands/AnalyzeDocumentation.php
+
+		-
+			message: '#^Cannot call method getRoute\(\) on Dedoc\\Scramble\\Exceptions\\RouteAware\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Console/Commands/AnalyzeDocumentation.php
+
+		-
+			message: '#^Cannot call method methods\(\) on Illuminate\\Routing\\Route\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Console/Commands/AnalyzeDocumentation.php
+
+		-
 			message: '#^Method Dedoc\\Scramble\\Console\\Commands\\AnalyzeDocumentation\:\:groupExceptions\(\) has parameter \$exceptions with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -343,6 +379,18 @@ parameters:
 			path: src/Console/Commands/AnalyzeDocumentation.php
 
 		-
+			message: '#^Parameter \#2 \$string of function explode expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Console/Commands/AnalyzeDocumentation.php
+
+		-
+			message: '#^Part \$action \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 1
+			path: src/Console/Commands/AnalyzeDocumentation.php
+
+		-
 			message: '#^Part \$message \(iterable\<string\>\|string\) of encapsed string cannot be cast to string\.$#'
 			identifier: encapsedStringPart.nonString
 			count: 1
@@ -367,6 +415,12 @@ parameters:
 			path: src/Console/Commands/Components/TermsOfContentItem.php
 
 		-
+			message: '#^Parameter \#1 \$string of function mb_strlen expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Console/Commands/Components/TermsOfContentItem.php
+
+		-
 			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|string\|null given\.$#'
 			identifier: argument.type
 			count: 1
@@ -379,7 +433,7 @@ parameters:
 			path: src/Console/Commands/ExportDocumentation.php
 
 		-
-			message: '#^Part \$api \(array\|bool\|string\) of encapsed string cannot be cast to string\.$#'
+			message: '#^Part \$api \(array\|bool\|string\|null\) of encapsed string cannot be cast to string\.$#'
 			identifier: encapsedStringPart.nonString
 			count: 1
 			path: src/Console/Commands/ExportDocumentation.php
@@ -439,6 +493,18 @@ parameters:
 			path: src/Exceptions/InvalidSchema.php
 
 		-
+			message: '#^Parameter \#2 \$line of class Dedoc\\Scramble\\Console\\Commands\\Components\\Code constructor expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Exceptions/InvalidSchema.php
+
+		-
+			message: '#^Part \$action \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 1
+			path: src/Exceptions/InvalidSchema.php
+
+		-
 			message: '#^Unsafe usage of new static\(\)\.$#'
 			identifier: new.static
 			count: 1
@@ -473,6 +539,18 @@ parameters:
 			identifier: parameter.notFound
 			count: 2
 			path: src/Extensions/TypeToSchemaExtension.php
+
+		-
+			message: '#^Cannot access property \$servers on \(TValue of mixed\)\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Generator.php
+
+		-
+			message: '#^Cannot call method servers\(\) on TValue of mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Generator.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Generator\:\:__invoke\(\) has no return type specified\.$#'
@@ -529,6 +607,24 @@ parameters:
 			path: src/Generator.php
 
 		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<\(int\|string\),mixed\>\:\:map\(\) expects callable\(mixed, int\|string\)\: mixed, Closure\(Illuminate\\Routing\\Route, int\)\: mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Generator.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,mixed\>\:\:filter\(\) expects \(callable\(mixed, int\)\: bool\)\|null, Closure\(Illuminate\\Routing\\Route\)\: mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Generator.php
+
+		-
+			message: '#^Parameter \#1 \$haystack of static method Illuminate\\Support\\Str\:\:startsWith\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Generator.php
+
+		-
 			message: '#^Parameter \#1 \$key of method Illuminate\\Support\\Collection\<TKey of \(int\|string\),TValue\>\:\:every\(\) expects \(callable\(Dedoc\\Scramble\\Support\\Generator\\Operation, int\|string\)\: bool\)\|Dedoc\\Scramble\\Support\\Generator\\Operation\|string, Closure\(Dedoc\\Scramble\\Support\\Generator\\Operation\)\: int\<0, max\> given\.$#'
 			identifier: argument.type
 			count: 1
@@ -538,6 +634,12 @@ parameters:
 			message: '#^Parameter \#1 \$value of function collect expects Illuminate\\Contracts\\Support\\Arrayable\<\(int\|string\), mixed\>\|iterable\<\(int\|string\), mixed\>\|null, Illuminate\\Routing\\RouteCollectionInterface given\.$#'
 			identifier: argument.type
 			count: 1
+			path: src/Generator.php
+
+		-
+			message: '#^Part \$action \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 2
 			path: src/Generator.php
 
 		-
@@ -661,6 +763,12 @@ parameters:
 			path: src/Http/Middleware/RestrictedDocsAccess.php
 
 		-
+			message: '#^Method Dedoc\\Scramble\\Infer\:\:analyzeClass\(\) should return Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition but returns Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Infer.php
+
+		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\ClassAnalyzer\:\:shouldAnalyzeParentClass\(\) has parameter \$parentClassReflection with generic class ReflectionClass but does not specify its types\: T$#'
 			identifier: missingType.generics
 			count: 1
@@ -677,6 +785,18 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/Infer/Analyzer/ClassAnalyzer.php
+
+		-
+			message: '#^Parameter \#1 \$reflectionType of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:createTypeFromReflectionType\(\) expects ReflectionType, ReflectionType\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Infer/Analyzer/ClassAnalyzer.php
+
+		-
+			message: '#^Cannot access property \$methods on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Infer/Analyzer/MethodAnalyzer.php
 
 		-
 			message: '#^Instanceof between PhpParser\\Node\\Expr\|PhpParser\\Node\\Identifier and PhpParser\\Node\\Name will always evaluate to false\.$#'
@@ -717,18 +837,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\MethodQuery\:\:getTypes\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Infer/Analyzer/MethodQuery.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\MethodQuery\:\:withArgumentType\(\) has parameter \$positionName with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Analyzer/MethodQuery.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Infer\\Analyzer\\MethodQuery\:\:\$argumentsOverrides type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Infer/Analyzer/MethodQuery.php
 
@@ -879,6 +987,12 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\DefinitionBuilders\\LazyClassReflectionDefinitionBuilder\:\:__construct\(\) has parameter \$reflection with generic class ReflectionClass but does not specify its types\: T$#'
 			identifier: missingType.generics
+			count: 1
+			path: src/Infer/DefinitionBuilders/LazyClassReflectionDefinitionBuilder.php
+
+		-
+			message: '#^Parameter \#1 \$reflectionType of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:createTypeFromReflectionType\(\) expects ReflectionType, ReflectionType\|null given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Infer/DefinitionBuilders/LazyClassReflectionDefinitionBuilder.php
 
@@ -1129,6 +1243,12 @@ parameters:
 			path: src/Infer/Handler/AssignHandler.php
 
 		-
+			message: '#^Parameter \#1 \$line of method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:addVariableType\(\) expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Infer/Handler/AssignHandler.php
+
+		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Handler\\ClassHandler\:\:enter\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -1213,6 +1333,30 @@ parameters:
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
 		-
+			message: '#^Cannot access offset mixed on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Infer/Handler/FunctionLikeHandler.php
+
+		-
+			message: '#^Cannot access property \$methods on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Infer/Handler/FunctionLikeHandler.php
+
+		-
+			message: '#^Cannot access property \$parentFqn on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/Infer/Handler/FunctionLikeHandler.php
+
+		-
+			message: '#^Cannot access property \$properties on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: src/Infer/Handler/FunctionLikeHandler.php
+
+		-
 			message: '#^Cannot cast PhpParser\\Node\\Expr\|string to string\.$#'
 			identifier: cast.string
 			count: 1
@@ -1255,13 +1399,31 @@ parameters:
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
 		-
+			message: '#^Parameter \#1 \$className of method Dedoc\\Scramble\\Infer\\Scope\\Index\:\:getClassDefinition\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Infer/Handler/FunctionLikeHandler.php
+
+		-
 			message: '#^Parameter \#1 \$key of function array_key_exists expects int\|string, PhpParser\\Node\\Expr\|string given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
 		-
+			message: '#^Parameter \#1 \$line of method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:addVariableType\(\) expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Infer/Handler/FunctionLikeHandler.php
+
+		-
 			message: '#^Parameter \#1 \$value of static method Illuminate\\Support\\Str\:\:studly\(\) expects string, PhpParser\\Node\\Expr\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Infer/Handler/FunctionLikeHandler.php
+
+		-
+			message: '#^Parameter \#3 \$type of method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:addVariableType\(\) expects Dedoc\\Scramble\\Support\\Type\\Type, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Infer/Handler/FunctionLikeHandler.php
@@ -1435,6 +1597,12 @@ parameters:
 			path: src/Infer/Reflector/MethodReflector.php
 
 		-
+			message: '#^Parameter \#1 \$nodes of method PhpParser\\NodeTraverser\:\:traverse\(\) expects array\<PhpParser\\Node\>, array\<int, PhpParser\\Node\|null\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Infer/Reflector/MethodReflector.php
+
+		-
 			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
 			identifier: argument.type
 			count: 1
@@ -1591,6 +1759,12 @@ parameters:
 			path: src/Infer/Services/ConstFetchTypeGetter.php
 
 		-
+			message: '#^Cannot call method toString\(\) on PhpParser\\Node\\Name\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Infer/Services/FileNameResolver.php
+
+		-
 			message: '#^Parameter \#1 \$subject of static method Illuminate\\Support\\Str\:\:before\(\) expects string, string\|false given\.$#'
 			identifier: argument.type
 			count: 1
@@ -1603,10 +1777,22 @@ parameters:
 			path: src/Infer/Services/FileNameResolver.php
 
 		-
+			message: '#^Parameter \#2 \$subject of function preg_match_all expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Infer/Services/FileNameResolver.php
+
+		-
 			message: '#^Property Dedoc\\Scramble\\Infer\\Services\\FileNameResolver\:\:\$nameContextCache has no type specified\.$#'
 			identifier: missingType.property
 			count: 1
 			path: src/Infer/Services/FileNameResolver.php
+
+		-
+			message: '#^Cannot call method toString\(\) on PhpParser\\Node\\Identifier\|PhpParser\\Node\\Name\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Infer/Services/FileParserResult.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\FileParserResult\:\:__construct\(\) has parameter \$statements with no value type specified in iterable type array\.$#'
@@ -1687,6 +1873,30 @@ parameters:
 			path: src/Infer/Services/ReferenceTypeResolver.php
 
 		-
+			message: '#^Cannot access property \$name on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Infer/Services/ReferenceTypeResolver.php
+
+		-
+			message: '#^Cannot access property \$properties on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Infer/Services/ReferenceTypeResolver.php
+
+		-
+			message: '#^Cannot access property \$templateTypes on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
+			identifier: property.nonObject
+			count: 5
+			path: src/Infer/Services/ReferenceTypeResolver.php
+
+		-
+			message: '#^Cannot call method getMethodDefinition\(\) on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Infer/Services/ReferenceTypeResolver.php
+
+		-
 			message: '#^Instanceof between Dedoc\\Scramble\\Support\\Type\\Generic and Dedoc\\Scramble\\Support\\Type\\Generic will always evaluate to true\.$#'
 			identifier: instanceof.alwaysTrue
 			count: 1
@@ -1731,6 +1941,12 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:prepareArguments\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
+			count: 1
+			path: src/Infer/Services/ReferenceTypeResolver.php
+
+		-
+			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:resolve\(\) should return Dedoc\\Scramble\\Support\\Type\\Type but returns mixed\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Infer/Services/ReferenceTypeResolver.php
 
@@ -1801,13 +2017,37 @@ parameters:
 			path: src/Infer/Services/ReferenceTypeResolver.php
 
 		-
+			message: '#^Parameter \#1 \$classDefinition of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:getParentConstructCallsTypes\(\) expects Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition, Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Infer/Services/ReferenceTypeResolver.php
+
+		-
 			message: '#^Parameter \#1 \$haystack of static method Illuminate\\Support\\Str\:\:contains\(\) expects string, string\|false given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Infer/Services/ReferenceTypeResolver.php
 
 		-
+			message: '#^Parameter \#1 \$items of method Illuminate\\Support\\Collection\<string,Dedoc\\Scramble\\Support\\Type\\Type\>\:\:merge\(\) expects Illuminate\\Contracts\\Support\\Arrayable\<string, Dedoc\\Scramble\\Support\\Type\\Type\>\|iterable\<string, Dedoc\\Scramble\\Support\\Type\\Type\>, Illuminate\\Support\\Collection\<\(int\|string\), Dedoc\\Scramble\\Support\\Type\\Type\|null\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Infer/Services/ReferenceTypeResolver.php
+
+		-
 			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Infer/Services/ReferenceTypeResolver.php
+
+		-
+			message: '#^Parameter \#1 \$subject of method Dedoc\\Scramble\\Support\\Type\\TypeWalker\:\:replace\(\) expects Dedoc\\Scramble\\Support\\Type\\Type, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Infer/Services/ReferenceTypeResolver.php
+
+		-
+			message: '#^Parameter \#2 \$annotatedReturnType of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:addAnnotatedReturnType\(\) expects Dedoc\\Scramble\\Support\\Type\\Type, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Infer/Services/ReferenceTypeResolver.php
@@ -1831,6 +2071,18 @@ parameters:
 			path: src/Infer/Services/ReferenceTypeResolver.php
 
 		-
+			message: '#^Parameter \#3 \$classDefinition of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:getMethodCallsSideEffectIntroducedTypesInConstructor\(\) expects Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition, Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Infer/Services/ReferenceTypeResolver.php
+
+		-
+			message: '#^Property Dedoc\\Scramble\\Support\\Type\\ObjectType\:\:\$name \(string\) does not accept string\|null\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Infer/Services/ReferenceTypeResolver.php
+
+		-
 			message: '#^Unable to resolve the template type TKey in call to function collect$#'
 			identifier: argument.templateType
 			count: 3
@@ -1841,6 +2093,12 @@ parameters:
 			identifier: argument.templateType
 			count: 3
 			path: src/Infer/Services/ReferenceTypeResolver.php
+
+		-
+			message: '#^Cannot call method getMethod\(\) on Dedoc\\Scramble\\Infer\\Contracts\\ClassDefinition\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Infer/Services/ShallowTypeResolver.php
 
 		-
 			message: '#^Match expression does not handle remaining value\: string$#'
@@ -1939,6 +2197,12 @@ parameters:
 			path: src/Infer/SimpleTypeGetters/ClassConstFetchTypeGetter.php
 
 		-
+			message: '#^Cannot access property \$parentScope on Dedoc\\Scramble\\Infer\\Scope\\Scope\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Infer/TypeInferer.php
+
+		-
 			message: '#^Cannot call method enter\(\) on class\-string\|object\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -1953,6 +2217,12 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\TypeInferer\:\:__construct\(\) has parameter \$handlers with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
+			count: 1
+			path: src/Infer/TypeInferer.php
+
+		-
+			message: '#^Method Dedoc\\Scramble\\Infer\\TypeInferer\:\:getFunctionLikeScope\(\) should return Dedoc\\Scramble\\Infer\\Scope\\Scope\|null but returns mixed\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Infer/TypeInferer.php
 
@@ -2161,6 +2431,12 @@ parameters:
 			path: src/Reflection/ReflectionRoute.php
 
 		-
+			message: '#^Method Dedoc\\Scramble\\Reflection\\ReflectionRoute\:\:createFromRoute\(\) should return static\(Dedoc\\Scramble\\Reflection\\ReflectionRoute\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Reflection/ReflectionRoute.php
+
+		-
 			message: '#^Method Dedoc\\Scramble\\Reflection\\ReflectionRoute\:\:getSignatureParametersMap\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -2168,6 +2444,18 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$conditions of method Illuminate\\Routing\\Route\:\:signatureParameters\(\) expects array, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Reflection/ReflectionRoute.php
+
+		-
+			message: '#^Parameter \#1 \$object_or_class of function is_a expects object\|string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Reflection/ReflectionRoute.php
+
+		-
+			message: '#^Parameter \#2 \$class of function is_a expects string, string\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Reflection/ReflectionRoute.php
@@ -2350,8 +2638,32 @@ parameters:
 			path: src/ScrambleServiceProvider.php
 
 		-
+			message: '#^Parameter \#1 \$config of method Dedoc\\Scramble\\GeneratorConfig\:\:useConfig\(\) expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/ScrambleServiceProvider.php
+
+		-
+			message: '#^Parameter \#1 \$object_or_class of function is_a expects object\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 5
+			path: src/ScrambleServiceProvider.php
+
+		-
 			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
 			identifier: argument.type
+			count: 1
+			path: src/ScrambleServiceProvider.php
+
+		-
+			message: '#^Parameter \#1 \.\.\.\$arrays of function array_merge expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/ScrambleServiceProvider.php
+
+		-
+			message: '#^Property Dedoc\\Scramble\\Infer\\Scope\\Index\:\:\$classesDefinitions \(array\<string, Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\>\) does not accept array\<mixed\>\.$#'
+			identifier: assign.propertyType
 			count: 1
 			path: src/ScrambleServiceProvider.php
 
@@ -2689,6 +3001,12 @@ parameters:
 			path: src/Support/Generator/OpenApi.php
 
 		-
+			message: '#^Argument of an invalid type array\<Dedoc\\Scramble\\Support\\Generator\\Response\>\|null supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: src/Support/Generator/Operation.php
+
+		-
 			message: '#^Instanceof between \*NEVER\* and Dedoc\\Scramble\\Support\\Generator\\Reference will always evaluate to false\.$#'
 			identifier: instanceof.alwaysFalse
 			count: 1
@@ -2833,6 +3151,12 @@ parameters:
 			path: src/Support/Generator/Operation.php
 
 		-
+			message: '#^Parameter \#1 \$value of function count expects array\|Countable, array\<Dedoc\\Scramble\\Support\\Generator\\Response\>\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/Generator/Operation.php
+
+		-
 			message: '#^Property Dedoc\\Scramble\\Support\\Generator\\Operation\:\:\$responses \(array\<Dedoc\\Scramble\\Support\\Generator\\Response\>\|null\) does not accept array\<Dedoc\\Scramble\\Support\\Generator\\Reference\|Dedoc\\Scramble\\Support\\Generator\\Response\>\.$#'
 			identifier: assign.propertyType
 			count: 1
@@ -2870,12 +3194,6 @@ parameters:
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:getAttribute\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Parameter.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:make\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
 			path: src/Support/Generator/Parameter.php
@@ -3232,6 +3550,24 @@ parameters:
 			path: src/Support/Generator/ServerVariable.php
 
 		-
+			message: '#^Binary operation "\." between "\\n\\n" and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Support/Generator/TypeTransformer.php
+
+		-
+			message: '#^Binary operation "\." between mixed and '' '' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Support/Generator/TypeTransformer.php
+
+		-
+			message: '#^Binary operation "\." between non\-falsy\-string and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Support/Generator/TypeTransformer.php
+
+		-
 			message: '#^Call to an undefined method Dedoc\\Scramble\\Extensions\\ExceptionToResponseExtension\:\:shouldHandle\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -3251,6 +3587,12 @@ parameters:
 
 		-
 			message: '#^Cannot call method reference\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Support/Generator/TypeTransformer.php
+
+		-
+			message: '#^Cannot call method toSchema\(\) on mixed\.$#'
 			identifier: method.nonObject
 			count: 1
 			path: src/Support/Generator/TypeTransformer.php
@@ -3306,6 +3648,18 @@ parameters:
 		-
 			message: '#^PHPDoc tag @var for variable \$extensions contains generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
 			identifier: missingType.generics
+			count: 1
+			path: src/Support/Generator/TypeTransformer.php
+
+		-
+			message: '#^Parameter \#1 \$object_or_class of function method_exists expects object\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/Generator/TypeTransformer.php
+
+		-
+			message: '#^Parameter \#1 \$string of static method Illuminate\\Support\\Str\:\:of\(\) expects string, mixed given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Support/Generator/TypeTransformer.php
 
@@ -3754,6 +4108,12 @@ parameters:
 			path: src/Support/Helpers/JsonResourceHelper.php
 
 		-
+			message: '#^Parameter \#1 \$string of static method Illuminate\\Support\\Str\:\:of\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/Helpers/JsonResourceHelper.php
+
+		-
 			message: '#^Property Dedoc\\Scramble\\Support\\Helpers\\JsonResourceHelper\:\:\$jsonResourcesModelTypesCache has no type specified\.$#'
 			identifier: missingType.property
 			count: 1
@@ -3769,6 +4129,12 @@ parameters:
 			message: '#^Access to an undefined property PhpParser\\Node\:\:\$args\.$#'
 			identifier: property.notFound
 			count: 7
+			path: src/Support/IndexBuilders/RequestParametersBuilder.php
+
+		-
+			message: '#^Cannot call method getAttribute\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
 			path: src/Support/IndexBuilders/RequestParametersBuilder.php
 
 		-
@@ -3856,6 +4222,24 @@ parameters:
 			path: src/Support/InferExtensions/JsonResourceExtension.php
 
 		-
+			message: '#^Parameter \#1 \$callee of class Dedoc\\Scramble\\Support\\Type\\Reference\\MethodCallReferenceType constructor expects Dedoc\\Scramble\\Support\\Type\\Type, Dedoc\\Scramble\\Support\\Type\\Type\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/InferExtensions/JsonResourceExtension.php
+
+		-
+			message: '#^Parameter \#1 \$jsonClass of static method Dedoc\\Scramble\\Support\\Helpers\\JsonResourceHelper\:\:modelType\(\) expects Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition, Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/InferExtensions/JsonResourceExtension.php
+
+		-
+			message: '#^Parameter \#1 \$object of class Dedoc\\Scramble\\Support\\Type\\Reference\\PropertyFetchReferenceType constructor expects Dedoc\\Scramble\\Support\\Type\\Type, Dedoc\\Scramble\\Support\\Type\\Type\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/InferExtensions/JsonResourceExtension.php
+
+		-
 			message: '#^Parameter \#2 \$haystack of function in_array expects array, array\<int, string\>\|string given\.$#'
 			identifier: argument.type
 			count: 1
@@ -3916,6 +4300,12 @@ parameters:
 			path: src/Support/InferExtensions/ModelExtension.php
 
 		-
+			message: '#^Parameter \#1 \$name of class Dedoc\\Scramble\\Support\\Type\\TemplateType constructor expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/InferExtensions/ModelExtension.php
+
+		-
 			message: '#^Property Dedoc\\Scramble\\Support\\InferExtensions\\ModelExtension\:\:\$cache has no type specified\.$#'
 			identifier: missingType.property
 			count: 1
@@ -3950,6 +4340,12 @@ parameters:
 			identifier: argument.type
 			count: 14
 			path: src/Support/InferExtensions/ResponseFactoryTypeInfer.php
+
+		-
+			message: '#^Cannot access property \$name on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Support/InferExtensions/TypeTraceInfer.php
 
 		-
 			message: '#^Parameter \#2 \$args of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:getArgType\(\) expects array\<PhpParser\\Node\\Arg\>, array\<PhpParser\\Node\\Arg\|PhpParser\\Node\\VariadicPlaceholder\> given\.$#'
@@ -3988,6 +4384,12 @@ parameters:
 			path: src/Support/OperationExtensions/ErrorResponsesExtension.php
 
 		-
+			message: '#^Cannot access property \$type on Dedoc\\Scramble\\Support\\Generator\\Schema\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Support/OperationExtensions/ErrorResponsesExtension.php
+
+		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ErrorResponsesExtension\:\:attachAuthenticationException\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -4022,6 +4424,12 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/Support/OperationExtensions/ErrorResponsesExtension.php
+
+		-
+			message: '#^Cannot access property \$type on Dedoc\\Scramble\\Support\\Generator\\Schema\|null\.$#'
+			identifier: property.nonObject
+			count: 5
+			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\AttributesParametersExtractor\:\:createNamedAttributes\(\) has parameter \$attributeArguments with no value type specified in iterable type array\.$#'
@@ -4072,8 +4480,8 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
 
 		-
-			message: '#^Call to an undefined method ReflectionType\:\:getName\(\)\.$#'
-			identifier: method.notFound
+			message: '#^Cannot call method getName\(\) on ReflectionType\|null\.$#'
+			identifier: method.nonObject
 			count: 1
 			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
 
@@ -4174,6 +4582,18 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
 
 		-
+			message: '#^Parameter \#1 \$reflectionType of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:createTypeFromReflectionType\(\) expects ReflectionType, ReflectionType\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
+
+		-
+			message: '#^Parameter \#1 \$string of static method Illuminate\\Support\\Str\:\:of\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
+
+		-
 			message: '#^Ternary operator condition is always true\.$#'
 			identifier: ternary.alwaysTrue
 			count: 1
@@ -4204,6 +4624,12 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
 
 		-
+			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:getPossibleParamType\(\) should return string\|null but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
+
+		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:handle\(\) has parameter \$parameterExtractionResults with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -4225,6 +4651,12 @@ parameters:
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:makeParameters\(\) has parameter \$rules with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
+			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
+
+		-
+			message: '#^Parameter \#1 \$object_or_class of function is_a expects object\|string, string\|null given\.$#'
+			identifier: argument.type
+			count: 3
 			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
 
 		-
@@ -4318,6 +4750,12 @@ parameters:
 			path: src/Support/OperationExtensions/RequestBodyExtension.php
 
 		-
+			message: '#^Parameter \#1 \$string of static method Illuminate\\Support\\Str\:\:of\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Support/OperationExtensions/RequestBodyExtension.php
+
+		-
 			message: '#^Unable to resolve the template type T in call to method static method Dedoc\\Scramble\\Support\\ContainerUtils\:\:makeContextable\(\)$#'
 			identifier: argument.templateType
 			count: 1
@@ -4390,10 +4828,22 @@ parameters:
 			path: src/Support/OperationExtensions/RequestEssentialsExtension.php
 
 		-
+			message: '#^Parameter \#1 \$class of function class_basename expects object\|string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/OperationExtensions/RequestEssentialsExtension.php
+
+		-
 			message: '#^Parameter \#1 \.\.\.\$values of method Illuminate\\Support\\Collection\<int,string\>\:\:push\(\) expects non\-falsy\-string, string\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Support/OperationExtensions/RequestEssentialsExtension.php
+
+		-
+			message: '#^Cannot access property \$description on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Support/OperationExtensions/ResponseExtension.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ResponseExtension\:\:handle\(\) has no return type specified\.$#'
@@ -4444,6 +4894,12 @@ parameters:
 			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
 
 		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
+
+		-
 			message: '#^Cannot cast PhpParser\\Node\\ComplexType\|PhpParser\\Node\\Identifier\|PhpParser\\Node\\Name\|null to string\.$#'
 			identifier: cast.string
 			count: 2
@@ -4452,6 +4908,12 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\NodeRulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
+			count: 1
+			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
+
+		-
+			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\NodeRulesEvaluator\:\:handle\(\) should return array but returns mixed\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
 
@@ -4498,18 +4960,6 @@ parameters:
 			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\DeepParametersMerger\:\:handleNested\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\DeepParametersMerger\:\:handleNested\(\) has parameter \$parameters with generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\DeepParametersMerger\:\:setDeepType\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -4522,8 +4972,8 @@ parameters:
 			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$nested contains generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
+			message: '#^Parameter \#1 \$name of method Dedoc\\Scramble\\Support\\Generator\\Types\\ObjectType\:\:addProperty\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
 
@@ -4756,6 +5206,18 @@ parameters:
 			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
 
 		-
+			message: '#^Binary operation "\." between '' '' and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameter.php
+
+		-
+			message: '#^Cannot access property \$type on Dedoc\\Scramble\\Support\\Generator\\Schema\|null\.$#'
+			identifier: property.nonObject
+			count: 4
+			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameter.php
+
+		-
 			message: '#^Cannot call method __toString\(\) on class\-string\|object\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -4799,6 +5261,12 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$class of function class_basename expects object\|string, class\-string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameter.php
+
+		-
+			message: '#^Parameter \#1 \$string of static method Illuminate\\Support\\Str\:\:of\(\) expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameter.php
@@ -4924,6 +5392,12 @@ parameters:
 			path: src/Support/ResponseExtractor/ModelInfo.php
 
 		-
+			message: '#^Method Dedoc\\Scramble\\Support\\ResponseExtractor\\ModelInfo\:\:getCastType\(\) should return string\|null but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Support/ResponseExtractor/ModelInfo.php
+
+		-
 			message: '#^Method Dedoc\\Scramble\\Support\\ResponseExtractor\\ModelInfo\:\:getCastsWithDates\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
 			identifier: missingType.generics
 			count: 1
@@ -5014,10 +5488,58 @@ parameters:
 			path: src/Support/RouteInfo.php
 
 		-
+			message: '#^Parameter \#1 \$class of method Dedoc\\Scramble\\Infer\:\:analyzeClass\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/RouteInfo.php
+
+		-
+			message: '#^Parameter \#1 \$name of method ReflectionClass\<object\>\:\:getMethod\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/RouteInfo.php
+
+		-
 			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Support/RouteInfo.php
+
+		-
+			message: '#^Parameter \#1 \$object_or_class of function method_exists expects object\|string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/RouteInfo.php
+
+		-
+			message: '#^Parameter \#2 \$method of function method_exists expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/RouteInfo.php
+
+		-
+			message: '#^Parameter \#2 \$string of function explode expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Support/RouteInfo.php
+
+		-
+			message: '#^Property Dedoc\\Scramble\\Support\\RouteInfo\:\:\$phpDoc \(PHPStan\\PhpDocParser\\Ast\\PhpDoc\\PhpDocNode\|null\) does not accept mixed\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Support/RouteInfo.php
+
+		-
+			message: '#^Cannot access property \$type on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/Support/RouteResponseTypeRetriever.php
+
+		-
+			message: '#^Cannot call method getAttribute\(\) on Dedoc\\Scramble\\Support\\Type\\FunctionType\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Support/RouteResponseTypeRetriever.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\RouteResponseTypeRetriever\:\:countKnownTypes\(\) has no return type specified\.$#'
@@ -5076,6 +5598,12 @@ parameters:
 		-
 			message: '#^Negated boolean expression is always false\.$#'
 			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: src/Support/RouteResponseTypeRetriever.php
+
+		-
+			message: '#^Parameter \#1 \$name of class Dedoc\\Scramble\\Support\\Type\\ObjectType constructor expects string, string\|null given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Support/RouteResponseTypeRetriever.php
 
@@ -5554,6 +6082,12 @@ parameters:
 			path: src/Support/Type/TypeTraverser.php
 
 		-
+			message: '#^Parameter \#1 \$type of method Dedoc\\Scramble\\Support\\Type\\TypeTraverser\:\:traverse\(\) expects Dedoc\\Scramble\\Support\\Type\\Type, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/Type/TypeTraverser.php
+
+		-
 			message: '#^Call to an undefined method Dedoc\\Scramble\\Support\\Type\\Type\:\:attributes\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -5562,6 +6096,24 @@ parameters:
 		-
 			message: '#^Call to an undefined method Dedoc\\Scramble\\Support\\Type\\Type\:\:mergeAttributes\(\)\.$#'
 			identifier: method.notFound
+			count: 1
+			path: src/Support/Type/TypeWalker.php
+
+		-
+			message: '#^Method Dedoc\\Scramble\\Support\\Type\\TypeWalker\:\:map\(\) should return Dedoc\\Scramble\\Support\\Type\\Type but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Support/Type/TypeWalker.php
+
+		-
+			message: '#^Parameter \#1 \$subject of method Dedoc\\Scramble\\Support\\Type\\TypeWalker\:\:map\(\) expects Dedoc\\Scramble\\Support\\Type\\Type, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/Type/TypeWalker.php
+
+		-
+			message: '#^Parameter \#1 \$subject of method Dedoc\\Scramble\\Support\\Type\\TypeWalker\:\:replace\(\) expects Dedoc\\Scramble\\Support\\Type\\Type, mixed given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Support/Type/TypeWalker.php
 
@@ -5746,6 +6298,18 @@ parameters:
 			path: src/Support/TypeToSchemaExtensions/EloquentCollectionToSchema.php
 
 		-
+			message: '#^Binary operation "\." between mixed and '' '' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Support/TypeToSchemaExtensions/EnumToSchema.php
+
+		-
+			message: '#^Binary operation "\." between non\-falsy\-string and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Support/TypeToSchemaExtensions/EnumToSchema.php
+
+		-
 			message: '#^Call to an undefined method ReflectionEnumUnitCase\:\:getBackingValue\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -5790,6 +6354,12 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$objectOrClass of class ReflectionEnum constructor expects class\-string\<T of UnitEnum\>\|T of UnitEnum, string given\.$#'
 			identifier: argument.type
+			count: 1
+			path: src/Support/TypeToSchemaExtensions/EnumToSchema.php
+
+		-
+			message: '#^Part \$description \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
 			count: 1
 			path: src/Support/TypeToSchemaExtensions/EnumToSchema.php
 
@@ -6018,6 +6588,12 @@ parameters:
 		-
 			message: '#^Offset 0 might not exist on array\{0\?\: mixed, 1\?\: mixed, 2\?\: mixed\}\.$#'
 			identifier: offsetAccess.notFound
+			count: 1
+			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
+
+		-
+			message: '#^Parameter \#1 \$scope of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:resolve\(\) expects Dedoc\\Scramble\\Infer\\Scope\\Scope, Dedoc\\Scramble\\Infer\\Scope\\Scope\|null given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
 
