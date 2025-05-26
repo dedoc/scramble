@@ -40,7 +40,7 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
             return false;
         }
 
-        $isManuallyAnnotatedPaginator = count($type->templateTypes) === 1 &&  $type->templateTypes[0] instanceof ObjectType;
+        $isManuallyAnnotatedPaginator = count($type->templateTypes) === 1 && $type->templateTypes[0] instanceof ObjectType;
         $isInferredPaginator = count($type->templateTypes) === 2 && $type->templateTypes[1] instanceof ObjectType;
 
         return $isManuallyAnnotatedPaginator || $isInferredPaginator;
