@@ -11,6 +11,7 @@ use PhpParser\Node;
 
 /**
  * @internal
+ *
  * @phpstan-type NamePosition array{?string, int}
  */
 class MethodQuery
@@ -32,7 +33,7 @@ class MethodQuery
     }
 
     /**
-     * @param NamePosition $positionName
+     * @param  NamePosition  $positionName
      */
     public function withArgumentType(array $positionName, Type $type): static
     {
@@ -56,7 +57,7 @@ class MethodQuery
                 {
                     /**
                      * @param  Bag<array{scope: Scope, types: Type[], _hasReplaced: bool}>  $bag
-                     * @param array{array{?string, int}, Type}[]  $argumentsOverrides
+                     * @param  array{array{?string, int}, Type}[]  $argumentsOverrides
                      */
                     public function __construct(private Bag $bag, private array $argumentsOverrides = []) {}
 
