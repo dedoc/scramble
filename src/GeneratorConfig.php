@@ -7,7 +7,6 @@ use Dedoc\Scramble\Configuration\DocumentTransformers;
 use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Dedoc\Scramble\Configuration\ServerVariables;
-use Dedoc\Scramble\Contracts\DocumentTransformer;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
