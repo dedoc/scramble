@@ -160,7 +160,7 @@ class GeneratorConfig
 
         return count($reflection->getParameters()) === 1
             && $reflection->getParameters()[0]->getType() instanceof ReflectionNamedType
-            && is_a($reflection->getParameters()[0]->getType()->getName(), DocumentTransformer::class, true);
+            && is_a($reflection->getParameters()[0]->getType()->getName(), DocumentTransformers::class, true);
     }
 
     /**
