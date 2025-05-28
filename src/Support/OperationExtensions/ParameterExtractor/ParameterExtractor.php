@@ -8,7 +8,7 @@ use Dedoc\Scramble\Support\RouteInfo;
 interface ParameterExtractor
 {
     /**
-     * @param ParametersExtractionResult[] $parameterExtractionResults
+     * @param  ParametersExtractionResult[]  $parameterExtractionResults
      * @return ParametersExtractionResult[]
      */
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array;
