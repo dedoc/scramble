@@ -7,8 +7,8 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\RulesNodes;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
-use PhpParser\Node;
 use Illuminate\Support\Collection;
+use PhpParser\Node;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 /**
@@ -22,8 +22,8 @@ class RulesToParameters
     private bool $mergeDotNotatedKeys = true;
 
     /**
-     * @param array<string, Rules> $rules
-     * @param Node[]|RulesNodes $validationNodesResults
+     * @param  array<string, Rules>  $rules
+     * @param  Node[]|RulesNodes  $validationNodesResults
      */
     public function __construct(
         private array $rules,
