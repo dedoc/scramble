@@ -997,6 +997,12 @@ parameters:
 			path: src/Infer/DefinitionBuilders/LazyClassReflectionDefinitionBuilder.php
 
 		-
+			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\AfterClassDefinitionCreatedExtension\:\:afterClassDefinitionCreated\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Infer/Extensions/AfterClassDefinitionCreatedExtension.php
+
+		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\AfterSideEffectCallAnalyzed\:\:afterSideEffectCallAnalyzed\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
