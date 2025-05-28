@@ -8,5 +8,5 @@ interface AfterClassDefinitionCreatedExtension extends InferExtension
 {
     public function shouldHandle(string $name): bool;
 
-    public function afterClassDefinitionCreated(ClassDefinitionCreatedEvent $event);
+    public function afterClassDefinitionCreated(ClassDefinitionCreatedEvent $event): void;
 }

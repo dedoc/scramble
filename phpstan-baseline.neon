@@ -997,12 +997,6 @@ parameters:
 			path: src/Infer/DefinitionBuilders/LazyClassReflectionDefinitionBuilder.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\AfterClassDefinitionCreatedExtension\:\:afterClassDefinitionCreated\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Extensions/AfterClassDefinitionCreatedExtension.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\AfterSideEffectCallAnalyzed\:\:afterSideEffectCallAnalyzed\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -2728,12 +2722,6 @@ parameters:
 			path: src/Support/ExceptionToResponseExtensions/HttpExceptionToResponseExtension.php
 
 		-
-			message: '#^Parameter \#2 \$callback of function tap expects \(callable\(Dedoc\\Scramble\\Support\\Generator\\Types\\Type\)\: mixed\)\|null, Closure\(Dedoc\\Scramble\\Support\\Generator\\Types\\StringType\)\: void given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/ExceptionToResponseExtensions/HttpExceptionToResponseExtension.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\ExceptionToResponseExtensions\\NotFoundExceptionToResponseExtension\:\:reference\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -2750,12 +2738,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: src/Support/ExceptionToResponseExtensions/NotFoundExceptionToResponseExtension.php
-
-		-
-			message: '#^Call to an undefined method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:additionalProperties\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/Support/ExceptionToResponseExtensions/ValidationExceptionToResponseExtension.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\ExceptionToResponseExtensions\\ValidationExceptionToResponseExtension\:\:reference\(\) has no return type specified\.$#'
@@ -4450,32 +4432,8 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\AttributesParametersExtractor\:\:handle\(\) has parameter \$parameterExtractionResults with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\AttributesParametersExtractor\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
-
-		-
 			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
 			identifier: argument.type
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
-
-		-
-			message: '#^Unable to resolve the template type TKey in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function collect$#'
-			identifier: argument.templateType
 			count: 1
 			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
 
@@ -4488,18 +4446,6 @@ parameters:
 		-
 			message: '#^Class Spatie\\LaravelData\\Contracts\\BaseData not found\.$#'
 			identifier: class.notFound
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\FormRequestParametersExtractor\:\:handle\(\) has parameter \$parameterExtractionResults with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\FormRequestParametersExtractor\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
 
@@ -4522,30 +4468,6 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\MethodCallsParametersExtractor\:\:handle\(\) has parameter \$parameterExtractionResults with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/MethodCallsParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\MethodCallsParametersExtractor\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/MethodCallsParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ParameterExtractor\:\:handle\(\) has parameter \$parameterExtractionResults with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/ParameterExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ParameterExtractor\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/ParameterExtractor.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\PathParametersExtractor\:\:getModelIdTypeAndDescription\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -4560,18 +4482,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\PathParametersExtractor\:\:getParametersFromString\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\PathParametersExtractor\:\:handle\(\) has parameter \$parameterExtractionResults with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\PathParametersExtractor\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
 
@@ -4626,18 +4536,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:getPossibleParamType\(\) should return string\|null but returns mixed\.$#'
 			identifier: return.type
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:handle\(\) has parameter \$parameterExtractionResults with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
 
