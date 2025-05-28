@@ -25,10 +25,13 @@ class RulesToParameters
      */
     public function __construct(
         private array $rules,
-        RulesNodes $validationNodesResults,
+        array|RulesNodes $validationNodesResults,
         private TypeTransformer $openApiTransformer,
         private string $in = 'query',
     ) {
+        // This is for backward compatibility
+        $validationNodesResults = is_array($validationNodesResults) ? RulesNodes::makeFromStatements($validationNodesResults) : $validationNodesResults;
+
         $this->nodeDocs = $validationNodesResults->getDocNodes();
     }
 
