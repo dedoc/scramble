@@ -140,7 +140,6 @@ class FunctionLikeHandler implements CreatesScope
                 || in_array(get_class(TypeHelper::createTypeFromTypeNode($returnTypeAnnotation)), [
                     IntegerType::class,
                     FloatType::class,
-                    BooleanType::class,
                 ])
             )
         ) {
