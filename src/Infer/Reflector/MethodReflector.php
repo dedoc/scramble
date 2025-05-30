@@ -70,16 +70,16 @@ class MethodReflector
 
             $partialClass = "<?php$lines class $className {\n".$methodDoc."\n".$this->getMethodCode()."\n}";
 
-            $statements = $this->parser->parseContent($partialClass)->getStatements();
             $node = (new NodeFinder)
                 ->findFirst(
-                    $statements,
+                    $this->parser->parseContent($partialClass)->getStatements(),
                     fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $this->name,
                 );
+            $fileNameContext = FileNameResolver::createForFile($this->getReflection()->getFileName());
 
             $traverser = new NodeTraverser;
 
-            $traverser->addVisitor(new class($this->getClassReflector()->getNameContext()) extends NameResolver
+            $traverser->addVisitor(new class($fileNameContext->nameContext) extends NameResolver
             {
                 public function __construct($nameContext)
                 {
@@ -92,9 +92,7 @@ class MethodReflector
                     return null;
                 }
             });
-            $traverser->addVisitor(new PhpDocResolver(
-                new FileNameResolver($this->getClassReflector()->getNameContext()),
-            ));
+            $traverser->addVisitor(new PhpDocResolver($fileNameContext));
 
             $traverser->traverse([$node]);
 
