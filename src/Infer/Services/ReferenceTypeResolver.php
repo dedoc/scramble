@@ -303,7 +303,16 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$name]");
         }
 
-        return $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType, $event);
+        $resultingType = $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType, $event);
+
+        if ($calleeType instanceof SelfType) {
+            return $resultingType;
+        }
+
+        // @todo resolve template type?
+        return $resultingType instanceof TemplateType
+            ? ($resultingType->is ?: new UnknownType)
+            : $resultingType;
     }
 
     private function resolveStaticMethodCallReferenceType(Scope $scope, StaticMethodCallReferenceType $type)
@@ -548,7 +557,11 @@ class ReferenceTypeResolver
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type)
     {
-        $objectType = $this->resolve($scope, $type->object);
+        $objectType = $type->object;
+        if ($objectType instanceof TemplateType && $objectType->is) {
+            $objectType = $objectType->is;
+        }
+        $objectType = $this->resolve($scope, $objectType);
 
         if (
             $objectType instanceof AbstractReferenceType
@@ -587,7 +600,16 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get property [$type->propertyName] type on [$name]");
         }
 
-        return $objectType->getPropertyType($type->propertyName, $scope);
+        $propertyType = $objectType->getPropertyType($type->propertyName, $scope);
+
+        if ($objectType instanceof SelfType) {
+            return $propertyType;
+        }
+
+        // @todo resolve template type?
+        return $propertyType instanceof TemplateType
+            ? ($propertyType->is ?: new UnknownType)
+            : $propertyType;
     }
 
     private function getFunctionCallResult(
