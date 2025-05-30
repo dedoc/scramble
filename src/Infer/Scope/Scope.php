@@ -210,15 +210,6 @@ class Scope
                 return new UnknownType('Cannot infer type of property fetch: not supported yet.');
             }
 
-            $calleeType = $this->getType($node->var);
-            if ($calleeType instanceof TemplateType) {
-                // @todo
-                // if ($calleeType->is instanceof ObjectType) {
-                //     $calleeType = $calleeType->is;
-                // }
-                return $this->setType($node, new UnknownType("Cannot infer type of property [{$name}] fetch on template type: not supported yet."));
-            }
-
             return $this->setType(
                 $node,
                 new PropertyFetchReferenceType($this->getType($node->var), $name),

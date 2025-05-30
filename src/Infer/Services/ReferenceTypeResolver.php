@@ -548,7 +548,11 @@ class ReferenceTypeResolver
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type)
     {
-        $objectType = $this->resolve($scope, $type->object);
+        $objectType = $type->object;
+        if ($objectType instanceof TemplateType && $objectType->is) {
+            $objectType = $objectType->is;
+        }
+        $objectType = $this->resolve($scope, $objectType);
 
         if (
             $objectType instanceof AbstractReferenceType
@@ -587,7 +591,16 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get property [$type->propertyName] type on [$name]");
         }
 
-        return $objectType->getPropertyType($type->propertyName, $scope);
+        $propertyType = $objectType->getPropertyType($type->propertyName, $scope);
+
+        if ($objectType instanceof SelfType) {
+            return $propertyType;
+        }
+
+        // @todo resolve template type
+        return $propertyType instanceof TemplateType
+            ? ($propertyType->is ? $propertyType->is : new UnknownType)
+            : $propertyType;
     }
 
     private function getFunctionCallResult(
