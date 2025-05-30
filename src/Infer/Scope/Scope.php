@@ -146,17 +146,6 @@ class Scope
 
             $exceptions = $event ? app(ExtensionsBroker::class)->getMethodCallExceptions($event) : [];
 
-            if (
-                $calleeType instanceof TemplateType
-                && ! $exceptions
-            ) {
-                // @todo
-                // if ($calleeType->is instanceof ObjectType) {
-                //     $calleeType = $calleeType->is;
-                // }
-                return $this->setType($node, new UnknownType("Cannot infer type of method [{$node->name->name}] call on template type: not supported yet."));
-            }
-
             $referenceType = new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args));
 
             /*

@@ -303,7 +303,16 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$name]");
         }
 
-        return $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType, $event);
+        $resultingType = $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType, $event);
+
+        if ($calleeType instanceof SelfType) {
+            return $resultingType;
+        }
+
+        // @todo resolve template type?
+        return $resultingType instanceof TemplateType
+            ? ($resultingType->is ?: new UnknownType)
+            : $resultingType;
     }
 
     private function resolveStaticMethodCallReferenceType(Scope $scope, StaticMethodCallReferenceType $type)
@@ -597,9 +606,9 @@ class ReferenceTypeResolver
             return $propertyType;
         }
 
-        // @todo resolve template type
+        // @todo resolve template type?
         return $propertyType instanceof TemplateType
-            ? ($propertyType->is ? $propertyType->is : new UnknownType)
+            ? ($propertyType->is ?: new UnknownType)
             : $propertyType;
     }
 
