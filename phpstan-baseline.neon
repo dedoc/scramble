@@ -1585,12 +1585,6 @@ parameters:
 			path: src/Infer/Reflector/MethodReflector.php
 
 		-
-			message: '#^Method PhpParser\\NodeVisitor\\NameResolver@anonymous/src/Infer/Reflector/MethodReflector\.php\:82\:\:__construct\(\) has parameter \$nameContext with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Infer/Reflector/MethodReflector.php
-
-		-
 			message: '#^Parameter \#1 \$array of function array_slice expects array, list\<string\>\|false given\.$#'
 			identifier: argument.type
 			count: 1
