@@ -6,12 +6,11 @@ use Illuminate\Support\Arr;
 
 class Union extends AbstractType
 {
-    /** @var Type[] */
-    public array $types;
-
-    public function __construct(array $types)
+    /**
+     * @param Type[] $types
+     */
+    public function __construct(public array $types)
     {
-        $this->types = $types;
     }
 
     public function nodes(): array
@@ -25,7 +24,10 @@ class Union extends AbstractType
             && collect($this->types)->every(fn (Type $t, $i) => $t->isSame($type->types[$i]));
     }
 
-    public static function wrap(...$types)
+    /**
+     * @param Type|Type[] $types
+     */
+    public static function wrap(...$types): Type
     {
         $types = Arr::wrap(...$types);
         $types = collect(array_values($types))
@@ -41,7 +43,7 @@ class Union extends AbstractType
             return $types[0];
         }
 
-        return new static($types);
+        return new self($types);
     }
 
     public function toString(): string

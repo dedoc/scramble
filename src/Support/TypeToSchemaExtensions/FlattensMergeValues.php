@@ -21,7 +21,11 @@ use Illuminate\Http\Resources\MissingValue;
 
 trait FlattensMergeValues
 {
-    protected function flattenMergeValues(array $items)
+    /**
+     * @param ArrayItemType_[] $items
+     * @return ArrayItemType_[]
+     */
+    protected function flattenMergeValues(array $items): array
     {
         return collect($items)
             ->flatMap(function (ArrayItemType_ $item) {
@@ -62,15 +66,12 @@ trait FlattensMergeValues
                     }
                 }
 
-                $isUnionWithMissingValue = fn ($type) => $type instanceof Union
-                    && (bool) array_filter($type->types, fn (Type $t) => $t->isInstanceOf(MissingValue::class));
-
                 if (
                     $item->value instanceof Union
-                    && (new TypeWalker)->first($item->value, $isUnionWithMissingValue)
+                    && (new TypeWalker)->first($item->value, $this->isUnionWithMissingValue(...))
                 ) {
-                    $newType = (new TypeWalker)->replace($item->value, function (Type $t) use ($isUnionWithMissingValue) {
-                        if (! $isUnionWithMissingValue($t)) {
+                    $newType = (new TypeWalker)->replace($item->value, function (Type $t) {
+                        if (! $this->isUnionWithMissingValue($t)) {
                             return null;
                         }
 
@@ -120,6 +121,15 @@ trait FlattensMergeValues
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * @phpstan-assert-if-true Union $type
+     */
+    private function isUnionWithMissingValue(Type $type): bool
+    {
+        return $type instanceof Union
+            && (bool) array_filter($type->types, fn (Type $t) => $t->isInstanceOf(MissingValue::class));
     }
 
     /**

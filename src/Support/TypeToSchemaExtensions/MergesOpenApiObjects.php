@@ -6,7 +6,7 @@ use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
 
 trait MergesOpenApiObjects
 {
-    protected function mergeOpenApiObjects(OpenApiTypes\ObjectType $into, OpenApiTypes\Type $what)
+    protected function mergeOpenApiObjects(OpenApiTypes\ObjectType $into, OpenApiTypes\Type $what): void
     {
         if (! $what instanceof OpenApiTypes\ObjectType) {
             return;
