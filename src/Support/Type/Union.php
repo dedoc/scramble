@@ -7,11 +7,9 @@ use Illuminate\Support\Arr;
 class Union extends AbstractType
 {
     /**
-     * @param Type[] $types
+     * @param  Type[]  $types
      */
-    public function __construct(public array $types)
-    {
-    }
+    public function __construct(public array $types) {}
 
     public function nodes(): array
     {
@@ -25,7 +23,7 @@ class Union extends AbstractType
     }
 
     /**
-     * @param Type|Type[] $types
+     * @param  Type|Type[]  $types
      */
     public static function wrap(...$types): Type
     {

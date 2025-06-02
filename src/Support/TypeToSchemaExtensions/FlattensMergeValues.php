@@ -22,7 +22,7 @@ use Illuminate\Http\Resources\MissingValue;
 trait FlattensMergeValues
 {
     /**
-     * @param ArrayItemType_[] $items
+     * @param  ArrayItemType_[]  $items
      * @return ArrayItemType_[]
      */
     protected function flattenMergeValues(array $items): array

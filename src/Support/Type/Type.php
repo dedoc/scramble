@@ -20,7 +20,7 @@ interface Type
     public function attributes(): array;
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      * @return $this
      */
     public function mergeAttributes(array $attributes): static;
