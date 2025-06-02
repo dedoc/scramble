@@ -11,7 +11,7 @@ use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType as OpenApiArrayType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
-use Dedoc\Scramble\Support\Generator\Types\UnknownType;
+use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type as InferType;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -41,7 +41,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
         parent::__construct($infer, $openApiTransformer, $components);
     }
 
-    public function shouldHandle(Type $type)
+    public function shouldHandle(Type $type): bool
     {
         return $type instanceof Generic
             && $type->isInstanceOf(AnonymousResourceCollection::class)
@@ -51,7 +51,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     /**
      * @param  Generic  $type
      */
-    public function toSchema(Type $type)
+    public function toSchema(Type $type): ?OpenApiType
     {
         if (! $collectingResourceType = $this->getCollectingResourceType($type)) {
             return null;
@@ -64,7 +64,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     /**
      * @param  Generic  $type
      */
-    public function toResponse(Type $type)
+    public function toResponse(Type $type): ?Response
     {
         $additional = $type->templateTypes[1 /* TAdditional */] ?? new InferType\UnknownType;
 
@@ -112,7 +112,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     /**
      * @see PaginatedResourceResponse
      */
-    private function getPaginatedCollectionResponse(Generic $type, ObjectType $collectingClassType, string $wrapKey, Type $additional)
+    private function getPaginatedCollectionResponse(Generic $type, ObjectType $collectingClassType, string $wrapKey, Type $additional): ?Response
     {
         if (! $type->isInstanceOf(AbstractPaginator::class) && ! $type->isInstanceOf(AbstractCursorPaginator::class)) {
             return null;
@@ -163,8 +163,8 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     private function getCollectingResourceType(Generic $type): ?ObjectType
     {
         // In case of paginated resource, we still want to get to the underlying JsonResource.
-        return (new TypeWalker)->first(
-            new Union([$type->templateTypes[0], $type->templateTypes[1] ?? new UnknownType]),
+        return (new TypeWalker)->first( // @phpstan-ignore return.type
+            new Union([$type->templateTypes[0], $type->templateTypes[1] ?? new InferType\UnknownType]),
             fn (Type $t) => $t->isInstanceOf(JsonResource::class),
         );
     }

@@ -32,12 +32,18 @@ trait TypeAttributes
         return null;
     }
 
-    public function attributes()
+    /**
+     * @return array<string, mixed>
+     */
+    public function attributes(): array
     {
         return $this->attributes;
     }
 
-    public function mergeAttributes($attributes)
+    /**
+     * @return $this
+     */
+    public function mergeAttributes($attributes): static
     {
         $this->attributes = array_merge($this->attributes, $attributes);
 
