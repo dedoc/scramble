@@ -35,6 +35,36 @@ class GroupTest_C_Controller
     public function __invoke() {}
 }
 
+it('allows groups defined on route methods', function () {
+    RouteFacade::get('api/a', GroupTest_A2_Controller::class);
+    RouteFacade::get('api/b', GroupTest_B2_Controller::class);
+    RouteFacade::get('api/c', GroupTest_C2_Controller::class);
+
+    Scramble::routes(fn (Route $r) => in_array($r->uri, ['api/a', 'api/b', 'api/c']));
+
+    $openApiDoc = app()->make(Generator::class)();
+
+    expect(array_keys($openApiDoc['paths']))
+        ->toBe(['/c', '/b', '/a'])
+        ->and(data_get($openApiDoc['paths'], '*.*.tags.*'))
+        ->toBe(['C 2', 'B 2', 'A 2']);
+});
+class GroupTest_A2_Controller
+{
+    #[Group(name: 'A 2', weight: 2)]
+    public function __invoke() {}
+}
+class GroupTest_B2_Controller
+{
+    #[Group(name: 'B 2', weight: 1)]
+    public function __invoke() {}
+}
+class GroupTest_C2_Controller
+{
+    #[Group(name: 'C 2', weight: 0)]
+    public function __invoke() {}
+}
+
 it('stores named group as the document level tag', function () {
     $openApiDoc = generateForRoute(fn () => RouteFacade::get('api/d', GroupTest_D_Controller::class));
 

@@ -189,7 +189,10 @@ class RequestEssentialsExtension extends OperationExtension
     {
         return array_map(
             fn (ReflectionAttribute $attribute) => $attribute->newInstance(),
-            $routeInfo->reflectionMethod()?->getDeclaringClass()->getAttributes(Group::class) ?? [],
+            [
+                ...($routeInfo->reflectionMethod()?->getAttributes(Group::class) ?? []),
+                ...($routeInfo->reflectionMethod()?->getDeclaringClass()->getAttributes(Group::class) ?? []),
+            ],
         );
     }
 
