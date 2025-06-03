@@ -90,7 +90,7 @@ class Scramble
      */
     public static function registerExtension(string $extensionClassName): void
     {
-        static::$extensions[] = $extensionClassName;
+        static::$extensions = array_values(array_unique(array_merge(static::$extensions, [$extensionClassName])));
     }
 
     /**
@@ -98,7 +98,7 @@ class Scramble
      */
     public static function registerExtensions(array $extensionClassNames): void
     {
-        static::$extensions = array_merge(static::$extensions, $extensionClassNames);
+        static::$extensions = array_values(array_unique(array_merge(static::$extensions, $extensionClassNames)));
     }
 
     /**
