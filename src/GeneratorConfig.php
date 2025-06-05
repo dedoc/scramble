@@ -7,7 +7,6 @@ use Dedoc\Scramble\Configuration\DocumentTransformers;
 use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Dedoc\Scramble\Configuration\ServerVariables;
-use Dedoc\Scramble\Contracts\DocumentTransformer;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
@@ -160,7 +159,7 @@ class GeneratorConfig
 
         return count($reflection->getParameters()) === 1
             && $reflection->getParameters()[0]->getType() instanceof ReflectionNamedType
-            && is_a($reflection->getParameters()[0]->getType()->getName(), DocumentTransformer::class, true);
+            && is_a($reflection->getParameters()[0]->getType()->getName(), DocumentTransformers::class, true);
     }
 
     /**

@@ -8,6 +8,7 @@ use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\RulesNodes;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use PhpParser\Node;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 /**
@@ -22,13 +23,17 @@ class RulesToParameters
 
     /**
      * @param  array<string, Rules>  $rules
+     * @param  Node[]|RulesNodes  $validationNodesResults
      */
     public function __construct(
         private array $rules,
-        RulesNodes $validationNodesResults,
+        array|RulesNodes $validationNodesResults,
         private TypeTransformer $openApiTransformer,
         private string $in = 'query',
     ) {
+        // This is for backward compatibility
+        $validationNodesResults = is_array($validationNodesResults) ? RulesNodes::makeFromStatements($validationNodesResults) : $validationNodesResults;
+
         $this->nodeDocs = $validationNodesResults->getDocNodes();
     }
 

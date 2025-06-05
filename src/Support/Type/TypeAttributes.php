@@ -29,11 +29,17 @@ trait TypeAttributes
         return null;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function attributes(): array
     {
         return $this->attributes;
     }
 
+    /**
+     * @return $this
+     */
     public function mergeAttributes($attributes): self
     {
         $this->attributes = array_merge($this->attributes, $attributes);

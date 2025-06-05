@@ -712,7 +712,7 @@ class FormRequestsValidationRulesWithConstsDocs_Test
 
 class ValidationRulesAndFormRequestAtTheSameTime_TestFormRequest extends \Illuminate\Foundation\Http\FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
@@ -727,7 +727,7 @@ class ValidationRulesAndFormRequestAtTheSameTime_TestFormRequest extends \Illumi
 
 class FormRequestWithDocs_TestFormRequest extends \Illuminate\Foundation\Http\FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }

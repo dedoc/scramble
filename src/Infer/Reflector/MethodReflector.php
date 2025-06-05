@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Infer\Reflector;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
+use PhpParser\NameContext;
 use PhpParser\Node;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeFinder;
@@ -70,32 +71,33 @@ class MethodReflector
 
             $partialClass = "<?php$lines class $className {\n".$methodDoc."\n".$this->getMethodCode()."\n}";
 
-            $statements = $this->parser->parseContent($partialClass)->getStatements();
             $node = (new NodeFinder)
                 ->findFirst(
-                    $statements,
+                    $this->parser->parseContent($partialClass)->getStatements(),
                     fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $this->name,
                 );
 
-            $traverser = new NodeTraverser;
+            if (! $path = $this->getReflection()->getFileName()) {
+                return null;
+            }
+            $fileNameContext = FileNameResolver::createForFile($path);
 
-            $traverser->addVisitor(new class($this->getClassReflector()->getNameContext()) extends NameResolver
-            {
-                public function __construct($nameContext)
+            $traverser = new NodeTraverser(
+                new class($fileNameContext->nameContext) extends NameResolver
                 {
-                    parent::__construct();
-                    $this->nameContext = $nameContext;
-                }
+                    public function __construct(NameContext $nameContext)
+                    {
+                        parent::__construct();
+                        $this->nameContext = $nameContext;
+                    }
 
-                public function beforeTraverse(array $nodes): ?array
-                {
-                    return null;
-                }
-            });
-            $traverser->addVisitor(new PhpDocResolver(
-                new FileNameResolver($this->getClassReflector()->getNameContext()),
-            ));
-
+                    public function beforeTraverse(array $nodes): ?array
+                    {
+                        return null;
+                    }
+                },
+                new PhpDocResolver($fileNameContext),
+            );
             $traverser->traverse([$node]);
 
             $this->methodNode = $node;

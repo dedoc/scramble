@@ -41,6 +41,9 @@ abstract class Type
         $this->default = new MissingExample;
     }
 
+    /**
+     * @return $this
+     */
     public function nullable(bool $nullable): self
     {
         $this->nullable = $nullable;
@@ -48,6 +51,9 @@ abstract class Type
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function format(string $format): self
     {
         $this->format = $format;
@@ -55,6 +61,9 @@ abstract class Type
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function contentMediaType(string $mediaType): self
     {
         $this->contentMediaType = $mediaType;
@@ -62,6 +71,9 @@ abstract class Type
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function contentEncoding(string $encoding): self
     {
         $this->contentEncoding = $encoding;
@@ -69,6 +81,9 @@ abstract class Type
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function addProperties(Type $fromType): self
     {
         $this->attributes = $fromType->attributes;
@@ -105,6 +120,9 @@ abstract class Type
         );
     }
 
+    /**
+     * @return $this
+     */
     public function setDescription(string $description): self
     {
         $this->description = $description;
@@ -112,6 +130,9 @@ abstract class Type
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function enum(array $enum): self
     {
         $this->enum = $enum;
@@ -121,6 +142,7 @@ abstract class Type
 
     /**
      * @param  array|scalar|null|MissingExample  $example
+     * @return $this
      */
     public function example($example): self
     {
@@ -131,6 +153,7 @@ abstract class Type
 
     /**
      * @param  array|scalar|null|MissingExample  $default
+     * @return $this
      */
     public function default($default): self
     {
@@ -141,6 +164,7 @@ abstract class Type
 
     /**
      * @param  array<array|scalar|null|MissingExample>  $examples
+     * @return $this
      */
     public function examples(array $examples): self
     {

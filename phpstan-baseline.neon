@@ -1441,12 +1441,6 @@ parameters:
 			path: src/Infer/Reflector/MethodReflector.php
 
 		-
-			message: '#^Method PhpParser\\NodeVisitor\\NameResolver@anonymous/src/Infer/Reflector/MethodReflector\.php\:82\:\:__construct\(\) has parameter \$nameContext with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Infer/Reflector/MethodReflector.php
-
-		-
 			message: '#^Parameter \#1 \$array of function array_slice expects array, list\<string\>\|false given\.$#'
 			identifier: argument.type
 			count: 1
@@ -2416,12 +2410,6 @@ parameters:
 			path: src/Support/ExceptionToResponseExtensions/HttpExceptionToResponseExtension.php
 
 		-
-			message: '#^Parameter \#2 \$callback of function tap expects \(callable\(Dedoc\\Scramble\\Support\\Generator\\Types\\Type\)\: mixed\)\|null, Closure\(Dedoc\\Scramble\\Support\\Generator\\Types\\StringType\)\: void given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/ExceptionToResponseExtensions/HttpExceptionToResponseExtension.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\ExceptionToResponseExtensions\\NotFoundExceptionToResponseExtension\:\:reference\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -2438,12 +2426,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: src/Support/ExceptionToResponseExtensions/NotFoundExceptionToResponseExtension.php
-
-		-
-			message: '#^Call to an undefined method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:additionalProperties\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/Support/ExceptionToResponseExtensions/ValidationExceptionToResponseExtension.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\ExceptionToResponseExtensions\\ValidationExceptionToResponseExtension\:\:reference\(\) has no return type specified\.$#'
@@ -4060,32 +4042,8 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\AttributesParametersExtractor\:\:handle\(\) has parameter \$parameterExtractionResults with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\AttributesParametersExtractor\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
-
-		-
 			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
 			identifier: argument.type
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
-
-		-
-			message: '#^Unable to resolve the template type TKey in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function collect$#'
-			identifier: argument.templateType
 			count: 1
 			path: src/Support/OperationExtensions/ParameterExtractor/AttributesParametersExtractor.php
 
@@ -4098,18 +4056,6 @@ parameters:
 		-
 			message: '#^Class Spatie\\LaravelData\\Contracts\\BaseData not found\.$#'
 			identifier: class.notFound
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\FormRequestParametersExtractor\:\:handle\(\) has parameter \$parameterExtractionResults with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\FormRequestParametersExtractor\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
 
@@ -4132,30 +4078,6 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\MethodCallsParametersExtractor\:\:handle\(\) has parameter \$parameterExtractionResults with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/MethodCallsParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\MethodCallsParametersExtractor\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/MethodCallsParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ParameterExtractor\:\:handle\(\) has parameter \$parameterExtractionResults with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/ParameterExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ParameterExtractor\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/ParameterExtractor.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\PathParametersExtractor\:\:getModelIdTypeAndDescription\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -4170,18 +4092,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\PathParametersExtractor\:\:getParametersFromString\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\PathParametersExtractor\:\:handle\(\) has parameter \$parameterExtractionResults with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\PathParametersExtractor\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
 
@@ -4236,18 +4146,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:getPossibleParamType\(\) should return string\|null but returns mixed\.$#'
 			identifier: return.type
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:handle\(\) has parameter \$parameterExtractionResults with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
 
@@ -5272,12 +5170,6 @@ parameters:
 			path: src/Support/Type/AbstractType.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\AbstractType\:\:nodes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Type/AbstractType.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\ArrayItemType_\:\:__construct\(\) has parameter \$key with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
@@ -5288,54 +5180,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: src/Support/Type/ArrayItemType_.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\ArrayItemType_\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/ArrayItemType_.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\ArrayItemType_\:\:nodes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Type/ArrayItemType_.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\ArrayType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/ArrayType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\ArrayType\:\:nodes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Type/ArrayType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\BooleanType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/BooleanType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\CallableStringType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/CallableStringType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\EnumCaseType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/EnumCaseType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\FloatType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/FloatType.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\FunctionType\:\:__construct\(\) has parameter \$arguments with no type specified\.$#'
@@ -5352,18 +5196,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\FunctionType\:\:__construct\(\) has parameter \$returnType with no type specified\.$#'
 			identifier: missingType.parameter
-			count: 1
-			path: src/Support/Type/FunctionType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\FunctionType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/FunctionType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\FunctionType\:\:nodes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/Type/FunctionType.php
 
@@ -5386,31 +5218,7 @@ parameters:
 			path: src/Support/Type/Generic.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Generic\:\:nodes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Type/Generic.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\IntegerType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/IntegerType.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\IntersectionType\:\:__construct\(\) has parameter \$types with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Type/IntersectionType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\IntersectionType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/IntersectionType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\IntersectionType\:\:nodes\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/Type/IntersectionType.php
@@ -5420,30 +5228,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/Type/KeyedArrayType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\KeyedArrayType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/KeyedArrayType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\KeyedArrayType\:\:nodes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Type/KeyedArrayType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\MixedType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/MixedType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\NullType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/NullType.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\ObjectType\:\:getMethodReturnType\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
@@ -5458,46 +5242,16 @@ parameters:
 			path: src/Support/Type/ObjectType.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\ObjectType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/ObjectType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Reference\\AbstractReferenceType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/Reference/AbstractReferenceType.php
-
-		-
 			message: '#^Call to function is_string\(\) with Dedoc\\Scramble\\Support\\Type\\Type will always evaluate to false\.$#'
 			identifier: function.impossibleType
 			count: 1
 			path: src/Support/Type/Reference/CallableCallReferenceType.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Reference\\MethodCallReferenceType\:\:nodes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Type/Reference/MethodCallReferenceType.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Reference\\NewCallReferenceType\:\:isInstanceOf\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
 			path: src/Support/Type/Reference/NewCallReferenceType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Reference\\NewCallReferenceType\:\:nodes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Type/Reference/NewCallReferenceType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Reference\\StaticMethodCallReferenceType\:\:nodes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Type/Reference/StaticMethodCallReferenceType.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Reference\\StaticReference\:\:isParent\(\) has no return type specified\.$#'
@@ -5524,12 +5278,6 @@ parameters:
 			path: src/Support/Type/Reference/StaticReference.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\SelfType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/SelfType.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\SideEffects\\SelfTemplateDefinition\:\:apply\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -5542,19 +5290,7 @@ parameters:
 			path: src/Support/Type/SideEffects/SelfTemplateDefinition.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\StringType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/StringType.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\TemplateType\:\:isInstanceOf\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/TemplateType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\TemplateType\:\:isSame\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
 			path: src/Support/Type/TemplateType.php
@@ -5562,18 +5298,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Type\:\:isInstanceOf\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/Type.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Type\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/Type.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Type\:\:nodes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/Type/Type.php
 
@@ -5698,124 +5422,10 @@ parameters:
 			path: src/Support/Type/TypeWalker.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Union\:\:__construct\(\) has parameter \$types with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Type/Union.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Union\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/Union.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Union\:\:nodes\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Type/Union.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Union\:\:wrap\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/Union.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Union\:\:wrap\(\) has parameter \$types with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/Type/Union.php
-
-		-
-			message: '#^Unsafe usage of new static\(\)\.$#'
-			identifier: new.static
-			count: 1
-			path: src/Support/Type/Union.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\UnknownType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/UnknownType.php
-
-		-
 			message: '#^Property Dedoc\\Scramble\\Support\\Type\\UnknownType\:\:\$comment is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
 			path: src/Support/Type/UnknownType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\VoidType\:\:isSame\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/VoidType.php
-
-		-
-			message: '#^Access to an undefined property Dedoc\\Scramble\\Support\\Type\\Type\:\:\$types\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/AnonymousResourceCollectionTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\AnonymousResourceCollectionTypeToSchema\:\:flattenMergeValues\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/AnonymousResourceCollectionTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\AnonymousResourceCollectionTypeToSchema\:\:flattenMergeValues\(\) has parameter \$items with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/AnonymousResourceCollectionTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\AnonymousResourceCollectionTypeToSchema\:\:getCollectingResourceType\(\) should return Dedoc\\Scramble\\Support\\Type\\ObjectType\|null but returns Dedoc\\Scramble\\Support\\Type\\Type\|null\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/AnonymousResourceCollectionTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\AnonymousResourceCollectionTypeToSchema\:\:getPaginatedCollectionResponse\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/AnonymousResourceCollectionTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\AnonymousResourceCollectionTypeToSchema\:\:mergeOpenApiObjects\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/AnonymousResourceCollectionTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\AnonymousResourceCollectionTypeToSchema\:\:shouldHandle\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/AnonymousResourceCollectionTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\AnonymousResourceCollectionTypeToSchema\:\:toResponse\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/AnonymousResourceCollectionTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\AnonymousResourceCollectionTypeToSchema\:\:toSchema\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/AnonymousResourceCollectionTypeToSchema.php
-
-		-
-			message: '#^Unable to resolve the template type TFlatMapKey in call to method Illuminate\\Support\\Collection\<\(int\|string\),mixed\>\:\:flatMap\(\)$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/AnonymousResourceCollectionTypeToSchema.php
-
-		-
-			message: '#^Unable to resolve the template type TFlatMapValue in call to method Illuminate\\Support\\Collection\<\(int\|string\),mixed\>\:\:flatMap\(\)$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/AnonymousResourceCollectionTypeToSchema.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\CollectionToSchema\:\:shouldHandle\(\) has no return type specified\.$#'
@@ -5938,30 +5548,6 @@ parameters:
 			path: src/Support/TypeToSchemaExtensions/EnumToSchema.php
 
 		-
-			message: '#^Access to an undefined property Dedoc\\Scramble\\Support\\Type\\Type\:\:\$types\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/JsonResourceTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\JsonResourceTypeToSchema\:\:flattenMergeValues\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/JsonResourceTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\JsonResourceTypeToSchema\:\:flattenMergeValues\(\) has parameter \$items with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/JsonResourceTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\JsonResourceTypeToSchema\:\:mergeOpenApiObjects\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/JsonResourceTypeToSchema.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\JsonResourceTypeToSchema\:\:reference\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -5982,18 +5568,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\JsonResourceTypeToSchema\:\:toSchema\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/JsonResourceTypeToSchema.php
-
-		-
-			message: '#^Unable to resolve the template type TFlatMapKey in call to method Illuminate\\Support\\Collection\<\(int\|string\),mixed\>\:\:flatMap\(\)$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/JsonResourceTypeToSchema.php
-
-		-
-			message: '#^Unable to resolve the template type TFlatMapValue in call to method Illuminate\\Support\\Collection\<\(int\|string\),mixed\>\:\:flatMap\(\)$#'
-			identifier: argument.templateType
 			count: 1
 			path: src/Support/TypeToSchemaExtensions/JsonResourceTypeToSchema.php
 
@@ -6088,31 +5662,7 @@ parameters:
 			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
 
 		-
-			message: '#^Access to an undefined property Dedoc\\Scramble\\Support\\Type\\Type\:\:\$types\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:flattenMergeValues\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:flattenMergeValues\(\) has parameter \$items with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:makeBaseResponse\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:mergeOpenApiObjects\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
 			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
@@ -6162,18 +5712,6 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$scope of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:resolve\(\) expects Dedoc\\Scramble\\Infer\\Scope\\Scope, Dedoc\\Scramble\\Infer\\Scope\\Scope\|null given\.$#'
 			identifier: argument.type
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Unable to resolve the template type TFlatMapKey in call to method Illuminate\\Support\\Collection\<\(int\|string\),mixed\>\:\:flatMap\(\)$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Unable to resolve the template type TFlatMapValue in call to method Illuminate\\Support\\Collection\<\(int\|string\),mixed\>\:\:flatMap\(\)$#'
-			identifier: argument.templateType
 			count: 1
 			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
 

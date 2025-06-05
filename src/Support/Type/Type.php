@@ -16,6 +16,7 @@ interface Type
 
     /**
      * @param  array<string, mixed>  $attributes
+     * @return $this
      */
     public function mergeAttributes(array $attributes): self;
 
@@ -30,12 +31,18 @@ interface Type
 
     public function acceptedBy(Type $otherType): bool;
 
+    /**
+     * @return string[]
+     */
     public function nodes(): array;
 
     public function getPropertyType(string $propertyName, Scope $scope): Type;
 
     public function getMethodDefinition(string $methodName, Scope $scope = new GlobalScope): ?FunctionLikeDefinition;
 
+    /**
+     * @return bool
+     */
     public function isSame(self $type);
 
     public function toString(): string;

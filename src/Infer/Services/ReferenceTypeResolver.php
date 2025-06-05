@@ -2,16 +2,19 @@
 
 namespace Dedoc\Scramble\Infer\Services;
 
+use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -289,10 +292,18 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$name]");
         }
 
-        return $this->finalizeStatic(
-            $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType, $event),
-            $calleeType,
-        );
+        $resultingType = $this->getFunctionCallResult($methodDefinition, $type->arguments, $calleeType, $event);
+
+        if ($calleeType instanceof SelfType) {
+            return $resultingType;
+        }
+
+        // @todo resolve template type?
+        $resultingType = $resultingType instanceof TemplateType
+            ? ($resultingType->is ?: new UnknownType)
+            : $resultingType;
+
+        return $this->finalizeStatic($resultingType, $calleeType);
     }
 
     private function resolveStaticMethodCallReferenceType(Scope $scope, StaticMethodCallReferenceType $type)
@@ -522,7 +533,11 @@ class ReferenceTypeResolver
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type)
     {
-        $objectType = $this->resolve($scope, $type->object);
+        $objectType = $type->object;
+        if ($objectType instanceof TemplateType && $objectType->is) {
+            $objectType = $objectType->is;
+        }
+        $objectType = $this->resolve($scope, $objectType);
 
         if (
             $objectType instanceof AbstractReferenceType
@@ -554,7 +569,16 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get property [$type->propertyName] type on [$name]");
         }
 
-        return $objectType->getPropertyType($type->propertyName, $scope);
+        $propertyType = $objectType->getPropertyType($type->propertyName, $scope);
+
+        if ($objectType instanceof SelfType) {
+            return $propertyType;
+        }
+
+        // @todo resolve template type?
+        return $propertyType instanceof TemplateType
+            ? ($propertyType->is ?: new UnknownType)
+            : $propertyType;
     }
 
     private function getFunctionCallResult(
