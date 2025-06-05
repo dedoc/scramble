@@ -28,6 +28,10 @@ class LazyShallowClassDefinition implements ClassDefinitionContract
     {
         $data = $this->getData();
 
+        if (! isset($data->methods[$name])) {
+            return null;
+        }
+
         if (isset($data->methods[$name]) && $data->methods[$name]->isFullyAnalyzed) {
             return $data->methods[$name];
         }

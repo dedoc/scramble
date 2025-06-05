@@ -50,7 +50,7 @@ class ClassReflector
 
         $fileName = $refClass->getFileName();
         if ($fileName === false) {
-            throw new RuntimeException("Class {$refClass->getName()} is internal or not user-defined.");
+            return '';
         }
 
         $startLine = $refClass->getStartLine();

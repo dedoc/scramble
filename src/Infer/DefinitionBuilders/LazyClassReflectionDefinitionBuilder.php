@@ -53,12 +53,8 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             )->getData()) : new ClassDefinitionData(name: ''))
             : new ClassDefinitionData(name: '');
 
-        if (! $this->reflection->getFileName()) {
-            throw new \Exception('Cannot build the definition due to the missing file name.');
-        }
-
-        $classPhpDoc = ($comment = $this->reflection->getDocComment())
-            ? PhpDoc::parse($comment, FileNameResolver::createForFile($this->reflection->getFileName()))
+        $classPhpDoc = (($comment = $this->reflection->getDocComment()) && ($path = $this->reflection->getFileName()))
+            ? PhpDoc::parse($comment, FileNameResolver::createForFile($path))
             : new PhpDocNode([]);
 
         $classTemplates = collect($classPhpDoc->getTemplateTagValues())
