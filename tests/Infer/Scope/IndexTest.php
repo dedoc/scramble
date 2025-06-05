@@ -12,6 +12,8 @@ it('builds definition', function () {
 
     $definition = $index->getClass(UserModel_IndexTest::class);
 
+    (new UserModel_IndexTest)->getOriginal();
+
     expect($definition->getData()->name)
         ->toBe(UserModel_IndexTest::class)
         ->and($definition->getData()->methods['foo']->isFullyAnalyzed)
