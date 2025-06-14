@@ -38,7 +38,7 @@ trait WithAttributes
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      * @return $this
      */
     public function mergeAttributes($attributes): self
