@@ -45,7 +45,7 @@ class TypeTransformer
 
     public function __construct(
         private Infer $infer,
-        private OpenApiContext $context,
+        public readonly OpenApiContext $context,
         array $typeToSchemaExtensionsClasses = [],
         array $exceptionToResponseExtensionsClasses = []
     ) {
