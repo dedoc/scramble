@@ -184,7 +184,7 @@ class RequestEssentialsExtension extends OperationExtension
     }
 
     /**
-     * @return ReflectionAttribute[]
+     * @return ReflectionAttribute<Group>[]
      */
     private function getTagsAnnotatedByGroups(RouteInfo $routeInfo): array
     {
@@ -201,7 +201,6 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         foreach ($groups as $group) {
-            /** @var Group $groupInstance */
             $groupInstance = $group->newInstance();
 
             if (! $groupInstance->name) {
