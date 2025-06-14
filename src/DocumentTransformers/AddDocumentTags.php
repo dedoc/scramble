@@ -18,7 +18,7 @@ class AddDocumentTags implements DocumentTransformer
     }
 
     /**
-     * @param Collection<int, ReflectionAttribute<Group>> $groupsAttributes
+     * @param  Collection<int, ReflectionAttribute<Group>>  $groupsAttributes
      * @return Tag[]
      */
     private function makeTagsFromGroupAttributes(Collection $groupsAttributes)
