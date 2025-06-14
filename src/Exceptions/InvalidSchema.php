@@ -22,7 +22,9 @@ class InvalidSchema extends Exception implements ConsoleRenderable, RouteAware
 
     public static function createForSchema(string $message, string $path, Type $schema)
     {
+        /** @var string|null $file */
         $file = $schema->getAttribute('file');
+        /** @var int|null $line */
         $line = $schema->getAttribute('line');
 
         $originalMessage = $message;

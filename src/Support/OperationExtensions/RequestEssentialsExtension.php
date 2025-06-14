@@ -248,7 +248,7 @@ class RequestEssentialsExtension extends OperationExtension
 
         $this->openApi->tags = collect($this->openApi->tags)
             ->sortBy(function (Tag $tag): float {
-                return $tag->getAttribute('weight', INF);
+                return $tag->getAttribute('weight', INF); // @phpstan-ignore return.type
             })
             ->values()
             ->all();

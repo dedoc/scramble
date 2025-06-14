@@ -20,7 +20,7 @@ trait WithAttributes
         return array_key_exists($key, $this->attributes);
     }
 
-    public function getAttribute(string $key, mixed $default = null)
+    public function getAttribute(string $key, mixed $default = null): mixed
     {
         if ($this->hasAttribute($key)) {
             return $this->attributes[$key];
@@ -29,12 +29,19 @@ trait WithAttributes
         return $default;
     }
 
-    public function attributes()
+    /**
+     * @return array<string, mixed>
+     */
+    public function attributes(): array
     {
         return $this->attributes;
     }
 
-    public function mergeAttributes($attributes)
+    /**
+     * @param array<string, mixed> $attributes
+     * @return $this
+     */
+    public function mergeAttributes($attributes): self
     {
         $this->attributes = array_merge($this->attributes, $attributes);
 
