@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\Generator;
 
 class Tag
 {
+    use WithAttributes;
     use WithExtensions;
 
     public function __construct(
