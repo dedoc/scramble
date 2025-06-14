@@ -210,10 +210,11 @@ class RequestEssentialsExtension extends OperationExtension
             $alreadyExistingTag = collect($this->openApi->tags)->firstWhere('name', $group->name);
 
             if (! $alreadyExistingTag) {
-                $this->openApi->tags[] = new Tag(
-                    name: $group->name,
-                    description: $group->description,
-                );
+                $tag = new Tag(name: $group->name, description: $group->description);
+
+                $tag->setAttribute('weight', $group->weight);
+
+                $this->openApi->tags[] = $tag;
 
                 continue;
             }
@@ -232,13 +233,24 @@ class RequestEssentialsExtension extends OperationExtension
                         return $acc;
                     }
 
-                    $acc[] = new Tag(
+                    $tag = new Tag(
                         name: $group->name,
                         description: $group->description,
                     );
 
+                    $tag->setAttribute('weight', $group->weight);
+
+                    $acc[] = $tag;
+
                     return $acc;
                 }, []);
         }
+
+        $this->openApi->tags = collect($this->openApi->tags)
+            ->sortBy(function (Tag $tag): float {
+                return $tag->getAttribute('weight', INF); // @phpstan-ignore return.type
+            })
+            ->values()
+            ->all();
     }
 }
