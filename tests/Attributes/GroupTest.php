@@ -8,7 +8,7 @@ use Dedoc\Scramble\Scramble;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
-it('allows sorting groups', function () {
+it('allows sorting groups without document level tags', function () {
     RouteFacade::get('api/a', GroupTest_A_Controller::class);
     RouteFacade::get('api/b', GroupTest_B_Controller::class);
     RouteFacade::get('api/c', GroupTest_C_Controller::class);
@@ -105,6 +105,40 @@ class GroupTest_E2_Controller
 }
 #[Group(name: 'E', description: 'Ignored description')]
 class GroupTest_E3_Controller
+{
+    public function __invoke() {}
+}
+
+it('allows sorting groups with document level tags', function () {
+    RouteFacade::get('api/a', GroupTest_A4_Controller::class);
+    RouteFacade::get('api/b', GroupTest_B4_Controller::class);
+    RouteFacade::get('api/c', GroupTest_C4_Controller::class);
+
+    Scramble::routes(fn (Route $r) => in_array($r->uri, ['api/a', 'api/b', 'api/c']));
+
+    $openApiDoc = app()->make(Generator::class)();
+
+    expect(array_keys($openApiDoc['paths']))
+        ->toBe(['/c', '/b', '/a'])
+        ->and($openApiDoc['tags'])
+        ->toBe([
+            ['name' => 'C'],
+            ['name' => 'B'],
+            ['name' => 'A'],
+        ]);
+});
+#[Group('A', weight: 2)]
+class GroupTest_A4_Controller
+{
+    public function __invoke() {}
+}
+#[Group('B', weight: 1)]
+class GroupTest_B4_Controller
+{
+    public function __invoke() {}
+}
+#[Group('C', weight: 0)]
+class GroupTest_C4_Controller
 {
     public function __invoke() {}
 }

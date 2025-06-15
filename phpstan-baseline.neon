@@ -2725,12 +2725,6 @@ parameters:
 			path: src/Support/Generator/Operation.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Operation\:\:attributes\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Operation.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Operation\:\:deprecated\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -2743,26 +2737,8 @@ parameters:
 			path: src/Support/Generator/Operation.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Operation\:\:getAttribute\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Operation.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Operation\:\:make\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Operation.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Operation\:\:mergeAttributes\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Operation.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Operation\:\:mergeAttributes\(\) has parameter \$attributes with no type specified\.$#'
-			identifier: missingType.parameter
 			count: 1
 			path: src/Support/Generator/Operation.php
 
@@ -2839,12 +2815,6 @@ parameters:
 			path: src/Support/Generator/Operation.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:attributes\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Parameter.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:description\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -2859,24 +2829,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:example\(\) has parameter \$example with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Generator/Parameter.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:getAttribute\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Parameter.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:mergeAttributes\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Parameter.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Parameter\:\:mergeAttributes\(\) has parameter \$attributes with no type specified\.$#'
-			identifier: missingType.parameter
 			count: 1
 			path: src/Support/Generator/Parameter.php
 
@@ -3640,12 +3592,6 @@ parameters:
 			path: src/Support/Generator/Types/StringType.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:attributes\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Types/Type.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:default\(\) has parameter \$default with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -3666,24 +3612,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:examples\(\) has parameter \$examples with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Generator/Types/Type.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:getAttribute\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Types/Type.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:mergeAttributes\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Types/Type.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:mergeAttributes\(\) has parameter \$attributes with no type specified\.$#'
-			identifier: missingType.parameter
 			count: 1
 			path: src/Support/Generator/Types/Type.php
 

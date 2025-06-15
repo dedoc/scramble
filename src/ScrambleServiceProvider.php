@@ -6,6 +6,7 @@ use Dedoc\Scramble\Configuration\GeneratorConfigCollection;
 use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
+use Dedoc\Scramble\DocumentTransformers\AddDocumentTags;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
@@ -219,7 +220,10 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ));
 
                 $transformers->append($operationExtensions);
-            });
+            })
+            ->withDocumentTransformers([
+                AddDocumentTags::class,
+            ]);
 
         if (Scramble::$defaultRoutesIgnored) {
             Scramble::configure()->expose(false);
