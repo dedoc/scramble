@@ -295,10 +295,18 @@ class Generator
         $names = new UniqueNamesOptionsCollection;
 
         $this->foreachOperation($openApi, function (Operation $operation) use ($names) {
+            if ($operation->operationId) {
+                return;
+            }
+
             $names->push($operation->getAttribute('operationId')); // @phpstan-ignore argument.type
         });
 
         $this->foreachOperation($openApi, function (Operation $operation, $index) use ($names) {
+            if ($operation->operationId) {
+                return;
+            }
+
             $name = $operation->getAttribute('operationId');
 
             $operation->setOperationId($names->getUniqueName($name, function (string $fallback) use ($index) { // @phpstan-ignore argument.type
