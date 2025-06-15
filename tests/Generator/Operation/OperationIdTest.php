@@ -2,16 +2,12 @@
 
 namespace Dedoc\Scramble\Tests\Generator\Request;
 
-use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Scramble;
-use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\RouteInfo;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Controller;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
-use Illuminate\Support\Str;
 
 it('documents operation id based on controller base name if no route name and not set manually', function () {
     $openApiDocument = generateForRoute(function () {
@@ -111,7 +107,5 @@ it('documents operation id with manual extension', function () {
 
 class ExtensionOperationIdDocumentationTestController extends Controller
 {
-    public function a()
-    {
-    }
+    public function a() {}
 }
