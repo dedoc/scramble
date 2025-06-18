@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
+use Dedoc\Scramble\Attributes\Endpoint;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\GeneratorConfig;
@@ -62,6 +63,8 @@ class RequestEssentialsExtension extends OperationExtension
         $pathAliases = ReflectionRoute::createFromRoute($routeInfo->route)->getSignatureParametersMap();
 
         $tagResolver = Scramble::$tagResolver ?? fn () => $this->getDefaultTags($operation, $routeInfo);
+
+        $this->attachEndpointWeightAttribute($operation, $routeInfo);
 
         $uriWithoutOptionalParams = Str::replace('?}', '}', $routeInfo->route->uri);
 
@@ -209,5 +212,16 @@ class RequestEssentialsExtension extends OperationExtension
 
             $this->openApiContext->groups->push($group);
         }
+    }
+
+    private function attachEndpointWeightAttribute(Operation $operation, RouteInfo $routeInfo): void
+    {
+        $endpointAnnotations = array_values($routeInfo->reflectionMethod()?->getAttributes(Endpoint::class) ?? []);
+
+        if (! $endpointAnnotations) {
+            return;
+        }
+
+        $operation->setAttribute('weight', $endpointAnnotations[0]->newInstance()->weight);
     }
 }
