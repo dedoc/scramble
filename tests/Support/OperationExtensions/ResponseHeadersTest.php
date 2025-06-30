@@ -137,6 +137,17 @@ it('applies wildcard headers to all responses when multiple responses exist', fu
         ->not->toHaveKey('X-Error-Code');
 });
 
+it('removes unused response references when dereferenced', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('api/test', [ResponseHeadersTestController::class, 'withUnusedReferences']));
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses['404']['headers'])
+        ->toHaveKey('X-Custom-Header')
+        ->and($openApiDocument)
+        ->not->toHaveKey('components');
+});
+
 class ResponseHeadersTestController
 {
     #[Header('X-Rate-Limit', 'Rate limiting information')]
@@ -176,7 +187,7 @@ class ResponseHeadersTestController
     #[Header('X-Rate-Limit', 'Rate limiting information')]
     #[Header('X-Error-Code', 'Error code', statusCode: 404)]
     public function mixedHeaders()
-    {   
+    {
         return new JsonResponse(['data' => 'success'], 200);
     }
 
@@ -187,6 +198,15 @@ class ResponseHeadersTestController
     {
         if (request()->has('error')) {
             abort(404, 'Not found');
+        }
+        return new JsonResponse(['data' => 'success'], 200);
+    }
+
+    #[Header('X-Custom-Header', 'Custom header description', statusCode: 404)]
+    public function withUnusedReferences()
+    {
+        if (request()->has('not_found')) {
+            abort(404, 'Resource not found');
         }
         return new JsonResponse(['data' => 'success'], 200);
     }
