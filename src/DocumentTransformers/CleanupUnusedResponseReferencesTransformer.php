@@ -26,7 +26,7 @@ class CleanupUnusedResponseReferencesTransformer implements DocumentTransformer
     private function isResponseReferenceUsed(OpenApi $document, string $responseName): bool
     {
         if (! isset($this->serializedDocumentJson)) {
-            $this->serializedDocumentJson = json_encode($document->toArray(), JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);
+            $this->serializedDocumentJson = json_encode($document->toArray(), JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         }
 
         $referencePath = "#/components/responses/{$responseName}";

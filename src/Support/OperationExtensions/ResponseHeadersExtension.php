@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\RouteInfo;
 use ReflectionAttribute;
+
 use function DeepCopy\deep_copy;
 
 class ResponseHeadersExtension extends OperationExtension
@@ -38,7 +39,7 @@ class ResponseHeadersExtension extends OperationExtension
                 $headerAttributesInstances,
                 fn (HeaderAttribute $attribute) => $attribute->statusCode == $responseStatusCode
                     || $attribute->statusCode === '*'
-                    || ($attribute->statusCode === null && !$firstSuccessfulResponseFound && $this->isSuccessStatusCode($responseStatusCode)),
+                    || ($attribute->statusCode === null && ! $firstSuccessfulResponseFound && $this->isSuccessStatusCode($responseStatusCode)),
             );
 
             if (! count($applicableHeaders)) {
@@ -59,7 +60,7 @@ class ResponseHeadersExtension extends OperationExtension
 
             $operation->responses[$i] = $response;
 
-            if (!$firstSuccessfulResponseFound && $this->isSuccessStatusCode($responseStatusCode)) {
+            if (! $firstSuccessfulResponseFound && $this->isSuccessStatusCode($responseStatusCode)) {
                 $firstSuccessfulResponseFound = true;
             }
         }
@@ -82,6 +83,7 @@ class ResponseHeadersExtension extends OperationExtension
     private function isSuccessStatusCode(string $statusCode): bool
     {
         $code = (int) $statusCode;
+
         return $code >= 200 && $code < 300;
     }
 }

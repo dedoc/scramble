@@ -43,6 +43,7 @@ class Response
     public function addHeader(string $name, Header|Reference $header): self
     {
         $this->headers[$name] = $header;
+
         return $this;
     }
 
@@ -52,16 +53,18 @@ class Response
     public function removeHeader(string $name): self
     {
         unset($this->headers[$name]);
+
         return $this;
     }
 
     /**
-     * @param array<string, Header|Reference> $headers
+     * @param  array<string, Header|Reference>  $headers
      * @return $this
      */
     public function setHeaders(array $headers): self
     {
         $this->headers = $headers;
+
         return $this;
     }
 

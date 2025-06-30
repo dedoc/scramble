@@ -14,9 +14,7 @@ class MediaType
         public array $examples = [],
         /** @var array<string, Encoding> */
         public array $encoding = [],
-    )
-    {
-    }
+    ) {}
 
     /**
      * @return $this
@@ -24,6 +22,7 @@ class MediaType
     public function setSchema(Schema|Reference|null $schema): self
     {
         $this->schema = $schema;
+
         return $this;
     }
 
@@ -33,26 +32,29 @@ class MediaType
     public function setExample(mixed $example): self
     {
         $this->example = $example;
+
         return $this;
     }
 
     /**
-     * @param array<string, Example|Reference> $examples
+     * @param  array<string, Example|Reference>  $examples
      * @return $this
      */
     public function setExamples(array $examples): self
     {
         $this->examples = $examples;
+
         return $this;
     }
 
     /**
-     * @param array<string, Encoding> $encoding
+     * @param  array<string, Encoding>  $encoding
      * @return $this
      */
     public function setEncoding(array $encoding): self
     {
         $this->encoding = $encoding;
+
         return $this;
     }
 
@@ -62,6 +64,7 @@ class MediaType
     public function addExample(string $key, Example|Reference $example): self
     {
         $this->examples[$key] = $example;
+
         return $this;
     }
 
@@ -71,6 +74,7 @@ class MediaType
     public function addEncoding(string $key, Encoding $encoding): self
     {
         $this->encoding[$key] = $encoding;
+
         return $this;
     }
 
@@ -80,6 +84,7 @@ class MediaType
     public function removeExample(string $key): self
     {
         unset($this->examples[$key]);
+
         return $this;
     }
 
@@ -89,6 +94,7 @@ class MediaType
     public function removeEncoding(string $key): self
     {
         unset($this->encoding[$key]);
+
         return $this;
     }
 

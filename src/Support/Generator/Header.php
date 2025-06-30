@@ -18,9 +18,7 @@ class Header
         public array $examples = [],
         /** @var array<string, MediaType> */
         public array $content = [],
-    )
-    {
-    }
+    ) {}
 
     /**
      * @return $this
@@ -28,6 +26,7 @@ class Header
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
         return $this;
     }
 
@@ -37,6 +36,7 @@ class Header
     public function setRequired(?bool $required): self
     {
         $this->required = $required;
+
         return $this;
     }
 
@@ -46,6 +46,7 @@ class Header
     public function setDeprecated(?bool $deprecated): self
     {
         $this->deprecated = $deprecated;
+
         return $this;
     }
 
@@ -55,6 +56,7 @@ class Header
     public function setExplode(?bool $explode): self
     {
         $this->explode = $explode;
+
         return $this;
     }
 
@@ -64,6 +66,7 @@ class Header
     public function setSchema(Schema|Reference|null $schema): self
     {
         $this->schema = $schema;
+
         return $this;
     }
 
@@ -73,26 +76,29 @@ class Header
     public function setExample(mixed $example): self
     {
         $this->example = $example;
+
         return $this;
     }
 
     /**
-     * @param array<string, Example|Reference> $examples
+     * @param  array<string, Example|Reference>  $examples
      * @return $this
      */
     public function setExamples(array $examples): self
     {
         $this->examples = $examples;
+
         return $this;
     }
 
     /**
-     * @param array<string, MediaType> $content
+     * @param  array<string, MediaType>  $content
      * @return $this
      */
     public function setContent(array $content): self
     {
         $this->content = $content;
+
         return $this;
     }
 
@@ -102,6 +108,7 @@ class Header
     public function addContent(string $key, MediaType $mediaType): self
     {
         $this->content[$key] = $mediaType;
+
         return $this;
     }
 
@@ -111,6 +118,7 @@ class Header
     public function addExample(string $key, Example|Reference $example): self
     {
         $this->examples[$key] = $example;
+
         return $this;
     }
 
@@ -120,6 +128,7 @@ class Header
     public function removeContent(string $key): self
     {
         unset($this->content[$key]);
+
         return $this;
     }
 
@@ -129,6 +138,7 @@ class Header
     public function removeExample(string $key): self
     {
         unset($this->examples[$key]);
+
         return $this;
     }
 

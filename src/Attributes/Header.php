@@ -3,8 +3,8 @@
 namespace Dedoc\Scramble\Attributes;
 
 use Attribute;
-use Dedoc\Scramble\Support\Generator\MissingValue as OpenApiMissingValue;
 use Dedoc\Scramble\Support\Generator\Header as OpenApiHeader;
+use Dedoc\Scramble\Support\Generator\MissingValue as OpenApiMissingValue;
 
 #[Attribute(Attribute::IS_REPEATABLE | Attribute::TARGET_ALL)]
 class Header
@@ -24,8 +24,7 @@ class Header
         /** @var array<string, Example> $examples */
         public readonly array $examples = [],
         public readonly int|string|null $statusCode = null,
-    ) {
-    }
+    ) {}
 
     public static function toOpenApiHeader(Header $header): OpenApiHeader
     {

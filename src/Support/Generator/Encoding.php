@@ -14,9 +14,7 @@ class Encoding
         public ?string $style = null,
         public ?bool $explode = null,
         public ?bool $allowReserved = null,
-    )
-    {
-    }
+    ) {}
 
     /**
      * @return $this
@@ -24,16 +22,18 @@ class Encoding
     public function setContentType(?string $contentType): self
     {
         $this->contentType = $contentType;
+
         return $this;
     }
 
     /**
-     * @param array<string, Header|Reference> $headers
+     * @param  array<string, Header|Reference>  $headers
      * @return $this
      */
     public function setHeaders(array $headers): self
     {
         $this->headers = $headers;
+
         return $this;
     }
 
@@ -43,6 +43,7 @@ class Encoding
     public function addHeader(string $key, Header|Reference $header): self
     {
         $this->headers[$key] = $header;
+
         return $this;
     }
 
@@ -52,6 +53,7 @@ class Encoding
     public function removeHeader(string $key): self
     {
         unset($this->headers[$key]);
+
         return $this;
     }
 
@@ -61,6 +63,7 @@ class Encoding
     public function setStyle(?string $style): self
     {
         $this->style = $style;
+
         return $this;
     }
 
@@ -70,6 +73,7 @@ class Encoding
     public function setExplode(?bool $explode): self
     {
         $this->explode = $explode;
+
         return $this;
     }
 
@@ -79,6 +83,7 @@ class Encoding
     public function setAllowReserved(?bool $allowReserved): self
     {
         $this->allowReserved = $allowReserved;
+
         return $this;
     }
 

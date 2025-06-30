@@ -1,7 +1,7 @@
 <?php
 
-use Dedoc\Scramble\Attributes\Header;
 use Dedoc\Scramble\Attributes\Example;
+use Dedoc\Scramble\Attributes\Header;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 
@@ -157,7 +157,7 @@ class ResponseHeadersTestController
         'API version header',
         examples: [
             'v1' => new Example('v1', 'Version 1'),
-            'v2' => new Example('v2', 'Version 2')
+            'v2' => new Example('v2', 'Version 2'),
         ]
     )]
     public function ok()
@@ -199,6 +199,7 @@ class ResponseHeadersTestController
         if (request()->has('error')) {
             abort(404, 'Not found');
         }
+
         return new JsonResponse(['data' => 'success'], 200);
     }
 
@@ -208,6 +209,7 @@ class ResponseHeadersTestController
         if (request()->has('not_found')) {
             abort(404, 'Resource not found');
         }
+
         return new JsonResponse(['data' => 'success'], 200);
     }
 }
