@@ -9,7 +9,7 @@ class MediaType
 
     public function __construct(
         public Schema|Reference|null $schema = null,
-        public mixed $example = new MissingExample,
+        public mixed $example = new MissingValue,
         /** @var array<string, Example|Reference> */
         public array $examples = [],
         /** @var array<string, Encoding> */
@@ -92,6 +92,9 @@ class MediaType
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         $result = [];
@@ -112,7 +115,7 @@ class MediaType
 
         return array_merge(
             $result,
-            $this->example instanceof MissingExample ? [] : ['example' => $this->example],
+            $this->example instanceof MissingValue ? [] : ['example' => $this->example],
             $examples ? ['examples' => $examples] : [],
             $encoding ? ['encoding' => $encoding] : [],
             $this->extensionPropertiesToArray(),

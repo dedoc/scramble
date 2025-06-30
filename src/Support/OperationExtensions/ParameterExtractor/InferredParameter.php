@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
-use Dedoc\Scramble\Support\Generator\MissingExample;
+use Dedoc\Scramble\Support\Generator\MissingValue;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -12,13 +12,13 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 class InferredParameter
 {
     /**
-     * @param  array<array-key, scalar>|scalar|null|MissingExample  $default
+     * @param  array<array-key, scalar>|scalar|null|MissingValue  $default
      */
     public function __construct(
         public string $name,
         public ?string $description = null,
         public Type $type = new UnknownType,
-        public mixed $default = new MissingExample,
+        public mixed $default = new MissingValue,
     ) {}
 
     public function toOpenApiParameter(TypeTransformer $transformer): Parameter

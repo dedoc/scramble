@@ -14,17 +14,13 @@ class Example
         public ?string $externalValue = null,
     ) {}
 
-    public static function toOpenApiExample(mixed $example)
+    public static function toOpenApiExample(Example $example): OpenApiExample
     {
-        if ($example instanceof static) {
-            return new OpenApiExample(
-                value: $example->value instanceof MissingValue ? new OpenApiMissingValue : $example->value,
-                summary: $example->summary,
-                description: $example->description,
-                externalValue: $example->externalValue,
-            );
-        }
-
-        return $example;
+        return new OpenApiExample(
+            value: $example->value instanceof MissingValue ? new OpenApiMissingValue : $example->value,
+            summary: $example->summary,
+            description: $example->description,
+            externalValue: $example->externalValue,
+        );
     }
 }

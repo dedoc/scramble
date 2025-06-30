@@ -29,7 +29,7 @@ class Parameter
 
     public string $description = '';
 
-    /** @var array|scalar|null|MissingExample */
+    /** @var array|scalar|null|MissingValue */
     public $example;
 
     /** @var array<string, Example> */
@@ -46,7 +46,7 @@ class Parameter
         $this->name = $name;
         $this->in = $in;
 
-        $this->example = new MissingExample;
+        $this->example = new MissingValue;
 
         if ($this->in === 'path') {
             $this->required = true;
@@ -86,7 +86,7 @@ class Parameter
 
         return array_merge(
             $result,
-            $this->example instanceof MissingExample ? [] : ['example' => $this->example],
+            $this->example instanceof MissingValue ? [] : ['example' => $this->example],
             ! is_null($this->explode) ? [
                 'explode' => $this->explode,
             ] : [],
@@ -124,7 +124,7 @@ class Parameter
     }
 
     /**
-     * @param  array|scalar|null|MissingExample  $example
+     * @param  array|scalar|null|MissingValue  $example
      */
     public function example($example)
     {

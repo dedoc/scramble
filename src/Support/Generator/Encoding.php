@@ -82,6 +82,9 @@ class Encoding
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         $result = array_filter([

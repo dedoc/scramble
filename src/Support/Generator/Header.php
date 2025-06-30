@@ -13,7 +13,7 @@ class Header
         public ?bool $deprecated = null,
         public ?bool $explode = null,
         public Schema|Reference|null $schema = null,
-        public mixed $example = new MissingExample,
+        public mixed $example = new MissingValue,
         /** @var array<string, Example|Reference> */
         public array $examples = [],
         /** @var array<string, MediaType> */
@@ -132,6 +132,9 @@ class Header
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         $result = array_filter([
@@ -157,7 +160,7 @@ class Header
 
         return array_merge(
             $result,
-            $this->example instanceof MissingExample ? [] : ['example' => $this->example],
+            $this->example instanceof MissingValue ? [] : ['example' => $this->example],
             $examples ? ['examples' => $examples] : [],
             $content ? ['content' => $content] : [],
             $this->extensionPropertiesToArray(),
