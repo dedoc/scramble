@@ -26,6 +26,7 @@ class Header
         public readonly ?string $type = null,
         public readonly ?string $format = null,
         public readonly ?bool $required = null,
+        /** @var array<mixed>|scalar|null|MissingValue */
         public readonly mixed $default = new MissingValue,
         public readonly mixed $example = new MissingValue,
         /** @var array<string, Example> $examples */
