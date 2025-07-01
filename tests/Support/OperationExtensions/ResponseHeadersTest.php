@@ -148,6 +148,125 @@ it('removes unused response references when dereferenced', function () {
         ->not->toHaveKey('components');
 });
 
+it('adds header with type specification', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('api/test', [ResponseHeadersTestController::class, 'withType']));
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses['200']['headers']['X-Count'])
+        ->toHaveKey('schema')
+        ->and($responses['200']['headers']['X-Count']['schema'])
+        ->toHaveKey('type')
+        ->and($responses['200']['headers']['X-Count']['schema']['type'])
+        ->toBe('integer');
+});
+
+it('adds header with format specification', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('api/test', [ResponseHeadersTestController::class, 'withFormat']));
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses['200']['headers']['X-Date'])
+        ->toHaveKey('schema')
+        ->and($responses['200']['headers']['X-Date']['schema'])
+        ->toHaveKey('format')
+        ->and($responses['200']['headers']['X-Date']['schema']['format'])
+        ->toBe('date');
+});
+
+it('adds header with default value', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('api/test', [ResponseHeadersTestController::class, 'withDefault']));
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses['200']['headers']['X-Language'])
+        ->toHaveKey('schema')
+        ->and($responses['200']['headers']['X-Language']['schema'])
+        ->toHaveKey('default')
+        ->and($responses['200']['headers']['X-Language']['schema']['default'])
+        ->toBe('en');
+});
+
+it('adds header with type, format, and default combined', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('api/test', [ResponseHeadersTestController::class, 'withTypeFormatAndDefault']));
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses['200']['headers']['X-Timestamp'])
+        ->toHaveKey('schema')
+        ->and($responses['200']['headers']['X-Timestamp']['schema'])
+        ->toHaveKey('type')
+        ->and($responses['200']['headers']['X-Timestamp']['schema']['type'])
+        ->toBe('string')
+        ->and($responses['200']['headers']['X-Timestamp']['schema'])
+        ->toHaveKey('format')
+        ->and($responses['200']['headers']['X-Timestamp']['schema']['format'])
+        ->toBe('date-time')
+        ->and($responses['200']['headers']['X-Timestamp']['schema'])
+        ->toHaveKey('default')
+        ->and($responses['200']['headers']['X-Timestamp']['schema']['default'])
+        ->toBe('2024-01-01T00:00:00Z');
+});
+
+it('adds header with boolean type', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('api/test', [ResponseHeadersTestController::class, 'withBooleanType']));
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses['200']['headers']['X-Cache-Enabled'])
+        ->toHaveKey('schema')
+        ->and($responses['200']['headers']['X-Cache-Enabled']['schema'])
+        ->toHaveKey('type')
+        ->and($responses['200']['headers']['X-Cache-Enabled']['schema']['type'])
+        ->toBe('boolean');
+});
+
+it('adds header with array type', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('api/test', [ResponseHeadersTestController::class, 'withArrayType']));
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses['200']['headers']['X-Allowed-Origins'])
+        ->toHaveKey('schema')
+        ->and($responses['200']['headers']['X-Allowed-Origins']['schema'])
+        ->toHaveKey('type')
+        ->and($responses['200']['headers']['X-Allowed-Origins']['schema']['type'])
+        ->toBe('array');
+});
+
+it('adds header with required specification', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('api/test', [ResponseHeadersTestController::class, 'withRequired']));
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses['200']['headers']['X-Authorization'])
+        ->toHaveKey('required')
+        ->and($responses['200']['headers']['X-Authorization']['required'])
+        ->toBe(true);
+});
+
+it('adds header with deprecated specification', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('api/test', [ResponseHeadersTestController::class, 'withDeprecated']));
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses['200']['headers']['X-Legacy-Header'])
+        ->toHaveKey('deprecated')
+        ->and($responses['200']['headers']['X-Legacy-Header']['deprecated'])
+        ->toBe(true);
+});
+
+it('adds header with explode specification', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('api/test', [ResponseHeadersTestController::class, 'withExplode']));
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses['200']['headers']['X-Tags'])
+        ->toHaveKey('explode')
+        ->and($responses['200']['headers']['X-Tags']['explode'])
+        ->toBe(true);
+});
+
 class ResponseHeadersTestController
 {
     #[Header('X-Rate-Limit', 'Rate limiting information')]
@@ -211,5 +330,59 @@ class ResponseHeadersTestController
         }
 
         return new JsonResponse(['data' => 'success'], 200);
+    }
+
+    #[Header('X-Count', 'Count header', type: 'int')]
+    public function withType()
+    {
+        return new JsonResponse(['data' => 'test'], 200);
+    }
+
+    #[Header('X-Date', format: 'date')]
+    public function withFormat()
+    {
+        return new JsonResponse(['data' => 'test'], 200);
+    }
+
+    #[Header('X-Language', 'Language header', default: 'en')]
+    public function withDefault()
+    {
+        return new JsonResponse(['data' => 'test'], 200);
+    }
+
+    #[Header('X-Timestamp', 'Timestamp header', type: 'string', format: 'date-time', default: '2024-01-01T00:00:00Z')]
+    public function withTypeFormatAndDefault()
+    {
+        return new JsonResponse(['data' => '2024-01-01T00:00:00Z'], 200);
+    }
+
+    #[Header('X-Cache-Enabled', 'Cache enabled header', type: 'bool')]
+    public function withBooleanType()
+    {
+        return new JsonResponse(['data' => true], 200);
+    }
+
+    #[Header('X-Allowed-Origins', 'Allowed origins header', type: 'array')]
+    public function withArrayType()
+    {
+        return new JsonResponse(['data' => ['http://example.com']], 200);
+    }
+
+    #[Header('X-Authorization', 'Authorization header', required: true)]
+    public function withRequired()
+    {
+        return new JsonResponse(['data' => 'test'], 200);
+    }
+
+    #[Header('X-Legacy-Header', 'Legacy header', deprecated: true)]
+    public function withDeprecated()
+    {
+        return new JsonResponse(['data' => 'test'], 200);
+    }
+
+    #[Header('X-Tags', 'Tags header', explode: true)]
+    public function withExplode()
+    {
+        return new JsonResponse(['data' => ['tag1', 'tag2']], 200);
     }
 }

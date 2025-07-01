@@ -7,6 +7,7 @@ use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
+use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\RouteInfo;
 use ReflectionAttribute;
 
@@ -55,7 +56,7 @@ class ResponseHeadersExtension extends OperationExtension
             }
 
             foreach ($applicableHeaders as $header) {
-                $response->addHeader($header->name, HeaderAttribute::toOpenApiHeader($header));
+                $response->addHeader($header->name, HeaderAttribute::toOpenApiHeader($header, $this->openApiTransformer));
             }
 
             $operation->responses[$i] = $response;
