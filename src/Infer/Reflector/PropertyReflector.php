@@ -12,6 +12,7 @@ use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use ReflectionProperty;
+use RuntimeException;
 
 class PropertyReflector
 {
@@ -58,7 +59,13 @@ class PropertyReflector
 
     private function getPropertyNodeDeclarationSource(): string
     {
-        $code = "<?php\n".$this->getClassReflector()->getSource();
+        try {
+            $classSource = $this->getClassReflector()->getSource();
+        } catch (RuntimeException) {
+            return '';
+        }
+
+        $code = "<?php\n".$classSource;
 
         $tokens = token_get_all($code);
         $inClass = false;
