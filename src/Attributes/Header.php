@@ -42,7 +42,7 @@ class Header
         $format = $header->format ?: '';
 
         if ($type instanceof MixedType && ($format || ! $default instanceof OpenApiMissingValue)) {
-            $type = new StringType();
+            $type = new StringType;
         }
 
         return new OpenApiHeader(
