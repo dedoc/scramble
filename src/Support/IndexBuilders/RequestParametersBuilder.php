@@ -3,7 +3,7 @@
 namespace Dedoc\Scramble\Support\IndexBuilders;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Generator\MissingExample;
+use Dedoc\Scramble\Support\Generator\MissingValue;
 use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\InferredParameter;
 use Dedoc\Scramble\Support\Type\BooleanType;
@@ -103,7 +103,7 @@ class RequestParametersBuilder implements IndexBuilder
                 name: $parameterName,
                 description: $this->makeDescriptionFromComments($commentHolderNode),
                 type: $parameterType,
-                default: $parameterDefault ?? new MissingExample,
+                default: $parameterDefault ?? new MissingValue,
             )
         );
     }

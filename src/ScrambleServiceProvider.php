@@ -7,6 +7,7 @@ use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Dedoc\Scramble\DocumentTransformers\AddDocumentTags;
+use Dedoc\Scramble\DocumentTransformers\CleanupUnusedResponseReferencesTransformer;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
@@ -221,6 +222,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             })
             ->withDocumentTransformers([
                 AddDocumentTags::class,
+                CleanupUnusedResponseReferencesTransformer::class,
             ]);
 
         if (Scramble::$defaultRoutesIgnored) {

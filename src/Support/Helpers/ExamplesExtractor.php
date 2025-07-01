@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Helpers;
 
-use Dedoc\Scramble\Support\Generator\MissingExample;
+use Dedoc\Scramble\Support\Generator\MissingValue;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 /**
@@ -35,7 +35,7 @@ class ExamplesExtractor
     private function getTypedExampleValue($exampleValue, bool $preferString = false)
     {
         if (! is_string($exampleValue)) {
-            return new MissingExample;
+            return new MissingValue;
         }
 
         if (function_exists('json_decode')) {

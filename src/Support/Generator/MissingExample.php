@@ -2,4 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class MissingExample {}
+/**
+ * @deprecated Use MissingValue instead
+ */
+class MissingExample extends MissingValue {}

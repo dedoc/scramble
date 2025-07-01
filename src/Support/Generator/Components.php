@@ -43,6 +43,11 @@ class Components
         unset($this->schemas[$schemaName]);
     }
 
+    public function removeResponse(string $responseName): void
+    {
+        unset($this->responses[$responseName]);
+    }
+
     public function toArray()
     {
         $result = [];

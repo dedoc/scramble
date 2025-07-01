@@ -6,7 +6,7 @@ use Dedoc\Scramble\Attributes\Example;
 use Dedoc\Scramble\Attributes\MissingValue;
 use Dedoc\Scramble\Attributes\Parameter as ParameterAttribute;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\Support\Generator\MissingExample;
+use Dedoc\Scramble\Support\Generator\MissingValue as OpenApiMissingValue;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\MixedType;
@@ -111,7 +111,7 @@ class AttributesParametersExtractor implements ParameterExtractor
 
     private function createParameterFromAttribute(ParameterAttribute $attribute): Parameter
     {
-        $default = $attribute->default instanceof MissingValue ? new MissingExample : $attribute->default;
+        $default = $attribute->default instanceof MissingValue ? new OpenApiMissingValue : $attribute->default;
         $type = $attribute->type ? $this->openApiTransformer->transform(
             PhpDocTypeHelper::toType(
                 PhpDoc::parse("/** @return $attribute->type */")->getReturnTagValues()[0]->type ?? new IdentifierTypeNode('mixed')
