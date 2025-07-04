@@ -79,7 +79,7 @@ class GeneratorConfig
     {
         $expectedDomain = $this->get('api_domain');
 
-        $isBaseMatching = !($prefix = $this->get('api_path', 'api')) || Str::startsWith($route->uri, $prefix);
+        $isBaseMatching = ! ($prefix = $this->get('api_path', 'api')) || Str::startsWith($route->uri, $prefix);
 
         return $isBaseMatching
             && (! $expectedDomain || $route->getDomain() === $expectedDomain);
