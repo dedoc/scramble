@@ -11,6 +11,7 @@ use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\RequestBodyObject;
 use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -63,7 +64,7 @@ class RequestBodyExtension extends OperationExtension
 
         if (in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
             $operation->addParameters(
-                $this->convertDotNamedParamsToComplexStructures($allParams)
+                $this->convertDotNamedParamsToFlatParams($allParams)
             );
 
             return;
@@ -73,7 +74,7 @@ class RequestBodyExtension extends OperationExtension
             ->partition(fn (Parameter $p) => $p->in !== 'body' || $p->getAttribute('isInQuery') || $p->getAttribute('nonBody'))
             ->map->toArray();
 
-        $operation->addParameters($this->convertDotNamedParamsToComplexStructures($nonBodyParams));
+        $operation->addParameters($this->convertDotNamedParamsToFlatParams($nonBodyParams));
 
         if (! $bodyParams) {
             return;
@@ -167,6 +168,46 @@ class RequestBodyExtension extends OperationExtension
     protected function convertDotNamedParamsToComplexStructures($params)
     {
         return (new DeepParametersMerger(collect($params)))->handle();
+    }
+
+    /**
+     * @param Parameter[] $params
+     * @return array
+     */
+    protected function convertDotNamedParamsToFlatParams($params): array
+    {
+        /** @var Collection<string, Parameter> $paramsByKeys */
+        $paramsByKeys = collect($params)->keyBy->name;
+
+        return collect($params)
+            /*
+             * Rejecting array "container" parameters for cases when there are properties specified. For example:
+             * ['filter' => 'array', 'filter.accountable' => 'integer']
+             * In this ruleset `filter` should not be documented at all as the accountable is enough.
+             */
+            ->reject(fn (Parameter $p) => $paramsByKeys->keys()->some(fn (string $key) => Str::startsWith($key, $p->name.'.')))
+            ->map(function (Parameter $originalParameter) {
+                $parameter = clone $originalParameter;
+
+                $parameter->name = Str::of($parameter->name)
+                    ->replace('.*.', '.0.')
+                    ->explode('.')
+                    ->map(fn ($str, $i) => $i === 0 ? $str : ($str === '*' ? '[]' : "[$str]"))
+                    ->join('');
+
+                if ($parameter->schema->type instanceof ArrayType) {
+                    $parameter->name .= '[]';
+                }
+
+                if (Str::endsWith($parameter->name, '[]') && !$parameter->schema->type instanceof ArrayType) {
+                    $parameter->schema->type = (new ArrayType())
+                        ->setItems($parameter->schema->type)
+                        ->addProperties($parameter->schema->type);
+                }
+
+                return $parameter;
+            })
+            ->all();
     }
 
     protected function getMediaType(Operation $operation, RouteInfo $routeInfo, array $bodyParams): string

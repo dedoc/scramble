@@ -584,3 +584,106 @@ class Validation_DescriptionSchemaNamesTest_Controller
         $request->validate(['foo' => 'integer']);
     }
 }
+
+it('documents deep query parameters according to how they can be read by laravel api', function () {
+    $document = generateForRoute(fn () => RouteFacade::get('test', RequestBodyExtensionTest_DeepQueryParametersController::class));
+
+    expect($parameters = $document['paths']['/test']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($parameters[0])
+        ->toBe([
+            'name' => 'filter[accountable]',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'integer',
+            ],
+        ]);
+});
+class RequestBodyExtensionTest_DeepQueryParametersController
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            'filter.accountable' => 'integer'
+        ]);
+    }
+}
+
+it('documents deep query parameters with container according to how they can be read by laravel api', function () {
+    $document = generateForRoute(fn () => RouteFacade::get('test', RequestBodyExtensionTest_DeepQueryParametersWithContainerController::class));
+
+    expect($parameters = $document['paths']['/test']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($parameters[0])
+        ->toBe([
+            'name' => 'filter[accountable]',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'integer',
+            ],
+        ]);
+});
+class RequestBodyExtensionTest_DeepQueryParametersWithContainerController
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            'filter' => 'array',
+            'filter.accountable' => 'integer',
+        ]);
+    }
+}
+
+it('documents array query parameters as arrays of some type', function () {
+    $document = generateForRoute(fn () => RouteFacade::get('test', RequestBodyExtensionTest_ArrayQueryParametersController::class));
+
+    expect($parameters = $document['paths']['/test']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($parameters[0])
+        ->toBe([
+            'name' => 'tags[]',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'string',
+                ]
+            ],
+        ]);
+});
+class RequestBodyExtensionTest_ArrayQueryParametersController
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            'tags' => 'array',
+        ]);
+    }
+}
+
+it('documents array query parameters as arrays of specific type', function () {
+    $document = generateForRoute(fn () => RouteFacade::get('test', RequestBodyExtensionTest_ArraySpecificQueryParametersController::class));
+
+    expect($parameters = $document['paths']['/test']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($parameters[0])
+        ->toBe([
+            'name' => 'tags[]',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'integer',
+                ]
+            ],
+        ]);
+});
+class RequestBodyExtensionTest_ArraySpecificQueryParametersController
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            'tags.*' => 'integer',
+        ]);
+    }
+}
