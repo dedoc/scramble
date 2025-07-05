@@ -22,7 +22,7 @@ class ParametersExtractors
     protected array $prepends = [];
 
     /**
-     * @param class-string<ParameterExtractor>[]|class-string<ParameterExtractor> $extractor
+     * @param  class-string<ParameterExtractor>[]|class-string<ParameterExtractor>  $extractor
      * @return $this
      */
     public function append(array|string $extractor): self
@@ -36,7 +36,7 @@ class ParametersExtractors
     }
 
     /**
-     * @param class-string<ParameterExtractor>[]|class-string<ParameterExtractor> $extractor
+     * @param  class-string<ParameterExtractor>[]|class-string<ParameterExtractor>  $extractor
      * @return $this
      */
     public function prepend(array|string $extractor): self
@@ -50,7 +50,7 @@ class ParametersExtractors
     }
 
     /**
-     * @param class-string<ParameterExtractor>[] $extractors
+     * @param  class-string<ParameterExtractor>[]  $extractors
      * @return $this
      */
     public function use(array $extractors): self

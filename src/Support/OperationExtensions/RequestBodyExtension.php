@@ -156,7 +156,7 @@ class RequestBodyExtension extends OperationExtension
     }
 
     /**
-     * @param Collection<int, Type> $schemas
+     * @param  Collection<int, Type>  $schemas
      */
     protected function makeComposedRequestBodySchema(Collection $schemas): Type
     {
@@ -168,7 +168,7 @@ class RequestBodyExtension extends OperationExtension
     }
 
     /**
-     * @param Collection<int, ParametersExtractionResult> $schemalessResults
+     * @param  Collection<int, ParametersExtractionResult>  $schemalessResults
      */
     protected function mergeSchemalessRulesResults(Collection $schemalessResults): ParametersExtractionResult
     {
@@ -178,7 +178,7 @@ class RequestBodyExtension extends OperationExtension
     }
 
     /**
-     * @param Parameter[] $params
+     * @param  Parameter[]  $params
      * @return Parameter[]
      */
     protected function convertDotNamedParamsToComplexStructures($params): array
@@ -265,7 +265,7 @@ class RequestBodyExtension extends OperationExtension
     }
 
     /**
-     * @param Parameter[] $bodyParams
+     * @param  Parameter[]  $bodyParams
      */
     protected function getMediaType(Operation $operation, RouteInfo $routeInfo, array $bodyParams): string
     {
@@ -286,7 +286,7 @@ class RequestBodyExtension extends OperationExtension
     }
 
     /**
-     * @param Parameter[] $bodyParams
+     * @param  Parameter[]  $bodyParams
      */
     protected function hasBinary(array $bodyParams): bool
     {
