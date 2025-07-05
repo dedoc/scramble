@@ -6,6 +6,7 @@ use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
@@ -48,7 +49,7 @@ class ResponseExtension extends OperationExtension
             ->unique(fn ($response) => ($response instanceof Response ? $response->code : 'ref').':'.json_encode($response->toArray()))
             ->values();
 
-        [$responses, $references] = $responses->partition(fn ($r) => $r instanceof Response);
+        [$responses, $references] = $responses->partition(fn ($r) => $r instanceof Response)->all();
 
         $responses = $responses
             ->groupBy('code')
@@ -59,8 +60,16 @@ class ResponseExtension extends OperationExtension
 
                 // @todo: Responses with similar code and type should result in a different example schemas.
 
-                $responsesTypes = $responses->map(fn (Response $r) => ($r->content['application/json'] ?? null)->schema?->type)
-                    ->filter()
+                $responsesTypes = $responses->map(function (Response $r) {
+                    $schema = ($r->content['application/json'] ?? null)->schema ?? null;
+                    if (! $schema) {
+                        return null;
+                    }
+                    if ($schema instanceof Reference) {
+                        return $schema->resolve()->type;
+                    }
+                    return $schema->type;
+                })
                     /*
                      * Empty response body can happen, and in case it is going to be grouped
                      * by status, it should become an empty string.

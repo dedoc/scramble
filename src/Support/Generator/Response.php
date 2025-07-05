@@ -37,13 +37,15 @@ class Response
         return $this;
     }
 
-    public function setContent($content): self
+    public function setContent($content): self // @phpstan-ignore missingType.parameter
     {
         /**
          * @todo backward compatibility, remove in 1.0
          */
         if (count($args = func_get_args()) === 2) {
-            return $this->addContent(...$args);
+            $mediaType = $args[1] instanceof MediaType ? $args[1] : new MediaType(schema: $args[1]); // @phpstan-ignore argument.type
+
+            return $this->addContent($args[0], $mediaType); // @phpstan-ignore argument.type
         }
 
         $this->content = $content;
