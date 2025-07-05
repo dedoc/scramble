@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
+use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
@@ -58,7 +59,8 @@ class ResponseExtension extends OperationExtension
 
                 // @todo: Responses with similar code and type should result in a different example schemas.
 
-                $responsesTypes = $responses->pluck('content.application/json.type')
+                $responsesTypes = $responses->map(fn (Response $r) => ($r->content['application/json'] ?? null)->schema?->type)
+                    ->filter()
                     /*
                      * Empty response body can happen, and in case it is going to be grouped
                      * by status, it should become an empty string.
@@ -70,9 +72,11 @@ class ResponseExtension extends OperationExtension
 
                 return Response::make((int) $code)
                     ->description($responses->first()->description)
-                    ->setContent(
+                    ->addContent(
                         'application/json',
-                        Schema::fromType(count($responsesTypes) > 1 ? (new AnyOf)->setItems($responsesTypes) : $responsesTypes[0])
+                        new MediaType(
+                            schema: Schema::fromType(count($responsesTypes) > 1 ? (new AnyOf)->setItems($responsesTypes) : $responsesTypes[0]),
+                        ),
                     );
             })
             ->values()

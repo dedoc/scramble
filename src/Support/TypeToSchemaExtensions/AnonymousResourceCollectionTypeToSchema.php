@@ -6,6 +6,7 @@ use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType as OpenApiArrayType;
@@ -106,7 +107,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
 
         return Response::make(200)
             ->description('Array of `'.$this->openApiContext->references->schemas->uniqueName($collectingResourceType->name).'`')
-            ->setContent('application/json', Schema::fromType($openApiType));
+            ->addContent('application/json', new MediaType(schema: Schema::fromType($openApiType)));
     }
 
     /**
@@ -157,7 +158,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
 
         return Response::make(200)
             ->description('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectingClassType->name).'`')
-            ->setContent('application/json', Schema::fromType($responseType));
+            ->addContent('application/json', new MediaType(schema: Schema::fromType($responseType)));
     }
 
     private function getCollectingResourceType(Generic $type): ?ObjectType

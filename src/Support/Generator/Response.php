@@ -9,8 +9,8 @@ class Response
 
     public ?int $code = null;
 
-    /** @var array<string, Schema|Reference|null> */
-    public array $content;
+    /** @var array<string, MediaType> */
+    public array $content = [];
 
     public string $description = '';
 
@@ -28,11 +28,27 @@ class Response
     }
 
     /**
-     * @param  Schema|Reference|null  $schema
+     * @return $this
      */
-    public function setContent(string $type, $schema)
+    public function addContent(string $type, MediaType $mediaType): self
     {
-        $this->content[$type] = $schema;
+        $this->content[$type] = $mediaType;
+
+        return $this;
+    }
+
+    public function setContent($content): self
+    {
+        /**
+         * @todo backward compatibility, remove in 1.0
+         */
+        if (count($args = func_get_args()) === 2) {
+            $mediaType = $args[1] instanceof MediaType ? $args[1] : new MediaType(schema: $args[1]);
+
+            return $this->addContent($args[0], $mediaType);
+        }
+
+        $this->content = $content;
 
         return $this;
     }
@@ -74,12 +90,8 @@ class Response
             'description' => $this->description,
         ];
 
-        if (isset($this->content)) {
-            $content = [];
-            foreach ($this->content ?? [] as $mediaType => $schema) {
-                $content[$mediaType] = $schema ? ['schema' => $schema->toArray()] : (object) [];
-            }
-            $result['content'] = $content;
+        if (count($this->content)) {
+            $result['content'] = array_map(fn ($mt) => $mt->toArray(), $this->content);
         }
 
         $headers = array_map(fn ($header) => $header->toArray(), $this->headers);

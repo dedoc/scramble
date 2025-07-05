@@ -40,10 +40,7 @@ class Foo_TestTwo
 }
 
 test('multiple responses support', function () {
-    \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestThree::class, 'index']);
-
-    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestThree::class, 'index']));
 
     assertMatchesSnapshot($openApiDocument);
 });

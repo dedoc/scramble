@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\ExceptionToResponseExtensions;
 
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
+use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
@@ -32,9 +33,9 @@ class AuthorizationExceptionToResponseExtension extends ExceptionToResponseExten
 
         return Response::make(403)
             ->description('Authorization error')
-            ->setContent(
+            ->addContent(
                 'application/json',
-                Schema::fromType($validationResponseBodyType)
+                new MediaType(schema: Schema::fromType($validationResponseBodyType))
             );
     }
 
