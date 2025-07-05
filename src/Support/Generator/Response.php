@@ -17,6 +17,9 @@ class Response
     /** @var array<string, Header|Reference> */
     public array $headers = [];
 
+    /** @var array<string, Link|Reference> */
+    public array $links = [];
+
     public function __construct(?int $code)
     {
         $this->code = $code;
@@ -84,6 +87,37 @@ class Response
         return $this;
     }
 
+    /**
+     * @return $this
+     */
+    public function addLink(string $name, Link|Reference $link): self
+    {
+        $this->links[$name] = $link;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function removeLink(string $name): self
+    {
+        unset($this->links[$name]);
+
+        return $this;
+    }
+
+    /**
+     * @param  array<string, Link|Reference>  $links
+     * @return $this
+     */
+    public function setLinks(array $links): self
+    {
+        $this->links = $links;
+
+        return $this;
+    }
+
     public function toArray()
     {
         $result = [
@@ -95,10 +129,12 @@ class Response
         }
 
         $headers = array_map(fn ($header) => $header->toArray(), $this->headers);
+        $links = array_map(fn ($link) => $link->toArray(), $this->links);
 
         return array_merge(
             $result,
             $headers ? ['headers' => $headers] : [],
+            $links ? ['links' => $links] : [],
             $this->extensionPropertiesToArray(),
         );
     }

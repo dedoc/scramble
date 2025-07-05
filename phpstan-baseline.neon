@@ -3172,20 +3172,8 @@ parameters:
 			path: src/Support/Generator/Response.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Response\:\:setContent\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Response.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Response\:\:toArray\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Response.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Support\\Generator\\Response\:\:\$content \(array\<string, Dedoc\\Scramble\\Support\\Generator\\Reference\|Dedoc\\Scramble\\Support\\Generator\\Schema\|null\>\) on left side of \?\? is not nullable\.$#'
-			identifier: nullCoalesce.property
 			count: 1
 			path: src/Support/Generator/Response.php
 
@@ -4460,12 +4448,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/Support/OperationExtensions/RequestEssentialsExtension.php
-
-		-
-			message: '#^Cannot access property \$description on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Support/OperationExtensions/ResponseExtension.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ResponseExtension\:\:handle\(\) has no return type specified\.$#'
