@@ -68,6 +68,7 @@ class ResponseExtension extends OperationExtension
                     if ($schema instanceof Reference) {
                         return $schema->resolve()->type;
                     }
+
                     return $schema->type;
                 })
                     /*
