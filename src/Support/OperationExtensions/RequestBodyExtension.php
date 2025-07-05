@@ -173,7 +173,7 @@ class RequestBodyExtension extends OperationExtension
     }
 
     /**
-     * @param Parameter[] $params
+     * @param  Parameter[]  $params
      * @return Parameter[]
      */
     protected function convertDotNamedParamsToQueryParams(array $params): array
@@ -235,8 +235,8 @@ class RequestBodyExtension extends OperationExtension
                     return null;
                 }
 
-                if (Str::endsWith($parameter->name, '[]') && !$parameter->schema->type instanceof ArrayType) {
-                    $parameter->schema->type = (new ArrayType())
+                if (Str::endsWith($parameter->name, '[]') && ! $parameter->schema->type instanceof ArrayType) {
+                    $parameter->schema->type = (new ArrayType)
                         ->setItems($parameter->schema->type)
                         ->addProperties($parameter->schema->type);
                 }

@@ -604,7 +604,7 @@ class RequestBodyExtensionTest_DeepQueryParametersController
     public function __invoke(Request $request)
     {
         $request->validate([
-            'filter.accountable' => 'integer'
+            'filter.accountable' => 'integer',
         ]);
     }
 }
@@ -647,7 +647,7 @@ it('documents array query parameters as arrays of some type', function () {
                 'type' => 'array',
                 'items' => [
                     'type' => 'string',
-                ]
+                ],
             ],
         ]);
 });
@@ -674,7 +674,7 @@ it('documents array query parameters as arrays of specific type', function () {
                 'type' => 'array',
                 'items' => [
                     'type' => 'integer',
-                ]
+                ],
             ],
         ]);
 });
