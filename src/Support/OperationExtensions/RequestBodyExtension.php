@@ -64,7 +64,7 @@ class RequestBodyExtension extends OperationExtension
 
         if (in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
             $operation->addParameters(
-                $this->convertDotNamedParamsToFlatParams($allParams)
+                $this->convertDotNamedParamsToQueryParams($allParams)
             );
 
             return;
@@ -74,7 +74,9 @@ class RequestBodyExtension extends OperationExtension
             ->partition(fn (Parameter $p) => $p->in !== 'body' || $p->getAttribute('isInQuery') || $p->getAttribute('nonBody'))
             ->map->toArray();
 
-        $operation->addParameters($this->convertDotNamedParamsToFlatParams($nonBodyParams));
+        $operation->addParameters(
+            $this->convertDotNamedParamsToQueryParams($nonBodyParams)
+        );
 
         if (! $bodyParams) {
             return;
@@ -172,31 +174,65 @@ class RequestBodyExtension extends OperationExtension
 
     /**
      * @param Parameter[] $params
-     * @return array
+     * @return Parameter[]
      */
-    protected function convertDotNamedParamsToFlatParams($params): array
+    protected function convertDotNamedParamsToQueryParams(array $params): array
     {
-        /** @var Collection<string, Parameter> $paramsByKeys */
-        $paramsByKeys = collect($params)->keyBy->name;
+        /** @var Collection<string, Parameter> $paramsByName */
+        $paramsByName = collect($params)->keyBy->name;
 
-        return collect($params)
+        [$convertableParameters, $deepParameters] = collect($params)
             /*
              * Rejecting array "container" parameters for cases when there are properties specified. For example:
              * ['filter' => 'array', 'filter.accountable' => 'integer']
              * In this ruleset `filter` should not be documented at all as the accountable is enough.
              */
-            ->reject(fn (Parameter $p) => $paramsByKeys->keys()->some(fn (string $key) => Str::startsWith($key, $p->name.'.')))
-            ->map(function (Parameter $originalParameter) {
+            ->reject(fn (Parameter $p) => $paramsByName->keys()->some(fn (string $key) => Str::startsWith($key, $p->name.'.')))
+            ->partition(function (Parameter $p) {
+                if ($p->getAttribute('isFlat')) {
+                    return true;
+                }
+
+                $isScalar = ! in_array($p->schema->type->type ?? null, ['array', 'object', null], strict: true);
+
+                $isArrayOfScalar = ($p->schema->type ?? null) instanceof ArrayType
+                    && ! in_array($p->schema->type->items->type ?? null, ['array', 'object', null], strict: true);
+
+                if (! Str::contains($p->name, '*')) { // no nested arrays
+                    return $isScalar || $isArrayOfScalar;
+                }
+
+                if (Str::endsWith($p->name, '*') && (Str::substrCount($p->name, '*') === 1)) {
+                    return $isScalar;
+                }
+
+                return false;
+            });
+
+        $deepParameters = array_map(
+            fn (Parameter $p) => tap($p, fn (Parameter $p) => $p->setExtensionProperty('deepObject-style', 'qs')),
+            $this->convertDotNamedParamsToComplexStructures($deepParameters->all()),
+        );
+
+        return collect($convertableParameters)
+            ->map(function (Parameter $originalParameter) use ($paramsByName) {
                 $parameter = clone $originalParameter;
 
                 $parameter->name = Str::of($parameter->name)
-                    ->replace('.*.', '.0.')
                     ->explode('.')
                     ->map(fn ($str, $i) => $i === 0 ? $str : ($str === '*' ? '[]' : "[$str]"))
                     ->join('');
 
                 if ($parameter->schema->type instanceof ArrayType) {
                     $parameter->name .= '[]';
+                }
+
+                if (
+                    $parameter->name !== $originalParameter->name
+                    && ($sameNameParam = $paramsByName->get($parameter->name))
+                    && $sameNameParam !== $originalParameter
+                ) {
+                    return null;
                 }
 
                 if (Str::endsWith($parameter->name, '[]') && !$parameter->schema->type instanceof ArrayType) {
@@ -207,6 +243,9 @@ class RequestBodyExtension extends OperationExtension
 
                 return $parameter;
             })
+            ->filter()
+            ->values()
+            ->merge($deepParameters)
             ->all();
     }
 
