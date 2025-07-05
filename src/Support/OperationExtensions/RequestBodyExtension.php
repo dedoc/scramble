@@ -28,9 +28,9 @@ class RequestBodyExtension extends OperationExtension
 {
     const HTTP_METHODS_WITHOUT_REQUEST_BODY = ['get', 'delete', 'head'];
 
-    public function handle(Operation $operation, RouteInfo $routeInfo)
+    public function handle(Operation $operation, RouteInfo $routeInfo): void
     {
-        $description = Str::of($routeInfo->phpDoc()->getAttribute('description'));
+        $description = Str::of($routeInfo->phpDoc()->getAttribute('description')); // @phpstan-ignore argument.type
 
         /*
          * Making sure to analyze the route.
@@ -39,6 +39,7 @@ class RequestBodyExtension extends OperationExtension
          */
         $routeInfo->getMethodType();
 
+        /** @var Collection<int, ParametersExtractionResult> $rulesResults */
         $rulesResults = collect();
 
         try {
@@ -51,10 +52,10 @@ class RequestBodyExtension extends OperationExtension
         }
 
         $operation
-            ->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'))
+            ->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'))  // @phpstan-ignore argument.type
             ->description($description);
 
-        $allParams = $rulesResults->flatMap->parameters->unique(fn ($p) => "$p->name.$p->in")->values()->all();
+        $allParams = $rulesResults->flatMap(fn ($p) => $p->parameters)->unique(fn ($p) => "$p->name.$p->in")->values()->all();
 
         $mediaType = $this->getMediaType($operation, $routeInfo, $allParams);
 
@@ -70,9 +71,12 @@ class RequestBodyExtension extends OperationExtension
             return;
         }
 
-        [$nonBodyParams, $bodyParams] = collect($allParams)
-            ->partition(fn (Parameter $p) => $p->in !== 'body' || $p->getAttribute('isInQuery') || $p->getAttribute('nonBody'))
-            ->map->toArray();
+        [$nonBodyParams, $bodyParams] = array_map(
+            fn ($c) => $c->all(),
+            collect($allParams)
+                ->partition(fn (Parameter $p) => $p->in !== 'body' || $p->getAttribute('isInQuery') || $p->getAttribute('nonBody'))
+                ->all(),
+        );
 
         $operation->addParameters(
             $this->convertDotNamedParamsToQueryParams($nonBodyParams)
@@ -82,7 +86,7 @@ class RequestBodyExtension extends OperationExtension
             return;
         }
 
-        [$schemaResults, $schemalessResults] = $rulesResults->partition('schemaName');
+        [$schemaResults, $schemalessResults] = $rulesResults->partition('schemaName')->all();
         $schemalessResults = collect([$this->mergeSchemalessRulesResults($schemalessResults->values())]);
 
         $schemas = $schemaResults->merge($schemalessResults)
@@ -133,7 +137,7 @@ class RequestBodyExtension extends OperationExtension
             $parameters = $this->convertDotNamedParamsToComplexStructures($result->parameters)
         );
 
-        if (count($parameters) === 1 && $parameters[0]?->name === '*') {
+        if (count($parameters) === 1 && $parameters[0]->name === '*' && $parameters[0]->schema) {
             $requestBodySchema->type = $parameters[0]->schema->type;
         }
 
@@ -151,15 +155,21 @@ class RequestBodyExtension extends OperationExtension
         return new Reference('schemas', $result->schemaName, $components);
     }
 
-    protected function makeComposedRequestBodySchema(Collection $schemas)
+    /**
+     * @param Collection<int, Type> $schemas
+     */
+    protected function makeComposedRequestBodySchema(Collection $schemas): Type
     {
         if ($schemas->count() === 1) {
-            return $schemas->first();
+            return $schemas->first(); // @phpstan-ignore return.type
         }
 
         return (new AllOf)->setItems($schemas->all());
     }
 
+    /**
+     * @param Collection<int, ParametersExtractionResult> $schemalessResults
+     */
     protected function mergeSchemalessRulesResults(Collection $schemalessResults): ParametersExtractionResult
     {
         return new ParametersExtractionResult(
@@ -167,7 +177,11 @@ class RequestBodyExtension extends OperationExtension
         );
     }
 
-    protected function convertDotNamedParamsToComplexStructures($params)
+    /**
+     * @param Parameter[] $params
+     * @return Parameter[]
+     */
+    protected function convertDotNamedParamsToComplexStructures($params): array
     {
         return (new DeepParametersMerger(collect($params)))->handle();
     }
@@ -207,7 +221,8 @@ class RequestBodyExtension extends OperationExtension
                 }
 
                 return false;
-            });
+            })
+            ->all();
 
         $deepParameters = array_map(
             fn (Parameter $p) => tap($p, fn (Parameter $p) => $p->setExtensionProperty('deepObject-style', 'qs')),
@@ -223,7 +238,7 @@ class RequestBodyExtension extends OperationExtension
                     ->map(fn ($str, $i) => $i === 0 ? $str : ($str === '*' ? '[]' : "[$str]"))
                     ->join('');
 
-                if ($parameter->schema->type instanceof ArrayType) {
+                if ($parameter->schema?->type instanceof ArrayType) {
                     $parameter->name .= '[]';
                 }
 
@@ -235,7 +250,7 @@ class RequestBodyExtension extends OperationExtension
                     return null;
                 }
 
-                if (Str::endsWith($parameter->name, '[]') && ! $parameter->schema->type instanceof ArrayType) {
+                if (Str::endsWith($parameter->name, '[]') && $parameter->schema && ! $parameter->schema->type instanceof ArrayType) {
                     $parameter->schema->type = (new ArrayType)
                         ->setItems($parameter->schema->type)
                         ->addProperties($parameter->schema->type);
@@ -249,11 +264,14 @@ class RequestBodyExtension extends OperationExtension
             ->all();
     }
 
+    /**
+     * @param Parameter[] $bodyParams
+     */
     protected function getMediaType(Operation $operation, RouteInfo $routeInfo, array $bodyParams): string
     {
         if (
             ($mediaTags = $routeInfo->phpDoc()->getTagsByName('@requestMediaType'))
-            && ($mediaType = trim(Arr::first($mediaTags)?->value?->value))
+            && ($mediaType = trim(Arr::first($mediaTags)->value->value ?? null))
         ) {
             return $mediaType;
         }
@@ -267,17 +285,23 @@ class RequestBodyExtension extends OperationExtension
         return $this->hasBinary($bodyParams) ? 'multipart/form-data' : $jsonMediaType;
     }
 
-    protected function hasBinary($bodyParams): bool
+    /**
+     * @param Parameter[] $bodyParams
+     */
+    protected function hasBinary(array $bodyParams): bool
     {
         return collect($bodyParams)->contains(function (Parameter $parameter) {
             // @todo: Use OpenApi document tree walker when ready
-            $parameterString = json_encode($parameter->toArray());
+            $parameterString = json_encode($parameter->toArray(), JSON_THROW_ON_ERROR);
 
             return Str::contains($parameterString, '"contentMediaType":"application\/octet-stream"');
         });
     }
 
-    private function extractParameters(Operation $operation, RouteInfo $routeInfo)
+    /**
+     * @return ParametersExtractionResult[]
+     */
+    private function extractParameters(Operation $operation, RouteInfo $routeInfo): array
     {
         $result = [];
         foreach ($this->config->parametersExtractors->all() as $extractorClass) {
