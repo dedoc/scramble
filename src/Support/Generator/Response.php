@@ -43,9 +43,7 @@ class Response
          * @todo backward compatibility, remove in 1.0
          */
         if (count($args = func_get_args()) === 2) {
-            $mediaType = $args[1] instanceof MediaType ? $args[1] : new MediaType(schema: $args[1]);
-
-            return $this->addContent($args[0], $mediaType);
+            return $this->addContent(...$args);
         }
 
         $this->content = $content;
