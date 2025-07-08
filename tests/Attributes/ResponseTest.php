@@ -59,3 +59,26 @@ class MultipleTypeController_ResponseTest
         return something_unknown();
     }
 }
+
+it('allows adding new response', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('test', NewResponseController_ResponseTest::class));
+
+    expect($responses = $openApiDocument['paths']['/test']['get']['responses'])
+        ->toHaveCount(2)
+        ->and($responses)
+        ->toHaveKeys([200, 201])
+        ->and($responses[201]['content']['application/json']['schema'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => ['foo' => ['type' => 'string']],
+            'required' => ['foo'],
+        ]);
+});
+class NewResponseController_ResponseTest
+{
+    #[Response(201, type: 'array{foo: string}')]
+    public function __invoke()
+    {
+        return something_unknown();
+    }
+}

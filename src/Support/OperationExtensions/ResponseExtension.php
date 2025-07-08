@@ -16,6 +16,7 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Collection;
 use ReflectionAttribute;
+use function DeepCopy\deep_copy;
 
 class ResponseExtension extends OperationExtension
 {
@@ -31,7 +32,7 @@ class ResponseExtension extends OperationExtension
     }
 
     /**
-     * @return Collection<int, Response>
+     * @return Collection<int, Response|Reference>
      */
     private function collectInferredResponses(RouteInfo $routeInfo): Collection
     {
@@ -66,6 +67,8 @@ class ResponseExtension extends OperationExtension
             ->values();
 
         [$responses, $references] = $responses->partition(fn ($r) => $r instanceof Response)->all();
+        /** @var Collection<int, Response> $responses */
+        /** @var Collection<int, Reference> $references */
 
         return $responses
             ->groupBy('code')
@@ -97,7 +100,7 @@ class ResponseExtension extends OperationExtension
                     ->all();
 
                 return Response::make((int) $code)
-                    ->description($responses->first()->description)
+                    ->setDescription($responses->first()->description) // @phpstan-ignore property.nonObject
                     ->addContent(
                         'application/json',
                         new MediaType(
@@ -111,22 +114,45 @@ class ResponseExtension extends OperationExtension
     }
 
     /**
-     * @param  Collection<int, Response>  $inferredResponses
-     * @return Collection<int, Response>
+     * @param  Collection<int, Response|Reference>  $inferredResponses
+     * @return Collection<int, Response|Reference>
      */
     private function applyResponsesAttributes(Collection $inferredResponses, RouteInfo $routeInfo): Collection
     {
         $responseAttributes = $routeInfo->reflectionMethod()?->getAttributes(ResponseAttribute::class, ReflectionAttribute::IS_INSTANCEOF) ?: [];
 
+        if (! count($responseAttributes)) {
+            return $inferredResponses;
+        }
+
         foreach ($responseAttributes as $responseAttribute) {
             $responseAttributeInstance = $responseAttribute->newInstance();
 
-            $originalResponse = $inferredResponses->first(fn (Response $r) => $r->code === $responseAttributeInstance->status);
+            $originalResponse = $inferredResponses
+                ->map(fn (Response|Reference $r): Response => $r instanceof Reference ? $r->resolve() : $r)
+                ->first(fn (Response $r) => $r->code === $responseAttributeInstance->status);
 
             $newResponse = ResponseAttribute::toOpenApiResponse($responseAttributeInstance, $originalResponse, $this->openApiTransformer);
 
+            $responseHasChanged = ! $originalResponse
+                || json_encode($newResponse->toArray(), JSON_THROW_ON_ERROR) !== json_encode($originalResponse->toArray(), JSON_THROW_ON_ERROR);
+
+            if (! $responseHasChanged) {
+                continue;
+            }
+
             $inferredResponses = $inferredResponses
-                ->map(fn (Response $r) => $r->code === $responseAttributeInstance->status ? $newResponse : $r);
+                ->map(function (Response|Reference $r) use ($responseAttributeInstance, $newResponse) {
+                    $response = $r instanceof Reference ? $r->resolve() : $r;
+
+                    /** @var Response $response */
+
+                    return $response->code === $responseAttributeInstance->status ? $newResponse : $r;
+                });
+
+            if (! $originalResponse) {
+                $inferredResponses->push($newResponse);
+            }
         }
 
         return $inferredResponses;

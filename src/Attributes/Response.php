@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
+use function DeepCopy\deep_copy;
 
 /**
  * @phpstan-type BaseExample array<mixed>|scalar|null
@@ -32,7 +33,7 @@ class Response
 
     public static function toOpenApiResponse(Response $responseAttribute, ?OpenApiResponse $originalResponse, TypeTransformer $openApiTransformer): OpenApiResponse
     {
-        $response = $originalResponse ?? OpenApiResponse::make($responseAttribute->status);
+        $response = $originalResponse ? deep_copy($originalResponse) : OpenApiResponse::make($responseAttribute->status);
 
         $response
             ->setDescription(self::getDescription($responseAttribute, $response))

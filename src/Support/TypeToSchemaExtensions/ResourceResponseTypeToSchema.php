@@ -11,6 +11,7 @@ use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Reference;
+use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -23,6 +24,7 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\ResourceResponse;
+use LogicException;
 
 class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 {
@@ -76,10 +78,13 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
             );
         }
 
-        $response = $this->openApiTransformer->toResponse($this->makeBaseResponse($resourceType));
+        $response = $this->openApiTransformer->toResponse($baseType = $this->makeBaseResponse($resourceType));
+        if (! $response instanceof Response) {
+            throw new LogicException("{$baseType->toString()} is expected to produce Response instance when casted to response.");
+        }
 
         return $response
-            ->description('`'.$this->openApiContext->references->schemas->uniqueName($resourceType->name).'`')
+            ->setDescription('`'.$this->openApiContext->references->schemas->uniqueName($resourceType->name).'`')
             ->addContent(
                 'application/json',
                 new MediaType(schema: Schema::fromType($openApiType)),

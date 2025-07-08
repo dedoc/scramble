@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\ResourceResponse;
+use LogicException;
 
 class ResponseTypeToSchema extends TypeToSchemaExtension
 {
@@ -70,6 +71,9 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
         $statusCode = $jsonResponseType->templateTypes[1];
 
         $response = $this->openApiTransformer->toResponse($data);
+        if (! $response instanceof Response) {
+            throw new LogicException("{$data->toString()} is expected to produce Response instance when casted to response.");
+        }
 
         $responseStatusCode = $statusCode instanceof UnknownType
             ? $response->code

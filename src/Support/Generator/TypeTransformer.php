@@ -30,7 +30,9 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+use function DeepCopy\deep_copy;
 
 /**
  * Transforms PHP type to OpenAPI schema type.
@@ -277,7 +279,7 @@ class TypeTransformer
         return $reference ?: $handledType;
     }
 
-    public function toResponse(Type $type)
+    public function toResponse(Type $type): Response|Reference|null
     {
         // In case of union type being returned and all of its types resulting in the same response, we want to make
         // sure to take only unique types to avoid having the same types in the response.
@@ -314,7 +316,13 @@ class TypeTransformer
 
                 $typeResponse = $this->toResponse($type);
 
-                $response->addContent('application/json', $typeResponse->getContent('application/json'));
+                if ($typeResponse instanceof Reference) {
+                    $typeResponse = deep_copy($typeResponse->resolve());
+                }
+
+                if ($typeResponse instanceof Response) {
+                    $response->addContent('application/json', $typeResponse->getContent('application/json'));
+                }
             }
         }
 

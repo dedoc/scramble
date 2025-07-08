@@ -3448,12 +3448,6 @@ parameters:
 			path: src/Support/Generator/TypeTransformer.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\TypeTransformer\:\:toResponse\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/TypeTransformer.php
-
-		-
 			message: '#^PHPDoc tag @var for variable \$extensions contains generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
 			identifier: missingType.generics
 			count: 1
