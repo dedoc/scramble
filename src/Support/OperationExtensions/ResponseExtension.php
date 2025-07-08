@@ -16,7 +16,6 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Collection;
 use ReflectionAttribute;
-use function DeepCopy\deep_copy;
 
 class ResponseExtension extends OperationExtension
 {

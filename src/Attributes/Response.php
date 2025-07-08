@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
+
 use function DeepCopy\deep_copy;
 
 /**

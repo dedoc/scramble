@@ -30,8 +30,8 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use InvalidArgumentException;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+
 use function DeepCopy\deep_copy;
 
 /**
