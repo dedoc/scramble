@@ -4,18 +4,13 @@ namespace Dedoc\Scramble\Attributes;
 
 use Attribute;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\Support\Generator\Header as OpenApiHeader;
 use Dedoc\Scramble\Support\Generator\MediaType;
-use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response as OpenApiResponse;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\Types\MixedType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
-use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
-use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 

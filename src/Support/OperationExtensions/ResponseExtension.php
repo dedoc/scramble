@@ -111,7 +111,7 @@ class ResponseExtension extends OperationExtension
     }
 
     /**
-     * @param Collection<int, Response> $inferredResponses
+     * @param  Collection<int, Response>  $inferredResponses
      * @return Collection<int, Response>
      */
     private function applyResponsesAttributes(Collection $inferredResponses, RouteInfo $routeInfo): Collection
