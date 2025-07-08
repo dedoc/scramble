@@ -7,7 +7,7 @@ class Response
     use WithAttributes;
     use WithExtensions;
 
-    public ?int $code = null;
+    public int|string|null $code = null;
 
     /** @var array<string, MediaType> */
     public array $content = [];
@@ -20,14 +20,24 @@ class Response
     /** @var array<string, Link|Reference> */
     public array $links = [];
 
-    public function __construct(?int $code)
+    public function __construct(int|string|null $code)
     {
         $this->code = $code;
     }
 
-    public static function make(?int $code)
+    public static function make(int|string|null $code)
     {
         return new self($code);
+    }
+
+    /**
+     * @return $this
+     */
+    public function setDescription(string $string): self
+    {
+        $this->description = $string;
+
+        return $this;
     }
 
     /**
@@ -144,10 +154,11 @@ class Response
         return $this->content[$mediaType];
     }
 
+    /**
+     * @deprecated Use `setDescription` instead.
+     */
     public function description(string $string)
     {
-        $this->description = $string;
-
-        return $this;
+        return $this->setDescription($string);
     }
 }

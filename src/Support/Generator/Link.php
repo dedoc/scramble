@@ -113,4 +113,4 @@ class Link
             $this->extensionPropertiesToArray(),
         );
     }
-} 
+}

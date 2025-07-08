@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
+use Dedoc\Scramble\Attributes\Response as ResponseAttribute;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\MediaType;
@@ -14,15 +15,30 @@ use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Collection;
+use ReflectionAttribute;
 
 class ResponseExtension extends OperationExtension
 {
-    public function handle(Operation $operation, RouteInfo $routeInfo)
+    public function handle(Operation $operation, RouteInfo $routeInfo): void
+    {
+        $inferredResponses = $this->collectInferredResponses($routeInfo);
+
+        $responses = $this->applyResponsesAttributes($inferredResponses, $routeInfo);
+
+        foreach ($responses as $response) {
+            $operation->addResponse($response);
+        }
+    }
+
+    /**
+     * @return Collection<int, Response>
+     */
+    private function collectInferredResponses(RouteInfo $routeInfo): Collection
     {
         $returnType = $routeInfo->getReturnType();
 
         if (! $returnType) {
-            return [];
+            return collect();
         }
 
         $returnTypes = $returnType instanceof Union
@@ -30,7 +46,7 @@ class ResponseExtension extends OperationExtension
             : [$returnType];
 
         $responses = collect($returnTypes)
-            ->merge($routeInfo->getMethodType()?->exceptions ?? [])
+            ->merge($routeInfo->getMethodType()->exceptions ?? [])
             ->map(function (Type $type) use ($routeInfo) {
                 /*
                  * Any inline comments on the entire response type that are not originating in the controller,
@@ -51,7 +67,7 @@ class ResponseExtension extends OperationExtension
 
         [$responses, $references] = $responses->partition(fn ($r) => $r instanceof Response)->all();
 
-        $responses = $responses
+        return $responses
             ->groupBy('code')
             ->map(function (Collection $responses, $code) {
                 if (count($responses) === 1) {
@@ -91,10 +107,28 @@ class ResponseExtension extends OperationExtension
             })
             ->values()
             ->merge($references)
-            ->all();
+            ->values();
+    }
 
-        foreach ($responses as $response) {
-            $operation->addResponse($response);
+    /**
+     * @param Collection<int, Response> $inferredResponses
+     * @return Collection<int, Response>
+     */
+    private function applyResponsesAttributes(Collection $inferredResponses, RouteInfo $routeInfo): Collection
+    {
+        $responseAttributes = $routeInfo->reflectionMethod()?->getAttributes(ResponseAttribute::class, ReflectionAttribute::IS_INSTANCEOF) ?: [];
+
+        foreach ($responseAttributes as $responseAttribute) {
+            $responseAttributeInstance = $responseAttribute->newInstance();
+
+            $originalResponse = $inferredResponses->first(fn (Response $r) => $r->code === $responseAttributeInstance->status);
+
+            $newResponse = ResponseAttribute::toOpenApiResponse($responseAttributeInstance, $originalResponse, $this->openApiTransformer);
+
+            $inferredResponses = $inferredResponses
+                ->map(fn (Response $r) => $r->code === $responseAttributeInstance->status ? $newResponse : $r);
         }
+
+        return $inferredResponses;
     }
 }
