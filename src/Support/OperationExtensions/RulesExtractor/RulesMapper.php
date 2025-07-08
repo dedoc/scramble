@@ -153,6 +153,16 @@ class RulesMapper
         return $this->max($type, $params);
     }
 
+    /**
+     * @param array<mixed> $params
+     */
+    public function between(Type $type, array $params): Type
+    {
+        $type = $this->min($type, [$params[0]]);
+
+        return $this->max($type, [$params[1]]);
+    }
+
     public function in(Type $type, $params)
     {
         return $type->enum(
