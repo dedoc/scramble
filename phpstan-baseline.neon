@@ -3172,20 +3172,8 @@ parameters:
 			path: src/Support/Generator/Response.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Response\:\:setContent\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Response.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Response\:\:toArray\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Response.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Support\\Generator\\Response\:\:\$content \(array\<string, Dedoc\\Scramble\\Support\\Generator\\Reference\|Dedoc\\Scramble\\Support\\Generator\\Schema\|null\>\) on left side of \?\? is not nullable\.$#'
-			identifier: nullCoalesce.property
 			count: 1
 			path: src/Support/Generator/Response.php
 
@@ -3455,12 +3443,6 @@ parameters:
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\TypeTransformer\:\:handleUsingExtensions\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/TypeTransformer.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\TypeTransformer\:\:toResponse\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
 			path: src/Support/Generator/TypeTransformer.php
@@ -4460,24 +4442,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/Support/OperationExtensions/RequestEssentialsExtension.php
-
-		-
-			message: '#^Cannot access property \$description on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Support/OperationExtensions/ResponseExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ResponseExtension\:\:handle\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/ResponseExtension.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>exceptions" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: src/Support/OperationExtensions/ResponseExtension.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\ComposedFormRequestRulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'

@@ -14,7 +14,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 
-#[Attribute(Attribute::IS_REPEATABLE | Attribute::TARGET_ALL)]
+#[Attribute(Attribute::IS_REPEATABLE | Attribute::TARGET_METHOD | Attribute::TARGET_FUNCTION)]
 class Header
 {
     /**

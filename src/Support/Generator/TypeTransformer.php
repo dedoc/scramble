@@ -32,6 +32,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
+use function DeepCopy\deep_copy;
+
 /**
  * Transforms PHP type to OpenAPI schema type.
  */
@@ -277,7 +279,7 @@ class TypeTransformer
         return $reference ?: $handledType;
     }
 
-    public function toResponse(Type $type)
+    public function toResponse(Type $type): Response|Reference|null
     {
         // In case of union type being returned and all of its types resulting in the same response, we want to make
         // sure to take only unique types to avoid having the same types in the response.
@@ -292,9 +294,9 @@ class TypeTransformer
             }
 
             $response = Response::make(200)
-                ->setContent(
+                ->addContent(
                     'application/json',
-                    Schema::fromType($this->transform($type))
+                    new MediaType(schema: Schema::fromType($this->transform($type))),
                 );
         }
 
@@ -314,7 +316,13 @@ class TypeTransformer
 
                 $typeResponse = $this->toResponse($type);
 
-                $response->setContent('application/json', $typeResponse->getContent('application/json'));
+                if ($typeResponse instanceof Reference) {
+                    $typeResponse = deep_copy($typeResponse->resolve());
+                }
+
+                if ($typeResponse instanceof Response) {
+                    $response->addContent('application/json', $typeResponse->getContent('application/json'));
+                }
             }
         }
 

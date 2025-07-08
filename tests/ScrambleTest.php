@@ -24,7 +24,7 @@ class ScrambleTest extends TestCase
             ->toThrow(fn (InvalidSchema $e) => expect($e->getMessage())->toContain(
                 'GET test',
                 'Dedoc\Scramble\Tests\ScrambleSchemaRulesTest_Controller@test',
-                '/paths/test/get/responses/0/content/application~1json/type',
+                '/paths/test/get/responses/0/content/application~1json/schema/type',
                 '[Dedoc\Scramble\Tests\ScrambleSchemaRulesTest_Controller] on line',
             ));
     }

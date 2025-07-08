@@ -6,6 +6,7 @@ use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
@@ -89,6 +90,6 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
 
         return Response::make(200)
             ->description('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectingClassType->name).'`')
-            ->setContent('application/json', Schema::fromType($this->openApiTransformer->transform($type)));
+            ->addContent('application/json', new MediaType(schema: Schema::fromType($this->openApiTransformer->transform($type))));
     }
 }

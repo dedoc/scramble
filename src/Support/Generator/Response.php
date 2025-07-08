@@ -7,32 +7,61 @@ class Response
     use WithAttributes;
     use WithExtensions;
 
-    public ?int $code = null;
+    public int|string|null $code = null;
 
-    /** @var array<string, Schema|Reference|null> */
-    public array $content;
+    /** @var array<string, MediaType> */
+    public array $content = [];
 
     public string $description = '';
 
     /** @var array<string, Header|Reference> */
     public array $headers = [];
 
-    public function __construct(?int $code)
+    /** @var array<string, Link|Reference> */
+    public array $links = [];
+
+    public function __construct(int|string|null $code)
     {
         $this->code = $code;
     }
 
-    public static function make(?int $code)
+    public static function make(int|string|null $code)
     {
         return new self($code);
     }
 
     /**
-     * @param  Schema|Reference|null  $schema
+     * @return $this
      */
-    public function setContent(string $type, $schema)
+    public function setDescription(string $string): self
     {
-        $this->content[$type] = $schema;
+        $this->description = $string;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function addContent(string $type, MediaType $mediaType): self
+    {
+        $this->content[$type] = $mediaType;
+
+        return $this;
+    }
+
+    public function setContent($content): self // @phpstan-ignore missingType.parameter
+    {
+        /**
+         * @todo backward compatibility, remove in 1.0
+         */
+        if (count($args = func_get_args()) === 2) {
+            $mediaType = $args[1] instanceof MediaType ? $args[1] : new MediaType(schema: $args[1]); // @phpstan-ignore argument.type
+
+            return $this->addContent($args[0], $mediaType); // @phpstan-ignore argument.type
+        }
+
+        $this->content = $content;
 
         return $this;
     }
@@ -68,25 +97,54 @@ class Response
         return $this;
     }
 
+    /**
+     * @return $this
+     */
+    public function addLink(string $name, Link|Reference $link): self
+    {
+        $this->links[$name] = $link;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function removeLink(string $name): self
+    {
+        unset($this->links[$name]);
+
+        return $this;
+    }
+
+    /**
+     * @param  array<string, Link|Reference>  $links
+     * @return $this
+     */
+    public function setLinks(array $links): self
+    {
+        $this->links = $links;
+
+        return $this;
+    }
+
     public function toArray()
     {
         $result = [
             'description' => $this->description,
         ];
 
-        if (isset($this->content)) {
-            $content = [];
-            foreach ($this->content ?? [] as $mediaType => $schema) {
-                $content[$mediaType] = $schema ? ['schema' => $schema->toArray()] : (object) [];
-            }
-            $result['content'] = $content;
+        if (count($this->content)) {
+            $result['content'] = array_map(fn ($mt) => $mt->toArray(), $this->content);
         }
 
         $headers = array_map(fn ($header) => $header->toArray(), $this->headers);
+        $links = array_map(fn ($link) => $link->toArray(), $this->links);
 
         return array_merge(
             $result,
             $headers ? ['headers' => $headers] : [],
+            $links ? ['links' => $links] : [],
             $this->extensionPropertiesToArray(),
         );
     }
@@ -96,10 +154,11 @@ class Response
         return $this->content[$mediaType];
     }
 
+    /**
+     * @deprecated Use `setDescription` instead.
+     */
     public function description(string $string)
     {
-        $this->description = $string;
-
-        return $this;
+        return $this->setDescription($string);
     }
 }
