@@ -65,7 +65,6 @@ class Response
         }
 
         /** @var OpenApiResponse|null $responseFromType */
-
         if (! $responseFromType) {
             return $response->addContent(
                 $responseAttribute->mediaType,
