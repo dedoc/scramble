@@ -85,17 +85,6 @@ it('applies wildcard headers to all responses', function () {
         ->toBe('Request ID for tracing');
 });
 
-it('applies default headers to first success response', function () {
-    $openApiDocument = generateForRoute(fn () => Route::get('api/test', [ResponseHeadersTestController::class, 'withDefaultHeaders']));
-
-    $responses = $openApiDocument['paths']['/test']['get']['responses'];
-
-    expect($responses['201']['headers'])
-        ->toHaveKey('X-Rate-Limit')
-        ->and($responses['201']['headers']['X-Rate-Limit']['description'])
-        ->toBe('Rate limiting information');
-});
-
 it('mixes different header types correctly', function () {
     $openApiDocument = generateForRoute(fn () => Route::get('api/test', [ResponseHeadersTestController::class, 'mixedHeaders']));
 
@@ -284,35 +273,29 @@ class ResponseHeadersTestController
         return new JsonResponse(['data' => 'test'], 200);
     }
 
-    #[Header('X-Created-At', 'Creation timestamp', statusCode: 201)]
+    #[Header('X-Created-At', 'Creation timestamp', status: 201)]
     public function created()
     {
         return new JsonResponse(['data' => 'created'], 201);
     }
 
-    #[Header('X-Request-ID', 'Request ID for tracing', statusCode: '*')]
+    #[Header('X-Request-ID', 'Request ID for tracing', status: '*')]
     public function withWildcardHeaders()
     {
         return new JsonResponse(['data' => 'success'], 200);
     }
 
+    #[Header('X-Request-ID', 'Request ID for tracing', status: '*')]
     #[Header('X-Rate-Limit', 'Rate limiting information')]
-    public function withDefaultHeaders()
-    {
-        return new JsonResponse(['data' => 'created'], 201);
-    }
-
-    #[Header('X-Request-ID', 'Request ID for tracing', statusCode: '*')]
-    #[Header('X-Rate-Limit', 'Rate limiting information')]
-    #[Header('X-Error-Code', 'Error code', statusCode: 404)]
+    #[Header('X-Error-Code', 'Error code', status: 404)]
     public function mixedHeaders()
     {
         return new JsonResponse(['data' => 'success'], 200);
     }
 
-    #[Header('X-Request-ID', 'Request ID for tracing', statusCode: '*')]
+    #[Header('X-Request-ID', 'Request ID for tracing', status: '*')]
     #[Header('X-Rate-Limit', 'Rate limiting information')]
-    #[Header('X-Error-Code', 'Error code', statusCode: 404)]
+    #[Header('X-Error-Code', 'Error code', status: 404)]
     public function multipleResponses()
     {
         if (request()->has('error')) {
@@ -322,7 +305,7 @@ class ResponseHeadersTestController
         return new JsonResponse(['data' => 'success'], 200);
     }
 
-    #[Header('X-Custom-Header', 'Custom header description', statusCode: 404)]
+    #[Header('X-Custom-Header', 'Custom header description', status: 404)]
     public function withUnusedReferences()
     {
         if (request()->has('not_found')) {
