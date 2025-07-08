@@ -290,6 +290,17 @@ it('extract rules from object like rules with explicit array', function () {
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
 
+it('supports between rule', function () {
+    $rules = [
+        'foo' => 'between:36,42',
+    ];
+
+    $type = ($this->buildRulesToParameters)($rules)->handle()[0]->schema->type;
+
+    expect($type->min)->toBe(36.0)
+        ->and($type->max)->toBe(42.0);
+});
+
 it('supports exists rule', function () {
     $rules = [
         'email' => 'required|email|exists:users,email',
