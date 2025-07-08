@@ -158,6 +158,10 @@ class RulesMapper
      */
     public function between(Type $type, array $params): Type
     {
+        if (count($params) !== 2) {
+            return $type;
+        }
+
         $type = $this->min($type, [$params[0]]);
 
         return $this->max($type, [$params[1]]);

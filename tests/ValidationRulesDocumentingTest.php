@@ -292,7 +292,7 @@ it('extract rules from object like rules with explicit array', function () {
 
 it('supports between rule', function () {
     $rules = [
-        'foo' => 'between:36,42',
+        'foo' => 'between:36',
     ];
 
     $type = ($this->buildRulesToParameters)($rules)->handle()[0]->schema->type;
