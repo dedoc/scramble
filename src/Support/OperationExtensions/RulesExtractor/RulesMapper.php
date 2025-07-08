@@ -154,7 +154,7 @@ class RulesMapper
     }
 
     /**
-     * @param array<mixed> $params
+     * @param  array<mixed>  $params
      */
     public function between(Type $type, array $params): Type
     {
