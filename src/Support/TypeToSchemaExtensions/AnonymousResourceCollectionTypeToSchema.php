@@ -107,7 +107,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
         }
 
         return Response::make(200)
-            ->description('Array of `'.$this->openApiContext->references->schemas->uniqueName($collectingResourceType->name).'`')
+            ->setDescription('Array of `'.$this->openApiContext->references->schemas->uniqueName($collectingResourceType->name).'`')
             ->addContent('application/json', new MediaType(schema: Schema::fromType($openApiType)));
     }
 
@@ -126,7 +126,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
         }
 
         $paginatorSchema = array_values($paginatorResponse->content)[0] ?? null;
-        $paginatorSchemaType = $paginatorSchema->type ?? null;
+        $paginatorSchemaType = $paginatorSchema->schema->type ?? null;
 
         if (! $paginatorSchemaType instanceof OpenApiObjectType) {
             // should not happen
