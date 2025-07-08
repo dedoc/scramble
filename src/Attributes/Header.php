@@ -33,7 +33,7 @@ class Header
         public readonly array $examples = [],
         public readonly ?bool $deprecated = null,
         public readonly ?bool $explode = null,
-        public readonly int|string|null $statusCode = null,
+        public readonly int|string $status = 200,
     ) {}
 
     public static function toOpenApiHeader(Header $header, TypeTransformer $openApiTransformer): OpenApiHeader

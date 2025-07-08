@@ -29,7 +29,6 @@ class ResponseHeadersExtension extends OperationExtension
             return;
         }
 
-        $firstSuccessfulResponseFound = false;
         foreach ($operation->responses as $i => $response) {
             if (! $responseStatusCode = $this->getResponseStatusCode($response)) {
                 continue;
@@ -37,9 +36,7 @@ class ResponseHeadersExtension extends OperationExtension
 
             $applicableHeaders = array_filter(
                 $headerAttributesInstances,
-                fn (HeaderAttribute $attribute) => $attribute->statusCode == $responseStatusCode
-                    || $attribute->statusCode === '*'
-                    || ($attribute->statusCode === null && ! $firstSuccessfulResponseFound && $this->isSuccessStatusCode($responseStatusCode)),
+                fn (HeaderAttribute $attribute) => $attribute->status === '*' || $attribute->status == $responseStatusCode
             );
 
             if (! count($applicableHeaders)) {
@@ -55,14 +52,13 @@ class ResponseHeadersExtension extends OperationExtension
             }
 
             foreach ($applicableHeaders as $header) {
-                $response->addHeader($header->name, HeaderAttribute::toOpenApiHeader($header, $this->openApiTransformer));
+                $response->addHeader(
+                    $header->name,
+                    HeaderAttribute::toOpenApiHeader($header, $this->openApiTransformer),
+                );
             }
 
             $operation->responses[$i] = $response;
-
-            if (! $firstSuccessfulResponseFound && $this->isSuccessStatusCode($responseStatusCode)) {
-                $firstSuccessfulResponseFound = true;
-            }
         }
     }
 
@@ -78,12 +74,5 @@ class ResponseHeadersExtension extends OperationExtension
         }
 
         return null;
-    }
-
-    private function isSuccessStatusCode(string $statusCode): bool
-    {
-        $code = (int) $statusCode;
-
-        return $code >= 200 && $code < 300;
     }
 }
