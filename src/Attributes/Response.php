@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Attributes;
 
 use Attribute;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Reference;
@@ -32,18 +33,52 @@ class Response
         public readonly mixed $examples = [],
     ) {}
 
-    public static function toOpenApiResponse(Response $responseAttribute, ?OpenApiResponse $originalResponse, TypeTransformer $openApiTransformer): OpenApiResponse
+    public static function toOpenApiResponse(Response $responseAttribute, ?OpenApiResponse $originalResponse, TypeTransformer $openApiTransformer, ?FileNameResolver $nameResolver): OpenApiResponse
     {
         $response = $originalResponse ? deep_copy($originalResponse) : OpenApiResponse::make($responseAttribute->status);
 
-        $response
-            ->setDescription(self::getDescription($responseAttribute, $response))
-            ->addContent(
-                $responseAttribute->mediaType,
-                self::getMediaType($responseAttribute, $response, $openApiTransformer),
-            );
+        $response = self::applyResponseMediaType($responseAttribute, $response, $openApiTransformer, $nameResolver);
+
+        $response->setDescription(self::getDescription($responseAttribute, $response));
 
         return $response;
+    }
+
+    private static function applyResponseMediaType(Response $responseAttribute, OpenApiResponse $response, TypeTransformer $openApiTransformer, ?FileNameResolver $nameResolver): OpenApiResponse
+    {
+        if (! $responseAttribute->type) {
+            return $response
+                ->addContent(
+                    $responseAttribute->mediaType,
+                    self::getMediaType($responseAttribute, $response),
+                );
+        }
+
+        $responseFromType = $openApiTransformer->toResponse(
+            PhpDocTypeHelper::toType(
+                PhpDoc::parse("/** @return $responseAttribute->type */", $nameResolver)->getReturnTagValues()[0]->type ?? new IdentifierTypeNode('mixed')
+            )
+        );
+
+        if ($responseFromType instanceof Reference) {
+            $responseFromType = deep_copy($responseFromType->resolve());
+        }
+
+        /** @var OpenApiResponse|null $responseFromType */
+
+        if (! $responseFromType) {
+            return $response->addContent(
+                $responseAttribute->mediaType,
+                self::getMediaType($responseAttribute, $response),
+            );
+        }
+
+        return $response
+            ->setDescription($responseFromType->description ?: self::getDescription($responseAttribute, $response))
+            ->addContent(
+                $responseAttribute->mediaType,
+                self::getMediaType($responseAttribute, $responseFromType),
+            );
     }
 
     private static function getDescription(Response $responseAttribute, OpenApiResponse $response): string
@@ -55,35 +90,23 @@ class Response
         return Str::replace('$0', $response->description, $responseAttribute->description);
     }
 
-    private static function getMediaType(Response $responseAttribute, OpenApiResponse $response, TypeTransformer $openApiTransformer): MediaType
+    private static function getMediaType(Response $responseAttribute, OpenApiResponse $response): MediaType
     {
         $mediaType = $response->content[$responseAttribute->mediaType] ?? new MediaType;
 
         return $mediaType
-            ->setSchema(self::getSchema($responseAttribute, $mediaType->schema, $openApiTransformer));
+            ->setSchema(self::getSchema($responseAttribute, $mediaType->schema));
     }
 
-    private static function getSchema(Response $responseAttribute, Schema|Reference|null $schema, TypeTransformer $openApiTransformer): Schema|Reference
+    private static function getSchema(Response $responseAttribute, Schema|Reference|null $schema): Schema|Reference
     {
-        if (
-            ! $responseAttribute->type
-            && ! $responseAttribute->format
-            && ! $responseAttribute->examples
-        ) {
+        if (! $responseAttribute->format && ! $responseAttribute->examples) {
             return $schema ?: Schema::fromType(new StringType);
         }
 
         $schemaType = $schema
             ? clone ($schema instanceof Reference ? $schema->resolve()->type : $schema->type)
             : new StringType;
-
-        if ($responseAttribute->type) {
-            $schemaType = $openApiTransformer->transform(
-                PhpDocTypeHelper::toType(
-                    PhpDoc::parse("/** @return $responseAttribute->type */")->getReturnTagValues()[0]->type ?? new IdentifierTypeNode('mixed')
-                )
-            )->addProperties($schemaType);
-        }
 
         if ($responseAttribute->format) {
             $schemaType->format($responseAttribute->format);
