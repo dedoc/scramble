@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Attributes\Response as ResponseAttribute;
 use Dedoc\Scramble\Extensions\OperationExtension;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Operation;
@@ -131,7 +132,14 @@ class ResponseExtension extends OperationExtension
                 ->map(fn (Response|Reference $r): Response => $r instanceof Reference ? $r->resolve() : $r)
                 ->first(fn (Response $r) => $r->code === $responseAttributeInstance->status);
 
-            $newResponse = ResponseAttribute::toOpenApiResponse($responseAttributeInstance, $originalResponse, $this->openApiTransformer);
+            $newResponse = ResponseAttribute::toOpenApiResponse(
+                $responseAttributeInstance,
+                $originalResponse,
+                $this->openApiTransformer,
+                ($fileName = $routeInfo->reflectionMethod()?->getFileName())
+                    ? FileNameResolver::createForFile($fileName)
+                    : null,
+            );
 
             $responseHasChanged = ! $originalResponse
                 || json_encode($newResponse->toArray(), JSON_THROW_ON_ERROR) !== json_encode($originalResponse->toArray(), JSON_THROW_ON_ERROR);

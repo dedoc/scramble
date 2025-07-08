@@ -33,6 +33,16 @@ class Response
     /**
      * @return $this
      */
+    public function setCode(int|string|null $code): self
+    {
+        $this->code = $code;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
     public function setDescription(string $string): self
     {
         $this->description = $string;
