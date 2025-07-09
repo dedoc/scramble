@@ -6,7 +6,6 @@ use Dedoc\Scramble\Attributes\Response as ResponseAttribute;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
-use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;

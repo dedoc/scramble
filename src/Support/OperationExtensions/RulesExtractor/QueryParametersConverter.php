@@ -64,7 +64,7 @@ class QueryParametersConverter
     }
 
     /**
-     * @param Collection<string, Parameter> $paramsByName
+     * @param  Collection<string, Parameter>  $paramsByName
      */
     private function convertParameterToQueryAdapted(Parameter $originalParameter, Collection $paramsByName): ?Parameter
     {

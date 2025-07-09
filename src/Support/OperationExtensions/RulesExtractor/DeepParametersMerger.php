@@ -137,7 +137,7 @@ class DeepParametersMerger
     }
 
     /**
-     * @param string[] $path
+     * @param  string[]  $path
      */
     private function getOrCreateDeepTypeContainer(Type &$base, array $path): Type
     {
