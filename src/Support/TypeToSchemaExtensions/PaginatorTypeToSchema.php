@@ -78,7 +78,7 @@ class PaginatorTypeToSchema extends TypeToSchemaExtension
         }
 
         return Response::make(200)
-            ->description('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectingClassType->name).'`')
-            ->addContent('application/json', new MediaType(schema: Schema::fromType($this->openApiTransformer->transform($type))));
+            ->setDescription('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectingClassType->name).'`')
+            ->setContent('application/json', Schema::fromType($this->openApiTransformer->transform($type)));
     }
 }

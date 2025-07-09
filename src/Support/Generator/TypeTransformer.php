@@ -294,9 +294,9 @@ class TypeTransformer
             }
 
             $response = Response::make(200)
-                ->addContent(
+                ->setContent(
                     'application/json',
-                    new MediaType(schema: Schema::fromType($this->transform($type))),
+                    Schema::fromType($this->transform($type)),
                 );
         }
 
@@ -321,7 +321,7 @@ class TypeTransformer
                 }
 
                 if ($typeResponse instanceof Response) {
-                    $response->addContent('application/json', $typeResponse->getContent('application/json'));
+                    $response->setContent('application/json', $typeResponse->getContent('application/json'));
                 }
             }
         }

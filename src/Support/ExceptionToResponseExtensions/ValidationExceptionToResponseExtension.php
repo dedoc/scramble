@@ -38,10 +38,10 @@ class ValidationExceptionToResponseExtension extends ExceptionToResponseExtensio
             ->setRequired(['message', 'errors']);
 
         return Response::make(422)
-            ->description('Validation error')
-            ->addContent(
+            ->setDescription('Validation error')
+            ->setContent(
                 'application/json',
-                new MediaType(schema: Schema::fromType($validationResponseBodyType)),
+                Schema::fromType($validationResponseBodyType),
             );
     }
 

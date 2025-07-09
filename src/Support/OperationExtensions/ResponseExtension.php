@@ -80,7 +80,7 @@ class ResponseExtension extends OperationExtension
                 // @todo: Responses with similar code and type should result in a different example schemas.
 
                 $responsesTypes = $responses->map(function (Response $r) {
-                    $schema = ($r->content['application/json'] ?? null)->schema ?? null;
+                    $schema = $r->content['application/json'] ?? null;
                     if (! $schema) {
                         return null;
                     }
@@ -101,11 +101,9 @@ class ResponseExtension extends OperationExtension
 
                 return Response::make((int) $code)
                     ->setDescription($responses->first()->description) // @phpstan-ignore property.nonObject
-                    ->addContent(
+                    ->setContent(
                         'application/json',
-                        new MediaType(
-                            schema: Schema::fromType(count($responsesTypes) > 1 ? (new AnyOf)->setItems($responsesTypes) : $responsesTypes[0]),
-                        ),
+                        Schema::fromType(count($responsesTypes) > 1 ? (new AnyOf)->setItems($responsesTypes) : $responsesTypes[0]),
                     );
             })
             ->values()

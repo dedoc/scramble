@@ -32,10 +32,10 @@ class AuthenticationExceptionToResponseExtension extends ExceptionToResponseExte
             ->setRequired(['message']);
 
         return Response::make(401)
-            ->description('Unauthenticated')
-            ->addContent(
+            ->setDescription('Unauthenticated')
+            ->setContent(
                 'application/json',
-                new MediaType(schema: Schema::fromType($responseBodyType)),
+                Schema::fromType($responseBodyType),
             );
     }
 

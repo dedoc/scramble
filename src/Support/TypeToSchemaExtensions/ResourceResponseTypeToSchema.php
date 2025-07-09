@@ -85,9 +85,9 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 
         return $response
             ->setDescription('`'.$this->openApiContext->references->schemas->uniqueName($resourceType->name).'`')
-            ->addContent(
+            ->setContent(
                 'application/json',
-                new MediaType(schema: Schema::fromType($openApiType)),
+                Schema::fromType($openApiType),
             );
     }
 

@@ -46,10 +46,10 @@ class CustomAuthenticationExceptionToResponseExtension extends ExceptionToRespon
     public function toResponse(Type $type)
     {
         return Response::make(401)
-            ->description('Custom Unauthenticated')
-            ->addContent(
+            ->setDescription('Custom Unauthenticated')
+            ->setContent(
                 'application/json',
-                new MediaType(schema: Schema::fromType((new OpenApiTypes\ObjectType))),
+                Schema::fromType((new OpenApiTypes\ObjectType)),
             );
     }
 

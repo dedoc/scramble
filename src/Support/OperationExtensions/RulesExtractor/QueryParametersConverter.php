@@ -37,18 +37,8 @@ class QueryParametersConverter
                 $this->convertDotNamedParamsToComplexStructures($otherParameters),
             ))
             ->filter()
-            ->sortBy($this->getSortIndex(...))
             ->values()
             ->all();
-    }
-
-    private function getSortIndex(Parameter $parameter, int $originalPosition): int
-    {
-        $parameters = collect($this->convertDotNamedParamsToComplexStructures($this->parameters))->keyBy(fn ($p) => $p->name);
-
-        $position = $parameters->keys()->search($parameter->name);
-
-        return $position === false ? $originalPosition : $position;
     }
 
     private function shouldAdaptParameterForQuery(Parameter $parameter): bool

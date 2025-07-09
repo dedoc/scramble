@@ -51,10 +51,10 @@ class ModelToSchema extends TypeToSchemaExtension
     public function toResponse(Type $type)
     {
         return Response::make(200)
-            ->description('`'.$this->openApiContext->references->schemas->uniqueName($type->name).'`')
-            ->addContent(
+            ->setDescription('`'.$this->openApiContext->references->schemas->uniqueName($type->name).'`')
+            ->setContent(
                 'application/json',
-                new MediaType(schema: Schema::fromType($this->openApiTransformer->transform($type))),
+                Schema::fromType($this->openApiTransformer->transform($type)),
             );
     }
 
