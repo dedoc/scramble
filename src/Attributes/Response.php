@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Attributes;
 use Attribute;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response as OpenApiResponse;
 use Dedoc\Scramble\Support\Generator\Schema;
@@ -48,7 +47,7 @@ class Response
     {
         if (! $responseAttribute->type) {
             return $response
-                ->addContent(
+                ->setContent(
                     $responseAttribute->mediaType,
                     self::getMediaType($responseAttribute, $response),
                 );
@@ -66,7 +65,7 @@ class Response
 
         /** @var OpenApiResponse|null $responseFromType */
         if (! $responseFromType) {
-            return $response->addContent(
+            return $response->setContent(
                 $responseAttribute->mediaType,
                 self::getMediaType($responseAttribute, $response),
             );
@@ -74,7 +73,7 @@ class Response
 
         return $response
             ->setDescription($responseFromType->description ?: self::getDescription($responseAttribute, $response))
-            ->addContent(
+            ->setContent(
                 $responseAttribute->mediaType,
                 self::getMediaType($responseAttribute, $responseFromType),
             );
@@ -89,12 +88,9 @@ class Response
         return Str::replace('$0', $response->description, $responseAttribute->description);
     }
 
-    private static function getMediaType(Response $responseAttribute, OpenApiResponse $response): MediaType
+    private static function getMediaType(Response $responseAttribute, OpenApiResponse $response): Schema|Reference
     {
-        $mediaType = $response->content[$responseAttribute->mediaType] ?? new MediaType;
-
-        return $mediaType
-            ->setSchema(self::getSchema($responseAttribute, $mediaType->schema));
+        return self::getSchema($responseAttribute, $response->content[$responseAttribute->mediaType] ?? null);
     }
 
     private static function getSchema(Response $responseAttribute, Schema|Reference|null $schema): Schema|Reference

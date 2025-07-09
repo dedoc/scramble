@@ -4522,48 +4522,6 @@ parameters:
 			path: src/Support/OperationExtensions/RulesEvaluator/RulesEvaluator.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\DeepParametersMerger\:\:extractTypeFromParameter\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\DeepParametersMerger\:\:extractTypeFromParameter\(\) has parameter \$parameter with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\DeepParametersMerger\:\:getOrCreateDeepTypeContainer\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\DeepParametersMerger\:\:getOrCreateDeepTypeContainer\(\) has parameter \$path with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\DeepParametersMerger\:\:setDeepType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
-
-		-
-			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
-
-		-
-			message: '#^Parameter \#1 \$name of method Dedoc\\Scramble\\Support\\Generator\\Types\\ObjectType\:\:addProperty\(\) expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/DeepParametersMerger.php
-
-		-
 			message: '#^Call to function method_exists\(\) with ''Illuminate\\\\Validation\\\\Rules\\\\Enum'' and ''except'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1

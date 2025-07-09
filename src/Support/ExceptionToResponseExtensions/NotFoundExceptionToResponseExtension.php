@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Support\ExceptionToResponseExtensions;
 
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
-use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
@@ -36,10 +35,10 @@ class NotFoundExceptionToResponseExtension extends ExceptionToResponseExtension
             ->setRequired(['message']);
 
         return Response::make(404)
-            ->description('Not found')
-            ->addContent(
+            ->setDescription('Not found')
+            ->setContent(
                 'application/json',
-                new MediaType(schema: Schema::fromType($validationResponseBodyType)),
+                Schema::fromType($validationResponseBodyType),
             );
     }
 

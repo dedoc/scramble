@@ -9,7 +9,7 @@ class Response
 
     public int|string|null $code = null;
 
-    /** @var array<string, MediaType> */
+    /** @var array<string, Schema|Reference> */
     public array $content = [];
 
     public string $description = '';
@@ -53,25 +53,9 @@ class Response
     /**
      * @return $this
      */
-    public function addContent(string $type, MediaType $mediaType): self
+    public function setContent(string $type, Schema|Reference $schema): self
     {
-        $this->content[$type] = $mediaType;
-
-        return $this;
-    }
-
-    public function setContent($content): self // @phpstan-ignore missingType.parameter
-    {
-        /**
-         * @todo backward compatibility, remove in 1.0
-         */
-        if (count($args = func_get_args()) === 2) {
-            $mediaType = $args[1] instanceof MediaType ? $args[1] : new MediaType(schema: $args[1]); // @phpstan-ignore argument.type
-
-            return $this->addContent($args[0], $mediaType); // @phpstan-ignore argument.type
-        }
-
-        $this->content = $content;
+        $this->content[$type] = $schema;
 
         return $this;
     }
@@ -145,7 +129,7 @@ class Response
         ];
 
         if (count($this->content)) {
-            $result['content'] = array_map(fn ($mt) => $mt->toArray(), $this->content);
+            $result['content'] = array_map(fn ($c) => ['schema' => $c->toArray()], $this->content);
         }
 
         $headers = array_map(fn ($header) => $header->toArray(), $this->headers);

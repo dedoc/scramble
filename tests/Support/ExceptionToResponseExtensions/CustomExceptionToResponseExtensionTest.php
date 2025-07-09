@@ -6,7 +6,6 @@ use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthenticationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\Generator\Components;
-use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
@@ -46,10 +45,10 @@ class CustomAuthenticationExceptionToResponseExtension extends ExceptionToRespon
     public function toResponse(Type $type)
     {
         return Response::make(401)
-            ->description('Custom Unauthenticated')
-            ->addContent(
+            ->setDescription('Custom Unauthenticated')
+            ->setContent(
                 'application/json',
-                new MediaType(schema: Schema::fromType((new OpenApiTypes\ObjectType))),
+                Schema::fromType((new OpenApiTypes\ObjectType)),
             );
     }
 

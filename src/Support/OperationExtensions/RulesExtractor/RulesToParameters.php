@@ -53,8 +53,8 @@ class RulesToParameters
             ->pipe($this->handleConfirmed(...))
             ->map(fn ($rules, $name) => (new RulesToParameter($name, $rules, $this->nodeDocs[$name] ?? null, $this->openApiTransformer, $this->in))->generate())
             ->filter()
-            ->pipe(fn ($c) => $this->mergeDotNotatedKeys ? collect((new DeepParametersMerger($c))->handle()) : $c)
             ->values()
+            ->pipe(fn ($c) => $this->mergeDotNotatedKeys ? collect((new DeepParametersMerger($c))->handle()) : $c)
             ->all();
     }
 

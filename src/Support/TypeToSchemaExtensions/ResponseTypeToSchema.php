@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
-use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -51,7 +50,7 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
         if (! $emptyContent) {
             $response->setContent(
                 'application/json', // @todo: Some other response types are possible as well
-                new MediaType(schema: Schema::fromType($this->openApiTransformer->transform($type->templateTypes[0]))),
+                Schema::fromType($this->openApiTransformer->transform($type->templateTypes[0])),
             );
         }
 
@@ -85,9 +84,9 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
 
         $response->code = $responseStatusCode;
         if (! $data->isInstanceOf(ResourceResponse::class)) {
-            $response->addContent(
+            $response->setContent(
                 'application/json',
-                new MediaType(schema: Schema::fromType($this->openApiTransformer->transform($data))),
+                Schema::fromType($this->openApiTransformer->transform($data)),
             );
         }
 

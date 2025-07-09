@@ -7,7 +7,6 @@ use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Generator\Components;
-use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -51,10 +50,10 @@ class ModelToSchema extends TypeToSchemaExtension
     public function toResponse(Type $type)
     {
         return Response::make(200)
-            ->description('`'.$this->openApiContext->references->schemas->uniqueName($type->name).'`')
-            ->addContent(
+            ->setDescription('`'.$this->openApiContext->references->schemas->uniqueName($type->name).'`')
+            ->setContent(
                 'application/json',
-                new MediaType(schema: Schema::fromType($this->openApiTransformer->transform($type))),
+                Schema::fromType($this->openApiTransformer->transform($type)),
             );
     }
 

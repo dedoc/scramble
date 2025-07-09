@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Support\ExceptionToResponseExtensions;
 
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
-use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
@@ -70,10 +69,10 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
             ->setRequired(['message']);
 
         return Response::make($responseCode)
-            ->description($this->getDescription($type))
-            ->addContent(
+            ->setDescription($this->getDescription($type))
+            ->setContent(
                 'application/json',
-                new MediaType(schema: Schema::fromType($responseBodyType)),
+                Schema::fromType($responseBodyType),
             );
     }
 

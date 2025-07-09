@@ -9,7 +9,6 @@ use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Components;
-use Dedoc\Scramble\Support\Generator\MediaType;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
@@ -85,9 +84,9 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 
         return $response
             ->setDescription('`'.$this->openApiContext->references->schemas->uniqueName($resourceType->name).'`')
-            ->addContent(
+            ->setContent(
                 'application/json',
-                new MediaType(schema: Schema::fromType($openApiType)),
+                Schema::fromType($openApiType),
             );
     }
 
