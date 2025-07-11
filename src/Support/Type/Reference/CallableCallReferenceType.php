@@ -12,6 +12,11 @@ class CallableCallReferenceType extends AbstractReferenceType
         public array $arguments,
     ) {}
 
+    public function nodes(): array
+    {
+        return ['callee', 'arguments'];
+    }
+
     public function toString(): string
     {
         $argsTypes = implode(
