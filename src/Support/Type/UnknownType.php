@@ -9,8 +9,7 @@ class UnknownType extends AbstractType
     public function __construct(
         private string $comment = '',
         ?Type $original = null,
-    )
-    {
+    ) {
         $this->original = $original;
     }
 

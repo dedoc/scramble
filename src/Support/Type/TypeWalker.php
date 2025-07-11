@@ -37,7 +37,7 @@ class TypeWalker
     }
 
     /**
-     * @param callable(Type): bool $lookup
+     * @param  callable(Type): bool  $lookup
      * @return Type[]
      */
     public function findAll(Type $type, callable $lookup): array

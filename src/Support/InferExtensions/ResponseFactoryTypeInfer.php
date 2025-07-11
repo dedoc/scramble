@@ -21,7 +21,6 @@ use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use League\MimeTypeDetection\ExtensionMimeTypeDetector;
-use League\MimeTypeDetection\GeneratedExtensionToMimeTypeMap;
 use PhpParser\Node\Expr;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -48,12 +47,13 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension, Function
                 ],
             );
         }
+
         return new ObjectType(ResponseFactory::class);
     }
 
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
-        return match($event->name) {
+        return match ($event->name) {
             'noContent' => new Generic(Response::class, [
                 new LiteralStringType(''),
                 $event->getArg('status', 0, new LiteralIntegerType(204)),
