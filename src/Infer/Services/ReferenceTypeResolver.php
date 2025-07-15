@@ -136,9 +136,7 @@ class ReferenceTypeResolver
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         ));
 
-        if ($resolvedType instanceof UnknownType) {
-            $resolvedType->original = $originalType;
-        }
+        $resolvedType->setOriginal($originalType);
 
         $type->setAttribute('resolvedType', $resolvedType);
 

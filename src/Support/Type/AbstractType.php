@@ -10,6 +10,21 @@ abstract class AbstractType implements Type
 {
     use TypeAttributes;
 
+    public ?Type $original = null;
+
+    /** @return $this */
+    public function setOriginal(?Type $original): self
+    {
+        $this->original = $original;
+
+        return $this;
+    }
+
+    public function getOriginal(): ?Type
+    {
+        return $this->original;
+    }
+
     public function nodes(): array
     {
         return [];
