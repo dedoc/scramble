@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * @see BinaryFileResponse
+ *
  * @internal
  */
 class BinaryFileResponseTypeFactory
@@ -27,14 +28,13 @@ class BinaryFileResponseTypeFactory
         public Type $name = new NullType,
         public Type $headers = new ArrayType,
         public Type $disposition = new NullType,
-    )
-    {
-    }
+    ) {}
 
     /** @return $this */
     public function setName(Type $name): self
     {
         $this->name = $name;
+
         return $this;
     }
 
@@ -42,6 +42,7 @@ class BinaryFileResponseTypeFactory
     public function setHeaders(Type $headers): self
     {
         $this->headers = $headers;
+
         return $this;
     }
 
@@ -49,6 +50,7 @@ class BinaryFileResponseTypeFactory
     public function setDisposition(Type $disposition): self
     {
         $this->disposition = $disposition;
+
         return $this;
     }
 
