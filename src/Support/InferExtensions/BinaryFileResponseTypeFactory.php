@@ -71,12 +71,30 @@ class BinaryFileResponseTypeFactory
     {
         $mimeType = 'application/octet-stream';
 
-        $fileName = $this->guessFileNameFromType($this->file);
-        if ($fileName && class_exists(ExtensionMimeTypeDetector::class)) {
-            $mimeType = (new ExtensionMimeTypeDetector)->detectMimeTypeFromPath($fileName);
+        if ($fileMime = $this->guessMimeTypeFromFile()) {
+            $mimeType = $fileMime;
         }
 
-        /** @var LiteralStringType|null $stringLiteralContentTypeHeader */
+        if ($headerMime = $this->guessMimeTypeFromHeaders()) {
+            $mimeType = $headerMime;
+        }
+
+        return $mimeType;
+    }
+
+    private function guessMimeTypeFromFile(): ?string
+    {
+        $fileName = $this->guessFileNameFromType($this->file);
+
+        if ($fileName && class_exists(ExtensionMimeTypeDetector::class)) {
+            return (new ExtensionMimeTypeDetector)->detectMimeTypeFromPath($fileName);
+        }
+
+        return null;
+    }
+
+    private function guessMimeTypeFromHeaders(): ?string
+    {
         $stringLiteralContentTypeHeader = $this->headers instanceof KeyedArrayType
             ? collect($this->headers->items)
                 ->first(function (ArrayItemType_ $t) {
@@ -86,27 +104,26 @@ class BinaryFileResponseTypeFactory
                 })
                 ?->value
             : null;
-        if ($stringLiteralContentTypeHeader) {
-            $mimeType = $stringLiteralContentTypeHeader->value;
+
+        if ($stringLiteralContentTypeHeader instanceof LiteralStringType) {
+            return $stringLiteralContentTypeHeader->value;
         }
 
-        return $mimeType;
+        return null;
     }
 
     private function guessContentDisposition(): ?string
     {
-        $fileName = $this->guessFileNameFromType($this->file);
-        $overridingFileName = $this->guessFileNameFromType($this->name);
-
         $contentDisposition = $this->disposition instanceof LiteralStringType ? $this->disposition->value : null;
-        if ($contentDisposition === 'attachment') {
-            $contentDisposition = $this->getContentDispositionAttachmentHeader(
-                $fileName,
-                $overridingFileName,
-            );
+
+        if ($contentDisposition !== 'attachment') {
+            return $contentDisposition;
         }
 
-        return $contentDisposition;
+        return $this->getContentDispositionAttachmentHeader(
+            $this->guessFileNameFromType($this->file),
+            $this->guessFileNameFromType($this->name),
+        );
     }
 
     private function guessFileNameFromType(Type $fileArgumentType): ?string

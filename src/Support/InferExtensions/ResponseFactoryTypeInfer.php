@@ -20,6 +20,8 @@ use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use PhpParser\Node\Expr;
+use Symfony\Component\HttpFoundation\StreamedJsonResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension, FunctionReturnTypeExtension, MethodReturnTypeExtension
 {
@@ -35,14 +37,11 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension, Function
     public function getFunctionReturnType(FunctionCallEvent $event): ?Type
     {
         if (count($event->arguments)) {
-            return new Generic(
-                Response::class,
-                [
-                    $event->getArg('content', 0, new LiteralStringType('')),
-                    $event->getArg('status', 1, new LiteralIntegerType(200)),
-                    $event->getArg('headers', 2, new ArrayType),
-                ],
-            );
+            return new Generic(Response::class, [
+                $event->getArg('content', 0, new LiteralStringType('')),
+                $event->getArg('status', 1, new LiteralIntegerType(200)),
+                $event->getArg('headers', 2, new ArrayType),
+            ]);
         }
 
         return new ObjectType(ResponseFactory::class);
@@ -74,6 +73,31 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension, Function
             'file' => (new BinaryFileResponseTypeFactory($event->getArg('file', 0)))
                 ->setHeaders($event->getArg('headers', 1, new ArrayType))
                 ->build(),
+            'stream' => new Generic(StreamedResponse::class, [
+                $event->getArg('callbackOrChunks', 0),
+                $event->getArg('status', 1, new LiteralIntegerType(200)),
+                $event->getArg('headers', 2, new ArrayType),
+            ]),
+            'streamJson' => new Generic(StreamedJsonResponse::class, [
+                $event->getArg('data', 0),
+                $event->getArg('status', 1, new LiteralIntegerType(200)),
+                $event->getArg('headers', 2, new ArrayType),
+            ]),
+            'streamDownload' => new Generic(StreamedResponse::class, [
+                $event->getArg('callback', 0),
+                new LiteralIntegerType(200),
+                $event->getArg('headers', 2, new ArrayType),
+            ]),
+            'eventStream' => (new Generic(StreamedResponse::class, [
+                $event->getArg('callback', 0),
+                new LiteralIntegerType(200),
+                $event->getArg('headers', 1, new ArrayType),
+            ]))->mergeAttributes([
+                'mimeType' => 'text/event-stream',
+                'endStreamWith' => ($endStreamWithType = $event->getArg('endStreamWith', 2, new LiteralStringType('</stream>'))) instanceof LiteralStringType
+                    ? $endStreamWithType->value
+                    : null,
+            ]),
             default => null,
         };
     }
