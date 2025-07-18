@@ -30,30 +30,6 @@ class BinaryFileResponseTypeFactory
         public Type $disposition = new NullType,
     ) {}
 
-    /** @return $this */
-    public function setName(Type $name): self
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
-    /** @return $this */
-    public function setHeaders(Type $headers): self
-    {
-        $this->headers = $headers;
-
-        return $this;
-    }
-
-    /** @return $this */
-    public function setDisposition(Type $disposition): self
-    {
-        $this->disposition = $disposition;
-
-        return $this;
-    }
-
     public function build(): Generic
     {
         $responseType = new Generic(BinaryFileResponse::class, [

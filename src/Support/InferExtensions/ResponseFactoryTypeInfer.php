@@ -65,14 +65,16 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension, Function
                 $event->getArg('status', 1, new LiteralIntegerType(200)),
                 $event->getArg('headers', 2, new ArrayType),
             ]),
-            'download' => (new BinaryFileResponseTypeFactory($event->getArg('file', 0)))
-                ->setName($event->getArg('name', 1, new NullType))
-                ->setHeaders($event->getArg('headers', 2, new ArrayType))
-                ->setDisposition($event->getArg('disposition', 3, new LiteralStringType('attachment')))
-                ->build(),
-            'file' => (new BinaryFileResponseTypeFactory($event->getArg('file', 0)))
-                ->setHeaders($event->getArg('headers', 1, new ArrayType))
-                ->build(),
+            'download' => (new BinaryFileResponseTypeFactory(
+                file: $event->getArg('file', 0),
+                name: $event->getArg('name', 1, new NullType),
+                headers: $event->getArg('headers', 2, new ArrayType),
+                disposition: $event->getArg('disposition', 3, new LiteralStringType('attachment')),
+            ))->build(),
+            'file' => (new BinaryFileResponseTypeFactory(
+                file: $event->getArg('file', 0),
+                headers: $event->getArg('headers', 1, new ArrayType),
+            ))->build(),
             'stream' => new Generic(StreamedResponse::class, [
                 $event->getArg('callbackOrChunks', 0),
                 $event->getArg('status', 1, new LiteralIntegerType(200)),
