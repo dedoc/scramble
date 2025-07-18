@@ -31,10 +31,10 @@ it('infers response factory expressions', function (string $expression, string $
         'mimeType' => 'text/plain',
         'contentDisposition' => null,
     ]],
-    ["response()->stream([])", 'Symfony\Component\HttpFoundation\StreamedResponse<list{}, int(200), array<mixed>>'],
-    ["response()->streamJson([])", 'Symfony\Component\HttpFoundation\StreamedJsonResponse<list{}, int(200), array<mixed>>'],
-    ["response()->streamDownload([])", 'Symfony\Component\HttpFoundation\StreamedResponse<list{}, int(200), array<mixed>>'],
-    ["response()->eventStream([])", 'Symfony\Component\HttpFoundation\StreamedResponse<list{}, int(200), array<mixed>>', [
+    ['response()->stream([])', 'Symfony\Component\HttpFoundation\StreamedResponse<list{}, int(200), array<mixed>>'],
+    ['response()->streamJson([])', 'Symfony\Component\HttpFoundation\StreamedJsonResponse<list{}, int(200), array<mixed>>'],
+    ['response()->streamDownload([])', 'Symfony\Component\HttpFoundation\StreamedResponse<list{}, int(200), array<mixed>>'],
+    ['response()->eventStream([])', 'Symfony\Component\HttpFoundation\StreamedResponse<list{}, int(200), array<mixed>>', [
         'mimeType' => 'text/event-stream',
         'endStreamWith' => '</stream>',
     ]],
