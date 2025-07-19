@@ -68,7 +68,7 @@ class TypeWalker
             return $replaced;
         }
 
-        if (in_array($subject, $this->visitedNodes)) {
+        if (in_array($subject, $this->visitedNodes, strict: true)) {
             return $subject;
         }
         $this->visitedNodes[] = $subject;

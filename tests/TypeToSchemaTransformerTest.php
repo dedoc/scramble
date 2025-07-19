@@ -280,7 +280,7 @@ class ComplexTypeHandlersTest_SampleType extends JsonResource
     public function toArray($request)
     {
         return [
-//            'foo' => 1,
+            'foo' => 1,
             $this->mergeWhen(true, [
                 'hey' => 'ho',
             ]),
