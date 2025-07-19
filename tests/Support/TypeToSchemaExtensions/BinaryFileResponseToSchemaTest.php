@@ -41,5 +41,5 @@ it('transforms basic inferred type to response', function () {
     expect($response->headers)->toHaveKey('Content-Disposition')
         ->and($response->headers['Content-Disposition']->example)->toBe('attachment; filename=wow.txt')
         ->and($response->content)->toHaveKey('text/plain')
-        ->and($response->getContent('text/plain')->toArray())->toBe(['type' => 'string', 'format' => 'binary']);
+        ->and($response->getContent('text/plain')->toArray())->toBe(['type' => 'string']);
 });

@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Generator\Header;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -18,6 +19,38 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class BinaryFileResponseToSchema extends TypeToSchemaExtension
 {
+    public static $nonBinaryMimeTypes = [
+        // Plain text formats
+        'text/plain',
+        'text/html',
+        'text/css',
+        'text/csv',
+        'text/xml',
+        'text/javascript',
+
+        // JSON and JavaScript formats
+        'application/json',
+        'application/javascript',
+        'application/ecmascript',
+
+        // XML and related formats
+        'application/xml',
+        'application/xhtml+xml',
+
+        // Form data
+        'application/x-www-form-urlencoded',
+
+        // Web fonts and SVG
+        'image/svg+xml',
+        'application/font-woff',
+        'application/font-woff2',
+
+        // Other textual formats
+        'application/graphql',
+        'application/ld+json',
+        'application/manifest+json',
+    ];
+
     public function shouldHandle(Type $type): bool
     {
         return $type instanceof Generic
@@ -36,8 +69,8 @@ class BinaryFileResponseToSchema extends TypeToSchemaExtension
 
         return Response::make($status)
             ->setContent(
-                $this->getContentType($type),
-                Schema::fromType((new StringType)->format('binary')),
+                $contentType = $this->getContentType($type),
+                Schema::fromType($this->buildType($contentType)),
             )
             ->setHeaders($this->makeHeaders($type));
     }
@@ -95,5 +128,16 @@ class BinaryFileResponseToSchema extends TypeToSchemaExtension
         }
 
         return null;
+    }
+
+    private function buildType(string $contentType): OpenApiType
+    {
+        $type = new StringType;
+
+        if (! in_array($contentType, static::$nonBinaryMimeTypes)) {
+            $type->format('binary');
+        }
+
+        return $type;
     }
 }

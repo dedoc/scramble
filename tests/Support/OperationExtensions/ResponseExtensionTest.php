@@ -40,3 +40,33 @@ class Foo_ResponseExtensionAnnotationTest__Controller
         return unknown();
     }
 }
+
+it('combines responses with different content types', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', MultipleMimes_ResponseExtensionTest_Controller::class));
+
+    expect($response = $openApiDocument['paths']['/test']['get']['responses'][200])
+        ->not->toBeNull()
+        ->and($response['headers'])->toHaveKey('Content-Disposition')
+        ->and($response['content'])->toBe([
+            'application/pdf' => ['schema' => ['type' => 'string', 'format' => 'binary']],
+            'application/json' => [
+                'schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'foo' => ['type' => 'string', 'enum' => ['bar']],
+                    ],
+                    'required' => ['foo'],
+                ]
+            ],
+        ]);
+});
+class MultipleMimes_ResponseExtensionTest_Controller
+{
+    public function __invoke()
+    {
+        if (foobar()) {
+            return ['foo' => 'bar'];
+        }
+        return response()->download('data.pdf');
+    }
+}

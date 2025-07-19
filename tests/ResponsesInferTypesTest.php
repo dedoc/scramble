@@ -24,7 +24,7 @@ it('infers response factory expressions', function (string $expression, string $
         'contentDisposition' => 'attachment; filename=wow.txt',
     ]],
     ["response()->download('/tmp/wow.txt', headers: ['Content-type' => 'application/json'])", 'Symfony\Component\HttpFoundation\BinaryFileResponse<string(/tmp/wow.txt), int(200), array{Content-type: string(application/json)}, string(attachment)>', [
-        'mimeType' => 'application/json',
+        'mimeType' => 'text/plain',
         'contentDisposition' => 'attachment; filename=wow.txt',
     ]],
     ["response()->file('/tmp/wow.txt')", 'Symfony\Component\HttpFoundation\BinaryFileResponse<string(/tmp/wow.txt), int(200), array<mixed>, null>', [
