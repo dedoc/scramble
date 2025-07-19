@@ -53,10 +53,6 @@ class BinaryFileResponseTypeFactory
             $mimeType = $fileMime;
         }
 
-        if ($headerMime = $this->guessMimeTypeFromHeaders()) {
-            $mimeType = $headerMime;
-        }
-
         return $mimeType;
     }
 
@@ -66,25 +62,6 @@ class BinaryFileResponseTypeFactory
 
         if ($fileName && class_exists(ExtensionMimeTypeDetector::class)) {
             return (new ExtensionMimeTypeDetector)->detectMimeTypeFromPath($fileName);
-        }
-
-        return null;
-    }
-
-    private function guessMimeTypeFromHeaders(): ?string
-    {
-        $stringLiteralContentTypeHeader = $this->headers instanceof KeyedArrayType
-            ? collect($this->headers->items)
-                ->first(function (ArrayItemType_ $t) {
-                    return is_string($t->key)
-                        && Str::lower($t->key) === 'content-type'
-                        && $t->value instanceof LiteralStringType;
-                })
-                ?->value
-            : null;
-
-        if ($stringLiteralContentTypeHeader instanceof LiteralStringType) {
-            return $stringLiteralContentTypeHeader->value;
         }
 
         return null;
