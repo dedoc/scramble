@@ -75,7 +75,7 @@ class ResponseExtension extends OperationExtension
             ->groupBy('code')
             ->map($this->mergeResponses(...))
             ->values()
-            ->merge($references)
+            ->concat($references)
             ->values();
     }
 
@@ -137,11 +137,13 @@ class ResponseExtension extends OperationExtension
     private function mergeResponses(Collection $responses): Response
     {
         if (count($responses) === 1) {
-            return $responses->first();
+            /** @var Response $response */
+            $response = $responses->first();
+            return $response;
         }
 
         return tap(
-            Response::make((int) $responses->first()->code)
+            Response::make((int) $responses->first()?->code)
                 ->setDescription(trim($responses->map->description->join("\n\n")))
                 ->setLinks($this->mergeLinks($responses))
                 ->setHeaders($this->mergeHeaders($responses)),
@@ -151,7 +153,7 @@ class ResponseExtension extends OperationExtension
 
     /**
      * @param  Collection<int, Response>  $responses
-     * @return array<string, Header>
+     * @return array<string, Header|Reference>
      */
     private function mergeHeaders(Collection $responses): array
     {
@@ -160,7 +162,7 @@ class ResponseExtension extends OperationExtension
 
     /**
      * @param  Collection<int, Response>  $responses
-     * @return array<string, Link>
+     * @return array<string, Link|Reference>
      */
     private function mergeLinks(Collection $responses): array
     {
@@ -173,6 +175,7 @@ class ResponseExtension extends OperationExtension
      */
     private function mergeContent(Collection $responses): array
     {
+        /** @var Collection<string, Collection<int, Reference|Schema>> $contentCollections */
         $contentCollections = collect();
 
         foreach ($responses as $r) {
@@ -180,7 +183,7 @@ class ResponseExtension extends OperationExtension
                 if (! $contentCollections->has($typeName)) {
                     $contentCollections->offsetSet($typeName, collect());
                 }
-                $contentCollections->get($typeName)->push($content);
+                $contentCollections->get($typeName)?->push($content);
             }
         }
 

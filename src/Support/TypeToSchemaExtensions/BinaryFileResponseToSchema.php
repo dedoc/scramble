@@ -19,7 +19,8 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class BinaryFileResponseToSchema extends TypeToSchemaExtension
 {
-    public static $nonBinaryMimeTypes = [
+    /** @var string[]  */
+    public static array $nonBinaryMimeTypes = [
         // Plain text formats
         'text/plain',
         'text/html',
@@ -106,8 +107,12 @@ class BinaryFileResponseToSchema extends TypeToSchemaExtension
 
     private function getContentType(Generic $type): string
     {
+        $attributeMimeType = is_string($attributeMimeType = $type->getAttribute('mimeType'))
+            ? $attributeMimeType
+            : null;
+
         return $this->guessMimeTypeFromHeaders($type->templateTypes[2 /* THeaders */])
-            ?: $type->getAttribute('mimeType')
+            ?: $attributeMimeType
             ?: 'application/octet-stream';
     }
 

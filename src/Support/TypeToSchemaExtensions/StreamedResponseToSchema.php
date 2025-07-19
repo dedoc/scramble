@@ -26,7 +26,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class StreamedResponseToSchema extends TypeToSchemaExtension
 {
-    public static $defaultMimeType = 'text/html';
+    public static string $defaultMimeType = 'text/html';
 
     public function shouldHandle(Type $type): bool
     {
@@ -86,7 +86,11 @@ class StreamedResponseToSchema extends TypeToSchemaExtension
 
     private function getContentType(Generic $type): string
     {
-        return $type->getAttribute('mimeType')
+        $attributeMimeType = is_string($attributeMimeType = $type->getAttribute('mimeType'))
+            ? $attributeMimeType
+            : null;
+
+        return $attributeMimeType
             ?: $this->guessMimeTypeFromHeaders($type->templateTypes[2 /* THeaders */])
             ?: ($type->isInstanceOf(StreamedJsonResponse::class) ? 'application/json' : self::$defaultMimeType)
             ?: self::$defaultMimeType;

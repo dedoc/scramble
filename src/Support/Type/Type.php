@@ -40,6 +40,11 @@ interface Type
 
     public function getMethodDefinition(string $methodName, Scope $scope = new GlobalScope): ?FunctionLikeDefinition;
 
+    /** @return $this */
+    public function setOriginal(?Type $original): self;
+
+    public function getOriginal(): ?Type;
+
     /**
      * @return bool
      */

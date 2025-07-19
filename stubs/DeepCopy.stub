@@ -1,0 +1,11 @@
+<?php
+
+namespace DeepCopy {
+    /**
+     * @template T
+     * @param T $value
+     * @param bool $useCloneMethod
+     * @return T
+     */
+    function deep_copy($value, $useCloneMethod = false) {}
+}
