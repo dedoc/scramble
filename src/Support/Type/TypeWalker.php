@@ -27,7 +27,7 @@ class TypeWalker
                 ->flatMap(fn ($node) => is_array($type->$node) ? array_values($type->$node) : [$type->$node]);
 
             foreach ($publicChildren as $child) {
-                if ($foundType = $this->first($child, $lookup)) {
+                if ($child && $foundType = $this->first($child, $lookup)) {
                     return $foundType;
                 }
             }
@@ -36,13 +36,39 @@ class TypeWalker
         }, fn () => null);
     }
 
+    /**
+     * @param  callable(Type): bool  $lookup
+     * @return Type[]
+     */
+    public function findAll(Type $type, callable $lookup): array
+    {
+        return RecursionGuard::run($type, function () use ($type, $lookup) {
+            $foundTypes = [];
+
+            if ($lookup($type)) {
+                $foundTypes[] = $type;
+            }
+
+            $publicChildren = collect($type->nodes())
+                ->flatMap(fn ($node) => is_array($type->$node) ? array_values($type->$node) : [$type->$node]);
+
+            foreach ($publicChildren as $child) {
+                if ($child && $allFoundTypes = $this->findAll($child, $lookup)) {
+                    $foundTypes = [...$foundTypes, ...$allFoundTypes];
+                }
+            }
+
+            return $foundTypes;
+        }, fn () => []);
+    }
+
     public function replace(Type $subject, callable $replacer): Type
     {
         if ($replaced = $replacer($subject)) {
             return $replaced;
         }
 
-        if (in_array($subject, $this->visitedNodes)) {
+        if (in_array($subject, $this->visitedNodes, strict: true)) {
             return $subject;
         }
         $this->visitedNodes[] = $subject;
@@ -51,6 +77,9 @@ class TypeWalker
 
         foreach ($propertiesWithNodes as $propertyWithNode) {
             $node = $subject->$propertyWithNode;
+            if (! $node) {
+                continue;
+            }
             if (! is_array($node)) {
                 $subject->$propertyWithNode = TypeHelper::unpackIfArray($this->replace($node, $replacer));
             } else {

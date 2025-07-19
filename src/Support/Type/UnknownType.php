@@ -4,12 +4,9 @@ namespace Dedoc\Scramble\Support\Type;
 
 class UnknownType extends AbstractType
 {
-    private string $comment;
-
-    public function __construct(string $comment = '')
-    {
-        $this->comment = $comment;
-    }
+    public function __construct(
+        private string $comment = '',
+    ) {}
 
     public function isSame(Type $type)
     {

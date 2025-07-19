@@ -110,6 +110,8 @@ class ReferenceTypeResolver
 
     public function resolve(Scope $scope, Type $type): Type
     {
+        $originalType = $type;
+
         if ($resolvedType = $type->getAttribute('resolvedType')) {
             return $resolvedType;
         }
@@ -133,6 +135,8 @@ class ReferenceTypeResolver
             ),
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         ));
+
+        $resolvedType->setOriginal($originalType);
 
         $type->setAttribute('resolvedType', $resolvedType);
 
