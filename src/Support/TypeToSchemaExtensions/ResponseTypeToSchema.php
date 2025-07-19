@@ -49,7 +49,7 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
 
         if (! $emptyContent) {
             $response->setContent(
-                'application/json', // @todo: Some other response types are possible as well
+                'application/json',
                 Schema::fromType($this->openApiTransformer->transform($type->templateTypes[0])),
             );
         }
