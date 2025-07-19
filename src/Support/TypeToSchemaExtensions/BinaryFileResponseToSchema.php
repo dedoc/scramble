@@ -26,7 +26,7 @@ class BinaryFileResponseToSchema extends TypeToSchemaExtension
     }
 
     /**
-     * @param Generic $type
+     * @param  Generic  $type
      */
     public function toResponse(Type $type): ?Response
     {
@@ -37,13 +37,12 @@ class BinaryFileResponseToSchema extends TypeToSchemaExtension
         return Response::make($status)
             ->setContent(
                 $this->getContentType($type),
-                Schema::fromType((new StringType())->format('binary')),
+                Schema::fromType((new StringType)->format('binary')),
             )
             ->setHeaders($this->makeHeaders($type));
     }
 
     /**
-     * @param Generic $type
      * @return array<string, Header>
      */
     private function makeHeaders(Generic $type): array

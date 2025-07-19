@@ -29,7 +29,7 @@ it('transforms basic inferred type to response', function () {
     $type = (new Generic(BinaryFileResponse::class, [
         new UnknownType,
         new LiteralIntegerType(200),
-        new ArrayType(),
+        new ArrayType,
         new LiteralStringType('attachment'),
     ]))->mergeAttributes([
         'mimeType' => 'text/plain',
