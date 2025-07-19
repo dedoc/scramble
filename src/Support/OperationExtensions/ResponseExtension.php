@@ -132,7 +132,7 @@ class ResponseExtension extends OperationExtension
     }
 
     /**
-     * @param Collection<int, Response> $responses
+     * @param  Collection<int, Response>  $responses
      */
     private function mergeResponses(Collection $responses): Response
     {
@@ -150,7 +150,7 @@ class ResponseExtension extends OperationExtension
     }
 
     /**
-     * @param Collection<int, Response> $responses
+     * @param  Collection<int, Response>  $responses
      * @return array<string, Header>
      */
     private function mergeHeaders(Collection $responses): array
@@ -159,8 +159,7 @@ class ResponseExtension extends OperationExtension
     }
 
     /**
-     *
-     * @param Collection<int, Response> $responses
+     * @param  Collection<int, Response>  $responses
      * @return array<string, Link>
      */
     private function mergeLinks(Collection $responses): array
@@ -169,8 +168,7 @@ class ResponseExtension extends OperationExtension
     }
 
     /**
-     *
-     * @param Collection<int, Response> $responses
+     * @param  Collection<int, Response>  $responses
      * @return array<string, Schema|Reference>
      */
     private function mergeContent(Collection $responses): array
@@ -207,7 +205,7 @@ class ResponseExtension extends OperationExtension
     }
 
     /**
-     * @param Collection<int, Response> $responses
+     * @param  Collection<int, Response>  $responses
      */
     private function addContentToResponse(Response $r, Collection $responses): void
     {

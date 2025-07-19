@@ -56,7 +56,7 @@ it('combines responses with different content types', function () {
                         'foo' => ['type' => 'string', 'enum' => ['bar']],
                     ],
                     'required' => ['foo'],
-                ]
+                ],
             ],
         ]);
 });
@@ -67,6 +67,7 @@ class MultipleMimes_ResponseExtensionTest_Controller
         if (foobar()) {
             return ['foo' => 'bar'];
         }
+
         return response()->download('data.pdf');
     }
 }
