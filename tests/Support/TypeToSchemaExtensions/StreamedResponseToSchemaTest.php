@@ -8,14 +8,7 @@ use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Dedoc\Scramble\Support\Type\ArrayType;
-use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\KeyedArrayType;
-use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
-use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\StreamedResponseToSchema;
-use Symfony\Component\HttpFoundation\StreamedJsonResponse;
 
 beforeEach(function () {
     $this->components = new Components;
