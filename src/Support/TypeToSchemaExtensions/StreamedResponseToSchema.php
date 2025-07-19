@@ -75,7 +75,7 @@ class StreamedResponseToSchema extends TypeToSchemaExtension
             return '';
         }
 
-        $description = "A server-sent events (SSE) streamed response.";
+        $description = 'A server-sent events (SSE) streamed response.';
 
         if (is_string($endStreamWith = $type->getAttribute('endStreamWith'))) {
             $description .= " `$endStreamWith` update will be sent to the event stream when the stream is complete.";
@@ -118,7 +118,7 @@ class StreamedResponseToSchema extends TypeToSchemaExtension
         }
 
         if ($this->isServerSentEventsResponse($type)) {
-            return (new ObjectType())
+            return (new ObjectType)
                 ->addProperty('event', (new StringType)->example('update'))
                 ->addProperty('data', new MixedType)
                 ->setRequired(['event', 'data']);

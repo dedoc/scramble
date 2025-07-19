@@ -44,7 +44,7 @@ it('transforms json inferred type to response', function () {
 });
 
 it('transforms SSE inferred type to response', function () {
-     $type = getStatementType("response()->eventStream(fn () => [])");
+    $type = getStatementType('response()->eventStream(fn () => [])');
 
     $response = $this->transformer->toResponse($type);
 
@@ -100,7 +100,7 @@ it('transforms SSE without string end event to response', function () {
 });
 
 it('transforms plain streamed type to response', function () {
-    $type = getStatementType("response()->stream(fn () => f())");
+    $type = getStatementType('response()->stream(fn () => f())');
 
     $response = $this->transformer->toResponse($type);
 

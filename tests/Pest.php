@@ -25,6 +25,7 @@ uses(TestCase::class)->in(__DIR__);
 
 expect()->extend('toBeSameJson', function (mixed $expectedData) {
     expect(json_encode($this->value, JSON_PRETTY_PRINT))->toBe(json_encode($expectedData, JSON_PRETTY_PRINT));
+
     return $this;
 });
 
