@@ -139,6 +139,7 @@ class ResponseExtension extends OperationExtension
         if (count($responses) === 1) {
             /** @var Response $response */
             $response = $responses->first();
+
             return $response;
         }
 

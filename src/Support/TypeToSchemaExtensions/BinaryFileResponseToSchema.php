@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class BinaryFileResponseToSchema extends TypeToSchemaExtension
 {
-    /** @var string[]  */
+    /** @var string[] */
     public static array $nonBinaryMimeTypes = [
         // Plain text formats
         'text/plain',
