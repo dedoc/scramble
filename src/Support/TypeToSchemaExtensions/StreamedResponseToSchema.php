@@ -77,7 +77,7 @@ class StreamedResponseToSchema extends TypeToSchemaExtension
 
         $description = 'A server-sent events (SSE) streamed response.';
 
-        if (is_string($endStreamWith = $type->getAttribute('endStreamWith'))) {
+        if ($endStreamWith = $this->getEndStreamWith($type)) {
             $description .= " `$endStreamWith` update will be sent to the event stream when the stream is complete.";
         }
 
@@ -118,13 +118,34 @@ class StreamedResponseToSchema extends TypeToSchemaExtension
         }
 
         if ($this->isServerSentEventsResponse($type)) {
-            return (new ObjectType)
+            $schema = (new ObjectType)
                 ->addProperty('event', (new StringType)->example('update'))
                 ->addProperty('data', new MixedType)
                 ->setRequired(['event', 'data']);
+
+            if ($example = $this->makeExample($type)) {
+                $schema->examples([$example]);
+            }
+
+            return $schema;
         }
 
         return new StringType;
+    }
+
+    private function makeExample(Generic $type): ?string
+    {
+        if (! $this->isServerSentEventsResponse($type)) {
+            return null;
+        }
+
+        $example = "event: update\ndata: {data}\n\n";
+
+        if ($endStreamWith = $this->getEndStreamWith($type)) {
+            $example .= "event: update\ndata: $endStreamWith\n\n";
+        }
+
+        return $example;
     }
 
     /**
@@ -138,5 +159,12 @@ class StreamedResponseToSchema extends TypeToSchemaExtension
                 schema: Schema::fromType((new StringType)->enum(['chunked'])),
             ),
         ];
+    }
+
+    private function getEndStreamWith(Generic $type): ?string
+    {
+        $endStreamWith = $type->getAttribute('endStreamWith');
+
+        return is_string($endStreamWith) ? $endStreamWith : null;
     }
 }

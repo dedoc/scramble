@@ -54,6 +54,9 @@ it('transforms SSE inferred type to response', function () {
             'text/event-stream' => [
                 'schema' => [
                     'type' => 'object',
+                    'examples' => [
+                        "event: update\ndata: {data}\n\nevent: update\ndata: </stream>\n\n"
+                    ],
                     'properties' => [
                         'event' => ['type' => 'string', 'example' => 'update'],
                         'data' => (object) [],
@@ -82,6 +85,9 @@ it('transforms SSE without string end event to response', function () {
             'text/event-stream' => [
                 'schema' => [
                     'type' => 'object',
+                    'examples' => [
+                        "event: update\ndata: {data}\n\n"
+                    ],
                     'properties' => [
                         'event' => ['type' => 'string', 'example' => 'update'],
                         'data' => (object) [],
