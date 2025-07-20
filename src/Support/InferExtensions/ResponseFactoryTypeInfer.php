@@ -107,19 +107,23 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension, Function
     public function getType(Expr $node, Scope $scope): ?Type
     {
         // call Response and JsonResponse constructors
+        $nodeType = $scope->getType($node);
+
         if (
             $node instanceof Expr\New_
             && (
-                $scope->getType($node)->isInstanceOf(JsonResponse::class)
-                || $scope->getType($node)->isInstanceOf(Response::class)
+                $nodeType->isInstanceOf(JsonResponse::class)
+                || $nodeType->isInstanceOf(Response::class)
             )
         ) {
-            $contentName = $scope->getType($node)->isInstanceOf(JsonResponse::class) ? 'data' : 'content';
-            $contentDefaultType = $scope->getType($node)->isInstanceOf(JsonResponse::class)
+            /** @var ObjectType $nodeType */
+
+            $contentName = $nodeType->isInstanceOf(JsonResponse::class) ? 'data' : 'content';
+            $contentDefaultType = $nodeType->isInstanceOf(JsonResponse::class)
                 ? new ArrayType
                 : new LiteralStringType('');
 
-            return new Generic($scope->getType($node)->name, [
+            return new Generic($nodeType->name, [
                 TypeHelper::getArgType($scope, $node->args, [$contentName, 0], $contentDefaultType),
                 TypeHelper::getArgType($scope, $node->args, ['status', 1], new LiteralIntegerType(200)),
                 TypeHelper::getArgType($scope, $node->args, ['headers', 2], new ArrayType),

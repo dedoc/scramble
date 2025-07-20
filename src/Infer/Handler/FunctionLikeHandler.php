@@ -180,7 +180,9 @@ class FunctionLikeHandler implements CreatesScope
 
         $argumentsAssignedToProperties = [];
 
-        $callToParentConstruct = $scope->classDefinition()->parentFqn ? array_filter(
+        $parentFqn = $scope->classDefinition()->parentFqn;
+
+        $callToParentConstruct = $parentFqn ? array_filter(
             $node->getStmts() ?: [],
             fn (Node\Stmt $s) => $s instanceof Node\Stmt\Expression
                 && $s->expr instanceof Node\Expr\StaticCall
@@ -192,7 +194,8 @@ class FunctionLikeHandler implements CreatesScope
 
         if (
             $callToParentConstruct
-            && ($parentDefinition = $scope->index->getClass($scope->classDefinition()->parentFqn))
+            && $parentFqn
+            && ($parentDefinition = $scope->index->getClass($parentFqn))
             && ($parentConstructorDefinition = $parentDefinition->getMethodDefinition('__construct'))
         ) {
             $parentConstructorArguments = $parentConstructorDefinition->type->arguments;

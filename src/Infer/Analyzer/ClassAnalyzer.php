@@ -24,12 +24,7 @@ class ClassAnalyzer
      */
     public function analyze(string $name): ClassDefinition
     {
-        // Preventing infinite recursion here @todo remove it?
-        // if ($definition = $this->index->getClassDefinition($name)) {
-        //     return $definition;
-        // }
-
-        $classReflection = new ReflectionClass($name);
+        $classReflection = new ReflectionClass($name); // @phpstan-ignore argument.type
 
         $parentName = ($classReflection->getParentClass() ?: null)?->name;
 
@@ -67,7 +62,7 @@ class ClassAnalyzer
                 $classDefinition->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
                     type: $t = new TemplateType(
                         'T'.Str::studly($reflectionProperty->name),
-                        is: $reflectionProperty->hasType() ? TypeHelper::createTypeFromReflectionType($reflectionProperty->getType()) : new UnknownType,
+                        is: ($reflectionPropertyType = $reflectionProperty->getType()) ? TypeHelper::createTypeFromReflectionType($reflectionPropertyType) : new UnknownType,
                     ),
                     defaultType: $reflectionProperty->hasDefaultValue()
                         ? PropertyAnalyzer::from($reflectionProperty)->getDefaultType()

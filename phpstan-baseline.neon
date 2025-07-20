@@ -703,36 +703,6 @@ parameters:
 			path: src/Infer.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\ClassAnalyzer\:\:shouldAnalyzeParentClass\(\) has parameter \$parentClassReflection with generic class ReflectionClass but does not specify its types\: T$#'
-			identifier: missingType.generics
-			count: 1
-			path: src/Infer/Analyzer/ClassAnalyzer.php
-
-		-
-			message: '#^Parameter \#1 \$haystack of function str_contains expects string, string\|false given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Analyzer/ClassAnalyzer.php
-
-		-
-			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Analyzer/ClassAnalyzer.php
-
-		-
-			message: '#^Parameter \#1 \$reflectionType of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:createTypeFromReflectionType\(\) expects ReflectionType, ReflectionType\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Analyzer/ClassAnalyzer.php
-
-		-
-			message: '#^Cannot access property \$methods on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Infer/Analyzer/MethodAnalyzer.php
-
-		-
 			message: '#^Instanceof between PhpParser\\Node\\Expr\|PhpParser\\Node\\Identifier and PhpParser\\Node\\Name will always evaluate to false\.$#'
 			identifier: instanceof.alwaysFalse
 			count: 2
@@ -1275,7 +1245,7 @@ parameters:
 		-
 			message: '#^Cannot access property \$parentFqn on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
 			identifier: property.nonObject
-			count: 2
+			count: 1
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
 		-
@@ -1323,12 +1293,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Handler\\FunctionLikeHandler\:\:shouldHandle\(\) has parameter \$node with no type specified\.$#'
 			identifier: missingType.parameter
-			count: 1
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
-			message: '#^Parameter \#1 \$className of method Dedoc\\Scramble\\Infer\\Scope\\Index\:\:getClassDefinition\(\) expects string, string\|null given\.$#'
-			identifier: argument.type
 			count: 1
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
@@ -1783,30 +1747,6 @@ parameters:
 			path: src/Infer/Services/ReferenceTypeResolver.php
 
 		-
-			message: '#^Cannot access property \$name on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Cannot access property \$properties on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Cannot access property \$templateTypes on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 5
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Cannot call method getMethodDefinition\(\) on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
 			message: '#^Instanceof between Dedoc\\Scramble\\Support\\Type\\Generic and Dedoc\\Scramble\\Support\\Type\\Generic will always evaluate to true\.$#'
 			identifier: instanceof.alwaysTrue
 			count: 1
@@ -1851,12 +1791,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:prepareArguments\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:resolve\(\) should return Dedoc\\Scramble\\Support\\Type\\Type but returns mixed\.$#'
-			identifier: return.type
 			count: 1
 			path: src/Infer/Services/ReferenceTypeResolver.php
 
@@ -1927,31 +1861,7 @@ parameters:
 			path: src/Infer/Services/ReferenceTypeResolver.php
 
 		-
-			message: '#^Parameter \#1 \$classDefinition of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:getParentConstructCallsTypes\(\) expects Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition, Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Parameter \#1 \$haystack of static method Illuminate\\Support\\Str\:\:contains\(\) expects string, string\|false given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
 			message: '#^Parameter \#1 \$items of method Illuminate\\Support\\Collection\<string,Dedoc\\Scramble\\Support\\Type\\Type\>\:\:merge\(\) expects Illuminate\\Contracts\\Support\\Arrayable\<string, Dedoc\\Scramble\\Support\\Type\\Type\>\|iterable\<string, Dedoc\\Scramble\\Support\\Type\\Type\>, Illuminate\\Support\\Collection\<\(int\|string\), Dedoc\\Scramble\\Support\\Type\\Type\|null\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Parameter \#1 \$subject of method Dedoc\\Scramble\\Support\\Type\\TypeWalker\:\:replace\(\) expects Dedoc\\Scramble\\Support\\Type\\Type, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Infer/Services/ReferenceTypeResolver.php
@@ -1976,12 +1886,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#3 \$calledOnType of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:getFunctionCallResult\(\) expects Dedoc\\Scramble\\Support\\Type\\ObjectType\|null, Dedoc\\Scramble\\Support\\Type\\Type given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
-			message: '#^Parameter \#3 \$classDefinition of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:getMethodCallsSideEffectIntroducedTypesInConstructor\(\) expects Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition, Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Infer/Services/ReferenceTypeResolver.php
@@ -3958,18 +3862,6 @@ parameters:
 			path: src/Support/IndexBuilders/RequestParametersBuilder.php
 
 		-
-			message: '#^Parameter \#2 \$args of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:getArgType\(\) expects array\<PhpParser\\Node\\Arg\>, array\<PhpParser\\Node\\Arg\|PhpParser\\Node\\VariadicPlaceholder\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/IndexBuilders/RequestParametersBuilder.php
-
-		-
-			message: '#^Parameter \#2 \$args of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:getArgType\(\) expects array\<PhpParser\\Node\\Arg\>, array\<PhpParser\\Node\\Arg\|PhpParser\\Node\\VariadicPlaceholder\> given\.$#'
-			identifier: argument.type
-			count: 3
-			path: src/Support/InferExtensions/AbortHelpersExceptionInfer.php
-
-		-
 			message: '#^Parameter \#1 \$array of function array_values expects array, array\|ArrayAccess given\.$#'
 			identifier: argument.type
 			count: 1
@@ -4102,28 +3994,10 @@ parameters:
 			path: src/Support/InferExtensions/ResourceCollectionTypeInfer.php
 
 		-
-			message: '#^Access to an undefined property Dedoc\\Scramble\\Support\\Type\\Type\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Support/InferExtensions/ResponseFactoryTypeInfer.php
-
-		-
-			message: '#^Parameter \#2 \$args of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:getArgType\(\) expects array\<PhpParser\\Node\\Arg\>, array\<PhpParser\\Node\\Arg\|PhpParser\\Node\\VariadicPlaceholder\> given\.$#'
-			identifier: argument.type
-			count: 14
-			path: src/Support/InferExtensions/ResponseFactoryTypeInfer.php
-
-		-
 			message: '#^Cannot access property \$name on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
 			identifier: property.nonObject
 			count: 1
 			path: src/Support/InferExtensions/TypeTraceInfer.php
-
-		-
-			message: '#^Parameter \#2 \$args of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:getArgType\(\) expects array\<PhpParser\\Node\\Arg\>, array\<PhpParser\\Node\\Arg\|PhpParser\\Node\\VariadicPlaceholder\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/InferExtensions/ValidatorTypeInfer.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationBuilder\:\:build\(\) has no return type specified\.$#'
