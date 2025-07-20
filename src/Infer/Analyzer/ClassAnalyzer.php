@@ -37,9 +37,10 @@ class ClassAnalyzer
      */
     public function analyze(string $name): ClassDefinition
     {
-        if ($definition = $this->index->getClassDefinition($name)) {
-            return $definition;
-        }
+        // Preventing infinite recursion here @todo remove it?
+        // if ($definition = $this->index->getClassDefinition($name)) {
+        //     return $definition;
+        // }
 
         $classReflection = new ReflectionClass($name);
 

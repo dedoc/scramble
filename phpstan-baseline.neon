@@ -1567,12 +1567,6 @@ parameters:
 			path: src/Infer/Reflector/MethodReflector.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Index\:\:registerFunctionDefinition\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Index.php
-
-		-
 			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
 			identifier: argument.type
 			count: 1

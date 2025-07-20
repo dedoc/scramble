@@ -407,20 +407,7 @@ class ReferenceTypeResolver
 
     private function resolveUnknownClass(string $className): ?ClassDefinition
     {
-        try {
-            $reflection = new \ReflectionClass($className);
-
-            if (Str::contains($reflection->getFileName(), DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR)) {
-                Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($className, new ClassDefinition($className)));
-
-                return $this->index->getClassDefinition($className);
-            }
-
-            return (new ClassAnalyzer($this->index))->analyze($className);
-        } catch (\ReflectionException) {
-        }
-
-        return null;
+        return $this->index->getClassDefinition($className);
     }
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)
