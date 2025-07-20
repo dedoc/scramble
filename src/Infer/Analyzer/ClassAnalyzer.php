@@ -33,7 +33,7 @@ class ClassAnalyzer
 
         $parentName = ($classReflection->getParentClass() ?: null)?->name;
 
-        $parentDefinition = $parentName ? $this->index->getClassDefinition($parentName) : null;
+        $parentDefinition = $parentName ? $this->index->getClass($parentName) : null;
 
         /*
          * @todo consider more advanced cloning implementation.

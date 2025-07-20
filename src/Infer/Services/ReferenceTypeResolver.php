@@ -230,7 +230,7 @@ class ReferenceTypeResolver
 
         $classDefinition = null;
         if ($normalizedCalleeType instanceof ObjectType) {
-            $classDefinition = $this->index->getClassDefinition($normalizedCalleeType->name);
+            $classDefinition = $this->index->getClass($normalizedCalleeType->name);
         }
 
         if ($normalizedCalleeType && $returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
@@ -254,7 +254,7 @@ class ReferenceTypeResolver
                 : $calleeType;
 
             if ($unwrappedType instanceof ObjectType) {
-                $classDefinition = $this->index->getClassDefinition($unwrappedType->name);
+                $classDefinition = $this->index->getClass($unwrappedType->name);
 
                 $event = new MethodCallEvent(
                     instance: $unwrappedType,
@@ -354,7 +354,7 @@ class ReferenceTypeResolver
 
         // Attempting extensions broker before potentially giving up on type inference
         if (! $isStaticCall && $scope->context->classDefinition) {
-            $definingMethodName = ($definingClass = $scope->index->getClassDefinition($contextualClassName))
+            $definingMethodName = ($definingClass = $scope->index->getClass($contextualClassName))
                 ? $definingClass->getMethodDefiningClassName($type->methodName, $scope->index)
                 : $contextualClassName;
 
@@ -371,7 +371,7 @@ class ReferenceTypeResolver
             }
         }
 
-        if (! $calleeDefinition = $this->index->getClassDefinition($calleeName)) {
+        if (! $calleeDefinition = $this->index->getClass($calleeName)) {
             return new UnknownType;
         }
 
@@ -459,7 +459,7 @@ class ReferenceTypeResolver
         }
         $type->name = $contextualClassName;
 
-        if (! $classDefinition = $this->index->getClassDefinition($type->name)) {
+        if (! $classDefinition = $this->index->getClass($type->name)) {
             /*
              * Usually in this case we want to return UnknownType. But we certainly know that using `new` will produce
              * an object of a type being created.
@@ -543,7 +543,7 @@ class ReferenceTypeResolver
 
         $classDefinition = $objectType instanceof SelfType && $scope->isInClass()
             ? $scope->classDefinition()
-            : $this->index->getClassDefinition($objectType->name);
+            : $this->index->getClass($objectType->name);
 
         if (! $classDefinition) {
             $name = $objectType instanceof SelfType ? 'self' : $objectType->name;
@@ -578,7 +578,7 @@ class ReferenceTypeResolver
             $returnType = $calledOnType;
         }
 
-        $templateNameToIndexMap = $calledOnType instanceof Generic && ($classDefinition = $this->index->getClassDefinition($calledOnType->name))
+        $templateNameToIndexMap = $calledOnType instanceof Generic && ($classDefinition = $this->index->getClass($calledOnType->name))
             ? array_flip(array_map(fn ($t) => $t->name, $classDefinition->templateTypes))
             : [];
         /** @var array<string, Type> $inferredTemplates */
@@ -731,7 +731,7 @@ class ReferenceTypeResolver
             return collect();
         }
 
-        $parentClassDefinition = $this->index->getClassDefinition($classDefinition->parentFqn);
+        $parentClassDefinition = $this->index->getClass($classDefinition->parentFqn);
 
         if (! $parentClassDefinition) {
             return collect();
@@ -772,7 +772,7 @@ class ReferenceTypeResolver
             $mappo->offsetSet($se, $resultingType);
 
             $methodDefinition = $se->callee instanceof ObjectType
-                ? $this->index->getClassDefinition($se->callee->name)?->getMethodDefinition($se->methodName)
+                ? $this->index->getClass($se->callee->name)?->getMethodDefinition($se->methodName)
                 : null;
 
             if (! $methodDefinition) {

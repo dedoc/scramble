@@ -8,7 +8,7 @@ use Dedoc\Scramble\Infer\Scope\Index;
 it('doesnt fail on internal class definition request', function () {
     $index = new Index;
 
-    $def = $index->getClassDefinition(\Error::class);
+    $def = $index->getClass(\Error::class);
 
     expect($def)->toBeInstanceOf(ClassDefinition::class);
 });

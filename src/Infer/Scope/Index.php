@@ -26,12 +26,7 @@ class Index
      */
     public array $functionsDefinitions = [];
 
-    public function registerClassDefinition(ClassDefinition $classDefinition): void
-    {
-        $this->classesDefinitions[$classDefinition->name] = $classDefinition;
-    }
-
-    public function getClassDefinition(string $className): ?ClassDefinition
+    public function getClass(string $className): ?ClassDefinition
     {
         if (isset($this->classesDefinitions[$className])) {
             return $this->classesDefinitions[$className];
@@ -56,6 +51,16 @@ class Index
          * Keep in mind the internal classes are analyzed here due to $classPath being `null` for them.
          */
         return (new ClassAnalyzer($this))->analyze($className);
+    }
+
+    public function registerClassDefinition(ClassDefinition $classDefinition): void
+    {
+        $this->classesDefinitions[$classDefinition->name] = $classDefinition;
+    }
+
+    public function getClassDefinition(string $className): ?ClassDefinition
+    {
+        return $this->classesDefinitions[$className] ?? null;
     }
 
     public static function shouldAnalyzeAst(string $path): bool
