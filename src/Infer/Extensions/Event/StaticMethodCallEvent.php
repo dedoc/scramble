@@ -18,7 +18,7 @@ class StaticMethodCallEvent
 
     public function getDefinition()
     {
-        return $this->scope->index->getClassDefinition($this->getCallee());
+        return $this->scope->index->getClass($this->getCallee());
     }
 
     public function getCallee()

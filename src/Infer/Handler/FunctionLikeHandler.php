@@ -192,7 +192,7 @@ class FunctionLikeHandler implements CreatesScope
 
         if (
             $callToParentConstruct
-            && ($parentDefinition = $scope->index->getClassDefinition($scope->classDefinition()->parentFqn))
+            && ($parentDefinition = $scope->index->getClass($scope->classDefinition()->parentFqn))
             && ($parentConstructorDefinition = $parentDefinition->getMethodDefinition('__construct'))
         ) {
             $parentConstructorArguments = $parentConstructorDefinition->type->arguments;

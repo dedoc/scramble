@@ -20,7 +20,7 @@ class MethodCallEvent
 
     public function getDefinition()
     {
-        return $this->scope->index->getClassDefinition($this->getInstance()->name);
+        return $this->scope->index->getClass($this->getInstance()->name);
     }
 
     public function getInstance()

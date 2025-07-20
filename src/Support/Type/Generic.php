@@ -34,7 +34,7 @@ class Generic extends ObjectType
     {
         $propertyType = parent::getPropertyType($propertyName, $scope);
 
-        $templateNameToIndexMap = ($classDefinition = $scope->index->getClassDefinition($this->name))
+        $templateNameToIndexMap = ($classDefinition = $scope->index->getClass($this->name))
             ? array_flip(array_map(fn ($t) => $t->name, $classDefinition->templateTypes))
             : [];
 
