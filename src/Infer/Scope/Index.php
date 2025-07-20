@@ -45,7 +45,7 @@ class Index
 
         $classPath = $reflection->getFileName();
 
-        if ($classPath && !static::shouldAnalyzeAst($classPath)) {
+        if ($classPath && ! static::shouldAnalyzeAst($classPath)) {
             Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($className, new ClassDefinition($className)));
 
             // The event emitted above MAY add the class definition to the index. So we'd like to return it if it was added.
