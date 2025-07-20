@@ -6,7 +6,9 @@ parameters:
     paths:
         - src
         - config
+    stubFiles:
+        - stubs/DeepCopy.stub
     tmpDir: build/phpstan
     checkOctaneCompatibility: true
     checkModelProperties: true
-    # reportUnmatchedIgnoredErrors: false
+    reportUnmatchedIgnoredErrors: false
