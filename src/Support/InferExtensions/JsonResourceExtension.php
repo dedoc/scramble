@@ -208,7 +208,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
 
     private function getModelMethodReturn(string $resourceClassName, string $methodName, array $arguments, Scope $scope): Type
     {
-        $modelType = JsonResourceHelper::modelType($scope->index->getClassDefinition($resourceClassName), $scope);
+        $modelType = JsonResourceHelper::modelType($scope->index->getClass($resourceClassName), $scope);
 
         return ReferenceTypeResolver::getInstance()->resolve(
             $scope,

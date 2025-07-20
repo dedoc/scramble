@@ -26,7 +26,7 @@ class AnyMethodCallEvent
     public function getDefinition(): ?ClassDefinition
     {
         return $this->instance instanceof ObjectType
-            ? $this->scope->index->getClassDefinition($this->instance->name)
+            ? $this->scope->index->getClass($this->instance->name)
             : null;
     }
 

@@ -21,7 +21,7 @@ class ClassHandler implements CreatesScope
     public function enter(Node\Stmt\Class_ $node, Scope $scope)
     {
         $parentDefinition = $node->extends
-            ? $scope->index->getClassDefinition($node->extends->toString())
+            ? $scope->index->getClass($node->extends->toString())
             : null;
 
         $scope->context->setClassDefinition($classDefinition = new ClassDefinition(
