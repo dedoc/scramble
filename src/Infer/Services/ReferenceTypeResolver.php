@@ -227,13 +227,6 @@ class ReferenceTypeResolver
             throw new \LogicException('Should not happen.');
         }
 
-        /*
-         * Doing a deep dive into the dependent class, if it has not been analyzed.
-         */
-        if ($calleeType instanceof ObjectType) {
-            $this->resolveUnknownClass($calleeType->name);
-        }
-
         $normalizedCalleeType = $calleeType instanceof TemplateType
             ? $calleeType->is
             : $calleeType;
@@ -281,8 +274,6 @@ class ReferenceTypeResolver
 
             if ($unwrappedType instanceof ObjectType) {
                 $calleeType = $unwrappedType;
-
-                $this->resolveUnknownClass($calleeType->name);
             }
         }
 
@@ -294,10 +285,7 @@ class ReferenceTypeResolver
             return $type;
         }
 
-        if (
-            ($calleeType instanceof ObjectType)
-            && ! array_key_exists($calleeType->name, $this->index->classesDefinitions)
-        ) {
+        if (! $classDefinition) {
             return new UnknownType;
         }
 
@@ -357,11 +345,6 @@ class ReferenceTypeResolver
         // Assuming callee here can be only string of known name. Reality is more complex than
         // that, but it is fine for now.
 
-        /*
-         * Doing a deep dive into the dependent class, if it has not been analyzed.
-         */
-        $this->resolveUnknownClass($calleeName);
-
         // Attempting extensions broker before potentially giving up on type inference
         if ($isStaticCall && $returnType = Context::getInstance()->extensionsBroker->getStaticMethodReturnType(new StaticMethodCallEvent(
             callee: $calleeName,
@@ -391,23 +374,15 @@ class ReferenceTypeResolver
             }
         }
 
-        if (! array_key_exists($calleeName, $this->index->classesDefinitions)) {
+        if (! $calleeDefinition = $this->index->getClassDefinition($calleeName)) {
             return new UnknownType;
         }
-
-        /** @var ClassDefinition $calleeDefinition */
-        $calleeDefinition = $this->index->getClassDefinition($calleeName);
 
         if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeName]");
         }
 
         return $this->getFunctionCallResult($methodDefinition, $type->arguments);
-    }
-
-    private function resolveUnknownClass(string $className): ?ClassDefinition
-    {
-        return $this->index->getClassDefinition($className);
     }
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)
@@ -487,18 +462,13 @@ class ReferenceTypeResolver
         }
         $type->name = $contextualClassName;
 
-        if (
-            ! array_key_exists($type->name, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClass($type->name)
-        ) {
+        if (! $classDefinition = $this->index->getClassDefinition($type->name)) {
             /*
              * Usually in this case we want to return UnknownType. But we certainly know that using `new` will produce
              * an object of a type being created.
              */
             return new ObjectType($type->name);
         }
-
-        $classDefinition = $this->index->getClassDefinition($type->name);
 
         $typeBeingConstructed = ! $classDefinition->templateTypes
             ? new ObjectType($type->name)
@@ -572,13 +542,6 @@ class ReferenceTypeResolver
             scope: $scope,
         ))) {
             return $propertyType;
-        }
-
-        if (
-            ! array_key_exists($objectType->name, $this->index->classesDefinitions)
-            && ! $this->resolveUnknownClass($objectType->name)
-        ) {
-            return new UnknownType("Cannot get property [$type->propertyName] type on [{$objectType->name}]");
         }
 
         $classDefinition = $objectType instanceof SelfType && $scope->isInClass()
