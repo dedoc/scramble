@@ -19,19 +19,6 @@ class ClassAnalyzer
 {
     public function __construct(private Index $index) {}
 
-    private function shouldAnalyzeParentClass(ReflectionClass $parentClassReflection): bool
-    {
-        if ($this->index->getClassDefinition($parentClassReflection->name)) {
-            return true;
-        }
-
-        /*
-         * Classes from `vendor` aren't analyzed at the moment. Instead, it is up to developers to provide
-         * definitions for them using the dictionaries.
-         */
-        return ! str_contains($parentClassReflection->getFileName(), DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR);
-    }
-
     /**
      * @throws \ReflectionException
      */
@@ -44,19 +31,9 @@ class ClassAnalyzer
 
         $classReflection = new ReflectionClass($name);
 
-        $parentDefinition = null;
+        $parentName = ($classReflection->getParentClass() ?: null)?->name;
 
-        if ($classReflection->getParentClass() && $this->shouldAnalyzeParentClass($classReflection->getParentClass())) {
-            $parentDefinition = $this->analyze($parentName = $classReflection->getParentClass()->name);
-        } elseif ($classReflection->getParentClass() && ! $this->shouldAnalyzeParentClass($classReflection->getParentClass())) {
-            // @todo: Here we still want to fire the event, so we can add some details to the definition.
-            $parentDefinition = new ClassDefinition($parentName = $classReflection->getParentClass()->name);
-
-            Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($parentDefinition->name, $parentDefinition));
-
-            // In case parent definition is added in an extension.
-            $parentDefinition = $this->index->getClassDefinition($parentName) ?: $parentDefinition;
-        }
+        $parentDefinition = $parentName ? $this->index->getClassDefinition($parentName) : null;
 
         /*
          * @todo consider more advanced cloning implementation.
@@ -67,7 +44,7 @@ class ClassAnalyzer
             templateTypes: $parentDefinition?->templateTypes ?: [],
             properties: array_map(fn ($pd) => clone $pd, $parentDefinition?->properties ?: []),
             methods: $parentDefinition?->methods ?: [],
-            parentFqn: $parentName ?? null,
+            parentFqn: $parentName,
         );
 
         /*
