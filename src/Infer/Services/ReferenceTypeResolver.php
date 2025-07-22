@@ -28,7 +28,6 @@ use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\SelfType;
-use Dedoc\Scramble\Support\Type\SideEffects\ParentConstructCall;
 use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
 use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -603,12 +602,8 @@ class ReferenceTypeResolver
             $returnType = $calledOnType;
         }
 
-        $templateNameToIndexMap = $calledOnType instanceof Generic && ($classDefinition = $this->index->getClass($calledOnType->name))
-            ? array_flip(array_map(fn ($t) => $t->name, $classDefinition->templateTypes))
-            : [];
-        /** @var array<string, Type> $inferredTemplates */
-        $inferredTemplates = $calledOnType instanceof Generic
-            ? collect($templateNameToIndexMap)->mapWithKeys(fn ($i, $name) => [$name => $calledOnType->templateTypes[$i] ?? new UnknownType])->toArray()
+        $inferredTemplates = $calledOnType instanceof Generic && ($classDefinition = $this->index->getClass($calledOnType->name))
+            ? (new TemplateTypesSolver)->getClassContextTemplates($calledOnType, $classDefinition)
             : [];
 
         $isTemplateForResolution = function (Type $t) use ($callee, $inferredTemplates) {
@@ -630,23 +625,18 @@ class ReferenceTypeResolver
                 || collect($callee->sideEffects)->first(fn ($s) => $s instanceof SelfTemplateDefinition && (new TypeWalker)->first($s->type, $isTemplateForResolution))
             )
         ) {
-            $inferredTemplates = array_merge($inferredTemplates, collect($this->resolveTypesTemplatesFromArguments(
-                $callee->type->templates,
-                $callee->type->arguments,
-                $this->prepareArguments($callee, $arguments),
-            ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray());
+            $inferredTemplates = array_merge(
+                $inferredTemplates,
+                (new TemplateTypesSolver)->getFunctionContextTemplates(
+                    $callee,
+                    $arguments,
+                )
+            );
 
             $returnType = (new TypeWalker)->replace(deep_copy($returnType), function (Type $t) use ($inferredTemplates) {
-                if (! $t instanceof TemplateType) {
-                    return null;
-                }
-                foreach ($inferredTemplates as $searchName => $replace) {
-                    if ($t->name === $searchName) {
-                        return $replace;
-                    }
-                }
-
-                return null;
+                return $t instanceof TemplateType && array_key_exists($t->name, $inferredTemplates)
+                    ? $inferredTemplates[$t->name]
+                    : null;
             });
 
             if ((new TypeWalker)->first($returnType, fn (Type $t) => in_array($t, $callee->type->templates, true))) {
@@ -734,98 +724,5 @@ class ReferenceTypeResolver
             StaticReference::STATIC => $scope->context->classDefinition?->name,
             StaticReference::PARENT => $scope->context->classDefinition?->parentFqn,
         };
-    }
-
-    /**
-     * @return Collection<string, Type> The key is a template type name and a value is a resulting type.
-     */
-    private function getParentConstructCallsTypes(ClassDefinition $classDefinition, ?FunctionLikeDefinition $constructorDefinition): Collection
-    {
-        if (! $constructorDefinition) {
-            return collect();
-        }
-
-        /** @var ParentConstructCall $firstParentConstructorCall */
-        $firstParentConstructorCall = collect($constructorDefinition->sideEffects)->first(fn ($se) => $se instanceof ParentConstructCall);
-
-        if (! $firstParentConstructorCall) {
-            return collect();
-        }
-
-        if (! $classDefinition->parentFqn) {
-            return collect();
-        }
-
-        $parentClassDefinition = $this->index->getClass($classDefinition->parentFqn);
-
-        if (! $parentClassDefinition) {
-            return collect();
-        }
-
-        $templateArgs = collect($this->resolveTypesTemplatesFromArguments(
-            $parentClassDefinition->templateTypes,
-            $parentClassDefinition->getMethodDefinition('__construct')?->type->arguments ?? [],
-            $this->prepareArguments($parentClassDefinition->getMethodDefinition('__construct'), $firstParentConstructorCall->arguments),
-        ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
-
-        return $this
-            ->getParentConstructCallsTypes($parentClassDefinition, $parentClassDefinition->getMethodDefinition('__construct'))
-            ->merge($templateArgs);
-    }
-
-    private function getMethodCallsSideEffectIntroducedTypesInConstructor(Generic $type, Scope $scope, ClassDefinition $classDefinition, ?FunctionLikeDefinition $constructorDefinition): Type
-    {
-        if (! $constructorDefinition) {
-            return $type;
-        }
-
-        $mappo = new \WeakMap;
-        foreach ($constructorDefinition->sideEffects as $se) {
-            if (! $se instanceof MethodCallReferenceType) {
-                continue;
-            }
-
-            if ((! $se->callee instanceof SelfType) && ($mappo->offsetExists($se->callee) && ! $mappo->offsetGet($se->callee) instanceof SelfType)) {
-                continue;
-            }
-
-            // at this point we know that this is a method call on a self type
-            $resultingType = $this->resolveMethodCallReferenceType($scope, $se);
-
-            // $resultingType will be Self type if $this is returned, and we're in context of fluent setter
-
-            $mappo->offsetSet($se, $resultingType);
-
-            $methodDefinition = $se->callee instanceof ObjectType
-                ? $this->index->getClass($se->callee->name)?->getMethodDefinition($se->methodName)
-                : null;
-
-            if (! $methodDefinition) {
-                continue;
-            }
-
-            if (! $type instanceof ObjectType) {
-                continue;
-            }
-
-            $event = new MethodCallEvent(
-                instance: $type,
-                name: $se->methodName,
-                scope: $scope,
-                arguments: $se->arguments,
-                methodDefiningClassName: $type->name,
-            );
-
-            foreach ($methodDefinition->sideEffects as $sideEffect) {
-                if (
-                    $sideEffect instanceof SelfTemplateDefinition
-                    && $type instanceof Generic
-                ) {
-                    $sideEffect->apply($type, $event);
-                }
-            }
-        }
-
-        return $type;
     }
 }

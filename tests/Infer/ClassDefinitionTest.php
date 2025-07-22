@@ -2,7 +2,14 @@
 
 // Tests for which definition is created from class' source
 
-use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
+use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
+use Dedoc\Scramble\Infer\Scope\Index;
+
+beforeEach(function () {
+    $this->index = app(Index::class);
+
+    $this->classAnalyzer = new ClassAnalyzer($this->index);
+});
 
 it('class generates definition', function () {
     $type = analyzeFile(<<<'EOD'
@@ -65,29 +72,26 @@ it('setting a parameter to property in constructor makes it template type', func
     expect($type->methods['__construct']->type->toString())->toBe('(TProp): void');
 });
 
-it('setting a parameter to property in method makes it local method template type and adds a side effect', function () {
-    $type = analyzeFile(<<<'EOD'
-<?php
-class Foo {
+it('setting a parameter to property in method makes it local method template type and defines self out', function () {
+    $def = $this->classAnalyzer->analyze(SetPropToMethod_ClassDefinitionTest::class);
+
+    expect($def->templateTypes)->toHaveCount(1)
+        ->and($def->templateTypes[0]->toString())->toBe('TProp');
+
+    expect($def->properties['prop']->type->toString())->toBe('TProp');
+
+    $setProp = $def->getMethodDefinition('setProp');
+
+    expect($setProp->type->toString())->toBe('<TA>(TA): void')
+        ->and($setProp->selfOutType?->toString())->toBe('self<TA>');
+});
+class SetPropToMethod_ClassDefinitionTest
+{
     public $prop;
     public function setProp($a) {
         $this->prop = $a;
     }
 }
-EOD)->getClassDefinition('Foo');
-
-    expect($type->templateTypes)->toHaveCount(1);
-    expect($type->templateTypes[0]->toString())->toBe('TProp');
-
-    expect($type->properties['prop']->type->toString())->toBe('TProp');
-
-    expect($type->methods['setProp']->type->toString())->toBe('<TA>(TA): void');
-    expect($type->methods['setProp']->sideEffects)->toHaveCount(1)
-        ->and($sideEffect = $type->methods['setProp']->sideEffects[0])
-        ->toBeInstanceOf(SelfTemplateDefinition::class)
-        ->and($sideEffect->definedTemplate)->toBe('TProp')
-        ->and($sideEffect->type->toString())->toBe('TA');
-});
 
 it('understands self type', function () {
     $type = analyzeFile(__DIR__.'/files/class_with_method_that_returns_self.php')

@@ -23,7 +23,6 @@ use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
-use Dedoc\Scramble\Support\Type\SideEffects\ParentConstructCall;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -176,14 +175,6 @@ class Scope
                     $node,
                     new StaticMethodCallReferenceType($this->getType($node->class), $node->name->name, $this->getArgsTypes($node->args)),
                 );
-            }
-
-            if (
-                $this->functionDefinition()?->type->name === '__construct'
-                && $node->class->toString() === 'parent'
-                && $node->name->toString() === '__construct'
-            ) {
-                $this->functionDefinition()->sideEffects[] = new ParentConstructCall($this->getArgsTypes($node->args));
             }
 
             return $this->setType(
