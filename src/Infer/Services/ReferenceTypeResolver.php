@@ -529,11 +529,9 @@ class ReferenceTypeResolver
                             : $t,
                     );
 
-                if ($concreteSelfOutTypePart instanceof TemplatePlaceholderType) {
-                    throw new \Exception('Concrete type should never be TemplatePlaceholderType');
+                if (! $concreteSelfOutTypePart instanceof TemplatePlaceholderType) {
+                    $resultingTemplatesMap[$index] = $concreteSelfOutTypePart;
                 }
-
-                $resultingTemplatesMap[$index] = $concreteSelfOutTypePart;
             }
         }
 
