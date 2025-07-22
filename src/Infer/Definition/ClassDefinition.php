@@ -87,12 +87,14 @@ class ClassDefinition implements ClassDefinitionContract
 
         $methodDefinition = $this->methods[$name];
 
-        if (! $methodDefinition->isFullyAnalyzed()) {
-            $this->methods[$name] = (new MethodAnalyzer(
-                $scope->index,
-                $this
-            ))->analyze($methodDefinition, $indexBuilders, $withSideEffects);
+        if ($methodDefinition->isFullyAnalyzed()) {
+            return $methodDefinition;
         }
+
+        $this->methods[$name] = (new MethodAnalyzer(
+            $scope->index,
+            $this
+        ))->analyze($methodDefinition, $indexBuilders, $withSideEffects);
 
         $methodScope = new Scope(
             $scope->index,

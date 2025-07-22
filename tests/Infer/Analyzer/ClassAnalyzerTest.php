@@ -50,6 +50,236 @@ it('resolves fully qualified names', function () {
     expect($fqnDef->type->getReturnType()->toString())->toBe('string('.Foo::class.')');
 });
 
+it('describes constructor arguments assignments as self out type on constructor', function () {
+    $constructor = $this->classAnalyzer
+        ->analyze(ConstructorArgumentAssignment_ClassAnalyzerTest::class)
+        ->getMethodDefinition('__construct');
+
+    expect($constructor->selfOutType)
+        ->not->toBeNull()
+        ->and($constructor->selfOutType->toString())
+        ->toBe('self<array{a: TFoo1}, _>');
+});
+class ConstructorArgumentAssignment_ClassAnalyzerTest
+{
+    public $foo;
+    public $bar;
+    public function __construct(int $foo)
+    {
+        $this->foo = ['a' => $foo];
+    }
+}
+
+/**
+ * The idea here is that any direct argument assignment of constructor argument is represented
+ * as `_` in selfOutType. It is later gets ignored when self out is processed and instead is handled
+ * with default handling mechanism (for now).
+ */
+it('describes direct constructor arguments assignments as template placeholders', function () {
+    $constructor = $this->classAnalyzer
+        ->analyze(ConstructorDirectArgumentAssignment_ClassAnalyzerTest::class)
+        ->getMethodDefinition('__construct');
+
+    expect($constructor->selfOutType)
+        ->not->toBeNull()
+        ->and($constructor->selfOutType->toString())
+        ->toBe('self<_>');
+});
+class ConstructorDirectArgumentAssignment_ClassAnalyzerTest
+{
+    public $foo;
+    public function __construct(int $foo)
+    {
+        $this->foo = $foo;
+    }
+}
+
+it('describes arguments assignments as self out type on any method', function () {
+    $method = $this->classAnalyzer
+        ->analyze(MethodArgumentAssignment_ClassAnalyzerTest::class)
+        ->getMethodDefinition('setFoo');
+
+    expect($method->selfOutType)
+        ->not->toBeNull()
+        ->and($method->selfOutType->toString())
+        ->toBe('self<array{foo: TSomething}>');
+});
+class MethodArgumentAssignment_ClassAnalyzerTest
+{
+    public $foo;
+    public function setFoo(int $something)
+    {
+        $this->foo = ['foo' => $something];
+    }
+}
+
+it('describes arguments passed to parent constructor call as part of self out type on a constructor', function () {
+    $constructor = $this->classAnalyzer
+        ->analyze(ParentConstructorCall_ClassAnalyzerTest::class)
+        ->getMethodDefinition('__construct');
+
+    expect($constructor->selfOutType)
+        ->not->toBeNull()
+        ->and($constructor->selfOutType->toString())
+        ->toBe('self<array{a: int(42)}, _>');
+});
+class ParentConstructorCall_ClassAnalyzerTest extends ParentConstructorCallee_ClassAnalyzerTest
+{
+    public $bar;
+    public function __construct(int $b)
+    {
+        parent::__construct(42);
+        $this->bar = $b;
+    }
+}
+class ParentConstructorCallee_ClassAnalyzerTest
+{
+    public $foo;
+    public function __construct(int $foo)
+    {
+        $this->foo = ['a' => $foo];
+    }
+}
+
+it('describes arguments passed to parent constructor direct call as part of self out type on a constructor', function () {
+    $constructor = $this->classAnalyzer
+        ->analyze(DirectParentConstructorCall_ClassAnalyzerTest::class)
+        ->getMethodDefinition('__construct');
+
+    expect($constructor->selfOutType)
+        ->not->toBeNull()
+        ->and($constructor->selfOutType->toString())
+        ->toBe('self<int(42), _>');
+});
+class DirectParentConstructorCall_ClassAnalyzerTest extends DirectParentConstructorCallee_ClassAnalyzerTest
+{
+    public $bar;
+    public function __construct(int $b)
+    {
+        parent::__construct(42);
+        $this->bar = $b;
+    }
+}
+class DirectParentConstructorCallee_ClassAnalyzerTest
+{
+    public $foo;
+    public function __construct(int $foo)
+    {
+        $this->foo = $foo;
+    }
+}
+
+it('describes properties set in setters as part of self out', function () {
+    $constructor = $this->classAnalyzer
+        ->analyze(SetterCall_ClassAnalyzerTest::class)
+        ->getMethodDefinition('__construct');
+
+    expect($constructor->selfOutType)
+        ->not->toBeNull()
+        ->and($constructor->selfOutType->toString())
+        ->toBe('self<TB>');
+});
+class SetterCall_ClassAnalyzerTest
+{
+    public $bar;
+    public function __construct(int $b)
+    {
+        $this->setBar($b);
+    }
+
+    public function setBar(int $b)
+    {
+        $this->bar = $b;
+    }
+}
+
+it('describes properties set in fluent setters as part of self out', function () {
+    $constructor = $this->classAnalyzer
+        ->analyze(FluentSetterCall_ClassAnalyzerTest::class)
+        ->getMethodDefinition('__construct');
+
+    expect($constructor->selfOutType)
+        ->not->toBeNull()
+        ->and($constructor->selfOutType->toString())
+        ->toBe('self<TB, int(42)>');
+});
+class FluentSetterCall_ClassAnalyzerTest
+{
+    public $bar;
+    public $foo;
+
+    public function __construct(int $b)
+    {
+        $this->setBar($b)->setFoo(42);
+    }
+
+    public function setFoo(int $f)
+    {
+        $this->foo = $f;
+        return $this;
+    }
+
+    public function setBar(int $b)
+    {
+        $this->bar = $b;
+        return $this;
+    }
+}
+
+it('describes properties set in fluent setters set of variables as part of self out', function () {
+    $constructor = $this->classAnalyzer
+        ->analyze(FluentSetterOnVariablesCall_ClassAnalyzerTest::class)
+        ->getMethodDefinition('__construct');
+
+    expect($constructor->selfOutType)
+        ->not->toBeNull()
+        ->and($constructor->selfOutType->toString())
+        ->toBe('self<TB, int(42)>');
+});
+class FluentSetterOnVariablesCall_ClassAnalyzerTest
+{
+    public $bar;
+    public $foo;
+
+    public function __construct(int $b)
+    {
+        $a = $this;
+        $c = $a->setBar($b);
+        $c->setFoo(42);
+    }
+
+    public function setFoo(int $f)
+    {
+        $this->foo = $f;
+        return $this;
+    }
+
+    public function setBar(int $b)
+    {
+        $this->bar = $b;
+        return $this;
+    }
+}
+
+it('playground', function () {
+//    $index = new Index;
+//    $index->registerClassDefinition(
+//        $this->classAnalyzer->analyze(Playground_ClassAnalyzerTest::class)
+//    );
+
+    dd(
+        getStatementType('new Playground_ClassAnalyzerTest(12)')->toString(),
+    );
+})->skip('playground');
+class Playground_ClassAnalyzerTest
+{
+    public $foo;
+    public function __construct(int $foo)
+    {
+        $this->foo = 12;
+    }
+}
+
 it('resolves pending returns lazily', function () {
     $classDefinition = $this->classAnalyzer->analyze(Foo::class);
 

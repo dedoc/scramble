@@ -30,6 +30,7 @@ use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\SideEffects\ParentConstructCall;
 use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
+use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
@@ -499,18 +500,44 @@ class ReferenceTypeResolver
             $this->prepareArguments($constructorDefinition, $type->arguments),
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
 
-        $inferredTemplates = $this->getParentConstructCallsTypes($classDefinition, $constructorDefinition)
+        $inferredTemplates = collect()//$this->getParentConstructCallsTypes($classDefinition, $constructorDefinition)
             ->merge($propertyDefaultTemplateTypes)
             ->merge($inferredConstructorParamTemplates);
 
-        $type = new Generic(
-            $classDefinition->name,
-            collect($classDefinition->templateTypes)
-                ->map(fn (TemplateType $t) => $inferredTemplates->get($t->name, new UnknownType))
-                ->toArray(),
-        );
+        $resultingTemplatesMap = collect($classDefinition->templateTypes)
+            ->map(fn (TemplateType $t) => $inferredTemplates->get($t->name, new UnknownType))
+            ->toArray();
 
-        return $this->getMethodCallsSideEffectIntroducedTypesInConstructor($type, $scope, $classDefinition, $constructorDefinition);
+        if (isset($constructorDefinition->selfOutType) && $constructorDefinition->selfOutType) {
+            $constructorCalledTemplatesMap = (new TemplateTypesSolver)->getClassConstructorContextTemplates(
+                $classDefinition,
+                $constructorDefinition,
+                $type->arguments,
+            );
+
+            foreach ($constructorDefinition->selfOutType->templateTypes as $index => $genericSelfOutTypePart) {
+                if (! $definedTemplateType = ($classDefinition->templateTypes[$index] ?? null)) {
+                    continue;
+                }
+
+                $concreteSelfOutTypePart = $genericSelfOutTypePart instanceof TemplatePlaceholderType && array_key_exists($definedTemplateType->name, $constructorCalledTemplatesMap)
+                    ? $constructorCalledTemplatesMap[$definedTemplateType->name]
+                    : (new TypeWalker())->map(
+                        $genericSelfOutTypePart,
+                        fn ($t) => $t instanceof TemplateType && array_key_exists($t->name, $constructorCalledTemplatesMap)
+                            ? $constructorCalledTemplatesMap[$t->name]
+                            : $t,
+                    );
+
+                if ($concreteSelfOutTypePart instanceof TemplatePlaceholderType) {
+                    throw new \Exception('Concrete type should never be TemplatePlaceholderType');
+                }
+
+                $resultingTemplatesMap[$index] = $concreteSelfOutTypePart;
+            }
+        }
+
+        return new Generic($classDefinition->name, $resultingTemplatesMap);
     }
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type)

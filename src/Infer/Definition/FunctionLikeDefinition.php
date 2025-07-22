@@ -18,6 +18,7 @@ class FunctionLikeDefinition
         public array $argumentsDefaults = [],
         public ?string $definingClassName = null,
         public bool $isStatic = false,
+        public Type|null $selfOutType = null,
     ) {}
 
     public function isFullyAnalyzed(): bool

@@ -49,6 +49,7 @@ class ResponseExtension extends OperationExtension
 
         $responses = collect($returnTypes)
             ->merge($routeInfo->getMethodType()->exceptions ?? [])
+            ->dd()
             ->map(function (Type $type) use ($routeInfo) {
                 /*
                  * Any inline comments on the entire response type that are not originating in the controller,

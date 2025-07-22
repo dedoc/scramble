@@ -32,6 +32,15 @@ class TemplateTypesSolver
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray();
     }
 
+    public function getClassConstructorContextTemplates(ClassDefinition $classDefinition, FunctionLikeDefinition $functionLikeDefinition, array $arguments)
+    {
+        return collect($this->resolveTypesTemplatesFromArguments(
+            $functionLikeDefinition->type->templates + $classDefinition->templateTypes,
+            $functionLikeDefinition->type->arguments,
+            $this->prepareArguments($functionLikeDefinition, $arguments),
+        ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray();
+    }
+
     /**
      * Prepares the actual arguments list with which a function is going to be executed, taking into consideration
      * arguments defaults.
