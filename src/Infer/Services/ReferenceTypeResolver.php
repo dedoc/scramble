@@ -633,15 +633,11 @@ class ReferenceTypeResolver
                 )
             );
 
-            $returnType = (new TypeWalker)->replace(deep_copy($returnType), function (Type $t) use ($inferredTemplates) {
+            $returnType = (new TypeWalker)->map($returnType, function (Type $t) use ($inferredTemplates) {
                 return $t instanceof TemplateType && array_key_exists($t->name, $inferredTemplates)
                     ? $inferredTemplates[$t->name]
-                    : null;
+                    : $t;
             });
-
-            if ((new TypeWalker)->first($returnType, fn (Type $t) => in_array($t, $callee->type->templates, true))) {
-                throw new \LogicException("Couldn't replace a template for function and this should never happen.");
-            }
         }
 
         foreach ($callee->sideEffects as $sideEffect) {
