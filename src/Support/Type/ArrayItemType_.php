@@ -13,8 +13,7 @@ class ArrayItemType_ extends AbstractType
         public bool $isOptional = false,
         public bool $shouldUnpack = false,
         public ?Type $keyType = null,
-    ) {
-    }
+    ) {}
 
     public function nodes(): array
     {

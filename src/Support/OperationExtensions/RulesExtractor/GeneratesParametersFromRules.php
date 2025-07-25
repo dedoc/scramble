@@ -9,10 +9,8 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 trait GeneratesParametersFromRules
 {
     /**
-     * @param array<string, RuleSet> $rules
-     * @param TypeTransformer $typeTransformer
-     * @param array<string, PhpDocNode> $rulesDocs
-     *
+     * @param  array<string, RuleSet>  $rules
+     * @param  array<string, PhpDocNode>  $rulesDocs
      * @return Parameter[]
      */
     private function makeParameters($rules, TypeTransformer $typeTransformer, array $rulesDocs = [], string $in = 'query'): array

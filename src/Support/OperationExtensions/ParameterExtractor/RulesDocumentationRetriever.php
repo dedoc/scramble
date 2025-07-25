@@ -30,7 +30,7 @@ class RulesDocumentationRetriever
 
         return collect($arrayItemsNodes)
             ->mapWithKeys(function (ArrayItemType_ $item) {
-                if (!$key = $this->getArrayItemKey($item)) {
+                if (! $key = $this->getArrayItemKey($item)) {
                     return [];
                 }
 

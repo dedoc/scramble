@@ -7,7 +7,6 @@ use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\ApiKeySecurityScheme;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\RulesNodes;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Illuminate\Http\Request;
@@ -825,7 +824,7 @@ it('extracts manual documentation for merged rules from request->validate call w
                 'in' => 'query',
                 'description' => 'Great parameter',
                 'schema' => ['type' => 'integer'],
-            ]
+            ],
         ]);
 });
 class ValidateCallMergedRules_ValidationRulesDocumentingTest
@@ -872,12 +871,12 @@ it('extracts manual documentation for rules in form request', function () {
                 'in' => 'query',
                 'description' => 'Great parameter',
                 'schema' => ['type' => 'integer'],
-            ]
+            ],
         ]);
 });
 class FormRequestRulesController_ValidationRulesDocumentingTest
 {
-    public function __invoke(FormRequestRulesRequest_ValidationRulesDocumentingTest $request){}
+    public function __invoke(FormRequestRulesRequest_ValidationRulesDocumentingTest $request) {}
 }
 class FormRequestRulesRequest_ValidationRulesDocumentingTest
 {
@@ -885,8 +884,9 @@ class FormRequestRulesRequest_ValidationRulesDocumentingTest
     {
         $rules = [
             // Nice parameter
-            'foo' => ['required', 'string']
+            'foo' => ['required', 'string'],
         ];
+
         return array_merge($rules, $this->getBarRules());
     }
 

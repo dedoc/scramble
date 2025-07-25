@@ -21,8 +21,7 @@ class RulesToParameters
         private TypeTransformer $openApiTransformer,
         private array $rulesDocs = [],
         private string $in = 'query',
-    ) {
-    }
+    ) {}
 
     public function mergeDotNotatedKeys(bool $mergeDotNotatedKeys = true): self
     {
