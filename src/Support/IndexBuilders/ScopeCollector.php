@@ -19,7 +19,7 @@ class ScopeCollector implements IndexBuilder
     public function __construct()
     {
         if (! isset(static::$scopes)) {
-            static::$scopes = new WeakMap();
+            static::$scopes = new WeakMap;
         }
     }
 
