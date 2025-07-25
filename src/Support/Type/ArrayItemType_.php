@@ -6,25 +6,14 @@ use LogicException;
 
 class ArrayItemType_ extends AbstractType
 {
-    /** @var string|int|null */
-    public $key;
-
-    public Type $value;
-
-    public bool $isOptional;
-
-    public bool $shouldUnpack;
-
     public function __construct(
-        $key,
-        Type $value,
-        bool $isOptional = false,
-        bool $shouldUnpack = false
+        /** @var string|int|null */
+        public $key,
+        public Type $value,
+        public bool $isOptional = false,
+        public bool $shouldUnpack = false,
+        public ?Type $keyType = null,
     ) {
-        $this->key = $key;
-        $this->value = $value;
-        $this->isOptional = $isOptional;
-        $this->shouldUnpack = $shouldUnpack;
     }
 
     public function nodes(): array

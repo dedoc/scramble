@@ -4114,18 +4114,6 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\FormRequestParametersExtractor\:\:makeParameters\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\FormRequestParametersExtractor\:\:makeParameters\(\) has parameter \$rules with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
-
-		-
 			message: '#^Variable \$requestParam in PHPDoc tag @var does not exist\.$#'
 			identifier: varTag.variableNotFound
 			count: 1
@@ -4200,18 +4188,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:getPossibleParamType\(\) should return string\|null but returns mixed\.$#'
 			identifier: return.type
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:makeParameters\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:makeParameters\(\) has parameter \$rules with no type specified\.$#'
-			identifier: missingType.parameter
 			count: 1
 			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
 
@@ -5078,12 +5054,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: src/Support/Type/AbstractType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\ArrayItemType_\:\:__construct\(\) has parameter \$key with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/Type/ArrayItemType_.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\ArrayItemType_\:\:isNumericKey\(\) has no return type specified\.$#'
