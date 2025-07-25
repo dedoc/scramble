@@ -41,6 +41,7 @@ use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeAbstract;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
+
 use function DeepCopy\deep_copy;
 
 class MethodAnalyzer
@@ -97,7 +98,7 @@ class MethodAnalyzer
             ->mapWithKeys(fn (TemplateType $t) => [$t->name => null])
             ->all();
 
-        $templateDefiningStatements = (new NodeFinder())->find(
+        $templateDefiningStatements = (new NodeFinder)->find(
             $node->stmts,
             fn ($n) => $this->isThisPropertyAssignment($n) // Direct assignments of something on `$this`, like `$this->foo = 42`.
                 || ($functionDefinition->type->name === '__construct' && $this->isParentConstructCall($n)) // Calls to `parent::__construct` if is in constructor
@@ -171,7 +172,7 @@ class MethodAnalyzer
 
                     $concreteSelfOutTypePart = $genericSelfOutTypePart instanceof TemplatePlaceholderType && array_key_exists($definedParentTemplateType->name, $parentCallContextTemplates)
                         ? $parentCallContextTemplates[$definedParentTemplateType->name]
-                        : (new TypeWalker())->map(
+                        : (new TypeWalker)->map(
                             $genericSelfOutTypePart,
                             fn ($t) => $t instanceof TemplateType && array_key_exists($t->name, $parentCallContextTemplates)
                                 ? $parentCallContextTemplates[$t->name]
@@ -233,7 +234,7 @@ class MethodAnalyzer
                         continue;
                     }
 
-                    $concreteSelfOutTypePart = (new TypeWalker())->map(
+                    $concreteSelfOutTypePart = (new TypeWalker)->map(
                         $genericSelfOutTypePart,
                         fn ($t) => $t instanceof TemplateType && array_key_exists($t->name, $methodCallContextTemplates)
                             ? $methodCallContextTemplates[$t->name]

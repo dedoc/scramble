@@ -63,7 +63,9 @@ it('describes constructor arguments assignments as self out type on constructor'
 class ConstructorArgumentAssignment_ClassAnalyzerTest
 {
     public $foo;
+
     public $bar;
+
     public function __construct(int $foo)
     {
         $this->foo = ['a' => $foo];
@@ -88,6 +90,7 @@ it('describes direct constructor arguments assignments as template placeholders'
 class ConstructorDirectArgumentAssignment_ClassAnalyzerTest
 {
     public $foo;
+
     public function __construct(int $foo)
     {
         $this->foo = $foo;
@@ -107,6 +110,7 @@ it('describes arguments assignments as self out type on any method', function ()
 class MethodArgumentAssignment_ClassAnalyzerTest
 {
     public $foo;
+
     public function setFoo(int $something)
     {
         $this->foo = ['foo' => $something];
@@ -126,6 +130,7 @@ it('describes arguments passed to parent constructor call as part of self out ty
 class ParentConstructorCall_ClassAnalyzerTest extends ParentConstructorCallee_ClassAnalyzerTest
 {
     public $bar;
+
     public function __construct(int $b)
     {
         parent::__construct(42);
@@ -135,6 +140,7 @@ class ParentConstructorCall_ClassAnalyzerTest extends ParentConstructorCallee_Cl
 class ParentConstructorCallee_ClassAnalyzerTest
 {
     public $foo;
+
     public function __construct(int $foo)
     {
         $this->foo = ['a' => $foo];
@@ -154,6 +160,7 @@ it('describes arguments passed to parent constructor direct call as part of self
 class DirectParentConstructorCall_ClassAnalyzerTest extends DirectParentConstructorCallee_ClassAnalyzerTest
 {
     public $bar;
+
     public function __construct(int $b)
     {
         parent::__construct(42);
@@ -163,6 +170,7 @@ class DirectParentConstructorCall_ClassAnalyzerTest extends DirectParentConstruc
 class DirectParentConstructorCallee_ClassAnalyzerTest
 {
     public $foo;
+
     public function __construct(int $foo)
     {
         $this->foo = $foo;
@@ -182,6 +190,7 @@ it('describes properties set in setters as part of self out', function () {
 class SetterCall_ClassAnalyzerTest
 {
     public $bar;
+
     public function __construct(int $b)
     {
         $this->setBar($b);
@@ -206,6 +215,7 @@ it('describes properties set in fluent setters as part of self out', function ()
 class FluentSetterCall_ClassAnalyzerTest
 {
     public $bar;
+
     public $foo;
 
     public function __construct(int $b)
@@ -216,12 +226,14 @@ class FluentSetterCall_ClassAnalyzerTest
     public function setFoo(int $f)
     {
         $this->foo = $f;
+
         return $this;
     }
 
     public function setBar(int $b)
     {
         $this->bar = $b;
+
         return $this;
     }
 }
@@ -239,6 +251,7 @@ it('describes properties set in fluent setters set of variables as part of self 
 class FluentSetterOnVariablesCall_ClassAnalyzerTest
 {
     public $bar;
+
     public $foo;
 
     public function __construct(int $b)
@@ -251,21 +264,23 @@ class FluentSetterOnVariablesCall_ClassAnalyzerTest
     public function setFoo(int $f)
     {
         $this->foo = $f;
+
         return $this;
     }
 
     public function setBar(int $b)
     {
         $this->bar = $b;
+
         return $this;
     }
 }
 
 it('playground', function () {
-//    $index = new Index;
-//    $index->registerClassDefinition(
-//        $this->classAnalyzer->analyze(Playground_ClassAnalyzerTest::class)
-//    );
+    //    $index = new Index;
+    //    $index->registerClassDefinition(
+    //        $this->classAnalyzer->analyze(Playground_ClassAnalyzerTest::class)
+    //    );
 
     dd(
         getStatementType('new Playground_ClassAnalyzerTest(12)')->toString(),
@@ -274,6 +289,7 @@ it('playground', function () {
 class Playground_ClassAnalyzerTest
 {
     public $foo;
+
     public function __construct(int $foo)
     {
         $this->foo = 12;

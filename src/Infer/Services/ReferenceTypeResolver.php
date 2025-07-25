@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Context;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
@@ -13,11 +12,9 @@ use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -39,9 +36,7 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
-use Illuminate\Support\Collection;
 
-use Illuminate\Support\Str;
 use function DeepCopy\deep_copy;
 
 class ReferenceTypeResolver
@@ -503,7 +498,7 @@ class ReferenceTypeResolver
             $this->prepareArguments($constructorDefinition, $type->arguments),
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]]);
 
-        $inferredTemplates = collect()//$this->getParentConstructCallsTypes($classDefinition, $constructorDefinition)
+        $inferredTemplates = collect()// $this->getParentConstructCallsTypes($classDefinition, $constructorDefinition)
             ->merge($propertyDefaultTemplateTypes)
             ->merge($inferredConstructorParamTemplates);
 
@@ -525,7 +520,7 @@ class ReferenceTypeResolver
 
                 $concreteSelfOutTypePart = $genericSelfOutTypePart instanceof TemplatePlaceholderType && array_key_exists($definedTemplateType->name, $constructorCalledTemplatesMap)
                     ? $constructorCalledTemplatesMap[$definedTemplateType->name]
-                    : (new TypeWalker())->map(
+                    : (new TypeWalker)->map(
                         $genericSelfOutTypePart,
                         fn ($t) => $t instanceof TemplateType && array_key_exists($t->name, $constructorCalledTemplatesMap)
                             ? $constructorCalledTemplatesMap[$t->name]

@@ -88,7 +88,9 @@ it('setting a parameter to property in method makes it local method template typ
 class SetPropToMethod_ClassDefinitionTest
 {
     public $prop;
-    public function setProp($a) {
+
+    public function setProp($a)
+    {
         $this->prop = $a;
     }
 }
