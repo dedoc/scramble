@@ -187,6 +187,22 @@ EOD)->getClassDefinition('Foo');
     expect($type->methods['foo']->type->toString())->toBe('(): unknown');
 });
 
+it('detects indirect calls cyclic reference', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public function foo () {
+        return $this->bar();
+    }
+    public function bar () {
+        return $this->foo();
+    }
+}
+EOD)->getClassDefinition('Foo');
+
+    expect($type->methods['foo']->type->toString())->toBe('(): unknown');
+});
+
 it('gets property type from parent class when constructed', function () {
     $type = analyzeClass(Pt_Foo::class)
         ->getExpressionType('(new Pt_Foo(2))->foo()');

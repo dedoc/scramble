@@ -13,9 +13,11 @@ use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -39,17 +41,19 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
 use Illuminate\Support\Collection;
 
+use Illuminate\Support\Str;
 use function DeepCopy\deep_copy;
 
 class ReferenceTypeResolver
 {
     public function __construct(
         private Index $index,
+        private int $dumpDepth = -1,
     ) {}
 
     public static function getInstance(): static
     {
-        return app(static::class);
+        return new self(app(Index::class));
     }
 
     public function resolveFunctionReturnReferences(Scope $scope, FunctionType $functionType): void
