@@ -116,21 +116,25 @@ class RouteInfo
         if (! $this->methodType) {
             $def = $this->infer->analyzeClass($this->className());
 
+            $scopeCollector = new ScopeCollector;
+
             /*
              * Sometimes method type may be null if route registered method name has the casing that
              * is different from the method name in the controller hence reflection is used here.
              */
-            $this->methodType = $def->getMethodDefinition(
+            $this->methodType = ($methodDefinition = $def->getMethodDefinition(
                 $this->reflectionMethod()->getName(),
                 indexBuilders: [
                     new RequestParametersBuilder($this->requestParametersFromCalls),
-                    $scopeCollector = new ScopeCollector,
+                    $scopeCollector,
                     ...$this->indexBuildingBroker->indexBuilders,
                 ],
                 withSideEffects: true,
-            )?->type;
+            ))?->type;
 
-            $this->scope = $scopeCollector->scope;
+            if ($methodDefinition) {
+                $this->scope = $scopeCollector->getScope($methodDefinition);
+            }
         }
 
         return $this->methodType;

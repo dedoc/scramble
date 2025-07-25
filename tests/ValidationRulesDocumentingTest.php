@@ -898,3 +898,36 @@ class FormRequestRulesRequest_ValidationRulesDocumentingTest
         ];
     }
 }
+
+it('extracts rules when the action is used by few routes', function () {
+    $routes = [
+        RouteFacade::get('api/a', ValidateCallSameActionDifferentRoutes_ValidationRulesDocumentingTest::class),
+        RouteFacade::get('api/b', ValidateCallSameActionDifferentRoutes_ValidationRulesDocumentingTest::class),
+    ];
+
+    Scramble::routes(fn (Route $r) => in_array($r, $routes, strict: true));
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    $expectedParameters = [[
+        'name' => 'foo',
+        'in' => 'query',
+        'required' => true,
+        'description' => 'Nice parameter',
+        'schema' => ['type' => 'string'],
+    ]];
+
+    expect($openApiDocument['paths']['/a']['get']['parameters'])
+        ->toBe($expectedParameters)
+        ->and($openApiDocument['paths']['/b']['get']['parameters'])
+        ->toBe($expectedParameters);
+});
+class ValidateCallSameActionDifferentRoutes_ValidationRulesDocumentingTest
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            // Nice parameter
+            'foo' => ['required', 'string'],
+        ]);
+    }
+}
