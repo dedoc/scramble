@@ -75,7 +75,7 @@ class NodeRulesEvaluator implements RulesEvaluator
             }
 
             return null;
-        }))->evaluateDirectly($this->rulesNode);
+        }))->evaluateDirectly($this->rulesNode) ?? [];
 
         foreach ($rules as &$item) {
             if (is_string($item)) {
@@ -89,6 +89,6 @@ class NodeRulesEvaluator implements RulesEvaluator
             }
         }
 
-        return $rules ?? [];
+        return $rules;
     }
 }

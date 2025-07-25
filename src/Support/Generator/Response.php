@@ -51,7 +51,7 @@ class Response
     }
 
     /**
-     * @param  Schema|Reference|null  $schema
+     * @param  Schema|Reference  $schema
      * @return $this
      */
     public function setContent(string $type, $schema): self
