@@ -110,10 +110,7 @@ class ReferenceTypeResolver
 
         $resolvedType = RecursionGuard::run(
             $type,
-            fn () => (new TypeWalker)->map(
-                $type,
-                fn (Type $t) => $this->doResolve($t, $type, $scope) ?: $t,
-            ),
+            fn () => (new TypeWalker)->map($type, fn (Type $t) => $this->doResolve($t, $type, $scope)),
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );
 
@@ -125,52 +122,33 @@ class ReferenceTypeResolver
             if ($t instanceof KeyedArrayType) {
                 return TypeHelper::unpackIfArray($t);
             }
-
             return $t;
         });
 
         return $finalizedResolvedType->setOriginal($originalType);
     }
 
-    private function doResolve(Type $t, Type $type, Scope $scope)
+    private function doResolve(Type $t, Type $type, Scope $scope): Type
     {
-        $resolver = function () use ($t, $scope) {
-            if ($t instanceof ConstFetchReferenceType) {
-                return $this->resolveConstFetchReferenceType($scope, $t);
-            }
-
-            if ($t instanceof MethodCallReferenceType) {
-                return $this->resolveMethodCallReferenceType($scope, $t);
-            }
-
-            if ($t instanceof StaticMethodCallReferenceType) {
-                return $this->resolveStaticMethodCallReferenceType($scope, $t);
-            }
-
-            if ($t instanceof CallableCallReferenceType) {
-                return $this->resolveCallableCallReferenceType($scope, $t);
-            }
-
-            if ($t instanceof NewCallReferenceType) {
-                return $this->resolveNewCallReferenceType($scope, $t);
-            }
-
-            if ($t instanceof PropertyFetchReferenceType) {
-                return $this->resolvePropertyFetchReferenceType($scope, $t);
-            }
-
-            return null;
+        $resolved = match ($t::class) {
+            ConstFetchReferenceType::class => $this->resolveConstFetchReferenceType($scope, $t),
+            MethodCallReferenceType::class => $this->resolveMethodCallReferenceType($scope, $t),
+            StaticMethodCallReferenceType::class => $this->resolveStaticMethodCallReferenceType($scope, $t),
+            CallableCallReferenceType::class => $this->resolveCallableCallReferenceType($scope, $t),
+            NewCallReferenceType::class => $this->resolveNewCallReferenceType($scope, $t),
+            PropertyFetchReferenceType::class => $this->resolvePropertyFetchReferenceType($scope, $t),
+            default => null,
         };
 
-        if (! $resolved = $resolver()) {
-            return null;
+        if (! $resolved) {
+            return $t;
         }
 
         if ($resolved === $type) {
             return new UnknownType('self reference');
         }
 
-        return $this->resolve($scope, $resolved);
+        return $this->doResolve($resolved, $type, $scope);
     }
 
     private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type)
