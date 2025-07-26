@@ -63,6 +63,38 @@ EOD)->getClassDefinition('Foo');
         ->toBe('(): unknown|int(1)');
 });
 
+it('resolves an indirect reference', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public function foo () {
+        return $this->bar();
+    }
+    public function bar () {
+        return $this->foo();
+    }
+}
+EOD)->getClassDefinition('Foo');
+
+    expect($type->methods['foo']->type->toString())
+        ->toBe('(): unknown');
+});
+
+it('resolves a cyclic reference introduced by template call', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public function foo ($q)
+    {
+        return $q->wow();
+    }
+}
+EOD)->getClassDefinition('Foo');
+
+    expect($type->methods['foo']->type->toString())
+        ->toBe('<TQ>(TQ): unknown');
+});
+
 it('resolves references in non-reference return types', function () {
     $type = analyzeFile(<<<'EOD'
 <?php
@@ -168,4 +200,24 @@ EOD)->getClassDefinition('Foo');
 
     expect($type->methods['returnSomeCall']->type->toString())
         ->toBe('(): unknown');
+});
+
+it('handles the strange discovery i dont even know how to call', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo
+{
+    public function returnSomeCall()
+    {
+        return $this->bar();
+    }
+
+    public function bar(): SomeClass {
+        return foo();
+    }
+}
+EOD)->getClassDefinition('Foo');
+
+    expect($type->methods['returnSomeCall']->type->toString())
+        ->toBe('(): SomeClass');
 });

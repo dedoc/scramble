@@ -51,4 +51,6 @@ interface Type
     public function isSame(self $type);
 
     public function toString(): string;
+
+    public function clone(): self;
 }

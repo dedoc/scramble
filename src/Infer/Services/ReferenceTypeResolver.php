@@ -37,6 +37,7 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 use function DeepCopy\deep_copy;
@@ -91,10 +92,12 @@ class ReferenceTypeResolver
             });
 
         if (! $annotatedTypeCanAcceptAnyInferredType) {
-            $types = [$annotatedReturnType];
+            return $annotatedReturnType;
         }
 
-        return Union::wrap($types)->mergeAttributes($inferredReturnType->attributes());
+        return Union::wrap($types)->mergeAttributes(
+            Arr::except($inferredReturnType->attributes(), ['resolvedType'])
+        );
     }
 
     public static function hasResolvableReferences(Type $type): bool
@@ -115,23 +118,22 @@ class ReferenceTypeResolver
 
         $resultingType = RecursionGuard::run(
             $type,// ->toString(),
-            fn () => (new TypeWalker)->replace(
+            fn () => (new TypeWalker)->map(
                 $type,
-                fn (Type $t) => $this->doResolve($t, $type, $scope)?->mergeAttributes($t->attributes()),
+                fn (Type $t) => $this->doResolve($t, $type, $scope)?->mergeAttributes($t->attributes()) ?: $t,
             ),
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );
 
-        $resolvedType = deep_copy(RecursionGuard::run(
-            $resultingType,// ->toString(),
-            fn () => (new TypeWalker)->replace(
-                $resultingType,
-                fn (Type $t) => $t instanceof Union
-                    ? TypeHelper::mergeTypes(...$t->types)->mergeAttributes($t->attributes())
-                    : null,
-            ),
-            onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
-        ));
+        /*
+         * Type finalization: removing duplicates from union + unpacking array items.
+         */
+        $resolvedType = (new TypeWalker)->replace(
+            $resultingType,
+            fn (Type $t) => $t instanceof Union
+                ? TypeHelper::mergeTypes(...$t->types)->mergeAttributes($t->attributes())
+                : null,
+        );
 
         $resolvedType->setOriginal($originalType);
 
@@ -279,7 +281,7 @@ class ReferenceTypeResolver
             // This maybe is not a good idea as it make references bleed into the fully analyzed
             // codebase, while at the moment of final reference resolution, we should've got either
             // a resolved type, or an unknown type.
-            return $type;
+            return new UnknownType;
         }
 
         if (! $classDefinition) {

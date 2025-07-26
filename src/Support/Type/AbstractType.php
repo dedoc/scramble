@@ -56,4 +56,50 @@ abstract class AbstractType implements Type
     {
         return null;
     }
+
+    public function clone(): self
+    {
+        $cloned = clone $this;
+
+        foreach ($cloned->nodes() as $nodeName) {
+            $nodeValue = $cloned->$nodeName;
+
+            if ($nodeValue instanceof TemplateType) {
+                continue;
+            }
+
+            if (! is_array($nodeValue)) {
+                $cloned->$nodeName = $nodeValue->clone();
+
+                continue;
+            }
+
+            foreach ($nodeValue as $i => $nodeItemValue) {
+                if ($nodeItemValue instanceof TemplateType) {
+                    continue;
+                }
+
+                $cloned->$nodeName[$i] = $nodeItemValue->clone();
+            }
+        }
+
+        return $cloned;
+    }
+
+//    public function __clone(): void
+//    {
+//        foreach ($this->nodes() as $nodeName) {
+//            $nodeValue = $this->$nodeName;
+//
+//            if (! is_array($nodeValue)) {
+//                $this->$nodeName = clone $nodeValue;
+//
+//                continue;
+//            }
+//
+//            foreach ($nodeValue as $i => $nodeItemValue) {
+//                $this->$nodeName[$i] = clone $nodeItemValue;
+//            }
+//        }
+//    }
 }
