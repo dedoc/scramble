@@ -86,20 +86,20 @@ abstract class AbstractType implements Type
         return $cloned;
     }
 
-//    public function __clone(): void
-//    {
-//        foreach ($this->nodes() as $nodeName) {
-//            $nodeValue = $this->$nodeName;
-//
-//            if (! is_array($nodeValue)) {
-//                $this->$nodeName = clone $nodeValue;
-//
-//                continue;
-//            }
-//
-//            foreach ($nodeValue as $i => $nodeItemValue) {
-//                $this->$nodeName[$i] = clone $nodeItemValue;
-//            }
-//        }
-//    }
+    //    public function __clone(): void
+    //    {
+    //        foreach ($this->nodes() as $nodeName) {
+    //            $nodeValue = $this->$nodeName;
+    //
+    //            if (! is_array($nodeValue)) {
+    //                $this->$nodeName = clone $nodeValue;
+    //
+    //                continue;
+    //            }
+    //
+    //            foreach ($nodeValue as $i => $nodeItemValue) {
+    //                $this->$nodeName[$i] = clone $nodeItemValue;
+    //            }
+    //        }
+    //    }
 }
