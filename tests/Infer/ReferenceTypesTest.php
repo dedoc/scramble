@@ -80,11 +80,11 @@ EOD)->getClassDefinition('Foo');
         ->toBe('(): unknown');
 });
 
-it('resolves a cyclic reference introduced by template call', function () {
+it('resolves a cyclic reference introduced by template method call', function () {
     $type = analyzeFile(<<<'EOD'
 <?php
 class Foo {
-    public function foo ($q)
+    public function foo($q)
     {
         return $q->wow();
     }
@@ -93,6 +93,21 @@ EOD)->getClassDefinition('Foo');
 
     expect($type->methods['foo']->type->toString())
         ->toBe('<TQ>(TQ): unknown');
+});
+
+it('resolves a cyclic reference introduced by template property fetch', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public function foo ()
+    {
+        return fn($q) => $q->prop;
+    }
+}
+EOD)->getClassDefinition('Foo');
+
+    expect($type->methods['foo']->type->toString())
+        ->toBe('(): <TQ>(TQ): unknown');
 });
 
 it('resolves references in non-reference return types', function () {

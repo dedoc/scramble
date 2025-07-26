@@ -145,7 +145,7 @@ class ReferenceTypeResolver
             return $t;
         }
 
-        if ($resolved === $type) {
+        if ($resolved === $type || $resolved === $t) {
             return new UnknownType('self reference');
         }
 
@@ -487,18 +487,16 @@ class ReferenceTypeResolver
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type)
     {
         $objectType = $type->object;
+
         if ($objectType instanceof TemplateType && $objectType->is) {
             $objectType = $objectType->is;
         }
-        $objectType = $this->resolve($scope, $objectType);
 
-        if (
-            $objectType instanceof AbstractReferenceType
-            || $objectType instanceof TemplateType
-        ) {
-            // Callee cannot be resolved.
-            return $type;
+        if ($objectType instanceof TemplateType) {
+            return new UnknownType;
         }
+
+        $objectType = $this->resolve($scope, $objectType);
 
         if (! $objectType instanceof ObjectType) {
             return new UnknownType;
