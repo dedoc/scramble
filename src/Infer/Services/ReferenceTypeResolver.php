@@ -16,6 +16,7 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -107,28 +108,27 @@ class ReferenceTypeResolver
     {
         $originalType = $type;
 
-        $resultingType = RecursionGuard::run(
+        $resolvedType = RecursionGuard::run(
             $type,
             fn () => (new TypeWalker)->map(
                 $type,
-                fn (Type $t) => $this->doResolve($t, $type, $scope)?->mergeAttributes($t->attributes()) ?: $t,
+                fn (Type $t) => $this->doResolve($t, $type, $scope) ?: $t,
             ),
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );
 
-        /*
-         * Type finalization: removing duplicates from union + unpacking array items.
-         */
-        $resolvedType = (new TypeWalker)->replace(
-            $resultingType,
-            fn (Type $t) => $t instanceof Union
-                ? TypeHelper::mergeTypes(...$t->types)->mergeAttributes($t->attributes())
-                : null,
-        );
+        // Type finalization: removing duplicates from union + unpacking array items.
+        $finalizedResolvedType = (new TypeWalker)->map($resolvedType, function (Type $t) {
+            if ($t instanceof Union) {
+                return TypeHelper::mergeTypes(...$t->types);
+            }
+            if ($t instanceof KeyedArrayType) {
+                return TypeHelper::unpackIfArray($t);
+            }
+            return $t;
+        });
 
-        $resolvedType->setOriginal($originalType);
-
-        return $resolvedType;
+        return $finalizedResolvedType->setOriginal($originalType);
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope)
