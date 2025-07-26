@@ -1765,12 +1765,6 @@ parameters:
 			path: src/Infer/Services/ReferenceTypeResolver.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:doResolve\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Services/ReferenceTypeResolver.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:getFunctionCallResult\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1

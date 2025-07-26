@@ -68,6 +68,7 @@ abstract class AbstractType implements Type
         $cloned = clone $this;
 
         foreach ($cloned->nodes() as $nodeName) {
+            /** @var Type|Type[] $nodeValue */
             $nodeValue = $cloned->$nodeName;
 
             if ($nodeValue instanceof TemplateType) {
@@ -80,6 +81,7 @@ abstract class AbstractType implements Type
                 continue;
             }
 
+            /** @var Type $nodeItemValue */
             foreach ($nodeValue as $i => $nodeItemValue) {
                 if ($nodeItemValue instanceof TemplateType) {
                     continue;
