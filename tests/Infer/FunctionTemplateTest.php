@@ -38,9 +38,9 @@ it('infers a return type of call of a function with argument default const', fun
     $type = analyzeFile(<<<'EOD'
 <?php
 function foo (int $a = \Illuminate\Http\Response::HTTP_CREATED) {
-    return $a;
+    return ['a' => $a];
 }
 EOD)->getExpressionType('foo()');
 
-    expect($type->toString())->toBe('int(201)');
+    expect($type->toString())->toBe('array{a: int(201)}');
 });

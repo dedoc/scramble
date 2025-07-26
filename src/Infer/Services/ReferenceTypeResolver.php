@@ -16,6 +16,7 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -38,8 +39,6 @@ use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
 use Illuminate\Support\Collection;
-
-use function DeepCopy\deep_copy;
 
 class ReferenceTypeResolver
 {
@@ -91,7 +90,7 @@ class ReferenceTypeResolver
             });
 
         if (! $annotatedTypeCanAcceptAnyInferredType) {
-            $types = [$annotatedReturnType];
+            return $annotatedReturnType;
         }
 
         return Union::wrap($types)->mergeAttributes($inferredReturnType->attributes());
@@ -109,72 +108,44 @@ class ReferenceTypeResolver
     {
         $originalType = $type;
 
-        if ($resolvedType = $type->getAttribute('resolvedType')) {
-            return $resolvedType;
-        }
-
-        $resultingType = RecursionGuard::run(
-            $type,// ->toString(),
-            fn () => (new TypeWalker)->replace(
-                $type,
-                fn (Type $t) => $this->doResolve($t, $type, $scope)?->mergeAttributes($t->attributes()),
-            ),
+        $resolvedType = RecursionGuard::run(
+            $type,
+            fn () => (new TypeWalker)->map($type, fn (Type $t) => $this->doResolve($t, $type, $scope)),
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );
 
-        $resolvedType = deep_copy(RecursionGuard::run(
-            $resultingType,// ->toString(),
-            fn () => (new TypeWalker)->replace(
-                $resultingType,
-                fn (Type $t) => $t instanceof Union
-                    ? TypeHelper::mergeTypes(...$t->types)->mergeAttributes($t->attributes())
-                    : null,
-            ),
-            onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
-        ));
+        // Type finalization: removing duplicates from union + unpacking array items.
+        $finalizedResolvedType = (new TypeWalker)->map($resolvedType, function (Type $t) {
+            if ($t instanceof Union) {
+                return TypeHelper::mergeTypes(...$t->types);
+            }
+            if ($t instanceof KeyedArrayType) {
+                return TypeHelper::unpackIfArray($t);
+            }
 
-        $resolvedType->setOriginal($originalType);
+            return $t;
+        });
 
-        $type->setAttribute('resolvedType', $resolvedType);
-
-        return $resolvedType;
+        return $finalizedResolvedType->setOriginal($originalType);
     }
 
-    private function doResolve(Type $t, Type $type, Scope $scope)
+    private function doResolve(Type $t, Type $type, Scope $scope): Type
     {
-        $resolver = function () use ($t, $scope) {
-            if ($t instanceof ConstFetchReferenceType) {
-                return $this->resolveConstFetchReferenceType($scope, $t);
-            }
-
-            if ($t instanceof MethodCallReferenceType) {
-                return $this->resolveMethodCallReferenceType($scope, $t);
-            }
-
-            if ($t instanceof StaticMethodCallReferenceType) {
-                return $this->resolveStaticMethodCallReferenceType($scope, $t);
-            }
-
-            if ($t instanceof CallableCallReferenceType) {
-                return $this->resolveCallableCallReferenceType($scope, $t);
-            }
-
-            if ($t instanceof NewCallReferenceType) {
-                return $this->resolveNewCallReferenceType($scope, $t);
-            }
-
-            if ($t instanceof PropertyFetchReferenceType) {
-                return $this->resolvePropertyFetchReferenceType($scope, $t);
-            }
-
-            return null;
+        $resolved = match ($t::class) {
+            ConstFetchReferenceType::class => $this->resolveConstFetchReferenceType($scope, $t),
+            MethodCallReferenceType::class => $this->resolveMethodCallReferenceType($scope, $t),
+            StaticMethodCallReferenceType::class => $this->resolveStaticMethodCallReferenceType($scope, $t),
+            CallableCallReferenceType::class => $this->resolveCallableCallReferenceType($scope, $t),
+            NewCallReferenceType::class => $this->resolveNewCallReferenceType($scope, $t),
+            PropertyFetchReferenceType::class => $this->resolvePropertyFetchReferenceType($scope, $t),
+            default => null,
         };
 
-        if (! $resolved = $resolver()) {
-            return null;
+        if (! $resolved) {
+            return $t;
         }
 
-        if ($resolved === $type) {
+        if ($resolved === $type || $resolved === $t) {
             return new UnknownType('self reference');
         }
 
@@ -279,7 +250,7 @@ class ReferenceTypeResolver
             // This maybe is not a good idea as it make references bleed into the fully analyzed
             // codebase, while at the moment of final reference resolution, we should've got either
             // a resolved type, or an unknown type.
-            return $type;
+            return new UnknownType;
         }
 
         if (! $classDefinition) {
@@ -516,18 +487,16 @@ class ReferenceTypeResolver
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type)
     {
         $objectType = $type->object;
+
         if ($objectType instanceof TemplateType && $objectType->is) {
             $objectType = $objectType->is;
         }
-        $objectType = $this->resolve($scope, $objectType);
 
-        if (
-            $objectType instanceof AbstractReferenceType
-            || $objectType instanceof TemplateType
-        ) {
-            // Callee cannot be resolved.
-            return $type;
+        if ($objectType instanceof TemplateType) {
+            return new UnknownType;
         }
+
+        $objectType = $this->resolve($scope, $objectType);
 
         if (! $objectType instanceof ObjectType) {
             return new UnknownType;
@@ -611,7 +580,7 @@ class ReferenceTypeResolver
                 $this->prepareArguments($callee, $arguments),
             ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray());
 
-            $returnType = (new TypeWalker)->replace(deep_copy($returnType), function (Type $t) use ($inferredTemplates) {
+            $returnType = (new TypeWalker)->replace($returnType->clone(), function (Type $t) use ($inferredTemplates) {
                 if (! $t instanceof TemplateType) {
                     return null;
                 }
