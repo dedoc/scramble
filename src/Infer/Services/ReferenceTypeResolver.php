@@ -90,12 +90,10 @@ class ReferenceTypeResolver
             });
 
         if (! $annotatedTypeCanAcceptAnyInferredType) {
-            return $annotatedReturnType;
+            $types = [$annotatedReturnType];
         }
 
-        return Union::wrap($types)->mergeAttributes(
-            Arr::except($inferredReturnType->attributes(), ['resolvedType'])
-        );
+        return Union::wrap($types)->mergeAttributes($inferredReturnType->attributes());
     }
 
     public static function hasResolvableReferences(Type $type): bool
@@ -110,12 +108,8 @@ class ReferenceTypeResolver
     {
         $originalType = $type;
 
-        if ($resolvedType = $type->getAttribute('resolvedType')) {
-            return $resolvedType;
-        }
-
         $resultingType = RecursionGuard::run(
-            $type,// ->toString(),
+            $type,
             fn () => (new TypeWalker)->map(
                 $type,
                 fn (Type $t) => $this->doResolve($t, $type, $scope)?->mergeAttributes($t->attributes()) ?: $t,
@@ -134,8 +128,6 @@ class ReferenceTypeResolver
         );
 
         $resolvedType->setOriginal($originalType);
-
-        $type->setAttribute('resolvedType', $resolvedType);
 
         return $resolvedType;
     }
