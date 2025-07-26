@@ -24,7 +24,7 @@ beforeEach(function () {
         'context' => new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig),
     ]);
     $this->buildRulesToParameters = function (array $rules) use ($openApiTransformer): RulesToParameters {
-        return new RulesToParameters($rules, $openApiTransformer);
+        return new RulesToParameters($rules, [], $openApiTransformer);
     };
 });
 

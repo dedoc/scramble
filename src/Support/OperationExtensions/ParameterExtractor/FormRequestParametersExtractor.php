@@ -91,10 +91,10 @@ class FormRequestParametersExtractor implements ParameterExtractor
             parameters: $this->makeParameters(
                 rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->route))->handle(),
                 typeTransformer: $this->openApiTransformer,
-                rulesDocs: (new RulesDocumentationRetriever(
+                rulesDocsRetriever: new TypeBasedRulesDocumentationRetriever(
                     $routeInfo->getScope(),
                     new MethodCallReferenceType(new ObjectType($requestClassName), 'rules', []),
-                ))->getDocNodes(),
+                ),
                 in: in_array(mb_strtolower($routeInfo->route->methods()[0]), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
                     ? 'query'
                     : 'body',
