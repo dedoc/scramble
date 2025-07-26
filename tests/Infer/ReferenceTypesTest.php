@@ -202,7 +202,7 @@ EOD)->getClassDefinition('Foo');
         ->toBe('(): unknown');
 });
 
-it('handles the strange discovery i dont even know how to call', function () {
+it('handles usage of type annotation when resolved inferred type is unknown', function () {
     $type = analyzeFile(<<<'EOD'
 <?php
 class Foo
