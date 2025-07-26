@@ -37,7 +37,6 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class ReferenceTypeResolver
