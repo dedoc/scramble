@@ -90,7 +90,7 @@ class ReferenceTypeResolver
             });
 
         if (! $annotatedTypeCanAcceptAnyInferredType) {
-            $types = [$annotatedReturnType];
+            return $annotatedReturnType;
         }
 
         return Union::wrap($types)->mergeAttributes($inferredReturnType->attributes());
