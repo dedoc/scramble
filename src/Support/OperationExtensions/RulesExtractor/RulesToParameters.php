@@ -22,8 +22,8 @@ class RulesToParameters
     private array $rulesDocs;
 
     /**
-     * @param array<string, RuleSet>  $rules
-     * @param Node[]|RulesDocumentationRetriever $validationNodesResults
+     * @param  array<string, RuleSet>  $rules
+     * @param  Node[]|RulesDocumentationRetriever  $validationNodesResults
      */
     public function __construct(
         private array $rules,

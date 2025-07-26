@@ -6,7 +6,6 @@ use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\RulesDocumentationRetriever;
 use PhpParser\Node;
-use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 trait GeneratesParametersFromRules
 {
