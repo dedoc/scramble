@@ -149,7 +149,7 @@ class ReferenceTypeResolver
             return new UnknownType('self reference');
         }
 
-        return $this->doResolve($resolved, $type, $scope);
+        return $this->resolve($scope, $resolved);
     }
 
     private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type)
