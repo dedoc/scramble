@@ -122,6 +122,7 @@ class ReferenceTypeResolver
             if ($t instanceof KeyedArrayType) {
                 return TypeHelper::unpackIfArray($t);
             }
+
             return $t;
         });
 
