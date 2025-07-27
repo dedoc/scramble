@@ -121,13 +121,13 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     fn ($e) => is_a($e, InferExtension::class, true),
                 ));
 
-                $inferExtensionsClasses = array_merge([
+                $inferExtensionsClasses = array_merge($inferExtensionsClasses, [
                     ResponseMethodReturnTypeExtension::class,
                     JsonResourceExtension::class,
                     ResourceResponseMethodReturnTypeExtension::class,
                     JsonResponseMethodReturnTypeExtension::class,
                     ModelExtension::class,
-                ], $inferExtensionsClasses);
+                ]);
 
                 return array_merge(
                     [
