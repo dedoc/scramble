@@ -63,18 +63,18 @@ function analyzeFile(
 
     $classLikeNames = array_map(
         fn (\PhpParser\Node\Stmt\ClassLike $cl) => $cl->name?->name,
-        (new \PhpParser\NodeFinder())->find(
+        (new \PhpParser\NodeFinder)->find(
             $fileAst,
             fn ($n) => $n instanceof \PhpParser\Node\Stmt\ClassLike,
         ),
     );
 
     foreach ($index->classesDefinitions as $classDefinition) {
-        if (!in_array($classDefinition->name, $classLikeNames)) {
+        if (! in_array($classDefinition->name, $classLikeNames)) {
             continue;
         }
         foreach ($classDefinition->methods as $name => $methodDefinition) {
-            $node = (new \PhpParser\NodeFinder())->findFirst(
+            $node = (new \PhpParser\NodeFinder)->findFirst(
                 $fileAst,
                 fn ($n) => $n instanceof \PhpParser\Node\Stmt\ClassMethod && $n->name->name === $name,
             );
