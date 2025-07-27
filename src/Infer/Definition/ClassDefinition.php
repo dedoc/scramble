@@ -20,6 +20,7 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use LogicException;
 use PhpParser\ErrorHandler\Throwing;
 use PhpParser\NameContext;
 
@@ -133,7 +134,7 @@ class ClassDefinition implements ClassDefinitionContract
             }
 
             $functionType->setReturnType(
-                static::addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType, $scope)
+                self::addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType, $scope)
             );
         }
     }
@@ -146,7 +147,11 @@ class ClassDefinition implements ClassDefinitionContract
 
         // @todo: Handle case when annotated return type is union.
         if ($annotatedReturnType instanceof ObjectType) {
-            $annotatedReturnType->name = ReferenceTypeResolver::resolveClassName($scope, $annotatedReturnType->name);
+            $resolvedName = ReferenceTypeResolver::resolveClassName($scope, $annotatedReturnType->name);
+            if (! $resolvedName) {
+                throw new LogicException("Got null after class name resolution of [$annotatedReturnType->name], string expected");
+            }
+            $annotatedReturnType->name = $resolvedName;
         }
 
         $annotatedTypeCanAcceptAnyInferredType = collect($types)

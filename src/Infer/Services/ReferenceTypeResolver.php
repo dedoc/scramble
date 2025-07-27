@@ -99,19 +99,15 @@ class ReferenceTypeResolver
         return $this->resolve($scope, $resolved);
     }
 
-    private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type)
+    private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type): Type
     {
         $analyzedType = clone $type;
 
         if ($type->callee instanceof StaticReference) {
-            $contextualCalleeName = match ($type->callee->keyword) {
-                StaticReference::SELF => $scope->context->functionDefinition?->definingClassName,
-                StaticReference::STATIC => $scope->context->classDefinition?->name,
-                StaticReference::PARENT => $scope->context->classDefinition?->parentFqn,
-            };
+            $contextualCalleeName = static::resolveClassName($scope, $type->callee->keyword);
 
             // This can only happen if any of static reserved keyword used in non-class context – hence considering not possible for now.
-            if (! $contextualCalleeName) {
+            if (! $contextualCalleeName || $contextualCalleeName === $type->callee->keyword) {
                 return new UnknownType("Cannot properly analyze [{$type->toString()}] reference type as static keyword used in non-class context, or current class scope has no parent.");
             }
 
@@ -139,7 +135,7 @@ class ReferenceTypeResolver
         return $resolved;
     }
 
-    private function resolveMethodCallReferenceType(Scope $scope, MethodCallReferenceType $type)
+    private function resolveMethodCallReferenceType(Scope $scope, MethodCallReferenceType $type): Type
     {
         // (#self).listTableDetails()
         // (#Doctrine\DBAL\Schema\Table).listTableDetails()
@@ -203,7 +199,7 @@ class ReferenceTypeResolver
             : $resultingType;
     }
 
-    private function resolveStaticMethodCallReferenceType(Scope $scope, StaticMethodCallReferenceType $type)
+    private function resolveStaticMethodCallReferenceType(Scope $scope, StaticMethodCallReferenceType $type): Type
     {
         // (#self).listTableDetails()
         // (#Doctrine\DBAL\Schema\Table).listTableDetails()
@@ -281,7 +277,7 @@ class ReferenceTypeResolver
         return $this->getFunctionCallResult($methodDefinition, $type->arguments);
     }
 
-    private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type)
+    private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type): Type
     {
         $callee = $this->resolve($scope, $type->callee);
         $callee = $callee instanceof TemplateType ? $callee->is : $callee;
@@ -335,7 +331,7 @@ class ReferenceTypeResolver
         return $this->getFunctionCallResult($calleeType, $type->arguments);
     }
 
-    private function resolveNewCallReferenceType(Scope $scope, NewCallReferenceType $type)
+    private function resolveNewCallReferenceType(Scope $scope, NewCallReferenceType $type): Type
     {
         if ($type->name instanceof Type) {
             $resolvedNameType = $this->resolve($scope, $type->name);
@@ -412,7 +408,7 @@ class ReferenceTypeResolver
         return $this->getMethodCallsSideEffectIntroducedTypesInConstructor($type, $scope, $classDefinition, $constructorDefinition);
     }
 
-    private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type)
+    private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type): Type
     {
         $objectType = $this->resolveAndNormalizeCallee($scope, $type->object);
 
@@ -452,7 +448,7 @@ class ReferenceTypeResolver
         /* When this is a handling for method call */
         ObjectType|SelfType|null $calledOnType = null,
         ?MethodCallEvent $event = null,
-    ) {
+    ): Type {
         $returnType = $callee->type->getReturnType();
         $isSelf = false;
 
@@ -530,10 +526,10 @@ class ReferenceTypeResolver
      * Prepares the actual arguments list with which a function is going to be executed, taking into consideration
      * arguments defaults.
      *
-     * @param  array  $realArguments  The list of arguments a function has been called with.
-     * @return array The actual list of arguments where not passed arguments replaced with default values.
+     * @param  array<array-key, Type> $realArguments  The list of arguments a function has been called with.
+     * @return array<int, Type> The actual list of arguments where not passed arguments replaced with default values.
      */
-    private function prepareArguments(?FunctionLikeDefinition $callee, array $realArguments)
+    private function prepareArguments(?FunctionLikeDefinition $callee, array $realArguments): array
     {
         if (! $callee) {
             return $realArguments;
@@ -546,10 +542,16 @@ class ReferenceTypeResolver
             })
             ->filter()
             ->values()
-            ->toArray();
+            ->all();
     }
 
-    private function resolveTypesTemplatesFromArguments($templates, $templatedArguments, $realArguments)
+    /**
+     * @param TemplateType[] $templates
+     * @param array<string, Type> $templatedArguments
+     * @param array<int, Type> $realArguments
+     * @return array{0: TemplateType, 1: Type}[]
+     */
+    private function resolveTypesTemplatesFromArguments($templates, $templatedArguments, $realArguments): array
     {
         return array_values(array_filter(array_map(function (TemplateType $template) use ($templatedArguments, $realArguments) {
             $argumentIndexName = null;
