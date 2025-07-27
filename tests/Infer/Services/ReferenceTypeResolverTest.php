@@ -136,7 +136,7 @@ it('allows overriding types accepted by another type', function () {
         new StringType,
     );
 
-    (new ReferenceTypeResolver(new Index))->resolveFunctionReturnReferences(
+    \Dedoc\Scramble\Infer\Definition\ClassDefinition::resolveFunctionReturnReferences(
         new GlobalScope,
         $functionType,
     );

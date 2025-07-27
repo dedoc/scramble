@@ -50,8 +50,7 @@ class MethodAnalyzer
             $indexBuilders,
         );
 
-        $methodDefinition = $this->classDefinition
-            ->methods[$methodDefinition->type->name];
+        $methodDefinition = $this->classDefinition->methods[$methodDefinition->type->name];
 
         if ($withSideEffects) {
             $this->analyzeSideEffects($methodDefinition, $node, $inferer);
