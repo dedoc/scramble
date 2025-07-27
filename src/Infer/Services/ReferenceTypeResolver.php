@@ -157,7 +157,7 @@ class ReferenceTypeResolver
             ? $this->index->getClass($calleeType->name)
             : null;
 
-        if (!($calleeType instanceof TemplateType) && $returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
+        if (! ($calleeType instanceof TemplateType) && $returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
             instance: $calleeType,
             name: $type->methodName,
             scope: $scope,
@@ -170,7 +170,7 @@ class ReferenceTypeResolver
         }
 
         if (! $calleeType instanceof ObjectType) {
-            return new UnknownType();
+            return new UnknownType;
         }
 
         if ($returnType = Context::getInstance()->extensionsBroker->getMethodReturnType($event = new MethodCallEvent(
