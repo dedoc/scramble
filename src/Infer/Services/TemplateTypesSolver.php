@@ -63,6 +63,7 @@ class TemplateTypesSolver
             ->values()
             ->toArray();
     }
+
     /**
      * @param  TemplateType[]  $templates
      * @param  array<string, Type>  $templatedArguments
