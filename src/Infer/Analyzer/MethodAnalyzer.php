@@ -20,6 +20,8 @@ use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Illuminate\Support\Arr;
+use PhpParser\ErrorHandler\Throwing;
+use PhpParser\NameContext;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
@@ -50,8 +52,7 @@ class MethodAnalyzer
             $indexBuilders,
         );
 
-        $methodDefinition = $this->classDefinition
-            ->methods[$methodDefinition->type->name];
+        $methodDefinition = $this->classDefinition->methods[$methodDefinition->type->name];
 
         if ($withSideEffects) {
             $this->analyzeSideEffects($methodDefinition, $node, $inferer);

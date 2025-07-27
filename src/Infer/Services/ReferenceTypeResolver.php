@@ -51,50 +51,6 @@ class ReferenceTypeResolver
         return app(static::class);
     }
 
-    public function resolveFunctionReturnReferences(Scope $scope, FunctionType $functionType): void
-    {
-        $returnType = $functionType->getReturnType();
-        $resolvedReference = $this->resolve($scope, $returnType);
-        $functionType->setReturnType($resolvedReference);
-
-        if ($annotatedReturnType = $functionType->getAttribute('annotatedReturnType')) {
-            if (! $functionType->getAttribute('inferredReturnType')) {
-                $functionType->setAttribute('inferredReturnType', clone $functionType->getReturnType());
-            }
-
-            $functionType->setReturnType(
-                $this->addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType, $scope)
-            );
-        }
-    }
-
-    private function addAnnotatedReturnType(Type $inferredReturnType, Type $annotatedReturnType, Scope $scope): Type
-    {
-        $types = $inferredReturnType instanceof Union
-            ? $inferredReturnType->types
-            : [$inferredReturnType];
-
-        // @todo: Handle case when annotated return type is union.
-        if ($annotatedReturnType instanceof ObjectType) {
-            $annotatedReturnType->name = $this->resolveClassName($scope, $annotatedReturnType->name);
-        }
-
-        $annotatedTypeCanAcceptAnyInferredType = collect($types)
-            ->some(function (Type $t) use ($annotatedReturnType) {
-                if ($annotatedReturnType->accepts($t)) {
-                    return true;
-                }
-
-                return $t->acceptedBy($annotatedReturnType);
-            });
-
-        if (! $annotatedTypeCanAcceptAnyInferredType) {
-            return $annotatedReturnType;
-        }
-
-        return Union::wrap($types)->mergeAttributes($inferredReturnType->attributes());
-    }
-
     public function resolve(Scope $scope, Type $type): Type
     {
         $originalType = $type;

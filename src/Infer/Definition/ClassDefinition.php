@@ -12,11 +12,13 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\ErrorHandler\Throwing;
 use PhpParser\NameContext;
@@ -94,26 +96,73 @@ class ClassDefinition implements ClassDefinitionContract
             ))->analyze($methodDefinition, $indexBuilders, $withSideEffects);
         }
 
-        $methodScope = new Scope(
-            $scope->index,
-            new NodeTypesResolver,
-            new ScopeContext($this, $methodDefinition),
-            new FileNameResolver(
-                class_exists($this->name)
-                    ? ClassReflector::make($this->name)->getNameContext()
-                    : tap(new NameContext(new Throwing), fn (NameContext $nc) => $nc->startNamespace()),
-            ),
-        );
+        if (! $methodDefinition->referencesResolved) { // @todo make a part of !$methodDefinition->isFullyAnalyzed() (a part of method definition building)
+            $methodScope = new Scope(
+                $scope->index,
+                new NodeTypesResolver,
+                new ScopeContext($this, $methodDefinition),
+                new FileNameResolver(
+                    class_exists($this->name)
+                        ? ClassReflector::make($this->name)->getNameContext()
+                        : tap(new NameContext(new Throwing), fn (NameContext $nc) => $nc->startNamespace()),
+                ),
+            );
 
-        (new ReferenceTypeResolver($scope->index))
-            ->resolveFunctionReturnReferences($methodScope, $this->methods[$name]->type);
+            static::resolveFunctionReturnReferences($methodScope, $this->methods[$name]->type);
 
-        foreach ($this->methods[$name]->type->exceptions as $i => $exceptionType) {
+            foreach ($this->methods[$name]->type->exceptions as $i => $exceptionType) {
                 $this->methods[$name]->type->exceptions[$i] = (new ReferenceTypeResolver($scope->index)) // @phpstan-ignore assign.propertyType
                     ->resolve($methodScope, $exceptionType);
+            }
+
+            $methodDefinition->referencesResolved = true;
         }
 
         return $this->methods[$name];
+    }
+
+    public static function resolveFunctionReturnReferences(Scope $scope, FunctionLikeType $functionType): void
+    {
+        $returnType = $functionType->getReturnType();
+        $resolvedReference = ReferenceTypeResolver::getInstance()->resolve($scope, $returnType);
+        $functionType->setReturnType($resolvedReference);
+
+        if ($annotatedReturnType = $functionType->getAttribute('annotatedReturnType')) {
+            if (! $functionType->getAttribute('inferredReturnType')) {
+                $functionType->setAttribute('inferredReturnType', clone $functionType->getReturnType());
+            }
+
+            $functionType->setReturnType(
+                static::addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType, $scope)
+            );
+        }
+    }
+
+    private static function addAnnotatedReturnType(Type $inferredReturnType, Type $annotatedReturnType, Scope $scope): Type
+    {
+        $types = $inferredReturnType instanceof Union
+            ? $inferredReturnType->types
+            : [$inferredReturnType];
+
+        // @todo: Handle case when annotated return type is union.
+        if ($annotatedReturnType instanceof ObjectType) {
+            $annotatedReturnType->name = ReferenceTypeResolver::resolveClassName($scope, $annotatedReturnType->name);
+        }
+
+        $annotatedTypeCanAcceptAnyInferredType = collect($types)
+            ->some(function (Type $t) use ($annotatedReturnType) {
+                if ($annotatedReturnType->accepts($t)) {
+                    return true;
+                }
+
+                return $t->acceptedBy($annotatedReturnType);
+            });
+
+        if (! $annotatedTypeCanAcceptAnyInferredType) {
+            return $annotatedReturnType;
+        }
+
+        return Union::wrap($types)->mergeAttributes($inferredReturnType->attributes());
     }
 
     public function getPropertyDefinition($name)
