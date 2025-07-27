@@ -396,24 +396,42 @@ class ReferenceTypeResolver
 
         $resultingTemplatesMap = collect($classDefinition->templateTypes)
             ->map(fn (TemplateType $t) => $inferredTemplates->get($t->name, new UnknownType))
-            ->toArray();
+            ->all();
 
-        if ($constructorDefinition?->selfOutType instanceof Generic) {
-            foreach ($constructorDefinition->selfOutType->templateTypes as $index => $genericSelfOutTypePart) {
-                if ($genericSelfOutTypePart instanceof TemplatePlaceholderType) {
-                    continue;
-                }
-
-                $resultingTemplatesMap[$index] = (new TypeWalker)->map(
-                    $genericSelfOutTypePart,
-                    fn ($t) => $t instanceof TemplateType && array_key_exists($t->name, $inferredConstructorParamTemplates)
-                        ? $inferredConstructorParamTemplates[$t->name]
-                        : $t,
-                );
-            }
-        }
+        $resultingTemplatesMap = $this->applySelfOutType(
+            $resultingTemplatesMap,
+            $constructorDefinition?->selfOutType,
+            $inferredConstructorParamTemplates,
+        );
 
         return new Generic($classDefinition->name, $resultingTemplatesMap);
+    }
+
+    /**
+     * @param Type[] $resultingTemplatesMap
+     * @param array<string, Type> $inferredTemplates
+     * @return Type[]
+     */
+    private function applySelfOutType(array $resultingTemplatesMap, ?Type $selfOutType, array $inferredTemplates): array
+    {
+        if (! $selfOutType instanceof Generic) {
+            return $resultingTemplatesMap;
+        }
+
+        foreach ($selfOutType->templateTypes as $index => $genericSelfOutTypePart) {
+            if ($genericSelfOutTypePart instanceof TemplatePlaceholderType) {
+                continue;
+            }
+
+            $resultingTemplatesMap[$index] = (new TypeWalker)->map(
+                $genericSelfOutTypePart,
+                fn ($t) => $t instanceof TemplateType && array_key_exists($t->name, $inferredTemplates)
+                    ? $inferredTemplates[$t->name]
+                    : $t,
+            );
+        }
+
+        return $resultingTemplatesMap;
     }
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type): Type
@@ -467,7 +485,9 @@ class ReferenceTypeResolver
             $returnType = $calledOnType;
         }
 
-        $instanceTemplates = $calledOnType && ($classDefinition = $this->index->getClass($calledOnType->name))
+        $classDefinition = $calledOnType instanceof ObjectType ? $this->index->getClass($calledOnType->name) : null;
+
+        $instanceTemplates = $calledOnType && $classDefinition
             ? (new TemplateTypesSolver)->getClassContextTemplates($calledOnType, $classDefinition)
             : [];
 
@@ -482,6 +502,19 @@ class ReferenceTypeResolver
                 : $t;
         });
 
+        if ($callee->selfOutType && $returnType instanceof Generic && $classDefinition) {
+            $resultingTemplatesMap = $returnType->templateTypes;
+
+            $resultingTemplatesMap = $this->applySelfOutType(
+                $resultingTemplatesMap,
+                $callee->selfOutType,
+                $inferredTemplates,
+            );
+
+            $returnType->templateTypes = $resultingTemplatesMap;
+        }
+
+        // backward compatibility
         foreach ($callee->sideEffects as $sideEffect) {
             if (
                 $sideEffect instanceof SelfTemplateDefinition
