@@ -526,7 +526,7 @@ class ReferenceTypeResolver
      * Prepares the actual arguments list with which a function is going to be executed, taking into consideration
      * arguments defaults.
      *
-     * @param  array<array-key, Type> $realArguments  The list of arguments a function has been called with.
+     * @param  array<array-key, Type>  $realArguments  The list of arguments a function has been called with.
      * @return array<int, Type> The actual list of arguments where not passed arguments replaced with default values.
      */
     private function prepareArguments(?FunctionLikeDefinition $callee, array $realArguments): array
@@ -546,9 +546,9 @@ class ReferenceTypeResolver
     }
 
     /**
-     * @param TemplateType[] $templates
-     * @param array<string, Type> $templatedArguments
-     * @param array<int, Type> $realArguments
+     * @param  TemplateType[]  $templates
+     * @param  array<string, Type>  $templatedArguments
+     * @param  array<int, Type>  $realArguments
      * @return array{0: TemplateType, 1: Type}[]
      */
     private function resolveTypesTemplatesFromArguments($templates, $templatedArguments, $realArguments): array
