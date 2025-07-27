@@ -32,11 +32,11 @@ class TemplateTypesSolver
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray();
     }
 
-    public function getClassConstructorContextTemplates(ClassDefinition $classDefinition, FunctionLikeDefinition $functionLikeDefinition, array $arguments)
+    public function getClassConstructorContextTemplates(ClassDefinition $classDefinition, ?FunctionLikeDefinition $functionLikeDefinition, array $arguments)
     {
         return collect($this->resolveTypesTemplatesFromArguments(
-            $functionLikeDefinition->type->templates + $classDefinition->templateTypes,
-            $functionLikeDefinition->type->arguments,
+            ($functionLikeDefinition->type->templates ?? []) + $classDefinition->templateTypes,
+            ($functionLikeDefinition->type->arguments ?? []),
             $this->prepareArguments($functionLikeDefinition, $arguments),
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray();
     }
@@ -45,8 +45,8 @@ class TemplateTypesSolver
      * Prepares the actual arguments list with which a function is going to be executed, taking into consideration
      * arguments defaults.
      *
-     * @param  array  $realArguments  The list of arguments a function has been called with.
-     * @return array The actual list of arguments where not passed arguments replaced with default values.
+     * @param  array<array-key, Type>  $realArguments  The list of arguments a function has been called with.
+     * @return array<int, Type> The actual list of arguments where not passed arguments replaced with default values.
      */
     private function prepareArguments(?FunctionLikeDefinition $callee, array $realArguments)
     {
@@ -63,8 +63,13 @@ class TemplateTypesSolver
             ->values()
             ->toArray();
     }
-
-    private function resolveTypesTemplatesFromArguments($templates, $templatedArguments, $realArguments)
+    /**
+     * @param  TemplateType[]  $templates
+     * @param  array<string, Type>  $templatedArguments
+     * @param  array<int, Type>  $realArguments
+     * @return array{0: TemplateType, 1: Type}[]
+     */
+    private function resolveTypesTemplatesFromArguments($templates, $templatedArguments, $realArguments): array
     {
         return array_values(array_filter(array_map(function (TemplateType $template) use ($templatedArguments, $realArguments) {
             $argumentIndexName = null;

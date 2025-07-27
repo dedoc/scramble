@@ -122,7 +122,7 @@ class TypeWalker
         }
 
         if ($subjectToMap !== $mappedSubject) { // type was changed during the mapping
-            //            return $mappedSubject;
+            return $mappedSubject;
         }
 
         $this->visitedNodesWeakMap->offsetSet($subject, $mappedSubject);
