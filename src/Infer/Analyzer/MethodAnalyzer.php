@@ -25,7 +25,7 @@ class MethodAnalyzer
             return $methodDefinition;
         }
 
-        $definition = (new FunctionLikeAstDefinitionBuilder(
+        return $this->classDefinition->methods[$methodDefinition->type->name] = (new FunctionLikeAstDefinitionBuilder(
             $methodDefinition->type->name,
             $node,
             $this->index,
@@ -34,8 +34,6 @@ class MethodAnalyzer
             $indexBuilders,
             $withSideEffects
         ))->build();
-
-        return $definition;
     }
 
     private function getClassReflector(): ClassReflector

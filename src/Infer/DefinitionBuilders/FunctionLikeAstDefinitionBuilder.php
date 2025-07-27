@@ -205,8 +205,12 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
 
                 $propertyName = $thisPropertiesAssignment->var->name->name;
 
+                if (! array_key_exists($propertyName, $classDefinition->properties)) {
+                    continue;
+                }
+
                 // if property name is not template type - skip
-                $propertyType = $classDefinition->properties[$propertyName]?->type;
+                $propertyType = $classDefinition->properties[$propertyName]->type;
                 if (! $propertyType instanceof TemplateType || ! array_key_exists($propertyType->name, $expectedTemplatesMap)) {
                     continue;
                 }
