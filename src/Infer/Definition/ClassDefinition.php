@@ -109,11 +109,8 @@ class ClassDefinition implements ClassDefinitionContract
             ->resolveFunctionReturnReferences($methodScope, $this->methods[$name]->type);
 
         foreach ($this->methods[$name]->type->exceptions as $i => $exceptionType) {
-            if (ReferenceTypeResolver::hasResolvableReferences($exceptionType)) {
                 $this->methods[$name]->type->exceptions[$i] = (new ReferenceTypeResolver($scope->index)) // @phpstan-ignore assign.propertyType
-                    ->resolve($methodScope, $exceptionType)
-                    ->mergeAttributes($exceptionType->attributes());
-            }
+                    ->resolve($methodScope, $exceptionType);
         }
 
         return $this->methods[$name];
