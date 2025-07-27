@@ -12,7 +12,7 @@ class StaticReference
 
     const KEYWORDS = [self::STATIC, self::SELF, self::PARENT];
 
-    public function __construct(public readonly string $keyword)
+    public function __construct(public string $keyword)
     {
         if (! in_array($this->keyword, self::KEYWORDS)) {
             throw new \InvalidArgumentException("[$this->keyword] keyword must be one of possible values.");

@@ -10,7 +10,10 @@ use PhpParser\NodeFinder;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use stdClass;
 
-class RulesNodes
+/**
+ * @internal
+ */
+class RulesNodes implements RulesDocumentationRetriever
 {
     /**
      * @param  Node\Expr\ArrayItem[]  $nodes

@@ -63,8 +63,7 @@ class MethodAnalyzer
             $indexBuilders,
         );
 
-        $methodDefinition = $this->classDefinition
-            ->methods[$methodDefinition->type->name];
+        $methodDefinition = $this->classDefinition->methods[$methodDefinition->type->name];
 
         if ($node) {
             $methodDefinition->selfOutType = $this->inferSelfOutType($inferer, $node);

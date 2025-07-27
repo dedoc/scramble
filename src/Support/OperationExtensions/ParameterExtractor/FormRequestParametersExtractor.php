@@ -10,7 +10,8 @@ use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\GeneratesParameter
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\SchemaClassDocReflector;
-use Illuminate\Support\Arr;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use PhpParser\PrettyPrinter;
 use ReflectionClass;
 use ReflectionNamedType;
@@ -88,12 +89,12 @@ class FormRequestParametersExtractor implements ParameterExtractor
 
         return new ParametersExtractionResult(
             parameters: $this->makeParameters(
-                node: RulesNodes::makeFromStatements(
-                    statements: Arr::wrap($classReflector->getMethod('rules')->getAstNode()->stmts),
-                    className: $classReflector->className,
-                ),
                 rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->route))->handle(),
                 typeTransformer: $this->openApiTransformer,
+                rulesDocsRetriever: new TypeBasedRulesDocumentationRetriever(
+                    $routeInfo->getScope(),
+                    new MethodCallReferenceType(new ObjectType($requestClassName), 'rules', []),
+                ),
                 in: in_array(mb_strtolower($routeInfo->route->methods()[0]), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
                     ? 'query'
                     : 'body',

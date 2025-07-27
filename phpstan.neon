@@ -11,4 +11,7 @@ parameters:
     tmpDir: build/phpstan
     checkOctaneCompatibility: true
     checkModelProperties: true
+    typeAliases:
+        Rule: 'string|\Illuminate\Contracts\Validation\ValidationRule'
+        RuleSet: 'Rule|Rule[]'
     # reportUnmatchedIgnoredErrors: false

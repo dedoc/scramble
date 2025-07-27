@@ -9,6 +9,8 @@ class FunctionLikeDefinition
 {
     public bool $isFullyAnalyzed = false;
 
+    public bool $referencesResolved = false;
+
     /**
      * @param  array<string, Type>  $argumentsDefaults  A map where the key is arg name and value is a default type.
      */

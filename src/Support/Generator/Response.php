@@ -51,9 +51,10 @@ class Response
     }
 
     /**
+     * @param  Schema|Reference  $schema
      * @return $this
      */
-    public function setContent(string $type, Schema|Reference $schema): self
+    public function setContent(string $type, $schema): self
     {
         $this->content[$type] = $schema;
 

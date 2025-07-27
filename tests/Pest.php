@@ -87,7 +87,7 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
             new ScopeContext(functionDefinition: $functionDefinition),
             new FileNameResolver(new NameContext(new Throwing)),
         );
-        $referenceResolver->resolveFunctionReturnReferences($fnScope, $functionDefinition->type);
+        Infer\Definition\ClassDefinition::resolveFunctionReturnReferences($fnScope, $functionDefinition->type);
     }
 
     foreach ($index->classesDefinitions as $classDefinition) {
@@ -98,7 +98,7 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
                 new ScopeContext($classDefinition, $methodDefinition),
                 new FileNameResolver(new NameContext(new Throwing)),
             );
-            $referenceResolver->resolveFunctionReturnReferences($methodScope, $methodDefinition->type);
+            Infer\Definition\ClassDefinition::resolveFunctionReturnReferences($methodScope, $methodDefinition->type);
         }
     }
 }
