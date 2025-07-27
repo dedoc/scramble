@@ -408,8 +408,8 @@ class ReferenceTypeResolver
     }
 
     /**
-     * @param Type[] $resultingTemplatesMap
-     * @param array<string, Type> $inferredTemplates
+     * @param  Type[]  $resultingTemplatesMap
+     * @param  array<string, Type>  $inferredTemplates
      * @return Type[]
      */
     private function applySelfOutType(array $resultingTemplatesMap, ?Type $selfOutType, array $inferredTemplates): array

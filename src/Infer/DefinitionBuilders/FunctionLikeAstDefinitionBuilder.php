@@ -48,6 +48,7 @@ use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeAbstract;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
+
 use function DeepCopy\deep_copy;
 
 class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
@@ -55,7 +56,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
     private LazyShallowReflectionIndex $shallowIndex;
 
     /**
-     * @param IndexBuilder[] $indexBuilders
+     * @param  IndexBuilder[]  $indexBuilders
      */
     public function __construct(
         public string $name,
@@ -87,12 +88,12 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             $this->analyzeSideEffects($definition, $inferrer);
         }
 
-//        static::resolveFunctionReturnReferences(new GlobalScope, $this->classDefinition->methods[$this->name]->type);
-//
-//        foreach ($this->classDefinition->methods[$this->name]->type->exceptions as $i => $exceptionType) {
-//            $this->classDefinition->methods[$this->name]->type->exceptions[$i] = (new ReferenceTypeResolver($this->index)) // @phpstan-ignore assign.propertyType
-//                ->resolve(new GlobalScope, $exceptionType);
-//        }
+        //        static::resolveFunctionReturnReferences(new GlobalScope, $this->classDefinition->methods[$this->name]->type);
+        //
+        //        foreach ($this->classDefinition->methods[$this->name]->type->exceptions as $i => $exceptionType) {
+        //            $this->classDefinition->methods[$this->name]->type->exceptions[$i] = (new ReferenceTypeResolver($this->index)) // @phpstan-ignore assign.propertyType
+        //                ->resolve(new GlobalScope, $exceptionType);
+        //        }
 
         $definition->isFullyAnalyzed = true;
 
@@ -148,7 +149,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
     }
 
     /**
-     * @param Node[] $nodes
+     * @param  Node[]  $nodes
      */
     private function traverseClassMethod(array $nodes, FunctionLikeDefinition $methodDefinition): TypeInferer
     {
