@@ -467,16 +467,13 @@ class ReferenceTypeResolver
             $returnType = $calledOnType;
         }
 
-        $inferredTemplates = $calledOnType instanceof Generic && ($classDefinition = $this->index->getClass($calledOnType->name))
+        $instanceTemplates = $calledOnType && ($classDefinition = $this->index->getClass($calledOnType->name))
             ? (new TemplateTypesSolver)->getClassContextTemplates($calledOnType, $classDefinition)
             : [];
 
         $inferredTemplates = array_merge(
-            $inferredTemplates,
-            (new TemplateTypesSolver)->getFunctionContextTemplates(
-                $callee,
-                $arguments,
-            )
+            $instanceTemplates,
+            (new TemplateTypesSolver)->getFunctionContextTemplates($callee, $arguments)
         );
 
         $returnType = (new TypeWalker)->map($returnType, function (Type $t) use ($inferredTemplates) {
