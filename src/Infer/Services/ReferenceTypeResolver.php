@@ -153,14 +153,14 @@ class ReferenceTypeResolver
             : null;
 
         if (! ($calleeType instanceof TemplateType) && $returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
-                instance: $calleeType,
-                name: $type->methodName,
-                scope: $scope,
-                arguments: $type->arguments,
-                methodDefiningClassName: $classDefinition
-                    ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index)
-                    : ($calleeType instanceof ObjectType ? $calleeType->name : null),
-            ))) {
+            instance: $calleeType,
+            name: $type->methodName,
+            scope: $scope,
+            arguments: $type->arguments,
+            methodDefiningClassName: $classDefinition
+                ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index)
+                : ($calleeType instanceof ObjectType ? $calleeType->name : null),
+        ))) {
             return $returnType;
         }
 
@@ -205,7 +205,7 @@ class ReferenceTypeResolver
         // (#TName).listTableDetails()
 
         $type->arguments = array_map(
-        // @todo: fix resolving arguments when deep arg is reference
+            // @todo: fix resolving arguments when deep arg is reference
             fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
             $type->arguments,
         );
@@ -238,11 +238,11 @@ class ReferenceTypeResolver
 
         // Attempting extensions broker before potentially giving up on type inference
         if ($isStaticCall && $returnType = Context::getInstance()->extensionsBroker->getStaticMethodReturnType(new StaticMethodCallEvent(
-                callee: $calleeName,
-                name: $type->methodName,
-                scope: $scope,
-                arguments: $type->arguments,
-            ))) {
+            callee: $calleeName,
+            name: $type->methodName,
+            scope: $scope,
+            arguments: $type->arguments,
+        ))) {
             return $returnType;
         }
 
@@ -285,7 +285,7 @@ class ReferenceTypeResolver
             $analyzedType = clone $type;
 
             $analyzedType->arguments = array_map(
-            // @todo: fix resolving arguments when deep arg is reference
+                // @todo: fix resolving arguments when deep arg is reference
                 fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
                 $type->arguments,
             );
@@ -366,12 +366,12 @@ class ReferenceTypeResolver
             : new Generic($type->name, array_map(fn () => new MixedType, $classDefinition->templateTypes));
 
         if (Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
-                instance: $typeBeingConstructed,
-                name: '__construct',
-                scope: $scope,
-                arguments: $type->arguments,
-                methodDefiningClassName: $type->name,
-            )) instanceof VoidType) {
+            instance: $typeBeingConstructed,
+            name: '__construct',
+            scope: $scope,
+            arguments: $type->arguments,
+            methodDefiningClassName: $type->name,
+        )) instanceof VoidType) {
             return $typeBeingConstructed;
         }
 
