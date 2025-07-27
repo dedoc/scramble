@@ -441,7 +441,7 @@ class ReferenceTypeResolver
     }
 
     /**
-     * @param array<array-key, Type> $arguments
+     * @param  array<array-key, Type>  $arguments
      */
     private function getFunctionCallResult(
         FunctionLikeDefinition $callee,
