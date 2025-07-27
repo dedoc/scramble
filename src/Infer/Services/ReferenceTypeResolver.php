@@ -101,20 +101,18 @@ class ReferenceTypeResolver
 
     private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type): Type
     {
-        $analyzedType = clone $type;
+        $contextualCalleeName = $type->callee;
 
-        if ($type->callee instanceof StaticReference) {
-            $contextualCalleeName = static::resolveClassName($scope, $type->callee->keyword);
+        if ($contextualCalleeName instanceof StaticReference) {
+            $contextualCalleeName = static::resolveClassName($scope, $contextualCalleeName->keyword);
 
             // This can only happen if any of static reserved keyword used in non-class context – hence considering not possible for now.
-            if (! $contextualCalleeName || $contextualCalleeName === $type->callee->keyword) {
+            if (! $contextualCalleeName) {
                 return new UnknownType("Cannot properly analyze [{$type->toString()}] reference type as static keyword used in non-class context, or current class scope has no parent.");
             }
-
-            $analyzedType->callee = $contextualCalleeName;
         }
 
-        return (new ConstFetchTypeGetter)($scope, $analyzedType->callee, $analyzedType->constName);
+        return (new ConstFetchTypeGetter)($scope, $contextualCalleeName, $type->constName);
     }
 
     /**
@@ -214,7 +212,7 @@ class ReferenceTypeResolver
         $calleeName = $type->callee;
 
         if ($calleeName instanceof Type) {
-            $calleeType = $this->resolve($scope, $type->callee);
+            $calleeType = $this->resolve($scope, $calleeName);
 
             if ($calleeType instanceof LiteralStringType) {
                 $calleeName = $calleeType->value;
@@ -310,8 +308,8 @@ class ReferenceTypeResolver
         }
 
         $calleeType = $callee instanceof CallableStringType
-            ? $this->index->getFunctionDefinition($type->callee->name)
-            : $this->resolve($scope, $type->callee);
+            ? $this->index->getFunctionDefinition($callee->name)
+            : $callee;
 
         if (! $calleeType) {
             // Callee cannot be resolved from index.
@@ -381,10 +379,10 @@ class ReferenceTypeResolver
         }
 
         $propertyDefaultTemplateTypes = collect($classDefinition->properties)
-            ->filter(fn (ClassPropertyDefinition $definition) => $definition->type instanceof TemplateType && (bool) $definition->defaultType)
-            ->mapWithKeys(fn (ClassPropertyDefinition $definition) => [
+            ->mapWithKeys(fn (ClassPropertyDefinition $definition) => $definition->type instanceof TemplateType ? [
                 $definition->type->name => $definition->defaultType,
-            ]);
+            ] : [])
+            ->filter();
 
         $constructorDefinition = $classDefinition->getMethodDefinition('__construct', $scope);
 
@@ -442,6 +440,9 @@ class ReferenceTypeResolver
             : $propertyType;
     }
 
+    /**
+     * @param array<array-key, Type> $arguments
+     */
     private function getFunctionCallResult(
         FunctionLikeDefinition $callee,
         array $arguments,
@@ -605,7 +606,7 @@ class ReferenceTypeResolver
             return collect();
         }
 
-        /** @var ParentConstructCall $firstParentConstructorCall */
+        /** @var ParentConstructCall|null $firstParentConstructorCall */
         $firstParentConstructorCall = collect($constructorDefinition->sideEffects)->first(fn ($se) => $se instanceof ParentConstructCall);
 
         if (! $firstParentConstructorCall) {
@@ -664,10 +665,6 @@ class ReferenceTypeResolver
                 continue;
             }
 
-            if (! $type instanceof ObjectType) {
-                continue;
-            }
-
             $event = new MethodCallEvent(
                 instance: $type,
                 name: $se->methodName,
@@ -677,10 +674,7 @@ class ReferenceTypeResolver
             );
 
             foreach ($methodDefinition->sideEffects as $sideEffect) {
-                if (
-                    $sideEffect instanceof SelfTemplateDefinition
-                    && $type instanceof Generic
-                ) {
+                if ($sideEffect instanceof SelfTemplateDefinition) {
                     $sideEffect->apply($type, $event);
                 }
             }
