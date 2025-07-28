@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
-use Closure;
 use Dedoc\Scramble\Infer\DefinitionBuilders\SelfOutTypeBuilder;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
