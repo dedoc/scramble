@@ -2,8 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 
+use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Infer\Services\ArrayArgumentTypeBag;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\Services\TemplateTypesSolver;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -109,7 +109,7 @@ class SelfOutTypeBuilder
                 $parentCallContextTemplates = (new TemplateTypesSolver)->getClassConstructorContextTemplates(
                     $parentDefinition,
                     $parentDefinition->getMethodDefinition('__construct'),
-                    new ArrayArgumentTypeBag($this->scope->getArgsTypes($parentConstructCall->args)),
+                    new UnresolvableArgumentTypeBag($this->scope->getArgsTypes($parentConstructCall->args)),
                 );
 
                 foreach ($constructorSelfOutType->templateTypes as $index => $genericSelfOutTypePart) {
@@ -165,7 +165,7 @@ class SelfOutTypeBuilder
 
                 $methodCallContextTemplates = (new TemplateTypesSolver)->getFunctionContextTemplates(
                     $methodDefinition,
-                    new ArrayArgumentTypeBag($this->scope->getArgsTypes($potentialSetterCall->args)),
+                    new UnresolvableArgumentTypeBag($this->scope->getArgsTypes($potentialSetterCall->args)),
                 );
 
                 foreach ($methodSelfOutType->templateTypes as $index => $genericSelfOutTypePart) {

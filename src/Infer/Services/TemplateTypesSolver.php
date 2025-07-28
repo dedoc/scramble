@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Services;
 
+use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -91,7 +92,6 @@ class TemplateTypesSolver
 
             if (! $foundCorrespondingTemplateType) {
                 $foundCorrespondingTemplateType = new UnknownType;
-                // throw new \LogicException("Cannot infer type of template $template->name from arguments.");
             }
 
             return [
@@ -99,21 +99,5 @@ class TemplateTypesSolver
                 $foundCorrespondingTemplateType,
             ];
         }, $templates)));
-    }
-
-    /**
-     * For a given generic type, defined a template type by the template type name.
-     */
-    public function defineTemplateTypes(?ClassDefinition $classDefinition, Generic $type, string $definedTemplate, Type $definedType)
-    {
-        $templateNameToIndexMap = array_flip(array_map(fn ($t) => $t->name, $classDefinition->templateTypes ?? []));
-
-        if (! isset($templateNameToIndexMap[$definedTemplate])) {
-            throw new \LogicException('Should not happen');
-        }
-
-        $templateIndex = $templateNameToIndexMap[$definedTemplate];
-
-        $type->templateTypes[$templateIndex] = $definedType;
     }
 }

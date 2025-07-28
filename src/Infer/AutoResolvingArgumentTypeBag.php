@@ -1,12 +1,14 @@
 <?php
 
-namespace Dedoc\Scramble\Infer\Services;
+namespace Dedoc\Scramble\Infer;
 
+use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 
-class LazyArgumentTypeBag implements ArgumentTypeBag
+class AutoResolvingArgumentTypeBag implements ArgumentTypeBag
 {
     public function __construct(private Scope $scope, private array $arguments) {}
 

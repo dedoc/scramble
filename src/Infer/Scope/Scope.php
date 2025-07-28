@@ -2,10 +2,10 @@
 
 namespace Dedoc\Scramble\Infer\Scope;
 
+use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
-use Dedoc\Scramble\Infer\Services\ArrayArgumentTypeBag;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\BooleanNotTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
@@ -140,7 +140,7 @@ class Scope
             $calleeType = $this->getType($node->var);
 
             $event = $calleeType instanceof ObjectType
-                ? new MethodCallEvent($calleeType, $node->name->name, $this, new ArrayArgumentTypeBag($this->getArgsTypes($node->args)), $calleeType->name)
+                ? new MethodCallEvent($calleeType, $node->name->name, $this, new UnresolvableArgumentTypeBag($this->getArgsTypes($node->args)), $calleeType->name)
                 : null;
 
             $exceptions = $event ? app(ExtensionsBroker::class)->getMethodCallExceptions($event) : [];

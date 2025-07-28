@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Infer\Services;
+namespace Dedoc\Scramble\Infer\Contracts;
 
 use Countable;
 use Dedoc\Scramble\Support\Type\Type;

@@ -1,11 +1,12 @@
 <?php
 
-namespace Dedoc\Scramble\Infer\Services;
+namespace Dedoc\Scramble\Infer;
 
+use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 
-class ArrayArgumentTypeBag implements ArgumentTypeBag
+class UnresolvableArgumentTypeBag implements ArgumentTypeBag
 {
     public function __construct(private array $arguments) {}
 

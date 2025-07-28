@@ -2,10 +2,10 @@
 
 namespace Dedoc\Scramble\Infer\Extensions\Event;
 
+use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\Concerns\ArgumentTypesAware;
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Infer\Services\ArrayArgumentTypeBag;
 use PhpParser\Node\Expr\CallLike;
 
 class SideEffectCallEvent
@@ -17,6 +17,6 @@ class SideEffectCallEvent
         public readonly FunctionLikeDefinition $calledDefinition,
         public readonly CallLike $node,
         public readonly Scope $scope,
-        public readonly ArrayArgumentTypeBag $arguments,
+        public readonly UnresolvableArgumentTypeBag $arguments,
     ) {}
 }

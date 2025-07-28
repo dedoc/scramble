@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Context;
+use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
@@ -10,6 +11,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
+use Dedoc\Scramble\Infer\AutoResolvingArgumentTypeBag;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
@@ -131,7 +133,7 @@ class ReferenceTypeResolver
 
         $calleeType = $this->resolveAndNormalizeCallee($scope, $type->callee);
         $type->callee = $calleeType; // @todo stop mutating `$type` use `$calleeType` instead.
-        $arguments = new LazyArgumentTypeBag($scope, $type->arguments);
+        $arguments = new AutoResolvingArgumentTypeBag($scope, $type->arguments);
 
         $classDefinition = $calleeType instanceof ObjectType
             ? $this->index->getClass($calleeType->name)
@@ -171,7 +173,7 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeType->name]");
         }
 
-        $resultingType = $this->getFunctionCallResult($methodDefinition, new LazyArgumentTypeBag($scope, $type->arguments), $calleeType, $event);
+        $resultingType = $this->getFunctionCallResult($methodDefinition, new AutoResolvingArgumentTypeBag($scope, $type->arguments), $calleeType, $event);
 
         if ($calleeType instanceof SelfType) {
             return $resultingType;
@@ -189,7 +191,7 @@ class ReferenceTypeResolver
         // (#Doctrine\DBAL\Schema\Table).listTableDetails()
         // (#TName).listTableDetails()
         $calleeName = $type->callee;
-        $arguments = new LazyArgumentTypeBag($scope, $type->arguments);
+        $arguments = new AutoResolvingArgumentTypeBag($scope, $type->arguments);
 
         if ($calleeName instanceof Type) {
             $calleeType = $this->resolve($scope, $calleeName);
@@ -260,7 +262,7 @@ class ReferenceTypeResolver
         $callee = $this->resolve($scope, $type->callee);
         $callee = $callee instanceof TemplateType ? $callee->is : $callee;
 
-        $arguments = new LazyArgumentTypeBag($scope, $type->arguments);
+        $arguments = new AutoResolvingArgumentTypeBag($scope, $type->arguments);
 
         if ($callee instanceof CallableStringType) {
             $returnType = Context::getInstance()->extensionsBroker->getFunctionReturnType(new FunctionCallEvent(
@@ -303,7 +305,7 @@ class ReferenceTypeResolver
 
     private function resolveNewCallReferenceType(Scope $scope, NewCallReferenceType $type): Type
     {
-        $arguments = new LazyArgumentTypeBag($scope, $type->arguments);
+        $arguments = new AutoResolvingArgumentTypeBag($scope, $type->arguments);
 
         if ($type->name instanceof Type) {
             $resolvedNameType = $this->resolve($scope, $type->name);
@@ -358,7 +360,7 @@ class ReferenceTypeResolver
         $inferredConstructorParamTemplates = (new TemplateTypesSolver)->getClassConstructorContextTemplates(
             $classDefinition,
             $constructorDefinition,
-            new LazyArgumentTypeBag($scope, $type->arguments),
+            new AutoResolvingArgumentTypeBag($scope, $type->arguments),
         );
 
         $inferredTemplates = collect()

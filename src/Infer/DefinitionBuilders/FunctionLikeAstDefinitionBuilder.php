@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 
+use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinitionBuilder;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
@@ -13,7 +14,6 @@ use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
-use Dedoc\Scramble\Infer\Services\ArrayArgumentTypeBag;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\Services\ShallowTypeResolver;
@@ -22,7 +22,6 @@ use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
-use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Support\Arr;
 use PhpParser\Node;
 use PhpParser\Node\Expr\FuncCall;
@@ -165,7 +164,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             calledDefinition: $shallowMethodDefinition,
             node: $methodCall,
             scope: $fnScope,
-            arguments: new ArrayArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
+            arguments: new UnresolvableArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
         ));
     }
 
@@ -199,7 +198,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             calledDefinition: $shallowMethodDefinition,
             node: $methodCall,
             scope: $fnScope,
-            arguments: new ArrayArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
+            arguments: new UnresolvableArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
         ));
     }
 
@@ -220,7 +219,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             calledDefinition: $functionDefinition,
             node: $call,
             scope: $fnScope,
-            arguments: new ArrayArgumentTypeBag($fnScope->getArgsTypes($call->args)),
+            arguments: new UnresolvableArgumentTypeBag($fnScope->getArgsTypes($call->args)),
         ));
     }
 
