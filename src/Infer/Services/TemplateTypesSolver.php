@@ -23,7 +23,7 @@ class TemplateTypesSolver
         ])->toArray();
     }
 
-    public function getFunctionContextTemplates(FunctionLikeDefinition $functionLikeDefinition, array $arguments)
+    public function getFunctionContextTemplates(FunctionLikeDefinition $functionLikeDefinition, array|ArgumentsBag $arguments)
     {
         return collect($this->resolveTypesTemplatesFromArguments(
             $functionLikeDefinition->type->templates,
@@ -32,7 +32,7 @@ class TemplateTypesSolver
         ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray();
     }
 
-    public function getClassConstructorContextTemplates(ClassDefinition $classDefinition, ?FunctionLikeDefinition $functionLikeDefinition, array $arguments)
+    public function getClassConstructorContextTemplates(ClassDefinition $classDefinition, ?FunctionLikeDefinition $functionLikeDefinition, array|ArgumentsBag $arguments)
     {
         return collect($this->resolveTypesTemplatesFromArguments(
             ($functionLikeDefinition->type->templates ?? []) + $classDefinition->templateTypes,
@@ -48,20 +48,22 @@ class TemplateTypesSolver
      * @param  array<array-key, Type>  $realArguments  The list of arguments a function has been called with.
      * @return array<int, Type> The actual list of arguments where not passed arguments replaced with default values.
      */
-    private function prepareArguments(?FunctionLikeDefinition $callee, array $realArguments)
+    private function prepareArguments(?FunctionLikeDefinition $callee, array|ArgumentsBag $realArguments): array
     {
         if (! $callee) {
-            return $realArguments;
+            return is_array($realArguments) ? $realArguments : $realArguments->all();
         }
+
+        $argumentsBag = is_array($realArguments) ? new ArrayArgumentsBag($realArguments) : $realArguments;
 
         return collect($callee->type->arguments)
             ->keys()
-            ->map(function (string $name, int $index) use ($callee, $realArguments) {
-                return $realArguments[$name] ?? $realArguments[$index] ?? $callee->argumentsDefaults[$name] ?? null;
+            ->map(function (string $name, int $index) use ($callee, $realArguments, $argumentsBag) {
+                return $argumentsBag->getArgument(new ArgumentPosition($index, $name), $callee->argumentsDefaults[$name] ?? null);
             })
             ->filter()
             ->values()
-            ->toArray();
+            ->all();
     }
 
     /**
