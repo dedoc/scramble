@@ -8,7 +8,6 @@ use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Illuminate\Support\Str;
 
 class MethodAnalyzer
 {
@@ -19,12 +18,6 @@ class MethodAnalyzer
 
     public function analyze(FunctionLikeDefinition $methodDefinition, array $indexBuilders = [], bool $withSideEffects = false)
     {
-        if (! Index::shouldAnalyzeAst($this->getClassReflector()->getMethod($methodDefinition->type->name)->getReflection()->getFileName() ?: '')) {
-            $methodDefinition->isFullyAnalyzed = true;
-
-            return $methodDefinition;
-        }
-
         $node = $this->getClassReflector()->getMethod($methodDefinition->type->name)->getAstNode();
 
         if (! $node) {
