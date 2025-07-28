@@ -59,17 +59,11 @@ class ReferenceTypeResolver
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );
 
-        // Type finalization: removing duplicates from union + unpacking array items.
-        $finalizedResolvedType = (new TypeWalker)->map($resolvedType, function (Type $t) {
-            if ($t instanceof Union) {
-                return TypeHelper::mergeTypes(...$t->types);
-            }
-            if ($t instanceof KeyedArrayType) {
-                return TypeHelper::unpackIfArray($t);
-            }
-
-            return $t;
-        });
+        // Type finalization: removing duplicates from union + unpacking array items (inside .
+        $finalizedResolvedType = (new TypeWalker)->replace(
+            $resolvedType,
+            fn (Type $t) => $t instanceof Union ? TypeHelper::mergeTypes(...$t->types) : null,
+        );
 
         return $finalizedResolvedType->setOriginal($originalType);
     }
