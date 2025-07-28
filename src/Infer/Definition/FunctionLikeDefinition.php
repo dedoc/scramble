@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Definition;
 
 use Closure;
+use Dedoc\Scramble\Infer\DefinitionBuilders\SelfOutTypeBuilder;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Type;
@@ -13,7 +14,7 @@ class FunctionLikeDefinition
 
     public bool $referencesResolved = false;
 
-    private Generic $_selfOutType;
+    private ?Generic $_selfOutType;
 
     /**
      * @param  array<string, Type>  $argumentsDefaults  A map where the key is arg name and value is a default type.
@@ -24,7 +25,7 @@ class FunctionLikeDefinition
         public array $argumentsDefaults = [],
         public ?string $definingClassName = null,
         public bool $isStatic = false,
-        public ?Closure $selfOutType = null,
+        public ?SelfOutTypeBuilder $selfOutType = null,
     ) {}
 
     public function isFullyAnalyzed(): bool
@@ -41,6 +42,6 @@ class FunctionLikeDefinition
 
     public function getSelfOutType(): ?Generic
     {
-        return $this->_selfOutType ??= $this->selfOutType ? ($this->selfOutType)() : null;
+        return $this->_selfOutType ??= $this->selfOutType?->build();
     }
 }

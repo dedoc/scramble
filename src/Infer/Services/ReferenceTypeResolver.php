@@ -294,7 +294,6 @@ class ReferenceTypeResolver
             : $callee;
 
         if (! $calleeType) {
-            // Callee cannot be resolved from index.
             return new UnknownType;
         }
 
@@ -304,7 +303,6 @@ class ReferenceTypeResolver
 
         // @todo: callee now can be either in index or not, add support for other cases.
         if (! $calleeType instanceof FunctionLikeDefinition) {
-            // Callee cannot be resolved.
             return new UnknownType;
         }
 
@@ -381,7 +379,7 @@ class ReferenceTypeResolver
 
         $resultingTemplatesMap = $this->applySelfOutType(
             $resultingTemplatesMap,
-            ($sot = $constructorDefinition?->selfOutType) ? $sot() : null,
+            $constructorDefinition?->getSelfOutType(),
             $inferredConstructorParamTemplates,
         );
 
@@ -449,9 +447,6 @@ class ReferenceTypeResolver
             : $propertyType;
     }
 
-    /**
-     * @param  array<array-key, Type>  $arguments
-     */
     private function getFunctionCallResult(
         FunctionLikeDefinition $callee,
         ArgumentTypeBag $arguments,
@@ -483,16 +478,12 @@ class ReferenceTypeResolver
                 : $t;
         });
 
-        if ($callee->selfOutType && $returnType instanceof Generic && $classDefinition) {
-            $resultingTemplatesMap = $returnType->templateTypes;
-
-            $resultingTemplatesMap = $this->applySelfOutType(
-                $resultingTemplatesMap,
-                ($callee->selfOutType)(),
+        if ($returnType instanceof Generic && ($selfOutType = $callee->getSelfOutType())) {
+            $returnType->templateTypes = $this->applySelfOutType(
+                $returnType->templateTypes,
+                $selfOutType,
                 $inferredTemplates,
             );
-
-            $returnType->templateTypes = $resultingTemplatesMap;
         }
 
         // backward compatibility
