@@ -33,4 +33,9 @@ class LazyArgumentTypeBag implements ArgumentTypeBag
     {
         return count($this->arguments);
     }
+
+    public function allUnresolved(): array
+    {
+        return $this->arguments;
+    }
 }

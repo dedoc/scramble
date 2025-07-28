@@ -11,6 +11,8 @@ use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Services\ArgumentTypeBag;
+use Dedoc\Scramble\Infer\Services\LazyArgumentTypeBag;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
@@ -206,13 +208,17 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         return $this->getModelMethodReturn($event->getInstance()->name, $event->name, $event->arguments, $event->scope);
     }
 
-    private function getModelMethodReturn(string $resourceClassName, string $methodName, array $arguments, Scope $scope): Type
+    private function getModelMethodReturn(string $resourceClassName, string $methodName, ArgumentTypeBag $arguments, Scope $scope): Type
     {
         $modelType = JsonResourceHelper::modelType($scope->index->getClass($resourceClassName), $scope);
 
+        $argumentsList = $arguments instanceof LazyArgumentTypeBag
+            ? $arguments->allUnresolved()
+            : $arguments->all();
+
         return ReferenceTypeResolver::getInstance()->resolve(
             $scope,
-            new MethodCallReferenceType($modelType, $methodName, arguments: $arguments),
+            new MethodCallReferenceType($modelType, $methodName, arguments: $argumentsList),
         );
     }
 

@@ -45,7 +45,7 @@ class SelfTemplateDefinition
 
         $methodDefinedTemplates = (new TemplateTypesSolver)->getFunctionContextTemplates(
             $classDefinition->getMethodDefinition($event->name),
-            new LazyArgumentTypeBag($event->scope, $event->arguments),
+            $event->arguments,
         );
 
         return array_merge($classDefinedTemplates, $methodDefinedTemplates);

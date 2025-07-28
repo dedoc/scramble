@@ -139,6 +139,7 @@ class ReferenceTypeResolver
 
         $calleeType = $this->resolveAndNormalizeCallee($scope, $type->callee);
         $type->callee = $calleeType; // @todo stop mutating `$type` use `$calleeType` instead.
+        $arguments = new LazyArgumentTypeBag($scope, $type->arguments);
 
         $classDefinition = $calleeType instanceof ObjectType
             ? $this->index->getClass($calleeType->name)
@@ -148,7 +149,7 @@ class ReferenceTypeResolver
             instance: $calleeType,
             name: $type->methodName,
             scope: $scope,
-            arguments: $type->arguments,
+            arguments: $arguments,
             methodDefiningClassName: $classDefinition
                 ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index)
                 : ($calleeType instanceof ObjectType ? $calleeType->name : null),
@@ -164,7 +165,7 @@ class ReferenceTypeResolver
             instance: $calleeType,
             name: $type->methodName,
             scope: $scope,
-            arguments: $type->arguments,
+            arguments: $arguments,
             methodDefiningClassName: $classDefinition ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index) : $calleeType->name,
         ))) {
             return $returnType;
@@ -196,6 +197,7 @@ class ReferenceTypeResolver
         // (#Doctrine\DBAL\Schema\Table).listTableDetails()
         // (#TName).listTableDetails()
         $calleeName = $type->callee;
+        $arguments = new LazyArgumentTypeBag($scope, $type->arguments);
 
         if ($calleeName instanceof Type) {
             $calleeType = $this->resolve($scope, $calleeName);
@@ -226,7 +228,7 @@ class ReferenceTypeResolver
             callee: $calleeName,
             name: $type->methodName,
             scope: $scope,
-            arguments: $type->arguments,
+            arguments: $arguments,
         ))) {
             return $returnType;
         }
@@ -237,11 +239,11 @@ class ReferenceTypeResolver
                 ? $definingClass->getMethodDefiningClassName($type->methodName, $scope->index)
                 : $contextualClassName;
 
-            $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType($e = new MethodCallEvent(
-                instance: $i = new ObjectType($scope->context->classDefinition->name),
+            $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
+                instance: new ObjectType($scope->context->classDefinition->name),
                 name: $type->methodName,
                 scope: $scope,
-                arguments: $type->arguments,
+                arguments: $arguments,
                 methodDefiningClassName: $definingMethodName,
             ));
 
@@ -258,7 +260,7 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeName]");
         }
 
-        return $this->getFunctionCallResult($methodDefinition, new LazyArgumentTypeBag($scope, $type->arguments));
+        return $this->getFunctionCallResult($methodDefinition, $arguments);
     }
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type): Type
@@ -311,6 +313,8 @@ class ReferenceTypeResolver
 
     private function resolveNewCallReferenceType(Scope $scope, NewCallReferenceType $type): Type
     {
+        $arguments = new LazyArgumentTypeBag($scope, $type->arguments);
+
         if ($type->name instanceof Type) {
             $resolvedNameType = $this->resolve($scope, $type->name);
 
@@ -343,7 +347,7 @@ class ReferenceTypeResolver
             instance: $typeBeingConstructed,
             name: '__construct',
             scope: $scope,
-            arguments: $type->arguments,
+            arguments: $arguments,
             methodDefiningClassName: $type->name,
         )) instanceof VoidType) {
             return $typeBeingConstructed;

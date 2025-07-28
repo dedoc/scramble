@@ -418,7 +418,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             calledDefinition: $shallowMethodDefinition,
             node: $methodCall,
             scope: $fnScope,
-            arguments: $fnScope->getArgsTypes($methodCall->args),
+            arguments: new ArrayArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
         ));
     }
 
@@ -452,7 +452,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             calledDefinition: $shallowMethodDefinition,
             node: $methodCall,
             scope: $fnScope,
-            arguments: $fnScope->getArgsTypes($methodCall->args),
+            arguments: new ArrayArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
         ));
     }
 
@@ -473,7 +473,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             calledDefinition: $functionDefinition,
             node: $call,
             scope: $fnScope,
-            arguments: $fnScope->getArgsTypes($call->args),
+            arguments: new ArrayArgumentTypeBag($fnScope->getArgsTypes($call->args)),
         ));
     }
 
