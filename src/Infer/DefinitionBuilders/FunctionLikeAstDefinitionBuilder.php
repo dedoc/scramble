@@ -80,64 +80,9 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             $this->analyzeSideEffects($definition, $inferrer);
         }
 
-        //        static::resolveFunctionReturnReferences(new GlobalScope, $this->classDefinition->methods[$this->name]->type);
-        //
-        //        foreach ($this->classDefinition->methods[$this->name]->type->exceptions as $i => $exceptionType) {
-        //            $this->classDefinition->methods[$this->name]->type->exceptions[$i] = (new ReferenceTypeResolver($this->index)) // @phpstan-ignore assign.propertyType
-        //                ->resolve(new GlobalScope, $exceptionType);
-        //        }
-
         $definition->isFullyAnalyzed = true;
 
         return $definition;
-    }
-
-    public static function resolveFunctionReturnReferences(Scope $scope, FunctionLikeType $functionType): void
-    {
-        $returnType = $functionType->getReturnType();
-        $resolvedReference = ReferenceTypeResolver::getInstance()->resolve($scope, $returnType);
-        $functionType->setReturnType($resolvedReference);
-
-        if ($annotatedReturnType = $functionType->getAttribute('annotatedReturnType')) {
-            if (! $functionType->getAttribute('inferredReturnType')) {
-                $functionType->setAttribute('inferredReturnType', clone $functionType->getReturnType());
-            }
-
-            $functionType->setReturnType(
-                self::addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType, $scope)
-            );
-        }
-    }
-
-    private static function addAnnotatedReturnType(Type $inferredReturnType, Type $annotatedReturnType, Scope $scope): Type
-    {
-        $types = $inferredReturnType instanceof Union
-            ? $inferredReturnType->types
-            : [$inferredReturnType];
-
-        // @todo: Handle case when annotated return type is union.
-        if ($annotatedReturnType instanceof ObjectType) {
-            $resolvedName = ReferenceTypeResolver::resolveClassName($scope, $annotatedReturnType->name);
-            if (! $resolvedName) {
-                throw new LogicException("Got null after class name resolution of [$annotatedReturnType->name], string expected");
-            }
-            $annotatedReturnType->name = $resolvedName;
-        }
-
-        $annotatedTypeCanAcceptAnyInferredType = collect($types)
-            ->some(function (Type $t) use ($annotatedReturnType) {
-                if ($annotatedReturnType->accepts($t)) {
-                    return true;
-                }
-
-                return $t->acceptedBy($annotatedReturnType);
-            });
-
-        if (! $annotatedTypeCanAcceptAnyInferredType) {
-            return $annotatedReturnType;
-        }
-
-        return Union::wrap($types)->mergeAttributes($inferredReturnType->attributes());
     }
 
     /**
