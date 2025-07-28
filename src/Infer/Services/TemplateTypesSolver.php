@@ -58,7 +58,7 @@ class TemplateTypesSolver
 
         return collect($callee->type->arguments)
             ->keys()
-            ->map(function (string $name, int $index) use ($callee, $realArguments, $argumentsBag) {
+            ->map(function (string $name, int $index) use ($callee, $argumentsBag) {
                 return $argumentsBag->getArgument(new ArgumentPosition($index, $name), $callee->argumentsDefaults[$name] ?? null);
             })
             ->filter()

@@ -7,9 +7,7 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 
 class ArrayArgumentsBag implements ArgumentsBag
 {
-    public function __construct(private array $arguments)
-    {
-    }
+    public function __construct(private array $arguments) {}
 
     public function getArgument(ArgumentPosition $position, ?Type $default = new UnknownType): ?Type
     {

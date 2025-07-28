@@ -300,13 +300,13 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
                     continue;
                 }
 
-//                try {
-//                    if (! Index::shouldAnalyzeAst((new \ReflectionClass($this->classDefinition->name))->getMethod($potentialSetterCall->name->name)->getFileName() ?: '')) {
-//                        continue;
-//                    }
-//                } catch (\Throwable) {
-//                    continue;
-//                }
+                //                try {
+                //                    if (! Index::shouldAnalyzeAst((new \ReflectionClass($this->classDefinition->name))->getMethod($potentialSetterCall->name->name)->getFileName() ?: '')) {
+                //                        continue;
+                //                    }
+                //                } catch (\Throwable) {
+                //                    continue;
+                //                }
 
                 if (! $methodDefinition = $classDefinition->getMethodDefinition($potentialSetterCall->name->name)) {
                     continue;
