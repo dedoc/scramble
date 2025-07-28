@@ -49,8 +49,6 @@ use PhpParser\NodeAbstract;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 
-use function DeepCopy\deep_copy;
-
 class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
 {
     private LazyShallowReflectionIndex $shallowIndex;
@@ -295,7 +293,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
                  */
                 $var = ReferenceTypeResolver::getInstance()->resolve(
                     $scope,
-                    deep_copy($scope->getType($potentialSetterCall->var)),
+                    $scope->getType($potentialSetterCall->var)->clone(),
                 );
 
                 if (! $var instanceof SelfType) {
