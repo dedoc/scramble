@@ -178,7 +178,7 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeType->name]");
         }
 
-        $resultingType = $this->getFunctionCallResult($methodDefinition, new LazyArgumentsBag($scope, $type->arguments), $calleeType, $event);
+        $resultingType = $this->getFunctionCallResult($methodDefinition, new LazyArgumentTypeBag($scope, $type->arguments), $calleeType, $event);
 
         if ($calleeType instanceof SelfType) {
             return $resultingType;
@@ -258,7 +258,7 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeName]");
         }
 
-        return $this->getFunctionCallResult($methodDefinition, new LazyArgumentsBag($scope, $type->arguments));
+        return $this->getFunctionCallResult($methodDefinition, new LazyArgumentTypeBag($scope, $type->arguments));
     }
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type): Type
@@ -266,19 +266,13 @@ class ReferenceTypeResolver
         $callee = $this->resolve($scope, $type->callee);
         $callee = $callee instanceof TemplateType ? $callee->is : $callee;
 
+        $arguments = new LazyArgumentTypeBag($scope, $type->arguments);
+
         if ($callee instanceof CallableStringType) {
-            $analyzedType = clone $type;
-
-            $analyzedType->arguments = array_map(
-                // @todo: fix resolving arguments when deep arg is reference
-                fn ($t) => $t instanceof AbstractReferenceType ? $this->resolve($scope, $t) : $t,
-                $type->arguments,
-            );
-
             $returnType = Context::getInstance()->extensionsBroker->getFunctionReturnType(new FunctionCallEvent(
                 name: $callee->name,
                 scope: $scope,
-                arguments: $analyzedType->arguments,
+                arguments: $arguments,
             ));
 
             if ($returnType) {
@@ -312,7 +306,7 @@ class ReferenceTypeResolver
             return new UnknownType;
         }
 
-        return $this->getFunctionCallResult($calleeType, new LazyArgumentsBag($scope, $type->arguments));
+        return $this->getFunctionCallResult($calleeType, $arguments);
     }
 
     private function resolveNewCallReferenceType(Scope $scope, NewCallReferenceType $type): Type
@@ -370,7 +364,7 @@ class ReferenceTypeResolver
         $inferredConstructorParamTemplates = (new TemplateTypesSolver)->getClassConstructorContextTemplates(
             $classDefinition,
             $constructorDefinition,
-            new LazyArgumentsBag($scope, $type->arguments),
+            new LazyArgumentTypeBag($scope, $type->arguments),
         );
 
         $inferredTemplates = collect()
@@ -456,7 +450,7 @@ class ReferenceTypeResolver
      */
     private function getFunctionCallResult(
         FunctionLikeDefinition $callee,
-        array|ArgumentsBag $arguments,
+        ArgumentTypeBag $arguments,
         /* When this is a handling for method call */
         ObjectType|SelfType|null $calledOnType = null,
         ?MethodCallEvent $event = null,

@@ -16,7 +16,7 @@ class ArrayMergeReturnTypeExtension implements FunctionReturnTypeExtension
 
     public function getFunctionReturnType(FunctionCallEvent $event): ?Type
     {
-        $arguments = collect($event->arguments);
+        $arguments = collect($event->arguments->all());
 
         if (! $arguments->every(fn ($arg) => $arg instanceof KeyedArrayType)) {
             return null;

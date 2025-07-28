@@ -14,6 +14,7 @@ use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
+use Dedoc\Scramble\Infer\Services\ArrayArgumentTypeBag;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\Services\ShallowTypeResolver;
@@ -254,7 +255,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
                 $parentCallContextTemplates = (new TemplateTypesSolver)->getClassConstructorContextTemplates(
                     $parentDefinition,
                     $parentDefinition->getMethodDefinition('__construct'),
-                    $scope->getArgsTypes($parentConstructCall->args),
+                    new ArrayArgumentTypeBag($scope->getArgsTypes($parentConstructCall->args)),
                 );
 
                 foreach ($constructorSelfOutType->templateTypes as $index => $genericSelfOutTypePart) {
@@ -322,7 +323,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
 
                 $methodCallContextTemplates = (new TemplateTypesSolver)->getFunctionContextTemplates(
                     $methodDefinition,
-                    $scope->getArgsTypes($potentialSetterCall->args),
+                    new ArrayArgumentTypeBag($scope->getArgsTypes($potentialSetterCall->args)),
                 );
 
                 foreach ($methodSelfOutType->templateTypes as $index => $genericSelfOutTypePart) {

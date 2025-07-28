@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\Type\SideEffects;
 
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
+use Dedoc\Scramble\Infer\Services\LazyArgumentTypeBag;
 use Dedoc\Scramble\Infer\Services\TemplateTypesSolver;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -42,7 +43,10 @@ class SelfTemplateDefinition
 
         $classDefinedTemplates = (new TemplateTypesSolver)->getClassContextTemplates($type, $classDefinition);
 
-        $methodDefinedTemplates = (new TemplateTypesSolver)->getFunctionContextTemplates($classDefinition->getMethodDefinition($event->name), $event->arguments);
+        $methodDefinedTemplates = (new TemplateTypesSolver)->getFunctionContextTemplates(
+            $classDefinition->getMethodDefinition($event->name),
+            new LazyArgumentTypeBag($event->scope, $event->arguments),
+        );
 
         return array_merge($classDefinedTemplates, $methodDefinedTemplates);
     }

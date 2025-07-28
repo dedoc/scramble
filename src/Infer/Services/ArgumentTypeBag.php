@@ -2,12 +2,13 @@
 
 namespace Dedoc\Scramble\Infer\Services;
 
+use Countable;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 
-interface ArgumentsBag
+interface ArgumentTypeBag extends Countable
 {
-    public function getArgument(ArgumentPosition $position, ?Type $default = new UnknownType): ?Type;
+    public function get(string $name, int $position, ?Type $default = new UnknownType): ?Type;
 
     public function all(): array;
 }
