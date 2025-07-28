@@ -23,7 +23,6 @@ class ArrayMergeReturnTypeExtension implements FunctionReturnTypeExtension
             return null;
         }
         /** @var Collection<array-key, KeyedArrayType> $arguments */
-
         $items = $arguments->flatMap->items
             // unique them by key like array_merge works
             ->reduce(function ($carry, $item) {

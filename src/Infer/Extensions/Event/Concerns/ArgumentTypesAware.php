@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Infer\Extensions\Event\Concerns;
 
-use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 

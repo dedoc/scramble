@@ -22,7 +22,6 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt\ClassMethod;
-use PhpParser\NodeAbstract;
 use PhpParser\NodeFinder;
 
 class SelfOutTypeBuilder
@@ -47,7 +46,7 @@ class SelfOutTypeBuilder
             ->all();
 
         $templateDefiningStatements = (new NodeFinder)->find(
-            $this->node->stmts  ?: [],
+            $this->node->stmts ?: [],
             fn ($n) => $this->isThisPropertyAssignment($n) // Direct assignments of something on `$this`, like `$this->foo = 42`.
                 || ($functionDefinition->type->name === '__construct' && $this->isParentConstructCall($n)) // Calls to `parent::__construct` if is in constructor
                 || ($this->isPotentialSetterCall($n) && $this->isSelfTypeOrCallOnSelfType($this->scope->getType($n->var)))// just any method call on $this (self type!)

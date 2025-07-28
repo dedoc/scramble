@@ -9,7 +9,7 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 class UnresolvableArgumentTypeBag implements ArgumentTypeBag
 {
     /**
-     * @param array<array-key, Type> $arguments
+     * @param  array<array-key, Type>  $arguments
      */
     public function __construct(private array $arguments) {}
 
