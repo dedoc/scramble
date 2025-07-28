@@ -381,7 +381,7 @@ class ReferenceTypeResolver
 
         $resultingTemplatesMap = $this->applySelfOutType(
             $resultingTemplatesMap,
-            $constructorDefinition?->selfOutType,
+            ($sot = $constructorDefinition?->selfOutType) ? $sot() : null,
             $inferredConstructorParamTemplates,
         );
 
@@ -488,7 +488,7 @@ class ReferenceTypeResolver
 
             $resultingTemplatesMap = $this->applySelfOutType(
                 $resultingTemplatesMap,
-                $callee->selfOutType,
+                ($callee->selfOutType)(),
                 $inferredTemplates,
             );
 

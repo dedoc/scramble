@@ -80,7 +80,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         $definition = $this->classDefinition->methods[$this->name];
 
         if ($this->functionLike instanceof ClassMethod) {
-            $definition->selfOutType = $this->inferSelfOutType($inferrer, $this->functionLike);
+            $definition->selfOutType = fn () => $this->inferSelfOutType($inferrer, $this->functionLike);
         }
 
         if ($this->withSideEffects) {
@@ -247,7 +247,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
                 if (
                     ! $parentConstructor
                     || ! isset($parentConstructor->selfOutType)
-                    || ! $constructorSelfOutType = $parentConstructor->selfOutType
+                    || ! $constructorSelfOutType = ($parentConstructor->selfOutType)()
                 ) {
                     continue;
                 }
@@ -316,7 +316,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
                 if (
                     ! $methodDefinition
                     || ! isset($methodDefinition->selfOutType)
-                    || ! $methodSelfOutType = $methodDefinition->selfOutType
+                    || ! $methodSelfOutType = ($methodDefinition->selfOutType)()
                 ) {
                     continue;
                 }

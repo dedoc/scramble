@@ -83,7 +83,7 @@ it('setting a parameter to property in method makes it local method template typ
     $setProp = $def->getMethodDefinition('setProp');
 
     expect($setProp->type->toString())->toBe('<TA>(TA): void')
-        ->and($setProp->selfOutType?->toString())->toBe('self<TA>');
+        ->and($setProp->getSelfOutType()->toString())->toBe('self<TA>');
 });
 class SetPropToMethod_ClassDefinitionTest
 {
