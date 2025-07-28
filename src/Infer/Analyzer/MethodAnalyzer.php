@@ -8,7 +8,6 @@ use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Illuminate\Support\Str;
 
 class MethodAnalyzer
 {
