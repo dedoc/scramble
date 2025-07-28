@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Support\Type\SideEffects;
 
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
-use Dedoc\Scramble\Infer\Services\LazyArgumentTypeBag;
 use Dedoc\Scramble\Infer\Services\TemplateTypesSolver;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\TemplateType;

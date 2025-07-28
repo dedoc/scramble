@@ -8,9 +8,7 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 
 class LazyArgumentTypeBag implements ArgumentTypeBag
 {
-    public function __construct(private Scope $scope, private array $arguments)
-    {
-    }
+    public function __construct(private Scope $scope, private array $arguments) {}
 
     public function get(string $name, int $position, ?Type $default = new UnknownType): ?Type
     {
