@@ -145,16 +145,6 @@ class Scope
 
             $exceptions = $event ? app(ExtensionsBroker::class)->getMethodCallExceptions($event) : [];
 
-            $referenceType = new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args));
-
-            /*
-             * When inside a constructor, we want to add a side effect to the constructor definition, so we can track
-             * how the properties are being set.
-             */
-            if ($this->functionDefinition()?->type->name === '__construct') {
-                $this->functionDefinition()->sideEffects[] = $referenceType;
-            }
-
             if ($this->functionDefinition()) {
                 $this->functionDefinition()->type->exceptions = array_merge(
                     $this->functionDefinition()->type->exceptions,
@@ -162,7 +152,7 @@ class Scope
                 );
             }
 
-            return $this->setType($node, $referenceType);
+            return $this->setType($node, new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args)));
         }
 
         if ($node instanceof Node\Expr\StaticCall) {

@@ -20,7 +20,6 @@ class FunctionLikeDefinition
      */
     public function __construct(
         public FunctionType $type,
-        public array $sideEffects = [],
         public array $argumentsDefaults = [],
         public ?string $definingClassName = null,
         public bool $isStatic = false,

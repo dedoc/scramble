@@ -27,7 +27,6 @@ use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\SelfType;
-use Dedoc\Scramble\Support\Type\SideEffects\SelfTemplateDefinition;
 use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -477,18 +476,6 @@ class ReferenceTypeResolver
                 $selfOutType,
                 $inferredTemplates,
             );
-        }
-
-        // backward compatibility
-        foreach ($callee->sideEffects as $sideEffect) {
-            if (
-                $sideEffect instanceof SelfTemplateDefinition
-                && $isSelf
-                && $returnType instanceof Generic
-                && $event
-            ) {
-                $sideEffect->apply($returnType, $event);
-            }
         }
 
         return $returnType;
