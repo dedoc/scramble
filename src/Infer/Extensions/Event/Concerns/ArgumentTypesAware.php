@@ -10,10 +10,6 @@ trait ArgumentTypesAware
 {
     public function getArg(string $name, int $position, Type $default = new UnknownType): Type
     {
-        if ($this->arguments instanceof ArgumentTypeBag) {
-            return $this->arguments->get($name, $position, $default);
-        }
-
-        return $this->arguments[$name] ?? $this->arguments[$position] ?? $default;
+        return $this->arguments->get($name, $position, $default) ?: $default;
     }
 }

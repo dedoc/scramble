@@ -13,7 +13,8 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 
 class TemplateTypesSolver
 {
-    public function getClassContextTemplates(ObjectType $type, ClassDefinition $classDefinition)
+    /** @return array<string, Type> */
+    public function getClassContextTemplates(ObjectType $type, ClassDefinition $classDefinition): array
     {
         if (! $type instanceof Generic) {
             return [];
@@ -21,25 +22,27 @@ class TemplateTypesSolver
 
         return collect($classDefinition->templateTypes)->mapWithKeys(fn ($t, $index) => [
             $t->name => $type->templateTypes[$index] ?? new UnknownType,
-        ])->toArray();
+        ])->all();
     }
 
-    public function getFunctionContextTemplates(FunctionLikeDefinition $functionLikeDefinition, ArgumentTypeBag $arguments)
+    /** @return array<string, Type> */
+    public function getFunctionContextTemplates(FunctionLikeDefinition $functionLikeDefinition, ArgumentTypeBag $arguments): array
     {
         return collect($this->resolveTypesTemplatesFromArguments(
             $functionLikeDefinition->type->templates,
             $functionLikeDefinition->type->arguments,
             $this->prepareArguments($functionLikeDefinition, $arguments),
-        ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray();
+        ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->all();
     }
 
-    public function getClassConstructorContextTemplates(ClassDefinition $classDefinition, ?FunctionLikeDefinition $functionLikeDefinition, ArgumentTypeBag $arguments)
+    /** @return array<string, Type> */
+    public function getClassConstructorContextTemplates(ClassDefinition $classDefinition, ?FunctionLikeDefinition $functionLikeDefinition, ArgumentTypeBag $arguments): array
     {
         return collect($this->resolveTypesTemplatesFromArguments(
             ($functionLikeDefinition->type->templates ?? []) + $classDefinition->templateTypes,
             ($functionLikeDefinition->type->arguments ?? []),
             $this->prepareArguments($functionLikeDefinition, $arguments),
-        ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->toArray();
+        ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->all();
     }
 
     /**
@@ -70,7 +73,7 @@ class TemplateTypesSolver
      * @param  array<int, Type>  $realArguments
      * @return array{0: TemplateType, 1: Type}[]
      */
-    private function resolveTypesTemplatesFromArguments($templates, $templatedArguments, $realArguments): array
+    private function resolveTypesTemplatesFromArguments(array $templates, array $templatedArguments, array $realArguments): array
     {
         return array_values(array_filter(array_map(function (TemplateType $template) use ($templatedArguments, $realArguments) {
             $argumentIndexName = null;

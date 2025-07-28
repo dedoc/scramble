@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
+use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\PropertyFetch;
@@ -33,11 +34,6 @@ class SelfOutTypeBuilder
 
     public function build(): ?Generic
     {
-        return $this->inferSelfOutType($this->node);
-    }
-
-    private function inferSelfOutType(ClassMethod $node): ?Generic
-    {
         if (! $classDefinition = $this->scope->context->classDefinition) {
             return null;
         }
@@ -51,7 +47,7 @@ class SelfOutTypeBuilder
             ->all();
 
         $templateDefiningStatements = (new NodeFinder)->find(
-            $node->stmts,
+            $this->node->stmts  ?: [],
             fn ($n) => $this->isThisPropertyAssignment($n) // Direct assignments of something on `$this`, like `$this->foo = 42`.
                 || ($functionDefinition->type->name === '__construct' && $this->isParentConstructCall($n)) // Calls to `parent::__construct` if is in constructor
                 || ($this->isPotentialSetterCall($n) && $this->isSelfTypeOrCallOnSelfType($this->scope->getType($n->var)))// just any method call on $this (self type!)
@@ -61,7 +57,7 @@ class SelfOutTypeBuilder
             if ($this->isThisPropertyAssignment($statement)) {
                 $thisPropertiesAssignment = $statement;
 
-                $propertyName = $thisPropertiesAssignment->var->name->name;
+                $propertyName = $thisPropertiesAssignment->var->name->name; // @phpstan-ignore property.notFound
 
                 if (! array_key_exists($propertyName, $classDefinition->properties)) {
                     continue;
@@ -155,7 +151,7 @@ class SelfOutTypeBuilder
                     continue;
                 }
 
-                if (! $methodDefinition = $classDefinition->getMethodDefinition($potentialSetterCall->name->name)) {
+                if (! $methodDefinition = $classDefinition->getMethodDefinition($potentialSetterCall->name->name)) {  // @phpstan-ignore property.notFound
                     continue;
                 }
 
@@ -202,17 +198,22 @@ class SelfOutTypeBuilder
         );
     }
 
-    private function isThisPropertyAssignment(NodeAbstract $n): bool
+    /**
+     * @phpstan-assert-if-true Assign $n
+     */
+    private function isThisPropertyAssignment(Node $n): bool
     {
         return $n instanceof Assign
             && $n->var instanceof PropertyFetch
             && $n->var->var instanceof Variable
             && $n->var->var->name === 'this'
-            && $n->var->name instanceof Identifier
-            && is_string($n->var->name->name);
+            && $n->var->name instanceof Identifier;
     }
 
-    private function isParentConstructCall(NodeAbstract $n): bool
+    /**
+     * @phpstan-assert-if-true StaticCall $n
+     */
+    private function isParentConstructCall(Node $n): bool
     {
         return $n instanceof StaticCall
             && $n->class instanceof Name
@@ -221,11 +222,13 @@ class SelfOutTypeBuilder
             && $n->name->name === '__construct';
     }
 
-    private function isPotentialSetterCall(NodeAbstract $n): bool
+    /**
+     * @phpstan-assert-if-true MethodCall $n
+     */
+    private function isPotentialSetterCall(Node $n): bool
     {
         return $n instanceof MethodCall
-            && $n->name instanceof Identifier
-            && is_string($n->name->name);
+            && $n->name instanceof Identifier;
     }
 
     private function isSelfTypeOrCallOnSelfType(Type $t): bool

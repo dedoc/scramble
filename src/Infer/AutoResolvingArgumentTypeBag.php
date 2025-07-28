@@ -10,6 +10,9 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 
 class AutoResolvingArgumentTypeBag implements ArgumentTypeBag
 {
+    /**
+     * @param array<array-key, Type> $arguments
+     */
     public function __construct(private Scope $scope, private array $arguments) {}
 
     public function get(string $name, int $position, ?Type $default = new UnknownType): ?Type
@@ -34,6 +37,7 @@ class AutoResolvingArgumentTypeBag implements ArgumentTypeBag
         return count($this->arguments);
     }
 
+    /** @return array<array-key, Type> */
     public function allUnresolved(): array
     {
         return $this->arguments;
