@@ -35,6 +35,68 @@ function validationRulesToDocumentationWithDeep($rulesToParameters)
 }
 
 // @todo: move rules from here to Generator/Request/ValidationRulesDocumentation test
+it('supports present rule', function () {
+    $rules = [
+        'password' => ['present'],
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'name' => 'password',
+            'in' => 'query',
+            'required' => true,
+            'schema' => ['type' => 'string'],
+        ]);
+});
+
+it('supports present rule on array', function () {
+    $rules = [
+        'users' => ['present', 'array'],
+        'users.*' => ['string'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'name' => 'users',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => ['type' => 'string'],
+            ],
+            'required' => true,
+        ]);
+});
+
+it('supports present rule in array', function () {
+    $rules = [
+        'user.password' => ['present'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'name' => 'user',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'password' => ['type' => 'string'],
+                ],
+                'required' => ['password'],
+            ],
+        ]);
+});
 
 it('supports confirmed rule', function () {
     $rules = [

@@ -113,6 +113,13 @@ class RulesMapper
         return $type->nullable(true);
     }
 
+    public function present(Type $type): Type
+    {
+        $type->setAttribute('required', true);
+
+        return $type;
+    }
+
     public function required(Type $type)
     {
         $type->setAttribute('required', true);

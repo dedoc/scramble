@@ -72,9 +72,15 @@ class RulesToParameter
         $description = $type->description;
         $type->setDescription('');
 
+        $containsRequiringRule = $rules->containsStrict('required')
+            || $rules->containsStrict('present');
+
         $parameter = Parameter::make($this->name, $this->in)
             ->setSchema(Schema::fromType($type))
-            ->required($rules->containsStrict('required') && ! $rules->containsStrict('sometimes'))
+            ->required(
+                $containsRequiringRule
+                && ! $rules->containsStrict('sometimes')
+            )
             ->description($description);
 
         return $this->applyDocsInfo($parameter);
