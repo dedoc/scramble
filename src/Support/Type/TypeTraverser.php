@@ -42,6 +42,7 @@ class TypeTraverser
         foreach ($this->visitors as $visitor) {
             $result = $visitor->enter($result ?: $type);
         }
+
         return $result;
     }
 
@@ -51,6 +52,7 @@ class TypeTraverser
         foreach ($this->visitors as $visitor) {
             $result = $visitor->leave($result ?: $type);
         }
+
         return $result;
     }
 }

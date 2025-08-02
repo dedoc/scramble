@@ -10,7 +10,7 @@ use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Scramble;
-use Dedoc\Scramble\Support\Type as Type;
+use Dedoc\Scramble\Support\Type;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Tests\Infer\stubs\InvokableFoo;
@@ -290,11 +290,11 @@ it('handles custom resolvable PhpDoc types', function () {
                 Type\Union::wrap([
                     new Type\Literal\LiteralStringType('a'),
                     new Type\Literal\LiteralStringType('b'),
-                ])
+                ]),
             ]),
             Type\Union::wrap([
                 new Type\Literal\LiteralStringType('a'),
-            ])
+            ]),
         ])
     );
 
@@ -322,14 +322,14 @@ class Pick_ReferenceResolutionTest implements TypeResolverExtension
 
         if (count($type->templateTypes) !== 2) {
             return null;
-            $context->emitter->error("Pick expects 2 type arguments to be passed, got ".count($type->templateTypes));
+            $context->emitter->error('Pick expects 2 type arguments to be passed, got '.count($type->templateTypes));
         }
 
         [$subject, $keys] = $type->templateTypes;
 
         if (! $subject instanceof Type\KeyedArrayType) {
             return null;
-            $context->emitter->error("Pick expects 2 type arguments to be passed, got ".count($type->templateTypes));
+            $context->emitter->error('Pick expects 2 type arguments to be passed, got '.count($type->templateTypes));
         }
 
         $isHandleableUnion = $keys instanceof Type\Union
@@ -337,12 +337,12 @@ class Pick_ReferenceResolutionTest implements TypeResolverExtension
 
         if (! $keys instanceof Type\Literal\LiteralStringType && ! $isHandleableUnion) {
             return null;
-            $context->emitter->error("Pick 2-nd type argument must be union of strings or integer literals, got ".$keys->toString());
+            $context->emitter->error('Pick 2-nd type argument must be union of strings or integer literals, got '.$keys->toString());
         }
 
         $keys = collect($keys instanceof Type\Union ? $keys->types : [$keys])->map->value->all();
 
-        return new Type\KeyedArrayType(collect($subject->items)->filter(fn (Type\ArrayItemType_$t) => in_array($t->key, $keys))->all());
+        return new Type\KeyedArrayType(collect($subject->items)->filter(fn (Type\ArrayItemType_ $t) => in_array($t->key, $keys))->all());
     }
 }
 
