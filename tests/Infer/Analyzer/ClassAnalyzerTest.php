@@ -55,7 +55,7 @@ it('describes constructor arguments assignments as self out type on constructor'
         ->analyze(ConstructorArgumentAssignment_ClassAnalyzerTest::class)
         ->getMethodDefinition('__construct');
 
-    expect($constructor->selfOutType)
+    expect($constructor->selfOutTypeBuilder)
         ->not->toBeNull()
         ->and($constructor->getSelfOutType()->toString())
         ->toBe('self<array{a: TFoo1}, _>');
@@ -82,7 +82,7 @@ it('describes direct constructor arguments assignments as template placeholders'
         ->analyze(ConstructorDirectArgumentAssignment_ClassAnalyzerTest::class)
         ->getMethodDefinition('__construct');
 
-    expect($constructor->selfOutType)
+    expect($constructor->selfOutTypeBuilder)
         ->not->toBeNull()
         ->and($constructor->getSelfOutType()->toString())
         ->toBe('self<_>');
@@ -102,7 +102,7 @@ it('describes arguments assignments as self out type on any method', function ()
         ->analyze(MethodArgumentAssignment_ClassAnalyzerTest::class)
         ->getMethodDefinition('setFoo');
 
-    expect($method->selfOutType)
+    expect($method->selfOutTypeBuilder)
         ->not->toBeNull()
         ->and($method->getSelfOutType()->toString())
         ->toBe('self<array{foo: TSomething}>');
@@ -122,7 +122,7 @@ it('describes arguments passed to parent constructor call as part of self out ty
         ->analyze(ParentConstructorCall_ClassAnalyzerTest::class)
         ->getMethodDefinition('__construct');
 
-    expect($constructor->selfOutType)
+    expect($constructor->selfOutTypeBuilder)
         ->not->toBeNull()
         ->and($constructor->getSelfOutType()->toString())
         ->toBe('self<array{a: int(42)}, _>');
@@ -152,7 +152,7 @@ it('describes arguments passed to parent constructor direct call as part of self
         ->analyze(DirectParentConstructorCall_ClassAnalyzerTest::class)
         ->getMethodDefinition('__construct');
 
-    expect($constructor->selfOutType)
+    expect($constructor->selfOutTypeBuilder)
         ->not->toBeNull()
         ->and($constructor->getSelfOutType()->toString())
         ->toBe('self<int(42), _>');
@@ -182,7 +182,7 @@ it('describes properties set in setters as part of self out', function () {
         ->analyze(SetterCall_ClassAnalyzerTest::class)
         ->getMethodDefinition('__construct');
 
-    expect($constructor->selfOutType)
+    expect($constructor->selfOutTypeBuilder)
         ->not->toBeNull()
         ->and($constructor->getSelfOutType()->toString())
         ->toBe('self<TB>');
@@ -207,7 +207,7 @@ it('describes properties set in fluent setters as part of self out', function ()
         ->analyze(FluentSetterCall_ClassAnalyzerTest::class)
         ->getMethodDefinition('__construct');
 
-    expect($constructor->selfOutType)
+    expect($constructor->selfOutTypeBuilder)
         ->not->toBeNull()
         ->and($constructor->getSelfOutType()->toString())
         ->toBe('self<TB, int(42)>');
@@ -243,7 +243,7 @@ it('describes properties set in fluent setters set of variables as part of self 
         ->analyze(FluentSetterOnVariablesCall_ClassAnalyzerTest::class)
         ->getMethodDefinition('__construct');
 
-    expect($constructor->selfOutType)
+    expect($constructor->selfOutTypeBuilder)
         ->not->toBeNull()
         ->and($constructor->getSelfOutType()->toString())
         ->toBe('self<TB, int(42)>');

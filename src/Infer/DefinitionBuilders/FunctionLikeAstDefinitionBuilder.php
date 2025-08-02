@@ -68,7 +68,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         $scope = $inferrer->getFunctionLikeScope($this->functionLike);
 
         if ($this->functionLike instanceof ClassMethod && $scope) {
-            $definition->selfOutType = new SelfOutTypeBuilder($scope, $this->functionLike);
+            $definition->selfOutTypeBuilder = new SelfOutTypeBuilder($scope, $this->functionLike);
         }
 
         if ($this->withSideEffects) {

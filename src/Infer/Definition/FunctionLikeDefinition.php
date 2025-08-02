@@ -23,7 +23,7 @@ class FunctionLikeDefinition
         public array $argumentsDefaults = [],
         public ?string $definingClassName = null,
         public bool $isStatic = false,
-        public ?SelfOutTypeBuilder $selfOutType = null,
+        public ?SelfOutTypeBuilder $selfOutTypeBuilder = null,
     ) {}
 
     public function isFullyAnalyzed(): bool
@@ -40,6 +40,6 @@ class FunctionLikeDefinition
 
     public function getSelfOutType(): ?Generic
     {
-        return $this->_selfOutType ??= $this->selfOutType?->build();
+        return $this->_selfOutType ??= $this->selfOutTypeBuilder?->build();
     }
 }
