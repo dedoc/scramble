@@ -387,6 +387,6 @@ class AlwaysInt_ReferenceResolutionTest implements ResolvingType
 {
     public function resolve(ReferenceResolutionEvent $event): ?Type\Type
     {
-        return new Type\IntegerType();
+        return new Type\IntegerType;
     }
 }

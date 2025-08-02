@@ -6,7 +6,6 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocParser;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeWalker;
 use Dedoc\Scramble\PhpDoc\ResolveFqnPhpDocTypeVisitor;
-use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTextNode;
