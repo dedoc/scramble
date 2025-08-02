@@ -33,6 +33,7 @@ use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
+use Dedoc\Scramble\Support\Type\TypeTraverser;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -59,13 +60,13 @@ class ReferenceTypeResolver
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );
 
-        // Type finalization: removing duplicates from union + unpacking array items (inside .
+        // Type finalization: removing duplicates from union, unpacking array items (inside `replace`), calling resolving extensions.
         $finalizedResolvedType = (new TypeWalker)->replace(
             $resolvedType,
             fn (Type $t) => $t instanceof Union ? TypeHelper::mergeTypes(...$t->types) : null,
         );
 
-        return $finalizedResolvedType->setOriginal($originalType);
+        return $this->resolveCustomTypes($finalizedResolvedType->setOriginal($originalType), $originalType, $scope);
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type
@@ -89,6 +90,20 @@ class ReferenceTypeResolver
         }
 
         return $this->resolve($scope, $resolved);
+    }
+
+    private function resolveCustomTypes(Type $type, Type $originalType, Scope $scope): Type
+    {
+        $attributes = $type->attributes();
+
+        $traverser = new TypeTraverser([
+            new CustomTypeResolvingTypeVisitor($originalType, $scope),
+        ]);
+
+        return $traverser
+            ->traverse($type)
+            ->mergeAttributes($attributes)
+            ->setOriginal($originalType);
     }
 
     private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type): Type
