@@ -11,7 +11,6 @@ use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
-use Dedoc\Scramble\Infer\Extensions\Event\ReferenceResolutionEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -34,6 +33,7 @@ use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
+use Dedoc\Scramble\Support\Type\TypeTraverser;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -61,19 +61,23 @@ class ReferenceTypeResolver
         );
 
         // Type finalization: removing duplicates from union, unpacking array items (inside `replace`), calling resolving extensions.
-        $finalizedResolvedType = (new TypeWalker)->replace($resolvedType, function (Type $t) {
-            if ($t instanceof Union) {
-                return TypeHelper::mergeTypes(...$t->types);
-            }
-            if ($newType = Context::getInstance()->extensionsBroker->getResolvedType(new ReferenceResolutionEvent($t))) {
-                if ($newType !== $t) {
-                    return $newType;
-                }
-            }
-            return null;
-        });
+        $finalizedResolvedType = (new TypeWalker)->replace(
+            $resolvedType,
+            fn (Type $t) => $t instanceof Union ? TypeHelper::mergeTypes(...$t->types) : null,
+        );
 
-        return $finalizedResolvedType->setOriginal($originalType);
+        return $this->resolveCustomTypes($finalizedResolvedType->setOriginal($originalType), $originalType, $scope);
+    }
+
+    private function resolveCustomTypes(Type $type, Type $originalType, Scope $scope): Type
+    {
+        $traverser = new TypeTraverser([
+            new CustomTypeResolvingTypeVisitor($originalType, $scope),
+        ]);
+
+        $type = $traverser->traverse($type);
+
+        return $type->setOriginal($originalType);
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type

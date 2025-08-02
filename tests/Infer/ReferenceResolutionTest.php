@@ -2,11 +2,14 @@
 
 // Tests for resolving references behavior
 
+use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\ReferenceResolutionEvent;
+use Dedoc\Scramble\Infer\Extensions\FunctionReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\TypeResolverExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type as Type;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -273,7 +276,7 @@ it('handles invokable call to Closure type without failing (#636)', function () 
 });
 
 it('handles custom resolvable PhpDoc types', function () {
-    \Dedoc\Scramble\Scramble::registerExtension(Pick_ReferenceResolutionTest::class);
+    Scramble::registerExtension(Pick_ReferenceResolutionTest::class);
 
     $type = app(ReferenceTypeResolver::class)->resolve(
         new GlobalScope,
@@ -324,7 +327,6 @@ class Pick_ReferenceResolutionTest implements TypeResolverExtension
 
         [$subject, $keys] = $type->templateTypes;
 
-
         if (! $subject instanceof Type\KeyedArrayType) {
             return null;
             $context->emitter->error("Pick expects 2 type arguments to be passed, got ".count($type->templateTypes));
@@ -341,5 +343,72 @@ class Pick_ReferenceResolutionTest implements TypeResolverExtension
         $keys = collect($keys instanceof Type\Union ? $keys->types : [$keys])->map->value->all();
 
         return new Type\KeyedArrayType(collect($subject->items)->filter(fn (Type\ArrayItemType_$t) => in_array($t->key, $keys))->all());
+    }
+}
+
+it('handles all templates resolvable PhpDoc types', function () {
+    Scramble::registerExtensions([
+        AllTemplatesInfer_ReferenceResolutionTest::class,
+        AllTemplates_ReferenceResolutionTest::class,
+    ]);
+
+    $type = getStatementType('(new FooAllTemplates_ReferenceResolutionTest)->foo(a: 1, b: 2, c: 3)');
+
+    expect($type->toString())->toBe('array{a: int(1), b: int(2), c: int(3)}');
+});
+class FooAllTemplates_ReferenceResolutionTest
+{
+    public function foo()
+    {
+        return func_get_args();
+    }
+}
+class AllTemplatesInfer_ReferenceResolutionTest implements FunctionReturnTypeExtension
+{
+    public function shouldHandle(string $name): bool
+    {
+        return $name === 'func_get_args';
+    }
+
+    public function getFunctionReturnType(FunctionCallEvent $event): ?Type\Type
+    {
+        return new Type\ObjectType('$Arguments');
+    }
+}
+class AllTemplates_ReferenceResolutionTest implements TypeResolverExtension
+{
+    public function resolve(ReferenceResolutionEvent $event): ?Type\Type
+    {
+        $type = $event->type;
+
+        if (! $type instanceof Type\ObjectType) {
+            return null;
+        }
+
+        if ($type->name !== '$Arguments') {
+            return null;
+        }
+
+        if (! $event->arguments) {
+            return null;
+        }
+
+        $original = $type->getOriginal();
+
+        if (
+            $original instanceof Type\Reference\CallableCallReferenceType
+            && $original->callee instanceof Type\CallableStringType
+            && $original->callee->name === 'func_get_args'
+        ) {
+            return null;
+        }
+
+        $arrayItems = collect($event->arguments->all())
+            ->map(function (Type\Type $type, $key) {
+                return new Type\ArrayItemType_($key, $type);
+            })
+            ->all();
+
+        return new Type\KeyedArrayType($arrayItems);
     }
 }
