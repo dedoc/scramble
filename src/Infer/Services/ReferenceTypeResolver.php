@@ -69,20 +69,6 @@ class ReferenceTypeResolver
         return $this->resolveCustomTypes($finalizedResolvedType->setOriginal($originalType), $originalType, $scope);
     }
 
-    private function resolveCustomTypes(Type $type, Type $originalType, Scope $scope): Type
-    {
-        $attributes = $type->attributes();
-
-        $traverser = new TypeTraverser([
-            new CustomTypeResolvingTypeVisitor($originalType, $scope),
-        ]);
-
-        return $traverser
-            ->traverse($type)
-            ->mergeAttributes($attributes)
-            ->setOriginal($originalType);
-    }
-
     private function doResolve(Type $t, Type $type, Scope $scope): Type
     {
         $resolved = match ($t::class) {
@@ -104,6 +90,20 @@ class ReferenceTypeResolver
         }
 
         return $this->resolve($scope, $resolved);
+    }
+
+    private function resolveCustomTypes(Type $type, Type $originalType, Scope $scope): Type
+    {
+        $attributes = $type->attributes();
+
+        $traverser = new TypeTraverser([
+            new CustomTypeResolvingTypeVisitor($originalType, $scope),
+        ]);
+
+        return $traverser
+            ->traverse($type)
+            ->mergeAttributes($attributes)
+            ->setOriginal($originalType);
     }
 
     private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type): Type

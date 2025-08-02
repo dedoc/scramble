@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\AutoResolvingArgumentTypeBag;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Extensions\Event\ReferenceResolutionEvent;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\AbstractTypeVisitor;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -13,27 +14,21 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 
-class CustomTypeResolvingTypeVisitor
+class CustomTypeResolvingTypeVisitor extends AbstractTypeVisitor
 {
     public function __construct(
         private Type $originalType,
         private Scope $scope,
     ) {}
 
-    public function enter(Type $type) {}
-
-    public function leave(Type $t)
+    public function leave(Type $type): ?Type
     {
-        if ($argumentsType = $this->resolveArguments($t)) {
+        if ($argumentsType = $this->resolveArguments($type)) {
             return $argumentsType;
         }
 
-        $event = new ReferenceResolutionEvent(type: $t);
-
-        if ($newType = Context::getInstance()->extensionsBroker->getResolvedType($event)) {
-            if ($newType !== $t) {
-                return $newType;
-            }
+        if ($newType = Context::getInstance()->extensionsBroker->getResolvedType(new ReferenceResolutionEvent($type))) {
+            return $newType;
         }
 
         return null;

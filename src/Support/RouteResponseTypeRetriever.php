@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support;
 
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
+use Dedoc\Scramble\Support\Type\AbstractTypeVisitor;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
@@ -144,13 +145,11 @@ class RouteResponseTypeRetriever
 
     private function countKnownTypes(Type $type)
     {
-        $counterVisitor = new class
+        $counterVisitor = new class extends AbstractTypeVisitor
         {
             public int $count = 0;
 
-            public function enter(Type $type) {}
-
-            public function leave(Type $type)
+            public function leave(Type $type): ?Type
             {
                 if (
                     $type instanceof ObjectType
@@ -167,6 +166,8 @@ class RouteResponseTypeRetriever
                 ) {
                     $this->count++;
                 }
+
+                return null;
             }
         };
 

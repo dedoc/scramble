@@ -41,7 +41,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
     private LazyShallowReflectionIndex $shallowIndex;
 
     /**
-     * @param  IndexBuilder[]  $indexBuilders
+     * @param  IndexBuilder<array<string, mixed>>[]  $indexBuilders
      */
     public function __construct(
         public string $name,
@@ -134,7 +134,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
          * But when the expression is in place, we skip analysis:
          *     $this->{$var}()
          */
-        if (! $methodCall->name instanceof Name && ! $methodCall->name instanceof Identifier) {
+        if (! $methodCall->name instanceof Identifier) {
             return;
         }
 
@@ -170,7 +170,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
 
     private function analyzeStaticMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, StaticCall $methodCall): void
     {
-        if (! $methodCall->name instanceof Name && ! $methodCall->name instanceof Identifier) {
+        if (! $methodCall->name instanceof Identifier) {
             return;
         }
 

@@ -4,6 +4,9 @@ namespace Dedoc\Scramble\Support\Type;
 
 class TypeTraverser
 {
+    /**
+     * @param TypeVisitor[] $visitors
+     */
     public function __construct(
         private array $visitors = [],
     ) {}
@@ -36,7 +39,7 @@ class TypeTraverser
         return $type;
     }
 
-    private function enterType(Type $type): mixed
+    private function enterType(Type $type): ?Type
     {
         $result = null;
         foreach ($this->visitors as $visitor) {
@@ -46,7 +49,7 @@ class TypeTraverser
         return $result;
     }
 
-    private function leaveType(Type $type): mixed
+    private function leaveType(Type $type): ?Type
     {
         $result = null;
         foreach ($this->visitors as $visitor) {
