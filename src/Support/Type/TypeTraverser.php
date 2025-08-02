@@ -5,7 +5,7 @@ namespace Dedoc\Scramble\Support\Type;
 class TypeTraverser
 {
     /**
-     * @param TypeVisitor[] $visitors
+     * @param  TypeVisitor[]  $visitors
      */
     public function __construct(
         private array $visitors = [],
