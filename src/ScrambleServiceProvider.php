@@ -272,4 +272,18 @@ class ScrambleServiceProvider extends PackageServiceProvider
             }
         }
     }
+
+    public function boot()
+    {
+        parent::boot();
+
+        // Publish views
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'scramble');
+        
+        // Publish assets
+        $this->publishes([
+            __DIR__.'/../resources/css' => public_path('vendor/scramble/css'),
+            __DIR__.'/../resources/js' => public_path('vendor/scramble/js'),
+        ], 'scramble-assets');
+    }
 }

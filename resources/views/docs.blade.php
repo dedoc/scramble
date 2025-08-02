@@ -8,7 +8,7 @@
 
     <script src="https://unpkg.com/@stoplight/elements@8.3.4/web-components.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements@8.3.4/styles.min.css">
-
+    <link rel="stylesheet" href="{{ asset('vendor/scramble/css/autosuggest.css') }}">
     <script>
         const originalFetch = window.fetch;
 
@@ -65,5 +65,6 @@
         docs.apiDescriptionDocument = @json($spec);
     })();
 </script>
+<script src="{{ asset('vendor/scramble/js/autosuggest.js') }}"></script>
 </body>
 </html>
