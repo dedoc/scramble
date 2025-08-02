@@ -54,4 +54,10 @@ function initializeAutosuggest() {
             searchInput.focus();
         }
     });
+
+    function navigateToEndpoint(path) {
+        window.location.hash = `operations/${path}`;
+        document.getElementById('endpoint-search').value = '';
+         document.getElementById('suggestions').style.display = 'none';
+    }
 }
