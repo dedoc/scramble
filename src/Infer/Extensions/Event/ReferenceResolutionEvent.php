@@ -9,6 +9,5 @@ class ReferenceResolutionEvent
 {
     public function __construct(
         public Type $type,
-        public ?ArgumentTypeBag $arguments,
     ) {}
 }

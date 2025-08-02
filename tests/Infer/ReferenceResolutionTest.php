@@ -349,7 +349,6 @@ class Pick_ReferenceResolutionTest implements TypeResolverExtension
 it('handles all templates resolvable PhpDoc types', function () {
     Scramble::registerExtensions([
         AllTemplatesInfer_ReferenceResolutionTest::class,
-        AllTemplates_ReferenceResolutionTest::class,
     ]);
 
     $type = getStatementType('(new FooAllTemplates_ReferenceResolutionTest)->foo(a: 1, b: 2, c: 3)');
@@ -372,43 +371,6 @@ class AllTemplatesInfer_ReferenceResolutionTest implements FunctionReturnTypeExt
 
     public function getFunctionReturnType(FunctionCallEvent $event): ?Type\Type
     {
-        return new Type\ObjectType('$Arguments');
-    }
-}
-class AllTemplates_ReferenceResolutionTest implements TypeResolverExtension
-{
-    public function resolve(ReferenceResolutionEvent $event): ?Type\Type
-    {
-        $type = $event->type;
-
-        if (! $type instanceof Type\ObjectType) {
-            return null;
-        }
-
-        if ($type->name !== '$Arguments') {
-            return null;
-        }
-
-        if (! $event->arguments) {
-            return null;
-        }
-
-        $original = $type->getOriginal();
-
-        if (
-            $original instanceof Type\Reference\CallableCallReferenceType
-            && $original->callee instanceof Type\CallableStringType
-            && $original->callee->name === 'func_get_args'
-        ) {
-            return null;
-        }
-
-        $arrayItems = collect($event->arguments->all())
-            ->map(function (Type\Type $type, $key) {
-                return new Type\ArrayItemType_($key, $type);
-            })
-            ->all();
-
-        return new Type\KeyedArrayType($arrayItems);
+        return new Type\ObjectType('Arguments');
     }
 }

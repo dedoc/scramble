@@ -71,13 +71,16 @@ class ReferenceTypeResolver
 
     private function resolveCustomTypes(Type $type, Type $originalType, Scope $scope): Type
     {
+        $attributes = $type->attributes();
+
         $traverser = new TypeTraverser([
             new CustomTypeResolvingTypeVisitor($originalType, $scope),
         ]);
 
-        $type = $traverser->traverse($type);
-
-        return $type->setOriginal($originalType);
+        return $traverser
+            ->traverse($type)
+            ->mergeAttributes($attributes)
+            ->setOriginal($originalType);
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type
