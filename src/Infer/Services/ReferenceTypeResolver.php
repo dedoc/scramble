@@ -11,6 +11,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\ReferenceResolutionEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -59,11 +60,18 @@ class ReferenceTypeResolver
             onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
         );
 
-        // Type finalization: removing duplicates from union + unpacking array items (inside .
-        $finalizedResolvedType = (new TypeWalker)->replace(
-            $resolvedType,
-            fn (Type $t) => $t instanceof Union ? TypeHelper::mergeTypes(...$t->types) : null,
-        );
+        // Type finalization: removing duplicates from union, unpacking array items (inside `replace`), calling resolving extensions.
+        $finalizedResolvedType = (new TypeWalker)->replace($resolvedType, function (Type $t) {
+            if ($t instanceof Union) {
+                return TypeHelper::mergeTypes(...$t->types);
+            }
+            if ($newType = Context::getInstance()->extensionsBroker->getResolvedType(new ReferenceResolutionEvent($t))) {
+                if ($newType !== $t) {
+                    return $newType;
+                }
+            }
+            return null;
+        });
 
         return $finalizedResolvedType->setOriginal($originalType);
     }

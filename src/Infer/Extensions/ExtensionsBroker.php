@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Extensions;
 
 use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\ReferenceResolutionEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
 use Dedoc\Scramble\Support\Type\Type;
 
@@ -31,6 +32,9 @@ class ExtensionsBroker
 
     /** @var AfterSideEffectCallAnalyzed[] */
     private array $afterSideEffectCallAnalyzedExtensions;
+
+    /** @var TypeResolverExtension[] */
+    private array $typeResolverExtensions;
 
     /**
      * @var class-string<InferExtension>[]
@@ -88,6 +92,10 @@ class ExtensionsBroker
 
         $this->afterSideEffectCallAnalyzedExtensions = array_filter($extensions, function ($e) {
             return $e instanceof AfterSideEffectCallAnalyzed;
+        });
+
+        $this->typeResolverExtensions = array_filter($extensions, function ($e) {
+            return $e instanceof TypeResolverExtension;
         });
     }
 
@@ -226,6 +234,17 @@ class ExtensionsBroker
         }
 
         return null;
+    }
+
+    public function getResolvedType(ReferenceResolutionEvent $event): ?Type
+    {
+        foreach ($this->typeResolverExtensions as $extension) {
+            if ($type = $extension->resolve($event)) {
+                return $type;
+            }
+        }
+
+        return $event->type;
     }
 
     public function afterClassDefinitionCreated($event): void

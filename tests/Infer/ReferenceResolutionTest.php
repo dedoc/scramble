@@ -2,6 +2,12 @@
 
 // Tests for resolving references behavior
 
+use Dedoc\Scramble\Infer\Extensions\Event\ReferenceResolutionEvent;
+use Dedoc\Scramble\Infer\Extensions\TypeResolverExtension;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\Type as Type;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Tests\Infer\stubs\InvokableFoo;
@@ -265,3 +271,75 @@ it('handles invokable call to Closure type without failing (#636)', function () 
 
     expect($type->toString())->toBe('unknown');
 });
+
+it('handles custom resolvable PhpDoc types', function () {
+    \Dedoc\Scramble\Scramble::registerExtension(Pick_ReferenceResolutionTest::class);
+
+    $type = app(ReferenceTypeResolver::class)->resolve(
+        new GlobalScope,
+        new Type\Generic('Pick', [
+            new Type\Generic('Pick', [
+                new Type\KeyedArrayType([
+                    new Type\ArrayItemType_('a', new Type\IntegerType),
+                    new Type\ArrayItemType_('b', new Type\StringType),
+                    new Type\ArrayItemType_('c', new Type\IntegerType),
+                ]),
+                Type\Union::wrap([
+                    new Type\Literal\LiteralStringType('a'),
+                    new Type\Literal\LiteralStringType('b'),
+                ])
+            ]),
+            Type\Union::wrap([
+                new Type\Literal\LiteralStringType('a'),
+            ])
+        ])
+    );
+
+    expect($type->toString())->toBe('array{a: int}');
+});
+class Pick_ReferenceResolutionTest implements TypeResolverExtension
+{
+    public function resolve(ReferenceResolutionEvent $event): ?Type\Type
+    {
+        $type = $event->type;
+
+        // $context->emitter
+        // $context->arguments
+        // $context->scope
+        // $context->resolver
+        // $context->index
+
+        if (! $type instanceof Type\Generic) {
+            return null;
+        }
+
+        if ($type->name !== 'Pick') {
+            return null;
+        }
+
+        if (count($type->templateTypes) !== 2) {
+            return null;
+            $context->emitter->error("Pick expects 2 type arguments to be passed, got ".count($type->templateTypes));
+        }
+
+        [$subject, $keys] = $type->templateTypes;
+
+
+        if (! $subject instanceof Type\KeyedArrayType) {
+            return null;
+            $context->emitter->error("Pick expects 2 type arguments to be passed, got ".count($type->templateTypes));
+        }
+
+        $isHandleableUnion = $keys instanceof Type\Union
+            && count(array_filter($keys->types, fn (Type\Type $t) => $t instanceof Type\Literal\LiteralIntegerType || $t instanceof Type\Literal\LiteralStringType)) === count($keys->types);
+
+        if (! $keys instanceof Type\Literal\LiteralStringType && ! $isHandleableUnion) {
+            return null;
+            $context->emitter->error("Pick 2-nd type argument must be union of strings or integer literals, got ".$keys->toString());
+        }
+
+        $keys = collect($keys instanceof Type\Union ? $keys->types : [$keys])->map->value->all();
+
+        return new Type\KeyedArrayType(collect($subject->items)->filter(fn (Type\ArrayItemType_$t) => in_array($t->key, $keys))->all());
+    }
+}
