@@ -50,6 +50,7 @@
     </script>
 </head>
 <body style="height: 100vh; overflow-y: hidden">
+@include('scramble:partials.search-box')
 <elements-api
     id="docs"
     tryItCredentialsPolicy="{{ $config->get('ui.try_it_credentials_policy', 'include') }}"
