@@ -104,7 +104,7 @@ class SelfOutTypeBuilder
                 $parentCallContextTemplates = (new TemplateTypesSolver)->getClassConstructorContextTemplates(
                     $parentDefinition,
                     $parentDefinition->getMethodDefinition('__construct'),
-                    new UnresolvableArgumentTypeBag($this->scope->getArgsTypes($parentConstructCall->args)),
+                    $arguments = new UnresolvableArgumentTypeBag($this->scope->getArgsTypes($parentConstructCall->args)),
                 );
 
                 foreach ($constructorSelfOutType->templateTypes as $index => $genericSelfOutTypePart) {
@@ -126,7 +126,7 @@ class SelfOutTypeBuilder
                                 : $t,
                         );
 
-                    $expectedTemplatesMap[$definedParentTemplateType->name] = $concreteSelfOutTypePart;
+                    $expectedTemplatesMap[$definedParentTemplateType->name] = ReferenceTypeResolver::resolveArgumentsType($concreteSelfOutTypePart, $arguments);
                 }
 
                 continue;
@@ -160,7 +160,7 @@ class SelfOutTypeBuilder
 
                 $methodCallContextTemplates = (new TemplateTypesSolver)->getFunctionContextTemplates(
                     $methodDefinition,
-                    new UnresolvableArgumentTypeBag($this->scope->getArgsTypes($potentialSetterCall->args)),
+                    $arguments = new UnresolvableArgumentTypeBag($this->scope->getArgsTypes($potentialSetterCall->args)),
                 );
 
                 foreach ($methodSelfOutType->templateTypes as $index => $genericSelfOutTypePart) {
@@ -184,7 +184,7 @@ class SelfOutTypeBuilder
                             : $t,
                     );
 
-                    $expectedTemplatesMap[$definedTemplateType->name] = $concreteSelfOutTypePart;
+                    $expectedTemplatesMap[$definedTemplateType->name] = ReferenceTypeResolver::resolveArgumentsType($concreteSelfOutTypePart, $arguments);
                 }
 
                 continue;

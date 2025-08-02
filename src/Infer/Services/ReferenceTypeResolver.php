@@ -14,9 +14,11 @@ use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -309,7 +311,7 @@ class ReferenceTypeResolver
         }
 
         if (! $classDefinition->templateTypes) {
-            return new ObjectType($contextualClassName);
+            return $this->resolveArgumentsType(new ObjectType($contextualClassName), $arguments);
         }
 
         $propertyDefaultTemplateTypes = collect($classDefinition->properties)
@@ -340,7 +342,7 @@ class ReferenceTypeResolver
             $inferredConstructorParamTemplates,
         );
 
-        return new Generic($classDefinition->name, $resultingTemplatesMap);
+        return $this->resolveArgumentsType(new Generic($classDefinition->name, $resultingTemplatesMap), $arguments);
     }
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type): Type
@@ -478,7 +480,16 @@ class ReferenceTypeResolver
             );
         }
 
-        return $returnType;
+        return $this->resolveArgumentsType($returnType, $arguments);
+    }
+
+    public static function resolveArgumentsType(Type $type, ArgumentTypeBag $arguments): Type
+    {
+        return (new TypeWalker)->map($type, function (Type $t) use ($arguments) {
+            return $t instanceof ObjectType && $t->name === 'Arguments'
+                ? new KeyedArrayType(collect($arguments->all())->map(fn ($t, $k) => new ArrayItemType_($k, $t))->all())
+                : $t;
+        });
     }
 
     public static function resolveClassName(Scope $scope, string $name): ?string

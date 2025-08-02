@@ -5,15 +5,16 @@
 use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\ReferenceResolutionEvent;
 use Dedoc\Scramble\Infer\Extensions\FunctionReturnTypeExtension;
+use Dedoc\Scramble\Infer\Extensions\ResolvingType;
 use Dedoc\Scramble\Infer\Extensions\TypeResolverExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
-use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Tests\Infer\stubs\InvokableFoo;
+use Dedoc\Scramble\Tests\TestUtils;
 
 it('supports creating an object without constructor', function () {
     $type = analyzeFile(<<<'EOD'
@@ -372,5 +373,20 @@ class AllTemplatesInfer_ReferenceResolutionTest implements FunctionReturnTypeExt
     public function getFunctionReturnType(FunctionCallEvent $event): ?Type\Type
     {
         return new Type\ObjectType('Arguments');
+    }
+}
+
+it('allows keep PhpDoc types resolution logic on custom type', function () {
+    $type = TestUtils::parseType('AlwaysInt_ReferenceResolutionTest<string>');
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType->toString())->toBe('int');
+});
+class AlwaysInt_ReferenceResolutionTest implements ResolvingType
+{
+    public function resolve(ReferenceResolutionEvent $event): ?Type\Type
+    {
+        return new Type\IntegerType();
     }
 }

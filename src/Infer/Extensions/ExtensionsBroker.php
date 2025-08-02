@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Infer\Extensions;
 use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\ReferenceResolutionEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 
 class ExtensionsBroker
@@ -238,6 +239,12 @@ class ExtensionsBroker
 
     public function getResolvedType(ReferenceResolutionEvent $event): ?Type
     {
+        if ($event->type instanceof ObjectType && is_a($event->type->name, ResolvingType::class, true)) {
+            if ($type = app($event->type->name)->resolve($event)) {
+                return $type;
+            }
+        }
+
         foreach ($this->typeResolverExtensions as $extension) {
             if ($type = $extension->resolve($event)) {
                 return $type;
