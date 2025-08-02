@@ -411,11 +411,7 @@ class ReferenceTypeResolver
             return null;
         }
 
-        if (! $contextualClassName = $this->resolveClassName($scope, $type)) {
-            return null;
-        }
-
-        return $contextualClassName;
+        return $this->resolveClassName($scope, $type);
     }
 
     /**
