@@ -1,6 +1,7 @@
 <?php
 
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -57,8 +58,40 @@ function analyzeFile(
         Infer\Context::getInstance()->extensionsBroker->extensions,
     ));
     $traverser->traverse(
-        FileParser::getInstance()->parseContent($code)->getStatements(),
+        $fileAst = FileParser::getInstance()->parseContent($code)->getStatements(),
     );
+
+    $classLikeNames = array_map(
+        fn (\PhpParser\Node\Stmt\ClassLike $cl) => $cl->name?->name,
+        (new \PhpParser\NodeFinder)->find(
+            $fileAst,
+            fn ($n) => $n instanceof \PhpParser\Node\Stmt\ClassLike,
+        ),
+    );
+
+    foreach ($index->classesDefinitions as $classDefinition) {
+        if (! in_array($classDefinition->name, $classLikeNames)) {
+            continue;
+        }
+        foreach ($classDefinition->methods as $name => $methodDefinition) {
+            $node = (new \PhpParser\NodeFinder)->findFirst(
+                $fileAst,
+                fn ($n) => $n instanceof \PhpParser\Node\Stmt\ClassMethod && $n->name->name === $name,
+            );
+
+            if (! $node) {
+                continue;
+            }
+
+            $classDefinition->methods[$name] = (new FunctionLikeAstDefinitionBuilder(
+                $methodDefinition->type->name,
+                $node,
+                $index,
+                new FileNameResolver(new NameContext(new Throwing)),
+                $classDefinition,
+            ))->build();
+        }
+    }
 
     // Should this be here? Index must be global?
     resolveReferences($index, new ReferenceTypeResolver($index));

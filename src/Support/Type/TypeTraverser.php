@@ -4,41 +4,58 @@ namespace Dedoc\Scramble\Support\Type;
 
 class TypeTraverser
 {
+    /**
+     * @param  TypeVisitor[]  $visitors
+     */
     public function __construct(
         private array $visitors = [],
     ) {}
 
-    public function traverse(Type $type): void
+    public function traverse(Type $type): Type
     {
-        $this->enterType($type);
+        $enterResult = $this->enterType($type);
+        if ($enterResult instanceof Type) {
+            $type = $enterResult;
+        }
 
         $propertiesWithNodes = $type->nodes();
 
         foreach ($propertiesWithNodes as $propertyWithNode) {
             $node = $type->$propertyWithNode;
             if (! is_array($node)) {
-                $this->traverse($node);
+                $type->$propertyWithNode = $this->traverse($node);
             } else {
-                foreach ($node as $item) {
-                    $this->traverse($item);
+                foreach ($node as $index => $item) {
+                    $type->$propertyWithNode[$index] = $this->traverse($item);
                 }
             }
         }
 
-        $this->leaveType($type);
+        $leaveResult = $this->leaveType($type);
+        if ($leaveResult instanceof Type) {
+            $type = $leaveResult;
+        }
+
+        return $type;
     }
 
-    private function enterType(Type $type): void
+    private function enterType(Type $type): ?Type
     {
+        $result = null;
         foreach ($this->visitors as $visitor) {
-            $visitor->enter($type);
+            $result = $visitor->enter($result ?: $type);
         }
+
+        return $result;
     }
 
-    private function leaveType(Type $type): void
+    private function leaveType(Type $type): ?Type
     {
+        $result = null;
         foreach ($this->visitors as $visitor) {
-            $visitor->leave($type);
+            $result = $visitor->leave($result ?: $type);
         }
+
+        return $result;
     }
 }

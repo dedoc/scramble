@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Extensions\Event;
 
+use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
 use Dedoc\Scramble\Infer\Extensions\Event\Concerns\ArgumentTypesAware;
 use Dedoc\Scramble\Infer\Scope\Scope;
 
@@ -12,7 +13,7 @@ class FunctionCallEvent
     public function __construct(
         public readonly string $name,
         public readonly Scope $scope,
-        public readonly array $arguments,
+        public readonly ArgumentTypeBag $arguments,
     ) {}
 
     public function getDefinition()

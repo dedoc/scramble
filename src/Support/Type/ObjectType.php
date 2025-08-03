@@ -2,12 +2,14 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 
 class ObjectType extends AbstractType
 {
@@ -51,8 +53,9 @@ class ObjectType extends AbstractType
         return $classDefinition?->getMethodDefinition($methodName, $scope);
     }
 
-    public function getMethodReturnType(string $methodName, array $arguments = [], Scope $scope = new GlobalScope): Type
+    public function getMethodReturnType(string $methodName, array|ArgumentTypeBag $arguments = [], Scope $scope = new GlobalScope): Type
     {
+        $arguments = $arguments instanceof ArgumentTypeBag ? $arguments : new UnresolvableArgumentTypeBag($arguments);
         $classDefinition = $scope->index->getClass($this->name);
 
         if ($returnType = app(ExtensionsBroker::class)->getMethodReturnType(new MethodCallEvent(

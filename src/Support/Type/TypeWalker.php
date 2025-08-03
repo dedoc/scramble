@@ -113,10 +113,16 @@ class TypeWalker
 
         $subNodes = $nodesNamesGetter($subject);
 
-        $mappedSubject = $cb($subNodes ? clone $subject : $subject);
+        $subjectToMap = $subNodes ? clone $subject : $subject;
+
+        $mappedSubject = $cb($subjectToMap);
 
         if ($preserveAttributes) {
             $mappedSubject->mergeAttributes($subject->attributes());
+        }
+
+        if ($subjectToMap !== $mappedSubject) { // type was changed during the mapping
+            return $mappedSubject;
         }
 
         $this->visitedNodesWeakMap->offsetSet($subject, $mappedSubject);

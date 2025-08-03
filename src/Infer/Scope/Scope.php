@@ -11,6 +11,7 @@ use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
+use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
@@ -23,7 +24,6 @@ use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
-use Dedoc\Scramble\Support\Type\SideEffects\ParentConstructCall;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -140,20 +140,10 @@ class Scope
             $calleeType = $this->getType($node->var);
 
             $event = $calleeType instanceof ObjectType
-                ? new MethodCallEvent($calleeType, $node->name->name, $this, $this->getArgsTypes($node->args), $calleeType->name)
+                ? new MethodCallEvent($calleeType, $node->name->name, $this, new UnresolvableArgumentTypeBag($this->getArgsTypes($node->args)), $calleeType->name)
                 : null;
 
             $exceptions = $event ? app(ExtensionsBroker::class)->getMethodCallExceptions($event) : [];
-
-            $referenceType = new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args));
-
-            /*
-             * When inside a constructor, we want to add a side effect to the constructor definition, so we can track
-             * how the properties are being set.
-             */
-            if ($this->functionDefinition()?->type->name === '__construct') {
-                $this->functionDefinition()->sideEffects[] = $referenceType;
-            }
 
             if ($this->functionDefinition()) {
                 $this->functionDefinition()->type->exceptions = array_merge(
@@ -162,7 +152,7 @@ class Scope
                 );
             }
 
-            return $this->setType($node, $referenceType);
+            return $this->setType($node, new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args)));
         }
 
         if ($node instanceof Node\Expr\StaticCall) {
@@ -176,14 +166,6 @@ class Scope
                     $node,
                     new StaticMethodCallReferenceType($this->getType($node->class), $node->name->name, $this->getArgsTypes($node->args)),
                 );
-            }
-
-            if (
-                $this->functionDefinition()?->type->name === '__construct'
-                && $node->class->toString() === 'parent'
-                && $node->name->toString() === '__construct'
-            ) {
-                $this->functionDefinition()->sideEffects[] = new ParentConstructCall($this->getArgsTypes($node->args));
             }
 
             return $this->setType(

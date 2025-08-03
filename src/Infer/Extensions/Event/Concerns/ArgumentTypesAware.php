@@ -9,6 +9,6 @@ trait ArgumentTypesAware
 {
     public function getArg(string $name, int $position, Type $default = new UnknownType): Type
     {
-        return $this->arguments[$name] ?? $this->arguments[$position] ?? $default;
+        return $this->arguments->get($name, $position, $default) ?: $default;
     }
 }

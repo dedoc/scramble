@@ -45,6 +45,7 @@ class TestCase extends Orchestra
         Scramble::$tagResolver = null;
         Scramble::$enforceSchemaRules = [];
         Scramble::$defaultRoutesIgnored = false;
+        Scramble::$extensions = [];
 
         parent::tearDown();
     }

@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\InferExtensions;
 
+use Dedoc\Scramble\Infer\AutoResolvingArgumentTypeBag;
+use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
@@ -206,13 +208,17 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         return $this->getModelMethodReturn($event->getInstance()->name, $event->name, $event->arguments, $event->scope);
     }
 
-    private function getModelMethodReturn(string $resourceClassName, string $methodName, array $arguments, Scope $scope): Type
+    private function getModelMethodReturn(string $resourceClassName, string $methodName, ArgumentTypeBag $arguments, Scope $scope): Type
     {
         $modelType = JsonResourceHelper::modelType($scope->index->getClass($resourceClassName), $scope);
 
+        $argumentsList = $arguments instanceof AutoResolvingArgumentTypeBag
+            ? $arguments->allUnresolved()
+            : $arguments->all();
+
         return ReferenceTypeResolver::getInstance()->resolve(
             $scope,
-            new MethodCallReferenceType($modelType, $methodName, arguments: $arguments),
+            new MethodCallReferenceType($modelType, $methodName, arguments: $argumentsList),
         );
     }
 

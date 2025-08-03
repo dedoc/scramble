@@ -47,7 +47,6 @@ class FunctionLikeHandler implements CreatesScope
         // set function return types not in leave function, but in the return handlers.
         $scope->context->setFunctionDefinition($fnDefinition = new FunctionLikeDefinition(
             type: $fnType = new FunctionType($node->name->name ?? 'anonymous'),
-            sideEffects: [],
             definingClassName: $scope->context->classDefinition?->name,
             isStatic: $node instanceof Node\Stmt\ClassMethod ? $node->isStatic() : false,
         ));

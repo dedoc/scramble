@@ -703,12 +703,6 @@ parameters:
 			path: src/Infer.php
 
 		-
-			message: '#^Instanceof between PhpParser\\Node\\Expr\|PhpParser\\Node\\Identifier and PhpParser\\Node\\Name will always evaluate to false\.$#'
-			identifier: instanceof.alwaysFalse
-			count: 2
-			path: src/Infer/Analyzer/MethodAnalyzer.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\MethodAnalyzer\:\:analyze\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -716,18 +710,6 @@ parameters:
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\MethodAnalyzer\:\:analyze\(\) has parameter \$indexBuilders with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Analyzer/MethodAnalyzer.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\MethodAnalyzer\:\:traverseClassMethod\(\) has parameter \$indexBuilders with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Analyzer/MethodAnalyzer.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\MethodAnalyzer\:\:traverseClassMethod\(\) has parameter \$nodes with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Infer/Analyzer/MethodAnalyzer.php
@@ -859,12 +841,6 @@ parameters:
 			path: src/Infer/Definition/ClassDefinition.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Definition\\FunctionLikeDefinition\:\:__construct\(\) has parameter \$sideEffects with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Definition/FunctionLikeDefinition.php
-
-		-
 			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
 			identifier: argument.type
 			count: 1
@@ -907,12 +883,6 @@ parameters:
 			path: src/Infer/Extensions/AfterSideEffectCallAnalyzed.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\FunctionCallEvent\:\:__construct\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Extensions/Event/FunctionCallEvent.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\FunctionCallEvent\:\:getDefinition\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -923,12 +893,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: src/Infer/Extensions/Event/FunctionCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\MethodCallEvent\:\:__construct\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Extensions/Event/MethodCallEvent.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\MethodCallEvent\:\:getDefinition\(\) has no return type specified\.$#'
@@ -965,18 +929,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: src/Infer/Extensions/Event/PropertyFetchEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\SideEffectCallEvent\:\:__construct\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Extensions/Event/SideEffectCallEvent.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\StaticMethodCallEvent\:\:__construct\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Extensions/Event/StaticMethodCallEvent.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Extensions\\Event\\StaticMethodCallEvent\:\:getCallee\(\) has no return type specified\.$#'
@@ -1107,12 +1059,6 @@ parameters:
 		-
 			message: '#^Cannot cast PhpParser\\Node\\Expr\|string to string\.$#'
 			identifier: cast.string
-			count: 1
-			path: src/Infer/Handler/AssignHandler.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Handler\\AssignHandler\:\:handlePropertyAssignment\(\) has no return type specified\.$#'
-			identifier: missingType.return
 			count: 1
 			path: src/Infer/Handler/AssignHandler.php
 
@@ -1757,78 +1703,6 @@ parameters:
 			identifier: ternary.alwaysTrue
 			count: 1
 			path: src/Infer/Services/ShallowTypeResolver.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\TemplateTypesSolver\:\:defineTemplateTypes\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Services/TemplateTypesSolver.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\TemplateTypesSolver\:\:getClassContextTemplates\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Services/TemplateTypesSolver.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\TemplateTypesSolver\:\:getFunctionContextTemplates\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Services/TemplateTypesSolver.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\TemplateTypesSolver\:\:getFunctionContextTemplates\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Services/TemplateTypesSolver.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\TemplateTypesSolver\:\:prepareArguments\(\) has parameter \$realArguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Services/TemplateTypesSolver.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\TemplateTypesSolver\:\:prepareArguments\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Services/TemplateTypesSolver.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\TemplateTypesSolver\:\:resolveTypesTemplatesFromArguments\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Services/TemplateTypesSolver.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\TemplateTypesSolver\:\:resolveTypesTemplatesFromArguments\(\) has parameter \$realArguments with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Infer/Services/TemplateTypesSolver.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\TemplateTypesSolver\:\:resolveTypesTemplatesFromArguments\(\) has parameter \$templatedArguments with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Infer/Services/TemplateTypesSolver.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Services\\TemplateTypesSolver\:\:resolveTypesTemplatesFromArguments\(\) has parameter \$templates with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Infer/Services/TemplateTypesSolver.php
-
-		-
-			message: '#^Unable to resolve the template type TKey in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Infer/Services/TemplateTypesSolver.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Infer/Services/TemplateTypesSolver.php
 
 		-
 			message: '#^Parameter \#1 \$value of class Dedoc\\Scramble\\Support\\Type\\Literal\\LiteralStringType constructor expects string, Dedoc\\Scramble\\Support\\Type\\Type\|string given\.$#'
@@ -3706,12 +3580,6 @@ parameters:
 			path: src/Support/InferExtensions/JsonResourceCreationInfer.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\JsonResourceExtension\:\:getModelMethodReturn\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/InferExtensions/JsonResourceExtension.php
-
-		-
 			message: '#^Parameter \#1 \$callee of class Dedoc\\Scramble\\Support\\Type\\Reference\\MethodCallReferenceType constructor expects Dedoc\\Scramble\\Support\\Type\\Type, Dedoc\\Scramble\\Support\\Type\\Type\|null given\.$#'
 			identifier: argument.type
 			count: 1
@@ -4546,12 +4414,6 @@ parameters:
 			path: src/Support/PhpDoc.php
 
 		-
-			message: '#^Unsafe call to private method Dedoc\\Scramble\\Support\\PhpDoc\:\:getTokenizerAndParser\(\) through static\:\:\.$#'
-			identifier: staticClassAccess.privateMethod
-			count: 1
-			path: src/Support/PhpDoc.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\ResponseExtractor\\ModelInfo\:\:columnIsUnique\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -4798,18 +4660,6 @@ parameters:
 			path: src/Support/RouteResponseTypeRetriever.php
 
 		-
-			message: '#^Method class@anonymous/src/Support/RouteResponseTypeRetriever\.php\:147\:\:enter\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/RouteResponseTypeRetriever.php
-
-		-
-			message: '#^Method class@anonymous/src/Support/RouteResponseTypeRetriever\.php\:147\:\:leave\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/RouteResponseTypeRetriever.php
-
-		-
 			message: '#^Negated boolean expression is always false\.$#'
 			identifier: booleanNot.alwaysFalse
 			count: 1
@@ -4984,18 +4834,6 @@ parameters:
 			path: src/Support/Type/Reference/StaticReference.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\SideEffects\\SelfTemplateDefinition\:\:apply\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/SideEffects/SelfTemplateDefinition.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\SideEffects\\SelfTemplateDefinition\:\:getAllDefinedTemplates\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Type/SideEffects/SelfTemplateDefinition.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\TemplateType\:\:isInstanceOf\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -5090,12 +4928,6 @@ parameters:
 			identifier: staticClassAccess.privateMethod
 			count: 1
 			path: src/Support/Type/TypeHelper.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\TypeTraverser\:\:__construct\(\) has parameter \$visitors with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/Type/TypeTraverser.php
 
 		-
 			message: '#^Parameter \#1 \$type of method Dedoc\\Scramble\\Support\\Type\\TypeTraverser\:\:traverse\(\) expects Dedoc\\Scramble\\Support\\Type\\Type, mixed given\.$#'
