@@ -13,14 +13,12 @@ class TemplatesMap
     private const ARGUMENTS = 'Arguments';
 
     /**
-     * @param array<string, Type> $bag
+     * @param  array<string, Type>  $bag
      */
     public function __construct(
         public array $bag,
         public ArgumentTypeBag $arguments,
-    )
-    {
-    }
+    ) {}
 
     public function prepend(array|self $itemsToPrepend): self
     {

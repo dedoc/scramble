@@ -97,7 +97,7 @@ class ReferenceTypeResolver
         $attributes = $type->attributes();
 
         $traverser = new TypeTraverser([
-            new CustomTypeResolvingTypeVisitor(),
+            new CustomTypeResolvingTypeVisitor,
         ]);
 
         return $traverser
