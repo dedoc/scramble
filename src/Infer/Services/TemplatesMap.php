@@ -22,6 +22,10 @@ class TemplatesMap
     {
     }
 
+    /**
+     * @param array<string, Type>|TemplatesMap $itemsToPrepend
+     * @return $this
+     */
     public function prepend(array|self $itemsToPrepend): self
     {
         $bag = is_array($itemsToPrepend) ? $itemsToPrepend : $itemsToPrepend->bag;

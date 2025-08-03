@@ -452,7 +452,7 @@ class ReferenceTypeResolver
 
         $templatesMap = (new TemplateTypesSolver)
             ->getFunctionContextTemplates($callee, $arguments)
-            ->prepend($classDefinition ? (new TemplateTypesSolver)->getClassContextTemplates($calledOnType, $classDefinition) : []);
+            ->prepend($calledOnType && $classDefinition ? (new TemplateTypesSolver)->getClassContextTemplates($calledOnType, $classDefinition) : []);
 
         $returnType = (new TypeWalker)->map(
             $returnType,
