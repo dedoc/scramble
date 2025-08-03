@@ -372,7 +372,7 @@ class AllTemplatesInfer_ReferenceResolutionTest implements FunctionReturnTypeExt
 
     public function getFunctionReturnType(FunctionCallEvent $event): ?Type\Type
     {
-        return new Type\ObjectType('Arguments');
+        return new Type\TemplateType('Arguments');
     }
 }
 

@@ -25,24 +25,28 @@ class TemplateTypesSolver
         ])->all();
     }
 
-    /** @return array<string, Type> */
-    public function getFunctionContextTemplates(FunctionLikeDefinition $functionLikeDefinition, ArgumentTypeBag $arguments): array
+    public function getFunctionContextTemplates(FunctionLikeDefinition $functionLikeDefinition, ArgumentTypeBag $arguments): TemplatesMap
     {
-        return collect($this->resolveTypesTemplatesFromArguments(
-            $functionLikeDefinition->type->templates,
-            $functionLikeDefinition->type->arguments,
-            $this->prepareArguments($functionLikeDefinition, $arguments),
-        ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->all();
+        return new TemplatesMap(
+            bag: $this->resolveTypesTemplatesFromArguments(
+                $functionLikeDefinition->type->templates,
+                $functionLikeDefinition->type->arguments,
+                $this->prepareArguments($functionLikeDefinition, $arguments),
+            ),
+            arguments: $arguments,
+        );
     }
 
-    /** @return array<string, Type> */
-    public function getClassConstructorContextTemplates(ClassDefinition $classDefinition, ?FunctionLikeDefinition $functionLikeDefinition, ArgumentTypeBag $arguments): array
+    public function getClassConstructorContextTemplates(ClassDefinition $classDefinition, ?FunctionLikeDefinition $functionLikeDefinition, ArgumentTypeBag $arguments): TemplatesMap
     {
-        return collect($this->resolveTypesTemplatesFromArguments(
-            ($functionLikeDefinition->type->templates ?? []) + $classDefinition->templateTypes,
-            ($functionLikeDefinition->type->arguments ?? []),
-            $this->prepareArguments($functionLikeDefinition, $arguments),
-        ))->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])->all();
+        return new TemplatesMap(
+            bag: $this->resolveTypesTemplatesFromArguments(
+                ($functionLikeDefinition->type->templates ?? []) + $classDefinition->templateTypes,
+                ($functionLikeDefinition->type->arguments ?? []),
+                $this->prepareArguments($functionLikeDefinition, $arguments),
+            ),
+            arguments: $arguments,
+        );
     }
 
     /**
@@ -71,36 +75,41 @@ class TemplateTypesSolver
      * @param  TemplateType[]  $templates
      * @param  array<string, Type>  $templatedArguments
      * @param  array<int, Type>  $realArguments
-     * @return array{0: TemplateType, 1: Type}[]
+     * @return array<string, Type>
      */
     private function resolveTypesTemplatesFromArguments(array $templates, array $templatedArguments, array $realArguments): array
     {
-        return array_values(array_filter(array_map(function (TemplateType $template) use ($templatedArguments, $realArguments) {
-            $argumentIndexName = null;
-            $index = 0;
-            foreach ($templatedArguments as $name => $type) {
-                if ($type === $template) {
-                    $argumentIndexName = [$index, $name];
-                    break;
+        return collect($templates)
+            ->map(function (TemplateType $template) use ($templatedArguments, $realArguments) {
+                $argumentIndexName = null;
+                $index = 0;
+                foreach ($templatedArguments as $name => $type) {
+                    if ($type === $template) {
+                        $argumentIndexName = [$index, $name];
+                        break;
+                    }
+                    $index++;
                 }
-                $index++;
-            }
-            if (! $argumentIndexName) {
-                return null;
-            }
+                if (! $argumentIndexName) {
+                    return null;
+                }
 
-            $foundCorrespondingTemplateType = $realArguments[$argumentIndexName[1]]
-                ?? $realArguments[$argumentIndexName[0]]
-                ?? null;
+                $foundCorrespondingTemplateType = $realArguments[$argumentIndexName[1]]
+                    ?? $realArguments[$argumentIndexName[0]]
+                    ?? null;
 
-            if (! $foundCorrespondingTemplateType) {
-                $foundCorrespondingTemplateType = new UnknownType;
-            }
+                if (! $foundCorrespondingTemplateType) {
+                    $foundCorrespondingTemplateType = new UnknownType;
+                }
 
-            return [
-                $template,
-                $foundCorrespondingTemplateType,
-            ];
-        }, $templates)));
+                return [
+                    $template,
+                    $foundCorrespondingTemplateType,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])
+            ->all();
     }
 }

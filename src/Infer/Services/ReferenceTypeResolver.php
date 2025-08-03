@@ -14,11 +14,9 @@ use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -68,7 +66,7 @@ class ReferenceTypeResolver
             fn (Type $t) => $t instanceof Union ? TypeHelper::mergeTypes(...$t->types) : null,
         );
 
-        return $this->resolveCustomTypes($finalizedResolvedType->setOriginal($originalType), $originalType, $scope);
+        return $this->resolveCustomTypes($finalizedResolvedType->setOriginal($originalType), $originalType);
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type
@@ -94,12 +92,12 @@ class ReferenceTypeResolver
         return $this->resolve($scope, $resolved);
     }
 
-    private function resolveCustomTypes(Type $type, Type $originalType, Scope $scope): Type
+    private function resolveCustomTypes(Type $type, Type $originalType): Type
     {
         $attributes = $type->attributes();
 
         $traverser = new TypeTraverser([
-            new CustomTypeResolvingTypeVisitor($originalType, $scope),
+            new CustomTypeResolvingTypeVisitor(),
         ]);
 
         return $traverser
@@ -150,7 +148,7 @@ class ReferenceTypeResolver
             return new UnknownType;
         }
 
-        if ($returnType = Context::getInstance()->extensionsBroker->getMethodReturnType($event = new MethodCallEvent(
+        if ($returnType = Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
             instance: $calleeType,
             name: $type->methodName,
             scope: $scope,
@@ -168,7 +166,7 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeType->name]");
         }
 
-        $resultingType = $this->getFunctionCallResult($methodDefinition, new AutoResolvingArgumentTypeBag($scope, $type->arguments), $calleeType, $event);
+        $resultingType = $this->getFunctionCallResult($methodDefinition, new AutoResolvingArgumentTypeBag($scope, $type->arguments), $calleeType);
 
         if ($calleeType instanceof SelfType) {
             return $resultingType;
@@ -311,7 +309,7 @@ class ReferenceTypeResolver
         }
 
         if (! $classDefinition->templateTypes) {
-            return $this->resolveArgumentsType(new ObjectType($contextualClassName), $arguments);
+            return new ObjectType($contextualClassName);
         }
 
         $propertyDefaultTemplateTypes = collect($classDefinition->properties)
@@ -322,27 +320,25 @@ class ReferenceTypeResolver
 
         $constructorDefinition = $classDefinition->getMethodDefinition('__construct', $scope);
 
-        $inferredConstructorParamTemplates = (new TemplateTypesSolver)->getClassConstructorContextTemplates(
-            $classDefinition,
-            $constructorDefinition,
-            new AutoResolvingArgumentTypeBag($scope, $type->arguments),
-        );
-
-        $inferredTemplates = collect()
-            ->merge($propertyDefaultTemplateTypes)
-            ->merge($inferredConstructorParamTemplates);
+        $templatesMap = (new TemplateTypesSolver)
+            ->getClassConstructorContextTemplates(
+                $classDefinition,
+                $constructorDefinition,
+                new AutoResolvingArgumentTypeBag($scope, $type->arguments),
+            )
+            ->prepend($propertyDefaultTemplateTypes->all());
 
         $resultingTemplatesMap = collect($classDefinition->templateTypes)
-            ->map(fn (TemplateType $t) => $inferredTemplates->get($t->name, new UnknownType))
+            ->map(fn (TemplateType $t) => $templatesMap->get($t->name, new UnknownType))
             ->all();
 
         $resultingTemplatesMap = $this->applySelfOutType(
             $resultingTemplatesMap,
             $constructorDefinition?->getSelfOutType(),
-            $inferredConstructorParamTemplates,
+            $templatesMap,
         );
 
-        return $this->resolveArgumentsType(new Generic($classDefinition->name, $resultingTemplatesMap), $arguments);
+        return new Generic($classDefinition->name, $resultingTemplatesMap);
     }
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type): Type
@@ -418,10 +414,9 @@ class ReferenceTypeResolver
 
     /**
      * @param  Type[]  $resultingTemplatesMap
-     * @param  array<string, Type>  $inferredTemplates
      * @return Type[]
      */
-    private function applySelfOutType(array $resultingTemplatesMap, ?Type $selfOutType, array $inferredTemplates): array
+    private function applySelfOutType(array $resultingTemplatesMap, ?Type $selfOutType, TemplatesMap $inferredTemplates): array
     {
         if (! $selfOutType instanceof Generic) {
             return $resultingTemplatesMap;
@@ -434,9 +429,7 @@ class ReferenceTypeResolver
 
             $resultingTemplatesMap[$index] = (new TypeWalker)->map(
                 $genericSelfOutTypePart,
-                fn ($t) => $t instanceof TemplateType && array_key_exists($t->name, $inferredTemplates)
-                    ? $inferredTemplates[$t->name]
-                    : $t,
+                fn ($t) => $t instanceof TemplateType ? $inferredTemplates->get($t->name, $t) : $t,
             );
         }
 
@@ -457,39 +450,24 @@ class ReferenceTypeResolver
 
         $classDefinition = $calledOnType instanceof ObjectType ? $this->index->getClass($calledOnType->name) : null;
 
-        $instanceTemplates = $calledOnType && $classDefinition
-            ? (new TemplateTypesSolver)->getClassContextTemplates($calledOnType, $classDefinition)
-            : [];
+        $templatesMap = (new TemplateTypesSolver)
+            ->getFunctionContextTemplates($callee, $arguments)
+            ->prepend($classDefinition ? (new TemplateTypesSolver)->getClassContextTemplates($calledOnType, $classDefinition) : []);
 
-        $inferredTemplates = array_merge(
-            $instanceTemplates,
-            (new TemplateTypesSolver)->getFunctionContextTemplates($callee, $arguments)
+        $returnType = (new TypeWalker)->map(
+            $returnType,
+            fn (Type $t) => $t instanceof TemplateType ? $templatesMap->get($t->name, $t) : $t,
         );
-
-        $returnType = (new TypeWalker)->map($returnType, function (Type $t) use ($inferredTemplates) {
-            return $t instanceof TemplateType && array_key_exists($t->name, $inferredTemplates)
-                ? $inferredTemplates[$t->name]
-                : $t;
-        });
 
         if ($returnType instanceof Generic && ($selfOutType = $callee->getSelfOutType())) {
             $returnType->templateTypes = $this->applySelfOutType(
                 $returnType->templateTypes,
                 $selfOutType,
-                $inferredTemplates,
+                $templatesMap,
             );
         }
 
-        return $this->resolveArgumentsType($returnType, $arguments);
-    }
-
-    public static function resolveArgumentsType(Type $type, ArgumentTypeBag $arguments): Type
-    {
-        return (new TypeWalker)->map($type, function (Type $t) use ($arguments) {
-            return $t instanceof ObjectType && $t->name === 'Arguments'
-                ? new KeyedArrayType(collect($arguments->all())->map(fn ($t, $k) => new ArrayItemType_($k, $t))->all())
-                : $t;
-        });
+        return $returnType;
     }
 
     public static function resolveClassName(Scope $scope, string $name): ?string

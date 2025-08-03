@@ -117,16 +117,14 @@ class SelfOutTypeBuilder
                         continue;
                     }
 
-                    $concreteSelfOutTypePart = $genericSelfOutTypePart instanceof TemplatePlaceholderType && array_key_exists($definedParentTemplateType->name, $parentCallContextTemplates)
-                        ? $parentCallContextTemplates[$definedParentTemplateType->name]
+                    $concreteSelfOutTypePart = $genericSelfOutTypePart instanceof TemplatePlaceholderType && $parentCallContextTemplates->has($definedParentTemplateType->name)
+                        ? $parentCallContextTemplates->get($definedParentTemplateType->name)
                         : (new TypeWalker)->map(
                             $genericSelfOutTypePart,
-                            fn ($t) => $t instanceof TemplateType && array_key_exists($t->name, $parentCallContextTemplates)
-                                ? $parentCallContextTemplates[$t->name]
-                                : $t,
+                            fn ($t) => $t instanceof TemplateType ? $parentCallContextTemplates->get($t->name, $t) : $t,
                         );
 
-                    $expectedTemplatesMap[$definedParentTemplateType->name] = ReferenceTypeResolver::resolveArgumentsType($concreteSelfOutTypePart, $arguments);
+                    $expectedTemplatesMap[$definedParentTemplateType->name] = $concreteSelfOutTypePart;
                 }
 
                 continue;
@@ -179,12 +177,10 @@ class SelfOutTypeBuilder
 
                     $concreteSelfOutTypePart = (new TypeWalker)->map(
                         $genericSelfOutTypePart,
-                        fn ($t) => $t instanceof TemplateType && array_key_exists($t->name, $methodCallContextTemplates)
-                            ? $methodCallContextTemplates[$t->name]
-                            : $t,
+                        fn ($t) => $t instanceof TemplateType ? $methodCallContextTemplates->get($t->name, $t) : $t,
                     );
 
-                    $expectedTemplatesMap[$definedTemplateType->name] = ReferenceTypeResolver::resolveArgumentsType($concreteSelfOutTypePart, $arguments);
+                    $expectedTemplatesMap[$definedTemplateType->name] = $concreteSelfOutTypePart;
                 }
 
                 continue;
