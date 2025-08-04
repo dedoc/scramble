@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
@@ -24,8 +25,11 @@ class ClassConstFetchTypeGetter
 
             $type = $scope->getType($node->class);
 
-            if ($type instanceof ObjectType || $type instanceof NewCallReferenceType) {
-                return new LiteralStringType($type->name);
+            if (
+                ($type instanceof ObjectType || $type instanceof NewCallReferenceType)
+                && $className = $this->getClassName($type)
+            ) {
+                return new LiteralStringType($className);
             }
         }
 
@@ -50,5 +54,24 @@ class ClassConstFetchTypeGetter
         }
 
         return new UnknownType('Cannot get type from class const fetch');
+    }
+
+    private function getClassName(ObjectType|NewCallReferenceType $type): ?string
+    {
+        if ($type instanceof ObjectType) {
+            return $type->name;
+        }
+
+        if (is_string($type->name)) {
+            return $type->name;
+        }
+
+        $typeName = $type->name;
+
+        if ($typeName instanceof TemplateType && $typeName->is instanceof ObjectType) {
+            return $typeName->is->name;
+        }
+
+        return null;
     }
 }
