@@ -68,6 +68,10 @@ class ClassConstFetchTypeGetter
 
         $typeName = $type->name;
 
+        if ($typeName instanceof LiteralStringType) {
+            return $typeName->value;
+        }
+
         if ($typeName instanceof TemplateType && $typeName->is instanceof ObjectType) {
             return $typeName->is->name;
         }
