@@ -64,6 +64,10 @@ class TypeHelper
                 );
             }
 
+            if ($typeNode->name === 'mixed') {
+                return new MixedType;
+            }
+
             if ($typeNode->name === 'null') {
                 return new NullType;
             }
