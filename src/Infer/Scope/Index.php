@@ -8,6 +8,8 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Illuminate\Support\Str;
+use ReflectionClass;
+use ReflectionException;
 
 /**
  * Index stores type information about analyzed classes, functions, and constants.
@@ -32,7 +34,7 @@ class Index
             return $this->classesDefinitions[$className];
         }
 
-        $reflection = rescue(fn () => new \ReflectionClass($className)); // @phpstan-ignore argument.type
+        $reflection = $this->createClassReflection($className);
 
         if (! $reflection) {
             return null;
@@ -76,5 +78,14 @@ class Index
     public function getFunctionDefinition(string $fnName): ?FunctionLikeDefinition
     {
         return $this->functionsDefinitions[$fnName] ?? null;
+    }
+
+    private function createClassReflection(string $className): ?ReflectionClass
+    {
+        try {
+            return new ReflectionClass($className); // @phpstan-ignore argument.type
+        } catch (ReflectionException) {
+            return null;
+        }
     }
 }

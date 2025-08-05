@@ -102,3 +102,19 @@ EOD;
 
     expect($result->getFunctionDefinition('foo')->type->getReturnType()->toString())->toBe('string');
 });
+
+it('infers class fetch type (#912)', function () {
+    $code = <<<'EOD'
+<?php
+function bar (): mixed {
+    return unknown();
+}
+function foo () {
+    return bar()->sample();
+}
+EOD;
+
+    $result = analyzeFile($code);
+
+    expect($result->getFunctionDefinition('foo')->type->getReturnType()->toString())->toBe('unknown');
+});
