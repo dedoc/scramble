@@ -20,6 +20,11 @@ return [
      */
     'export_path' => 'api.json',
 
+    /**
+     * Define route path for OpenAPI export
+     */
+    'export_route_path' => 'docs/api.json',
+
     'info' => [
         /*
          * API version.
@@ -36,6 +41,12 @@ return [
      * Customize Stoplight Elements UI
      */
     'ui' => [
+
+        /**
+         * Define route path for documentation's UI
+         */
+        'route_path' => 'docs/api',
+    
         /*
          * Define the title of the documentation's website. App name is used when this config is `null`.
          */
