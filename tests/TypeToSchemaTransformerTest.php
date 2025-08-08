@@ -107,6 +107,23 @@ it('gets enum with values type and description', function () {
 EOF);
 });
 
+it('gets enum with its description and cases description (#922)', function () {
+    config()->set('scramble.enum_cases_description_strategy', 'description');
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [EnumToSchema::class]);
+    $extension = new EnumToSchema($infer, $transformer, $this->context->openApi->components);
+
+    $type = new ObjectType(StatusFour::class);
+
+    expect($extension->toSchema($type)->toArray()['description'])
+        ->toBe(<<<"EOF"
+Description for StatusFour.
+| |
+|---|
+| `draft` <br/> Drafts are the posts that are not visible by visitors. |
+EOF);
+});
+
 it('gets enum with values type and description with extensions', function () {
     config()->set('scramble.enum_cases_description_strategy', 'extension');
 
@@ -449,4 +466,15 @@ enum StatusThree: string
      * Archived posts are not visible to visitors.
      */
     case ARCHIVED = 'archived';
+}
+
+/**
+ * Description for StatusFour.
+ */
+enum StatusFour: string
+{
+    /**
+     * Drafts are the posts that are not visible by visitors.
+     */
+    case DRAFT = 'draft';
 }
