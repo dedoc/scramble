@@ -16,7 +16,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use ReflectionEnum;
 use ReflectionEnumBackedCase;
-use ReflectionEnumUnitCase;
 
 class EnumToSchema extends TypeToSchemaExtension
 {
@@ -35,7 +34,7 @@ class EnumToSchema extends TypeToSchemaExtension
         $name = $type->name;
 
         if (! isset($name::cases()[0]->value)) { // only backed enums support
-            return new UnknownType();
+            return new UnknownType;
         }
 
         $values = array_map(fn ($s) => $s->value, $name::cases());
@@ -110,7 +109,7 @@ class EnumToSchema extends TypeToSchemaExtension
     }
 
     /**
-     * @param Collection<array-key, string> $cases
+     * @param  Collection<array-key, string>  $cases
      */
     protected function handleDescriptionEnumStrategy(OpenApi\Type $schema, Collection $cases): void
     {
@@ -130,7 +129,7 @@ class EnumToSchema extends TypeToSchemaExtension
     }
 
     /**
-     * @param Collection<array-key, string> $cases
+     * @param  Collection<array-key, string>  $cases
      */
     protected function handleExtensionEnumStrategy(OpenApi\Type $schema, Collection $cases): void
     {

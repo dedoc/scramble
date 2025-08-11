@@ -21,7 +21,6 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTyp
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
-use Dedoc\Scramble\Tests\TestUtils;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
@@ -117,7 +116,7 @@ it('gets enum with its description and cases description (#922)', function () {
     $type = new ObjectType(StatusFour::class);
 
     expect($extension->toSchema($type)->toArray()['description'])
-        ->toBe(<<<"EOF"
+        ->toBe(<<<'EOF'
 Description for StatusFour.
 | |
 |---|
@@ -130,7 +129,7 @@ it('preserves enum cases description but overrides the enum schema description w
 
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [EnumToSchema::class]);
 
-    $type = getStatementType(<<<"EOF"
+    $type = getStatementType(<<<'EOF'
 [
     /**
      * Override for StatusFour.
@@ -141,7 +140,7 @@ it('preserves enum cases description but overrides the enum schema description w
 EOF);
 
     expect($transformer->transform($type)->toArray()['properties']['a']['description'])
-        ->toBe(<<<"EOF"
+        ->toBe(<<<'EOF'
 Override for StatusFour.
 | |
 |---|
