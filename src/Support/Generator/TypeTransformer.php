@@ -138,17 +138,7 @@ class TypeTransformer
                 $commentDescription = trim($docNode->getAttribute('summary').' '.$docNode->getAttribute('description'));
                 $varNodeDescription = $varNode && $varNode->description ? trim($varNode->description) : '';
                 if ($commentDescription || $varNodeDescription) {
-                    $customDescription = implode('. ', array_filter([$varNodeDescription, $commentDescription]));
-
-                    /*
-                     * This is a workaround for Stoplight Elements. When `enum_cases_description_strategy` is set to `description` and
-                     * a enum used as array item value and user adds some description, we want to keep the description in the UI.
-                     */
-                    if ($openApiType instanceof Reference && $casesDescription = $this->getEnumReferenceCasesDescription($openApiType)) {
-                        $customDescription .= "\n".$casesDescription;
-                    }
-
-                    $openApiType->setDescription($customDescription);
+                    $openApiType->setDescription(implode('. ', array_filter([$varNodeDescription, $commentDescription])));
                 }
 
                 if ($examples = ExamplesExtractor::make($docNode)->extract(preferString: $openApiType instanceof StringType)) {
@@ -337,21 +327,6 @@ class TypeTransformer
         }
 
         return $response;
-    }
-
-    private function getEnumReferenceCasesDescription(Reference $ref): ?string
-    {
-        $schema = $ref->resolve();
-
-        if (! $schema instanceof Schema) {
-            return null;
-        }
-
-        if (! is_string($casesDescription = $schema->type->getAttribute('casesDescription'))) {
-            return null;
-        }
-
-        return $casesDescription;
     }
 
     private function handleResponseUsingExtensions(Type $type)
