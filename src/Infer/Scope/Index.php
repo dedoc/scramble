@@ -80,6 +80,7 @@ class Index
         return $this->functionsDefinitions[$fnName] ?? null;
     }
 
+    /** @return ?ReflectionClass<object> */
     private function createClassReflection(string $className): ?ReflectionClass
     {
         try {

@@ -12,9 +12,11 @@ use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
+use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
 use PhpParser;
 use PhpParser\Node;
 use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
 
 class AnalysisResult
 {
@@ -37,14 +39,17 @@ class AnalysisResult
         $fileAst = (new PhpParser\ParserFactory)->createForHostVersion()->parse($code);
 
         $index = $this->index;
-        $infer = new TypeInferer(
+        $traverser = new NodeTraverser;
+        $traverser->addVisitor($nameResolver = new NameResolver);
+        $traverser->addVisitor(new PhpDocResolver(
+            $nameResolver = new FileNameResolver($nameResolver->getNameContext()),
+        ));
+        $traverser->addVisitor(new TypeInferer(
             $index,
-            $nameResolver = new FileNameResolver(new PhpParser\NameContext(new PhpParser\ErrorHandler\Throwing)),
+            $nameResolver,
             $scope = new Scope($index, new NodeTypesResolver, new ScopeContext, $nameResolver),
             Context::getInstance()->extensionsBroker->extensions,
-        );
-        $traverser = new NodeTraverser;
-        $traverser->addVisitor($infer);
+        ));
         $traverser->traverse($fileAst);
 
         $unresolvedType = $scope->getType(

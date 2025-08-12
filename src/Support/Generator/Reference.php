@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\Generator;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\Types\NullType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
+use Illuminate\Support\Str;
 
 class Reference extends Type
 {
@@ -40,6 +41,36 @@ class Reference extends Type
     public function getUniqueName()
     {
         return $this->components->uniqueSchemaName($this->shortName ?: $this->fullName);
+    }
+
+    public function setDescription(string $description): Type
+    {
+        $casesDescription = $this->getEnumReferenceCasesDescription();
+
+        if ($description && $casesDescription) {
+            $description = Str::replaceLast($casesDescription, '', $description)."\n".$casesDescription;
+        }
+
+        return parent::setDescription($description);
+    }
+
+    /**
+     * This is a workaround for Stoplight Elements. When `enum_cases_description_strategy` is set to `description` and
+     * enum used as array item value and user adds some description, we want to keep the description in the UI.
+     */
+    private function getEnumReferenceCasesDescription(): ?string
+    {
+        $schema = $this->resolve();
+
+        if (! $schema instanceof Schema) {
+            return null;
+        }
+
+        if (! is_string($casesDescription = $schema->type->getAttribute('casesDescription'))) {
+            return null;
+        }
+
+        return $casesDescription;
     }
 
     public function toArray()
