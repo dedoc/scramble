@@ -2,7 +2,4 @@
 
 namespace Dedoc\Scramble\Exceptions;
 
-class OpenApiReferenceTargetNotFoundException extends \Exception
-{
-
-}
+class OpenApiReferenceTargetNotFoundException extends \Exception {}

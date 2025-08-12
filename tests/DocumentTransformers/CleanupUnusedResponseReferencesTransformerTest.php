@@ -10,12 +10,10 @@ test('doesnt cause failure of response serialization when reference is removed (
 
     expect($openApiDocument['paths']['/test/{user}']['get']['responses'])->toHaveKeys([200, 404]);
 });
-class CleanupUnusedResponseReferencesTransformerTest_ControllerA {
+class CleanupUnusedResponseReferencesTransformerTest_ControllerA
+{
     /**
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      */
-    public function __invoke(SampleUserModel $user)
-    {
-
-    }
+    public function __invoke(SampleUserModel $user) {}
 }
