@@ -55,6 +55,6 @@ class FileNameResolver
     {
         $name = $this->nameContext->getResolvedName(new Name([$shortName]), 1)->toString();
 
-        return class_exists($name) || interface_exists($name) ? $name : $shortName;
+        return ltrim(class_exists($name) || interface_exists($name) ? $name : $shortName, '\\');
     }
 }
