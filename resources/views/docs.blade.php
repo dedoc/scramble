@@ -66,7 +66,7 @@
     })();
 </script>
 
-@if($config->get('ui.theme', 'light') === 'automatic')
+@if($config->get('ui.theme', 'light') === 'system')
     <script>
         var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
