@@ -2,6 +2,10 @@
 
 namespace Dedoc\Scramble\Tests\Support\TypeToSchemaExtensions;
 
+use Dedoc\Scramble\GeneratorConfig;
+use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -23,6 +27,14 @@ class UserResource_AnonymousResourceCollectionTypeToSchemaTest extends JsonResou
     }
 }
 
+beforeEach(function () {
+    $context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
+
+    $this->transformer = app(TypeTransformer::class, [
+        'context' => $context,
+    ]);
+});
+
 it('documents inferred pagination response', function () {
     $openApiDocument = generateForRoute(fn () => Route::get('test', InferredPagination_AnonymousResourceCollectionTypeToSchemaTestController::class));
 
@@ -38,5 +50,23 @@ class InferredPagination_AnonymousResourceCollectionTypeToSchemaTestController
     public function __invoke()
     {
         return UserResource_AnonymousResourceCollectionTypeToSchemaTest::collection(User_AnonymousResourceCollectionTypeToSchemaTest::paginate());
+    }
+}
+
+it('documents manually created response', function () {
+    $type = getStatementType(UserResource_AnonymousResourceCollectionTypeToSchemaTest::class.'::collection()->response()->setStatusCode(202)');
+
+    $response = $this->transformer->toResponse($type);
+
+    expect($response->code)
+        ->toBe(202)
+        ->and($response->toArray()['description'])
+        ->toBe('Array of `UserResource_AnonymousResourceCollectionTypeToSchemaTest`');
+});
+class ManualResponse_AnonymousResourceCollectionTypeToSchemaTestController
+{
+    public function __invoke()
+    {
+        return UserResource_AnonymousResourceCollectionTypeToSchemaTest::collection(User_AnonymousResourceCollectionTypeToSchemaTest::all())->response();
     }
 }

@@ -17,11 +17,13 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceResponse;
 use LogicException;
 
@@ -49,6 +51,11 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
     public function toResponse(Type $type)
     {
         $resourceType = $type->templateTypes[0];
+
+        if ($resourceType instanceof ObjectType && $resourceType->isInstanceOf(AnonymousResourceCollection::class)) {
+            return $this->openApiTransformer->toResponse($resourceType);
+        }
+
         $openApiType = $this->openApiTransformer->transform($resourceType);
 
         $definition = $this->infer->analyzeClass($resourceType->name);

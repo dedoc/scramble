@@ -3,10 +3,14 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Support\Generator\Header;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -14,6 +18,7 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\ResourceResponse;
+use Illuminate\Support\Str;
 use LogicException;
 
 class ResponseTypeToSchema extends TypeToSchemaExtension
@@ -54,6 +59,8 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
             );
         }
 
+        $this->addHeaders($response, $type);
+
         return $response;
     }
 
@@ -90,6 +97,64 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
             );
         }
 
+        $this->addHeaders($response, $jsonResponseType);
+
         return $response;
+    }
+
+    private function addHeaders(Response $response, Generic $type): void
+    {
+        $headersType = $type->templateTypes[2] ?? null;
+
+        if (! $headersType instanceof KeyedArrayType) {
+            return;
+        }
+
+        foreach ($headersType->items as $item) {
+            $this->addHeader($response, $item);
+        }
+    }
+
+    private function addHeader(Response $response, ArrayItemType_ $item): void
+    {
+        if (! $key = $this->getNormalizedHeaderKey($item)) {
+            return;
+        }
+
+        if (Str::lower($key) === 'content-type') {
+            $this->handleContentTypeHeader($response, $item);
+
+            return;
+        }
+
+        $response->addHeader(
+            $key,
+            new Header(schema: Schema::fromType($this->openApiTransformer->transform($item->value))),
+        );
+    }
+
+    private function handleContentTypeHeader(Response $response, ArrayItemType_ $item): void
+    {
+        $contentTypeValue = $item->value instanceof LiteralStringType ? $item->value->value : null;
+
+        if (! $contentTypeValue) {
+            return;
+        }
+
+        if (! $firstMediaType = array_keys($response->content)[0] ?? null) {
+            return;
+        }
+
+        $mediaType = $response->getContent($firstMediaType);
+
+        unset($response->content[$firstMediaType]);
+        $response->content[$contentTypeValue] = $mediaType;
+    }
+
+    private function getNormalizedHeaderKey(ArrayItemType_ $item): ?string
+    {
+        $key = $item->key ?: ($item->keyType instanceof LiteralStringType ? $item->keyType->value : null);
+
+        return is_string($key) ? $key : null;
     }
 }
