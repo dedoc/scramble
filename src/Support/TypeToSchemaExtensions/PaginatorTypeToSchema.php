@@ -14,10 +14,7 @@ use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\Paginator;
 
 class PaginatorTypeToSchema extends TypeToSchemaExtension
