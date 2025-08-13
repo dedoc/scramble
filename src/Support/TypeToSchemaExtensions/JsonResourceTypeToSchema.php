@@ -85,7 +85,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     }
 
     /**
-     * @param  Generic  $type
+     * @param  ObjectType  $type
      */
     public function toResponse(Type $type)
     {
