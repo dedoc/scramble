@@ -123,6 +123,7 @@ class ResponseTypeToSchema extends TypeToSchemaExtension
 
         if (Str::lower($key) === 'content-type') {
             $this->handleContentTypeHeader($response, $item);
+
             return;
         }
 
