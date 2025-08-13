@@ -61,7 +61,7 @@ it('documents manually created response', function () {
     expect($response->code)
         ->toBe(202)
         ->and($response->toArray()['description'])
-        ->toBe("Array of `UserResource_AnonymousResourceCollectionTypeToSchemaTest`");
+        ->toBe('Array of `UserResource_AnonymousResourceCollectionTypeToSchemaTest`');
 });
 class ManualResponse_AnonymousResourceCollectionTypeToSchemaTestController
 {
