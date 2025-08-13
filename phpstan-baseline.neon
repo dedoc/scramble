@@ -3070,12 +3070,6 @@ parameters:
 			path: src/Support/Generator/TypeTransformer.php
 
 		-
-			message: '#^Right side of && is always true\.$#'
-			identifier: booleanAnd.rightAlwaysTrue
-			count: 1
-			path: src/Support/Generator/TypeTransformer.php
-
-		-
 			message: '#^Unable to resolve the template type TKey in call to function collect$#'
 			identifier: argument.templateType
 			count: 1
@@ -4978,12 +4972,6 @@ parameters:
 			path: src/Support/TypeToSchemaExtensions/CollectionToSchema.php
 
 		-
-			message: '#^Access to an undefined property Dedoc\\Scramble\\Support\\Type\\Type\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/CursorPaginatorTypeToSchema.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\CursorPaginatorTypeToSchema\:\:shouldHandle\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -5044,12 +5032,6 @@ parameters:
 			path: src/Support/TypeToSchemaExtensions/JsonResourceTypeToSchema.php
 
 		-
-			message: '#^Access to an undefined property Dedoc\\Scramble\\Support\\Type\\Type\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/LengthAwarePaginatorTypeToSchema.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\LengthAwarePaginatorTypeToSchema\:\:shouldHandle\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -5090,12 +5072,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: src/Support/TypeToSchemaExtensions/ModelToSchema.php
-
-		-
-			message: '#^Access to an undefined property Dedoc\\Scramble\\Support\\Type\\Type\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/PaginatorTypeToSchema.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\PaginatorTypeToSchema\:\:shouldHandle\(\) has no return type specified\.$#'

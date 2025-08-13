@@ -17,12 +17,12 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
 {
+    use WithCollectedPaginatedItems;
+
     public function __construct(
         Infer $infer,
         TypeTransformer $openApiTransformer,
@@ -36,8 +36,7 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
     {
         return $type instanceof Generic
             && $type->name === LengthAwarePaginator::class
-            && count($type->templateTypes) === 1
-            && $type->templateTypes[0] instanceof ObjectType;
+            && $this->getCollectedType($type);
     }
 
     /**
@@ -45,13 +44,11 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        $collectingClassType = $type->templateTypes[0];
-
-        if (! $collectingClassType->isInstanceOf(JsonResource::class) && ! $collectingClassType->isInstanceOf(Model::class)) {
+        if (! $collectedType = $this->getCollectedType($type)) {
             return null;
         }
 
-        $collectingType = $this->openApiTransformer->transform($collectingClassType);
+        $collectingType = $this->openApiTransformer->transform($collectedType);
 
         return (new OpenApiObjectType)
             ->addProperty('current_page', new IntegerType)
@@ -81,14 +78,12 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
-        $collectingClassType = $type->templateTypes[0];
-
-        if (! $collectingClassType->isInstanceOf(JsonResource::class) && ! $collectingClassType->isInstanceOf(Model::class)) {
+        if (! $collectedType = $this->getCollectedType($type)) {
             return null;
         }
 
         return Response::make(200)
-            ->setDescription('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectingClassType->name).'`')
+            ->setDescription('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectedType->name).'`')
             ->setContent('application/json', Schema::fromType($this->openApiTransformer->transform($type)));
     }
 }
