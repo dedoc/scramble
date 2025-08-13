@@ -14,14 +14,13 @@ use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\CursorPaginator;
 
 class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
 {
+    use WithCollectedPaginatedItems;
+
     public function __construct(
         Infer $infer,
         TypeTransformer $openApiTransformer,
@@ -35,8 +34,7 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
     {
         return $type instanceof Generic
             && $type->name === CursorPaginator::class
-            && count($type->templateTypes) === 1
-            && $type->templateTypes[0] instanceof ObjectType;
+            && $this->getCollectedType($type);
     }
 
     /**
@@ -44,13 +42,11 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        $collectingClassType = $type->templateTypes[0];
-
-        if (! $collectingClassType->isInstanceOf(JsonResource::class) && ! $collectingClassType->isInstanceOf(Model::class)) {
+        if (! $collectedType = $this->getCollectedType($type)) {
             return null;
         }
 
-        $collectingType = $this->openApiTransformer->transform($collectingClassType);
+        $collectingType = $this->openApiTransformer->transform($collectedType);
 
         return (new OpenApiObjectType)
             ->addProperty('data', (new ArrayType)->setItems($collectingType))
@@ -68,14 +64,12 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
-        $collectingClassType = $type->templateTypes[0];
-
-        if (! $collectingClassType->isInstanceOf(JsonResource::class) && ! $collectingClassType->isInstanceOf(Model::class)) {
+        if (! $collectedType = $this->getCollectedType($type)) {
             return null;
         }
 
         return Response::make(200)
-            ->setDescription('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectingClassType->name).'`')
+            ->setDescription('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectedType->name).'`')
             ->setContent('application/json', Schema::fromType($this->openApiTransformer->transform($type)));
     }
 }
