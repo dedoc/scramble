@@ -70,22 +70,19 @@
     <script>
         var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-        // Function to update theme based on OS preference
         function updateTheme(e) {
             if (e.matches) {
-                // Dark mode is preferred
                 window.document.documentElement.setAttribute('data-theme', 'dark');
                 window.document.getElementsByName('color-scheme')[0].setAttribute('content', 'dark');
             } else {
-                // Light mode is preferred
                 window.document.documentElement.setAttribute('data-theme', 'light');
                 window.document.getElementsByName('color-scheme')[0].setAttribute('content', 'light');
             }
-        };
+        }
 
-    mediaQuery.addEventListener('change', updateTheme);
-    updateTheme(mediaQuery);
-  </script>
+        mediaQuery.addEventListener('change', updateTheme);
+        updateTheme(mediaQuery);
+    </script>
 @endif
 </body>
 </html>
