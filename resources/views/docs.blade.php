@@ -65,5 +65,24 @@
         docs.apiDescriptionDocument = @json($spec);
     })();
 </script>
+
+@if($config->get('ui.theme', 'light') === 'system')
+    <script>
+        var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function updateTheme(e) {
+            if (e.matches) {
+                window.document.documentElement.setAttribute('data-theme', 'dark');
+                window.document.getElementsByName('color-scheme')[0].setAttribute('content', 'dark');
+            } else {
+                window.document.documentElement.setAttribute('data-theme', 'light');
+                window.document.getElementsByName('color-scheme')[0].setAttribute('content', 'light');
+            }
+        }
+
+        mediaQuery.addEventListener('change', updateTheme);
+        updateTheme(mediaQuery);
+    </script>
+@endif
 </body>
 </html>
