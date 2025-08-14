@@ -71,8 +71,28 @@ class Generator
                         $method = $route->methods()[0];
                         $action = $route->getAction('uses');
 
-                        dump("Error when analyzing route '$method $route->uri' ($action): {$e->getMessage()} – ".($e->getFile().' on line '.$e->getLine()));
-                        logger()->error("Error when analyzing route '$method $route->uri' ($action): {$e->getMessage()} – ".($e->getFile().' on line '.$e->getLine()));
+                       // Ensure $action is safely converted to a readable string
+                        if (is_string($action)) {
+                            $actionString = $action;
+                        } elseif (is_array($action) && isset($action[0], $action[1])) {
+                            $actionString = (is_object($action[0]) ? get_class($action[0]) : $action[0]) . '@' . $action[1];
+                        } elseif ($action instanceof \Closure) {
+                            $actionString = 'Closure';
+                        } elseif (is_object($action)) {
+                            $actionString = get_class($action);
+                        } else {
+                            $actionString = json_encode($action);
+                        }
+
+                        $errorMessage = sprintf(
+                            "Error when analyzing route '$method {$route->uri}' ($actionString): {$e->getMessage()} – %s on line %s",
+                            $e->getFile(),
+                            $e->getLine()
+                        );
+
+                        dump($errorMessage);
+
+                        logger()->error($errorMessage);
                     }
 
                     throw $e;
