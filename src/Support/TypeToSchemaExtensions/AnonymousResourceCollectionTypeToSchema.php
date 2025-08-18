@@ -183,7 +183,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     {
         $collectsType = Infer\Services\ReferenceTypeResolver::getInstance()
             ->resolve(
-                new Infer\Scope\GlobalScope(),
+                new Infer\Scope\GlobalScope,
                 new InferType\Reference\PropertyFetchReferenceType($type, 'collects'),
             );
 

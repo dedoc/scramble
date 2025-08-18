@@ -22,7 +22,7 @@ class AfterResourceCollectionClassDefinitionCreatedExtension implements AfterCla
     }
 
     /**
-     * @param TemplateType[] $templateTypes
+     * @param  TemplateType[]  $templateTypes
      * @return TemplateType[]
      */
     private function makeTemplateTypes(array $templateTypes): array

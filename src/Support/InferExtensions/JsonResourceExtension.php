@@ -14,7 +14,6 @@ use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
-use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
@@ -43,7 +42,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceResponse;
 use Illuminate\Http\Resources\MergeValue;
 use Illuminate\Http\Resources\MissingValue;
-use function Pest\Laravel\instance;
 
 class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeExtension, StaticMethodReturnTypeExtension
 {
@@ -180,7 +178,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
     {
         return match ($event->getName()) {
             'collection' => $this->buildAnonymousResourceCollectionType($event),
-//            'make' => new Generic($event->getCallee(), [$event->getArg('resource', 0)]),
+            //            'make' => new Generic($event->getCallee(), [$event->getArg('resource', 0)]),
             'make' => ReferenceTypeResolver::getInstance()
                 ->resolve(
                     $event->scope,

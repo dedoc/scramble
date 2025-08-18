@@ -308,8 +308,6 @@ class ReferenceTypeResolver
             return $typeBeingConstructed;
         }
 
-
-
         if (! $classDefinition->templateTypes) {
             return new ObjectType($contextualClassName);
         }
@@ -319,7 +317,6 @@ class ReferenceTypeResolver
                 $definition->type->name => $definition->defaultType,
             ] : [])
             ->filter();
-
 
         $constructorDefinition = $classDefinition->getMethodDefinition('__construct', $scope);
 
@@ -334,7 +331,7 @@ class ReferenceTypeResolver
         if ($classDefinition->name === "App\Resources\AssetsObjectCollection") {
             dd($classDefinition,
                 $constructorDefinition,
-                new AutoResolvingArgumentTypeBag($scope, $type->arguments),);
+                new AutoResolvingArgumentTypeBag($scope, $type->arguments), );
         }
 
         $resultingTemplatesMap = collect($classDefinition->templateTypes)
