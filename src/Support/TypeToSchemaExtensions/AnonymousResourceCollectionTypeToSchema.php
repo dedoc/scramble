@@ -67,6 +67,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type): ?Response
     {
+        dd($type);
         $additional = $type->templateTypes[1 /* TAdditional */] ?? new InferType\UnknownType;
 
         if ($additional instanceof KeyedArrayType) {

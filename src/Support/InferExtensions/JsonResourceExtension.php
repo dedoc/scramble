@@ -180,6 +180,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
     {
         return match ($event->getName()) {
             'collection' => $this->buildAnonymousResourceCollectionType($event),
+//            'make' => new Generic($event->getCallee(), [$event->getArg('resource', 0)]),
             'make' => ReferenceTypeResolver::getInstance()
                 ->resolve(
                     $event->scope,
