@@ -169,8 +169,27 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     {
         // In case of paginated resource, we still want to get to the underlying JsonResource.
         return (new TypeWalker)->first( // @phpstan-ignore return.type
-            new Union([$type->templateTypes[0], $type->templateTypes[1] ?? new InferType\UnknownType]),
+            new Union([
+                $this->inferCollectsType($type) ?? new InferType\UnknownType,
+                $type->templateTypes[0],
+                $type->templateTypes[1] ?? new InferType\UnknownType,
+            ]),
             fn (Type $t) => $t->isInstanceOf(JsonResource::class),
         );
+    }
+
+    private function inferCollectsType(Generic $type): ?ObjectType
+    {
+        $collectsType = Infer\Services\ReferenceTypeResolver::getInstance()
+            ->resolve(
+                new Infer\Scope\GlobalScope(),
+                new InferType\Reference\PropertyFetchReferenceType($type, 'collects'),
+            );
+
+        if (! $collectsType instanceof InferType\Literal\LiteralStringType) {
+            return null;
+        }
+
+        return new ObjectType($collectsType->value);
     }
 }
