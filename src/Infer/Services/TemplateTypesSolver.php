@@ -115,8 +115,7 @@ class TemplateTypesSolver
     }
 
     /**
-     * @param TemplateType[] $templateTypes
-     * @param TemplatesMap $templatesMap
+     * @param  TemplateType[]  $templateTypes
      * @return Type[]
      */
     public function getGenericCreationTemplatesWithDefaults(array $templateTypes, TemplatesMap $templatesMap): array
@@ -141,6 +140,7 @@ class TemplateTypesSolver
 
             if ($nonMissingTypeSeen && $type instanceof MissingType) {
                 $mappedTypes[$key] = ($templateTypes[$key]->default ?? new UnknownType('Should have template default here but doesnt have for some reason'));
+
                 continue;
             }
 

@@ -14,9 +14,7 @@ class ShallowClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
     public function __construct(
         private Index $index,
         private ReflectionClass $reflection
-    )
-    {
-    }
+    ) {}
 
     public function build(): ClassDefinition
     {

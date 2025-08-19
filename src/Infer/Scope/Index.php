@@ -3,12 +3,10 @@
 namespace Dedoc\Scramble\Infer\Scope;
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
-use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\DefinitionBuilders\ShallowClassReflectionDefinitionBuilder;
-use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionException;

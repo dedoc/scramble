@@ -30,7 +30,7 @@ class AfterJsonResourceDefinitionCreatedExtension implements AfterClassDefinitio
 
         $definition->templateTypes = [
             $tResource = new TemplateType('TResource'),
-            $tAdditional = new TemplateType('TAdditional', default: new ArrayType()),
+            $tAdditional = new TemplateType('TAdditional', default: new ArrayType),
         ];
 
         $definition->methods['__construct'] = new ShallowFunctionDefinition(
@@ -39,7 +39,7 @@ class AfterJsonResourceDefinitionCreatedExtension implements AfterClassDefinitio
                 arguments: [
                     'resource' => $tResource,
                 ],
-                returnType: new VoidType(),
+                returnType: new VoidType,
             ),
             definingClassName: JsonResource::class,
             // @todo now required, but should not be required!
@@ -74,7 +74,7 @@ class AfterJsonResourceDefinitionCreatedExtension implements AfterClassDefinitio
     private function buildNewCollectionMethodDefinition(): ShallowFunctionDefinition
     {
         $templates = [
-            $tResource1 = new TemplateType('TResource1')
+            $tResource1 = new TemplateType('TResource1'),
         ];
 
         return new ShallowFunctionDefinition(
@@ -98,7 +98,7 @@ class AfterJsonResourceDefinitionCreatedExtension implements AfterClassDefinitio
     private function buildCollectionMethodDefinition(): ShallowFunctionDefinition
     {
         $templates = [
-            $tResource1 = new TemplateType('TResource1')
+            $tResource1 = new TemplateType('TResource1'),
         ];
 
         return new ShallowFunctionDefinition(
