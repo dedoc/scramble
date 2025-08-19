@@ -7,10 +7,14 @@ use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\VoidType;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class AfterJsonResourceDefinitionCreatedExtension implements AfterClassDefinitionCreatedExtension
@@ -60,6 +64,58 @@ class AfterJsonResourceDefinitionCreatedExtension implements AfterClassDefinitio
                 new TemplatePlaceholderType,
                 $tAdditional1,
             ])
+        );
+
+        $definition->methods['newCollection'] = $this->buildNewCollectionMethodDefinition();
+
+        $definition->methods['collection'] = $this->buildCollectionMethodDefinition();
+    }
+
+    private function buildNewCollectionMethodDefinition(): ShallowFunctionDefinition
+    {
+        $templates = [
+            $tResource1 = new TemplateType('TResource1')
+        ];
+
+        return new ShallowFunctionDefinition(
+            type: tap(new FunctionType(
+                name: 'newCollection',
+                arguments: [
+                    'resource' => $tResource1,
+                ],
+                returnType: new Generic(AnonymousResourceCollection::class, [
+                    $tResource1,
+                    new ArrayType,
+                    new ConstFetchReferenceType(new StaticReference(StaticReference::STATIC), 'class'),
+                ]),
+            ), function (FunctionType $ft) use ($templates) {
+                $ft->templates = $templates;
+            }),
+            definingClassName: JsonResource::class,
+        );
+    }
+
+    private function buildCollectionMethodDefinition(): ShallowFunctionDefinition
+    {
+        $templates = [
+            $tResource1 = new TemplateType('TResource1')
+        ];
+
+        return new ShallowFunctionDefinition(
+            type: tap(new FunctionType(
+                name: 'collection',
+                arguments: [
+                    'resource' => $tResource1,
+                ],
+                returnType: new StaticMethodCallReferenceType(
+                    StaticReference::STATIC,
+                    'newCollection',
+                    [$tResource1],
+                ),
+            ), function (FunctionType $ft) use ($templates) {
+                $ft->templates = $templates;
+            }),
+            definingClassName: JsonResource::class,
         );
     }
 }

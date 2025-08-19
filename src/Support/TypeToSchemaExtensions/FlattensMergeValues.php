@@ -143,8 +143,7 @@ trait FlattensMergeValues
         }
 
         if ($type->isInstanceOf(AnonymousResourceCollection::class)) {
-            return $type->templateTypes[0]->templateTypes[0]
-                ?? new UnknownType;
+            return $type->templateTypes[0] ?? new UnknownType;
         }
 
         if ($type->isInstanceOf(JsonResource::class)) {

@@ -160,14 +160,6 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
 
             'attributes' => $this->getAttributesMethodReturnType($event),
 
-//            'additional' => $event->getInstance() instanceof Generic
-//                ? tap($event->getInstance(), function (Generic $type) use ($event) {
-//                    $type->templateTypes = array_merge($type->templateTypes, [
-//                        /* TAdditional */ 1 => $event->getArg('data', 0),
-//                    ]);
-//                })
-//                : null,
-
             default => ! $event->getDefinition() || $event->getDefinition()->hasMethodDefinition($event->name)
                 ? null
                 : $this->proxyMethodCallToModel($event),
@@ -177,7 +169,6 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
     public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
     {
         return match ($event->getName()) {
-            'collection' => $this->buildAnonymousResourceCollectionType($event),
             'make' => ReferenceTypeResolver::getInstance()
                 ->resolve(
                     $event->scope,
@@ -271,24 +262,5 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                     ->all()
             ),
         ]);
-    }
-
-    private function buildAnonymousResourceCollectionType(StaticMethodCallEvent $event): Generic
-    {
-        $argument = $event->getArg('resource', 0);
-
-        $isInferredPaginator = $argument instanceof Generic
-            && ($argument->isInstanceOf(Paginator::class) || $argument->isInstanceOf(CursorPaginator::class))
-            && count($argument->templateTypes) === 2;
-
-        if ($isInferredPaginator) {
-            $argument = clone $argument;
-            $argument->templateTypes = [new ObjectType($event->getCallee())];
-        }
-
-        return new Generic(
-            AnonymousResourceCollection::class,
-            [$isInferredPaginator ? $argument : new Generic($event->getCallee(), [$event->getArg('resource', 0)])],
-        );
     }
 }

@@ -185,11 +185,7 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
 
     private function inferCollectsType(Generic $type): ?ObjectType
     {
-        $collectsType = Infer\Services\ReferenceTypeResolver::getInstance()
-            ->resolve(
-                new Infer\Scope\GlobalScope,
-                new InferType\Reference\PropertyFetchReferenceType($type, 'collects'),
-            );
+        $collectsType = $type->templateTypes[2 /* TCollects */] ?? null;
 
         if (! $collectsType instanceof InferType\Literal\LiteralStringType) {
             return null;

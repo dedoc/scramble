@@ -3,6 +3,8 @@
 namespace Dedoc\Scramble\Tests\InferExtensions;
 
 use Dedoc\Scramble\Infer\Scope\Index;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 beforeEach(function () {
     Index::$avoidAnalyzingAstClasses[] = Bar_JsonResourceInferenceTest::class;
@@ -11,18 +13,18 @@ beforeEach(function () {
 it('infers json resource creation', function ($expression, $expectedType) {
     expect(getStatementType($expression)->toString())->toBe($expectedType);
 })->with([
-//    [
-//        'new '.Foo_JsonResourceInferenceTest::class.'(42)',
-//        Foo_JsonResourceInferenceTest::class.'<int(42)>',
-//    ],
-//    [
-//        '(new '.Foo_JsonResourceInferenceTest::class.'(42))->additional(1)',
-//        Foo_JsonResourceInferenceTest::class.'<int(42), int(1)>',
-//    ],
-//    [
-//        '(new '.ManualConstructCall_JsonResourceInferenceTest::class.'(42))',
-//        ManualConstructCall_JsonResourceInferenceTest::class.'<int(42)>',
-//    ],
+    [
+        'new '.Foo_JsonResourceInferenceTest::class.'(42)',
+        Foo_JsonResourceInferenceTest::class.'<int(42)>',
+    ],
+    [
+        '(new '.Foo_JsonResourceInferenceTest::class.'(42))->additional(1)',
+        Foo_JsonResourceInferenceTest::class.'<int(42), int(1)>',
+    ],
+    [
+        '(new '.ManualConstructCall_JsonResourceInferenceTest::class.'(42))',
+        ManualConstructCall_JsonResourceInferenceTest::class.'<int(42)>',
+    ],
     [
         '(new '.ManualConstructCallWithData_JsonResourceInferenceTest::class.'(42))',
         ManualConstructCallWithData_JsonResourceInferenceTest::class.'<int(23)>',
@@ -42,6 +44,30 @@ class ManualConstructCallWithData_JsonResourceInferenceTest extends \Illuminate\
     public function __construct($resource)
     {
         parent::__construct(23);
+    }
+}
+
+it('infers static collection creation', function ($expression, $expectedType) {
+    expect(getStatementType($expression)->toString())->toBe($expectedType);
+})->with([
+    [
+        Foo_JsonResourceInferenceTest::class.'::newCollection([])',
+        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.Foo_JsonResourceInferenceTest::class.')>',
+    ],
+    [
+        Foo_JsonResourceInferenceTest::class.'::collection([])',
+        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.Foo_JsonResourceInferenceTest::class.')>',
+    ],
+    [
+        OverridenNewCollection_JsonResourceInferenceTest::class.'::collection([])',
+        NoCollectedResourcCollection_JsonResourceInferenceTest::class.'<list{}>',
+    ],
+]);
+class OverridenNewCollection_JsonResourceInferenceTest extends JsonResource
+{
+    public static function newCollection($resource)
+    {
+        return new NoCollectedResourcCollection_JsonResourceInferenceTest($resource);
     }
 }
 
