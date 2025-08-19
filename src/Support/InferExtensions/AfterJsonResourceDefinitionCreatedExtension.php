@@ -92,6 +92,7 @@ class AfterJsonResourceDefinitionCreatedExtension implements AfterClassDefinitio
                 $ft->templates = $templates;
             }),
             definingClassName: JsonResource::class,
+            isStatic: true,
         );
     }
 
@@ -116,6 +117,7 @@ class AfterJsonResourceDefinitionCreatedExtension implements AfterClassDefinitio
                 $ft->templates = $templates;
             }),
             definingClassName: JsonResource::class,
+            isStatic: true,
         );
     }
 }
