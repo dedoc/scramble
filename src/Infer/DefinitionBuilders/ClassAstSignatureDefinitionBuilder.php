@@ -2,8 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinitionBuilder;
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\InferExtensions\ShallowFunctionDefinition;
@@ -13,10 +13,8 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use InvalidArgumentException;
-use PhpParser\Node\Identifier;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PHPStan\PhpDocParser\Ast\PhpDoc\GenericTagValueNode;
@@ -27,9 +25,7 @@ class ClassAstSignatureDefinitionBuilder implements ClassDefinitionBuilder
         private string $fileName,
         private string $namespace,
         private Class_ $class,
-    )
-    {
-    }
+    ) {}
 
     public function build(): ClassDefinition
     {
@@ -42,6 +38,7 @@ class ClassAstSignatureDefinitionBuilder implements ClassDefinitionBuilder
         foreach ($this->class->stmts as $stmt) {
             if ($stmt instanceof ClassMethod) {
                 $this->handleClassMethod($definition, $stmt);
+
                 continue;
             }
             throw new InvalidArgumentException('Class node statement is not handleable: '.$stmt::class);
@@ -136,8 +133,8 @@ class ClassAstSignatureDefinitionBuilder implements ClassDefinitionBuilder
     }
 
     /**
-     * @param TemplateType[] $templateTypes
-     * @param Type[] $typesToReplaceReferencesIn
+     * @param  TemplateType[]  $templateTypes
+     * @param  Type[]  $typesToReplaceReferencesIn
      */
     private function replaceMethodTemplatesReferences(array $templateTypes, array $typesToReplaceReferencesIn): void
     {

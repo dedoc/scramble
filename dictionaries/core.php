@@ -10,8 +10,10 @@ namespace Illuminate\Http\Resources\Json
     {
         /**
          * @template TNewAdditional
-         * @param TNewAdditional $additional
+         *
+         * @param  TNewAdditional  $additional
          * @return $this
+         *
          * @self-out-type self<_, TNewAdditional>
          */
         public function additional($additional): self {}

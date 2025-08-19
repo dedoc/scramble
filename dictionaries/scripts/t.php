@@ -39,7 +39,7 @@ foreach ($ast->getStatements() as $namespaceNode) {
 
 }
 
-//$classes = (new NodeFinder())
+// $classes = (new NodeFinder())
 //    ->findInstanceOf(
 //        $ast->getStatements(),
 //
@@ -48,7 +48,6 @@ foreach ($ast->getStatements() as $namespaceNode) {
 dd($ast);
 
 dd(print_tokens(token_get_all($source)));
-
 
 function token_const_name(int $id): ?string
 {
@@ -80,6 +79,7 @@ function print_tokens(array $tokens): array
         if (! is_array($token)) {
             return $token;
         }
+
         return [
             token_const_name($token[0]),
             $token[1],
