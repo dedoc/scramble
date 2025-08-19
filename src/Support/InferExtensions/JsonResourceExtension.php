@@ -160,13 +160,13 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
 
             'attributes' => $this->getAttributesMethodReturnType($event),
 
-            'additional' => $event->getInstance() instanceof Generic
-                ? tap($event->getInstance(), function (Generic $type) use ($event) {
-                    $type->templateTypes = array_merge($type->templateTypes, [
-                        /* TAdditional */ 1 => $event->getArg('data', 0),
-                    ]);
-                })
-                : null,
+//            'additional' => $event->getInstance() instanceof Generic
+//                ? tap($event->getInstance(), function (Generic $type) use ($event) {
+//                    $type->templateTypes = array_merge($type->templateTypes, [
+//                        /* TAdditional */ 1 => $event->getArg('data', 0),
+//                    ]);
+//                })
+//                : null,
 
             default => ! $event->getDefinition() || $event->getDefinition()->hasMethodDefinition($event->name)
                 ? null
@@ -178,7 +178,6 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
     {
         return match ($event->getName()) {
             'collection' => $this->buildAnonymousResourceCollectionType($event),
-            //            'make' => new Generic($event->getCallee(), [$event->getArg('resource', 0)]),
             'make' => ReferenceTypeResolver::getInstance()
                 ->resolve(
                     $event->scope,

@@ -28,7 +28,9 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\IndexBuilders\PaginatorsCandidatesBuilder;
 use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
+use Dedoc\Scramble\Support\InferExtensions\AfterJsonResourceDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionClassDefinitionCreatedExtension;
+use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceCreationInfer;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
@@ -128,7 +130,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ResourceResponseMethodReturnTypeExtension::class,
                     JsonResponseMethodReturnTypeExtension::class,
                     ModelExtension::class,
-                    AfterResourceCollectionClassDefinitionCreatedExtension::class,
+                    AfterJsonResourceDefinitionCreatedExtension::class,
+                    AfterResourceCollectionDefinitionCreatedExtension::class,
                 ]);
 
                 return array_merge(
@@ -138,7 +141,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                         new PaginateMethodsReturnTypeExtension,
 
-                        new JsonResourceCreationInfer,
+//                        new JsonResourceCreationInfer,
                         new ValidatorTypeInfer,
                         new ResourceCollectionTypeInfer,
                         new ResponseFactoryTypeInfer,

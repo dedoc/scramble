@@ -4,8 +4,10 @@ namespace Dedoc\Scramble\Infer\Scope;
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Context;
+use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\DefinitionBuilders\ShallowClassReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Illuminate\Support\Str;
 use ReflectionClass;
@@ -16,7 +18,7 @@ use ReflectionException;
  * The index exists per run and stores all the information, so it can be accessed
  * during analysis. Index contains all classes/fns/constants found in the analyzed file.
  */
-class Index
+class Index implements IndexContract
 {
     /**
      * @var array<string, ClassDefinition>
@@ -27,6 +29,9 @@ class Index
      * @var array<string, FunctionLikeDefinition>
      */
     public array $functionsDefinitions = [];
+
+    /** @var class-string<object>[] */
+    public static array $avoidAnalyzingAstClasses = [];
 
     public function getClass(string $className): ?ClassDefinition
     {
@@ -42,8 +47,11 @@ class Index
 
         $classPath = $reflection->getFileName();
 
-        if ($classPath && ! static::shouldAnalyzeAst($classPath)) {
-            Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($className, new ClassDefinition($className)));
+        // @todo: $avoidAnalyzingAstClasses is needed for testing only, fix it!
+        $shouldAnalyzeAst = ! in_array($className, static::$avoidAnalyzingAstClasses) && static::shouldAnalyzeAst($classPath);
+
+        if ($classPath && ! $shouldAnalyzeAst) {
+            return $this->classesDefinitions[$className] = (new ShallowClassReflectionDefinitionBuilder($this, $reflection))->build();
 
             // The event emitted above MAY add the class definition to the index. So we'd like to return it if it was added.
             return $this->classesDefinitions[$className] ?? null;
@@ -88,5 +96,10 @@ class Index
         } catch (ReflectionException) {
             return null;
         }
+    }
+
+    public function getFunction(string $name): ?FunctionLikeDefinition
+    {
+        return $this->getFunctionDefinition($name);
     }
 }

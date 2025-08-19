@@ -67,7 +67,6 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type): ?Response
     {
-        dd($type);
         $additional = $type->templateTypes[1 /* TAdditional */] ?? new InferType\UnknownType;
 
         if ($additional instanceof KeyedArrayType) {
@@ -118,6 +117,11 @@ class AnonymousResourceCollectionTypeToSchema extends TypeToSchemaExtension
     {
         if (! $type->isInstanceOf(AbstractPaginator::class) && ! $type->isInstanceOf(AbstractCursorPaginator::class)) {
             return null;
+        }
+
+        if (count($type->templateTypes) === 2) {
+            $type = $type->clone();
+            $type->templateTypes[1] = $collectingClassType;
         }
 
         $paginatorResponse = $this->openApiTransformer->toResponse($type);

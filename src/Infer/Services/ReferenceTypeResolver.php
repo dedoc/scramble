@@ -18,6 +18,7 @@ use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\MissingType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
@@ -328,15 +329,8 @@ class ReferenceTypeResolver
             )
             ->prepend($propertyDefaultTemplateTypes->all());
 
-        if ($classDefinition->name === "App\Resources\AssetsObjectCollection") {
-            dd($classDefinition,
-                $constructorDefinition,
-                new AutoResolvingArgumentTypeBag($scope, $type->arguments), );
-        }
-
-        $resultingTemplatesMap = collect($classDefinition->templateTypes)
-            ->map(fn (TemplateType $t) => $templatesMap->get($t->name, new UnknownType))
-            ->all();
+        $resultingTemplatesMap = (new TemplateTypesSolver)
+            ->getGenericCreationTemplatesWithDefaults($classDefinition->templateTypes, $templatesMap);
 
         $resultingTemplatesMap = $this->applySelfOutType(
             $resultingTemplatesMap,

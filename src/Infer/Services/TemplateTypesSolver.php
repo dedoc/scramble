@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\MissingType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -111,5 +112,43 @@ class TemplateTypesSolver
             ->values()
             ->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])
             ->all();
+    }
+
+    /**
+     * @param TemplateType[] $templateTypes
+     * @param TemplatesMap $templatesMap
+     * @return Type[]
+     */
+    public function getGenericCreationTemplatesWithDefaults(array $templateTypes, TemplatesMap $templatesMap): array
+    {
+        $mappedTypes = collect($templateTypes)
+            ->map(function (TemplateType $t) use ($templatesMap) {
+                $type = $templatesMap->get($t->name, new MissingType);
+
+                if ($type instanceof MissingType) {
+                    return $t->default ? $type : new UnknownType;
+                }
+
+                return $type;
+            })
+            ->all();
+
+        $nonMissingTypeSeen = false;
+        foreach (array_reverse($mappedTypes, preserve_keys: true) as $key => $type) {
+            if (! $type instanceof MissingType) {
+                $nonMissingTypeSeen = true;
+            }
+
+            if ($nonMissingTypeSeen && $type instanceof MissingType) {
+                $mappedTypes[$key] = ($templateTypes[$key]->default ?? new UnknownType('Should have template default here but doesnt have for some reason'));
+                continue;
+            }
+
+            if ($type instanceof MissingType) {
+                unset($mappedTypes[$key]);
+            }
+        }
+
+        return $mappedTypes;
     }
 }

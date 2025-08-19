@@ -51,6 +51,10 @@ class Generator
     {
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
+//        dd(
+//            $this->infer->analyzeClass('App\Resources\AssetsObjectCollection')
+//        );
+
         $openApi = $this->makeOpenApi($config);
         $context = new OpenApiContext($openApi, $config);
         $typeTransformer = $this->buildTypeTransformer($context);
