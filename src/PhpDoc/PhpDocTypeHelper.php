@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\PhpDoc;
 
+use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
@@ -17,6 +18,8 @@ use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprFloatNode;
@@ -31,9 +34,21 @@ use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IntersectionTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
+use PHPStan\PhpDocParser\Parser\TokenIterator;
 
 class PhpDocTypeHelper
 {
+    public static function parsePhpDocStringToType(string $type): Type
+    {
+        [$lexer, $_, $typeParser] = PhpDoc::getTokenizerAndParser();
+
+        $tokens = new TokenIterator($lexer->tokenize($type));
+
+        $phpDocType = $typeParser->parse($tokens);
+
+        return PhpDocTypeHelper::toType($phpDocType);
+    }
+
     public static function toType(TypeNode $type)
     {
         if ($type instanceof IdentifierTypeNode) {
@@ -156,6 +171,9 @@ class PhpDocTypeHelper
         }
         if ($type->name === 'mixed') {
             return new MixedType;
+        }
+        if ($type->name === '_') {
+            return new TemplatePlaceholderType;
         }
 
         return new ObjectType($type->name);
