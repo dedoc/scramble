@@ -122,13 +122,19 @@ class FooAnonCollectionTap_JsonResourceInferenceTest extends \Illuminate\Http\Re
 }
 
 it('handles that weird case', function () {
-    $ca = new ClassAnalyzer(app(Index::class));
-    $def = $ca->analyze(WeirdController__JsonResourceInferenceTest::class);
+    $ca = new ClassAnalyzer($index = app(Index::class));
 
-    dd([
-        'a' => $def->getMethodDefinition('a')->type->getReturnType()->toString(),
-        'b' => $def->getMethodDefinition('b')->type->getReturnType()->toString(),
-    ]);
+    $b = $ca->analyze(BaloobooFooAnonCollectionTap_JsonResourceInferenceTest::class);
+    $c = $ca->analyze(CarFooAnonCollectionTap_JsonResourceInferenceTest::class);
+
+    $cd = $c->getMethodDefinition('get');
+    $bd = $b->getMethodDefinition('get');
+
+    $rt1 = $cd->type->getReturnType();
+    $rt2 = $bd->type->getReturnType();
+
+    expect($rt1->toString())->toBe('string(' . CarFooAnonCollectionTap_JsonResourceInferenceTest::class . ')')
+        ->and($rt2->toString())->toBe('string(' . BaloobooFooAnonCollectionTap_JsonResourceInferenceTest::class . ')');
 });
 class Static_JsonResourceInferenceTest
 {
@@ -139,15 +145,3 @@ class Static_JsonResourceInferenceTest
 }
 class BaloobooFooAnonCollectionTap_JsonResourceInferenceTest extends Static_JsonResourceInferenceTest {}
 class CarFooAnonCollectionTap_JsonResourceInferenceTest extends Static_JsonResourceInferenceTest {}
-class WeirdController__JsonResourceInferenceTest
-{
-    public function a()
-    {
-        return CarFooAnonCollectionTap_JsonResourceInferenceTest::get();
-    }
-
-    public function b()
-    {
-        return BaloobooFooAnonCollectionTap_JsonResourceInferenceTest::get();
-    }
-}

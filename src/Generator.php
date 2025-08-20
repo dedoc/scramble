@@ -55,7 +55,7 @@ class Generator
         $context = new OpenApiContext($openApi, $config);
         $typeTransformer = $this->buildTypeTransformer($context);
 
-        $this->getRoutes($config)// ->dd()
+        $this->getRoutes($config)
             ->map(function (Route $route, int $index) use ($openApi, $config, $typeTransformer) {
                 try {
                     $operation = $this->routeToOperation($openApi, $route, $config, $typeTransformer);
@@ -157,7 +157,7 @@ class Generator
 
     private function getRoutes(GeneratorConfig $config): Collection
     {
-        $routes = collect(RouteFacade::getRoutes())
+        return collect(RouteFacade::getRoutes())
             ->pipe(function (Collection $c) {
                 $onlyRoute = $c->first(function (Route $route) {
                     if (! is_string($route->getAction('controller'))) {

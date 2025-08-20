@@ -99,7 +99,7 @@ class CallRef_ReferenceTypeResolverTest
 {
     public static function baz()
     {
-        return [static::foo(), static::class];
+        return static::foo();
     }
 
     public static function foo()
