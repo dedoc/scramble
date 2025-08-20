@@ -12,12 +12,21 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\ExcludeIf;
+use Illuminate\Validation\Rules\ProhibitedIf;
+use Illuminate\Validation\Rules\RequiredIf;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RulesToParameter
 {
-    const RULES_PRIORITY = [
+    public const RULES_PRIORITY = [
         'bool', 'boolean', 'numeric', 'int', 'integer', 'file', 'image', 'string', 'array', 'exists',
+    ];
+
+    private const IF_RULES_NAMES = [
+        RequiredIf::class   => 'required_if',
+        ExcludeIf::class    => 'exclude_if',
+        ProhibitedIf::class => 'prohibited_if',
     ];
 
     private array $rules;
@@ -42,7 +51,10 @@ class RulesToParameter
             ->map(function ($v) {
                 if (! method_exists($v, '__toString')) {
                     return $v;
+                } elseif (array_key_exists($classRule = get_class($v), self::IF_RULES_NAMES)) {
+                    return self::IF_RULES_NAMES[$classRule];
                 }
+
                 try {
                     return $v->__toString();
                 } catch (\Throwable) {
