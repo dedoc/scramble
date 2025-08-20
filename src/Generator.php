@@ -55,7 +55,7 @@ class Generator
         $context = new OpenApiContext($openApi, $config);
         $typeTransformer = $this->buildTypeTransformer($context);
 
-        $this->getRoutes($config)//->dd()
+        $this->getRoutes($config)// ->dd()
             ->map(function (Route $route, int $index) use ($openApi, $config, $typeTransformer) {
                 try {
                     $operation = $this->routeToOperation($openApi, $route, $config, $typeTransformer);

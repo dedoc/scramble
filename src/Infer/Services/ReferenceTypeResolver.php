@@ -113,10 +113,10 @@ class ReferenceTypeResolver
         if ($contextualCalleeName instanceof StaticReference) {
             $contextualCalleeName = static::resolveClassName($scope, $contextualCalleeName->keyword);
 
-//            dump([
-//                $scope,
-//                $type->toString().' res name' => $contextualCalleeName,
-//            ]);
+            //            dump([
+            //                $scope,
+            //                $type->toString().' res name' => $contextualCalleeName,
+            //            ]);
 
             // This can only happen if any of static reserved keyword used in non-class context – hence considering not possible for now.
             if (! $contextualCalleeName) {
@@ -124,14 +124,14 @@ class ReferenceTypeResolver
             }
         }
 
-
         $res = (new ConstFetchTypeGetter)($scope, $contextualCalleeName, $type->constName);
-//        if ($contextualCalleeName === "App\Http\Controllers\API\AgenciesController") {
-//
-//        dd([
-//            $type->toString().' res' => $res->toString(),
-//        ]);
-//        }
+
+        //        if ($contextualCalleeName === "App\Http\Controllers\API\AgenciesController") {
+        //
+        //        dd([
+        //            $type->toString().' res' => $res->toString(),
+        //        ]);
+        //        }
         return $res;
     }
 

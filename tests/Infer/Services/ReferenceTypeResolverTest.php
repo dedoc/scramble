@@ -101,6 +101,7 @@ class CallRef_ReferenceTypeResolverTest
     {
         return [static::foo(), static::class];
     }
+
     public static function foo()
     {
         return \Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::staticClassFetch();

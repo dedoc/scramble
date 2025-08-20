@@ -169,7 +169,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
     public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
     {
         return match ($event->getName()) {
-//            'collection' => $this->buildAnonymousResourceCollectionType($event),
+            //            'collection' => $this->buildAnonymousResourceCollectionType($event),
             'make' => ReferenceTypeResolver::getInstance()
                 ->resolve(
                     $event->scope,

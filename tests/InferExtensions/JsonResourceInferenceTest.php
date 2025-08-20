@@ -2,13 +2,10 @@
 
 namespace Dedoc\Scramble\Tests\InferExtensions;
 
-use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Scope\Index;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Route;
 
 beforeEach(function () {
     Index::$avoidAnalyzingAstClasses[] = Bar_JsonResourceInferenceTest::class;
@@ -140,18 +137,15 @@ class Static_JsonResourceInferenceTest
         return static::class;
     }
 }
-class BaloobooFooAnonCollectionTap_JsonResourceInferenceTest extends Static_JsonResourceInferenceTest
-{
-}
-class CarFooAnonCollectionTap_JsonResourceInferenceTest extends Static_JsonResourceInferenceTest
-{
-}
+class BaloobooFooAnonCollectionTap_JsonResourceInferenceTest extends Static_JsonResourceInferenceTest {}
+class CarFooAnonCollectionTap_JsonResourceInferenceTest extends Static_JsonResourceInferenceTest {}
 class WeirdController__JsonResourceInferenceTest
 {
     public function a()
     {
         return CarFooAnonCollectionTap_JsonResourceInferenceTest::get();
     }
+
     public function b()
     {
         return BaloobooFooAnonCollectionTap_JsonResourceInferenceTest::get();
