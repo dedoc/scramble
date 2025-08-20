@@ -113,13 +113,26 @@ class ReferenceTypeResolver
         if ($contextualCalleeName instanceof StaticReference) {
             $contextualCalleeName = static::resolveClassName($scope, $contextualCalleeName->keyword);
 
+//            dump([
+//                $scope,
+//                $type->toString().' res name' => $contextualCalleeName,
+//            ]);
+
             // This can only happen if any of static reserved keyword used in non-class context – hence considering not possible for now.
             if (! $contextualCalleeName) {
                 return new UnknownType("Cannot properly analyze [{$type->toString()}] reference type as static keyword used in non-class context, or current class scope has no parent.");
             }
         }
 
-        return (new ConstFetchTypeGetter)($scope, $contextualCalleeName, $type->constName);
+
+        $res = (new ConstFetchTypeGetter)($scope, $contextualCalleeName, $type->constName);
+//        if ($contextualCalleeName === "App\Http\Controllers\API\AgenciesController") {
+//
+//        dd([
+//            $type->toString().' res' => $res->toString(),
+//        ]);
+//        }
+        return $res;
     }
 
     private function resolveMethodCallReferenceType(Scope $scope, MethodCallReferenceType $type): Type

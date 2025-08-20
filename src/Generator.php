@@ -89,6 +89,8 @@ class Generator
             ))
             ->toArray();
 
+        dd($this->infer->index->getClass("App\Http\Controllers\API\AgenciesController")->getMethod('index')->type->getReturnType()->toString());
+
         $this->setUniqueOperationId($openApi);
 
         $this->moveSameAlternativeServersToPath($openApi);

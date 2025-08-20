@@ -69,6 +69,44 @@ it('infers static method calls on child class', function (string $method, string
     ['parentMethodCall', 'string(foo)'],
 ]);
 
+it('infers static class fetch on parent', function (string $method, string $expectedType) {
+    $methodDef = $this->classAnalyzer
+        ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo::class)
+        ->getMethodDefinition($method);
+    expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
+})->with([
+    ['staticClassFetch', 'string(Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo)'],
+]);
+
+it('infers static class fetch on child', function (string $method, string $expectedType) {
+    $methodDef = $this->classAnalyzer
+        ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class)
+        ->getMethodDefinition($method);
+    expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
+})->with([
+    ['staticClassFetch', 'string(Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar)'],
+]);
+
+it('infers static class fetch on child when called from outside', function (string $method, string $expectedType) {
+    $methodDef = $this->classAnalyzer
+        ->analyze(CallRef_ReferenceTypeResolverTest::class)
+        ->getMethodDefinition($method);
+    expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
+})->with([
+    ['baz', 'string(Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar)'],
+]);
+class CallRef_ReferenceTypeResolverTest
+{
+    public static function baz()
+    {
+        return [static::foo(), static::class];
+    }
+    public static function foo()
+    {
+        return \Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::staticClassFetch();
+    }
+}
+
 it('complex static call and property fetch', function () {
     $type = getStatementType('Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::wow()');
 
