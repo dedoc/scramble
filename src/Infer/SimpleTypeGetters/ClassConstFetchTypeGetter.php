@@ -20,6 +20,13 @@ class ClassConstFetchTypeGetter
     {
         if ($node->name instanceof Node\Identifier && $node->name->toString() === 'class') {
             if ($node->class instanceof Node\Name) {
+                if (in_array($node->class->toString(), StaticReference::KEYWORDS)) {
+                    return new ConstFetchReferenceType(
+                        new StaticReference($node->class->toString()),
+                        $node->name->toString(),
+                    );
+                }
+
                 return new LiteralStringType($node->class->toString());
             }
 

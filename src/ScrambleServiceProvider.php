@@ -28,6 +28,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\IndexBuilders\PaginatorsCandidatesBuilder;
 use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
+use Dedoc\Scramble\Support\InferExtensions\AfterAnonymousResourceCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterJsonResourceDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
@@ -40,9 +41,11 @@ use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResponseMethodReturnTypeExtension;
+use Dedoc\Scramble\Support\InferExtensions\ShallowFunctionDefinition;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\VoidType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\BinaryFileResponseToSchema;
@@ -107,6 +110,19 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 $index->classesDefinitions[$className] = unserialize($serializedClassDefinition);
             }
 
+            $templates = [$tValue = new TemplateType('TValue')];
+            $index->functionsDefinitions['tap'] = new ShallowFunctionDefinition(
+                type: tap(new FunctionType(
+                    name: 'tap',
+                    arguments: [
+                        'value' => $tValue,
+                    ],
+                    returnType: $tValue,
+                ), function (FunctionType $type) use ($templates) {
+                    $type->templates = $templates;
+                })
+            );
+
             return $index;
         });
 
@@ -130,6 +146,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ModelExtension::class,
                     AfterJsonResourceDefinitionCreatedExtension::class,
                     AfterResourceCollectionDefinitionCreatedExtension::class,
+                    AfterAnonymousResourceCollectionDefinitionCreatedExtension::class,
                 ]);
 
                 return array_merge(

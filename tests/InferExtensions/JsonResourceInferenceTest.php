@@ -88,3 +88,34 @@ class FooCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources
 {
     public $collects = Foo_JsonResourceInferenceTest::class;
 }
+
+it('infers anonymous collection creation', function ($expression, $expectedType) {
+    expect(getStatementType($expression)->toString())->toBe($expectedType);
+})->with([
+//    [
+//        'new '.AnonymousResourceCollection::class.'([], '.Bar_JsonResourceInferenceTest::class.'::class)',
+//        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.Bar_JsonResourceInferenceTest::class.')>',
+//    ],
+//    [
+//        FooAnonCollection_JsonResourceInferenceTest::class.'::collection([])',
+//        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.FooAnonCollection_JsonResourceInferenceTest::class.')>',
+//    ],
+    [
+        FooAnonCollectionTap_JsonResourceInferenceTest::class.'::collection([])',
+        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.FooAnonCollectionTap_JsonResourceInferenceTest::class.')>',
+    ],
+]);
+class FooAnonCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\JsonResource
+{
+    public static function collection($resource)
+    {
+        return new AnonymousResourceCollection($resource, static::class);
+    }
+}
+class FooAnonCollectionTap_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\JsonResource
+{
+    public static function collection($resource)
+    {
+        return tap(new AnonymousResourceCollection($resource, static::class), function ($v) {});
+    }
+}
