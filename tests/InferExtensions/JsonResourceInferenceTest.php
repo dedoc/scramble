@@ -2,9 +2,13 @@
 
 namespace Dedoc\Scramble\Tests\InferExtensions;
 
+use Dedoc\Scramble\Generator;
+use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Route;
 
 beforeEach(function () {
     Index::$avoidAnalyzingAstClasses[] = Bar_JsonResourceInferenceTest::class;
@@ -92,14 +96,14 @@ class FooCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources
 it('infers anonymous collection creation', function ($expression, $expectedType) {
     expect(getStatementType($expression)->toString())->toBe($expectedType);
 })->with([
-//    [
-//        'new '.AnonymousResourceCollection::class.'([], '.Bar_JsonResourceInferenceTest::class.'::class)',
-//        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.Bar_JsonResourceInferenceTest::class.')>',
-//    ],
-//    [
-//        FooAnonCollection_JsonResourceInferenceTest::class.'::collection([])',
-//        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.FooAnonCollection_JsonResourceInferenceTest::class.')>',
-//    ],
+    [
+        'new '.AnonymousResourceCollection::class.'([], '.Bar_JsonResourceInferenceTest::class.'::class)',
+        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.Bar_JsonResourceInferenceTest::class.')>',
+    ],
+    [
+        FooAnonCollection_JsonResourceInferenceTest::class.'::collection([])',
+        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.FooAnonCollection_JsonResourceInferenceTest::class.')>',
+    ],
     [
         FooAnonCollectionTap_JsonResourceInferenceTest::class.'::collection([])',
         AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.FooAnonCollectionTap_JsonResourceInferenceTest::class.')>',
@@ -117,5 +121,39 @@ class FooAnonCollectionTap_JsonResourceInferenceTest extends \Illuminate\Http\Re
     public static function collection($resource)
     {
         return tap(new AnonymousResourceCollection($resource, static::class), function ($v) {});
+    }
+}
+
+it('handles that weird case', function () {
+    $ca = new ClassAnalyzer(app(Index::class));
+    $def = $ca->analyze(WeirdController__JsonResourceInferenceTest::class);
+
+    dd([
+        'a' => $def->getMethodDefinition('a')->type->getReturnType()->toString(),
+        'b' => $def->getMethodDefinition('b')->type->getReturnType()->toString(),
+    ]);
+});
+class Static_JsonResourceInferenceTest
+{
+    public static function get()
+    {
+        return static::class;
+    }
+}
+class BaloobooFooAnonCollectionTap_JsonResourceInferenceTest extends Static_JsonResourceInferenceTest
+{
+}
+class CarFooAnonCollectionTap_JsonResourceInferenceTest extends Static_JsonResourceInferenceTest
+{
+}
+class WeirdController__JsonResourceInferenceTest
+{
+    public function a()
+    {
+        return CarFooAnonCollectionTap_JsonResourceInferenceTest::get();
+    }
+    public function b()
+    {
+        return BaloobooFooAnonCollectionTap_JsonResourceInferenceTest::get();
     }
 }
