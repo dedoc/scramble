@@ -38,7 +38,7 @@ class ClassAnalyzer
             name: $name,
             templateTypes: $parentDefinition?->templateTypes ?: [],
             properties: array_map(fn ($pd) => clone $pd, $parentDefinition?->properties ?: []),
-            methods: $parentDefinition?->methods ?: [],
+            methods: array_map(fn ($md) => $md->copyFromParent(), $parentDefinition?->methods ?: []),
             parentFqn: $parentName,
         );
 

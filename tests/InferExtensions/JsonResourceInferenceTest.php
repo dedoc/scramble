@@ -127,11 +127,6 @@ it('handles that weird case', function () {
     $b = $ca->analyze(BaloobooFooAnonCollectionTap_JsonResourceInferenceTest::class);
     $c = $ca->analyze(CarFooAnonCollectionTap_JsonResourceInferenceTest::class);
 
-//    dd([
-//        $b->getMethodDefinitionWithoutAnalysis('get'),
-//        $c->getMethodDefinitionWithoutAnalysis('get'),
-//    ]);
-
     $cd = $c->getMethodDefinition('get');
     $bd = $b->getMethodDefinition('get');
 
@@ -150,3 +145,25 @@ class Static_JsonResourceInferenceTest
 }
 class BaloobooFooAnonCollectionTap_JsonResourceInferenceTest extends Static_JsonResourceInferenceTest {}
 class CarFooAnonCollectionTap_JsonResourceInferenceTest extends Static_JsonResourceInferenceTest {}
+
+it('handles that second weird case', function () {
+    $ca = new ClassAnalyzer($index = app(Index::class));
+
+    $b = $ca->analyze(Bar_JsonResourceInferenceTest::class);
+    $j = $ca->analyze(Jar_JsonResourceInferenceTest::class);
+
+    $bget = $b->getMethodDefinition('collection');
+    $jget = $j->getMethodDefinition('collection');
+
+    $bgetret = $bget->type->getReturnType();
+    $jgetret = $jget->type->getReturnType();
+
+    expect($bgetret->toString())
+        ->toBe(
+            AnonymousResourceCollection::class . '<TResource1, array<mixed>, string(' . Bar_JsonResourceInferenceTest::class . ')>')
+        ->and($jgetret->toString())
+        ->toBe(
+            AnonymousResourceCollection::class . '<TResource1, array<mixed>, string(' . Jar_JsonResourceInferenceTest::class . ')>'
+        );
+});
+class Jar_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\JsonResource {}

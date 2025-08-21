@@ -23,4 +23,11 @@ class ShallowFunctionDefinition extends FunctionLikeDefinition
     {
         return $this->selfOutType;
     }
+
+    public function copyFromParent(): self
+    {
+        $copy = clone $this;
+        $copy->type = $copy->type->clone();
+        return $copy;
+    }
 }
