@@ -47,7 +47,7 @@ class ResourceCollectionTypeInfer implements MethodReturnTypeExtension, Property
 
     private function getCollectionType(ObjectType $type, ClassDefinition $definition): ArrayType
     {
-        if ($type instanceof Generic && $instanceCollectedType = $this->getInstanceCollectedType($type)) {
+        if ($type instanceof Generic && $instanceCollectedType = $this->getCollectedInstanceType($type)) {
             return new ArrayType($instanceCollectedType);
         }
 
@@ -91,7 +91,7 @@ class ResourceCollectionTypeInfer implements MethodReturnTypeExtension, Property
         return $collectingClassType;
     }
 
-    private function getInstanceCollectedType(ObjectType $type): ?Type
+    public function getCollectedInstanceType(ObjectType $type): ?Type
     {
         if (! $type instanceof Generic) {
             return null;

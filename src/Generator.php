@@ -159,7 +159,8 @@ class Generator
     {
         return collect(RouteFacade::getRoutes())
             ->pipe(function (Collection $c) {
-                $onlyRoute = $c->first(function (Route $route) {
+                $onlyRoutes = $c->filter(function (Route $route) {
+//                    dump($route->getName());
                     if (! is_string($route->getAction('controller'))) {
                         return false;
                     }
@@ -180,7 +181,7 @@ class Generator
                     return false;
                 });
 
-                return $onlyRoute ? collect([$onlyRoute]) : $c;
+                return $onlyRoutes->count() ? $onlyRoutes : $c;
             })
             ->filter(function (Route $route) {
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
