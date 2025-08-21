@@ -57,6 +57,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\PaginatorTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\StreamedResponseToSchema;
@@ -208,7 +209,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ModelToSchema::class,
                     CollectionToSchema::class,
                     EloquentCollectionToSchema::class,
-                    AnonymousResourceCollectionTypeToSchema::class,
+//                    AnonymousResourceCollectionTypeToSchema::class,
+                    ResourceCollectionTypeToSchema::class,
                     CursorPaginatorTypeToSchema::class,
                     PaginatorTypeToSchema::class,
                     LengthAwarePaginatorTypeToSchema::class,

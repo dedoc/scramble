@@ -53,7 +53,8 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
         $resourceType = $type->templateTypes[0];
 
         if ($resourceType instanceof ObjectType && $resourceType->isInstanceOf(AnonymousResourceCollection::class)) {
-            return $this->openApiTransformer->toResponse($resourceType);
+//            dd($type->toString(), $resourceType->toString());
+//            return $this->openApiTransformer->toResponse($resourceType);
         }
 
         $openApiType = $this->openApiTransformer->transform($resourceType);

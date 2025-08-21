@@ -12,7 +12,6 @@ use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -20,7 +19,6 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceResponse;
@@ -43,7 +41,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     {
         return $type instanceof ObjectType
             && $type->isInstanceOf(JsonResource::class)
-            && ! $type->isInstanceOf(AnonymousResourceCollection::class);
+            && ! $type->isInstanceOf(ResourceCollection::class);
     }
 
     /**
@@ -51,23 +49,13 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        $definition = $this->infer->analyzeClass($type->name);
-
         $array = ReferenceTypeResolver::getInstance()->resolve(
             new GlobalScope,
             (new MethodCallReferenceType($type, 'toArray', arguments: []))
         );
 
-        // @todo: Should unpacking be done here? Or here we'd want to have already unpacked array?
+        // @todo: why unpacking is here? ReferenceTypeResolver@resolve should've returned unpacked type
         $array = TypeHelper::unpackIfArray($array);
-
-        if (! $array instanceof KeyedArrayType) {
-            if ($type->isInstanceOf(ResourceCollection::class)) {
-                $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($definition);
-            } else {
-                return new UnknownType;
-            }
-        }
 
         // The case when `toArray` is not defined.
         if ($array instanceof ArrayType) {
