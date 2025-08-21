@@ -172,6 +172,22 @@ it('infers anonymous resource collection toArray', function ($expression, $expec
     ],
 ]);
 
+it('falls back to parent resource collection toArray if cannot infer overwritten type', function ($expression, $expectedType) {
+    expect(getStatementType($expression)->toString())->toBe($expectedType);
+})->with([
+    [
+        '(new '.OverwrittenUnknownCollection_JsonResourceInferenceTest::class.'([], '.Foo_JsonResourceInferenceTest::class.'::class))->toArray()',
+        'array<'.Foo_JsonResourceInferenceTest::class.'<unknown>>',
+    ],
+]);
+class OverwrittenUnknownCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+{
+    public function toArray($request)
+    {
+        return unknown();
+    }
+}
+
 it('handles that weird case', function () {
     $ca = new ClassAnalyzer($index = app(Index::class));
 

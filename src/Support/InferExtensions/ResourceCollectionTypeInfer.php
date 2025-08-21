@@ -5,10 +5,8 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
-use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
-use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -17,8 +15,6 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Str;
-use PhpParser\Node;
-use PhpParser\Node\Expr;
 
 class ResourceCollectionTypeInfer implements MethodReturnTypeExtension, PropertyTypeExtension
 {
@@ -30,9 +26,7 @@ class ResourceCollectionTypeInfer implements MethodReturnTypeExtension, Property
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         return match ($event->name) {
-            'toArray' => $event->methodDefiningClassName === ResourceCollection::class
-                ? $this->getCollectionType($event->getInstance(), $event->getDefinition())
-                : null,
+            'toArray' => $this->getToArrayReturnType($event),
             default => null,
         };
     }
@@ -43,6 +37,22 @@ class ResourceCollectionTypeInfer implements MethodReturnTypeExtension, Property
             'collection' => $this->getCollectionType($event->getInstance(), $event->getDefinition()),
             default => null,
         };
+    }
+
+    private function getToArrayReturnType(MethodCallEvent $event): ?Type
+    {
+        $parentType = $this->getCollectionType($event->getInstance(), $event->getDefinition());
+
+        if ($event->methodDefiningClassName === ResourceCollection::class) {
+            return $parentType;
+        }
+
+        $realType = $event->getDefinition()->getMethodDefinition('toArray')?->type->getReturnType();
+        if ($realType instanceof UnknownType) {
+            return $parentType;
+        }
+
+        return $realType;
     }
 
     private function getCollectionType(ObjectType $type, ClassDefinition $definition): ArrayType
