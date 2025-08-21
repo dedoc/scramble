@@ -127,6 +127,11 @@ it('handles that weird case', function () {
     $b = $ca->analyze(BaloobooFooAnonCollectionTap_JsonResourceInferenceTest::class);
     $c = $ca->analyze(CarFooAnonCollectionTap_JsonResourceInferenceTest::class);
 
+//    dd([
+//        $b->getMethodDefinitionWithoutAnalysis('get'),
+//        $c->getMethodDefinitionWithoutAnalysis('get'),
+//    ]);
+
     $cd = $c->getMethodDefinition('get');
     $bd = $b->getMethodDefinition('get');
 

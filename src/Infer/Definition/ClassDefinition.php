@@ -97,7 +97,7 @@ class ClassDefinition implements ClassDefinitionContract
             ))->analyze($methodDefinition, $indexBuilders, $withSideEffects);
         }
 
-        if (true || ! $methodDefinition->referencesResolved) { // @todo make a part of !$methodDefinition->isFullyAnalyzed() (a part of method definition building)
+        if (! $this->methods[$name]->referencesResolved) { // @todo make a part of !$methodDefinition->isFullyAnalyzed() (a part of method definition building)
             $methodScope = new Scope(
                 $scope->index,
                 new NodeTypesResolver,
@@ -116,7 +116,7 @@ class ClassDefinition implements ClassDefinitionContract
                     ->resolve($methodScope, $exceptionType);
             }
 
-            $methodDefinition->referencesResolved = true;
+            $this->methods[$name]->referencesResolved = true;
         }
 
         return $this->methods[$name];
