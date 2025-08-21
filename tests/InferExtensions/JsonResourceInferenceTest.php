@@ -160,10 +160,10 @@ it('handles that second weird case', function () {
 
     expect($bgetret->toString())
         ->toBe(
-            AnonymousResourceCollection::class . '<TResource1, array<mixed>, string(' . Bar_JsonResourceInferenceTest::class . ')>')
+            AnonymousResourceCollection::class.'<TResource1, array<mixed>, string('.Bar_JsonResourceInferenceTest::class.')>')
         ->and($jgetret->toString())
         ->toBe(
-            AnonymousResourceCollection::class . '<TResource1, array<mixed>, string(' . Jar_JsonResourceInferenceTest::class . ')>'
+            AnonymousResourceCollection::class.'<TResource1, array<mixed>, string('.Jar_JsonResourceInferenceTest::class.')>'
         );
 });
 class Jar_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\JsonResource {}

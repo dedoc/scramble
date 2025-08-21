@@ -28,6 +28,7 @@ class ShallowFunctionDefinition extends FunctionLikeDefinition
     {
         $copy = clone $this;
         $copy->type = $copy->type->clone();
+
         return $copy;
     }
 }
