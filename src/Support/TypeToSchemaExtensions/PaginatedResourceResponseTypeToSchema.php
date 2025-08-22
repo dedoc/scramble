@@ -84,16 +84,6 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
         $paginatorSchemaType = $this->getPaginatorSchemaType($type);
 
         return (new OpenApiObjectType)
-            ->addProperty('meta', tap(new OpenApiObjectType, function (OpenApiObjectType $type) use ($paginatorSchemaType) {
-                $type->properties = Arr::except($paginatorSchemaType->properties, [
-                    'data',
-                    'first_page_url',
-                    'last_page_url',
-                    'prev_page_url',
-                    'next_page_url',
-                ]);
-                $type->setRequired(array_keys($type->properties));
-            }))
             ->addProperty('links', tap(new OpenApiObjectType, function (OpenApiObjectType $type) use ($paginatorSchemaType) {
                 $defaultLinkType = (new StringType)->nullable(true);
                 $type->properties = [
@@ -102,6 +92,16 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
                     'prev' => $paginatorSchemaType->properties['prev_page_url'] ?? $defaultLinkType,
                     'next' => $paginatorSchemaType->properties['next_page_url'] ?? $defaultLinkType,
                 ];
+                $type->setRequired(array_keys($type->properties));
+            }))
+            ->addProperty('meta', tap(new OpenApiObjectType, function (OpenApiObjectType $type) use ($paginatorSchemaType) {
+                $type->properties = Arr::except($paginatorSchemaType->properties, [
+                    'data',
+                    'first_page_url',
+                    'last_page_url',
+                    'prev_page_url',
+                    'next_page_url',
+                ]);
                 $type->setRequired(array_keys($type->properties));
             }))
             ->setRequired(['links', 'meta']);
