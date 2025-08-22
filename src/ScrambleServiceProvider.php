@@ -209,7 +209,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ModelToSchema::class,
                     CollectionToSchema::class,
                     EloquentCollectionToSchema::class,
-//                    AnonymousResourceCollectionTypeToSchema::class,
+                    //                    AnonymousResourceCollectionTypeToSchema::class,
                     ResourceCollectionTypeToSchema::class,
                     CursorPaginatorTypeToSchema::class,
                     PaginatorTypeToSchema::class,

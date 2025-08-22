@@ -8,9 +8,9 @@ use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -25,7 +25,6 @@ use LogicException;
 
 class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
 {
-
     public function shouldHandle(Type $type)
     {
         return $type instanceof Generic
@@ -35,7 +34,7 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
     }
 
     /**
-     * @param Generic $type
+     * @param  Generic  $type
      */
     public function toResponse(Type $type): Response
     {
@@ -61,7 +60,7 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
         $wrapKey = $this->wrapper($type);
         $dataIsWrapped = $this->dataIsWrapped($this->unref($data), $wrapKey);
 
-        if ($wrapKey && !$dataIsWrapped) { // $this->haveDefaultWrapperAndDataIsUnwrapped($data)
+        if ($wrapKey && ! $dataIsWrapped) { // $this->haveDefaultWrapperAndDataIsUnwrapped($data)
             $data = (new OpenApiObjectType)
                 ->addProperty($wrapKey, $data)
                 ->setRequired([$wrapKey]);
@@ -73,6 +72,7 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
 
         if ($data instanceof OpenApiObjectType) {
             $this->mergeOpenApiObjects($data, $additional);
+
             return $data;
         }
 

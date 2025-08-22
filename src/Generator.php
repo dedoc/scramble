@@ -160,7 +160,7 @@ class Generator
         return collect(RouteFacade::getRoutes())
             ->pipe(function (Collection $c) {
                 $onlyRoutes = $c->filter(function (Route $route) {
-//                    dump($route->getName());
+                    //                    dump($route->getName());
                     if (! is_string($route->getAction('controller'))) {
                         return false;
                     }

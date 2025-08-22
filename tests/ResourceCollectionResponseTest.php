@@ -105,14 +105,14 @@ test('transforms collection without toArray implementation', function () {
         JsonResourceTypeToSchema::class,
         ResourceCollectionTypeToSchema::class,
     ]);
-//    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->components, $this->context);
+    //    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->components, $this->context);
 
     $type = new ObjectType(UserCollection_Four::class);
 
-//    dd([
-//        'response' => $transformer->toResponse($type)->toArray(),
-//        'components' => $this->components->toArray(),
-//    ]);
+    //    dd([
+    //        'response' => $transformer->toResponse($type)->toArray(),
+    //        'components' => $this->components->toArray(),
+    //    ]);
 
     assertMatchesSnapshot([
         'response' => $transformer->toResponse($type)->toArray(),

@@ -107,12 +107,13 @@ it('infers resource collection toArray', function ($expression, $expectedType) {
     // collection with $collects, with call to `collection` property
     [
         '(new '.CallToCollection_JsonResourceInferenceTest::class.'([]))->toArray()',
-        'array{data: array<'.Foo_JsonResourceInferenceTest::class.'<unknown>>, links: array{self: string(link-value)}}'
+        'array{data: array<'.Foo_JsonResourceInferenceTest::class.'<unknown>>, links: array{self: string(link-value)}}',
     ],
 ]);
 class ParentToArrayCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
     public $collects = Foo_JsonResourceInferenceTest::class;
+
     public function toArray(Request $request)
     {
         return parent::toArray($request);
@@ -121,6 +122,7 @@ class ParentToArrayCollection_JsonResourceInferenceTest extends \Illuminate\Http
 class CallToCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
     public $collects = Foo_JsonResourceInferenceTest::class;
+
     public function toArray(Request $request)
     {
         return [

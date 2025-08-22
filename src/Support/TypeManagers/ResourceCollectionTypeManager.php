@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Support\TypeManagers;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
-use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
@@ -19,9 +18,7 @@ use Illuminate\Support\Str;
  */
 class ResourceCollectionTypeManager
 {
-    public function __construct(private Generic $type, private Index $index)
-    {
-    }
+    public function __construct(private Generic $type, private Index $index) {}
 
     public function getCollectedType(): Generic|UnknownType
     {
@@ -49,7 +46,7 @@ class ResourceCollectionTypeManager
 
     private function getCollectedTypeFromManualAnnotation(): ?Generic
     {
-         $type = (new TypeWalker)->first( // @phpstan-ignore return.type
+        $type = (new TypeWalker)->first( // @phpstan-ignore return.type
             new Union([
                 $this->type->templateTypes[0] ?? new UnknownType,
                 $this->type->templateTypes[1] ?? new UnknownType,
@@ -84,6 +81,7 @@ class ResourceCollectionTypeManager
             ) {
                 return new Generic($class, [new UnknownType]);
             }
+
             return null;
         }
 
