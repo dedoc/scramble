@@ -48,7 +48,7 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
             && count($type->templateTypes) >= 1;
     }
 
-    public function toResponse(Type $type)
+    public function toResponse(Type $type): Response
     {
         $resourceType = $type->templateTypes[0];
 

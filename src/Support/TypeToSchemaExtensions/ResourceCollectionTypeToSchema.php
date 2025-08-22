@@ -11,7 +11,11 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\Json\PaginatedResourceResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Http\Resources\Json\ResourceResponse;
+use Illuminate\Pagination\AbstractCursorPaginator;
+use Illuminate\Pagination\AbstractPaginator;
 
 class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
 {
@@ -27,6 +31,12 @@ class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
     public function toResponse(Type $type)
     {
         // todo: paginated response
+        if ($this->isPaginatedResource($type)) {
+            $resourceResponseType = new Generic(PaginatedResourceResponse::class, [$type]);
+
+            return (new PaginatedResourceResponseTypeToSchema($this->infer, $this->openApiTransformer, $this->components, $this->openApiContext))
+                ->toResponse($resourceResponseType);
+        }
 
         $response = parent::toResponse($type);
 
@@ -35,6 +45,21 @@ class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
         }
 
         return $response;
+    }
+
+    private function isPaginatedResource(ObjectType $type): bool
+    {
+        if (! $type instanceof Generic) {
+            return false;
+        }
+
+        $resourceType = $type->templateTypes[/* TResource */ 0] ?? null;
+        if (! $resourceType instanceof ObjectType) {
+            return false;
+        }
+
+        return $resourceType->isInstanceOf(AbstractPaginator::class)
+            || $resourceType->isInstanceOf(AbstractCursorPaginator::class);
     }
 
     private function addShapeDescription(ObjectType $type, Response $response): void
