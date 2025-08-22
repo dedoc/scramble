@@ -25,6 +25,6 @@ trait MergesOpenApiObjects
             }
         }
 
-        $into->addRequired(array_keys($what->properties));
+        $into->addRequired($what->required);
     }
 }

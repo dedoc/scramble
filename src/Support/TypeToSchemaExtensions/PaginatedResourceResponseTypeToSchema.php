@@ -195,16 +195,6 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
         }
 
         return (new OpenApiObjectType)
-            ->addProperty('links', tap(new OpenApiObjectType, function (OpenApiObjectType $type) use ($paginatorSchemaType) {
-                $defaultLinkType = (new StringType)->nullable(true);
-                $type->properties = [
-                    'first' => $paginatorSchemaType->properties['first_page_url'] ?? $defaultLinkType,
-                    'last' => $paginatorSchemaType->properties['last_page_url'] ?? $defaultLinkType,
-                    'prev' => $paginatorSchemaType->properties['prev_page_url'] ?? $defaultLinkType,
-                    'next' => $paginatorSchemaType->properties['next_page_url'] ?? $defaultLinkType,
-                ];
-                $type->setRequired(array_keys($type->properties));
-            }))
             ->addProperty('meta', tap(new OpenApiObjectType, function (OpenApiObjectType $type) use ($paginatorSchemaType) {
                 $type->properties = Arr::except($paginatorSchemaType->properties, [
                     'data',
@@ -213,6 +203,16 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
                     'prev_page_url',
                     'next_page_url',
                 ]);
+                $type->setRequired(array_keys($type->properties));
+            }))
+            ->addProperty('links', tap(new OpenApiObjectType, function (OpenApiObjectType $type) use ($paginatorSchemaType) {
+                $defaultLinkType = (new StringType)->nullable(true);
+                $type->properties = [
+                    'first' => $paginatorSchemaType->properties['first_page_url'] ?? $defaultLinkType,
+                    'last' => $paginatorSchemaType->properties['last_page_url'] ?? $defaultLinkType,
+                    'prev' => $paginatorSchemaType->properties['prev_page_url'] ?? $defaultLinkType,
+                    'next' => $paginatorSchemaType->properties['next_page_url'] ?? $defaultLinkType,
+                ];
                 $type->setRequired(array_keys($type->properties));
             }))
             ->setRequired(['links', 'meta']);

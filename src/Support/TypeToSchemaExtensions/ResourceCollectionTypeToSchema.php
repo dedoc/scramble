@@ -3,19 +3,15 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Support\Generator\Response;
-use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
-use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\UnknownType;
-use Illuminate\Http\Resources\Json\JsonResource;
+use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\Resources\Json\PaginatedResourceResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Http\Resources\Json\ResourceResponse;
 use Illuminate\Pagination\AbstractCursorPaginator;
 use Illuminate\Pagination\AbstractPaginator;
+use Illuminate\Support\Str;
 
 class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
 {
@@ -63,7 +59,9 @@ class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
 
     private function addShapeDescription(ObjectType $type, Response $response): void
     {
-        $collectedResourceType = (new ResourceCollectionTypeInfer)->getCollectedInstanceType($type);
+        $type = (! $type instanceof Generic) ? new Generic($type->name) : $type;
+
+        $collectedResourceType = (new ResourceCollectionTypeManager($type, $this->infer->index))->getCollectedType();
 
         if (! $collectedResourceType instanceof ObjectType) {
             return;
@@ -81,35 +79,8 @@ class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
         return parent::reference($type);
     }
 
-    private function shouldReferenceResourceCollection(ObjectType $type): bool
+    protected function shouldReferenceResourceCollection(ObjectType $type): bool
     {
-        $definition = $this->infer->analyzeClass($type->name);
-
-        return (new ResourceCollectionTypeInfer)->getCollectingClassType($definition) instanceof LiteralStringType;
-    }
-
-    private function getCollectionType(ObjectType $type): ?ArrayType
-    {
-        $definition = $this->infer->analyzeClass($type->name);
-
-        $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($definition);
-        if ($array instanceof ArrayType) {
-            return $array;
-        }
-
-        if (! $type instanceof Generic) {
-            return null;
-        }
-        $collectName = $type->templateTypes[2 /* TCollects */];
-        if (! $collectName instanceof LiteralStringType) {
-            return null;
-        }
-
-        $className = $collectName->value;
-        if (! is_a($className, JsonResource::class, true)) {
-            return null;
-        }
-
-        return new ArrayType(new Generic($className, [new UnknownType]));
+        return ! Str::contains(class_basename($type->name), 'anonymous', ignoreCase: true);
     }
 }
