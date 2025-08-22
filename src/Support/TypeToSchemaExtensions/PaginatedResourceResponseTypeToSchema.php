@@ -69,6 +69,10 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
 
         $content = $response->getContent('application/json')->type;
 
+        if (! $content instanceof OpenApiObjectType) {
+            return;
+        }
+
         $this->mergeOpenApiObjects(
             $content,
             $paginatedData,
@@ -114,7 +118,7 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
         return new Generic(ResourceResponse::class, [$collectionType]);
     }
 
-    private function unwrapPaginatorType(Generic $paginatorType)
+    private function unwrapPaginatorType(Type $paginatorType)
     {
         $valueType = $paginatorType->templateTypes[1] ?? $paginatorType->templateTypes[0] ?? new UnknownType;
 
@@ -140,8 +144,12 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
         $collectingClassType = $this->getCollectingClassType($type);
         $paginatorType = $type->templateTypes[/* TData */ 0]->templateTypes[/* TResource */ 0] ?? null;
 
+        if (! $paginatorType instanceof ObjectType) {
+            throw new InvalidArgumentException("Paginator type is expected to be ObjectType");
+        }
+
         if (! $paginatorType instanceof Generic) {
-            throw new InvalidArgumentException("Paginator type is expected to be Generic");
+            $paginatorType = new Generic($paginatorType->name);
         }
 
         if (count($paginatorType->templateTypes) === 2) {
@@ -149,7 +157,7 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
             $paginatorType->templateTypes[1] = $collectingClassType;
         }
 
-        $paginatorResponse = $this->openApiTransformer->toResponse($type);
+        $paginatorResponse = $this->openApiTransformer->toResponse($paginatorType);
         if (! $paginatorResponse instanceof Response) {
             throw new LogicException("{$paginatorType->toString()} is expected to produce Response instance when casted to response.");
         }
