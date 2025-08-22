@@ -30,7 +30,6 @@ class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
      */
     public function toResponse(Type $type)
     {
-        // todo: paginated response
         if ($this->isPaginatedResource($type)) {
             $resourceResponseType = new Generic(PaginatedResourceResponse::class, [$type]);
 

@@ -7,12 +7,14 @@ use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Str;
 
@@ -34,18 +36,20 @@ class ResourceCollectionTypeInfer implements MethodReturnTypeExtension, Property
     public function getPropertyType(PropertyFetchEvent $event): ?Type
     {
         return match ($event->name) {
-            'collection' => $this->getCollectionType($event->getInstance(), $event->getDefinition()),
+            'collection' => $this->getCollectionType($event->getInstance(), $event->scope->index),
             default => null,
         };
     }
 
     private function getToArrayReturnType(MethodCallEvent $event): ?Type
     {
-        $parentType = $this->getCollectionType($event->getInstance(), $event->getDefinition());
+        $parentType = $this->getCollectionType($event->getInstance(), $event->scope->index);
 
         if ($event->methodDefiningClassName === ResourceCollection::class) {
             return $parentType;
         }
+
+        // @todo instead, handle `map` call!
 
         $realType = $event->getDefinition()->getMethodDefinition('toArray')?->type->getReturnType();
         if ($realType instanceof UnknownType) {
@@ -59,18 +63,13 @@ class ResourceCollectionTypeInfer implements MethodReturnTypeExtension, Property
         return $realType;
     }
 
-    private function getCollectionType(ObjectType $type, ClassDefinition $definition): ArrayType
+    private function getCollectionType(ObjectType $type, Index $index): ArrayType
     {
-        if ($type instanceof Generic && $instanceCollectedType = $this->getCollectedInstanceType($type)) {
-            return new ArrayType($instanceCollectedType);
-        }
+        $normalizedType = (! $type instanceof Generic) ? new Generic($type->name) : $type;
 
-        $propertyOrGuessedClassNameType = $this->getCollectingClassType($definition);
-        if (! $propertyOrGuessedClass = $propertyOrGuessedClassNameType?->value) {
-            return new ArrayType(new UnknownType('Cannot get collection type'));
-        }
-
-        return new ArrayType(new Generic($propertyOrGuessedClass, [new UnknownType]));
+        return new ArrayType(
+            (new ResourceCollectionTypeManager($normalizedType, $index))->getCollectedType(),
+        );
     }
 
     public function getBasicCollectionType(ClassDefinition $classDefinition)

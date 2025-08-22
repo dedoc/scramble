@@ -98,9 +98,9 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
             );
     }
 
-    private function makeBaseResponse(Type $type)
+    protected function makeBaseResponse(ObjectType $resourceType): Generic
     {
-        $definition = $this->infer->analyzeClass($type->name);
+        $definition = $this->infer->analyzeClass($resourceType->name);
 
         $responseType = new Generic(JsonResponse::class, [new UnknownType, new LiteralIntegerType(200), new KeyedArrayType]);
 

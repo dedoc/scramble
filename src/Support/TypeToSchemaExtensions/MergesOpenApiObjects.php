@@ -13,7 +13,16 @@ trait MergesOpenApiObjects
         }
 
         foreach ($what->properties as $name => $property) {
-            $into->addProperty($name, $property);
+            if (! array_key_exists($name, $into->properties)) {
+                $into->addProperty($name, $property);
+            } else {
+                if (
+                    $into->properties[$name] instanceof OpenApiTypes\ObjectType
+                    && $property instanceof OpenApiTypes\ObjectType
+                ) {
+                    $this->mergeOpenApiObjects($into->properties[$name], $property);
+                }
+            }
         }
 
         $into->addRequired(array_keys($what->properties));

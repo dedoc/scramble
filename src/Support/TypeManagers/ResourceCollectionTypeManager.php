@@ -6,7 +6,11 @@ use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Str;
 
@@ -21,7 +25,7 @@ class ResourceCollectionTypeManager
 
     public function getCollectedType(): Generic|UnknownType
     {
-        if ($inferredCollectedType = $this->getInferredType()) {
+        if ($inferredCollectedType = $this->getInferredCollectedType()) {
             return $inferredCollectedType;
         }
 
@@ -32,17 +36,36 @@ class ResourceCollectionTypeManager
         return new UnknownType;
     }
 
-    private function getInferredType(): ?Generic
+    private function getInferredCollectedType(): ?Generic
     {
-        // @todo implement getting the inferred type from first template type param
-
         $collectsClassNameType = $this->type->templateTypes[/* TCollects */ 2] ?? null;
 
         if (! $collectsClassNameType instanceof LiteralStringType) {
-            return null;
+            return $this->getCollectedTypeFromManualAnnotation();
         }
 
         return new Generic($collectsClassNameType->value, [new UnknownType]);
+    }
+
+    private function getCollectedTypeFromManualAnnotation(): ?Generic
+    {
+         $type = (new TypeWalker)->first( // @phpstan-ignore return.type
+            new Union([
+                $this->type->templateTypes[0] ?? new UnknownType,
+                $this->type->templateTypes[1] ?? new UnknownType,
+            ]),
+            fn (Type $t) => $t->isInstanceOf(JsonResource::class),
+        );
+
+        if (! $type) {
+            return null;
+        }
+
+        if (! $type instanceof Generic) {
+            return new Generic($type->name);
+        }
+
+        return $type;
     }
 
     private function getCollectedTypeFromPropertyDefinition(): ?Generic

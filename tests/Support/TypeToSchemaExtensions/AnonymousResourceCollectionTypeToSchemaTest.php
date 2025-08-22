@@ -8,7 +8,9 @@ use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Route;
 
 class User_AnonymousResourceCollectionTypeToSchemaTest extends Model
@@ -63,8 +65,18 @@ it('documents manually created response', function () {
         ->and($response->toArray()['description'])
         ->toBe('Array of `UserResource_AnonymousResourceCollectionTypeToSchemaTest`');
 });
+
+it('documents manually annotated response', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('test', ManualResponse_AnonymousResourceCollectionTypeToSchemaTestController::class));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][200]['description'])
+        ->toBe('Paginated set of `UserResource_AnonymousResourceCollectionTypeToSchemaTest`');
+});
 class ManualResponse_AnonymousResourceCollectionTypeToSchemaTestController
 {
+    /**
+     * @return AnonymousResourceCollection<LengthAwarePaginator<UserResource_AnonymousResourceCollectionTypeToSchemaTest>>
+     */
     public function __invoke()
     {
         return UserResource_AnonymousResourceCollectionTypeToSchemaTest::collection(User_AnonymousResourceCollectionTypeToSchemaTest::all())->response();
