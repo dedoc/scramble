@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
+use Dedoc\Scramble\Support\Generator\Reference;
+use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -13,7 +15,7 @@ use Illuminate\Support\Str;
 
 class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
 {
-    public function shouldHandle(Type $type)
+    public function shouldHandle(Type $type): bool
     {
         return $type instanceof ObjectType
             && $type->isInstanceOf(ResourceCollection::class);
@@ -22,7 +24,7 @@ class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
     /**
      * @param  ObjectType  $type
      */
-    public function toResponse(Type $type)
+    public function toResponse(Type $type): ?Response
     {
         if ($this->isPaginatedResource($type)) {
             $resourceResponseType = new Generic(PaginatedResourceResponse::class, [$type]);
@@ -49,7 +51,7 @@ class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
             || $resourceType->isInstanceOf(AbstractCursorPaginator::class);
     }
 
-    public function reference(ObjectType $type)
+    public function reference(ObjectType $type): ?Reference
     {
         if (! $this->shouldReferenceResourceCollection($type)) {
             return null;

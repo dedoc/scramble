@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\TypeManagers;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
@@ -54,7 +55,7 @@ class ResourceCollectionTypeManager
             fn (Type $t) => $t->isInstanceOf(JsonResource::class),
         );
 
-        if (! $type) {
+        if (! $type instanceof ObjectType) {
             return null;
         }
 
@@ -67,7 +68,9 @@ class ResourceCollectionTypeManager
 
     private function getCollectedTypeFromPropertyDefinition(): ?Generic
     {
-        $classDefinition = $this->index->getClass($this->type->name);
+        if (! $classDefinition = $this->index->getClass($this->type->name)) {
+            return null;
+        }
 
         $collectingClassDefinition = $classDefinition->getPropertyDefinition('collects');
 

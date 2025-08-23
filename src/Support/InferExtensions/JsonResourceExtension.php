@@ -264,23 +264,4 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
             ),
         ]);
     }
-
-    private function buildAnonymousResourceCollectionType(StaticMethodCallEvent $event): Generic
-    {
-        $argument = $event->getArg('resource', 0);
-
-        $isInferredPaginator = $argument instanceof Generic
-            && ($argument->isInstanceOf(Paginator::class) || $argument->isInstanceOf(CursorPaginator::class))
-            && count($argument->templateTypes) === 2;
-
-        if ($isInferredPaginator) {
-            $argument = clone $argument;
-            $argument->templateTypes = [new ObjectType($event->getCallee())];
-        }
-
-        return new Generic(
-            AnonymousResourceCollection::class,
-            [$isInferredPaginator ? $argument : new Generic($event->getCallee(), [$event->getArg('resource', 0)])],
-        );
-    }
 }

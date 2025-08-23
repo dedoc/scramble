@@ -52,5 +52,5 @@ interface Type
 
     public function toString(): string;
 
-    public function clone(): self;
+    public function clone(): static;
 }

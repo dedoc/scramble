@@ -187,7 +187,7 @@ class Generator
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
             })
             ->filter($config->routes())
-            ->filter(fn (Route $r) => $r->getAction('controller'))
+            ->filter(fn (Route $r) => (bool) $r->getAction('controller'))
             ->filter(function (Route $route) {
                 if (! is_string($route->getAction('uses'))) {
                     return true;

@@ -28,7 +28,10 @@ class Index implements IndexContract
      */
     public array $functionsDefinitions = [];
 
-    /** @var class-string<object>[] */
+    /**
+     * @internal
+     * @var class-string<object>[]
+     */
     public static array $avoidAnalyzingAstClasses = [];
 
     public function getClass(string $className): ?ClassDefinition
@@ -46,13 +49,11 @@ class Index implements IndexContract
         $classPath = $reflection->getFileName();
 
         // @todo: $avoidAnalyzingAstClasses is needed for testing only, fix it!
-        $shouldAnalyzeAst = ! in_array($className, static::$avoidAnalyzingAstClasses) && static::shouldAnalyzeAst($classPath);
-
-        if ($classPath && ! $shouldAnalyzeAst) {
+        if (
+            $classPath
+            && ! ($shouldAnalyzeAst = ! in_array($className, static::$avoidAnalyzingAstClasses) && static::shouldAnalyzeAst($classPath))
+        ) {
             return $this->classesDefinitions[$className] = (new ShallowClassReflectionDefinitionBuilder($this, $reflection))->build();
-
-            // The event emitted above MAY add the class definition to the index. So we'd like to return it if it was added.
-            return $this->classesDefinitions[$className] ?? null;
         }
 
         /*

@@ -25,7 +25,7 @@ use LogicException;
 
 class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
 {
-    public function shouldHandle(Type $type)
+    public function shouldHandle(Type $type): bool
     {
         return $type instanceof Generic
             && $type->isInstanceOf(PaginatedResourceResponse::class)
@@ -38,13 +38,17 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
      */
     public function toResponse(Type $type): Response
     {
-        $resourceType = $type->templateTypes[/* TData */ 0];
+        $resourceType = $this->getResourceType($type);
 
         // Parent `makeBaseResponse` call is needed so we can infer the modification of the `withResponse`
         // if it is defined on the resource class.
         $baseResponse = $this->openApiTransformer->toResponse(
             $this->makeBaseResponse($resourceType),
         );
+
+        if (! $baseResponse instanceof Response) {
+            throw new LogicException('Paginated base response is expected to be an instance of Response, got '.($baseResponse ? $baseResponse::class : 'null'));
+        }
 
         return $baseResponse
             ->setDescription($this->getPaginatedDescription($type))
@@ -106,7 +110,7 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
         return array_key_exists($wrapKey, $unrefedData->properties);
     }
 
-    protected function unref(OpenApiType $type)
+    protected function unref(OpenApiType $type): OpenApiType
     {
         if ($type instanceof Reference) {
             $type = $type->resolve();
@@ -128,7 +132,7 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
 
     private function getMergedAdditionalSchema(Generic $type): OpenApiObjectType
     {
-        $resourceType = $type->templateTypes[/* TData */ 0];
+        $resourceType = $this->getResourceType($type);
 
         $paginationInformation = $this->getPaginatedInformationSchema($type);
         $with = $this->getWithSchema($resourceType);
@@ -158,7 +162,7 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
 
         $withArray->items = $this->flattenMergeValues($withArray->items);
 
-        return $this->openApiTransformer->transform($withArray);
+        return $this->openApiTransformer->transform($withArray); // @phpstan-ignore return.type
     }
 
     private function getAdditionalSchema(Generic $resource): ?OpenApiObjectType
@@ -173,12 +177,12 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
 
         $additional->items = $this->flattenMergeValues($additional->items);
 
-        return $this->openApiTransformer->transform($additional);
+        return $this->openApiTransformer->transform($additional); // @phpstan-ignore return.type
     }
 
     private function getPaginatedInformationSchema(Generic $type): OpenApiObjectType
     {
-        $paginatorType = $type->templateTypes[/* TData */ 0]->templateTypes[/* TResource */ 0];
+        $paginatorType = $this->getResourceType($type)->templateTypes[/* TResource */ 0];
 
         if (! $paginatorType instanceof ObjectType) {
             throw new LogicException('Paginator type must be an object, got '.$paginatorType->toString());
@@ -222,27 +226,40 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
     {
         $collectedType = $this->getCollectingClassType($type);
 
+        if ($collectedType instanceof UnknownType) {
+            return 'Paginated set';
+        }
+
         return 'Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectedType->name).'`';
     }
 
     private function prepareNormalizedCollectionType(Generic $type): Generic
     {
-        // The case when collection is manually annotated
-        // @todo
-        $collectionType = $type->templateTypes[/* TData */ 0]->clone();
-        // assert generic
+        $collectionType = $this->getResourceType($type)->clone();
+
         $collectionType->templateTypes[0] = $this->unwrapPaginatorType($collectionType->templateTypes[0]);
 
         return $collectionType;
     }
 
-    private function unwrapPaginatorType(Type $paginatorType)
+    private function unwrapPaginatorType(Type $paginatorType): Type
     {
         return $paginatorType->templateTypes[1] ?? $paginatorType->templateTypes[0] ?? new UnknownType;
     }
 
     private function getCollectingClassType(Generic $type): Generic|UnknownType
     {
-        return (new ResourceCollectionTypeManager($type->templateTypes[0], $this->infer->index))->getCollectedType();
+        return (new ResourceCollectionTypeManager($this->getResourceType($type), $this->infer->index))->getCollectedType();
+    }
+
+    private function getResourceType(Generic $type): Generic
+    {
+        $resourceType = $type->templateTypes[/* TData */ 0] ?? null;
+
+        if (! $resourceType instanceof Generic) {
+            throw new \InvalidArgumentException('Resource type of the response must be Generic, got '.($resourceType ? $resourceType::class : 'null'));
+        }
+
+        return $resourceType;
     }
 }
