@@ -12,7 +12,7 @@ use ReflectionClass;
 class ShallowClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 {
     /**
-     * @param ReflectionClass<object> $reflection
+     * @param  ReflectionClass<object>  $reflection
      */
     public function __construct(
         private Index $index,

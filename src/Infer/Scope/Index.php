@@ -30,6 +30,7 @@ class Index implements IndexContract
 
     /**
      * @internal
+     *
      * @var class-string<object>[]
      */
     public static array $avoidAnalyzingAstClasses = [];
