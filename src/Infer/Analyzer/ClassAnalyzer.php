@@ -38,7 +38,7 @@ class ClassAnalyzer
             name: $name,
             templateTypes: $parentDefinition?->templateTypes ?: [],
             properties: array_map(fn ($pd) => clone $pd, $parentDefinition?->properties ?: []),
-            methods: $parentDefinition?->methods ?: [],
+            methods: array_map(fn ($md) => $md->copyFromParent(), $parentDefinition?->methods ?: []),
             parentFqn: $parentName,
         );
 
@@ -59,16 +59,26 @@ class ClassAnalyzer
                         : new UnknownType,
                 );
             } else {
+                $expectedTemplateTypeName = 'T'.Str::studly($reflectionProperty->name);
+
+                $existingPropertyTemplateType = collect($classDefinition->templateTypes)
+                    ->first(fn (TemplateType $t) => $t->name === $expectedTemplateTypeName);
+
+                $propertyTemplateType = $existingPropertyTemplateType ?: new TemplateType(
+                    $expectedTemplateTypeName,
+                    is: ($reflectionPropertyType = $reflectionProperty->getType()) ? TypeHelper::createTypeFromReflectionType($reflectionPropertyType) : new UnknownType,
+                );
+
                 $classDefinition->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
-                    type: $t = new TemplateType(
-                        'T'.Str::studly($reflectionProperty->name),
-                        is: ($reflectionPropertyType = $reflectionProperty->getType()) ? TypeHelper::createTypeFromReflectionType($reflectionPropertyType) : new UnknownType,
-                    ),
+                    type: $propertyTemplateType,
                     defaultType: $reflectionProperty->hasDefaultValue()
                         ? PropertyAnalyzer::from($reflectionProperty)->getDefaultType()
                         : null,
                 );
-                $classDefinition->templateTypes[] = $t;
+
+                if (! $existingPropertyTemplateType) {
+                    $classDefinition->templateTypes[] = $propertyTemplateType;
+                }
             }
         }
 

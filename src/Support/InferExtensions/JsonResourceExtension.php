@@ -28,15 +28,13 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Illuminate\Contracts\Pagination\CursorPaginator;
-use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceResponse;
 use Illuminate\Http\Resources\MergeValue;
@@ -159,14 +157,6 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
 
             'attributes' => $this->getAttributesMethodReturnType($event),
 
-            'additional' => $event->getInstance() instanceof Generic
-                ? tap($event->getInstance(), function (Generic $type) use ($event) {
-                    $type->templateTypes = array_merge($type->templateTypes, [
-                        /* TAdditional */ 1 => $event->getArg('data', 0),
-                    ]);
-                })
-                : null,
-
             default => ! $event->getDefinition() || $event->getDefinition()->hasMethodDefinition($event->name)
                 ? null
                 : $this->proxyMethodCallToModel($event),
@@ -176,8 +166,11 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
     public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
     {
         return match ($event->getName()) {
-            'collection' => $this->buildAnonymousResourceCollectionType($event),
-            'make' => new Generic($event->getCallee(), [$event->getArg('resource', 0)]),
+            'make' => ReferenceTypeResolver::getInstance()
+                ->resolve(
+                    $event->scope,
+                    new NewCallReferenceType($event->getCallee(), $event->arguments instanceof AutoResolvingArgumentTypeBag ? $event->arguments->allUnresolved() : $event->arguments->all()),
+                ),
             default => null,
         };
     }
@@ -266,24 +259,5 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                     ->all()
             ),
         ]);
-    }
-
-    private function buildAnonymousResourceCollectionType(StaticMethodCallEvent $event): Generic
-    {
-        $argument = $event->getArg('resource', 0);
-
-        $isInferredPaginator = $argument instanceof Generic
-            && ($argument->isInstanceOf(Paginator::class) || $argument->isInstanceOf(CursorPaginator::class))
-            && count($argument->templateTypes) === 2;
-
-        if ($isInferredPaginator) {
-            $argument = clone $argument;
-            $argument->templateTypes = [new ObjectType($event->getCallee())];
-        }
-
-        return new Generic(
-            AnonymousResourceCollection::class,
-            [$isInferredPaginator ? $argument : new Generic($event->getCallee(), [$event->getArg('resource', 0)])],
-        );
     }
 }

@@ -13,17 +13,20 @@ use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
+use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceResponse;
 use LogicException;
 
@@ -48,58 +51,106 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
             && count($type->templateTypes) >= 1;
     }
 
-    public function toResponse(Type $type)
+    /**
+     * @param  Generic  $type
+     */
+    public function toResponse(Type $type): ?Response
     {
-        $resourceType = $type->templateTypes[0];
+        $resource = $type->templateTypes[0];
 
-        if ($resourceType instanceof ObjectType && $resourceType->isInstanceOf(AnonymousResourceCollection::class)) {
-            return $this->openApiTransformer->toResponse($resourceType);
+        if (! $resource instanceof ObjectType) {
+            throw new LogicException('ResourceResponse data is expected to be an object');
         }
 
-        $openApiType = $this->openApiTransformer->transform($resourceType);
-
-        $definition = $this->infer->analyzeClass($resourceType->name);
-
-        $withArray = $definition->getMethodCallType('with');
-        $additional = $resourceType instanceof Generic ? ($resourceType->templateTypes[1] ?? null) : null;
-
-        if ($withArray instanceof KeyedArrayType) {
-            $withArray->items = $this->flattenMergeValues($withArray->items);
-        }
-        if ($additional instanceof KeyedArrayType) {
-            $additional->items = $this->flattenMergeValues($additional->items);
-        }
-
-        $shouldWrap = ($wrapKey = $resourceType->name::$wrap ?? null) !== null
-            || $withArray instanceof KeyedArrayType
-            || $additional instanceof KeyedArrayType;
-        $wrapKey = $wrapKey ?: 'data';
-
-        if ($shouldWrap) {
-            $openApiType = $this->mergeResourceTypeAndAdditionals(
-                $wrapKey,
-                $openApiType,
-                $this->normalizeKeyedArrayType($withArray),
-                $this->normalizeKeyedArrayType($additional),
-            );
-        }
-
-        $response = $this->openApiTransformer->toResponse($baseType = $this->makeBaseResponse($resourceType));
-        if (! $response instanceof Response) {
-            throw new LogicException("{$baseType->toString()} is expected to produce Response instance when casted to response.");
-        }
-
-        return $response
-            ->setDescription('`'.$this->openApiContext->references->schemas->uniqueName($resourceType->name).'`')
-            ->setContent(
-                'application/json',
-                Schema::fromType($openApiType),
-            );
+        return $this
+            ->makeResponse($resource)
+            ->setDescription($this->getDescription($resource))
+            ->setContent('application/json', Schema::fromType($this->wrap(
+                $this->wrapper($resource),
+                $this->openApiTransformer->transform($resource),
+                $this->getMergedAdditionalSchema($resource),
+            )));
     }
 
-    private function makeBaseResponse(Type $type)
+    protected function getDescription(ObjectType $resourceType): string
     {
-        $definition = $this->infer->analyzeClass($type->name);
+        if ($this->isNonReferencedResourceCollection($resourceType)) {
+            return $this->getNonReferencedResourceCollectionDescription($resourceType);
+        }
+
+        return '`'.$this->openApiContext->references->schemas->uniqueName($resourceType->name).'`';
+    }
+
+    private function getMergedAdditionalSchema(ObjectType $resourceType): ?OpenApiType
+    {
+        $with = $this->getWithSchema($resourceType);
+        $additional = $this->getAdditionalSchema($resourceType);
+
+        if (! $with && ! $additional) {
+            return null;
+        }
+
+        $mergedAdditional = new OpenApiObjectType;
+
+        if ($with) {
+            $this->mergeOpenApiObjects($mergedAdditional, $with);
+        }
+
+        if ($additional) {
+            $this->mergeOpenApiObjects($mergedAdditional, $additional);
+        }
+
+        return $mergedAdditional;
+    }
+
+    protected function getNonReferencedResourceCollectionDescription(ObjectType $resourceType): string
+    {
+        $resourceType = (! $resourceType instanceof Generic) ? new Generic($resourceType->name) : $resourceType;
+
+        $collectedResourceType = (new ResourceCollectionTypeManager($resourceType, $this->infer->index))->getCollectedType();
+
+        if (! $collectedResourceType instanceof ObjectType) {
+            return 'Array of items';
+        }
+
+        return 'Array of `'.$this->openApiContext->references->schemas->uniqueName($collectedResourceType->name).'`';
+    }
+
+    protected function isNonReferencedResourceCollection(ObjectType $resourceType): bool
+    {
+        if (! $resourceType->isInstanceOf(ResourceCollection::class)) {
+            return false;
+        }
+
+        return ! $this->getResourceCollectionTypeToSchemaInstance()->shouldReferenceResourceCollection($resourceType);
+    }
+
+    protected function getResourceCollectionTypeToSchemaInstance(): ResourceCollectionTypeToSchema
+    {
+        return new ResourceCollectionTypeToSchema(
+            $this->infer,
+            $this->openApiTransformer,
+            $this->components,
+            $this->openApiContext,
+        );
+    }
+
+    protected function makeResponse(ObjectType $resourceType): Response
+    {
+        $baseResponse = $this->openApiTransformer->toResponse(
+            $this->makeBaseResponseType($resourceType),
+        );
+
+        if (! $baseResponse instanceof Response) {
+            throw new LogicException('Paginated base response is expected to be an instance of Response, got '.($baseResponse ? $baseResponse::class : 'null'));
+        }
+
+        return $baseResponse;
+    }
+
+    protected function makeBaseResponseType(ObjectType $resourceType): Generic
+    {
+        $definition = $this->infer->analyzeClass($resourceType->name);
 
         $responseType = new Generic(JsonResponse::class, [new UnknownType, new LiteralIntegerType(200), new KeyedArrayType]);
 
@@ -118,44 +169,101 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
         return $responseType;
     }
 
-    private function mergeResourceTypeAndAdditionals(string $wrapKey, $openApiType, ?KeyedArrayType $withArray, ?KeyedArrayType $additional)
+    protected function wrap(?string $wrapKey, OpenApiType $data, ?OpenApiType $additional): OpenApiType
     {
-        $resolvedOpenApiType = $openApiType instanceof Reference ? $openApiType->resolve() : $openApiType;
-        $resolvedOpenApiType = $resolvedOpenApiType instanceof Schema ? $resolvedOpenApiType->type : $resolvedOpenApiType;
+        $dataIsWrapped = $this->dataIsWrapped($this->unref($data), $wrapKey);
 
-        // If resolved type already contains wrapKey, we don't need to wrap it again. But we still need to merge additionals.
-        if ($resolvedOpenApiType instanceof OpenApiObjectType && $resolvedOpenApiType->hasProperty($wrapKey)) {
-            $items = array_values(array_filter([
-                $openApiType,
-                $this->transformNullableType($withArray),
-                $this->transformNullableType($additional),
-            ]));
-
-            return count($items) > 1 ? (new AllOf)->setItems($items) : $items[0];
+        if ($wrapKey && ! $dataIsWrapped) { // $this->haveDefaultWrapperAndDataIsUnwrapped($data)
+            $data = (new OpenApiObjectType)
+                ->addProperty($wrapKey, $data)
+                ->setRequired([$wrapKey]);
+        } elseif (! $dataIsWrapped && $additional) { // $this->haveAdditionalInformationAndDataIsUnwrapped($data, $with, $additional)
+            $data = (new OpenApiObjectType)
+                ->addProperty($wrapKey ?? 'data', $data)
+                ->setRequired([$wrapKey ?? 'data']);
         }
 
-        $openApiType = (new OpenApiObjectType)
-            ->addProperty($wrapKey, $openApiType)
-            ->setRequired([$wrapKey]);
-
-        if ($withArray) {
-            $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($withArray));
+        if (! $additional) {
+            return $data;
         }
 
-        if ($additional) {
-            $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));
+        if ($data instanceof OpenApiObjectType) {
+            $this->mergeOpenApiObjects($data, $additional);
+
+            return $data;
         }
 
-        return $openApiType;
+        return (new AllOf)->setItems([
+            $data,
+            $additional,
+        ]);
     }
 
-    private function normalizeKeyedArrayType($type): ?KeyedArrayType
+    protected function wrapper(Type $resource): ?string
     {
-        return $type instanceof KeyedArrayType ? $type : null;
+        if (! $resource instanceof ObjectType) {
+            return null;
+        }
+
+        return $resource->name::$wrap ?? null;
     }
 
-    private function transformNullableType(?KeyedArrayType $type)
+    protected function dataIsWrapped(OpenApiType $unrefedData, ?string $wrapKey): bool
     {
-        return $type ? $this->openApiTransformer->transform($type) : null;
+        if (! $wrapKey) {
+            return false;
+        }
+
+        if (! $unrefedData instanceof OpenApiObjectType) {
+            return false;
+        }
+
+        return array_key_exists($wrapKey, $unrefedData->properties);
+    }
+
+    protected function unref(OpenApiType $type): OpenApiType
+    {
+        if ($type instanceof Reference) {
+            $type = $type->resolve();
+
+            return $type instanceof Schema ? $type->type : throw new \Exception('Cannot unref not Schema');
+        }
+
+        return $type;
+    }
+
+    protected function getWithSchema(ObjectType $resource): ?OpenApiObjectType
+    {
+        $withArray = ReferenceTypeResolver::getInstance()->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType($resource, 'with', [])
+        );
+
+        if (! $withArray instanceof KeyedArrayType) {
+            return null;
+        }
+
+        $withArray->items = $this->flattenMergeValues($withArray->items);
+
+        return $this->openApiTransformer->transform($withArray); // @phpstan-ignore return.type
+    }
+
+    protected function getAdditionalSchema(ObjectType $resource): ?OpenApiObjectType
+    {
+        if (! $resource instanceof Generic) {
+            return null;
+        }
+
+        $additional = $resource->templateTypes[/* TAdditional */ 1] ?? null;
+
+        if (! $additional instanceof KeyedArrayType) {
+            return null;
+        }
+
+        $additional = $additional->clone();
+
+        $additional->items = $this->flattenMergeValues($additional->items);
+
+        return $this->openApiTransformer->transform($additional); // @phpstan-ignore return.type
     }
 }

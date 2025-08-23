@@ -547,12 +547,6 @@ parameters:
 			path: src/Generator.php
 
 		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,mixed\>\:\:filter\(\) expects \(callable\(mixed, int\)\: bool\)\|null, Closure\(Illuminate\\Routing\\Route\)\: mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Generator.php
-
-		-
 			message: '#^Parameter \#1 \$haystack of static method Illuminate\\Support\\Str\:\:startsWith\(\) expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
@@ -3556,18 +3550,6 @@ parameters:
 			path: src/Support/InferExtensions/ArrayMergeReturnTypeExtension.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\JsonResourceCreationInfer\:\:setResourceType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/InferExtensions/JsonResourceCreationInfer.php
-
-		-
-			message: '#^Parameter \#3 \$args of method Dedoc\\Scramble\\Support\\InferExtensions\\JsonResourceCreationInfer\:\:setResourceType\(\) expects array\<PhpParser\\Node\\Arg\>, array\<PhpParser\\Node\\Arg\|PhpParser\\Node\\VariadicPlaceholder\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/InferExtensions/JsonResourceCreationInfer.php
-
-		-
 			message: '#^Parameter \#1 \$callee of class Dedoc\\Scramble\\Support\\Type\\Reference\\MethodCallReferenceType constructor expects Dedoc\\Scramble\\Support\\Type\\Type, Dedoc\\Scramble\\Support\\Type\\Type\|null given\.$#'
 			identifier: argument.type
 			count: 1
@@ -5092,62 +5074,8 @@ parameters:
 			path: src/Support/TypeToSchemaExtensions/PaginatorTypeToSchema.php
 
 		-
-			message: '#^Access to an undefined property Dedoc\\Scramble\\Support\\Type\\Type\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Access to an undefined property Dedoc\\Scramble\\Support\\Type\\Type\:\:\$templateTypes\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:makeBaseResponse\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:mergeResourceTypeAndAdditionals\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:mergeResourceTypeAndAdditionals\(\) has parameter \$openApiType with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:normalizeKeyedArrayType\(\) has parameter \$type with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:shouldHandle\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:toResponse\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:transformNullableType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Offset 0 might not exist on array\{0\?\: mixed, 1\?\: mixed, 2\?\: mixed\}\.$#'
-			identifier: offsetAccess.notFound
 			count: 1
 			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
 

@@ -63,7 +63,7 @@ abstract class AbstractType implements Type
      * Note that template types are not cloned but rather kept as is due to templates replacement in the generics
      * is made via reference comparison, not just via names. For now.
      */
-    public function clone(): self
+    public function clone(): static
     {
         $cloned = clone $this;
 

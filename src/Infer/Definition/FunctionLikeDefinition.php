@@ -42,4 +42,15 @@ class FunctionLikeDefinition
     {
         return $this->_selfOutType ??= $this->selfOutTypeBuilder?->build();
     }
+
+    /**
+     * When analyzing parent classes, function like definitions are "copied" from parent class. When function
+     * like is sourced from AST, we don't want to make a deep clone to save some memory (is the difference really makes sense?)
+     * as the definition will be re-build to the specifics of a given class. However, other types of fn definitions
+     * may override this method and do a deeper cloning (or cloning at all!).
+     */
+    public function copyFromParent(): self
+    {
+        return $this;
+    }
 }

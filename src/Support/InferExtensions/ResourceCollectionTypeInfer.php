@@ -3,45 +3,73 @@
 namespace Dedoc\Scramble\Support\InferExtensions;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
-use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
-use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
+use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
+use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Str;
-use PhpParser\Node;
-use PhpParser\Node\Expr;
 
-class ResourceCollectionTypeInfer implements ExpressionTypeInferExtension
+class ResourceCollectionTypeInfer implements MethodReturnTypeExtension, PropertyTypeExtension
 {
-    public function getType(Expr $node, Scope $scope): ?Type
+    public function shouldHandle(ObjectType $type): bool
     {
-        if (! $scope->classDefinition()?->isInstanceOf(ResourceCollection::class)) {
-            return null;
+        return $type->isInstanceOf(ResourceCollection::class);
+    }
+
+    public function getMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        return match ($event->name) {
+            'toArray' => $this->getToArrayReturnType($event),
+            default => null,
+        };
+    }
+
+    public function getPropertyType(PropertyFetchEvent $event): ?Type
+    {
+        return match ($event->name) {
+            'collection' => $this->getCollectionType($event->getInstance(), $event->scope->index),
+            default => null,
+        };
+    }
+
+    private function getToArrayReturnType(MethodCallEvent $event): ?Type
+    {
+        $parentType = $this->getCollectionType($event->getInstance(), $event->scope->index);
+
+        if ($event->methodDefiningClassName === ResourceCollection::class) {
+            return $parentType;
         }
 
-        /** parent::toArray() in `toArray` */
-        if (
-            ($scope->isInFunction() && $scope->functionDefinition()->type->name === 'toArray')
-            && $node instanceof Node\Expr\StaticCall
-            && ($node->class instanceof Node\Name && $node->class->toString() === 'parent')
-            && ($node->name->name ?? null) === 'toArray'
-        ) {
-            return $this->getBasicCollectionType($scope->classDefinition());
+        // @todo instead, handle `map` call!
+
+        $realType = $event->getDefinition()->getMethodDefinition('toArray')?->type->getReturnType();
+        if ($realType instanceof UnknownType) {
+            /**
+             * When inferred return type of `toArray` method cannot be inferred, we'd like to fall back to
+             * the default behavior of ResourceCollection, so there is still SOME information.
+             */
+            return $parentType;
         }
 
-        /** $this->collection */
-        if (
-            $node instanceof Node\Expr\PropertyFetch
-            && ($node->var->name ?? null) === 'this' && ($node->name->name ?? null) === 'collection'
-        ) {
-            return $this->getBasicCollectionType($scope->classDefinition());
-        }
+        return $realType;
+    }
 
-        return null;
+    private function getCollectionType(ObjectType $type, Index $index): ArrayType
+    {
+        $normalizedType = (! $type instanceof Generic) ? new Generic($type->name) : $type;
+
+        return new ArrayType(
+            (new ResourceCollectionTypeManager($normalizedType, $index))->getCollectedType(),
+        );
     }
 
     public function getBasicCollectionType(ClassDefinition $classDefinition)
@@ -55,7 +83,7 @@ class ResourceCollectionTypeInfer implements ExpressionTypeInferExtension
         return new ArrayType(value: new ObjectType($collectingClassType->value));
     }
 
-    private function getCollectingClassType(ClassDefinition $classDefinition): ?LiteralStringType
+    public function getCollectingClassType(ClassDefinition $classDefinition): ?LiteralStringType
     {
         $collectingClassDefinition = $classDefinition->getPropertyDefinition('collects');
 
@@ -74,5 +102,19 @@ class ResourceCollectionTypeInfer implements ExpressionTypeInferExtension
         }
 
         return $collectingClassType;
+    }
+
+    public function getCollectedInstanceType(ObjectType $type): ?Type
+    {
+        if (! $type instanceof Generic) {
+            return null;
+        }
+
+        $collectsClassNameType = $type->templateTypes[/* TCollects */ 2] ?? null;
+        if (! $collectsClassNameType instanceof LiteralStringType) {
+            return null;
+        }
+
+        return new Generic($collectsClassNameType->value, [new UnknownType]);
     }
 }

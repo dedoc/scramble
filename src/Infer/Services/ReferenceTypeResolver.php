@@ -328,9 +328,8 @@ class ReferenceTypeResolver
             )
             ->prepend($propertyDefaultTemplateTypes->all());
 
-        $resultingTemplatesMap = collect($classDefinition->templateTypes)
-            ->map(fn (TemplateType $t) => $templatesMap->get($t->name, new UnknownType))
-            ->all();
+        $resultingTemplatesMap = (new TemplateTypesSolver)
+            ->getGenericCreationTemplatesWithDefaults($classDefinition->templateTypes, $templatesMap);
 
         $resultingTemplatesMap = $this->applySelfOutType(
             $resultingTemplatesMap,
