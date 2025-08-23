@@ -22,8 +22,9 @@ use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceResponse;
 use LogicException;
 
@@ -51,11 +52,6 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
     public function toResponse(Type $type): Response
     {
         $resourceType = $type->templateTypes[0];
-
-        if ($resourceType instanceof ObjectType && $resourceType->isInstanceOf(AnonymousResourceCollection::class)) {
-            //            dd($type->toString(), $resourceType->toString());
-            //            return $this->openApiTransformer->toResponse($resourceType);
-        }
 
         $openApiType = $this->openApiTransformer->transform($resourceType);
 
@@ -91,11 +87,52 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
         }
 
         return $response
-            ->setDescription('`'.$this->openApiContext->references->schemas->uniqueName($resourceType->name).'`')
+            ->setDescription($this->getDescription($resourceType))
             ->setContent(
                 'application/json',
                 Schema::fromType($openApiType),
             );
+    }
+
+    protected function getDescription(ObjectType $resourceType): string
+    {
+        if ($this->isNonReferencedResourceCollection($resourceType)) {
+            return $this->getNonReferencedResourceCollectionDescription($resourceType);
+        }
+
+        return '`'.$this->openApiContext->references->schemas->uniqueName($resourceType->name).'`';
+    }
+
+    protected function getNonReferencedResourceCollectionDescription(ObjectType $resourceType): string
+    {
+        $resourceType = (! $resourceType instanceof Generic) ? new Generic($resourceType->name) : $resourceType;
+
+        $collectedResourceType = (new ResourceCollectionTypeManager($resourceType, $this->infer->index))->getCollectedType();
+
+        if (! $collectedResourceType instanceof ObjectType) {
+            return '';
+        }
+
+        return 'Array of `'.$this->openApiContext->references->schemas->uniqueName($collectedResourceType->name).'`';
+    }
+
+    protected function isNonReferencedResourceCollection(ObjectType $resourceType): bool
+    {
+        if (! $resourceType->isInstanceOf(ResourceCollection::class)) {
+            return false;
+        }
+
+        return ! $this->getResourceCollectionTypeToSchemaInstance()->shouldReferenceResourceCollection($resourceType);
+    }
+
+    protected function getResourceCollectionTypeToSchemaInstance(): ResourceCollectionTypeToSchema
+    {
+        return new ResourceCollectionTypeToSchema(
+            $this->infer,
+            $this->openApiTransformer,
+            $this->components,
+            $this->openApiContext,
+        );
     }
 
     protected function makeBaseResponse(ObjectType $resourceType): Generic
