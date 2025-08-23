@@ -58,6 +58,9 @@ class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
         return parent::reference($type);
     }
 
+    /**
+     * @internal
+     */
     public function shouldReferenceResourceCollection(ObjectType $type): bool
     {
         return ! Str::contains(class_basename($type->name), 'anonymous', ignoreCase: true);

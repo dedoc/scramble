@@ -47,7 +47,6 @@ use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\VoidType;
-use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\BinaryFileResponseToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
@@ -209,7 +208,6 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ModelToSchema::class,
                     CollectionToSchema::class,
                     EloquentCollectionToSchema::class,
-                    //                    AnonymousResourceCollectionTypeToSchema::class,
                     ResourceCollectionTypeToSchema::class,
                     CursorPaginatorTypeToSchema::class,
                     PaginatorTypeToSchema::class,
