@@ -134,8 +134,8 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
     {
         $paginatorType = $this->getResourceType($type)->templateTypes[/* TResource */ 0];
 
-        if (!$paginatorType instanceof ObjectType) {
-            throw new LogicException('Paginator type must be an object, got ' . $paginatorType->toString());
+        if (! $paginatorType instanceof ObjectType) {
+            throw new LogicException('Paginator type must be an object, got '.$paginatorType->toString());
         }
 
         return new Generic($paginatorType->name, [

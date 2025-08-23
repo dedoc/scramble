@@ -52,7 +52,7 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
     }
 
     /**
-     * @param Generic $type
+     * @param  Generic  $type
      */
     public function toResponse(Type $type): ?Response
     {
@@ -204,6 +204,7 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
         if (! $resource instanceof ObjectType) {
             return null;
         }
+
         return $resource->name::$wrap ?? null;
     }
 
