@@ -47,7 +47,7 @@ class ResourceCollectionTypeManager
 
     private function getCollectedTypeFromManualAnnotation(): ?Generic
     {
-        $type = (new TypeWalker)->first( // @phpstan-ignore return.type
+        $type = (new TypeWalker)->first(
             new Union([
                 $this->type->templateTypes[0] ?? new UnknownType,
                 $this->type->templateTypes[1] ?? new UnknownType,

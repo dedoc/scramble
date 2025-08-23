@@ -58,6 +58,10 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
     {
         $resource = $type->templateTypes[0];
 
+        if (! $resource instanceof ObjectType) {
+            throw new LogicException('ResourceResponse data is expected to be an object');
+        }
+
         return $this
             ->makeResponse($resource)
             ->setDescription($this->getDescription($resource))

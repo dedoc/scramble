@@ -5074,44 +5074,8 @@ parameters:
 			path: src/Support/TypeToSchemaExtensions/PaginatorTypeToSchema.php
 
 		-
-			message: '#^Access to an undefined property Dedoc\\Scramble\\Support\\Type\\Type\:\:\$templateTypes\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:mergeResourceTypeAndAdditionals\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:mergeResourceTypeAndAdditionals\(\) has parameter \$openApiType with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:normalizeKeyedArrayType\(\) has parameter \$type with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:shouldHandle\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:transformNullableType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
-			message: '#^Offset 0 might not exist on array\{0\?\: mixed, 1\?\: mixed, 2\?\: mixed\}\.$#'
-			identifier: offsetAccess.notFound
 			count: 1
 			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
 
