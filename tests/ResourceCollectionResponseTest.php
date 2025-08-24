@@ -8,7 +8,6 @@ use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
-use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceCollectionTypeToSchema;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;

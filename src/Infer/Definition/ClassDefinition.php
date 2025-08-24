@@ -84,7 +84,7 @@ class ClassDefinition implements ClassDefinitionContract
     }
 
     /**
-     * @param IndexBuilder<array<string, mixed>>[] $indexBuilders
+     * @param  IndexBuilder<array<string, mixed>>[]  $indexBuilders
      */
     public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [], bool $withSideEffects = false): ?FunctionLikeDefinition
     {

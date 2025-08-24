@@ -7,7 +7,6 @@ use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Analyzer\MethodQuery;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\OpenApiContext;
-use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Reference;

@@ -3,16 +3,11 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Support\Generator\Reference;
-use Dedoc\Scramble\Support\Generator\Response;
-use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Http\Resources\Json\PaginatedResourceResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Pagination\AbstractCursorPaginator;
-use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\Str;
 
 class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema

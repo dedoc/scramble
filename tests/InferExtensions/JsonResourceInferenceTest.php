@@ -10,11 +10,11 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 beforeEach(function () {
-     Scramble::infer()
-         ->configure()
-         ->buildDefinitionsUsingReflectionFor([
-             Bar_JsonResourceInferenceTest::class,
-         ]);
+    Scramble::infer()
+        ->configure()
+        ->buildDefinitionsUsingReflectionFor([
+            Bar_JsonResourceInferenceTest::class,
+        ]);
 });
 
 it('infers json resource creation', function ($expression, $expectedType) {

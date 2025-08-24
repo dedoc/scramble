@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 
 class ShallowClassDefinition extends ClassDefinition
 {
