@@ -19,9 +19,10 @@ class InferConfig
     private array $forcedReflectionSourcedDefinitionsMatchers = [];
 
     /**
+     * @param DefinitionMatcher[] $items
      * @return $this
      */
-    public function buildDefinitionsUsingAstFor($items): static
+    public function buildDefinitionsUsingAstFor(array $items): static
     {
         $this->forcedAstSourcedDefinitionsMatchers = [
             ...$this->forcedAstSourcedDefinitionsMatchers,
@@ -35,6 +36,7 @@ class InferConfig
     }
 
     /**
+     * @param DefinitionMatcher[] $items
      * @return $this
      */
     public function buildDefinitionsUsingReflectionFor(array $items): static
@@ -74,7 +76,8 @@ class InferConfig
             return true;
         }
 
-        $reflection = new \ReflectionClass($class);
+        // Ignoring static analysis error due to it is fine to exception to be thrown here if bad input.
+        $reflection = new \ReflectionClass($class); // @phpstan-ignore argument.type
 
         $path = $reflection->getFileName();
 

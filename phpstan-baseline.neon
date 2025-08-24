@@ -781,24 +781,6 @@ parameters:
 			path: src/Infer/Definition/ClassDefinition.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\:\:getMethodDefinition\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Definition/ClassDefinition.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\:\:getMethodDefinition\(\) has parameter \$indexBuilders with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Definition/ClassDefinition.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\:\:getMethodDefinitionWithoutAnalysis\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Definition/ClassDefinition.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\:\:getPropertyDefinition\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -2264,18 +2246,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: src/Support/ExceptionToResponseExtensions/ValidationExceptionToResponseExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\ClassBasedReference\:\:create\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/ClassBasedReference.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\ClassBasedReference\:\:createInput\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/ClassBasedReference.php
 
 		-
 			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
@@ -5004,12 +4974,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\JsonResourceTypeToSchema\:\:toSchema\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/JsonResourceTypeToSchema.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
 			count: 1
 			path: src/Support/TypeToSchemaExtensions/JsonResourceTypeToSchema.php
 

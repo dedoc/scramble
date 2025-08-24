@@ -12,6 +12,7 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -53,7 +54,7 @@ class ClassDefinition implements ClassDefinitionContract
         return array_key_exists($name, $this->methods);
     }
 
-    public function getMethodDefinitionWithoutAnalysis(string $name)
+    public function getMethodDefinitionWithoutAnalysis(string $name): ?FunctionLikeDefinition
     {
         if (! array_key_exists($name, $this->methods)) {
             return null;
@@ -82,7 +83,10 @@ class ClassDefinition implements ClassDefinitionContract
         return $lastLookedUpClassName;
     }
 
-    public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [], bool $withSideEffects = false)
+    /**
+     * @param IndexBuilder<array<string, mixed>>[] $indexBuilders
+     */
+    public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [], bool $withSideEffects = false): ?FunctionLikeDefinition
     {
         if (! array_key_exists($name, $this->methods)) {
             return null;
@@ -188,7 +192,8 @@ class ClassDefinition implements ClassDefinitionContract
             return new UnknownType("Cannot get type of calling method [$name] on object [$this->name]");
         }
 
-        $type = $this->getMethodDefinition($name)->type;
+        // Ignoring static analysis issue here because method definition is guaranteed to be present due to null check above.
+        $type = $this->getMethodDefinition($name)->type; // @phpstan-ignore property.nonObject
 
         if (! $calledOn instanceof Generic) {
             return $type->getReturnType();
