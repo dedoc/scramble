@@ -5038,12 +5038,6 @@ parameters:
 			path: src/Support/TypeToSchemaExtensions/PaginatorTypeToSchema.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResourceResponseTypeToSchema\:\:shouldHandle\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
-
-		-
 			message: '#^Parameter \#1 \$scope of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:resolve\(\) expects Dedoc\\Scramble\\Infer\\Scope\\Scope, Dedoc\\Scramble\\Infer\\Scope\\Scope\|null given\.$#'
 			identifier: argument.type
 			count: 1

@@ -47,7 +47,7 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
     /**
      * @phpstan-assert-if-true Generic $type
      */
-    public function shouldHandle(Type $type)
+    public function shouldHandle(Type $type): bool
     {
         return $type instanceof Generic
             && $type->isInstanceOf(ResourceResponse::class)
@@ -57,7 +57,7 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
     /**
      * @param  Generic  $type
      */
-    public function toResponse(Type $type): ?Response
+    public function toResponse(Type $type): Response
     {
         $resource = $type->templateTypes[0];
 

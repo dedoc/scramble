@@ -19,7 +19,7 @@ class InferConfig
     private array $forcedReflectionSourcedDefinitionsMatchers = [];
 
     /**
-     * @param  DefinitionMatcher[]  $items
+     * @param  (string|DefinitionMatcher)[]  $items
      * @return $this
      */
     public function buildDefinitionsUsingAstFor(array $items): static
@@ -36,7 +36,7 @@ class InferConfig
     }
 
     /**
-     * @param  DefinitionMatcher[]  $items
+     * @param  (string|DefinitionMatcher)[]  $items
      * @return $this
      */
     public function buildDefinitionsUsingReflectionFor(array $items): static
