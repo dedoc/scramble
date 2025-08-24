@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Configuration;
 
-class ClassLikeAndChildren
+class ClassLikeAndChildren implements DefinitionMatcher
 {
     public function __construct(public readonly string $class)
     {

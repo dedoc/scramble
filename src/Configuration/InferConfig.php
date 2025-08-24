@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Configuration;
 
 use Dedoc\Scramble\Infer\Configuration\ClassLike;
+use Dedoc\Scramble\Infer\Configuration\DefinitionMatcher;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
@@ -11,15 +12,19 @@ use Illuminate\Support\Str;
  */
 class InferConfig
 {
-    private array $forceAnalyzingAst = [];
+    /** @var DefinitionMatcher[] */
+    private array $forcedAstSourcedDefinitionsMatchers = [];
+
+    /** @var DefinitionMatcher[] */
+    private array $forcedReflectionSourcedDefinitionsMatchers = [];
 
     /**
      * @return $this
      */
     public function buildDefinitionsUsingAstFor($items): static
     {
-        $this->forceAnalyzingAst = [
-            ...$this->forceAnalyzingAst,
+        $this->forcedAstSourcedDefinitionsMatchers = [
+            ...$this->forcedAstSourcedDefinitionsMatchers,
             ...array_map(
                 fn ($item) => is_string($item) ? new ClassLike($item) : $item,
                 Arr::wrap($items),
@@ -29,12 +34,44 @@ class InferConfig
         return $this;
     }
 
-    public function shouldAnalyzeAst(string $class): bool
+    /**
+     * @return $this
+     */
+    public function buildDefinitionsUsingReflectionFor(array $items): static
     {
-        foreach ($this->forceAnalyzingAst as $item) {
+        $this->forcedReflectionSourcedDefinitionsMatchers = [
+            ...$this->forcedReflectionSourcedDefinitionsMatchers,
+            ...array_map(
+                fn ($item) => is_string($item) ? new ClassLike($item) : $item,
+                Arr::wrap($items),
+            ),
+        ];
+
+        return $this;
+    }
+
+    /**
+     * @param DefinitionMatcher[] $matchers
+     */
+    private function matchesAnyDefinitionMatcher(string $class, array $matchers): bool
+    {
+        foreach ($matchers as $item) {
             if ($item->matches($class)) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    public function shouldAnalyzeAst(string $class): bool
+    {
+        if ($this->matchesAnyDefinitionMatcher($class, $this->forcedReflectionSourcedDefinitionsMatchers)) {
+            return false;
+        }
+
+        if ($this->matchesAnyDefinitionMatcher($class, $this->forcedAstSourcedDefinitionsMatchers)) {
+            return true;
         }
 
         $reflection = new \ReflectionClass($class);
