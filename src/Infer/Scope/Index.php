@@ -7,7 +7,7 @@ use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\DefinitionBuilders\ShallowClassReflectionDefinitionBuilder;
-use Illuminate\Support\Str;
+use Dedoc\Scramble\Scramble;
 use ReflectionClass;
 use ReflectionException;
 
@@ -28,13 +28,6 @@ class Index implements IndexContract
      */
     public array $functionsDefinitions = [];
 
-    /**
-     * @internal
-     *
-     * @var class-string<object>[]
-     */
-    public static array $avoidAnalyzingAstClasses = [];
-
     public function getClass(string $className): ?ClassDefinition
     {
         if (isset($this->classesDefinitions[$className])) {
@@ -47,19 +40,10 @@ class Index implements IndexContract
             return null;
         }
 
-        $classPath = $reflection->getFileName();
-
-        // @todo: $avoidAnalyzingAstClasses is needed for testing only, fix it!
-        if (
-            $classPath
-            && ! ($shouldAnalyzeAst = ! in_array($className, static::$avoidAnalyzingAstClasses) && static::shouldAnalyzeAst($classPath))
-        ) {
+        if (! Scramble::infer()->config->shouldAnalyzeAst($className)) {
             return $this->classesDefinitions[$className] = (new ShallowClassReflectionDefinitionBuilder($this, $reflection))->build();
         }
 
-        /*
-         * Keep in mind the internal classes are analyzed here due to $classPath being `null` for them.
-         */
         return (new ClassAnalyzer($this))->analyze($className);
     }
 
@@ -71,11 +55,6 @@ class Index implements IndexContract
     public function getClassDefinition(string $className): ?ClassDefinition
     {
         return $this->classesDefinitions[$className] ?? null;
-    }
-
-    public static function shouldAnalyzeAst(string $path): bool
-    {
-        return ! Str::contains($path, DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR);
     }
 
     public function registerFunctionDefinition(FunctionLikeDefinition $fnDefinition): void

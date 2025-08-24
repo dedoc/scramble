@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Analyzer\MethodQuery;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Reference;
@@ -44,6 +45,9 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
         parent::__construct($infer, $openApiTransformer, $components);
     }
 
+    /**
+     * @phpstan-assert-if-true Generic $type
+     */
     public function shouldHandle(Type $type)
     {
         return $type instanceof Generic
@@ -245,7 +249,13 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 
         $withArray->items = $this->flattenMergeValues($withArray->items);
 
-        return $this->openApiTransformer->transform($withArray); // @phpstan-ignore return.type
+        $schema = $this->openApiTransformer->transform($withArray);
+
+        if (! $schema instanceof OpenApiObjectType) {
+            return null;
+        }
+
+        return $schema;
     }
 
     protected function getAdditionalSchema(ObjectType $resource): ?OpenApiObjectType
@@ -264,6 +274,12 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 
         $additional->items = $this->flattenMergeValues($additional->items);
 
-        return $this->openApiTransformer->transform($additional); // @phpstan-ignore return.type
+        $schema = $this->openApiTransformer->transform($additional);
+
+        if (! $schema instanceof OpenApiObjectType) {
+            return null;
+        }
+
+        return $schema;
     }
 }

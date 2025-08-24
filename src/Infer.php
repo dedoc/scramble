@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Configuration\InferConfig;
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Scope\Index;
@@ -9,7 +10,8 @@ use Dedoc\Scramble\Infer\Scope\Index;
 class Infer
 {
     public function __construct(
-        public Index $index
+        public Index $index,
+        public InferConfig $config,
     ) {}
 
     public function analyzeClass(string $class): ClassDefinition
@@ -21,5 +23,10 @@ class Infer
         }
 
         return $this->index->getClassDefinition($class);
+    }
+
+    public function configure(): InferConfig
+    {
+        return $this->config;
     }
 }
