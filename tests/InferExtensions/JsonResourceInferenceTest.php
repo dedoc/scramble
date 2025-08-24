@@ -4,12 +4,17 @@ namespace Dedoc\Scramble\Tests\InferExtensions;
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Scramble;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 beforeEach(function () {
-    Index::$avoidAnalyzingAstClasses[] = Bar_JsonResourceInferenceTest::class;
+    Scramble::infer()
+        ->configure()
+        ->buildDefinitionsUsingReflectionFor([
+            Bar_JsonResourceInferenceTest::class,
+        ]);
 });
 
 it('infers json resource creation', function ($expression, $expectedType) {

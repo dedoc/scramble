@@ -11,7 +11,11 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\Json\PaginatedResourceResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Http\Resources\Json\ResourceResponse;
+use Illuminate\Pagination\AbstractCursorPaginator;
+use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\Str;
 
 /**
@@ -89,5 +93,34 @@ class ResourceCollectionTypeManager
         }
 
         return new Generic($collectingClassType->value, [new UnknownType]);
+    }
+
+    public static function make(ObjectType $type): self
+    {
+        return new self(
+            $type instanceof Generic ? $type : new Generic($type->name),
+            app(Index::class),
+        );
+    }
+
+    public function getResponseType(): Generic
+    {
+        if ($this->isPaginatedResource()) {
+            return new Generic(PaginatedResourceResponse::class, [$this->type]);
+        }
+
+        return new Generic(ResourceResponse::class, [$this->type]);
+    }
+
+    private function isPaginatedResource(): bool
+    {
+        $resourceType = $this->type->templateTypes[/* TResource */ 0] ?? null;
+
+        if (! $resourceType instanceof ObjectType) {
+            return false;
+        }
+
+        return $resourceType->isInstanceOf(AbstractPaginator::class)
+            || $resourceType->isInstanceOf(AbstractCursorPaginator::class);
     }
 }

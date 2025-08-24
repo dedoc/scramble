@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Route;
 
 beforeEach(function () {
     $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
+    $this->infer = app(Infer::class);
+    $this->transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
 });
 
 it('supports call to method', function () {
@@ -127,11 +131,7 @@ class JsonResourceTypeToSchemaTest_Sample extends JsonResource
 it('handles withResponse for json api resource', function () {
     $type = new Generic(JsonResourceTypeToSchemaTest_WithResponseSample::class, [new UnknownType]);
 
-    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
-        JsonResourceTypeToSchema::class,
-        ResponseTypeToSchema::class,
-    ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
+    $extension = new JsonResourceTypeToSchema($this->infer, $this->transformer, $this->context->openApi->components, $this->context);
 
     expect($extension->toResponse($type)->code)->toBe(429);
 });

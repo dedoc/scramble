@@ -7,12 +7,12 @@ use ReflectionClass;
 
 class ClassBasedReference
 {
-    public static function create(string $referenceType, string $className, Components $components)
+    public static function create(string $referenceType, string $className, Components $components): Reference
     {
         return new Reference($referenceType, $className, $components, static::getClassBasedName($className));
     }
 
-    public static function createInput(string $referenceType, string $className, Components $components)
+    public static function createInput(string $referenceType, string $className, Components $components): Reference
     {
         return new Reference($referenceType, $className, $components, static::getClassBasedName($className, input: true));
     }

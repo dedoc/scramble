@@ -44,7 +44,10 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
         parent::__construct($infer, $openApiTransformer, $components);
     }
 
-    public function shouldHandle(Type $type)
+    /**
+     * @phpstan-assert-if-true Generic $type
+     */
+    public function shouldHandle(Type $type): bool
     {
         return $type instanceof Generic
             && $type->isInstanceOf(ResourceResponse::class)
@@ -54,7 +57,7 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
     /**
      * @param  Generic  $type
      */
-    public function toResponse(Type $type): ?Response
+    public function toResponse(Type $type): Response
     {
         $resource = $type->templateTypes[0];
 
@@ -245,7 +248,13 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 
         $withArray->items = $this->flattenMergeValues($withArray->items);
 
-        return $this->openApiTransformer->transform($withArray); // @phpstan-ignore return.type
+        $schema = $this->openApiTransformer->transform($withArray);
+
+        if (! $schema instanceof OpenApiObjectType) {
+            return null;
+        }
+
+        return $schema;
     }
 
     protected function getAdditionalSchema(ObjectType $resource): ?OpenApiObjectType
@@ -264,6 +273,12 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 
         $additional->items = $this->flattenMergeValues($additional->items);
 
-        return $this->openApiTransformer->transform($additional); // @phpstan-ignore return.type
+        $schema = $this->openApiTransformer->transform($additional);
+
+        if (! $schema instanceof OpenApiObjectType) {
+            return null;
+        }
+
+        return $schema;
     }
 }

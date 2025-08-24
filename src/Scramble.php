@@ -177,6 +177,11 @@ class Scramble
         return static::getConfigurationsInstance()->get($api);
     }
 
+    public static function infer(): Infer
+    {
+        return app(Infer::class);
+    }
+
     /** @internal */
     public static function getConfigurationsInstance(): GeneratorConfigCollection
     {

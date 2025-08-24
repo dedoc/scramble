@@ -8,7 +8,6 @@ use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
-use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceCollectionTypeToSchema;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
@@ -16,6 +15,9 @@ use function Spatie\Snapshots\assertMatchesSnapshot;
 beforeEach(function () {
     $this->components = new Components;
     $this->context = new OpenApiContext((new OpenApi('3.1.0'))->setComponents($this->components), new GeneratorConfig);
+    $this->transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
 });
 
 test('transforms collection with toArray only', function () {
@@ -78,15 +80,10 @@ class UserCollection_Two extends \Illuminate\Http\Resources\Json\ResourceCollect
 }
 
 test('transforms collection without proper toArray implementation', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
-        JsonResourceTypeToSchema::class,
-        ResourceCollectionTypeToSchema::class,
-    ]);
-
     $type = new ObjectType(UserCollection_Three::class);
 
     assertMatchesSnapshot([
-        'response' => $transformer->toResponse($type)->toArray(),
+        'response' => $this->transformer->toResponse($type)->toArray(),
         'components' => $this->components->toArray(),
     ]);
 });
@@ -101,21 +98,10 @@ class UserCollection_Three extends \Illuminate\Http\Resources\Json\ResourceColle
 }
 
 test('transforms collection without toArray implementation', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
-        JsonResourceTypeToSchema::class,
-        ResourceCollectionTypeToSchema::class,
-    ]);
-    //    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->components, $this->context);
-
     $type = new ObjectType(UserCollection_Four::class);
 
-    //    dd([
-    //        'response' => $transformer->toResponse($type)->toArray(),
-    //        'components' => $this->components->toArray(),
-    //    ]);
-
     assertMatchesSnapshot([
-        'response' => $transformer->toResponse($type)->toArray(),
+        'response' => $this->transformer->toResponse($type)->toArray(),
         'components' => $this->components->toArray(),
     ]);
 });

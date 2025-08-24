@@ -9,7 +9,6 @@ use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Generator\Components;
-use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ArrayType;
@@ -77,22 +76,18 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
-        $resourceResponseType = new Generic(ResourceResponse::class, [$type]);
+        return $this->openApiTransformer->toResponse(
+            $this->getResponseType($type)
+        );
+    }
 
-        return (new ResourceResponseTypeToSchema($this->infer, $this->openApiTransformer, $this->components, $this->openApiContext))
-            ->toResponse($resourceResponseType);
+    protected function getResponseType(ObjectType $type): Type
+    {
+        return new Generic(ResourceResponse::class, [$type]);
     }
 
     public function reference(ObjectType $type)
     {
         return ClassBasedReference::create('schemas', $type->name, $this->components);
-
-        /*
-         * @todo: Allow (enforce) user to explicitly pass short and unique names for the reference and avoid passing components.
-         * Otherwise, only class names are correctly handled for now.
-         */
-        return Reference::in('schemas')
-            ->shortName(class_basename($type->name))
-            ->uniqueName($type->name);
     }
 }
