@@ -2,8 +2,8 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
+use Dedoc\Scramble\Attributes\Endpoint;
 use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\OperationId;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
@@ -153,7 +153,7 @@ class RequestEssentialsExtension extends OperationExtension
             eloquent: (function () use ($routeInfo) {
                 // Manual operation ID setting.
                 // Check if OperationId attribute is present
-                $operationId = ($routeInfo->reflectionMethod()->getAttributes(OperationId::class)[0] ?? null)
+                $operationId = ($routeInfo->reflectionMethod()->getAttributes(Endpoint::class)[0] ?? null)
                     ?->newInstance()
                     ?->operationId;
 
