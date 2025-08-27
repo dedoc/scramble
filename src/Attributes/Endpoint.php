@@ -15,6 +15,11 @@ class Endpoint
          * Determines the ordering of the endpoints. Endpoints with the same weight, are sorted
          * by the order of their declaration.
          */
-        public readonly int $weight = INF,
+        public readonly int $weight = PHP_INT_MAX,
+
+        /**
+         * Assigns an OperationID to a controller method.
+         */
+        public readonly ?string $operationId = null,
     ) {}
 }
