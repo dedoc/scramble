@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Attributes\Group;
+use Dedoc\Scramble\Attributes\OperationId;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
@@ -151,6 +152,16 @@ class RequestEssentialsExtension extends OperationExtension
         return new UniqueNameOptions(
             eloquent: (function () use ($routeInfo) {
                 // Manual operation ID setting.
+                // Check if OperationId attribute is present
+                $operationId = ($routeInfo->reflectionMethod()->getAttributes(OperationId::class)[0] ?? null)
+                    ?->newInstance()
+                    ?->operationId;
+
+                if ($operationId) {
+                    return $operationId;
+                }
+
+                // Failing that, lets look for the annotation
                 if (
                     ($operationId = $routeInfo->phpDoc()->getTagsByName('@operationId'))
                     && ($value = trim(Arr::first($operationId)?->value?->value))
