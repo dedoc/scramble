@@ -80,3 +80,34 @@ class JsonResourceExtensionTest_WhenHas extends JsonResource
         ];
     }
 }
+
+class JsonResourceExtensionTest_MatchWithThrow extends JsonResource
+{
+    public function toArray(Request $request)
+    {
+        return [
+            'property' => match (rand(0, 2)) {
+                0 => 'foo',
+                1 => throw new Exception('foo'),
+                default => 123,
+            },
+        ];
+    }
+}
+
+it('supports match with throw', function () {
+    [$schema] = JsonResourceExtensionTest_analyze($this->infer, $this->context, JsonResourceExtensionTest_MatchWithThrow::class);
+
+    expect($schema->toArray())->toBe([
+        'type' => 'object',
+        'properties' => [
+            'property' => [
+                'anyOf' => [
+                    ['type' => 'string', 'enum' => ['foo']],
+                    ['type' => 'integer', 'enum' => [123]],
+                ],
+            ],
+        ],
+        'required' => ['property'],
+    ]);
+});

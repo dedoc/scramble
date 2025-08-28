@@ -27,6 +27,7 @@ use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node;
 
 class Scope
@@ -65,6 +66,10 @@ class Scope
 
         if ($node instanceof Node\Expr\ConstFetch) {
             return (new ConstFetchTypeGetter)($node);
+        }
+
+        if ($node instanceof Node\Expr\Throw_) {
+            return new VoidType();
         }
 
         if ($node instanceof Node\Expr\Ternary) {
