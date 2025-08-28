@@ -69,7 +69,7 @@ class Scope
         }
 
         if ($node instanceof Node\Expr\Throw_) {
-            return new VoidType();
+            return new VoidType;
         }
 
         if ($node instanceof Node\Expr\Ternary) {
