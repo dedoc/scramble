@@ -37,3 +37,9 @@ match (unknown()) {
 }
 EOD, 'int(1)|null'],
 ]);
+
+it('infers throw node type', function ($code, $expectedTypeString) {
+    expect(getStatementTypeForScopeTest($code)->toString())->toBe($expectedTypeString);
+})->with([
+    ['throw new Exception("foo")', 'void'],
+]);
