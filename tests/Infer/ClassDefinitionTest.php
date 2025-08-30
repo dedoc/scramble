@@ -3,13 +3,86 @@
 // Tests for which definition is created from class' source
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
+use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
+use Dedoc\Scramble\Infer\Extensions\AfterClassDefinitionCreatedExtension;
+use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\GenericClassStringType;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\TemplateType;
+use Dedoc\Scramble\Support\Type\TypePath;
+use Dedoc\Scramble\Support\Type\TypePathItem;
+use Dedoc\Scramble\Support\Type\TypePathItemCondition;
+use Illuminate\Database\Eloquent\Builder;
 
 beforeEach(function () {
     $this->index = app(Index::class);
 
     $this->classAnalyzer = new ClassAnalyzer($this->index);
 });
+
+it('infers from default type', function () {
+    Scramble::registerExtension(AfterFoo_ClassDefinitionTest::class);
+
+    $this->classAnalyzer->analyze(Foo_ClassDefinitionTest::class);
+
+    // #/types/1/a/returnType/ar
+//    $path = new TypePath([
+//        new TypePathItem(
+//            key: 'type',
+//            condition: new TypePathItemCondition(
+//                class: GenericClassStringType::class,
+//            )
+//        ),
+//        new TypePathItem(
+//            key: 'returnType',
+//            condition: new TypePathItemCondition(
+//                class: FunctionType::class,
+//            )
+//        ),
+//    ]);
+
+    $type = getStatementType(<<<'EOD'
+['a' => fn (int $b) => 123]
+EOD);
+
+//    $type = new GenericClassStringType(new ObjectType(Builder::class));
+
+    $path = TypePath::findFirst(
+        $type,
+        fn ($t) => $t instanceof \Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType,
+    );
+
+    dd($path?->getFrom($type));
+
+
+
+    expect(getStatementType('new '.Foo_ClassDefinitionTest::class)->toString())
+        ->toBe('Foo_ClassDefinitionTest<Illuminate\Database\Eloquent\Builder>');
+});
+class Foo_ClassDefinitionTest {
+    public $prop = Builder::class;
+}
+class AfterFoo_ClassDefinitionTest implements AfterClassDefinitionCreatedExtension
+{
+    public function shouldHandle(string $name): bool
+    {
+        return $name === Foo_ClassDefinitionTest::class;
+    }
+
+    public function afterClassDefinitionCreated(ClassDefinitionCreatedEvent $event)
+    {
+        $event->classDefinition->templateTypes = [
+            $t = new TemplateType('T')
+        ];
+        $event->classDefinition->properties['prop'] = new ClassPropertyDefinition(
+            type: new GenericClassStringType($t),
+            defaultType: new GenericClassStringType(new ObjectType(Builder::class)),
+        );
+    }
+}
 
 it('class generates definition', function () {
     $type = analyzeFile(<<<'EOD'

@@ -318,6 +318,14 @@ class ReferenceTypeResolver
             ] : [])
             ->filter();
 
+        $propertyDefaultTemplateTypes = (new TemplateTypesSolver)
+            ->inferTemplatesFromPropertyDefaults(
+                $classDefinition->templateTypes,
+                $classDefinition->properties,
+            );
+
+        dd($propertyDefaultTemplateTypes);
+
         $constructorDefinition = $classDefinition->getMethodDefinition('__construct', $scope);
 
         $templatesMap = (new TemplateTypesSolver)

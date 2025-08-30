@@ -52,6 +52,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             new GlobalScope,
             (new MethodCallReferenceType($type, 'toArray', arguments: []))
         );
+        dd($array);
 
         // @todo: why unpacking is here? ReferenceTypeResolver@resolve should've returned unpacked type
         $array = TypeHelper::unpackIfArray($array);

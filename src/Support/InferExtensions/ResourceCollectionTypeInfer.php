@@ -5,9 +5,12 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
+use Dedoc\Scramble\Infer\Extensions\ExpressionTypeInferExtension;
+use Dedoc\Scramble\Infer\Extensions\InferExtension;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -36,7 +39,7 @@ class ResourceCollectionTypeInfer implements MethodReturnTypeExtension, Property
     public function getPropertyType(PropertyFetchEvent $event): ?Type
     {
         return match ($event->name) {
-            'collection' => $this->getCollectionType($event->getInstance(), $event->scope->index),
+//            'collection' => $this->getCollectionType($event->getInstance(), $event->scope->index),
             default => null,
         };
     }

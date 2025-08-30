@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\MissingType;
@@ -150,5 +151,46 @@ class TemplateTypesSolver
         }
 
         return $mappedTypes;
+    }
+
+    /**
+     * @param TemplateType[] $classTemplateTypes
+     * @param ClassPropertyDefinition[] $properties
+     * @return array
+     */
+    public function inferTemplatesFromPropertyDefaults(array $classTemplateTypes, array $properties): array
+    {
+        $inferredTemplates = [];
+
+        foreach ($classTemplateTypes as $template) {
+            foreach ($properties as $property) {
+                if (! $property->defaultType) {
+                    continue;
+                }
+
+                if ($inferredType = $this->inferTemplate($template, $property->type, $property->defaultType)) {
+                    $inferredTemplates[$template->name] = $inferredType;
+
+                    break;
+                }
+            }
+
+        }
+
+        return $inferredTemplates;
+    }
+
+    private function inferTemplate(TemplateType $template, Type $typeWithTemplate, Type $type): ?Type
+    {
+        if (! $path = $this->findTemplatePath($template, $typeWithTemplate)) {
+            return null;
+        }
+
+        return $this->getTypeByPath($type, $path);
+    }
+
+    private function findTemplatePath(TemplateType $template, Type $typeWithTemplate): ?Type
+    {
+        dd($template, $typeWithTemplate);
     }
 }
