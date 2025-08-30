@@ -5,15 +5,14 @@ namespace Dedoc\Scramble\Support\Type;
 class TypePathItem
 {
     const KIND_DEFAULT = 0;
+
     const KIND_ARRAY_KEY = 1;
 
     public function __construct(
         public string|int $key,
         public int $kind = self::KIND_DEFAULT,
         public ?TypePathItemCondition $condition = null,
-    )
-    {
-    }
+    ) {}
 
     public function getFrom(array|Type $type): Type|array|null
     {

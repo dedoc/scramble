@@ -154,9 +154,8 @@ class TemplateTypesSolver
     }
 
     /**
-     * @param TemplateType[] $classTemplateTypes
-     * @param ClassPropertyDefinition[] $properties
-     * @return array
+     * @param  TemplateType[]  $classTemplateTypes
+     * @param  ClassPropertyDefinition[]  $properties
      */
     public function inferTemplatesFromPropertyDefaults(array $classTemplateTypes, array $properties): array
     {

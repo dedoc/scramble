@@ -5,20 +5,19 @@ namespace Dedoc\Scramble\Support\Type;
 class TypePath
 {
     /**
-     * @param TypePathItem[] $items
+     * @param  TypePathItem[]  $items
      */
-    public function __construct(public array $items)
-    {
-    }
+    public function __construct(public array $items) {}
 
     public function getFrom(Type $type): Type|array|null
     {
         $typeInCheck = $type;
         foreach ($this->items as $item) {
-            if(! $typeInCheck = $item->getFrom($typeInCheck)) {
+            if (! $typeInCheck = $item->getFrom($typeInCheck)) {
                 return null;
             }
         }
+
         return $typeInCheck;
     }
 

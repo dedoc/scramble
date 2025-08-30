@@ -29,26 +29,26 @@ it('infers from default type', function () {
     $this->classAnalyzer->analyze(Foo_ClassDefinitionTest::class);
 
     // #/types/1/a/returnType/ar
-//    $path = new TypePath([
-//        new TypePathItem(
-//            key: 'type',
-//            condition: new TypePathItemCondition(
-//                class: GenericClassStringType::class,
-//            )
-//        ),
-//        new TypePathItem(
-//            key: 'returnType',
-//            condition: new TypePathItemCondition(
-//                class: FunctionType::class,
-//            )
-//        ),
-//    ]);
+    //    $path = new TypePath([
+    //        new TypePathItem(
+    //            key: 'type',
+    //            condition: new TypePathItemCondition(
+    //                class: GenericClassStringType::class,
+    //            )
+    //        ),
+    //        new TypePathItem(
+    //            key: 'returnType',
+    //            condition: new TypePathItemCondition(
+    //                class: FunctionType::class,
+    //            )
+    //        ),
+    //    ]);
 
     $type = getStatementType(<<<'EOD'
 ['a' => fn (int $b) => 123]
 EOD);
 
-//    $type = new GenericClassStringType(new ObjectType(Builder::class));
+    //    $type = new GenericClassStringType(new ObjectType(Builder::class));
 
     $path = TypePath::findFirst(
         $type,
@@ -57,12 +57,11 @@ EOD);
 
     dd($path?->getFrom($type));
 
-
-
     expect(getStatementType('new '.Foo_ClassDefinitionTest::class)->toString())
         ->toBe('Foo_ClassDefinitionTest<Illuminate\Database\Eloquent\Builder>');
 });
-class Foo_ClassDefinitionTest {
+class Foo_ClassDefinitionTest
+{
     public $prop = Builder::class;
 }
 class AfterFoo_ClassDefinitionTest implements AfterClassDefinitionCreatedExtension
@@ -75,7 +74,7 @@ class AfterFoo_ClassDefinitionTest implements AfterClassDefinitionCreatedExtensi
     public function afterClassDefinitionCreated(ClassDefinitionCreatedEvent $event)
     {
         $event->classDefinition->templateTypes = [
-            $t = new TemplateType('T')
+            $t = new TemplateType('T'),
         ];
         $event->classDefinition->properties['prop'] = new ClassPropertyDefinition(
             type: new GenericClassStringType($t),

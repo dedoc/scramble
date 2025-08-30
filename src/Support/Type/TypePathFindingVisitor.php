@@ -18,9 +18,8 @@ class TypePathFindingVisitor implements TypeVisitor
 
     public function __construct(
         private Closure $cb,
-    )
-    {
-        $this->pointers = new WeakMap();
+    ) {
+        $this->pointers = new WeakMap;
     }
 
     public function enter(Type $type): ?Type
@@ -98,7 +97,7 @@ class TypePathFindingVisitor implements TypeVisitor
                                 class: $type::class,
                                 objectName: $type instanceof ObjectType ? $type->name : null,
                             )
-                        )
+                        ),
                     ]
                 );
             } else {

@@ -7,9 +7,7 @@ class TypePathItemCondition
     public function __construct(
         public ?string $class = null,
         public ?string $objectName = null,
-    )
-    {
-    }
+    ) {}
 
     public function matches(Type $result): bool
     {
