@@ -14,7 +14,6 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
-use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type as InferType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
@@ -25,7 +24,6 @@ use PhpParser\Comment;
 use PhpParser\Node;
 use PhpParser\NodeAbstract;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
-use function Pest\Laravel\instance;
 
 /**
  * @implements IndexBuilder<array<string, InferredParameter>>
