@@ -31,7 +31,7 @@ class ResourceCollectionTypeManager
             return $inferredCollectedType;
         }
 
-        if ($collectedTypeFromProperty = $this->getCollectedTypeFromPropertyDefinition()) {
+        if ($collectedTypeFromProperty = $this->guessCollectedTypeResourceName()) {
             return $collectedTypeFromProperty;
         }
 
@@ -42,11 +42,11 @@ class ResourceCollectionTypeManager
     {
         $collectsClassNameType = $this->type->templateTypes[/* TCollects */ 2] ?? null;
 
-        if (! $collectsClassNameType instanceof LiteralStringType) {
+        if (! $collectsClassNameType instanceof ObjectType) {
             return $this->getCollectedTypeFromManualAnnotation();
         }
 
-        return new Generic($collectsClassNameType->value, [new UnknownType]);
+        return new Generic($collectsClassNameType->name, [new UnknownType]);
     }
 
     private function getCollectedTypeFromManualAnnotation(): ?Generic
@@ -70,29 +70,21 @@ class ResourceCollectionTypeManager
         return $type;
     }
 
-    private function getCollectedTypeFromPropertyDefinition(): ?Generic
+    private function guessCollectedTypeResourceName(): ?Generic
     {
         if (! $classDefinition = $this->index->getClass($this->type->name)) {
             return null;
         }
 
-        $collectingClassDefinition = $classDefinition->getPropertyDefinition('collects');
-
-        $collectingClassType = $collectingClassDefinition?->defaultType;
-
-        if (! $collectingClassType instanceof LiteralStringType) {
-            if (
-                str_ends_with($classDefinition->name, 'Collection') &&
-                (class_exists($class = Str::replaceLast('Collection', '', $classDefinition->name)) ||
-                    class_exists($class = Str::replaceLast('Collection', 'Resource', $classDefinition->name)))
-            ) {
-                return new Generic($class, [new UnknownType]);
-            }
-
-            return null;
+        if (
+            str_ends_with($classDefinition->name, 'Collection') &&
+            (class_exists($class = Str::replaceLast('Collection', '', $classDefinition->name)) ||
+                class_exists($class = Str::replaceLast('Collection', 'Resource', $classDefinition->name)))
+        ) {
+            return new Generic($class, [new UnknownType]);
         }
 
-        return new Generic($collectingClassType->value, [new UnknownType]);
+        return null;
     }
 
     public static function make(ObjectType $type): self

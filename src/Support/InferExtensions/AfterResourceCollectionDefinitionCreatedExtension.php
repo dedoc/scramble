@@ -39,7 +39,7 @@ class AfterResourceCollectionDefinitionCreatedExtension implements AfterClassDef
                 arguments: [
                     'resource' => new MixedType,
                 ],
-                returnType: new ArrayType,
+                returnType: new ArrayType($tCollects),
             ),
             definingClassName: ResourceCollection::class,
         );
