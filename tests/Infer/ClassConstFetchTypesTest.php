@@ -5,8 +5,8 @@ it(
     fn ($statement, $expectedType) => expect(getStatementType($statement)->toString())->toBe($expectedType),
 )->with([
     ['$var::class', 'string'],
-    ['(new SomeType)::class', 'string(SomeType)'],
-    ['SomeType::class', 'string(SomeType)'],
+    ['(new SomeType)::class', 'class-string<SomeType>'],
+    ['SomeType::class', 'class-string<SomeType>'],
     ['Enum_ClassConstFetchTypesTest::FOO', 'Enum_ClassConstFetchTypesTest::FOO'],
 ]);
 

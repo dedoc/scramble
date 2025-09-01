@@ -312,19 +312,11 @@ class ReferenceTypeResolver
             return new ObjectType($contextualClassName);
         }
 
-        $propertyDefaultTemplateTypes = collect($classDefinition->properties)
-            ->mapWithKeys(fn (ClassPropertyDefinition $definition) => $definition->type instanceof TemplateType ? [
-                $definition->type->name => $definition->defaultType,
-            ] : [])
-            ->filter();
-
         $propertyDefaultTemplateTypes = (new TemplateTypesSolver)
             ->inferTemplatesFromPropertyDefaults(
                 $classDefinition->templateTypes,
                 $classDefinition->properties,
             );
-
-        dd($propertyDefaultTemplateTypes);
 
         $constructorDefinition = $classDefinition->getMethodDefinition('__construct', $scope);
 
@@ -334,7 +326,7 @@ class ReferenceTypeResolver
                 $constructorDefinition,
                 new AutoResolvingArgumentTypeBag($scope, $type->arguments),
             )
-            ->prepend($propertyDefaultTemplateTypes->all());
+            ->prepend($propertyDefaultTemplateTypes);
 
         $resultingTemplatesMap = (new TemplateTypesSolver)
             ->getGenericCreationTemplatesWithDefaults($classDefinition->templateTypes, $templatesMap);

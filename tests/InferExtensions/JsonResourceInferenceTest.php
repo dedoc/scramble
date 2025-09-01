@@ -207,8 +207,8 @@ it('handles that weird case', function () {
     $rt1 = $cd->type->getReturnType();
     $rt2 = $bd->type->getReturnType();
 
-    expect($rt1->toString())->toBe('string('.CarFooAnonCollectionTap_JsonResourceInferenceTest::class.')')
-        ->and($rt2->toString())->toBe('string('.BaloobooFooAnonCollectionTap_JsonResourceInferenceTest::class.')');
+    expect($rt1->toString())->toBe('class-string<'.CarFooAnonCollectionTap_JsonResourceInferenceTest::class.'>')
+        ->and($rt2->toString())->toBe('class-string<'.BaloobooFooAnonCollectionTap_JsonResourceInferenceTest::class.'>');
 });
 class Static_JsonResourceInferenceTest
 {

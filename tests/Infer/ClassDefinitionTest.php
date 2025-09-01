@@ -10,6 +10,7 @@ use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\GenericClassStringType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypePath;
@@ -23,39 +24,24 @@ beforeEach(function () {
     $this->classAnalyzer = new ClassAnalyzer($this->index);
 });
 
-it('infers from default type', function () {
-    Scramble::registerExtension(AfterFoo_ClassDefinitionTest::class);
 
-    $this->classAnalyzer->analyze(Foo_ClassDefinitionTest::class);
-
-    // #/types/1/a/returnType/ar
-    //    $path = new TypePath([
-    //        new TypePathItem(
-    //            key: 'type',
-    //            condition: new TypePathItemCondition(
-    //                class: GenericClassStringType::class,
-    //            )
-    //        ),
-    //        new TypePathItem(
-    //            key: 'returnType',
-    //            condition: new TypePathItemCondition(
-    //                class: FunctionType::class,
-    //            )
-    //        ),
-    //    ]);
-
+it('finds type', function () {
     $type = getStatementType(<<<'EOD'
 ['a' => fn (int $b) => 123]
 EOD);
 
-    //    $type = new GenericClassStringType(new ObjectType(Builder::class));
-
     $path = TypePath::findFirst(
         $type,
-        fn ($t) => $t instanceof \Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType,
+        fn ($t) => $t instanceof LiteralIntegerType,
     );
 
-    dd($path?->getFrom($type));
+    expect($path?->getFrom($type)->toString())->toBe('int(123)');
+})->todo('move to its own test case');
+
+it('infers from default type', function () {
+    Scramble::registerExtension(AfterFoo_ClassDefinitionTest::class);
+
+    $this->classAnalyzer->analyze(Foo_ClassDefinitionTest::class);
 
     expect(getStatementType('new '.Foo_ClassDefinitionTest::class)->toString())
         ->toBe('Foo_ClassDefinitionTest<Illuminate\Database\Eloquent\Builder>');
