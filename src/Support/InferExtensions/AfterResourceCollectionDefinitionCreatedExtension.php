@@ -7,11 +7,14 @@ use Dedoc\Scramble\Infer\Extensions\AfterClassDefinitionCreatedExtension;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\GenericClassStringType;
+use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Support\Collection;
 
 class AfterResourceCollectionDefinitionCreatedExtension implements AfterClassDefinitionCreatedExtension
 {
@@ -31,6 +34,13 @@ class AfterResourceCollectionDefinitionCreatedExtension implements AfterClassDef
 
         $definition->properties['collects'] = new ClassPropertyDefinition(
             type: new GenericClassStringType($tCollects),
+        );
+
+        $definition->properties['collection'] = new ClassPropertyDefinition(
+            type: new Generic(Collection::class, [
+                new IntegerType,
+                $tCollects,
+            ]),
         );
 
         $definition->methods['toArray'] = new ShallowFunctionDefinition(

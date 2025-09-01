@@ -19,7 +19,7 @@ use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Str;
 
-class ResourceCollectionTypeInfer implements MethodReturnTypeExtension, PropertyTypeExtension
+class ResourceCollectionTypeInfer implements MethodReturnTypeExtension
 {
     public function shouldHandle(ObjectType $type): bool
     {
@@ -34,23 +34,13 @@ class ResourceCollectionTypeInfer implements MethodReturnTypeExtension, Property
         };
     }
 
-    public function getPropertyType(PropertyFetchEvent $event): ?Type
-    {
-        return match ($event->name) {
-            //            'collection' => $this->getCollectionType($event->getInstance(), $event->scope->index),
-            default => null,
-        };
-    }
-
     private function getToArrayReturnType(MethodCallEvent $event): ?Type
     {
-        $parentType = $this->getCollectionType($event->getInstance(), $event->scope->index);
-
         if ($event->methodDefiningClassName === ResourceCollection::class) {
-            return $parentType;
+            return null; // default behavior
         }
 
-        // @todo instead, handle `map` call!
+        $parentType = $this->getCollectionType($event->getInstance(), $event->scope->index);
 
         $realType = $event->getDefinition()->getMethodDefinition('toArray')?->type->getReturnType();
         if ($realType instanceof UnknownType) {
@@ -61,7 +51,7 @@ class ResourceCollectionTypeInfer implements MethodReturnTypeExtension, Property
             return $parentType;
         }
 
-        return $realType;
+        return null; // default behavior
     }
 
     private function getCollectionType(ObjectType $type, Index $index): ArrayType
@@ -71,51 +61,5 @@ class ResourceCollectionTypeInfer implements MethodReturnTypeExtension, Property
         return new ArrayType(
             (new ResourceCollectionTypeManager($normalizedType, $index))->getCollectedType(),
         );
-    }
-
-    public function getBasicCollectionType(ClassDefinition $classDefinition)
-    {
-        $collectingClassType = $this->getCollectingClassType($classDefinition);
-
-        if (! $collectingClassType) {
-            return new UnknownType('Cannot find a type of the collecting class.');
-        }
-
-        return new ArrayType(value: new ObjectType($collectingClassType->value));
-    }
-
-    public function getCollectingClassType(ClassDefinition $classDefinition): ?LiteralStringType
-    {
-        $collectingClassDefinition = $classDefinition->getPropertyDefinition('collects');
-
-        $collectingClassType = $collectingClassDefinition?->defaultType;
-
-        if (! $collectingClassType instanceof LiteralStringType) {
-            if (
-                str_ends_with($classDefinition->name, 'Collection') &&
-                (class_exists($class = Str::replaceLast('Collection', '', $classDefinition->name)) ||
-                    class_exists($class = Str::replaceLast('Collection', 'Resource', $classDefinition->name)))
-            ) {
-                $collectingClassType = new LiteralStringType($class);
-            } else {
-                return null;
-            }
-        }
-
-        return $collectingClassType;
-    }
-
-    public function getCollectedInstanceType(ObjectType $type): ?Type
-    {
-        if (! $type instanceof Generic) {
-            return null;
-        }
-
-        $collectsClassNameType = $type->templateTypes[/* TCollects */ 2] ?? null;
-        if (! $collectsClassNameType instanceof LiteralStringType) {
-            return null;
-        }
-
-        return new Generic($collectsClassNameType->value, [new UnknownType]);
     }
 }

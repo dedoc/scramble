@@ -208,7 +208,7 @@ class ReferenceTypeResolver
                 : $contextualClassName;
 
             $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
-                instance: new ObjectType($scope->context->classDefinition->name),
+                instance: new SelfType($scope->context->classDefinition->name),
                 name: $type->methodName,
                 scope: $scope,
                 arguments: $arguments,

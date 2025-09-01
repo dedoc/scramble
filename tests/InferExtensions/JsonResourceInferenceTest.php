@@ -8,6 +8,7 @@ use Dedoc\Scramble\Scramble;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
 beforeEach(function () {
     Scramble::infer()
@@ -100,21 +101,28 @@ it('infers resource collection toArray', function ($expression, $expectedType) {
     expect(getStatementType($expression)->toString())->toBe($expectedType);
 })->with([
     // collection with $collects, without toArray
-    //    [
-    //        '(new '.FooCollection_JsonResourceInferenceTest::class.'([]))->toArray()',
-    //        'array<'.Foo_JsonResourceInferenceTest::class.'<unknown>>',
-    //    ],
+    [
+        '(new ' . FooCollection_JsonResourceInferenceTest::class . '([]))->toArray()',
+        'array<' . Foo_JsonResourceInferenceTest::class . '>',
+    ],
     // collection with $collects, with parent::toArray()
     [
-        '(new '.ParentToArrayCollection_JsonResourceInferenceTest::class.'([]))->toArray()',
-        'array<'.Foo_JsonResourceInferenceTest::class.'<unknown>>',
+        '(new ' . ParentToArrayCollection_JsonResourceInferenceTest::class . '([]))->toArray()',
+        'array<' . Foo_JsonResourceInferenceTest::class . '>',
     ],
     // collection with $collects, with call to `collection` property
-    //    [
-    //        '(new '.CallToCollection_JsonResourceInferenceTest::class.'([]))->toArray()',
-    //        'array{data: array<'.Foo_JsonResourceInferenceTest::class.'<unknown>>, links: array{self: string(link-value)}}',
-    //    ],
+    [
+        '(new ' . CallToCollection_JsonResourceInferenceTest::class . '([]))->toArray()',
+        'array{data: '.Collection::class.'<int, ' . Foo_JsonResourceInferenceTest::class . '>, links: array{self: string(link-value)}}',
+    ],
 ]);
+it('gives me understanding', function () {
+    $cd = (new ClassAnalyzer(app(Index::class)))->analyze(ParentToArrayCollection_JsonResourceInferenceTest::class);
+
+    $md = $cd->getMethod('toArray');
+
+    expect($md->type->getReturnType()->toString())->toBe('array<TCollects>');
+});
 class ParentToArrayCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
     public $collects = Foo_JsonResourceInferenceTest::class;
@@ -175,7 +183,7 @@ it('infers anonymous resource collection toArray', function ($expression, $expec
 })->with([
     [
         Foo_JsonResourceInferenceTest::class.'::collection([])->toArray()',
-        'array<'.Foo_JsonResourceInferenceTest::class.'<unknown>>',
+        'array<'.Foo_JsonResourceInferenceTest::class.'>',
     ],
 ]);
 
