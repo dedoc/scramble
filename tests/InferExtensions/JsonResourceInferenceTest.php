@@ -102,18 +102,18 @@ it('infers resource collection toArray', function ($expression, $expectedType) {
 })->with([
     // collection with $collects, without toArray
     [
-        '(new ' . FooCollection_JsonResourceInferenceTest::class . '([]))->toArray()',
-        'array<' . Foo_JsonResourceInferenceTest::class . '>',
+        '(new '.FooCollection_JsonResourceInferenceTest::class.'([]))->toArray()',
+        'array<'.Foo_JsonResourceInferenceTest::class.'>',
     ],
     // collection with $collects, with parent::toArray()
     [
-        '(new ' . ParentToArrayCollection_JsonResourceInferenceTest::class . '([]))->toArray()',
-        'array<' . Foo_JsonResourceInferenceTest::class . '>',
+        '(new '.ParentToArrayCollection_JsonResourceInferenceTest::class.'([]))->toArray()',
+        'array<'.Foo_JsonResourceInferenceTest::class.'>',
     ],
     // collection with $collects, with call to `collection` property
     [
-        '(new ' . CallToCollection_JsonResourceInferenceTest::class . '([]))->toArray()',
-        'array{data: '.Collection::class.'<int, ' . Foo_JsonResourceInferenceTest::class . '>, links: array{self: string(link-value)}}',
+        '(new '.CallToCollection_JsonResourceInferenceTest::class.'([]))->toArray()',
+        'array{data: '.Collection::class.'<int, '.Foo_JsonResourceInferenceTest::class.'>, links: array{self: string(link-value)}}',
     ],
 ]);
 it('gives me understanding', function () {
