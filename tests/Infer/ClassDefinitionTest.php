@@ -8,14 +8,11 @@ use Dedoc\Scramble\Infer\Extensions\AfterClassDefinitionCreatedExtension;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Scramble;
-use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\GenericClassStringType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypePath;
-use Dedoc\Scramble\Support\Type\TypePathItem;
-use Dedoc\Scramble\Support\Type\TypePathItemCondition;
 use Illuminate\Database\Eloquent\Builder;
 
 beforeEach(function () {
@@ -23,7 +20,6 @@ beforeEach(function () {
 
     $this->classAnalyzer = new ClassAnalyzer($this->index);
 });
-
 
 it('finds type', function () {
     $type = getStatementType(<<<'EOD'
@@ -79,9 +75,7 @@ it('infers from constructor argument type', function () {
 });
 class Bar_ClassDefinitionTest
 {
-    public function __construct(public $prop = Builder::class)
-    {
-    }
+    public function __construct(public $prop = Builder::class) {}
 }
 class AfterBar_ClassDefinitionTest implements AfterClassDefinitionCreatedExtension
 {

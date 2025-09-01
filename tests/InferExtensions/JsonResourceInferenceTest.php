@@ -100,20 +100,20 @@ it('infers resource collection toArray', function ($expression, $expectedType) {
     expect(getStatementType($expression)->toString())->toBe($expectedType);
 })->with([
     // collection with $collects, without toArray
-//    [
-//        '(new '.FooCollection_JsonResourceInferenceTest::class.'([]))->toArray()',
-//        'array<'.Foo_JsonResourceInferenceTest::class.'<unknown>>',
-//    ],
+    //    [
+    //        '(new '.FooCollection_JsonResourceInferenceTest::class.'([]))->toArray()',
+    //        'array<'.Foo_JsonResourceInferenceTest::class.'<unknown>>',
+    //    ],
     // collection with $collects, with parent::toArray()
     [
         '(new '.ParentToArrayCollection_JsonResourceInferenceTest::class.'([]))->toArray()',
         'array<'.Foo_JsonResourceInferenceTest::class.'<unknown>>',
     ],
     // collection with $collects, with call to `collection` property
-//    [
-//        '(new '.CallToCollection_JsonResourceInferenceTest::class.'([]))->toArray()',
-//        'array{data: array<'.Foo_JsonResourceInferenceTest::class.'<unknown>>, links: array{self: string(link-value)}}',
-//    ],
+    //    [
+    //        '(new '.CallToCollection_JsonResourceInferenceTest::class.'([]))->toArray()',
+    //        'array{data: array<'.Foo_JsonResourceInferenceTest::class.'<unknown>>, links: array{self: string(link-value)}}',
+    //    ],
 ]);
 class ParentToArrayCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
