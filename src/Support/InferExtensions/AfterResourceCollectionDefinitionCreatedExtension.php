@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer\Extensions\AfterClassDefinitionCreatedExtension;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\GenericClassStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -24,12 +25,12 @@ class AfterResourceCollectionDefinitionCreatedExtension implements AfterClassDef
         $definition = $event->classDefinition;
 
         $definition->templateTypes[] = $tCollects = new TemplateType(
-            'TCollects',
+            'TCollects', // @todo rename to TCollectedResource
             default: new UnknownType,
         );
 
         $definition->properties['collects'] = new ClassPropertyDefinition(
-            $tCollects,
+            type: new GenericClassStringType($tCollects),
         );
 
         $definition->methods['toArray'] = new ShallowFunctionDefinition(

@@ -59,11 +59,11 @@ it('infers static collection creation', function ($expression, $expectedType) {
 })->with([
     [
         Foo_JsonResourceInferenceTest::class.'::newCollection([])',
-        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.Foo_JsonResourceInferenceTest::class.')>',
+        AnonymousResourceCollection::class.'<list{}, array<mixed>, '.Foo_JsonResourceInferenceTest::class.'>',
     ],
     [
         Foo_JsonResourceInferenceTest::class.'::collection([])',
-        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.Foo_JsonResourceInferenceTest::class.')>',
+        AnonymousResourceCollection::class.'<list{}, array<mixed>, '.Foo_JsonResourceInferenceTest::class.'>',
     ],
     [
         OverridenNewCollection_JsonResourceInferenceTest::class.'::collection([])',
@@ -87,7 +87,7 @@ it('infers resource collection creation', function ($expression, $expectedType) 
     ],
     [
         'new '.FooCollection_JsonResourceInferenceTest::class.'([])',
-        FooCollection_JsonResourceInferenceTest::class.'<list{}, array<mixed>, string('.Foo_JsonResourceInferenceTest::class.')>',
+        FooCollection_JsonResourceInferenceTest::class.'<list{}, array<mixed>, '.Foo_JsonResourceInferenceTest::class.'>',
     ],
 ]);
 class NoCollectedResourcCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\ResourceCollection {}
@@ -144,15 +144,15 @@ it('infers anonymous collection creation', function ($expression, $expectedType)
 })->with([
     [
         'new '.AnonymousResourceCollection::class.'([], '.Bar_JsonResourceInferenceTest::class.'::class)',
-        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.Bar_JsonResourceInferenceTest::class.')>',
+        AnonymousResourceCollection::class.'<list{}, array<mixed>, '.Bar_JsonResourceInferenceTest::class.'>',
     ],
     [
         FooAnonCollection_JsonResourceInferenceTest::class.'::collection([])',
-        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.FooAnonCollection_JsonResourceInferenceTest::class.')>',
+        AnonymousResourceCollection::class.'<list{}, array<mixed>, '.FooAnonCollection_JsonResourceInferenceTest::class.'>',
     ],
     [
         FooAnonCollectionTap_JsonResourceInferenceTest::class.'::collection([])',
-        AnonymousResourceCollection::class.'<list{}, array<mixed>, string('.FooAnonCollectionTap_JsonResourceInferenceTest::class.')>',
+        AnonymousResourceCollection::class.'<list{}, array<mixed>, '.FooAnonCollectionTap_JsonResourceInferenceTest::class.'>',
     ],
 ]);
 class FooAnonCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\JsonResource
@@ -234,10 +234,10 @@ it('handles that second weird case', function () {
 
     expect($bgetret->toString())
         ->toBe(
-            AnonymousResourceCollection::class.'<TResource1, array<mixed>, string('.Bar_JsonResourceInferenceTest::class.')>')
+            AnonymousResourceCollection::class.'<TResource1, array<mixed>, '.Bar_JsonResourceInferenceTest::class.'>')
         ->and($jgetret->toString())
         ->toBe(
-            AnonymousResourceCollection::class.'<TResource1, array<mixed>, string('.Jar_JsonResourceInferenceTest::class.')>'
+            AnonymousResourceCollection::class.'<TResource1, array<mixed>, '.Jar_JsonResourceInferenceTest::class.'>'
         );
 });
 class Jar_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\JsonResource {}

@@ -47,7 +47,7 @@ it('resolves fully qualified names', function () {
         ->analyze(Foo::class)
         ->getMethodDefinition('fqn');
 
-    expect($fqnDef->type->getReturnType()->toString())->toBe('string('.Foo::class.')');
+    expect($fqnDef->type->getReturnType()->toString())->toBe('class-string<'.Foo::class.'>');
 });
 
 it('describes constructor arguments assignments as self out type on constructor', function () {

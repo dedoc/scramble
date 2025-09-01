@@ -38,7 +38,7 @@ EOD);
     expect($path?->getFrom($type)->toString())->toBe('int(123)');
 })->todo('move to its own test case');
 
-it('infers from default type', function () {
+it('infers from property default type', function () {
     Scramble::registerExtension(AfterFoo_ClassDefinitionTest::class);
 
     $this->classAnalyzer->analyze(Foo_ClassDefinitionTest::class);
@@ -55,6 +55,39 @@ class AfterFoo_ClassDefinitionTest implements AfterClassDefinitionCreatedExtensi
     public function shouldHandle(string $name): bool
     {
         return $name === Foo_ClassDefinitionTest::class;
+    }
+
+    public function afterClassDefinitionCreated(ClassDefinitionCreatedEvent $event)
+    {
+        $event->classDefinition->templateTypes = [
+            $t = new TemplateType('T'),
+        ];
+        $event->classDefinition->properties['prop'] = new ClassPropertyDefinition(
+            type: new GenericClassStringType($t),
+            defaultType: new GenericClassStringType(new ObjectType(Builder::class)),
+        );
+    }
+}
+
+it('infers from constructor argument type', function () {
+    Scramble::registerExtension(AfterBar_ClassDefinitionTest::class);
+
+    $this->classAnalyzer->analyze(Bar_ClassDefinitionTest::class);
+
+    expect(getStatementType('new '.Bar_ClassDefinitionTest::class.'(prop: '.\Dedoc\Scramble\Support\Generator\Schema::class.'::class)')->toString())
+        ->toBe('Bar_ClassDefinitionTest<Dedoc\Scramble\Support\Generator\Schema>');
+});
+class Bar_ClassDefinitionTest
+{
+    public function __construct(public $prop = Builder::class)
+    {
+    }
+}
+class AfterBar_ClassDefinitionTest implements AfterClassDefinitionCreatedExtension
+{
+    public function shouldHandle(string $name): bool
+    {
+        return $name === Bar_ClassDefinitionTest::class;
     }
 
     public function afterClassDefinitionCreated(ClassDefinitionCreatedEvent $event)

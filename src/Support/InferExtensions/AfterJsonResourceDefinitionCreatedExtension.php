@@ -7,7 +7,9 @@ use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\SelfType;
@@ -83,11 +85,16 @@ class AfterJsonResourceDefinitionCreatedExtension implements AfterClassDefinitio
                 arguments: [
                     'resource' => $tResource1,
                 ],
-                returnType: new Generic(AnonymousResourceCollection::class, [
+                returnType: new NewCallReferenceType(AnonymousResourceCollection::class, [
                     $tResource1,
-                    new ArrayType,
                     new ConstFetchReferenceType(new StaticReference(StaticReference::STATIC), 'class'),
                 ]),
+                /*returnType: new Generic(AnonymousResourceCollection::class, [
+                    $tResource1,
+                    new ArrayType,
+                    new ObjectType(StaticReference::STATIC),
+//                    new ConstFetchReferenceType(new StaticReference(StaticReference::STATIC), 'class'),
+                ]),*/
             ), function (FunctionType $ft) use ($templates) {
                 $ft->templates = $templates;
             }),

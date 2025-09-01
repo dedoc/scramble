@@ -52,6 +52,14 @@ class ClassAnalyzer
                 continue;
             }
 
+            if (array_key_exists($reflectionProperty->name, $classDefinition->properties)) {
+                $classDefinition->properties[$reflectionProperty->name]->defaultType = $reflectionProperty->hasDefaultValue()
+                    ? PropertyAnalyzer::from($reflectionProperty)->getDefaultType()
+                    : null;
+
+                continue;
+            }
+
             if ($reflectionProperty->isStatic()) {
                 $classDefinition->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
                     type: $reflectionProperty->hasDefaultValue()

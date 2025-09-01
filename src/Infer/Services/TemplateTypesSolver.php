@@ -82,38 +82,25 @@ class TemplateTypesSolver
      */
     private function resolveTypesTemplatesFromArguments(array $templates, array $templatedArguments, array $realArguments): array
     {
-        return collect($templates)
-            ->map(function (TemplateType $template) use ($templatedArguments, $realArguments) {
-                $argumentIndexName = null;
-                $index = 0;
-                foreach ($templatedArguments as $name => $type) {
-                    if ($type === $template) {
-                        $argumentIndexName = [$index, $name];
-                        break;
-                    }
-                    $index++;
-                }
-                if (! $argumentIndexName) {
-                    return null;
+        $inferredTemplates = [];
+
+        foreach ($templates as $template) {
+            foreach (array_values($templatedArguments) as $i => $templatedParameterType) {
+                $argumentType = $realArguments[$i] ?? null;
+
+                if (! $argumentType) {
+                    continue;
                 }
 
-                $foundCorrespondingTemplateType = $realArguments[$argumentIndexName[1]]
-                    ?? $realArguments[$argumentIndexName[0]]
-                    ?? null;
+                if ($inferredType = $this->inferTemplate($template, $templatedParameterType, $argumentType)) {
+                    $inferredTemplates[$template->name] = $inferredType;
 
-                if (! $foundCorrespondingTemplateType) {
-                    $foundCorrespondingTemplateType = new UnknownType;
+                    break;
                 }
+            }
+        }
 
-                return [
-                    $template,
-                    $foundCorrespondingTemplateType,
-                ];
-            })
-            ->filter()
-            ->values()
-            ->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])
-            ->all();
+        return $inferredTemplates;
     }
 
     /**
