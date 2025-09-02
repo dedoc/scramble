@@ -31,6 +31,13 @@ class ResourceCollectionTypeInfer implements MethodReturnTypeExtension
     private function getToArrayReturnType(MethodCallEvent $event): ?Type
     {
         if ($event->methodDefiningClassName === ResourceCollection::class) {
+            $isManualAnnotation = $event->getInstance() instanceof Generic
+                && count($event->getInstance()->templateTypes) === 1;
+
+            if ($isManualAnnotation) {
+                return $this->getCollectionType($event->getInstance(), $event->scope->index);
+            }
+
             return null; // default behavior
         }
 
