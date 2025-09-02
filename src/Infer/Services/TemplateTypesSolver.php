@@ -181,12 +181,13 @@ class TemplateTypesSolver
         );
     }
 
-    private function getTypeByPath(Type $type, TypePath $path): Type
+    private function getTypeByPath(Type $type, TypePath $path): ?Type
     {
         $result = $path->getFrom($type);
 
         if (! $result instanceof Type) {
-            throw new \LogicException('Should not happen: path retrieval result should always be a type due to the found template');
+            // Path retrieval result should always be a type due to the found template
+            return null;
         }
 
         return $result;
