@@ -15,7 +15,7 @@ class TypePathItem
     ) {}
 
     /**
-     * @param Type[]|Type $type
+     * @param  Type[]|Type  $type
      * @return Type|Type[]|null
      */
     public function getFrom(array|Type $type): Type|array|null

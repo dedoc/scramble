@@ -19,7 +19,7 @@ class TypePathFindingVisitor implements TypeVisitor
     private WeakMap $pointers;
 
     /**
-     * @param Closure(Type): bool $cb
+     * @param  Closure(Type): bool  $cb
      */
     public function __construct(
         private Closure $cb,

@@ -85,7 +85,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
     protected function normalizeType(ObjectType $type): Generic
     {
-        return $type instanceof Generic ? $type : new Generic($type->name, [new \Dedoc\Scramble\Support\Type\UnknownType()]);
+        return $type instanceof Generic ? $type : new Generic($type->name, [new \Dedoc\Scramble\Support\Type\UnknownType]);
     }
 
     protected function getResponseType(ObjectType $type): Type

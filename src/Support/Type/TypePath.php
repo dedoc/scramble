@@ -27,7 +27,7 @@ class TypePath
     }
 
     /**
-     * @param Closure(Type): bool $cb
+     * @param  Closure(Type): bool  $cb
      */
     public static function findFirst(Type $type, Closure $cb): ?TypePath
     {
