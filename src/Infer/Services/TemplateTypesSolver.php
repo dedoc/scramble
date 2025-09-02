@@ -86,11 +86,7 @@ class TemplateTypesSolver
 
         foreach ($templates as $template) {
             foreach (array_values($templatedArguments) as $i => $templatedParameterType) {
-                $argumentType = $realArguments[$i] ?? null;
-
-                if (! $argumentType) {
-                    continue;
-                }
+                $argumentType = $realArguments[$i] ?? new UnknownType;
 
                 if ($inferredType = $this->inferTemplate($template, $templatedParameterType, $argumentType)) {
                     $inferredTemplates[$template->name] = $inferredType;
