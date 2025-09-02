@@ -76,7 +76,7 @@ it('documents manually annotated response', function () {
             'type' => 'array',
             'items' => [
                 '$ref' => '#/components/schemas/UserResource_AnonymousResourceCollectionTypeToSchemaTest',
-            ]
+            ],
         ])
         ->and($response['description'])
         ->toBe('Paginated set of `UserResource_AnonymousResourceCollectionTypeToSchemaTest`');
