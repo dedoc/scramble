@@ -43,12 +43,6 @@ parameters:
 			path: src/Attributes/CookieParameter.php
 
 		-
-			message: '#^Default value of the parameter \#1 \$weight \(float\) of method Dedoc\\Scramble\\Attributes\\Endpoint\:\:__construct\(\) is incompatible with type int\.$#'
-			identifier: parameter.defaultValue
-			count: 1
-			path: src/Attributes/Endpoint.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Attributes\\HeaderParameter\:\:__construct\(\) has parameter \$deprecated with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
@@ -3620,12 +3614,6 @@ parameters:
 			identifier: nullCoalesce.property
 			count: 2
 			path: src/Support/InferExtensions/PossibleExceptionInfer.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\ResourceCollectionTypeInfer\:\:getBasicCollectionType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/InferExtensions/ResourceCollectionTypeInfer.php
 
 		-
 			message: '#^Cannot access property \$name on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'

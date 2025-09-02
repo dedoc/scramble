@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+use Closure;
+
 class TypePath
 {
     /**
@@ -9,6 +11,9 @@ class TypePath
      */
     public function __construct(public array $items) {}
 
+    /**
+     * @return Type|Type[]|null
+     */
     public function getFrom(Type $type): Type|array|null
     {
         $typeInCheck = $type;
@@ -21,7 +26,10 @@ class TypePath
         return $typeInCheck;
     }
 
-    public static function findFirst(Type $type, callable $cb): ?TypePath
+    /**
+     * @param Closure(Type): bool $cb
+     */
+    public static function findFirst(Type $type, Closure $cb): ?TypePath
     {
         $traverser = new TypeTraverser([
             $visitor = new TypePathFindingVisitor($cb),

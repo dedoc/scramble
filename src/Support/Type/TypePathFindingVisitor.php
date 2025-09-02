@@ -7,8 +7,10 @@ use WeakMap;
 
 class TypePathFindingVisitor implements TypeVisitor
 {
+    /** @var TypePathItem[]|null */
     private ?array $foundPathItems = null;
 
+    /** @var TypePathItem[]|null */
     private ?array $pathItems = null;
 
     /**
@@ -16,6 +18,9 @@ class TypePathFindingVisitor implements TypeVisitor
      */
     private WeakMap $pointers;
 
+    /**
+     * @param Closure(Type): bool $cb
+     */
     public function __construct(
         private Closure $cb,
     ) {
@@ -85,6 +90,7 @@ class TypePathFindingVisitor implements TypeVisitor
         $propertiesWithNodes = $type->nodes();
 
         foreach ($propertiesWithNodes as $propertyWithNode) {
+            /** @var Type|Type[] $node */
             $node = $type->$propertyWithNode;
 
             if (! is_array($node)) {
@@ -133,7 +139,7 @@ class TypePathFindingVisitor implements TypeVisitor
         }
     }
 
-    private function popPathItem(Type $type)
+    private function popPathItem(Type $type): void
     {
         $pointer = $this->pointers[$type] ?? null;
 

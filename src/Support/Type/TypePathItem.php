@@ -14,9 +14,13 @@ class TypePathItem
         public ?TypePathItemCondition $condition = null,
     ) {}
 
+    /**
+     * @param Type[]|Type $type
+     * @return Type|Type[]|null
+     */
     public function getFrom(array|Type $type): Type|array|null
     {
-        if ($this->condition && ! $this->condition->matches($type)) {
+        if ($this->condition && $type instanceof Type && ! $this->condition->matches($type)) {
             return null;
         }
 

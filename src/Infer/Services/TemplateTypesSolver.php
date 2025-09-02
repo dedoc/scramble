@@ -140,6 +140,7 @@ class TemplateTypesSolver
     /**
      * @param  TemplateType[]  $classTemplateTypes
      * @param  ClassPropertyDefinition[]  $properties
+     * @return array<string, Type> The key is template name and the value is the inferred type.
      */
     public function inferTemplatesFromPropertyDefaults(array $classTemplateTypes, array $properties): array
     {
@@ -180,7 +181,7 @@ class TemplateTypesSolver
         );
     }
 
-    private function getTypeByPath(Type $type, TypePath $path)
+    private function getTypeByPath(Type $type, TypePath $path): Type
     {
         $result = $path->getFrom($type);
 
