@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\TypeManagers;
 
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\GenericClassStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
@@ -73,6 +74,14 @@ class ResourceCollectionTypeManager
     {
         if (! $classDefinition = $this->index->getClass($this->type->name)) {
             return null;
+        }
+
+        $collectsPropertyDefaultType = $classDefinition->getPropertyDefinition('collects')?->defaultType;
+        if (
+            $collectsPropertyDefaultType instanceof GenericClassStringType
+            && $collectsPropertyDefaultType->type instanceof ObjectType
+        ) {
+            return new Generic($collectsPropertyDefaultType->type->name, [new UnknownType]);
         }
 
         if (

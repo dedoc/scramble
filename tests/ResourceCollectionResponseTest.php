@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceCollectionTypeToSchema;
 use Illuminate\Support\Facades\Route as RouteFacade;
@@ -23,13 +24,14 @@ beforeEach(function () {
 
 test('transforms collection with toArray only', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
+        CollectionToSchema::class,
+        JsonResourceTypeToSchema::class,
         ResourceCollectionTypeToSchema::class,
     ]);
     $extension = new ResourceCollectionTypeToSchema($infer, $transformer, $this->components, $this->context);
 
     $type = new ObjectType(UserCollection_One::class);
 
-    dd($extension->toSchema($type)->toArray());
     assertMatchesSnapshot($extension->toSchema($type)->toArray());
 });
 class UserCollection_One extends \Illuminate\Http\Resources\Json\ResourceCollection
@@ -50,9 +52,11 @@ class UserCollection_One extends \Illuminate\Http\Resources\Json\ResourceCollect
 
 test('transforms collection with toArray and with', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
+        CollectionToSchema::class,
         JsonResourceTypeToSchema::class,
+        ResourceCollectionTypeToSchema::class,
     ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->components, $this->context);
+    $extension = new ResourceCollectionTypeToSchema($infer, $transformer, $this->components, $this->context);
 
     $type = new ObjectType(UserCollection_Two::class);
 

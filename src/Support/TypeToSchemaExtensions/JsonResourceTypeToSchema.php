@@ -48,9 +48,11 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
+        $type = $this->normalizeType($type);
+
         $array = ReferenceTypeResolver::getInstance()->resolve(
             new GlobalScope,
-            (new MethodCallReferenceType($type, 'toArray', arguments: []))
+            new MethodCallReferenceType($type, 'toArray', arguments: []),
         );
 
         // @todo: why unpacking is here? ReferenceTypeResolver@resolve should've returned unpacked type
@@ -79,6 +81,11 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         return $this->openApiTransformer->toResponse(
             $this->getResponseType($type)
         );
+    }
+
+    protected function normalizeType(ObjectType $type): Generic
+    {
+        return $type instanceof Generic ? $type : new Generic($type->name, [new \Dedoc\Scramble\Support\Type\UnknownType()]);
     }
 
     protected function getResponseType(ObjectType $type): Type
