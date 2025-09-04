@@ -4,12 +4,14 @@ namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\MissingType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypePath;
 use Dedoc\Scramble\Support\Type\UnknownType;
 
 class TemplateTypesSolver
@@ -80,38 +82,21 @@ class TemplateTypesSolver
      */
     private function resolveTypesTemplatesFromArguments(array $templates, array $templatedArguments, array $realArguments): array
     {
-        return collect($templates)
-            ->map(function (TemplateType $template) use ($templatedArguments, $realArguments) {
-                $argumentIndexName = null;
-                $index = 0;
-                foreach ($templatedArguments as $name => $type) {
-                    if ($type === $template) {
-                        $argumentIndexName = [$index, $name];
-                        break;
-                    }
-                    $index++;
-                }
-                if (! $argumentIndexName) {
-                    return null;
-                }
+        $inferredTemplates = [];
 
-                $foundCorrespondingTemplateType = $realArguments[$argumentIndexName[1]]
-                    ?? $realArguments[$argumentIndexName[0]]
-                    ?? null;
+        foreach ($templates as $template) {
+            foreach (array_values($templatedArguments) as $i => $templatedParameterType) {
+                $argumentType = $realArguments[$i] ?? new UnknownType;
 
-                if (! $foundCorrespondingTemplateType) {
-                    $foundCorrespondingTemplateType = new UnknownType;
+                if ($inferredType = $this->inferTemplate($template, $templatedParameterType, $argumentType)) {
+                    $inferredTemplates[$template->name] = $inferredType;
+
+                    break;
                 }
+            }
+        }
 
-                return [
-                    $template,
-                    $foundCorrespondingTemplateType,
-                ];
-            })
-            ->filter()
-            ->values()
-            ->mapWithKeys(fn ($searchReplace) => [$searchReplace[0]->name => $searchReplace[1]])
-            ->all();
+        return $inferredTemplates;
     }
 
     /**
@@ -150,5 +135,61 @@ class TemplateTypesSolver
         }
 
         return $mappedTypes;
+    }
+
+    /**
+     * @param  TemplateType[]  $classTemplateTypes
+     * @param  ClassPropertyDefinition[]  $properties
+     * @return array<string, Type> The key is template name and the value is the inferred type.
+     */
+    public function inferTemplatesFromPropertyDefaults(array $classTemplateTypes, array $properties): array
+    {
+        $inferredTemplates = [];
+
+        foreach ($classTemplateTypes as $template) {
+            foreach ($properties as $property) {
+                if (! $property->defaultType) {
+                    continue;
+                }
+
+                if ($inferredType = $this->inferTemplate($template, $property->type, $property->defaultType)) {
+                    $inferredTemplates[$template->name] = $inferredType;
+
+                    break;
+                }
+            }
+
+        }
+
+        return $inferredTemplates;
+    }
+
+    private function inferTemplate(TemplateType $template, Type $typeWithTemplate, Type $type): ?Type
+    {
+        if (! $path = $this->findTemplatePath($template, $typeWithTemplate)) {
+            return null;
+        }
+
+        return $this->getTypeByPath($type, $path);
+    }
+
+    private function findTemplatePath(TemplateType $template, Type $typeWithTemplate): ?TypePath
+    {
+        return TypePath::findFirst(
+            $typeWithTemplate,
+            fn (Type $t) => $t === $template,
+        );
+    }
+
+    private function getTypeByPath(Type $type, TypePath $path): ?Type
+    {
+        $result = $path->getFrom($type);
+
+        if (! $result instanceof Type) {
+            // Path retrieval result should always be a type due to the found template
+            return null;
+        }
+
+        return $result;
     }
 }

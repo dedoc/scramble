@@ -69,7 +69,16 @@ it('documents manually created response', function () {
 it('documents manually annotated response', function () {
     $openApiDocument = generateForRoute(fn () => Route::get('test', ManualResponse_AnonymousResourceCollectionTypeToSchemaTestController::class));
 
-    expect($openApiDocument['paths']['/test']['get']['responses'][200]['description'])
+    $response = $openApiDocument['paths']['/test']['get']['responses'][200];
+
+    expect($response['content']['application/json']['schema']['properties']['data'])
+        ->toBe([
+            'type' => 'array',
+            'items' => [
+                '$ref' => '#/components/schemas/UserResource_AnonymousResourceCollectionTypeToSchemaTest',
+            ],
+        ])
+        ->and($response['description'])
         ->toBe('Paginated set of `UserResource_AnonymousResourceCollectionTypeToSchemaTest`');
 });
 class ManualResponse_AnonymousResourceCollectionTypeToSchemaTestController

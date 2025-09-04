@@ -3,13 +3,98 @@
 // Tests for which definition is created from class' source
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
+use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
+use Dedoc\Scramble\Infer\Extensions\AfterClassDefinitionCreatedExtension;
+use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Type\GenericClassStringType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\TemplateType;
+use Dedoc\Scramble\Support\Type\TypePath;
+use Illuminate\Database\Eloquent\Builder;
 
 beforeEach(function () {
     $this->index = app(Index::class);
 
     $this->classAnalyzer = new ClassAnalyzer($this->index);
 });
+
+it('finds type', function () {
+    $type = getStatementType(<<<'EOD'
+['a' => fn (int $b) => 123]
+EOD);
+
+    $path = TypePath::findFirst(
+        $type,
+        fn ($t) => $t instanceof LiteralIntegerType,
+    );
+
+    expect($path?->getFrom($type)->toString())->toBe('int(123)');
+})->todo('move to its own test case');
+
+it('infers from property default type', function () {
+    Scramble::registerExtension(AfterFoo_ClassDefinitionTest::class);
+
+    $this->classAnalyzer->analyze(Foo_ClassDefinitionTest::class);
+
+    expect(getStatementType('new '.Foo_ClassDefinitionTest::class)->toString())
+        ->toBe('Foo_ClassDefinitionTest<Illuminate\Database\Eloquent\Builder>');
+});
+class Foo_ClassDefinitionTest
+{
+    public $prop = Builder::class;
+}
+class AfterFoo_ClassDefinitionTest implements AfterClassDefinitionCreatedExtension
+{
+    public function shouldHandle(string $name): bool
+    {
+        return $name === Foo_ClassDefinitionTest::class;
+    }
+
+    public function afterClassDefinitionCreated(ClassDefinitionCreatedEvent $event)
+    {
+        $event->classDefinition->templateTypes = [
+            $t = new TemplateType('T'),
+        ];
+        $event->classDefinition->properties['prop'] = new ClassPropertyDefinition(
+            type: new GenericClassStringType($t),
+            defaultType: new GenericClassStringType(new ObjectType(Builder::class)),
+        );
+    }
+}
+
+it('infers from constructor argument type', function () {
+    Scramble::registerExtension(AfterBar_ClassDefinitionTest::class);
+
+    $this->classAnalyzer->analyze(Bar_ClassDefinitionTest::class);
+
+    expect(getStatementType('new '.Bar_ClassDefinitionTest::class.'(prop: '.\Dedoc\Scramble\Support\Generator\Schema::class.'::class)')->toString())
+        ->toBe('Bar_ClassDefinitionTest<Dedoc\Scramble\Support\Generator\Schema>');
+});
+class Bar_ClassDefinitionTest
+{
+    public function __construct(public $prop = Builder::class) {}
+}
+class AfterBar_ClassDefinitionTest implements AfterClassDefinitionCreatedExtension
+{
+    public function shouldHandle(string $name): bool
+    {
+        return $name === Bar_ClassDefinitionTest::class;
+    }
+
+    public function afterClassDefinitionCreated(ClassDefinitionCreatedEvent $event)
+    {
+        $event->classDefinition->templateTypes = [
+            $t = new TemplateType('T'),
+        ];
+        $event->classDefinition->properties['prop'] = new ClassPropertyDefinition(
+            type: new GenericClassStringType($t),
+            defaultType: new GenericClassStringType(new ObjectType(Builder::class)),
+        );
+    }
+}
 
 it('class generates definition', function () {
     $type = analyzeFile(<<<'EOD'

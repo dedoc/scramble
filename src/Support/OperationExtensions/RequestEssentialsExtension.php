@@ -153,7 +153,7 @@ class RequestEssentialsExtension extends OperationExtension
             eloquent: (function () use ($routeInfo) {
                 // Manual operation ID setting.
                 // Check if Endpoint attribute is present with an `operationId` value
-                $operationId = ($routeInfo->reflectionMethod()->getAttributes(Endpoint::class)[0] ?? null)
+                $operationId = ($routeInfo->reflectionMethod()?->getAttributes(Endpoint::class)[0] ?? null)
                     ?->newInstance()
                     ?->operationId;
 

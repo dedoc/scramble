@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Infer\Services;
 use Dedoc\Scramble\Infer\AutoResolvingArgumentTypeBag;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
-use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
@@ -92,6 +91,14 @@ class ReferenceTypeResolver
         return $this->resolve($scope, $resolved);
     }
 
+    private function finalizeStatic(Type $type, Type $staticType): Type
+    {
+        return (new TypeWalker)->map(
+            $type,
+            fn (Type $t) => $t instanceof ObjectType && $t->name === StaticReference::STATIC ? $staticType : $t,
+        );
+    }
+
     private function resolveCustomTypes(Type $type, Type $originalType): Type
     {
         $attributes = $type->attributes();
@@ -141,7 +148,7 @@ class ReferenceTypeResolver
                 ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index)
                 : ($calleeType instanceof ObjectType ? $calleeType->name : null),
         ))) {
-            return $returnType;
+            return $this->finalizeStatic($returnType, $calleeType);
         }
 
         if (! $calleeType instanceof ObjectType) {
@@ -155,7 +162,7 @@ class ReferenceTypeResolver
             arguments: $arguments,
             methodDefiningClassName: $classDefinition ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index) : $calleeType->name,
         ))) {
-            return $returnType;
+            return $this->finalizeStatic($returnType, $calleeType);
         }
 
         if (! $classDefinition) {
@@ -173,9 +180,11 @@ class ReferenceTypeResolver
         }
 
         // @todo resolve template type?
-        return $resultingType instanceof TemplateType
+        $resultingType = $resultingType instanceof TemplateType
             ? ($resultingType->is ?: new UnknownType)
             : $resultingType;
+
+        return $this->finalizeStatic($resultingType, $calleeType);
     }
 
     private function resolveStaticMethodCallReferenceType(Scope $scope, StaticMethodCallReferenceType $type): Type
@@ -209,7 +218,7 @@ class ReferenceTypeResolver
                 : $contextualClassName;
 
             $returnType = Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
-                instance: new ObjectType($scope->context->classDefinition->name),
+                instance: new SelfType($scope->context->classDefinition->name),
                 name: $type->methodName,
                 scope: $scope,
                 arguments: $arguments,
@@ -229,7 +238,10 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$contextualClassName]");
         }
 
-        return $this->getFunctionCallResult($methodDefinition, $arguments);
+        return $this->finalizeStatic(
+            $this->getFunctionCallResult($methodDefinition, $arguments),
+            new ObjectType($contextualClassName), // @todo Generic can be here.
+        );
     }
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type): Type
@@ -312,11 +324,11 @@ class ReferenceTypeResolver
             return new ObjectType($contextualClassName);
         }
 
-        $propertyDefaultTemplateTypes = collect($classDefinition->properties)
-            ->mapWithKeys(fn (ClassPropertyDefinition $definition) => $definition->type instanceof TemplateType ? [
-                $definition->type->name => $definition->defaultType,
-            ] : [])
-            ->filter();
+        $propertyDefaultTemplateTypes = (new TemplateTypesSolver)
+            ->inferTemplatesFromPropertyDefaults(
+                $classDefinition->templateTypes,
+                $classDefinition->properties,
+            );
 
         $constructorDefinition = $classDefinition->getMethodDefinition('__construct', $scope);
 
@@ -326,7 +338,7 @@ class ReferenceTypeResolver
                 $constructorDefinition,
                 new AutoResolvingArgumentTypeBag($scope, $type->arguments),
             )
-            ->prepend($propertyDefaultTemplateTypes->all());
+            ->prepend($propertyDefaultTemplateTypes);
 
         $resultingTemplatesMap = (new TemplateTypesSolver)
             ->getGenericCreationTemplatesWithDefaults($classDefinition->templateTypes, $templatesMap);

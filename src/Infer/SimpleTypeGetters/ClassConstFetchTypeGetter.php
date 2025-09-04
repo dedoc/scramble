@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\SimpleTypeGetters;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\GenericClassStringType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
@@ -27,7 +28,7 @@ class ClassConstFetchTypeGetter
                     );
                 }
 
-                return new LiteralStringType($node->class->toString());
+                return new GenericClassStringType(new ObjectType($node->class->toString()));
             }
 
             $type = $scope->getType($node->class);
@@ -36,7 +37,7 @@ class ClassConstFetchTypeGetter
                 ($type instanceof ObjectType || $type instanceof NewCallReferenceType)
                 && $className = $this->getClassName($type)
             ) {
-                return new LiteralStringType($className);
+                return new GenericClassStringType(new ObjectType($className));
             }
         }
 

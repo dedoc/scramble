@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Extensions\AfterClassDefinitionCreatedExtension;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\GenericClassStringType;
 use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\VoidType;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -30,7 +31,7 @@ class AfterAnonymousResourceCollectionDefinitionCreatedExtension implements Afte
                 name: '__construct',
                 arguments: [
                     'resource' => $tResource,
-                    'collects' => $tCollects,
+                    'collects' => new GenericClassStringType($tCollects),
                 ],
                 returnType: new VoidType,
             ),
