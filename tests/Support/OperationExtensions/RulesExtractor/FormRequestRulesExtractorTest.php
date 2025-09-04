@@ -48,7 +48,7 @@ class ConcreteDataRequest extends FormRequest implements DataRequestContract
     {
         return [
             'foo' => 'required',
-            'bar' => Rule::requiredIf(fn() => true),
+            'bar' => Rule::requiredIf(fn () => true),
             'baz' => 'required_if:foo,1',
         ];
     }
