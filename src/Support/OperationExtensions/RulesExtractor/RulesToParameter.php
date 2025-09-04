@@ -19,13 +19,13 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class RulesToParameter
 {
-    public const RULES_PRIORITY = [
+    const RULES_PRIORITY = [
         'bool', 'boolean', 'numeric', 'int', 'integer', 'file', 'image', 'string', 'array', 'exists',
     ];
 
     private const IF_RULES_NAMES = [
-        RequiredIf::class   => 'required_if',
-        ExcludeIf::class    => 'exclude_if',
+        RequiredIf::class => 'required_if',
+        ExcludeIf::class => 'exclude_if',
         ProhibitedIf::class => 'prohibited_if',
     ];
 
@@ -51,7 +51,9 @@ class RulesToParameter
             ->map(function ($v) {
                 if (! method_exists($v, '__toString')) {
                     return $v;
-                } elseif (array_key_exists($classRule = get_class($v), self::IF_RULES_NAMES)) {
+                }
+
+                if (array_key_exists($classRule = get_class($v), self::IF_RULES_NAMES)) {
                     return self::IF_RULES_NAMES[$classRule];
                 }
 
