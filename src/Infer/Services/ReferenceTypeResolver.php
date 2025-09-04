@@ -91,6 +91,14 @@ class ReferenceTypeResolver
         return $this->resolve($scope, $resolved);
     }
 
+    private function finalizeStatic(Type $type, Type $staticType): Type
+    {
+        return (new TypeWalker)->map(
+            $type,
+            fn (Type $t) => $t instanceof ObjectType && $t->name === StaticReference::STATIC ? $staticType : $t,
+        );
+    }
+
     private function resolveCustomTypes(Type $type, Type $originalType): Type
     {
         $attributes = $type->attributes();
@@ -140,7 +148,7 @@ class ReferenceTypeResolver
                 ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index)
                 : ($calleeType instanceof ObjectType ? $calleeType->name : null),
         ))) {
-            return $returnType;
+            return $this->finalizeStatic($returnType, $calleeType);
         }
 
         if (! $calleeType instanceof ObjectType) {
@@ -154,7 +162,7 @@ class ReferenceTypeResolver
             arguments: $arguments,
             methodDefiningClassName: $classDefinition ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index) : $calleeType->name,
         ))) {
-            return $returnType;
+            return $this->finalizeStatic($returnType, $calleeType);
         }
 
         if (! $classDefinition) {
@@ -172,9 +180,11 @@ class ReferenceTypeResolver
         }
 
         // @todo resolve template type?
-        return $resultingType instanceof TemplateType
+        $resultingType = $resultingType instanceof TemplateType
             ? ($resultingType->is ?: new UnknownType)
             : $resultingType;
+
+        return $this->finalizeStatic($resultingType, $calleeType);
     }
 
     private function resolveStaticMethodCallReferenceType(Scope $scope, StaticMethodCallReferenceType $type): Type
@@ -228,7 +238,10 @@ class ReferenceTypeResolver
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$contextualClassName]");
         }
 
-        return $this->getFunctionCallResult($methodDefinition, $arguments);
+        return $this->finalizeStatic(
+            $this->getFunctionCallResult($methodDefinition, $arguments),
+            new ObjectType($contextualClassName), // @todo Generic can be here.
+        );
     }
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type): Type
