@@ -108,4 +108,18 @@ return [
     ],
 
     'extensions' => [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Allowed Environments
+    |--------------------------------------------------------------------------
+    |
+    | A list of environments where the API documentation should be accessible.
+    | This is read from the SCRAMBLE_ALLOWED_ENV in your .env file.
+    | By default, it's set to 'local', meaning the documentation is only accessible
+    | in the local development environment.
+    |
+    */
+    'allowed_environments' => explode(',', env('SCRAMBLE_ALLOWED_ENV', 'local')),
+
 ];
