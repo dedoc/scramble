@@ -17,6 +17,6 @@ class Group
          * Determines the ordering of the groups. Groups with the same weight, are sorted
          * by the name (with `SORT_LOCALE_STRING` sorting flag).
          */
-        public readonly int|float $weight = INF,
+        public readonly int $weight = PHP_INT_MAX,
     ) {}
 }
