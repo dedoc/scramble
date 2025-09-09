@@ -19,7 +19,7 @@ use Illuminate\Support\Stringable;
 use Illuminate\Validation\ConditionalRules;
 use Illuminate\Validation\Rules\Enum;
 
-class RuleToSchemaTransformer
+class RulesMapper
 {
     public function __construct(
         private TypeTransformer $openApiTransformer,

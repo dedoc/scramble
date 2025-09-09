@@ -73,7 +73,7 @@ class RuleSetToSchemaTransformer
 
     protected function getTypeFromStringRule(OpenApiType $type, string $rule): OpenApiType
     {
-        $rulesHandler = new RuleToSchemaTransformer($this->openApiTransformer, $this);
+        $rulesHandler = new RulesMapper($this->openApiTransformer, $this);
 
         $explodedRule = explode(':', $rule, 2);
 
@@ -87,7 +87,7 @@ class RuleSetToSchemaTransformer
 
     protected function getTypeFromObjectRule(OpenApiType $type, $rule): OpenApiType
     {
-        $rulesHandler = new RuleToSchemaTransformer($this->openApiTransformer, $this);
+        $rulesHandler = new RulesMapper($this->openApiTransformer, $this);
 
         $methodName = Str::camel(class_basename(get_class($rule)));
 
