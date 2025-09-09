@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
+use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
@@ -15,16 +16,15 @@ use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
+use Illuminate\Validation\ConditionalRules;
 use Illuminate\Validation\Rules\Enum;
 
 class RulesMapper
 {
-    private TypeTransformer $openApiTransformer;
-
-    public function __construct(TypeTransformer $openApiTransformer)
-    {
-        $this->openApiTransformer = $openApiTransformer;
-    }
+    public function __construct(
+        private TypeTransformer $openApiTransformer,
+        private RuleSetToSchemaTransformer $rulesToSchemaTransformer,
+    ) {}
 
     public function string(Type $prevType)
     {
@@ -257,5 +257,47 @@ class RulesMapper
     public function date_format(Type $type, $params)
     {
         return $this->date($type, $params);
+    }
+
+    public function conditionalRules(Type $type, ConditionalRules $rule): Type
+    {
+        $ifRules = $rule->rules();
+        $elseRules = $rule->defaultRules();
+
+        $rules = [$ifRules, $elseRules];
+
+        $types = $type instanceof AnyOf
+            ? array_map(fn (Type $t) => (clone $t)->addProperties($type), $type->items)
+            : [$type];
+
+        $newTypes = [];
+        foreach ($rules as $conditionRules) {
+            foreach ($types as $type) {
+                $newTypes[] = $newT = $this->rulesToSchemaTransformer->transform($conditionRules, clone $type);
+                if (! $conditionRules) {
+                    $newT->setAttribute('isEmptyRules', true);
+                }
+            }
+        }
+
+        $isRequired = collect($newTypes)->every(fn (Type $t) => (bool) $t->getAttribute('required', false));
+
+        $newTypes = array_values(array_filter($newTypes, fn (Type $t) => ! $t->getAttribute('isEmptyRules')));
+
+        if (count($newTypes) === 1) {
+            if ($isRequired !== $newTypes[0]->getAttribute('required')) {
+                $newTypes[0]->setAttribute('required', $isRequired);
+            }
+
+            return $newTypes[0];
+        }
+
+        $anyOf = (new AnyOf)->setItems($newTypes);
+
+        if ($isRequired) {
+            $anyOf->setAttribute('required', true);
+        }
+
+        return $anyOf;
     }
 }

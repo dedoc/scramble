@@ -9,7 +9,7 @@ use InvalidArgumentException;
 class AnyOf extends Type
 {
     /** @var Type[] */
-    private $items;
+    public $items;
 
     public function __construct()
     {
