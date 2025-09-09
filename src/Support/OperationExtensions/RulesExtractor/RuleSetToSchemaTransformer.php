@@ -62,16 +62,16 @@ class RuleSetToSchemaTransformer
     {
         return $rules->reduce(function (OpenApiType $type, $rule) {
             if (is_string($rule)) {
-                return $this->getTypeFromStringRule($type, $rule);
+                return $this->transformStringRuleToSchema($type, $rule);
             }
 
             return method_exists($rule, 'docs')
                 ? $rule->docs($type, $this->openApiTransformer)
-                : $this->getTypeFromObjectRule($type, $rule);
+                : $this->transformRuleValueToSchema($type, $rule);
         }, $initialType);
     }
 
-    protected function getTypeFromStringRule(OpenApiType $type, string $rule): OpenApiType
+    protected function transformStringRuleToSchema(OpenApiType $type, string $rule): OpenApiType
     {
         $rulesHandler = new RulesMapper($this->openApiTransformer, $this);
 
@@ -85,7 +85,7 @@ class RuleSetToSchemaTransformer
             : $type;
     }
 
-    protected function getTypeFromObjectRule(OpenApiType $type, $rule): OpenApiType
+    protected function transformRuleValueToSchema(OpenApiType $type, $rule): OpenApiType
     {
         $rulesHandler = new RulesMapper($this->openApiTransformer, $this);
 
