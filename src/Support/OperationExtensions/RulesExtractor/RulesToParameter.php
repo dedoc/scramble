@@ -37,7 +37,7 @@ class RulesToParameter
 
         $parameter = Parameter::make($this->name, $this->in)
             ->setSchema(Schema::fromType($type))
-            ->required($type->getAttribute('required', false))
+            ->required((bool) $type->getAttribute('required', false))
             ->description($description);
 
         return $this->applyDocsInfo($parameter);

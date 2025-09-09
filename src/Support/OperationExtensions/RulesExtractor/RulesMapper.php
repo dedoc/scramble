@@ -280,7 +280,7 @@ class RulesMapper
             }
         }
 
-        $isRequired = collect($newTypes)->every(fn (Type $t) => $t->getAttribute('required', false));
+        $isRequired = collect($newTypes)->every(fn (Type $t) => (bool) $t->getAttribute('required', false));
 
         $newTypes = array_values(array_filter($newTypes, fn (Type $t) => ! $t->getAttribute('isEmptyRules')));
 

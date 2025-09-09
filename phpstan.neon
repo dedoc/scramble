@@ -14,4 +14,4 @@ parameters:
     typeAliases:
         Rule: 'string|\Illuminate\Contracts\Validation\ValidationRule'
         RuleSet: 'Rule|Rule[]'
-    # reportUnmatchedIgnoredErrors: false
+    reportUnmatchedIgnoredErrors: false

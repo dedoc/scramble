@@ -85,11 +85,14 @@ class RuleSetToSchemaTransformer
             : $type;
     }
 
+    /**
+     * @param object $rule
+     */
     protected function transformRuleValueToSchema(OpenApiType $type, $rule): OpenApiType
     {
         $rulesHandler = new RulesMapper($this->openApiTransformer, $this);
 
-        $methodName = Str::camel(class_basename(get_class($rule)));
+        $methodName = Str::camel(class_basename(get_class($rule))); // @phpstan-ignore argument.type
 
         return method_exists($rulesHandler, $methodName)
             ? $rulesHandler->$methodName($type, $rule)
@@ -152,8 +155,8 @@ class RuleSetToSchemaTransformer
             return -2;
         }
 
-        $index = array_search($rule, static::RULES_PRIORITY);
+        $index = array_search($rule, self::RULES_PRIORITY);
 
-        return $index === false ? -1 : count(static::RULES_PRIORITY) - $index;
+        return $index === false ? -1 : count(self::RULES_PRIORITY) - $index;
     }
 }
