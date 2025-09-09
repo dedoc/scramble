@@ -111,6 +111,88 @@ it('supports confirmed rule', function () {
         ->toMatchArray(['name' => 'password_confirmation']);
 });
 
+it('supports Rule::when', function () {
+    $rules = [
+        'password' => [Rule::when(0, ['boolean'])],
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'schema' => [
+                'type' => 'boolean',
+            ],
+        ]);
+});
+
+it('supports Rule::when with one required case', function () {
+    $rules = [
+        'foo' => Rule::when(0, ['boolean', 'required']),
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            "name" => "foo",
+            "in" => "query",
+            "schema" => [
+                'type' => 'boolean',
+            ],
+        ]);
+});
+
+it('supports Rule::when with all cases', function () {
+    $rules = [
+        'foo' => [
+            'required',
+            'string',
+            Rule::when(0, ['min:1'], ['min:3']),
+            Rule::when(0, ['max:4'], ['max:15']),
+        ],
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            "name" => "foo",
+            "in" => "query",
+            "required" => true,
+            "schema" => [
+                "anyOf" => [
+                    [
+                        "type" => "string",
+                        "minLength" => 1,
+                        "maxLength" => 4,
+                    ],
+                    [
+                        "type" => "string",
+                        "minLength" => 3,
+                        "maxLength" => 4,
+                    ],
+                    [
+                        "type" => "string",
+                        "minLength" => 1,
+                        "maxLength" => 15,
+                    ],
+                    [
+                        "type" => "string",
+                        "minLength" => 3,
+                        "maxLength" => 15,
+                    ],
+                ],
+            ],
+        ]);
+});
+
 it('supports confirmed rule in array', function () {
     $rules = [
         'user.password' => ['required', 'min:8', 'confirmed'],
