@@ -14,7 +14,7 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 class RulesToParameter
 {
     /**
-     * @param RuleSet $rules
+     * @param  RuleSet  $rules
      */
     public function __construct(
         private string $name,
@@ -22,8 +22,7 @@ class RulesToParameter
         private ?PhpDocNode $docNode,
         private TypeTransformer $openApiTransformer,
         private string $in = 'query',
-    ) {
-    }
+    ) {}
 
     public function generate(): ?Parameter
     {

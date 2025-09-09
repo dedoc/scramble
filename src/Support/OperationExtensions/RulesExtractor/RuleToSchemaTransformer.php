@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
-use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
@@ -289,6 +288,7 @@ class RuleToSchemaTransformer
             if ($isRequired !== $newTypes[0]->getAttribute('required')) {
                 $newTypes[0]->setAttribute('required', $isRequired);
             }
+
             return $newTypes[0];
         }
 

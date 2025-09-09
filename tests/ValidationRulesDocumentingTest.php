@@ -139,9 +139,9 @@ it('supports Rule::when with one required case', function () {
         ->toHaveCount(1)
         ->and($params[0])
         ->toMatchArray([
-            "name" => "foo",
-            "in" => "query",
-            "schema" => [
+            'name' => 'foo',
+            'in' => 'query',
+            'schema' => [
                 'type' => 'boolean',
             ],
         ]);
@@ -163,30 +163,30 @@ it('supports Rule::when with all cases', function () {
         ->toHaveCount(1)
         ->and($params[0])
         ->toMatchArray([
-            "name" => "foo",
-            "in" => "query",
-            "required" => true,
-            "schema" => [
-                "anyOf" => [
+            'name' => 'foo',
+            'in' => 'query',
+            'required' => true,
+            'schema' => [
+                'anyOf' => [
                     [
-                        "type" => "string",
-                        "minLength" => 1,
-                        "maxLength" => 4,
+                        'type' => 'string',
+                        'minLength' => 1,
+                        'maxLength' => 4,
                     ],
                     [
-                        "type" => "string",
-                        "minLength" => 3,
-                        "maxLength" => 4,
+                        'type' => 'string',
+                        'minLength' => 3,
+                        'maxLength' => 4,
                     ],
                     [
-                        "type" => "string",
-                        "minLength" => 1,
-                        "maxLength" => 15,
+                        'type' => 'string',
+                        'minLength' => 1,
+                        'maxLength' => 15,
                     ],
                     [
-                        "type" => "string",
-                        "minLength" => 3,
-                        "maxLength" => 15,
+                        'type' => 'string',
+                        'minLength' => 3,
+                        'maxLength' => 15,
                     ],
                 ],
             ],

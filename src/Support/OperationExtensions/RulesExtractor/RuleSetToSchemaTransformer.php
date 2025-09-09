@@ -8,7 +8,6 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ConditionalRules;
 use Illuminate\Validation\Rules\ExcludeIf;
 use Illuminate\Validation\Rules\ProhibitedIf;
 use Illuminate\Validation\Rules\RequiredIf;
@@ -40,7 +39,7 @@ class RuleSetToSchemaTransformer
     ) {}
 
     /**
-     * @param RuleSet $rules
+     * @param  RuleSet  $rules
      */
     public function transform(mixed $rules, OpenApiType $initialType = new UnknownType): OpenApiType
     {
@@ -57,7 +56,7 @@ class RuleSetToSchemaTransformer
     }
 
     /**
-     * @param Collection<int, Rule> $rules
+     * @param  Collection<int, Rule>  $rules
      */
     protected function transformToSchema(Collection $rules, OpenApiType $initialType): OpenApiType
     {
@@ -98,7 +97,7 @@ class RuleSetToSchemaTransformer
     }
 
     /**
-     * @param Collection<int, Rule> $rules
+     * @param  Collection<int, Rule>  $rules
      */
     protected function checkIfRequired(Collection $rules): ?bool
     {
@@ -114,7 +113,7 @@ class RuleSetToSchemaTransformer
     }
 
     /**
-     * @param RuleSet $rules
+     * @param  RuleSet  $rules
      * @return Collection<int, Rule>
      */
     protected function normalizeAndPrioritizeRules(mixed $rules): Collection
@@ -145,7 +144,7 @@ class RuleSetToSchemaTransformer
     }
 
     /**
-     * @param Rule $rule
+     * @param  Rule  $rule
      */
     protected function rulesSorter($rule): int
     {
