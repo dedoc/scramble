@@ -86,7 +86,7 @@ class RuleSetToSchemaTransformer
     }
 
     /**
-     * @param object $rule
+     * @param  object  $rule
      */
     protected function transformRuleValueToSchema(OpenApiType $type, $rule): OpenApiType
     {
