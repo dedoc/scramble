@@ -428,7 +428,7 @@ class InferTypesTest_JsonResourceWithCarbonAttribute extends JsonResource
             'id' => $this->id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'deleted_at' => $this->whenNotNull($this->deleted_at)
+            'deleted_at' => $this->whenNotNull($this->deleted_at),
         ];
     }
 }
