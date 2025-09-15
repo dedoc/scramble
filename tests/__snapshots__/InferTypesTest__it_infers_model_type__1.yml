@@ -9,6 +9,7 @@ properties:
     approved_at: { type: [string, 'null'], format: date-time }
     created_at: { type: [string, 'null'], format: date-time }
     updated_at: { type: [string, 'null'], format: date-time }
+    deleted_at: { type: [string, 'null'], format: date-time }
     parent: { $ref: '#/components/schemas/SamplePostModel' }
     children: { type: array, items: { $ref: '#/components/schemas/SamplePostModel' } }
     user: { $ref: '#/components/schemas/SampleUserModel' }
@@ -22,3 +23,4 @@ required:
     - approved_at
     - created_at
     - updated_at
+    - deleted_at
