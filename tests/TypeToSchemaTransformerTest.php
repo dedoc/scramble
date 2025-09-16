@@ -258,9 +258,22 @@ it('infers date column directly referenced in json as date-time', function () {
         '$ref' => '#/components/schemas/InferTypesTest_JsonResourceWithCarbonAttribute',
     ]);
 
-    expect($this->context->openApi->components->getSchema(InferTypesTest_JsonResourceWithCarbonAttribute::class)->toArray()['properties']['created_at'])->toBe([
+    $schema = $this->context->openApi->components->getSchema(InferTypesTest_JsonResourceWithCarbonAttribute::class)->toArray();
+
+    expect($schema['properties']['created_at'])->toBe([
         'type' => ['string', 'null'],
         'format' => 'date-time',
+    ]);
+
+    expect($schema['properties']['deleted_at'])->toBe([
+        'type' => 'string',
+        'format' => 'date-time',
+    ]);
+
+    expect($schema['required'])->toBe([
+        'id',
+        'created_at',
+        'updated_at',
     ]);
 });
 
@@ -415,6 +428,7 @@ class InferTypesTest_JsonResourceWithCarbonAttribute extends JsonResource
             'id' => $this->id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'deleted_at' => $this->whenNotNull($this->deleted_at),
         ];
     }
 }

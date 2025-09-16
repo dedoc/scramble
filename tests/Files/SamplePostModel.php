@@ -3,9 +3,12 @@
 namespace Dedoc\Scramble\Tests\Files;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SamplePostModel extends Model
 {
+    use SoftDeletes;
+
     public $timestamps = true;
 
     protected $guarded = [];

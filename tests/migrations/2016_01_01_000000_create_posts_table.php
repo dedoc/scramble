@@ -22,6 +22,7 @@ class CreatePostsTable extends Migration
             $table->text('body');
             $table->dateTime('approved_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
