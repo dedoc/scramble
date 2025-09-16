@@ -36,29 +36,6 @@ trait FlattensMergeValues
                     return [$item];
                 }
 
-                if (
-                    $item->value instanceof Union
-                    && (new TypeWalker)->first($item->value, fn (Type $t) => $t->isInstanceOf(Carbon::class) || $t->isInstanceOf(CarbonImmutable::class))
-                ) {
-                    (new TypeWalker)->replace($item->value, function (Type $t) {
-                        return ($t->isInstanceOf(Carbon::class) || $t->isInstanceOf(CarbonImmutable::class))
-                            ? tap(new StringType, fn ($t) => $t->setAttribute('format', 'date-time'))
-                            : null;
-                    });
-
-                    if ($this->isUnionWithMissingValue($item->value)) {
-                        $item->isOptional = true;
-
-                        $item->value = (new TypeWalker)->replace($item->value, function (Type $t) {
-                            return Union::wrap(...array_values(
-                                array_filter($t->types, fn (Type $t) => ! $t->isInstanceOf(MissingValue::class))
-                            ));
-                        });
-                    }
-
-                    return [$item];
-                }
-
                 if ($item->value->isInstanceOf(JsonResource::class)) {
                     $resource = $this->getResourceType($item->value);
 
