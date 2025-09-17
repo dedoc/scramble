@@ -155,7 +155,7 @@ class PhpDocTypeHelper
             return new ArrayType;
         }
         if ($type->name === 'list') {
-            return new ArrayType();
+            return new ArrayType;
         }
         if ($type->name === 'object') {
             return new ObjectType('\stdClass');
