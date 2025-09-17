@@ -11,6 +11,14 @@ it('handles array set type', function () {
     expect($a)->toHaveType('array{foo: int(42)}');
 });
 
+it('handles array push type', function () {
+    $a = [];
+    $a[] = 42;
+    $a[] = 1;
+
+    expect($a)->toHaveType('list{int(42), int(1)}');
+});
+
 it('handles array modify type', function () {
     $a = ['foo' => 23];
 
@@ -31,4 +39,12 @@ it('handles array deep modify type', function () {
     $a['foo']['bar'] = 42;
 
     expect($a)->toHaveType('array{foo: array{bar: int(42)}}');
+});
+
+it('handles array deep push type', function () {
+    $a = ['foo' => []];
+    $a['foo']['bar'][] = 42;
+    $a['foo']['bar'][] = 1;
+
+    expect($a)->toHaveType('array{foo: array{bar: list{int(42), int(1)}}}');
 });

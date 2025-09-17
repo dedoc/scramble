@@ -56,12 +56,16 @@ class OffsetSet implements ResolvingType
             $modifyingType = $isLast
                 ? $this->applyLeafAssignment($modifyingType, $pathItem, $value)
                 : $this->applyIntermediateStep($modifyingType, $pathItem, $target);
+
+            if ($modifyingType === null) {
+                return $target;
+            }
         }
 
         return $target;
     }
 
-    private function applyIntermediateStep(KeyedArrayType $modifyingType, string|int|null $pathItem, KeyedArrayType $target): KeyedArrayType
+    private function applyIntermediateStep(KeyedArrayType $modifyingType, string|int|null $pathItem, KeyedArrayType $target): ?KeyedArrayType
     {
         $targetItems = $modifyingType->items;
 
@@ -72,7 +76,7 @@ class OffsetSet implements ResolvingType
 
         if ($targetItem) {
             if (! $targetItem->value instanceof KeyedArrayType) {
-                return $target; // bail out same as before
+                return null;
             }
             $newModifyingType = $targetItem->value;
         } else {
@@ -93,10 +97,10 @@ class OffsetSet implements ResolvingType
     {
         $targetItems = $modifyingType->items;
 
-        $targetItem = Arr::first(
+        $targetItem = $pathItem !== null ? Arr::first(
             $targetItems,
             fn (ArrayItemType_ $t) => $t->key === $pathItem,
-        );
+        ) : null;
 
         if ($targetItem) {
             $targetItem->value = $value;
@@ -149,6 +153,7 @@ class OffsetSet implements ResolvingType
             }
             return null;
         }
+
         return $normalizedPath;
     }
 }
