@@ -155,6 +155,32 @@ class AnnotationResourceCollectionResponseTest_Controller
     }
 }
 
+test('transforms collection with paginationInformation implementation', function () {
+    $type = getStatementType('new '.UserCollection_Five::class.'('.\Dedoc\Scramble\Tests\Files\SampleUserModel::class.'::paginate())');
+
+    $r = $this->transformer->toResponse($type);
+
+//    dd(
+//        $r->toArray()
+//    );
+
+    assertMatchesSnapshot([
+        'response' => $this->transformer->toResponse($type)->toArray(),
+        'components' => $this->components->toArray(),
+    ]);
+})->todo();
+class UserCollection_Five extends \Illuminate\Http\Resources\Json\ResourceCollection
+{
+    public $collects = UserResource::class;
+
+    public function paginationInformation($request, $paginated, $default)
+    {
+        $default['links']['custom'] = 'https://example.com';
+
+        return $default;
+    }
+}
+
 class UserResource extends \Illuminate\Http\Resources\Json\JsonResource
 {
     public function toArray($request)

@@ -13,13 +13,18 @@ use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Support\Type\Contracts\Literal;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\ArrayDimFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
@@ -37,6 +42,7 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
+use Illuminate\Support\Arr;
 
 class ReferenceTypeResolver
 {
@@ -77,6 +83,7 @@ class ReferenceTypeResolver
             CallableCallReferenceType::class => $this->resolveCallableCallReferenceType($scope, $t),
             NewCallReferenceType::class => $this->resolveNewCallReferenceType($scope, $t),
             PropertyFetchReferenceType::class => $this->resolvePropertyFetchReferenceType($scope, $t),
+            ArrayDimFetchReferenceType::class => $this->resolveArrayDimFetchReferenceType($scope, $t),
             default => null,
         };
 
@@ -384,6 +391,35 @@ class ReferenceTypeResolver
         return $propertyType instanceof TemplateType
             ? ($propertyType->is ?: new UnknownType)
             : $propertyType;
+    }
+
+    private function resolveArrayDimFetchReferenceType(Scope $scope, ArrayDimFetchReferenceType $type): Type
+    {
+        $varType = $this->resolveAndNormalizeCallee($scope, $type->var);
+
+        // KeyedArrayType: do stuff
+        // Array: do stuff
+        // Object: resolve call `__offsetGet`
+
+        if (! $varType instanceof KeyedArrayType) {
+            return new UnknownType;
+        }
+
+        // Event manager attempt
+        $dimType = $this->resolveAndNormalizeCallee($scope, $type->dim);
+        if (! $dimType instanceof Literal) {
+            return new UnknownType;
+        }
+
+        $dimValue = $dimType->getValue();
+
+        /** @var ArrayItemType_|null $arrayKey */
+        $arrayKey = Arr::first($varType->items, fn (ArrayItemType_ $t) => $t->key === $dimValue);
+        if (! $arrayKey) {
+            return new UnknownType;
+        }
+
+        return $this->resolve($scope, $arrayKey->value);
     }
 
     /**

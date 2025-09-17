@@ -18,6 +18,7 @@ use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\ArrayDimFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
@@ -203,6 +204,18 @@ class Scope
                 $node,
                 new CallableCallReferenceType($this->getType($node->name), $this->getArgsTypes($node->args)),
             );
+        }
+
+        /**
+         * When `dim` is empty, it means that the context is setting, not handling now.
+         */
+        if ($node instanceof Node\Expr\ArrayDimFetch && $node->dim) {
+            $type = new ArrayDimFetchReferenceType(
+                var: $this->getType($node->var),
+                dim: $this->getType($node->dim),
+            );
+
+            return $this->setType($node, $type);
         }
 
         return $type;

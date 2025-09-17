@@ -30,6 +30,71 @@ expect()->extend('toBeSameJson', function (mixed $expectedData) {
     return $this;
 });
 
+function getTestSourceCode () {
+    $getPrivateProperty = function ($object, string $property) {
+        $reflection = new ReflectionClass($object);
+        $prop = $reflection->getProperty($property);
+        $prop->setAccessible(true);
+
+        return $prop->getValue($object);
+    };
+
+    $db = debug_backtrace();
+
+    $entry = \Illuminate\Support\Arr::first(
+        $db,
+        fn ($item) => in_array(
+            \Pest\Concerns\Testable::class,
+            class_uses_recursive($item['object'] ?? (object)[]),
+        ),
+    );
+
+    /** @var \Pest\Concerns\Testable $object */
+    $object = $entry['object'];
+
+    $reflection = new ReflectionFunction($getPrivateProperty($object, '__test'));
+
+    $actualReflection = new \Laravel\SerializableClosure\Support\ReflectionClosure($reflection->getClosureUsedVariables()['closure']);
+
+    $source = $actualReflection->getCode();
+
+    $lines = explode("\n", $source);
+
+    $code = array_splice($lines, 1, -1);
+
+    return implode("\n", $code);
+}
+
+expect()->extend('toHaveType', function (string $expectedType) {
+    $code = '<?php'."\n\n".getTestSourceCode();
+
+    $index = app(Index::class); // new Index;
+
+    $traverser = new NodeTraverser;
+    $traverser->addVisitor($nameResolver = new NameResolver);
+    $traverser->addVisitor(new PhpDocResolver(
+        $nameResolver = new FileNameResolver($nameResolver->getNameContext()),
+    ));
+    $traverser->addVisitor(new TypeInferer(
+        $index,
+        $nameResolver,
+        $scope = new Scope($index, new NodeTypesResolver, new ScopeContext, $nameResolver),
+        Infer\Context::getInstance()->extensionsBroker->extensions,
+    ));
+    $traverser->traverse(
+        $fileAst = FileParser::getInstance()->parseContent($code)->getStatements(),
+    );
+
+    /** @var \PhpParser\Node\Expr\FuncCall $node */
+    $node = (new \PhpParser\NodeFinder)->findFirst($fileAst, fn ($n) => $n instanceof \PhpParser\Node\Expr\FuncCall && $n->name->toString() === 'expect');
+
+    $actualType = ReferenceTypeResolver::getInstance()->resolve($scope, $scope->getType($node->args[0]->value));
+
+    expect($actualType->toString())->toBe($expectedType);
+
+    return $this;
+});
+
 function analyzeFile(
     string $code,
     $extensions = [],
