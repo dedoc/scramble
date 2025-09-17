@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\Type\Literal;
 
 use Dedoc\Scramble\Support\Type\StringType;
+use Illuminate\Support\Str;
 
 class LiteralStringType extends StringType
 {
@@ -15,6 +16,7 @@ class LiteralStringType extends StringType
 
     public function toString(): string
     {
-        return parent::toString()."($this->value)";
+        return "'".Str::replace("'", "\'", $this->value)."'";
+//        return parent::toString()."($this->value)";
     }
 }

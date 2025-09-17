@@ -27,8 +27,8 @@ use PhpParser\NodeFinder;
 class SelfOutTypeBuilder
 {
     public function __construct(
-        private Scope $scope,
-        private ClassMethod $node,
+        public readonly Scope $scope,
+        public readonly ClassMethod $node,
     ) {}
 
     public function build(): ?Generic

@@ -6,6 +6,7 @@ use Dedoc\Scramble\Configuration\GeneratorConfigCollection;
 use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
+use Dedoc\Scramble\Console\Commands\LspCommand;
 use Dedoc\Scramble\DocumentTransformers\AddDocumentTags;
 use Dedoc\Scramble\DocumentTransformers\CleanupUnusedResponseReferencesTransformer;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
@@ -83,6 +84,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasCommand(ExportDocumentation::class)
             ->hasCommand(AnalyzeDocumentation::class)
+            ->hasCommand(LspCommand::class)
             ->hasViews('scramble');
 
         $this->app->singleton(FileParser::class, function () {

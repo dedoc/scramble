@@ -15,6 +15,7 @@ class LiteralFloatType extends FloatType
 
     public function toString(): string
     {
-        return parent::toString()."($this->value)";
+        return $this->value;
+//        return parent::toString()."($this->value)";
     }
 }

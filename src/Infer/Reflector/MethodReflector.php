@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Infer\Reflector;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
+use Illuminate\Support\Str;
 use PhpParser\NameContext;
 use PhpParser\Node;
 use PhpParser\Node\Stmt\ClassMethod;
@@ -64,12 +65,24 @@ class MethodReflector
             $className = class_basename($this->className);
             $methodReflection = $this->getReflection();
 
+            $content = file_get_contents($methodReflection->getFileName());
             $methodDoc = $methodReflection->getDocComment() ?: '';
             $lines = $methodReflection->getStartLine();
 
             $lines = str_repeat("\n", max($lines - 3 - substr_count($methodDoc, "\n"), 1));
+            $methodStartFilePos = $this->findNthOccurrenceInString($content, "\n", $methodReflection->getStartLine() - 1);
 
-            $partialClass = "<?php$lines class $className {\n".$methodDoc."\n".$this->getMethodCode()."\n}";
+            $partialClassStart = "<?php$lines class $className {\n".$methodDoc;
+
+            $padChars = max($methodStartFilePos - strlen($partialClassStart), 0);
+
+            $partialClassStart = Str::replaceStart(
+                '<?php',
+                '<?php'.str_repeat(' ', $padChars),
+                $partialClassStart,
+            );
+
+            $partialClass = $partialClassStart."\n".$this->getMethodCode()."\n}";
 
             $node = (new NodeFinder)
                 ->findFirst(
@@ -104,6 +117,11 @@ class MethodReflector
         }
 
         return $this->methodNode;
+    }
+
+    private function findNthOccurrenceInString(string $str, string $substring, int $n): ?int
+    {
+        return preg_match_all('/'.$substring.'/i', $str, $m, PREG_OFFSET_CAPTURE) >= $n ? $m[0][$n-1][1] : null;
     }
 
     public function getClassReflector(): ClassReflector
