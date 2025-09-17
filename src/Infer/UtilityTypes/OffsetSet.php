@@ -43,55 +43,71 @@ class OffsetSet implements ResolvingType
 
         $path = $this->normalizePath($pathType);
 
-        $target = $target->clone();
+        return $this->applyPath($target->clone(), $path, $value);
+    }
 
+    private function applyPath(KeyedArrayType $target, array $path, Type $value): KeyedArrayType
+    {
         $modifyingType = $target;
+
         foreach ($path as $i => $pathItem) {
-            $isLast = $i === count($path) - 1;
+            $isLast = $i === array_key_last($path);
 
-            $targetItems = $modifyingType->items;
-
-            $targetItem = Arr::first(
-                $targetItems,
-                fn (ArrayItemType_ $t) => $t->key === $pathItem,
-            );
-
-            if (! $isLast) {
-                if ($targetItem) {
-                    if (! $targetItem->value instanceof KeyedArrayType) {
-                        return $target;
-                    }
-                    $newModifyingType = $targetItem->value;
-                } else {
-                    $targetItem = new ArrayItemType_(
-                        key: $pathItem,
-                        value: $newModifyingType = new KeyedArrayType(),
-                    );
-
-                    $targetItems[] = $targetItem;
-                }
-
-                $modifyingType->items = $targetItems;
-                $modifyingType->isList = KeyedArrayType::checkIsList($targetItems);
-
-                $modifyingType = $newModifyingType;
-
-                continue;
-            }
-
-            if ($targetItem) {
-                $targetItem->value = $value;
-            } else {
-                $targetItem = new ArrayItemType_(key: $pathItem, value: $value);
-
-                $targetItems[] = $targetItem;
-            }
-
-            $modifyingType->items = $targetItems;
-            $modifyingType->isList = KeyedArrayType::checkIsList($targetItems);
+            $modifyingType = $isLast
+                ? $this->applyLeafAssignment($modifyingType, $pathItem, $value)
+                : $this->applyIntermediateStep($modifyingType, $pathItem, $target);
         }
 
         return $target;
+    }
+
+    private function applyIntermediateStep(KeyedArrayType $modifyingType, string|int|null $pathItem, KeyedArrayType $target): KeyedArrayType
+    {
+        $targetItems = $modifyingType->items;
+
+        $targetItem = Arr::first(
+            $targetItems,
+            fn (ArrayItemType_ $t) => $t->key === $pathItem,
+        );
+
+        if ($targetItem) {
+            if (! $targetItem->value instanceof KeyedArrayType) {
+                return $target; // bail out same as before
+            }
+            $newModifyingType = $targetItem->value;
+        } else {
+            $targetItem = new ArrayItemType_(
+                key: $pathItem,
+                value: $newModifyingType = new KeyedArrayType(),
+            );
+            $targetItems[] = $targetItem;
+        }
+
+        $modifyingType->items = $targetItems;
+        $modifyingType->isList = KeyedArrayType::checkIsList($targetItems);
+
+        return $newModifyingType;
+    }
+
+    private function applyLeafAssignment(KeyedArrayType $modifyingType, string|int|null $pathItem, Type $value): KeyedArrayType
+    {
+        $targetItems = $modifyingType->items;
+
+        $targetItem = Arr::first(
+            $targetItems,
+            fn (ArrayItemType_ $t) => $t->key === $pathItem,
+        );
+
+        if ($targetItem) {
+            $targetItem->value = $value;
+        } else {
+            $targetItems[] = new ArrayItemType_(key: $pathItem, value: $value);
+        }
+
+        $modifyingType->items = $targetItems;
+        $modifyingType->isList = KeyedArrayType::checkIsList($targetItems);
+
+        return $modifyingType;
     }
 
     private function getTarget(Generic $type): KeyedArrayType|ArrayType|null
