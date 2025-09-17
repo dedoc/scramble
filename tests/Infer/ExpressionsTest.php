@@ -48,3 +48,15 @@ it('handles array deep push type', function () {
 
     expect($a)->toHaveType('array{foo: array{bar: list{int(42), int(1)}}}');
 });
+
+it('fucks', function () {
+    $a = function ($b) {
+        $b['wow'] = 42;
+        return $b;
+    };
+
+    $wow = ['foo' => 'bar'];
+    $wow2 = $a($wow);
+
+    expect($wow2)->toHaveType('array{foo: array{bar: list{int(42), int(1)}}}');
+});
