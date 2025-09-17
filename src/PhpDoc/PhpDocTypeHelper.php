@@ -10,7 +10,6 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\IntersectionType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
-use Dedoc\Scramble\Support\Type\ListType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -79,7 +78,7 @@ class PhpDocTypeHelper
             }
 
             if ($type->type->name === 'list') {
-                return new ListType(
+                return new ArrayType(
                     value: static::toType($type->genericTypes[0] ?? new MixedType),
                 );
             }
@@ -156,7 +155,7 @@ class PhpDocTypeHelper
             return new ArrayType;
         }
         if ($type->name === 'list') {
-            return new ListType();
+            return new ArrayType();
         }
         if ($type->name === 'object') {
             return new ObjectType('\stdClass');

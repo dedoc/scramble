@@ -33,5 +33,5 @@ it('parses list', function (string $phpDocType, string $expectedTypeString) {
         getPhpTypeFromDoc_Copy($phpDocType)->toString()
     )->toBe($expectedTypeString);
 })->with([
-    ['/** @var list<float> */', 'list<float>'],
+    ['/** @var list<float> */', 'array<float>'],
 ]);

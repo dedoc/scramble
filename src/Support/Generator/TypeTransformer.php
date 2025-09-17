@@ -22,7 +22,6 @@ use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Dedoc\Scramble\Support\Type\ListType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -125,10 +124,6 @@ class TypeTransformer
                 $openApiType = (new ObjectType)
                     ->additionalProperties($this->transform($type->value));
             }
-        } elseif (
-            $type instanceof ListType
-        ) {
-            $openApiType = (new ArrayType())->setItems($this->transform($type->value));
         } elseif ($type instanceof ArrayItemType_) {
             $openApiType = $this->transform($type->value);
 
