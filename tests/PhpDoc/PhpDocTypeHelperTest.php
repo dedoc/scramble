@@ -27,3 +27,11 @@ it('parses tuple', function (string $phpDocType, string $expectedTypeString) {
 })->with([
     ['/** @var array{float, float} */', 'list{float, float}'],
 ]);
+
+it('parses list', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    ['/** @var list<float> */', 'list<float>'],
+]);
