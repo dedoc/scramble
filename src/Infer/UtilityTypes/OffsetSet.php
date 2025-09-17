@@ -11,6 +11,7 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Arr;
@@ -25,7 +26,13 @@ class OffsetSet implements ResolvingType
             throw new \InvalidArgumentException('Type must be generic');
         }
 
-        if (! $target = $this->getTarget($type)) {
+        $target = $this->getTarget($type);
+
+        if ($this->shouldDefferResolution($target)) {
+            return null;
+        }
+
+        if (! $target instanceof KeyedArrayType && ! $target instanceof ArrayType) {
             return new UnknownType;
         }
 
@@ -114,12 +121,9 @@ class OffsetSet implements ResolvingType
         return $modifyingType;
     }
 
-    private function getTarget(Generic $type): KeyedArrayType|ArrayType|null
+    private function getTarget(Generic $type): ?Type
     {
-        $target = $type->templateTypes[0] ?? null;
-
-        return ($target instanceof KeyedArrayType || $target instanceof ArrayType)
-            ? $target : null;
+        return $type->templateTypes[0] ?? null;
     }
 
     private function getPath(Generic $type): ?KeyedArrayType
@@ -155,5 +159,18 @@ class OffsetSet implements ResolvingType
         }
 
         return $normalizedPath;
+    }
+
+    private function shouldDefferResolution(?Type $target): bool
+    {
+        if (! $target) {
+            return false;
+        }
+
+        if ($target instanceof TemplateType) {
+            return true;
+        }
+
+        return $target instanceof Generic && $target->isInstanceOf(ResolvingType::class);
     }
 }

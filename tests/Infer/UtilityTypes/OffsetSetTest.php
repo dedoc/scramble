@@ -49,7 +49,7 @@ it('handles array deep push type', function () {
     expect($a)->toHaveType('array{foo: array{bar: list{int(42), int(1)}}}');
 });
 
-it('fucks', function () {
+it('allows setting keys on template type', function () {
     $a = function ($b) {
         $b['wow'] = 42;
         return $b;
@@ -58,5 +58,33 @@ it('fucks', function () {
     $wow = ['foo' => 'bar'];
     $wow2 = $a($wow);
 
-    expect($wow2)->toHaveType('array{foo: array{bar: list{int(42), int(1)}}}');
+    expect($wow2)->toHaveType('array{foo: string(bar), wow: int(42)}');
 });
+
+it('allows setting keys on template type with deep methods logic', function () {
+    $foo = new Foo_ExpressionsTest;
+
+    $result = $foo->setC(['foo' => 'bar']);
+
+    expect($result)->toHaveType('array{foo: string(bar), a: int(1), b: int(2), c: int(3)}');
+});
+
+class Foo_ExpressionsTest {
+    public function setA($data)
+    {
+        $data['a'] = 1;
+        return $data;
+    }
+    public function setB($data)
+    {
+        $data = $this->setA($data);
+        $data['b'] = 2;
+        return $data;
+    }
+    public function setC($data)
+    {
+        $data = $this->setB($data);
+        $data['c'] = 3;
+        return $data;
+    }
+}
