@@ -14,6 +14,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\Contracts\Literal;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -397,29 +398,30 @@ class ReferenceTypeResolver
     {
         $varType = $this->resolveAndNormalizeCallee($scope, $type->var);
 
-        // KeyedArrayType: do stuff
-        // Array: do stuff
-        // Object: resolve call `__offsetGet`
+        // @todo object: resolve call `__offsetGet`
 
-        if (! $varType instanceof KeyedArrayType) {
-            return new UnknownType;
+        if ($varType instanceof ArrayType) {
+            return $this->resolve($scope, $varType->value);
         }
 
-        // Event manager attempt
-        $dimType = $this->resolveAndNormalizeCallee($scope, $type->dim);
-        if (! $dimType instanceof Literal) {
-            return new UnknownType;
+        if ($varType instanceof KeyedArrayType) {
+            $dimType = $this->resolveAndNormalizeCallee($scope, $type->dim);
+            if (! $dimType instanceof Literal) {
+                return new UnknownType;
+            }
+
+            $dimValue = $dimType->getValue();
+
+            /** @var ArrayItemType_|null $arrayItem */
+            $arrayItem = Arr::first($varType->items, fn (ArrayItemType_ $t) => $t->key === $dimValue);
+            if (! $arrayItem) {
+                return new UnknownType;
+            }
+
+            return $this->resolve($scope, $arrayItem->value);
         }
 
-        $dimValue = $dimType->getValue();
-
-        /** @var ArrayItemType_|null $arrayKey */
-        $arrayKey = Arr::first($varType->items, fn (ArrayItemType_ $t) => $t->key === $dimValue);
-        if (! $arrayKey) {
-            return new UnknownType;
-        }
-
-        return $this->resolve($scope, $arrayKey->value);
+        return new UnknownType;
     }
 
     /**
