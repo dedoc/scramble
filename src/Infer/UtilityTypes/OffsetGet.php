@@ -60,7 +60,11 @@ class OffsetGet implements ResolvingType
             fn (ArrayItemType_ $t) => $t->key === $path,
         );
 
-        return $arrayItem->value ?? new UnknownType;
+        if (! $arrayItem) {
+            return new UnknownType;
+        }
+
+        return $arrayItem->value->mergeAttributes($arrayItem->attributes());
     }
 
     private function getTarget(Generic $type): ?Type

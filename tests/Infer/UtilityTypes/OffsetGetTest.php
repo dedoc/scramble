@@ -5,7 +5,5 @@ it('handles array fetch', function () {
 });
 
 it('handles array deep fetch', function () {
-    expect([
-        'b' => ['c' => 42],
-    ]['b']['c'])->toHaveType('int(42)');
+    expect(['b' => ['c' => 42]]['b']['c'])->toHaveType('int(42)');
 });

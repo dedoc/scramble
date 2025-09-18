@@ -175,8 +175,6 @@ class UserCollection_Five extends \Illuminate\Http\Resources\Json\ResourceCollec
 test('transforms collection with fully custom paginationInformation', function () {
     $type = getStatementType('new '.UserCollection_Six::class.'('.\Dedoc\Scramble\Tests\Files\SampleUserModel::class.'::paginate())');
 
-    dd($this->transformer->toResponse($type)->toArray());
-
     assertMatchesSnapshot($this->transformer->toResponse($type)->toArray());
 });
 class UserCollection_Six extends \Illuminate\Http\Resources\Json\ResourceCollection

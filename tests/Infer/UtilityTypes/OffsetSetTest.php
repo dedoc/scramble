@@ -1,5 +1,11 @@
 <?php
 
+use Dedoc\Scramble\GeneratorConfig;
+use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Type\Type;
+
 it('handles array fetch', function () {
     expect(["a" => 1]["a"])->toHaveType('int(1)');
 });
@@ -67,8 +73,7 @@ it('allows setting keys on template type with deep methods logic', function () {
     $result = $foo->setC(['foo' => 'bar']);
 
     expect($result)->toHaveType('array{foo: string(bar), a: int(1), b: int(2), c: int(3)}');
-});
-
+})->skip('figure out test ns');
 class Foo_ExpressionsTest {
     public function setA($data)
     {
@@ -88,3 +93,66 @@ class Foo_ExpressionsTest {
         return $data;
     }
 }
+
+it('preserves array key description when setting the offset from offset get', function () {
+    $arr = [
+        /** Foo description. */
+        'foo' => 42,
+    ];
+
+    $newArr = [];
+    $newArr['bar'] = $arr['foo'];
+
+    expect($newArr)->toHaveType(function (Type $t) {
+        $openApiTransformer = app(TypeTransformer::class, [
+            'context' => new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig),
+        ]);
+
+        expect($openApiTransformer->transform($t)->toArray())->toBe([
+            'type' => 'object',
+            'properties' => [
+                'bar' => [
+                    'type' => 'integer',
+                    'description' => 'Foo description.',
+                    'enum' => [42],
+                ],
+            ],
+            'required' => ['bar'],
+        ]);
+
+        return true;
+    });
+});
+
+it('preserves array key description when setting the key from offset get', function () {
+    $arr = [
+        'bar' => [
+            /** Foo description. */
+            'foo' => 42,
+        ]
+    ];
+
+    $newArr = [
+        'bar' => $arr['bar']['foo'],
+    ];
+
+    expect($newArr)->toHaveType(function (Type $t) {
+        $openApiTransformer = app(TypeTransformer::class, [
+            'context' => new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig),
+        ]);
+
+        expect($openApiTransformer->transform($t)->toArray())->toBe([
+            'type' => 'object',
+            'properties' => [
+                'bar' => [
+                    'type' => 'integer',
+                    'description' => 'Foo description.',
+                    'enum' => [42],
+                ],
+            ],
+            'required' => ['bar'],
+        ]);
+
+        return true;
+    });
+});

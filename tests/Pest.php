@@ -65,7 +65,7 @@ function getTestSourceCode () {
     return implode("\n", $code);
 }
 
-expect()->extend('toHaveType', function (string $expectedType) {
+expect()->extend('toHaveType', function (string|callable $expectedType) {
     $code = '<?php'."\n\n".getTestSourceCode();
 
     $index = app(Index::class); // new Index;
@@ -90,7 +90,11 @@ expect()->extend('toHaveType', function (string $expectedType) {
 
     $actualType = ReferenceTypeResolver::getInstance()->resolve($scope, $scope->getType($node->args[0]->value));
 
-    expect($actualType->toString())->toBe($expectedType);
+    if (is_string($expectedType)) {
+        expect($actualType->toString())->toBe($expectedType);
+    } else {
+        expect($expectedType($actualType))->toBeTrue();
+    }
 
     return $this;
 });

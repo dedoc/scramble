@@ -21,6 +21,7 @@ use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
+use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
@@ -127,7 +128,18 @@ class TypeTransformer
         } elseif ($type instanceof ArrayItemType_) {
             $openApiType = $this->transform($type->value);
 
-            if ($docNode = $type->getAttribute('docNode')) {
+            /** @var PhpDocNode|null $valueDocNode */
+            $valueDocNode = $type->value->getAttribute('docNode');
+            /** @var PhpDocNode|null $arrayItemDocNode */
+            $arrayItemDocNode = $type->getAttribute('docNode');
+
+            if ($valueDocNode || $arrayItemDocNode) {
+                $docNode = new PhpDocNode([
+                    ...($arrayItemDocNode?->children ?: []),
+                    ...($valueDocNode?->children ?: []),
+                ]);
+                PhpDoc::addSummaryAttributes($docNode);
+
                 /** @var PhpDocNode $docNode */
                 $varNode = array_values($docNode->getVarTagValues())[0] ?? null;
 

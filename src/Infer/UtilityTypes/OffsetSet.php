@@ -115,7 +115,7 @@ class OffsetSet implements ResolvingType
         if ($targetItem) {
             $targetItem->value = $value;
         } else {
-            $targetItems[] = new ArrayItemType_(key: $pathItem, value: $value);
+            $targetItems[] = $targetItem = new ArrayItemType_(key: $pathItem, value: $value);
         }
 
         $modifyingType->items = $targetItems;
