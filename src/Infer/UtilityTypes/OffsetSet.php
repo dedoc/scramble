@@ -49,6 +49,9 @@ class OffsetSet implements ResolvingType
         }
 
         $path = $this->normalizePath($pathType);
+        if (! $path) {
+            return new UnknownType;
+        }
 
         return $this->applyPath($target->clone(), $path, $value);
     }
