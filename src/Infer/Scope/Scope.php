@@ -12,13 +12,14 @@ use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
 use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
+use Dedoc\Scramble\Infer\UtilityTypes\OffsetGet;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Reference\ArrayDimFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
@@ -210,10 +211,10 @@ class Scope
          * When `dim` is empty, it means that the context is setting, not handling now.
          */
         if ($node instanceof Node\Expr\ArrayDimFetch && $node->dim) {
-            $type = new ArrayDimFetchReferenceType(
-                var: $this->getType($node->var),
-                dim: $this->getType($node->dim),
-            );
+            $type = new Generic(OffsetGet::class, [
+                $this->getType($node->var),
+                $this->getType($node->dim),
+            ]);
 
             return $this->setType($node, $type);
         }
