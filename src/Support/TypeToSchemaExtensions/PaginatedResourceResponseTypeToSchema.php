@@ -2,19 +2,32 @@
 
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
-use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\TypeManagers\CursorPaginatorTypeManager;
+use Dedoc\Scramble\Support\TypeManagers\LengthAwarePaginatorTypeManager;
+use Dedoc\Scramble\Support\TypeManagers\PaginatorTypeManager;
 use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\Resources\Json\PaginatedResourceResponse;
-use Illuminate\Support\Arr;
+use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use LogicException;
 
 class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
@@ -72,35 +85,48 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
 
     protected function getPaginatedInformationSchema(Generic $type): OpenApiObjectType
     {
-        $normalizedPaginatorType = $this->getPaginatorType($type);
+        $resourceType = $this->getResourceType($type);
+        $paginationInformationArray = $this->getDefaultPaginationInformationArray($type);
 
-        $paginatorSchemaType = $this->openApiTransformer->transform($normalizedPaginatorType);
-        if (! $paginatorSchemaType instanceof OpenApiObjectType) {
-            throw new LogicException('Paginator schema is expected to be an object, got '.$paginatorSchemaType::class);
+        $resourceTypeDefinition = $this->infer->index->getClass($resourceType->name);
+
+        if ($resourceTypeDefinition->hasMethodDefinition('paginationInformation')) {
+            $paginationInformationArray = ReferenceTypeResolver::getInstance()
+                ->resolve(
+                    new GlobalScope(),
+                    new MethodCallReferenceType($resourceType, 'paginationInformation', [
+                        new UnknownType,
+                        new UnknownType,
+                        $paginationInformationArray,
+                    ])
+                );
         }
 
-        return (new OpenApiObjectType)
-            ->addProperty('links', tap(new OpenApiObjectType, function (OpenApiObjectType $type) use ($paginatorSchemaType) {
-                $defaultLinkType = (new StringType)->nullable(true);
-                $type->properties = [
-                    'first' => $paginatorSchemaType->properties['first_page_url'] ?? $defaultLinkType,
-                    'last' => $paginatorSchemaType->properties['last_page_url'] ?? $defaultLinkType,
-                    'prev' => $paginatorSchemaType->properties['prev_page_url'] ?? $defaultLinkType,
-                    'next' => $paginatorSchemaType->properties['next_page_url'] ?? $defaultLinkType,
-                ];
-                $type->setRequired(array_keys($type->properties));
-            }))
-            ->addProperty('meta', tap(new OpenApiObjectType, function (OpenApiObjectType $type) use ($paginatorSchemaType) {
-                $type->properties = Arr::except($paginatorSchemaType->properties, [
-                    'data',
-                    'first_page_url',
-                    'last_page_url',
-                    'prev_page_url',
-                    'next_page_url',
-                ]);
-                $type->setRequired(array_keys($type->properties));
-            }))
-            ->setRequired(['meta', 'links']);
+        if (! $paginationInformationArray instanceof KeyedArrayType) {
+            return new OpenApiObjectType;
+        }
+
+        return $this->openApiTransformer->transform($paginationInformationArray);
+    }
+
+    protected function getDefaultPaginationInformationArray(Generic $type): KeyedArrayType
+    {
+        $normalizedPaginatorType = $this->getPaginatorType($type);
+
+        $typeManager = match ($normalizedPaginatorType->name) {
+            Paginator::class => new PaginatorTypeManager(),
+            CursorPaginator::class => new CursorPaginatorTypeManager(),
+            LengthAwarePaginator::class => new LengthAwarePaginatorTypeManager(),
+            default => null,
+        };
+
+        if (! $typeManager) {
+            return new KeyedArrayType();
+        }
+
+        $paginatorArray = $typeManager->getToArrayType(new ArrayType($normalizedPaginatorType->templateTypes[1]));
+
+        return $this->makePaginationInformationType($paginatorArray);
     }
 
     protected function getPaginatedDescription(Generic $type): string
@@ -141,6 +167,37 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
         return new Generic($paginatorType->name, [
             new IntegerType,
             $this->getCollectingClassType($type),
+        ]);
+    }
+
+    private function makePaginationInformationType(KeyedArrayType $paginatorArray): KeyedArrayType
+    {
+        $findItemByKey = function (string $key) use ($paginatorArray) {
+            foreach ($paginatorArray->items as $item) {
+                if ($item->key === $key) {
+                    return $item->value;
+                }
+            }
+            return new Union([new StringType, new NullType]);
+        };
+
+        $metaItems = [];
+        $excludedKeys = ['data', 'first_page_url', 'last_page_url', 'prev_page_url', 'next_page_url'];
+
+        foreach ($paginatorArray->items as $item) {
+            if (!in_array($item->key, $excludedKeys)) {
+                $metaItems[] = $item;
+            }
+        }
+
+        return new KeyedArrayType([
+            new ArrayItemType_('links', new KeyedArrayType([
+                new ArrayItemType_('first', $findItemByKey('first_page_url')),
+                new ArrayItemType_('last', $findItemByKey('last_page_url')),
+                new ArrayItemType_('prev', $findItemByKey('prev_page_url')),
+                new ArrayItemType_('next', $findItemByKey('next_page_url')),
+            ])),
+            new ArrayItemType_('meta', new KeyedArrayType($metaItems)),
         ]);
     }
 }

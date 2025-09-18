@@ -160,9 +160,9 @@ test('transforms collection with paginationInformation implementation', function
 
     $r = $this->transformer->toResponse($type);
 
-//    dd(
-//        $r->toArray()
-//    );
+    dd(
+        $r->toArray()
+    );
 
     assertMatchesSnapshot([
         'response' => $this->transformer->toResponse($type)->toArray(),

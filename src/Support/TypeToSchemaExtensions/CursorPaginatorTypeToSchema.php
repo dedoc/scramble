@@ -8,13 +8,11 @@ use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\Types\ArrayType;
-use Dedoc\Scramble\Support\Generator\Types\IntegerType;
-use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
-use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\TypeManagers\CursorPaginatorTypeManager;
 use Illuminate\Pagination\CursorPaginator;
 
 class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
@@ -46,17 +44,9 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
             return null;
         }
 
-        $collectingType = $this->openApiTransformer->transform($collectedType);
+        $paginatorArray = (new CursorPaginatorTypeManager)->getToArrayType(new ArrayType($collectedType));
 
-        return (new OpenApiObjectType)
-            ->addProperty('data', (new ArrayType)->setItems($collectingType))
-            ->addProperty('path', (new StringType)->nullable(true)->setDescription('Base path for paginator generated URLs.'))
-            ->addProperty('per_page', (new IntegerType)->setDescription('Number of items shown per page.'))
-            ->addProperty('next_cursor', (new StringType)->nullable(true)->setDescription('The "cursor" that points to the next set of items.'))
-            ->addProperty('next_page_url', (new StringType)->format('uri')->nullable(true))
-            ->addProperty('prev_cursor', (new StringType)->nullable(true)->setDescription('The "cursor" that points to the previous set of items.'))
-            ->addProperty('prev_page_url', (new StringType)->format('uri')->nullable(true))
-            ->setRequired(['data', 'path', 'per_page', 'next_cursor', 'next_page_url', 'prev_cursor', 'prev_page_url']);
+        return $this->openApiTransformer->transform($paginatorArray);
     }
 
     /**
