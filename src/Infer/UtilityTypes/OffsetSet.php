@@ -16,6 +16,9 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Arr;
 
+/**
+ * @internal
+ */
 class OffsetSet implements ResolvingType
 {
     public function resolve(ReferenceResolutionEvent $event): ?Type

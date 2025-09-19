@@ -164,7 +164,7 @@ class UserCollection_Five extends \Illuminate\Http\Resources\Json\ResourceCollec
 {
     public $collects = UserResource::class;
 
-    public function paginationInformation($request, $paginated, $default)
+    public function paginationInformation($request, $paginated, $default): array
     {
         $default['links']['custom'] = 'https://example.com';
 
@@ -181,7 +181,7 @@ class UserCollection_Six extends \Illuminate\Http\Resources\Json\ResourceCollect
 {
     public $collects = UserResource::class;
 
-    public function paginationInformation($request, $paginated, $default)
+    public function paginationInformation($request, $paginated, $default): array
     {
         // Have to ignore phpstan errors here because the base class has a very restrictive array shape.
         return [ // @phpstan-ignore-line

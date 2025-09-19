@@ -12,9 +12,12 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Infer\UtilityTypes\OffsetSet;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
+use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -160,6 +163,13 @@ class ClassDefinition implements ClassDefinitionContract
 
         $annotatedTypeCanAcceptAnyInferredType = collect($types)
             ->some(function (Type $t) use ($annotatedReturnType) {
+                $isAnnotatedAsArray = $annotatedReturnType instanceof ArrayType
+                    || $annotatedReturnType instanceof KeyedArrayType;
+
+                if ($isAnnotatedAsArray && $t instanceof Generic && $t->isInstanceOf(OffsetSet::class)) {
+                    return true;
+                }
+
                 if ($annotatedReturnType->accepts($t)) {
                     return true;
                 }
