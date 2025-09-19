@@ -3,9 +3,9 @@
 namespace Dedoc\Scramble\Support\Type\Literal;
 
 use Dedoc\Scramble\Support\Type\BooleanType;
-use Dedoc\Scramble\Support\Type\Contracts\Literal;
+use Dedoc\Scramble\Support\Type\Contracts\LiteralType;
 
-class LiteralBooleanType extends BooleanType implements Literal
+class LiteralBooleanType extends BooleanType implements LiteralType
 {
     public bool $value;
 

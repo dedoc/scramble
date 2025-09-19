@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type\Contracts;
 
-interface LiteralString extends Literal
+interface LiteralString extends LiteralType
 {
     public function getValue(): string;
 }

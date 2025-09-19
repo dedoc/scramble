@@ -6,7 +6,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\ReferenceResolutionEvent;
 use Dedoc\Scramble\Infer\Extensions\ResolvingType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
-use Dedoc\Scramble\Support\Type\Contracts\Literal;
+use Dedoc\Scramble\Support\Type\Contracts\LiteralType;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -75,14 +75,14 @@ class OffsetGet implements ResolvingType
         return $type->templateTypes[0] ?? null;
     }
 
-    private function getPath(Generic $type): ?Literal
+    private function getPath(Generic $type): ?LiteralType
     {
         $path = $type->templateTypes[1] ?? null;
 
-        return $path instanceof Literal ? $path : null;
+        return $path instanceof LiteralType ? $path : null;
     }
 
-    private function normalizePath(Literal $path): string|int|null
+    private function normalizePath(LiteralType $path): string|int|null
     {
         if ($path instanceof LiteralString || $path instanceof LiteralIntegerType) {
             return $path->getValue();

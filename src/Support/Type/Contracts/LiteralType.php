@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type\Contracts;
 
-interface Literal
+interface LiteralType
 {
     public function getValue(): mixed;
 }

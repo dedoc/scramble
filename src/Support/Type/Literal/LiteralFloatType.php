@@ -2,10 +2,10 @@
 
 namespace Dedoc\Scramble\Support\Type\Literal;
 
-use Dedoc\Scramble\Support\Type\Contracts\Literal;
+use Dedoc\Scramble\Support\Type\Contracts\LiteralType;
 use Dedoc\Scramble\Support\Type\FloatType;
 
-class LiteralFloatType extends FloatType implements Literal
+class LiteralFloatType extends FloatType implements LiteralType
 {
     public float $value;
 

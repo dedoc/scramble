@@ -2,10 +2,10 @@
 
 namespace Dedoc\Scramble\Support\Type\Literal;
 
-use Dedoc\Scramble\Support\Type\Contracts\Literal;
+use Dedoc\Scramble\Support\Type\Contracts\LiteralType;
 use Dedoc\Scramble\Support\Type\IntegerType;
 
-class LiteralIntegerType extends IntegerType implements Literal
+class LiteralIntegerType extends IntegerType implements LiteralType
 {
     public int $value;
 
