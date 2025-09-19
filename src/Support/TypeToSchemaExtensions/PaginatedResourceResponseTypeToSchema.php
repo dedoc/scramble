@@ -86,9 +86,9 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
     protected function getPaginatedInformationSchema(Generic $type): OpenApiObjectType
     {
         $resourceType = $this->getResourceType($type);
-        $paginationInformationArray = $this->getDefaultPaginationInformationArray($type);
-
         $resourceTypeDefinition = $this->infer->index->getClass($resourceType->name);
+
+        $paginationInformationArray = $this->getDefaultPaginationInformationArray($type);
 
         if ($resourceTypeDefinition->hasMethodDefinition('paginationInformation')) {
             $paginationInformationArray = ReferenceTypeResolver::getInstance()
@@ -114,9 +114,9 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
         $normalizedPaginatorType = $this->getPaginatorType($type);
 
         $typeManager = match ($normalizedPaginatorType->name) {
-            Paginator::class => new PaginatorTypeManager(),
-            CursorPaginator::class => new CursorPaginatorTypeManager(),
-            LengthAwarePaginator::class => new LengthAwarePaginatorTypeManager(),
+            Paginator::class => new PaginatorTypeManager,
+            CursorPaginator::class => new CursorPaginatorTypeManager,
+            LengthAwarePaginator::class => new LengthAwarePaginatorTypeManager,
             default => null,
         };
 
@@ -172,32 +172,23 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
 
     private function makePaginationInformationType(KeyedArrayType $paginatorArray): KeyedArrayType
     {
-        $findItemByKey = function (string $key) use ($paginatorArray) {
-            foreach ($paginatorArray->items as $item) {
-                if ($item->key === $key) {
-                    return $item->value;
-                }
-            }
-            return new Union([new StringType, new NullType]);
-        };
-
-        $metaItems = [];
-        $excludedKeys = ['data', 'first_page_url', 'last_page_url', 'prev_page_url', 'next_page_url'];
-
-        foreach ($paginatorArray->items as $item) {
-            if (!in_array($item->key, $excludedKeys)) {
-                $metaItems[] = $item;
-            }
-        }
+        $defaultLinkType = new Union([new StringType, new NullType]);
+        $excludedMetaKeys = ['data', 'first_page_url', 'last_page_url', 'prev_page_url', 'next_page_url'];
 
         return new KeyedArrayType([
             new ArrayItemType_('links', new KeyedArrayType([
-                new ArrayItemType_('first', $findItemByKey('first_page_url')),
-                new ArrayItemType_('last', $findItemByKey('last_page_url')),
-                new ArrayItemType_('prev', $findItemByKey('prev_page_url')),
-                new ArrayItemType_('next', $findItemByKey('next_page_url')),
+                new ArrayItemType_('first', $paginatorArray->getItemValueTypeByKey('first_page_url', $defaultLinkType)),
+                new ArrayItemType_('last', $paginatorArray->getItemValueTypeByKey('last_page_url', $defaultLinkType)),
+                new ArrayItemType_('prev', $paginatorArray->getItemValueTypeByKey('prev_page_url', $defaultLinkType)),
+                new ArrayItemType_('next', $paginatorArray->getItemValueTypeByKey('next_page_url', $defaultLinkType)),
             ])),
-            new ArrayItemType_('meta', new KeyedArrayType($metaItems)),
+            new ArrayItemType_(
+                'meta',
+                new KeyedArrayType(array_values(array_filter(
+                    $paginatorArray->items,
+                    fn (ArrayItemType_ $t) => ! in_array($t->key, $excludedMetaKeys),
+                ))),
+            ),
         ]);
     }
 }
