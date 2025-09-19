@@ -59,7 +59,7 @@ class AssignHandler
         $varType = new Generic(OffsetSet::class, [
             $scope->getType($var),
             new KeyedArrayType(array_map(
-                fn ($pathExpression) => new ArrayItemType_(null, value: $pathExpression === null ? new TemplatePlaceholderType() : $scope->getType($pathExpression)),
+                fn ($pathExpression) => new ArrayItemType_(null, value: $pathExpression === null ? new TemplatePlaceholderType : $scope->getType($pathExpression)),
                 $path,
             )),
             $scope->getType($node->expr),

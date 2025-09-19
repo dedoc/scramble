@@ -93,7 +93,7 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
         if ($resourceTypeDefinition->hasMethodDefinition('paginationInformation')) {
             $paginationInformationArray = ReferenceTypeResolver::getInstance()
                 ->resolve(
-                    new GlobalScope(),
+                    new GlobalScope,
                     new MethodCallReferenceType($resourceType, 'paginationInformation', [
                         new UnknownType,
                         new UnknownType,
@@ -121,7 +121,7 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
         };
 
         if (! $typeManager) {
-            return new KeyedArrayType();
+            return new KeyedArrayType;
         }
 
         $paginatorArray = $typeManager->getToArrayType(new ArrayType($normalizedPaginatorType->templateTypes[1]));

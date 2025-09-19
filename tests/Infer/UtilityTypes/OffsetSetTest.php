@@ -7,7 +7,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\Type;
 
 it('handles array fetch', function () {
-    expect(["a" => 1]["a"])->toHaveType('int(1)');
+    expect(['a' => 1]['a'])->toHaveType('int(1)');
 });
 
 it('handles array set type', function () {
@@ -58,6 +58,7 @@ it('handles array deep push type', function () {
 it('allows setting keys on template type', function () {
     $a = function ($b) {
         $b['wow'] = 42;
+
         return $b;
     };
 
@@ -74,22 +75,28 @@ it('allows setting keys on template type with deep methods logic', function () {
 
     expect($result)->toHaveType('array{foo: string(bar), a: int(1), b: int(2), c: int(3)}');
 })->skip('figure out test ns');
-class Foo_ExpressionsTest {
+class Foo_ExpressionsTest
+{
     public function setA($data)
     {
         $data['a'] = 1;
+
         return $data;
     }
+
     public function setB($data)
     {
         $data = $this->setA($data);
         $data['b'] = 2;
+
         return $data;
     }
+
     public function setC($data)
     {
         $data = $this->setB($data);
         $data['c'] = 3;
+
         return $data;
     }
 }
@@ -129,7 +136,7 @@ it('preserves array key description when setting the key from offset get', funct
         'bar' => [
             /** Foo description. */
             'foo' => 42,
-        ]
+        ],
     ];
 
     $newArr = [

@@ -95,7 +95,7 @@ class OffsetSet implements ResolvingType
         } else {
             $targetItem = new ArrayItemType_(
                 key: $pathItem,
-                value: $newModifyingType = new KeyedArrayType(),
+                value: $newModifyingType = new KeyedArrayType,
             );
             $targetItems[] = $targetItem;
         }
@@ -155,12 +155,15 @@ class OffsetSet implements ResolvingType
         foreach ($pathItems as $pathItemType) {
             if ($pathItemType instanceof TemplatePlaceholderType) {
                 $normalizedPath[] = null;
+
                 continue;
             }
             if ($pathItemType instanceof LiteralString || $pathItemType instanceof LiteralIntegerType) {
                 $normalizedPath[] = $pathItemType->getValue();
+
                 continue;
             }
+
             return null;
         }
 

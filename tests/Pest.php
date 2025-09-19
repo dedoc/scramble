@@ -30,7 +30,8 @@ expect()->extend('toBeSameJson', function (mixed $expectedData) {
     return $this;
 });
 
-function getTestSourceCode () {
+function getTestSourceCode()
+{
     $getPrivateProperty = function ($object, string $property) {
         $reflection = new ReflectionClass($object);
         $prop = $reflection->getProperty($property);
@@ -45,7 +46,7 @@ function getTestSourceCode () {
         $db,
         fn ($item) => in_array(
             \Pest\Concerns\Testable::class,
-            class_uses_recursive($item['object'] ?? (object)[]),
+            class_uses_recursive($item['object'] ?? (object) []),
         ),
     );
 
