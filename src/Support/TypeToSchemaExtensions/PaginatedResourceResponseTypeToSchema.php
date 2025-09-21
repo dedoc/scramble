@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Generator\Response;
@@ -86,27 +87,44 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
     protected function getPaginatedInformationSchema(Generic $type): OpenApiObjectType
     {
         $resourceType = $this->getResourceType($type);
-        $resourceTypeDefinition = $this->infer->index->getClass($resourceType->name);
 
-        $paginationInformationArray = $this->getDefaultPaginationInformationArray($type);
+        $paginationInformation = $this->getDefaultPaginationInformationArray($type);
 
-        if ($resourceTypeDefinition->hasMethodDefinition('paginationInformation')) {
-            $paginationInformationArray = ReferenceTypeResolver::getInstance()
+        if ($this->getPaginationInformationMethod($resourceType)) {
+            $paginationInformation = ReferenceTypeResolver::getInstance()
                 ->resolve(
                     new GlobalScope,
                     new MethodCallReferenceType($resourceType, 'paginationInformation', [
                         new UnknownType,
                         new UnknownType,
-                        $paginationInformationArray,
+                        $paginationInformation,
                     ])
                 );
         }
 
-        if (! $paginationInformationArray instanceof KeyedArrayType) {
+        if (! $paginationInformation instanceof KeyedArrayType) {
             return new OpenApiObjectType;
         }
 
-        return $this->openApiTransformer->transform($paginationInformationArray);
+        return $this->openApiTransformer->transform($paginationInformation);
+    }
+
+    protected function getPaginationInformationMethod(Generic $resourceType): ?FunctionLikeDefinition
+    {
+        $resourceTypeDefinition = $this->infer->index->getClass($resourceType->name);
+
+        $method = $resourceTypeDefinition->getMethod('paginationInformation');
+
+        if (! $method) {
+            return null;
+        }
+
+        return $this->isUserDefinedPaginationInformationMethod($method) ? $method : null;
+    }
+
+    protected function isUserDefinedPaginationInformationMethod(FunctionLikeDefinition $method): bool
+    {
+        return true;
     }
 
     protected function getDefaultPaginationInformationArray(Generic $type): KeyedArrayType
