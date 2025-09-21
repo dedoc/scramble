@@ -60,7 +60,7 @@ class OffsetSet implements ResolvingType
     }
 
     /**
-     * @param array<int, int|string|null> $path
+     * @param  array<int, int|string|null>  $path
      */
     private function applyPath(KeyedArrayType $target, array $path, Type $value): KeyedArrayType
     {
