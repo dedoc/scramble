@@ -155,6 +155,55 @@ class AnnotationResourceCollectionResponseTest_Controller
     }
 }
 
+test('transforms collection with paginationInformation implementation', function () {
+    $type = getStatementType('new '.UserCollection_Five::class.'('.\Dedoc\Scramble\Tests\Files\SampleUserModel::class.'::paginate())');
+
+    assertMatchesSnapshot($this->transformer->toResponse($type)->toArray());
+});
+class UserCollection_Five extends \Illuminate\Http\Resources\Json\ResourceCollection
+{
+    public $collects = UserResource::class;
+
+    public function paginationInformation($request, $paginated, $default): array
+    {
+        $default['links']['custom'] = 'https://example.com';
+
+        return $default;
+    }
+}
+
+test('transforms collection with fully custom paginationInformation', function () {
+    $type = getStatementType('new '.UserCollection_Six::class.'('.\Dedoc\Scramble\Tests\Files\SampleUserModel::class.'::paginate())');
+
+    assertMatchesSnapshot($this->transformer->toResponse($type)->toArray());
+});
+class UserCollection_Six extends \Illuminate\Http\Resources\Json\ResourceCollection
+{
+    public $collects = UserResource::class;
+
+    public function paginationInformation($request, $paginated, $default): array
+    {
+        // Have to ignore phpstan errors here because the base class has a very restrictive array shape.
+        return [ // @phpstan-ignore-line
+            'links' => [
+                'first' => $default['links']['first'],
+                'last' => $default['links']['last'],
+                'prev' => $default['links']['prev'],
+                'next' => $default['links']['next'],
+            ],
+            'meta' => [
+                'currentPage' => $default['meta']['current_page'], // @phpstan-ignore-line
+                'lastPage' => $default['meta']['last_page'], // @phpstan-ignore-line
+                'from' => $default['meta']['from'], // @phpstan-ignore-line
+                'to' => $default['meta']['to'], // @phpstan-ignore-line
+                'total' => $default['meta']['total'], // @phpstan-ignore-line
+                'pageSize' => $default['meta']['per_page'], // @phpstan-ignore-line
+                'path' => $default['meta']['path'], // @phpstan-ignore-line
+            ],
+        ];
+    }
+}
+
 class UserResource extends \Illuminate\Http\Resources\Json\JsonResource
 {
     public function toArray($request)

@@ -8,13 +8,11 @@ use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\Types\ArrayType;
-use Dedoc\Scramble\Support\Generator\Types\IntegerType;
-use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
-use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\TypeManagers\PaginatorTypeManager;
 use Illuminate\Pagination\Paginator;
 
 class PaginatorTypeToSchema extends TypeToSchemaExtension
@@ -46,19 +44,9 @@ class PaginatorTypeToSchema extends TypeToSchemaExtension
             return null;
         }
 
-        $collectingType = $this->openApiTransformer->transform($collectedType);
+        $paginatorArray = (new PaginatorTypeManager)->getToArrayType(new ArrayType($collectedType));
 
-        return (new OpenApiObjectType)
-            ->addProperty('current_page', new IntegerType)
-            ->addProperty('data', (new ArrayType)->setItems($collectingType))
-            ->addProperty('first_page_url', (new StringType)->nullable(true))
-            ->addProperty('from', (new IntegerType)->nullable(true))
-            ->addProperty('next_page_url', (new StringType)->nullable(true))
-            ->addProperty('path', (new StringType)->nullable(true)->setDescription('Base path for paginator generated URLs.'))
-            ->addProperty('per_page', (new IntegerType)->setDescription('Number of items shown per page.'))
-            ->addProperty('prev_page_url', (new StringType)->nullable(true))
-            ->addProperty('to', (new IntegerType)->nullable(true)->setDescription('Number of the last item in the slice.'))
-            ->setRequired(['current_page', 'data', 'first_page_url', 'from', 'next_page_url', 'path', 'per_page', 'prev_page_url', 'to']);
+        return $this->openApiTransformer->transform($paginatorArray);
     }
 
     /**

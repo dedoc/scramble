@@ -39,6 +39,17 @@ class KeyedArrayType extends AbstractType
         return false;
     }
 
+    public function getItemValueTypeByKey(string|int $key, Type $default = new UnknownType): Type
+    {
+        foreach ($this->items as $item) {
+            if ($item->key === $key) {
+                return $item->value;
+            }
+        }
+
+        return $default;
+    }
+
     public function toString(): string
     {
         $name = $this->isList ? 'list' : 'array';

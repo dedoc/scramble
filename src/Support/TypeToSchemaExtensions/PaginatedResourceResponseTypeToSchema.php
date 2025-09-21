@@ -2,19 +2,33 @@
 
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
-use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\TypeManagers\CursorPaginatorTypeManager;
+use Dedoc\Scramble\Support\TypeManagers\LengthAwarePaginatorTypeManager;
+use Dedoc\Scramble\Support\TypeManagers\PaginatorTypeManager;
 use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\Resources\Json\PaginatedResourceResponse;
-use Illuminate\Support\Arr;
+use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use LogicException;
 
 class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
@@ -72,35 +86,67 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
 
     protected function getPaginatedInformationSchema(Generic $type): OpenApiObjectType
     {
-        $normalizedPaginatorType = $this->getPaginatorType($type);
+        $resourceType = $this->getResourceType($type);
 
-        $paginatorSchemaType = $this->openApiTransformer->transform($normalizedPaginatorType);
-        if (! $paginatorSchemaType instanceof OpenApiObjectType) {
-            throw new LogicException('Paginator schema is expected to be an object, got '.$paginatorSchemaType::class);
+        $paginationInformation = $this->getDefaultPaginationInformationArray($type);
+
+        if ($this->getPaginationInformationMethod($resourceType)) {
+            $paginationInformation = ReferenceTypeResolver::getInstance()
+                ->resolve(
+                    new GlobalScope,
+                    new MethodCallReferenceType($resourceType, 'paginationInformation', [
+                        new UnknownType,
+                        new UnknownType,
+                        $paginationInformation,
+                    ])
+                );
         }
 
-        return (new OpenApiObjectType)
-            ->addProperty('links', tap(new OpenApiObjectType, function (OpenApiObjectType $type) use ($paginatorSchemaType) {
-                $defaultLinkType = (new StringType)->nullable(true);
-                $type->properties = [
-                    'first' => $paginatorSchemaType->properties['first_page_url'] ?? $defaultLinkType,
-                    'last' => $paginatorSchemaType->properties['last_page_url'] ?? $defaultLinkType,
-                    'prev' => $paginatorSchemaType->properties['prev_page_url'] ?? $defaultLinkType,
-                    'next' => $paginatorSchemaType->properties['next_page_url'] ?? $defaultLinkType,
-                ];
-                $type->setRequired(array_keys($type->properties));
-            }))
-            ->addProperty('meta', tap(new OpenApiObjectType, function (OpenApiObjectType $type) use ($paginatorSchemaType) {
-                $type->properties = Arr::except($paginatorSchemaType->properties, [
-                    'data',
-                    'first_page_url',
-                    'last_page_url',
-                    'prev_page_url',
-                    'next_page_url',
-                ]);
-                $type->setRequired(array_keys($type->properties));
-            }))
-            ->setRequired(['meta', 'links']);
+        if (! $paginationInformation instanceof KeyedArrayType) {
+            return new OpenApiObjectType;
+        }
+
+        $schema = $this->openApiTransformer->transform($paginationInformation);
+
+        return $schema instanceof OpenApiObjectType ? $schema : new OpenApiObjectType;
+    }
+
+    protected function getPaginationInformationMethod(ObjectType $resourceType): ?FunctionLikeDefinition
+    {
+        $resourceTypeDefinition = $this->infer->index->getClass($resourceType->name);
+
+        $method = $resourceTypeDefinition?->getMethod('paginationInformation');
+
+        if (! $method) {
+            return null;
+        }
+
+        return $this->isUserDefinedPaginationInformationMethod($method) ? $method : null;
+    }
+
+    protected function isUserDefinedPaginationInformationMethod(FunctionLikeDefinition $method): bool
+    {
+        return true;
+    }
+
+    protected function getDefaultPaginationInformationArray(Generic $type): KeyedArrayType
+    {
+        $normalizedPaginatorType = $this->getPaginatorType($type);
+
+        $typeManager = match ($normalizedPaginatorType->name) {
+            Paginator::class => new PaginatorTypeManager,
+            CursorPaginator::class => new CursorPaginatorTypeManager,
+            LengthAwarePaginator::class => new LengthAwarePaginatorTypeManager,
+            default => null,
+        };
+
+        if (! $typeManager) {
+            return new KeyedArrayType;
+        }
+
+        $paginatorArray = $typeManager->getToArrayType(new ArrayType($normalizedPaginatorType->templateTypes[1]));
+
+        return $this->makePaginationInformationType($paginatorArray);
     }
 
     protected function getPaginatedDescription(Generic $type): string
@@ -141,6 +187,28 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
         return new Generic($paginatorType->name, [
             new IntegerType,
             $this->getCollectingClassType($type),
+        ]);
+    }
+
+    private function makePaginationInformationType(KeyedArrayType $paginatorArray): KeyedArrayType
+    {
+        $defaultLinkType = new Union([new StringType, new NullType]);
+        $excludedMetaKeys = ['data', 'first_page_url', 'last_page_url', 'prev_page_url', 'next_page_url'];
+
+        return new KeyedArrayType([
+            new ArrayItemType_('links', new KeyedArrayType([
+                new ArrayItemType_('first', $paginatorArray->getItemValueTypeByKey('first_page_url', $defaultLinkType)),
+                new ArrayItemType_('last', $paginatorArray->getItemValueTypeByKey('last_page_url', $defaultLinkType)),
+                new ArrayItemType_('prev', $paginatorArray->getItemValueTypeByKey('prev_page_url', $defaultLinkType)),
+                new ArrayItemType_('next', $paginatorArray->getItemValueTypeByKey('next_page_url', $defaultLinkType)),
+            ])),
+            new ArrayItemType_(
+                'meta',
+                new KeyedArrayType(array_values(array_filter(
+                    $paginatorArray->items,
+                    fn (ArrayItemType_ $t) => ! in_array($t->key, $excludedMetaKeys),
+                ))),
+            ),
         ]);
     }
 }
