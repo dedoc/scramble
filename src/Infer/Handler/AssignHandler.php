@@ -30,7 +30,7 @@ class AssignHandler
         }
     }
 
-    private function handleVarAssignment(Node\Expr\Assign $node, Node\Expr\Variable $var, Scope $scope)
+    private function handleVarAssignment(Node\Expr\Assign $node, Node\Expr\Variable $var, Scope $scope): void
     {
         $scope->addVariableType(
             $node->getAttribute('startLine'),
@@ -41,7 +41,7 @@ class AssignHandler
         $scope->setType($node, $type);
     }
 
-    private function handleArrayKeyAssignment(Node\Expr\Assign $node, Node\Expr\ArrayDimFetch $targetNode, Scope $scope)
+    private function handleArrayKeyAssignment(Node\Expr\Assign $node, Node\Expr\ArrayDimFetch $targetNode, Scope $scope): void
     {
         /** @var (?Expr)[] $path */
         $path = [$targetNode->dim];
@@ -56,6 +56,10 @@ class AssignHandler
             return;
         }
 
+        if (! is_string($var->name)) {
+            return;
+        }
+
         $varType = new Generic(OffsetSet::class, [
             $scope->getType($var),
             new KeyedArrayType(array_map(
@@ -66,8 +70,8 @@ class AssignHandler
         ]);
 
         $scope->addVariableType(
-            $node->getAttribute('startLine'),
-            (string) $var->name,
+            $node->getAttribute('startLine'), // @phpstan-ignore argument.type
+            $var->name,
             $varType,
         );
 

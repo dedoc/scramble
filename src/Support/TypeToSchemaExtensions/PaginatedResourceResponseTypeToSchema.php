@@ -106,14 +106,16 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
             return new OpenApiObjectType;
         }
 
-        return $this->openApiTransformer->transform($paginationInformation);
+        $schema = $this->openApiTransformer->transform($paginationInformation);
+
+        return $schema instanceof OpenApiObjectType ? $schema : new OpenApiObjectType;
     }
 
     protected function getPaginationInformationMethod(Generic $resourceType): ?FunctionLikeDefinition
     {
         $resourceTypeDefinition = $this->infer->index->getClass($resourceType->name);
 
-        $method = $resourceTypeDefinition->getMethod('paginationInformation');
+        $method = $resourceTypeDefinition?->getMethod('paginationInformation');
 
         if (! $method) {
             return null;

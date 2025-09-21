@@ -59,6 +59,9 @@ class OffsetSet implements ResolvingType
         return $this->applyPath($target->clone(), $path, $value);
     }
 
+    /**
+     * @param array<int, int|string|null> $path
+     */
     private function applyPath(KeyedArrayType $target, array $path, Type $value): KeyedArrayType
     {
         $modifyingType = $target;
