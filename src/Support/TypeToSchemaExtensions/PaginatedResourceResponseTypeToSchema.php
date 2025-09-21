@@ -111,7 +111,7 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
         return $schema instanceof OpenApiObjectType ? $schema : new OpenApiObjectType;
     }
 
-    protected function getPaginationInformationMethod(Generic $resourceType): ?FunctionLikeDefinition
+    protected function getPaginationInformationMethod(ObjectType $resourceType): ?FunctionLikeDefinition
     {
         $resourceTypeDefinition = $this->infer->index->getClass($resourceType->name);
 
