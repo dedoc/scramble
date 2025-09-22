@@ -329,6 +329,33 @@ it('supports simple comments descriptions in api resource', function () {
     ]);
 });
 
+it('supports list types', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(ApiResourceTest_ResourceWithList::class);
+
+    $schema = $transformer->transform($type)->toArray();
+    $component = $this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithList::class)->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithList',
+    ]);
+
+    expect($component)
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                'items' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'integer',
+                    ],
+                ],
+            ],
+            'required' => ['items'],
+        ]);
+});
+
 class ComplexTypeHandlersTest_SampleType extends JsonResource
 {
     public function toArray($request)
@@ -446,6 +473,18 @@ class ApiResourceTest_ResourceWithExamples extends JsonResource
              * @example Multiword example
              */
             'id' => $this->id,
+        ];
+    }
+}
+
+
+class ApiResourceTest_ResourceWithList extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            /** @var list<int> $items */
+            'items' => $this->resource->items,
         ];
     }
 }

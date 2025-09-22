@@ -77,6 +77,12 @@ class PhpDocTypeHelper
                 );
             }
 
+            if ($type->type->name === 'list') {
+                return new ArrayType(
+                    value: static::toType($type->genericTypes[0] ?? new MixedType),
+                );
+            }
+
             if (! ($typeObject = static::toType($type->type)) instanceof ObjectType) {
                 return $typeObject;
             }
@@ -146,6 +152,9 @@ class PhpDocTypeHelper
             return new StringType;
         }
         if ($type->name === 'array') {
+            return new ArrayType;
+        }
+        if ($type->name === 'list') {
             return new ArrayType;
         }
         if ($type->name === 'object') {
