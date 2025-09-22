@@ -477,7 +477,6 @@ class ApiResourceTest_ResourceWithExamples extends JsonResource
     }
 }
 
-
 class ApiResourceTest_ResourceWithList extends JsonResource
 {
     public function toArray($request)
