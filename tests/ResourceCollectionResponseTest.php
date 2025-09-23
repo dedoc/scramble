@@ -222,6 +222,24 @@ class UserCollection_Seven extends \Illuminate\Http\Resources\Json\ResourceColle
     }
 }
 
+test('transforms collection with paginationInformation and unset', function () {
+    $type = getStatementType('new '.UserCollection_Eight::class.'('.\Dedoc\Scramble\Tests\Files\SampleUserModel::class.'::paginate())');
+
+    assertMatchesSnapshot($this->transformer->toResponse($type)->toArray());
+});
+class UserCollection_Eight extends \Illuminate\Http\Resources\Json\ResourceCollection
+{
+    public $collects = UserResource::class;
+
+    public function paginationInformation($request, $paginated, $default): array
+    {
+        unset($default['links']['prev'], $default['links']['next']);
+        unset($default['meta']);
+
+        return $default;
+    }
+}
+
 class UserResource extends \Illuminate\Http\Resources\Json\JsonResource
 {
     public function toArray($request)
