@@ -65,7 +65,7 @@ class ReferenceTypeResolver
             fn (Type $t) => $t instanceof Union ? TypeHelper::mergeTypes(...$t->types) : null,
         );
 
-        return $this->resolveCustomTypes($finalizedResolvedType->setOriginal($originalType), $originalType);
+        return $this->resolveLateTypes($finalizedResolvedType->setOriginal($originalType), $originalType);
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type
@@ -99,12 +99,12 @@ class ReferenceTypeResolver
         );
     }
 
-    private function resolveCustomTypes(Type $type, Type $originalType): Type
+    private function resolveLateTypes(Type $type, Type $originalType): Type
     {
         $attributes = $type->attributes();
 
         $traverser = new TypeTraverser([
-            new CustomTypeResolvingTypeVisitor,
+            new LateTypeResolvingTypeVisitor,
         ]);
 
         return $traverser
