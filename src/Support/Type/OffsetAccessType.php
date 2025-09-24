@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
-use Dedoc\Scramble\Support\Type\Contracts\LiteralType;
 
 class OffsetAccessType extends AbstractType implements LateResolvingType
 {
@@ -21,23 +20,7 @@ class OffsetAccessType extends AbstractType implements LateResolvingType
 
     public function resolve(): Type
     {
-        if ($this->type instanceof ArrayType) {
-            return $this->type->value;
-        }
-
-        if (! $this->type instanceof KeyedArrayType) {
-            return new UnknownType;
-        }
-
-        $offset = $this->offset instanceof LiteralType
-            ? $this->offset->getValue()
-            : null;
-
-        if (! is_string($offset) && ! is_int($offset)) {
-            return new UnknownType;
-        }
-
-        return $this->type->getItemValueTypeByKey($offset);
+        return $this->type->getOffsetValueType($this->offset);
     }
 
     public function isResolvable(): bool

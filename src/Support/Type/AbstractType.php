@@ -52,6 +52,11 @@ abstract class AbstractType implements Type
         return new UnknownType("Cannot get a property type [$propertyName] on type [{$className}]");
     }
 
+    public function getOffsetValueType(Type $offset): Type
+    {
+        return new UnknownType("Cannot get an offset value type ".$this::class);
+    }
+
     public function getMethodDefinition(string $methodName, Scope $scope = new GlobalScope): ?FunctionLikeDefinition
     {
         return null;

@@ -16,6 +16,7 @@ use Dedoc\Scramble\Infer\UtilityTypes\OffsetSet;
 use Dedoc\Scramble\Infer\UtilityTypes\OffsetUnset;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -170,8 +171,12 @@ class ClassDefinition implements ClassDefinitionContract
                 if (
                     $isAnnotatedAsArray
                     && $t instanceof Generic
-                    && ($t->isInstanceOf(OffsetSet::class) || $t->isInstanceOf(OffsetUnset::class))
+                    && $t->isInstanceOf(OffsetUnset::class)
                 ) {
+                    return true;
+                }
+
+                if ($isAnnotatedAsArray && $t instanceof LateResolvingType) {
                     return true;
                 }
 

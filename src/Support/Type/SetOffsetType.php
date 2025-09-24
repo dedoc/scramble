@@ -1,62 +1,77 @@
 <?php
 
-namespace Dedoc\Scramble\Infer\UtilityTypes;
+namespace Dedoc\Scramble\Support\Type;
 
-use Dedoc\Scramble\Infer\Extensions\Event\ReferenceResolutionEvent;
-use Dedoc\Scramble\Infer\Extensions\ResolvingType;
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
-use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
-use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
-use Dedoc\Scramble\Support\Type\TemplateType;
-use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Arr;
 
-/**
- * @internal
- */
-class OffsetSet implements ResolvingType
+class SetOffsetType extends AbstractType implements LateResolvingType
 {
-    public function resolve(ReferenceResolutionEvent $event): ?Type
+    public function __construct(
+        public Type $type,
+        public Type $offset,
+        public Type $value,
+    )
     {
-        $type = $event->type;
+    }
 
-        if (! $type instanceof Generic) {
-            throw new \InvalidArgumentException('Type must be generic');
-        }
+    public function nodes(): array
+    {
+        return ['type', 'offset', 'value'];
+    }
 
-        $target = $this->getTarget($type);
-
-        if ($this->shouldDefferResolution($target)) {
-            return null;
-        }
-
-        if (! $target instanceof KeyedArrayType && ! $target instanceof ArrayType) {
+    public function resolve(): Type
+    {
+        if (! $this->offset instanceof KeyedArrayType) {
             return new UnknownType;
         }
 
-        if (! $pathType = $this->getPath($type)) {
-            return $target;
+        if (! $this->type instanceof KeyedArrayType && ! $this->type instanceof ArrayType) {
+            return new UnknownType;
         }
 
-        if (! $value = $this->getValue($type)) {
-            return $target;
+        if ($this->type instanceof ArrayType) {
+            return $this->type; // ??
         }
 
-        if ($target instanceof ArrayType) {
-            return $target; // ??
-        }
-
-        $path = $this->normalizePath($pathType);
+        $path = $this->normalizePath($this->offset);
         if (! $path) {
             return new UnknownType;
         }
 
-        return $this->applyPath($target->clone(), $path, $value);
+        return $this->applyPath($this->type->clone(), $path, $this->value);
+    }
+
+    public function isResolvable(): bool
+    {
+        return $this->shouldResolveSubtype($this->type)
+            && $this->shouldResolveSubtype($this->offset)
+            && $this->shouldResolveSubtype($this->value);
+    }
+
+    private function shouldResolveSubtype(Type $type): bool
+    {
+        if ($type instanceof TemplateType) {
+            return false;
+        }
+
+        if ($type instanceof LateResolvingType) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function isSame(Type $type)
+    {
+        return false;
+    }
+
+    public function toString(): string
+    {
+        return $this->type->toString().'&{'.$this->offset->toString().': '.$this->value->toString().'}';
     }
 
     /**
@@ -71,7 +86,7 @@ class OffsetSet implements ResolvingType
 
             $modifyingType = $isLast
                 ? $this->applyLeafAssignment($modifyingType, $pathItem, $value)
-                : $this->applyIntermediateStep($modifyingType, $pathItem, $target);
+                : $this->applyIntermediateStep($modifyingType, $pathItem);
 
             if ($modifyingType === null) {
                 return $target;
@@ -81,7 +96,7 @@ class OffsetSet implements ResolvingType
         return $target;
     }
 
-    private function applyIntermediateStep(KeyedArrayType $modifyingType, string|int|null $pathItem, KeyedArrayType $target): ?KeyedArrayType
+    private function applyIntermediateStep(KeyedArrayType $modifyingType, string|int|null $pathItem): ?KeyedArrayType
     {
         $targetItems = $modifyingType->items;
 
@@ -130,23 +145,6 @@ class OffsetSet implements ResolvingType
         return $modifyingType;
     }
 
-    private function getTarget(Generic $type): ?Type
-    {
-        return $type->templateTypes[0] ?? null;
-    }
-
-    private function getPath(Generic $type): ?KeyedArrayType
-    {
-        $path = $type->templateTypes[1] ?? null;
-
-        return $path instanceof KeyedArrayType ? $path : null;
-    }
-
-    private function getValue(Generic $type): ?Type
-    {
-        return $type->templateTypes[2] ?? null;
-    }
-
     /**
      * @return null|list<string|int|null>
      */
@@ -171,18 +169,5 @@ class OffsetSet implements ResolvingType
         }
 
         return $normalizedPath;
-    }
-
-    private function shouldDefferResolution(?Type $target): bool
-    {
-        if (! $target) {
-            return false;
-        }
-
-        if ($target instanceof TemplateType) {
-            return true;
-        }
-
-        return $target instanceof Generic && $target->isInstanceOf(ResolvingType::class);
     }
 }

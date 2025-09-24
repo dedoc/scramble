@@ -14,6 +14,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -77,6 +78,7 @@ class ReferenceTypeResolver
             CallableCallReferenceType::class => $this->resolveCallableCallReferenceType($scope, $t),
             NewCallReferenceType::class => $this->resolveNewCallReferenceType($scope, $t),
             PropertyFetchReferenceType::class => $this->resolvePropertyFetchReferenceType($scope, $t),
+            LateResolvingType::class => $this->resolveLateTypeEarly($t),
             default => null,
         };
 
@@ -97,6 +99,15 @@ class ReferenceTypeResolver
             $type,
             fn (Type $t) => $t instanceof ObjectType && $t->name === StaticReference::STATIC ? $staticType : $t,
         );
+    }
+
+    private function resolveLateTypeEarly(LateResolvingType $type): Type
+    {
+        if (! $type->isResolvable()) {
+            return $type;
+        }
+
+        return $type->resolve();
     }
 
     private function resolveLateTypes(Type $type, Type $originalType): Type
@@ -393,7 +404,7 @@ class ReferenceTypeResolver
      */
     private function resolveAndNormalizeCallee(Scope $scope, Type $callee): Type
     {
-        $resolved = $callee instanceof AbstractReferenceType
+        $resolved = ($callee instanceof AbstractReferenceType || $callee instanceof LateResolvingType)
             ? $this->resolve($scope, $callee)
             : $callee;
 

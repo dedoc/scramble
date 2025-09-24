@@ -14,6 +14,11 @@ class ArrayType extends AbstractType
         return ['value', 'key'];
     }
 
+    public function getOffsetValueType(Type $offset): Type
+    {
+        return $this->value;
+    }
+
     public function accepts(Type $otherType): bool
     {
         if (parent::accepts($otherType)) {

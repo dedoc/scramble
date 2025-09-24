@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+use Dedoc\Scramble\Support\Type\Contracts\LiteralType;
+
 /**
  * Represents an array with known keys. This may represent a list as well.
  */
@@ -44,6 +46,29 @@ class KeyedArrayType extends AbstractType
         foreach ($this->items as $item) {
             if ($item->key === $key) {
                 return $item->value;
+            }
+        }
+
+        return $default;
+    }
+
+    public function getOffsetValueType(Type $offset): Type
+    {
+        $default = parent::getOffsetValueType($offset);
+
+        if (! $offset instanceof LiteralType) {
+            return $default;
+        }
+
+        $offsetValue = $offset->getValue();
+
+        if (! is_string($offsetValue) && ! is_int($offsetValue)) {
+            return $default;
+        }
+
+        foreach ($this->items as $item) {
+            if ($item->key === $offsetValue) {
+                return $item->value->mergeAttributes($item->attributes());
             }
         }
 
