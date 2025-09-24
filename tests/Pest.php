@@ -89,7 +89,14 @@ expect()->extend('toHaveType', function (string|callable $expectedType) {
     /** @var \PhpParser\Node\Expr\FuncCall $node */
     $node = (new \PhpParser\NodeFinder)->findFirst($fileAst, fn ($n) => $n instanceof \PhpParser\Node\Expr\FuncCall && $n->name instanceof \PhpParser\Node\Name && $n->name->toString() === 'expect');
 
-    $actualType = ReferenceTypeResolver::getInstance()->resolve($scope, $scope->getType($node->args[0]->value));
+    $actualType = ReferenceTypeResolver::getInstance()->resolve(
+        $scope,
+        $incompleteType = ($scope->getType($node->args[0]->value)),
+    );
+
+    // dump([
+    //     $incompleteType->toString() => $actualType->toString(),
+    // ]);
 
     if (is_string($expectedType)) {
         expect($actualType->toString())->toBe($expectedType);

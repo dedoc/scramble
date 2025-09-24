@@ -14,6 +14,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -65,7 +66,7 @@ class ReferenceTypeResolver
             fn (Type $t) => $t instanceof Union ? TypeHelper::mergeTypes(...$t->types) : null,
         );
 
-        return $this->resolveCustomTypes($finalizedResolvedType->setOriginal($originalType), $originalType);
+        return $this->resolveLateTypes($finalizedResolvedType->setOriginal($originalType), $originalType);
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type
@@ -77,6 +78,7 @@ class ReferenceTypeResolver
             CallableCallReferenceType::class => $this->resolveCallableCallReferenceType($scope, $t),
             NewCallReferenceType::class => $this->resolveNewCallReferenceType($scope, $t),
             PropertyFetchReferenceType::class => $this->resolvePropertyFetchReferenceType($scope, $t),
+            LateResolvingType::class => $this->resolveLateTypeEarly($t),
             default => null,
         };
 
@@ -99,12 +101,21 @@ class ReferenceTypeResolver
         );
     }
 
-    private function resolveCustomTypes(Type $type, Type $originalType): Type
+    private function resolveLateTypeEarly(LateResolvingType $type): Type
+    {
+        if (! $type->isResolvable()) {
+            return $type;
+        }
+
+        return $type->resolve();
+    }
+
+    private function resolveLateTypes(Type $type, Type $originalType): Type
     {
         $attributes = $type->attributes();
 
         $traverser = new TypeTraverser([
-            new CustomTypeResolvingTypeVisitor,
+            new LateTypeResolvingTypeVisitor,
         ]);
 
         return $traverser
@@ -393,7 +404,7 @@ class ReferenceTypeResolver
      */
     private function resolveAndNormalizeCallee(Scope $scope, Type $callee): Type
     {
-        $resolved = $callee instanceof AbstractReferenceType
+        $resolved = ($callee instanceof AbstractReferenceType || $callee instanceof LateResolvingType)
             ? $this->resolve($scope, $callee)
             : $callee;
 

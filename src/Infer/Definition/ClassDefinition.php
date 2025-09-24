@@ -12,9 +12,9 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
-use Dedoc\Scramble\Infer\UtilityTypes\OffsetSet;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -166,7 +166,11 @@ class ClassDefinition implements ClassDefinitionContract
                 $isAnnotatedAsArray = $annotatedReturnType instanceof ArrayType
                     || $annotatedReturnType instanceof KeyedArrayType;
 
-                if ($isAnnotatedAsArray && $t instanceof Generic && $t->isInstanceOf(OffsetSet::class)) {
+                if ($isAnnotatedAsArray && $t instanceof LateResolvingType) {
+                    return true;
+                }
+
+                if ($t instanceof TemplateType && ! $t->is) {
                     return true;
                 }
 

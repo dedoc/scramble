@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -227,5 +228,18 @@ class TypeHelper
         }
 
         return new UnknownType('Cannot create type from reflection type '.((string) $reflectionType));
+    }
+
+    public static function isResolvable(Type $type): bool
+    {
+        if ($type instanceof TemplateType) {
+            return false;
+        }
+
+        if ($type instanceof LateResolvingType) {
+            return false;
+        }
+
+        return true;
     }
 }

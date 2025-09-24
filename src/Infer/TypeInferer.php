@@ -17,6 +17,7 @@ use Dedoc\Scramble\Infer\Handler\PhpDocHandler;
 use Dedoc\Scramble\Infer\Handler\PropertyHandler;
 use Dedoc\Scramble\Infer\Handler\ReturnHandler;
 use Dedoc\Scramble\Infer\Handler\ThrowHandler;
+use Dedoc\Scramble\Infer\Handler\UnsetHandler;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -45,6 +46,7 @@ class TypeInferer extends NodeVisitorAbstract
         $this->handlers = [
             new FunctionLikeHandler,
             new AssignHandler,
+            new UnsetHandler,
             new ClassHandler,
             new PropertyHandler,
             new ArrayHandler,

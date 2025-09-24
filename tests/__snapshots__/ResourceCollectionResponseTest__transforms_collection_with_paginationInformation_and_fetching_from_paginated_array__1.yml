@@ -1,0 +1,3 @@
+description: 'Paginated set of `UserResource`'
+content:
+    application/json: { schema: { type: object, properties: { data: { $ref: '#/components/schemas/UserCollection_Seven' }, page: { type: integer }, totalPages: { type: integer } }, required: [data, page, totalPages] } }

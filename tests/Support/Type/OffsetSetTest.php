@@ -77,6 +77,11 @@ it('allows setting keys on template type with deep methods logic', function () {
 })->skip('figure out test ns');
 class Foo_ExpressionsTest
 {
+    public function get42()
+    {
+        return 42;
+    }
+
     public function setA($data)
     {
         $data['a'] = 1;
@@ -100,6 +105,27 @@ class Foo_ExpressionsTest
         return $data;
     }
 }
+
+it('allows calling methods on retrieved types', function () {
+    $arr = [];
+    $foo = new Foo_ExpressionsTest;
+
+    $arr['foo'] = $foo;
+
+    $r = $arr['foo']->get42();
+
+    expect($r)->toHaveType('int(42)');
+})->skip('figure out test ns');
+
+it('allows calling methods on deep retrieved types', function () {
+    $arr = [
+        'foo' => ['bar' => new Foo_ExpressionsTest],
+    ];
+
+    $r = $arr['foo']['bar']->get42();
+
+    expect($r)->toHaveType('int(42)');
+})->skip('figure out test ns');
 
 it('preserves array key description when setting the offset from offset get', function () {
     $arr = [
