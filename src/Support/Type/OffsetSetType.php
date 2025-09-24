@@ -13,9 +13,7 @@ class OffsetSetType extends AbstractType implements LateResolvingType
         public Type $type,
         public Type $offset,
         public Type $value,
-    )
-    {
-    }
+    ) {}
 
     public function nodes(): array
     {

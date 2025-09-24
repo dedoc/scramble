@@ -119,7 +119,7 @@ it('allows calling methods on retrieved types', function () {
 
 it('allows calling methods on deep retrieved types', function () {
     $arr = [
-        'foo' => ['bar' => new Foo_ExpressionsTest]
+        'foo' => ['bar' => new Foo_ExpressionsTest],
     ];
 
     $r = $arr['foo']['bar']->get42();

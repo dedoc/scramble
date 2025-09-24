@@ -54,7 +54,7 @@ abstract class AbstractType implements Type
 
     public function getOffsetValueType(Type $offset): Type
     {
-        return new UnknownType("Cannot get an offset value type ".$this::class);
+        return new UnknownType('Cannot get an offset value type '.$this::class);
     }
 
     public function getMethodDefinition(string $methodName, Scope $scope = new GlobalScope): ?FunctionLikeDefinition

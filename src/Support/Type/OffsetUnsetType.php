@@ -12,9 +12,7 @@ class OffsetUnsetType extends AbstractType implements LateResolvingType
     public function __construct(
         public Type $type,
         public Type $offset,
-    )
-    {
-    }
+    ) {}
 
     public function nodes(): array
     {
