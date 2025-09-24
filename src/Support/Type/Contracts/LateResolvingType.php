@@ -7,7 +7,7 @@ use Dedoc\Scramble\Support\Type\Type;
 /**
  * This is the type which resolution is posponed until the internal template type is known.
  */
-interface LateResolvingType
+interface LateResolvingType extends Type
 {
     public function resolve(): Type;
 

@@ -78,9 +78,9 @@ class PhpDocTypeHelper
             }
 
             if ($type->type->name === 'list') {
-                return new ArrayType(
-                    value: static::toType($type->genericTypes[0] ?? new MixedType),
-                );
+                $valueType = isset($type->genericTypes[0]) ? static::toType($type->genericTypes[0]) : new MixedType;
+
+                return new ArrayType(value: $valueType);
             }
 
             if (! ($typeObject = static::toType($type->type)) instanceof ObjectType) {

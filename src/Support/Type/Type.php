@@ -38,6 +38,8 @@ interface Type
 
     public function getPropertyType(string $propertyName, Scope $scope): Type;
 
+    public function getOffsetValueType(Type $offset): Type;
+
     public function getMethodDefinition(string $methodName, Scope $scope = new GlobalScope): ?FunctionLikeDefinition;
 
     /** @return $this */

@@ -13,12 +13,12 @@ use PhpParser\Node\Expr;
 
 class UnsetHandler
 {
-    public function shouldHandle($node)
+    public function shouldHandle(Node $node): bool
     {
         return $node instanceof Node\Stmt\Unset_;
     }
 
-    public function leave(Node\Stmt\Unset_ $node, Scope $scope)
+    public function leave(Node\Stmt\Unset_ $node, Scope $scope): void
     {
         foreach ($node->vars as $var) {
             if ($var instanceof Node\Expr\ArrayDimFetch) {
