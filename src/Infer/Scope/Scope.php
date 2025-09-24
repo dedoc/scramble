@@ -314,11 +314,6 @@ class Scope
         return (bool) $this->context->functionDefinition;
     }
 
-    private function handleUnset(Node\Expr\FuncCall $node)
-    {
-        dd($node);
-    }
-
     public function addVariableType(int $line, string $name, Type $type)
     {
         if (! isset($this->variables[$name])) {
