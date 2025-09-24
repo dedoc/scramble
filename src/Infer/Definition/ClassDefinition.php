@@ -168,14 +168,6 @@ class ClassDefinition implements ClassDefinitionContract
                 $isAnnotatedAsArray = $annotatedReturnType instanceof ArrayType
                     || $annotatedReturnType instanceof KeyedArrayType;
 
-                if (
-                    $isAnnotatedAsArray
-                    && $t instanceof Generic
-                    && $t->isInstanceOf(OffsetUnset::class)
-                ) {
-                    return true;
-                }
-
                 if ($isAnnotatedAsArray && $t instanceof LateResolvingType) {
                     return true;
                 }

@@ -7,7 +7,7 @@ use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Illuminate\Support\Arr;
 
-class SetOffsetType extends AbstractType implements LateResolvingType
+class OffsetSetType extends AbstractType implements LateResolvingType
 {
     public function __construct(
         public Type $type,
@@ -71,7 +71,7 @@ class SetOffsetType extends AbstractType implements LateResolvingType
 
     public function toString(): string
     {
-        return $this->type->toString().'&{'.$this->offset->toString().': '.$this->value->toString().'}';
+        return 'OffsetSet<'.$this->type->toString().', '.$this->offset->toString().', '.$this->value->toString().'>';
     }
 
     /**

@@ -94,6 +94,10 @@ expect()->extend('toHaveType', function (string|callable $expectedType) {
         $incompleteType = ($scope->getType($node->args[0]->value)),
     );
 
+    // dump([
+    //     $incompleteType->toString() => $actualType->toString(),
+    // ]);
+
     if (is_string($expectedType)) {
         expect($actualType->toString())->toBe($expectedType);
     } else {

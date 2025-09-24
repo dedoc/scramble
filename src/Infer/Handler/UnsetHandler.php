@@ -3,10 +3,9 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Infer\UtilityTypes\OffsetUnset;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\OffsetUnsetType;
 use Dedoc\Scramble\Support\Type\VoidType;
 use Illuminate\Support\Arr;
 use PhpParser\Node;
@@ -55,13 +54,13 @@ class UnsetHandler
             return;
         }
 
-        $varType = new Generic(OffsetUnset::class, [
+        $varType = new OffsetUnsetType(
             $scope->getType($var),
             new KeyedArrayType(array_map(
                 fn ($pathExpression) => new ArrayItemType_(null, value: $scope->getType($pathExpression)),
                 $path,
             )),
-        ]);
+        );
 
         $scope->addVariableType(
             $node->getAttribute('startLine'), // @phpstan-ignore argument.type

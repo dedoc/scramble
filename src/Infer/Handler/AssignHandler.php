@@ -7,7 +7,7 @@ use Dedoc\Scramble\Infer\UtilityTypes\OffsetSet;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
-use Dedoc\Scramble\Support\Type\SetOffsetType;
+use Dedoc\Scramble\Support\Type\OffsetSetType;
 use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Illuminate\Support\Arr;
 use PhpParser\Node;
@@ -61,7 +61,7 @@ class AssignHandler
             return;
         }
 
-        $varType = new SetOffsetType(
+        $varType = new OffsetSetType(
             $scope->getType($var),
             new KeyedArrayType(array_map(
                 fn ($pathExpression) => new ArrayItemType_(null, value: $pathExpression === null ? new TemplatePlaceholderType : $scope->getType($pathExpression)),

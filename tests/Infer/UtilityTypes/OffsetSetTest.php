@@ -117,6 +117,16 @@ it('allows calling methods on retrieved types', function () {
     expect($r)->toHaveType('int(42)');
 })->skip('figure out test ns');
 
+it('allows calling methods on deep retrieved types', function () {
+    $arr = [
+        'foo' => ['bar' => new Foo_ExpressionsTest]
+    ];
+
+    $r = $arr['foo']['bar']->get42();
+
+    expect($r)->toHaveType('int(42)');
+})->skip('figure out test ns');
+
 it('preserves array key description when setting the offset from offset get', function () {
     $arr = [
         /** Foo description. */
