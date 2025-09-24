@@ -44,22 +44,9 @@ class OffsetSetType extends AbstractType implements LateResolvingType
 
     public function isResolvable(): bool
     {
-        return $this->shouldResolveSubtype($this->type)
-            && $this->shouldResolveSubtype($this->offset)
-            && $this->shouldResolveSubtype($this->value);
-    }
-
-    private function shouldResolveSubtype(Type $type): bool
-    {
-        if ($type instanceof TemplateType) {
-            return false;
-        }
-
-        if ($type instanceof LateResolvingType) {
-            return false;
-        }
-
-        return true;
+        return TypeHelper::isResolvable($this->type)
+            && TypeHelper::isResolvable($this->offset)
+            && TypeHelper::isResolvable($this->value);
     }
 
     public function isSame(Type $type)
