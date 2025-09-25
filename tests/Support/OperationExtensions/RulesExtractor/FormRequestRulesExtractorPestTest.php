@@ -28,6 +28,16 @@ class FormRequestA_FormRequestRulesExtractorPestTest
     }
 }
 
+it('extracts form request parameters for closure route class', function () {
+    $openApi = generateForRoute(Route::post(
+        '/test',
+        fn (FormRequestA_FormRequestRulesExtractorPestTest $request) => null,
+    ));
+
+    expect($openApi['components']['schemas']['FormRequestA_FormRequestRulesExtractorPestTest']['properties'])
+        ->toHaveKey('foo');
+});
+
 it('extracts parameters with route parameter bindings', function () {
     $openApi = $this->generateForRoute(function () {
         return Route::post('/test/{user}', ControllerB_FormRequestRulesExtractorPestTest::class);

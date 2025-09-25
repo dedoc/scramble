@@ -60,7 +60,7 @@ class ClosureReflector
 
     public function getCode(): string
     {
-        return $this->getReflection()->getCode();
+        return ($this->getReflection()->getDocComment() ?: '')."\n".$this->getReflection()->getCode();
     }
 
     public function getNameContext(): NameContext
@@ -85,16 +85,28 @@ class ClosureReflector
 
         $code = '<?php '.$this->getCode().';';
 
-        /** @var Node\FunctionLike|null $node */
         $node = (new NodeFinder)
             ->findFirst(
                 $this->parser->parseContent($code)->getStatements(),
-                fn (Node $node) => $node instanceof Node\FunctionLike,
+                fn (Node $n) => $n instanceof Node\Stmt\Expression && $n->expr instanceof Node\FunctionLike,
             );
+
+        /** @var Node\Stmt\Expression|null $node */
 
         if (! $node) {
             return null;
         }
+
+        /*
+         * We first find statement containing function like expression and not function like directly,
+         * due to the PHPDoc. When PHPDoc is attached to the closure, it will be contained in the statement
+         * node, not the function like expression node. This way we attach this PHPDoc to the expression so
+         * the rest of the codebase can handle it correctly.
+         */
+        $attrs = $node->getAttributes();
+        /** @var Node\FunctionLike $node */
+        $node = $node->expr;
+        $node->setAttributes($attrs);
 
         if (! $path = $this->getReflection()->getFileName()) {
             return null;

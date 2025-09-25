@@ -26,11 +26,11 @@ class AttributesParametersExtractor implements ParameterExtractor
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
     {
-        if (! $reflectionMethod = $routeInfo->reflectionMethod()) {
+        if (! $reflectionAction = $routeInfo->reflectionAction()) {
             return $parameterExtractionResults;
         }
 
-        $parameters = collect($reflectionMethod->getAttributes(ParameterAttribute::class, ReflectionAttribute::IS_INSTANCEOF))
+        $parameters = collect($reflectionAction->getAttributes(ParameterAttribute::class, ReflectionAttribute::IS_INSTANCEOF))
             ->values()
             ->map(fn (ReflectionAttribute $ra) => $this->createParameter($parameterExtractionResults, $ra->newInstance(), $ra->getArguments()))
             ->all();

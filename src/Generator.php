@@ -75,6 +75,9 @@ class Generator
                     if (config('app.debug', false)) {
                         $method = $route->methods()[0];
                         $action = $route->getAction('uses');
+                        if ($action instanceof \Closure) {
+                            $action = '{closure}';
+                        }
 
                         dump("Error when analyzing route '$method $route->uri' ($action): {$e->getMessage()} – ".($e->getFile().' on line '.$e->getLine()));
                         logger()->error("Error when analyzing route '$method $route->uri' ($action): {$e->getMessage()} – ".($e->getFile().' on line '.$e->getLine()));

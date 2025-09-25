@@ -37,14 +37,11 @@ class PathParametersExtractor implements ParameterExtractor
     {
         $reflectionRoute = ReflectionRoute::createFromRoute($route = $routeInfo->route);
 
-        $methodPhpDocNode = $routeInfo->phpDoc();
         $aliases = $reflectionRoute->getSignatureParametersMap();
         $routeParams = collect($route->signatureParameters());
         $reflectionParamsByKeys = $routeParams->keyBy->name;
         $paramsValuesClasses = $reflectionRoute->getBoundParametersTypes();
-        $phpDocTypehintParam = $methodPhpDocNode
-            ? collect($methodPhpDocNode->getParamTagValues())->keyBy(fn (ParamTagValueNode $n) => Str::replace('$', '', $n->parameterName))
-            : collect();
+        $phpDocTypehintParam = collect($routeInfo->phpDoc()->getParamTagValues())->keyBy(fn (ParamTagValueNode $n) => Str::replace('$', '', $n->parameterName));
 
         /*
          * Figure out param type based on importance priority:
@@ -98,9 +95,9 @@ class PathParametersExtractor implements ParameterExtractor
         ?string $boundClass,
     ) {
         $type = $boundClass ? new ObjectType($boundClass) : new UnknownType;
-        if ($routeInfo->reflectionMethod()) {
-            $type->setAttribute('file', $routeInfo->reflectionMethod()->getFileName());
-            $type->setAttribute('line', $routeInfo->reflectionMethod()->getStartLine());
+        if ($routeInfo->reflectionAction()) {
+            $type->setAttribute('file', $routeInfo->reflectionAction()->getFileName());
+            $type->setAttribute('line', $routeInfo->reflectionAction()->getStartLine());
         }
 
         if ($phpDocParam?->type) {
