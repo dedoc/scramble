@@ -180,7 +180,7 @@ class ReferenceTypeResolver
             return new UnknownType;
         }
 
-        if (! $methodDefinition = $calleeType->getMethodDefinition($type->methodName, $scope)) {
+        if (! $methodDefinition = $classDefinition->getMethod($type->methodName)) {
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeType->name]");
         }
 
@@ -245,7 +245,7 @@ class ReferenceTypeResolver
             return new UnknownType;
         }
 
-        if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
+        if (! $methodDefinition = $calleeDefinition->getMethod($type->methodName)) {
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$contextualClassName]");
         }
 

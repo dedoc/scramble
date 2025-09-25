@@ -49,10 +49,12 @@ class PhpDoc
 
         if ($nameResolver) {
             $tagValues = [
+                ...$node->getMixinTagValues(),
                 ...$node->getReturnTagValues(),
                 ...$node->getReturnTagValues('@response'),
                 ...$node->getVarTagValues(),
                 ...$node->getThrowsTagValues(),
+                ...$node->getUsesTagValues(),
             ];
 
             foreach ($tagValues as $tagValue) {
