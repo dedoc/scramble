@@ -92,7 +92,7 @@ class RuleSetToSchemaTransformer
     {
         $rulesHandler = new RulesMapper($this->openApiTransformer, $this);
 
-        $methodName = Str::camel(class_basename(get_class($rule))); // @phpstan-ignore argument.type
+        $methodName = Str::camel(class_basename(get_class($rule)));
 
         return method_exists($rulesHandler, $methodName)
             ? $rulesHandler->$methodName($type, $rule)

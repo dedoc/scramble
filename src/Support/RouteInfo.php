@@ -115,7 +115,7 @@ class RouteInfo
 
     public function reflectionAction(): ReflectionMethod|ReflectionClosure|null
     {
-        return $this->isClassBased() ? $this->reflectionMethod() : $this->reflectionClosure(); // @phpstan-ignore method.deprecated
+        return $this->isClassBased() ? $this->reflectionMethod() : $this->reflectionClosure();
     }
 
     public function reflectionClosure(): ?ReflectionClosure
