@@ -3772,12 +3772,6 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
 
 		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>description" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
