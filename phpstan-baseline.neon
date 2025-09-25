@@ -1033,12 +1033,6 @@ parameters:
 			path: src/Infer/Handler/AssignHandler.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Handler\\AssignHandler\:\:handleVarAssignment\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Handler/AssignHandler.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Handler\\AssignHandler\:\:leave\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -3778,12 +3772,6 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
 
 		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>description" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -3857,12 +3845,6 @@ parameters:
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RequestEssentialsExtension\:\:getAlternativeServers\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RequestEssentialsExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RequestEssentialsExtension\:\:getDefaultTags\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
 			path: src/Support/OperationExtensions/RequestEssentialsExtension.php
@@ -4440,12 +4422,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\RouteInfo\:\:getReturnType\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/RouteInfo.php
-
-		-
-			message: '#^Parameter \#1 \$class of method Dedoc\\Scramble\\Infer\:\:analyzeClass\(\) expects string, string\|null given\.$#'
-			identifier: argument.type
 			count: 1
 			path: src/Support/RouteInfo.php
 

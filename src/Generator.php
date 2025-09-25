@@ -59,6 +59,11 @@ class Generator
             ->map(function (Route $route, int $index) use ($openApi, $config, $typeTransformer) {
                 try {
                     $operation = $this->routeToOperation($openApi, $route, $config, $typeTransformer);
+
+                    if (! $operation) {
+                        return null;
+                    }
+
                     $operation->setAttribute('index', $index);
 
                     return $operation;
@@ -70,6 +75,9 @@ class Generator
                     if (config('app.debug', false)) {
                         $method = $route->methods()[0];
                         $action = $route->getAction('uses');
+                        if ($action instanceof \Closure) {
+                            $action = '{closure}';
+                        }
 
                         dump("Error when analyzing route '$method $route->uri' ($action): {$e->getMessage()} – ".($e->getFile().' on line '.$e->getLine()));
                         logger()->error("Error when analyzing route '$method $route->uri' ($action): {$e->getMessage()} – ".($e->getFile().' on line '.$e->getLine()));
@@ -120,7 +128,7 @@ class Generator
 
     private function createOperationsSorter(): array
     {
-        $defaultSortValue = fn (Operation $o) => $o->tags[0];
+        $defaultSortValue = fn (Operation $o) => $o->tags[0] ?? null;
 
         return [
             fn (Operation $a, Operation $b) => $a->getAttribute('groupWeight', INF) <=> $b->getAttribute('groupWeight', INF),
@@ -160,7 +168,7 @@ class Generator
         return collect(RouteFacade::getRoutes())
             ->pipe(function (Collection $c) {
                 $onlyRoutes = $c->filter(function (Route $route) {
-                    //                    dump($route->getName());
+
                     if (! is_string($route->getAction('controller'))) {
                         return false;
                     }
@@ -187,7 +195,6 @@ class Generator
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
             })
             ->filter($config->routes())
-            ->filter(fn (Route $r) => (bool) $r->getAction('controller'))
             ->filter(function (Route $route) {
                 if (! is_string($route->getAction('uses'))) {
                     return true;
@@ -226,10 +233,6 @@ class Generator
     private function routeToOperation(OpenApi $openApi, Route $route, GeneratorConfig $config, TypeTransformer $typeTransformer)
     {
         $routeInfo = new RouteInfo($route, $this->infer);
-
-        if (! $routeInfo->isClassBased()) {
-            return null;
-        }
 
         $operation = $this->operationBuilder->build($routeInfo, $openApi, $config, $typeTransformer);
 

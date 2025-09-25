@@ -44,12 +44,12 @@ class FormRequestParametersExtractor implements ParameterExtractor
 
     private function getFormRequestClassName(RouteInfo $routeInfo): ?string
     {
-        if (! $reflectionMethod = $routeInfo->reflectionMethod()) {
+        if (! $reflectionAction = $routeInfo->reflectionAction()) {
             return null;
         }
 
         /** @var ReflectionParameter $requestParam */
-        if (! $requestParam = collect($reflectionMethod->getParameters())->first($this->isCustomRequestParam(...))) {
+        if (! $requestParam = collect($reflectionAction->getParameters())->first($this->isCustomRequestParam(...))) {
             return null;
         }
 

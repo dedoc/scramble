@@ -19,10 +19,10 @@ use Dedoc\Scramble\Infer\Services\ShallowTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
-use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Illuminate\Support\Arr;
+use LogicException;
 use PhpParser\Node;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
@@ -33,7 +33,6 @@ use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt\ClassMethod;
-use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 
 class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
@@ -48,7 +47,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         public FunctionLike $functionLike,
         public Index $index,
         public FileNameResolver $fileNameResolver,
-        public ClassDefinition $classDefinition,
+        public ?ClassDefinition $classDefinition = null,
         public array $indexBuilders = [],
         public bool $withSideEffects = false,
     ) {
@@ -57,17 +56,15 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
 
     public function build(): FunctionLikeDefinition
     {
-        $definition = $this->classDefinition->methods[$this->name] ?? new FunctionLikeDefinition(
-            new FunctionType(name: $this->name),
-        );
-
-        $inferrer = $this->traverseClassMethod([$this->functionLike], $definition);
-
-        $definition = $this->classDefinition->methods[$this->name];
+        $inferrer = $this->traverseAstNode($this->functionLike);
 
         $scope = $inferrer->getFunctionLikeScope($this->functionLike);
 
-        if ($this->functionLike instanceof ClassMethod && $scope) {
+        if (! $definition = $scope?->context->functionDefinition) {
+            throw new LogicException('No definition in scope found.');
+        }
+
+        if ($this->functionLike instanceof ClassMethod && $scope) { // @phpstan-ignore booleanAnd.rightAlwaysTrue
             $definition->selfOutTypeBuilder = new SelfOutTypeBuilder($scope, $this->functionLike);
         }
 
@@ -80,10 +77,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         return $definition;
     }
 
-    /**
-     * @param  Node[]  $nodes
-     */
-    private function traverseClassMethod(array $nodes, FunctionLikeDefinition $methodDefinition): TypeInferer
+    private function traverseAstNode(Node $node): TypeInferer
     {
         $traverser = new NodeTraverser;
 
@@ -94,12 +88,6 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             Context::getInstance()->extensionsBroker->extensions,
             [new IndexBuildingHandler($this->indexBuilders)],
         ));
-
-        $node = (new NodeFinder)
-            ->findFirst(
-                $nodes,
-                fn ($n) => $n instanceof ClassMethod && $n->name->toString() === $methodDefinition->type->name
-            );
 
         $traverser->traverse(Arr::wrap($node));
 

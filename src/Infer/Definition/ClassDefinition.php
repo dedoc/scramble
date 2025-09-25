@@ -118,15 +118,20 @@ class ClassDefinition implements ClassDefinitionContract
 
             static::resolveFunctionReturnReferences($methodScope, $this->methods[$name]->type);
 
-            foreach ($this->methods[$name]->type->exceptions as $i => $exceptionType) {
-                $this->methods[$name]->type->exceptions[$i] = (new ReferenceTypeResolver($scope->index)) // @phpstan-ignore assign.propertyType
-                    ->resolve($methodScope, $exceptionType);
-            }
+            static::resolveFunctionExceptions($methodScope, $this->methods[$name]->type);
 
             $this->methods[$name]->referencesResolved = true;
         }
 
         return $this->methods[$name];
+    }
+
+    public static function resolveFunctionExceptions(Scope $scope, FunctionLikeType $functionType): void
+    {
+        foreach ($functionType->exceptions as $i => $exceptionType) { // @phpstan-ignore property.notFound
+            $functionType->exceptions[$i] = (new ReferenceTypeResolver($scope->index))
+                ->resolve($scope, $exceptionType);
+        }
     }
 
     public static function resolveFunctionReturnReferences(Scope $scope, FunctionLikeType $functionType): void

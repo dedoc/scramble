@@ -23,6 +23,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionAttribute;
+use ReflectionMethod;
 
 class RequestEssentialsExtension extends OperationExtension
 {
@@ -36,24 +37,27 @@ class RequestEssentialsExtension extends OperationExtension
         parent::__construct($infer, $openApiTransformer, $config);
     }
 
-    private function getDefaultTags(Operation $operation, RouteInfo $routeInfo)
+    /**
+     * @return string[]
+     */
+    private function getDefaultTags(Operation $operation, RouteInfo $routeInfo): array
     {
-        $defaultName = Str::of(class_basename($routeInfo->className()))->replace('Controller', '');
+        $defaultName = (string) Str::of(class_basename($routeInfo->className()))->replace('Controller', '');
 
         if ($groupAttrsInstances = $this->getTagsAnnotatedByGroups($routeInfo)) {
             $attributeInstance = $groupAttrsInstances[0]->newInstance();
 
             $operation->setAttribute('groupWeight', $attributeInstance->weight);
 
-            return [
+            return array_filter([
                 $attributeInstance->name ?: $defaultName,
-            ];
+            ]);
         }
 
-        return array_unique([
+        return array_values(array_unique(array_filter([
             ...$this->extractTagsForMethod($routeInfo),
             $defaultName,
-        ]);
+        ])));
     }
 
     public function handle(Operation $operation, RouteInfo $routeInfo)
@@ -132,8 +136,8 @@ class RequestEssentialsExtension extends OperationExtension
 
     private function extractTagsForMethod(RouteInfo $routeInfo)
     {
-        $classPhpDoc = $routeInfo->reflectionMethod()
-            ? $routeInfo->reflectionMethod()->getDeclaringClass()->getDocComment()
+        $classPhpDoc = $routeInfo->isClassBased()
+            ? $routeInfo->reflectionMethod()?->getDeclaringClass()->getDocComment()
             : false;
 
         $classPhpDoc = $classPhpDoc ? PhpDoc::parse($classPhpDoc) : new PhpDocNode([]);
@@ -153,7 +157,7 @@ class RequestEssentialsExtension extends OperationExtension
             eloquent: (function () use ($routeInfo) {
                 // Manual operation ID setting.
                 // Check if Endpoint attribute is present with an `operationId` value
-                $operationId = ($routeInfo->reflectionMethod()?->getAttributes(Endpoint::class)[0] ?? null)
+                $operationId = ($routeInfo->reflectionAction()?->getAttributes(Endpoint::class)[0] ?? null)
                     ?->newInstance()
                     ?->operationId;
 
@@ -199,9 +203,15 @@ class RequestEssentialsExtension extends OperationExtension
      */
     private function getTagsAnnotatedByGroups(RouteInfo $routeInfo): array
     {
+        $reflection = $routeInfo->reflectionAction();
+
+        $methodClassGroupAttributes = $reflection instanceof ReflectionMethod
+            ? $reflection->getDeclaringClass()->getAttributes(Group::class)
+            : [];
+
         return [
-            ...($routeInfo->reflectionMethod()?->getAttributes(Group::class) ?? []),
-            ...($routeInfo->reflectionMethod()?->getDeclaringClass()->getAttributes(Group::class) ?? []),
+            ...($reflection?->getAttributes(Group::class) ?? []),
+            ...$methodClassGroupAttributes,
         ];
     }
 

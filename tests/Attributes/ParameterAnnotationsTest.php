@@ -10,6 +10,7 @@ use Dedoc\Scramble\Attributes\PathParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Route;
 
 it('body parameters attaches info to inferred params', function () {
     $openApi = generateForRoute(fn (Router $r) => $r->post('api/test', BodyParameterController_ParameterAnnotationsTest::class));
@@ -196,4 +197,19 @@ class QueryParameterController_ParameterAnnotationsTest
     public function __invoke() {}
 }
 
-//  body parameters test, pay attention to required property!
+it('supports subclass annotations on closure routes', function () {
+    $openApi = generateForRoute(Route::get(
+        'api/test',
+        #[HeaderParameter('X-Retry-After', type: 'int')]
+        function () {}
+    ));
+
+    expect($openApi['paths']['/test']['get']['parameters'][0])
+        ->toBe([
+            'name' => 'X-Retry-After',
+            'in' => 'header',
+            'schema' => [
+                'type' => 'integer',
+            ],
+        ]);
+});

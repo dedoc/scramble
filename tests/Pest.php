@@ -228,9 +228,9 @@ dataset('extendableTemplateTypes', [
     ['callable', 'TA', 'TA is callable'],
 ]);
 
-function generateForRoute(Closure $param)
+function generateForRoute($param)
 {
-    $route = $param(app(Router::class));
+    $route = $param instanceof Route ? $param : $param(app(Router::class));
 
     $config = Scramble::configure()
         ->useConfig(config('scramble'))
