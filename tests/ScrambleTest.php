@@ -99,7 +99,7 @@ class ScrambleTest extends TestCase
         $doc = $generator(Scramble::getGeneratorConfig('default'));
 
         $this->assertEquals('http://localhost', $doc['servers'][0]['url']);
-        $this->assertEquals(['/api/a', '/api/b', '/api/c', '/second-api/a', '/second-api/b', '/second-api/c'], array_keys($doc['paths']));
+        $this->assertEquals(['/storage/{path}', '/api/a', '/api/b', '/api/c', '/second-api/a', '/second-api/b', '/second-api/c'], array_keys($doc['paths']));
     }
 
     protected function registerCustomPathApi()

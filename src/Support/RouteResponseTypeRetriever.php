@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support;
 
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Type\AbstractTypeVisitor;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
@@ -11,6 +13,7 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeTraverser;
@@ -77,12 +80,24 @@ class RouteResponseTypeRetriever
 
     private function getInferredType()
     {
-        if (! $methodType = $this->routeInfo->getMethodType()) {
+        if ($this->routeInfo->isClassBased()) {
+            if (! $methodType = $this->routeInfo->getMethodType()) {
+                return null;
+            }
+
+            return (new ObjectType($this->routeInfo->className()))
+                ->getMethodReturnType($methodType->name);
+        }
+
+        if (! $definition = $this->routeInfo->getFunctionLikeDefinition()) {
             return null;
         }
 
-        return (new ObjectType($this->routeInfo->className()))
-            ->getMethodReturnType($methodType->name);
+        return ReferenceTypeResolver::getInstance()
+            ->resolve(
+                new GlobalScope,
+                new CallableCallReferenceType($definition->type, [])
+            );
     }
 
     private function getMethodPhpDocReturnType()

@@ -23,6 +23,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionAttribute;
+use ReflectionMethod;
 
 class RequestEssentialsExtension extends OperationExtension
 {
@@ -38,22 +39,22 @@ class RequestEssentialsExtension extends OperationExtension
 
     private function getDefaultTags(Operation $operation, RouteInfo $routeInfo)
     {
-        $defaultName = Str::of(class_basename($routeInfo->className()))->replace('Controller', '');
+        $defaultName = (string) Str::of(class_basename($routeInfo->className()))->replace('Controller', '');
 
         if ($groupAttrsInstances = $this->getTagsAnnotatedByGroups($routeInfo)) {
             $attributeInstance = $groupAttrsInstances[0]->newInstance();
 
             $operation->setAttribute('groupWeight', $attributeInstance->weight);
 
-            return [
+            return array_values(array_filter([
                 $attributeInstance->name ?: $defaultName,
-            ];
+            ]));
         }
 
-        return array_unique([
+        return array_values(array_unique(array_filter([
             ...$this->extractTagsForMethod($routeInfo),
             $defaultName,
-        ]);
+        ])));
     }
 
     public function handle(Operation $operation, RouteInfo $routeInfo)
@@ -199,9 +200,15 @@ class RequestEssentialsExtension extends OperationExtension
      */
     private function getTagsAnnotatedByGroups(RouteInfo $routeInfo): array
     {
+        $reflection = $routeInfo->reflectionFunctionLike();
+
+        $methodClassGroupAttributes = $reflection instanceof ReflectionMethod
+            ? $reflection->getDeclaringClass()->getAttributes(Group::class)
+            : [];
+
         return [
-            ...($routeInfo->reflectionMethod()?->getAttributes(Group::class) ?? []),
-            ...($routeInfo->reflectionMethod()?->getDeclaringClass()->getAttributes(Group::class) ?? []),
+            ...($reflection?->getAttributes(Group::class) ?? []),
+            ...$methodClassGroupAttributes,
         ];
     }
 
