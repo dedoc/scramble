@@ -48,7 +48,7 @@ class ResponseExtension extends OperationExtension
             : [$returnType];
 
         $responses = collect($returnTypes)
-            ->merge($routeInfo->getMethodType()->exceptions ?? [])
+            ->merge($routeInfo->getActionType()->exceptions ?? [])
             ->map(function (Type $type) use ($routeInfo) {
                 /*
                  * Any inline comments on the entire response type that are not originating in the controller,
@@ -85,7 +85,7 @@ class ResponseExtension extends OperationExtension
      */
     private function applyResponsesAttributes(Collection $inferredResponses, RouteInfo $routeInfo): Collection
     {
-        $responseAttributes = $routeInfo->reflectionMethod()?->getAttributes(ResponseAttribute::class, ReflectionAttribute::IS_INSTANCEOF) ?: [];
+        $responseAttributes = $routeInfo->reflectionAction()?->getAttributes(ResponseAttribute::class, ReflectionAttribute::IS_INSTANCEOF) ?: [];
 
         if (! count($responseAttributes)) {
             return $inferredResponses;
@@ -102,7 +102,7 @@ class ResponseExtension extends OperationExtension
                 $responseAttributeInstance,
                 $originalResponse,
                 $this->openApiTransformer,
-                ($fileName = $routeInfo->reflectionMethod()?->getFileName())
+                ($fileName = $routeInfo->reflectionAction()?->getFileName())
                     ? FileNameResolver::createForFile($fileName)
                     : null,
             );

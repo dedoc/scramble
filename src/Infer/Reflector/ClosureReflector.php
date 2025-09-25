@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
+use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\IndexBuilders\RequestParametersBuilder;
 use Dedoc\Scramble\Support\IndexBuilders\ScopeCollector;
 use Laravel\SerializableClosure\Support\ReflectionClosure;
@@ -22,6 +23,9 @@ use WeakMap;
 
 class ClosureReflector
 {
+    /**
+     * @var WeakMap<Closure, self>
+     */
     private static WeakMap $cache;
 
     private ?NameContext $nameContext = null;
@@ -34,12 +38,18 @@ class ClosureReflector
     ) {
     }
 
+    /**
+     * @return WeakMap<Closure, self>
+     */
     private static function getCache(): WeakMap
     {
-        return self::$cache ??= new WeakMap;
+        /** @var WeakMap<Closure, self> $default */
+        $default = new WeakMap;
+
+        return self::$cache ??= $default;
     }
 
-    public static function make(Closure $closure)
+    public static function make(Closure $closure): self
     {
         if (self::getCache()->offsetExists($closure)) {
             return self::getCache()->offsetGet($closure);
@@ -59,7 +69,11 @@ class ClosureReflector
 
     public function getNameContext(): NameContext
     {
-        return $this->nameContext ??= FileNameResolver::createForFile($this->getReflection()->getFileName())->nameContext;
+        if (! $path = $this->getReflection()->getFileName()) {
+            throw new \LogicException('Cannot find file name for closure');
+        }
+
+        return $this->nameContext ??= FileNameResolver::createForFile($path)->nameContext;
     }
 
     public function getReflection(): ReflectionClosure
@@ -75,9 +89,10 @@ class ClosureReflector
 
         $code = '<?php '.$this->getCode().';';
 
+        /** @var Node\FunctionLike|null $node */
         $node = (new NodeFinder)
             ->findFirst(
-                $this->parser->parseContent($code)->getStatements()[0],
+                $this->parser->parseContent($code)->getStatements(),
                 fn (Node $node) => $node instanceof Node\FunctionLike,
             );
 
@@ -112,20 +127,29 @@ class ClosureReflector
         return $this->astNode = $node;
     }
 
+    /**
+     * @param IndexBuilder<array<string, mixed>>[] $indexBuilders
+     */
     public function getFunctionLikeDefinition(array $indexBuilders = [], bool $withSideEffects = false): FunctionLikeDefinition
     {
+        if (! $functionLikeNode = $this->getAstNode()) {
+            throw new \LogicException('Cannot get AST node of closure');
+        }
+
         $scopeCollector = new ScopeCollector;
 
         $closureDefinition = (new Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder(
             '{closure}',
-            $this->getAstNode(),
+            $functionLikeNode,
             app(Infer::class)->index,
             new FileNameResolver($this->getNameContext()),
             indexBuilders: [...$indexBuilders, $scopeCollector],
             withSideEffects: $withSideEffects,
         ))->build();
 
-        $scope = $scopeCollector->getScope($closureDefinition);
+        if (! $scope = $scopeCollector->getScope($closureDefinition)) {
+            throw new \LogicException('Cannot get scope of closure');
+        }
 
         Infer\Definition\ClassDefinition::resolveFunctionReturnReferences($scope, $closureDefinition->type);
         Infer\Definition\ClassDefinition::resolveFunctionExceptions($scope, $closureDefinition->type);

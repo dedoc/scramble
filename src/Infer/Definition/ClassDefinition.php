@@ -128,7 +128,7 @@ class ClassDefinition implements ClassDefinitionContract
 
     public static function resolveFunctionExceptions(Scope $scope, FunctionLikeType $functionType): void
     {
-        foreach ($functionType->exceptions as $i => $exceptionType) {
+        foreach ($functionType->exceptions as $i => $exceptionType) { // @phpstan-ignore property.notFound
             $functionType->exceptions[$i] = (new ReferenceTypeResolver($scope->index)) // @phpstan-ignore assign.propertyType
                 ->resolve($scope, $exceptionType);
         }

@@ -27,7 +27,7 @@ class ErrorResponsesExtension extends OperationExtension
 {
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
-        if (! $methodType = $routeInfo->getMethodType()) {
+        if (! $methodType = $routeInfo->getActionType()) {
             return;
         }
 

@@ -16,7 +16,7 @@ class ResponseHeadersExtension extends OperationExtension
 {
     public function handle(Operation $operation, RouteInfo $routeInfo): void
     {
-        if (! $reflectionMethod = $routeInfo->reflectionMethod()) {
+        if (! $reflectionMethod = $routeInfo->reflectionAction()) {
             return;
         }
 

@@ -37,7 +37,10 @@ class RequestEssentialsExtension extends OperationExtension
         parent::__construct($infer, $openApiTransformer, $config);
     }
 
-    private function getDefaultTags(Operation $operation, RouteInfo $routeInfo)
+    /**
+     * @return string[]
+     */
+    private function getDefaultTags(Operation $operation, RouteInfo $routeInfo): array
     {
         $defaultName = (string) Str::of(class_basename($routeInfo->className()))->replace('Controller', '');
 
@@ -46,9 +49,9 @@ class RequestEssentialsExtension extends OperationExtension
 
             $operation->setAttribute('groupWeight', $attributeInstance->weight);
 
-            return array_values(array_filter([
+            return array_filter([
                 $attributeInstance->name ?: $defaultName,
-            ]));
+            ]);
         }
 
         return array_values(array_unique(array_filter([
@@ -133,8 +136,8 @@ class RequestEssentialsExtension extends OperationExtension
 
     private function extractTagsForMethod(RouteInfo $routeInfo)
     {
-        $classPhpDoc = $routeInfo->reflectionMethod()
-            ? $routeInfo->reflectionMethod()->getDeclaringClass()->getDocComment()
+        $classPhpDoc = $routeInfo->isClassBased()
+            ? $routeInfo->reflectionMethod()?->getDeclaringClass()->getDocComment()
             : false;
 
         $classPhpDoc = $classPhpDoc ? PhpDoc::parse($classPhpDoc) : new PhpDocNode([]);
@@ -154,7 +157,7 @@ class RequestEssentialsExtension extends OperationExtension
             eloquent: (function () use ($routeInfo) {
                 // Manual operation ID setting.
                 // Check if Endpoint attribute is present with an `operationId` value
-                $operationId = ($routeInfo->reflectionMethod()?->getAttributes(Endpoint::class)[0] ?? null)
+                $operationId = ($routeInfo->reflectionAction()?->getAttributes(Endpoint::class)[0] ?? null)
                     ?->newInstance()
                     ?->operationId;
 

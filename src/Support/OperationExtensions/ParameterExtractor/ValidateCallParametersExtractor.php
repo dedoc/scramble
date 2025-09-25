@@ -27,7 +27,7 @@ class ValidateCallParametersExtractor implements ParameterExtractor
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
     {
-        if (! $astNode = $routeInfo->methodNode()) {
+        if (! $astNode = $routeInfo->actionNode()) {
             return $parameterExtractionResults;
         }
 

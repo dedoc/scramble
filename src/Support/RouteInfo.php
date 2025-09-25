@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support;
 
+use Closure;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Infer\Reflector\ClosureReflector;
@@ -12,6 +13,7 @@ use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\InferredParame
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Illuminate\Routing\Route;
 use Laravel\SerializableClosure\Support\ReflectionClosure;
+use LogicException;
 use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Stmt\ClassMethod;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
@@ -40,7 +42,7 @@ class RouteInfo
 
     public function __construct(
         public readonly Route $route,
-        private Infer $infer,
+        private Infer $infer, // @phpstan-ignore property.onlyWritten
     ) {
         /** @var Bag<array<string, InferredParameter>> $bag */
         $bag = new Bag;
@@ -77,7 +79,7 @@ class RouteInfo
             return new PhpDocNode([]);
         }
 
-        return $this->phpDoc = $this->actionNode()->getAttribute('parsedPhpDoc') ?: new PhpDocNode([]);
+        return $this->phpDoc = $this->actionNode()->getAttribute('parsedPhpDoc') ?: new PhpDocNode([]); // @phpstan-ignore return.type
     }
 
     /**
@@ -89,7 +91,12 @@ class RouteInfo
             return $this->methodNode;
         }
 
-        return $this->methodNode = $this->getActionReflector()->getAstNode();
+        $methodNode = $this->getActionReflector()->getAstNode();
+        if (! $methodNode instanceof ClassMethod) {
+            throw new LogicException('ClassMethod node expected from method reflector');
+        }
+
+        return $this->methodNode = $methodNode;
     }
 
     protected function closureNode(): ?FunctionLike
@@ -103,15 +110,15 @@ class RouteInfo
 
     public function actionNode(): ?FunctionLike
     {
-        return $this->isClassBased() ? $this->methodNode() : $this->closureNode();
+        return $this->isClassBased() ? $this->methodNode() : $this->closureNode(); // @phpstan-ignore method.deprecated
     }
 
     public function reflectionAction(): ReflectionMethod|ReflectionClosure|null
     {
-        return $this->isClassBased() ? $this->reflectionMethod() : $this->reflectionClosure();
+        return $this->isClassBased() ? $this->reflectionMethod() : $this->reflectionClosure(); // @phpstan-ignore method.deprecated
     }
 
-    protected function reflectionClosure(): ?ReflectionClosure
+    public function reflectionClosure(): ?ReflectionClosure
     {
         if ($this->isClassBased()) {
             return null;
@@ -119,7 +126,7 @@ class RouteInfo
 
         $uses = $this->route->getAction('uses');
 
-        if (! is_callable($uses)) {
+        if (! $uses instanceof Closure) {
             return null;
         }
 
@@ -130,9 +137,6 @@ class RouteInfo
         return new ReflectionClosure($uses);
     }
 
-    /**
-     * @deprecated use `reflectionAction` instead.
-     */
     public function reflectionMethod(): ?ReflectionMethod
     {
         if (! $this->isClassBased()) {
@@ -158,7 +162,11 @@ class RouteInfo
             return MethodReflector::make(...explode('@', $this->route->getAction('uses')));
         }
 
-        return ClosureReflector::make($this->route->getAction('uses'));
+        if ($this->route->getAction('uses') instanceof Closure) {
+            return ClosureReflector::make($this->route->getAction('uses'));
+        }
+
+        throw new LogicException('Cannot determine the action reflector');
     }
 
     public function getActionDefinition(): ?Infer\Definition\FunctionLikeDefinition
@@ -169,7 +177,7 @@ class RouteInfo
 
         $scopeCollector = new ScopeCollector;
 
-        $this->actionDefinition = $this->getActionReflector()?->getFunctionLikeDefinition(
+        $this->actionDefinition = $this->getActionReflector()->getFunctionLikeDefinition(
             indexBuilders: [
                 new RequestParametersBuilder($this->requestParametersFromCalls),
                 $scopeCollector,
