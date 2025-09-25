@@ -30,7 +30,7 @@ class RouteResponseTypeRetriever
 
     public function getResponseType()
     {
-        if (! $this->routeInfo->getMethodType()) {
+        if (! $this->routeInfo->getActionType()) {
             return null;
         }
 
@@ -50,11 +50,13 @@ class RouteResponseTypeRetriever
         if ($annotatedBodyType = $this->getAnnotatedBodyType()) {
             return $annotatedBodyType;
         }
+
+        return null;
     }
 
     private function getAnnotatedBodyType()
     {
-        if (! $inferredTypeAttribute = $this->routeInfo->getMethodType()->getAttribute('inferredReturnType')) {
+        if (! $inferredTypeAttribute = $this->routeInfo->getActionType()->getAttribute('inferredReturnType')) {
             return null;
         }
 
@@ -81,7 +83,7 @@ class RouteResponseTypeRetriever
     private function getInferredType()
     {
         if ($this->routeInfo->isClassBased()) {
-            if (! $methodType = $this->routeInfo->getMethodType()) {
+            if (! $methodType = $this->routeInfo->getActionType()) {
                 return null;
             }
 

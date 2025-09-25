@@ -29,7 +29,7 @@ class RouteInfo
 
     private ?ClassMethod $methodNode = null;
 
-    private ?FunctionLike $closureNode = null;
+    private ?FunctionLike $actionNode = null;
 
     private ?Infer\Scope\Scope $scope = null;
 
@@ -94,11 +94,11 @@ class RouteInfo
 
     protected function closureNode(): ?FunctionLike
     {
-        if ($this->closureNode || $this->isClassBased()) {
-            return $this->closureNode;
+        if ($this->actionNode || $this->isClassBased()) {
+            return $this->actionNode;
         }
 
-        return $this->closureNode = $this->getActionReflector()->getAstNode();
+        return $this->actionNode = $this->getActionReflector()->getAstNode();
     }
 
     public function actionNode(): ?FunctionLike
@@ -111,7 +111,7 @@ class RouteInfo
         return $this->isClassBased() ? $this->reflectionMethod() : $this->reflectionClosure();
     }
 
-    public function reflectionClosure(): ?ReflectionClosure
+    protected function reflectionClosure(): ?ReflectionClosure
     {
         if ($this->isClassBased()) {
             return null;
@@ -130,6 +130,9 @@ class RouteInfo
         return new ReflectionClosure($uses);
     }
 
+    /**
+     * @deprecated use `reflectionAction` instead.
+     */
     public function reflectionMethod(): ?ReflectionMethod
     {
         if (! $this->isClassBased()) {
