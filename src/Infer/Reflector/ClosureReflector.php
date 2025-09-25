@@ -92,7 +92,6 @@ class ClosureReflector
             );
 
         /** @var Node\Stmt\Expression|null $node */
-
         if (! $node) {
             return null;
         }
