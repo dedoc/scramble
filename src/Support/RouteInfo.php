@@ -209,8 +209,10 @@ class RouteInfo
     /** @internal */
     public function getScope(): Infer\Scope\Scope
     {
+        $this->getActionDefinition();
+
         if (! $this->scope) {
-            throw new RuntimeException('Scope is not initialized for route. Make sure to call `getMethodType` before calling `getScope`');
+            throw new RuntimeException('Scope is not initialized for route.');
         }
 
         return $this->scope;

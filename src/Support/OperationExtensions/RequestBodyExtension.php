@@ -32,13 +32,6 @@ class RequestBodyExtension extends OperationExtension
     {
         $description = Str::of($routeInfo->phpDoc()->getAttribute('description')); // @phpstan-ignore argument.type
 
-        /*
-         * Making sure to analyze the route.
-         * @todo rename the method
-         * @todo if this methods returns null, make sure to notify users about this.
-         */
-        $routeInfo->getMethodType();
-
         /** @var Collection<int, ParametersExtractionResult> $rulesResults */
         $rulesResults = collect();
 
