@@ -89,7 +89,7 @@ class RouteResponseTypeRetriever
                 ->getMethodReturnType($methodType->name);
         }
 
-        if (! $definition = $this->routeInfo->getFunctionLikeDefinition()) {
+        if (! $definition = $this->routeInfo->getActionDefinition()) {
             return null;
         }
 

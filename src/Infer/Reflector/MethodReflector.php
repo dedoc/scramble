@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\Reflector;
 
+use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
@@ -109,5 +111,16 @@ class MethodReflector
     public function getClassReflector(): ClassReflector
     {
         return ClassReflector::make($this->getReflection()->class);
+    }
+
+    public function getFunctionLikeDefinition(array $indexBuilders = [], bool $withSideEffects = false): FunctionLikeDefinition
+    {
+        $def = app(Infer::class)->analyzeClass($this->getReflection()->class);
+
+        return $def->getMethodDefinition(
+            $this->getReflection()->name,
+            indexBuilders: $indexBuilders,
+            withSideEffects: $withSideEffects,
+        );
     }
 }

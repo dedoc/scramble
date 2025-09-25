@@ -200,7 +200,7 @@ class RequestEssentialsExtension extends OperationExtension
      */
     private function getTagsAnnotatedByGroups(RouteInfo $routeInfo): array
     {
-        $reflection = $routeInfo->reflectionFunctionLike();
+        $reflection = $routeInfo->reflectionAction();
 
         $methodClassGroupAttributes = $reflection instanceof ReflectionMethod
             ? $reflection->getDeclaringClass()->getAttributes(Group::class)

@@ -3,9 +3,13 @@
 namespace Dedoc\Scramble\Infer\Reflector;
 
 use Closure;
+use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
+use Dedoc\Scramble\Support\IndexBuilders\RequestParametersBuilder;
+use Dedoc\Scramble\Support\IndexBuilders\ScopeCollector;
 use Laravel\SerializableClosure\Support\ReflectionClosure;
 use PhpParser\NameContext;
 use PhpParser\Node;
@@ -106,5 +110,28 @@ class ClosureReflector
         $traverser->traverse([$node]);
 
         return $this->astNode = $node;
+    }
+
+    public function getFunctionLikeDefinition(array $indexBuilders = [], bool $withSideEffects = false): FunctionLikeDefinition
+    {
+        $scopeCollector = new ScopeCollector;
+
+        $closureDefinition = (new Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder(
+            '{closure}',
+            $this->getAstNode(),
+            app(Infer::class)->index,
+            new FileNameResolver($this->getNameContext()),
+            indexBuilders: [...$indexBuilders, $scopeCollector],
+            withSideEffects: $withSideEffects,
+        ))->build();
+
+        $scope = $scopeCollector->getScope($closureDefinition);
+
+        Infer\Definition\ClassDefinition::resolveFunctionReturnReferences($scope, $closureDefinition->type);
+        Infer\Definition\ClassDefinition::resolveFunctionExceptions($scope, $closureDefinition->type);
+
+        $closureDefinition->referencesResolved = true;
+
+        return $closureDefinition;
     }
 }

@@ -4,7 +4,7 @@ namespace Dedoc\Scramble\Support;
 
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Reflector\MethodReflector;
-use Dedoc\Scramble\Infer\Services\FileNameResolver;
+use Dedoc\Scramble\Infer\Reflector\ClosureReflector;
 use Dedoc\Scramble\Support\IndexBuilders\Bag;
 use Dedoc\Scramble\Support\IndexBuilders\RequestParametersBuilder;
 use Dedoc\Scramble\Support\IndexBuilders\ScopeCollector;
@@ -16,12 +16,13 @@ use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Stmt\ClassMethod;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionClass;
-use ReflectionFunction;
 use ReflectionMethod;
 use RuntimeException;
 
 class RouteInfo
 {
+    protected ?Infer\Definition\FunctionLikeDefinition $actionDefinition = null;
+
     public ?FunctionType $methodType = null;
 
     private ?PhpDocNode $phpDoc = null;
@@ -72,41 +73,40 @@ class RouteInfo
             return $this->phpDoc;
         }
 
-        if (! $this->methodNode()) {
+        if (! $this->actionNode()) {
             return new PhpDocNode([]);
         }
 
-        $this->phpDoc = $this->methodNode()->getAttribute('parsedPhpDoc') ?: new PhpDocNode([]);
-
-        return $this->phpDoc;
+        return $this->phpDoc = $this->actionNode()->getAttribute('parsedPhpDoc') ?: new PhpDocNode([]);
     }
 
+    /**
+     * @deprecated use `actionNode` instead
+     */
     public function methodNode(): ?ClassMethod
     {
         if ($this->methodNode || ! $this->isClassBased() || ! $this->reflectionMethod()) {
             return $this->methodNode;
         }
 
-        return $this->methodNode = MethodReflector::make(...explode('@', $this->route->getAction('uses')))
-            ->getAstNode();
+        return $this->methodNode = $this->getActionReflector()->getAstNode();
     }
 
-    public function closureNode(): ?FunctionLike
+    protected function closureNode(): ?FunctionLike
     {
         if ($this->closureNode || $this->isClassBased()) {
             return $this->closureNode;
         }
 
-        return $this->closureNode = Infer\Reflector\ClosureReflector::make($this->route->getAction('uses'))
-            ->getAstNode();
+        return $this->closureNode = $this->getActionReflector()->getAstNode();
     }
 
-    public function functionLikeNode(): ?FunctionLike
+    public function actionNode(): ?FunctionLike
     {
         return $this->isClassBased() ? $this->methodNode() : $this->closureNode();
     }
 
-    public function reflectionFunctionLike(): ReflectionMethod|ReflectionClosure|null
+    public function reflectionAction(): ReflectionMethod|ReflectionClosure|null
     {
         return $this->isClassBased() ? $this->reflectionMethod() : $this->reflectionClosure();
     }
@@ -149,99 +149,49 @@ class RouteInfo
         return (new RouteResponseTypeRetriever($this))->getResponseType();
     }
 
-    protected ?Infer\Definition\FunctionLikeDefinition $functionLikeDefinition = null;
-
-    public function getFunctionLikeDefinition(): ?Infer\Definition\FunctionLikeDefinition
+    protected function getActionReflector(): MethodReflector|ClosureReflector
     {
-        if ($this->functionLikeDefinition) {
-            return $this->functionLikeDefinition;
+        if ($this->isClassBased()) {
+            return MethodReflector::make(...explode('@', $this->route->getAction('uses')));
         }
 
-        if (! $reflectionFunctionLike = $this->reflectionFunctionLike()) {
-            return null;
+        return ClosureReflector::make($this->route->getAction('uses'));
+    }
+
+    public function getActionDefinition(): ?Infer\Definition\FunctionLikeDefinition
+    {
+        if ($this->actionDefinition) {
+            return $this->actionDefinition;
         }
 
         $scopeCollector = new ScopeCollector;
 
-        if ($reflectionFunctionLike instanceof ReflectionMethod) {
-            $def = $this->infer->analyzeClass($this->className());
-
-            $this->functionLikeDefinition = $methodDefinition = $def->getMethodDefinition(
-                $this->reflectionMethod()->getName(),
-                indexBuilders: [
-                    new RequestParametersBuilder($this->requestParametersFromCalls),
-                    $scopeCollector,
-                    ...$this->indexBuildingBroker->indexBuilders,
-                ],
-                withSideEffects: true,
-            );
-
-            if ($methodDefinition) {
-                $this->scope = $scopeCollector->getScope($methodDefinition);
-            }
-
-            return $this->functionLikeDefinition;
-        }
-
-        $closureDefinition = (new Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder(
-            '{closure}',
-            $this->functionLikeNode(),
-            $this->infer->index,
-            new FileNameResolver(Infer\Reflector\ClosureReflector::make($this->route->getAction('uses'))->getNameContext()),
+        $this->actionDefinition = $this->getActionReflector()?->getFunctionLikeDefinition(
             indexBuilders: [
                 new RequestParametersBuilder($this->requestParametersFromCalls),
                 $scopeCollector,
                 ...$this->indexBuildingBroker->indexBuilders,
             ],
             withSideEffects: true,
-        ))->build();
+        );
 
-        $this->scope = $scopeCollector->getScope($closureDefinition);
+        $this->scope = $scopeCollector->getScope($this->actionDefinition);
 
-        Infer\Definition\ClassDefinition::resolveFunctionReturnReferences($this->scope, $closureDefinition->type);
-        Infer\Definition\ClassDefinition::resolveFunctionExceptions($this->scope, $closureDefinition->type);
+        return $this->actionDefinition;
+    }
 
-        $closureDefinition->referencesResolved = true;
-
-        return $this->functionLikeDefinition = $closureDefinition;
+    public function getActionType(): ?FunctionType
+    {
+        return $this->getActionDefinition()?->type;
     }
 
     /**
+     * @deprecated use `getActionType`
      * @todo Maybe better name is needed as this method performs method analysis, indexes building, etc.
      */
     public function getMethodType(): ?FunctionType
     {
-        return $this->getFunctionLikeDefinition()->type ?? null;
-
-        if (! $this->isClassBased() || ! $this->reflectionMethod()) {
-            return null;
-        }
-
-        if (! $this->methodType) {
-            $def = $this->infer->analyzeClass($this->className());
-
-            $scopeCollector = new ScopeCollector;
-
-            /*
-             * Sometimes method type may be null if route registered method name has the casing that
-             * is different from the method name in the controller hence reflection is used here.
-             */
-            $this->methodType = ($methodDefinition = $def->getMethodDefinition(
-                $this->reflectionMethod()->getName(),
-                indexBuilders: [
-                    new RequestParametersBuilder($this->requestParametersFromCalls),
-                    $scopeCollector,
-                    ...$this->indexBuildingBroker->indexBuilders,
-                ],
-                withSideEffects: true,
-            ))?->type;
-
-            if ($methodDefinition) {
-                $this->scope = $scopeCollector->getScope($methodDefinition);
-            }
-        }
-
-        return $this->methodType;
+        return $this->getActionType();
     }
 
     /** @internal */
