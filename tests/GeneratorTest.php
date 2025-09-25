@@ -9,5 +9,5 @@ it('works with closure routes', function () {
         return response()->json(['foo' => 'bar']);
     }));
 
-//    dd($openApi);
+    //    dd($openApi);
 });

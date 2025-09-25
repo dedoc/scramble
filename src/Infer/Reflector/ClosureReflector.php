@@ -9,16 +9,13 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
-use Dedoc\Scramble\Support\IndexBuilders\RequestParametersBuilder;
 use Dedoc\Scramble\Support\IndexBuilders\ScopeCollector;
 use Laravel\SerializableClosure\Support\ReflectionClosure;
 use PhpParser\NameContext;
 use PhpParser\Node;
-use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
-use ReflectionMethod;
 use WeakMap;
 
 class ClosureReflector
@@ -35,8 +32,7 @@ class ClosureReflector
     private function __construct(
         private FileParser $parser,
         public Closure $closure,
-    ) {
-    }
+    ) {}
 
     /**
      * @return WeakMap<Closure, self>
@@ -128,7 +124,7 @@ class ClosureReflector
     }
 
     /**
-     * @param IndexBuilder<array<string, mixed>>[] $indexBuilders
+     * @param  IndexBuilder<array<string, mixed>>[]  $indexBuilders
      */
     public function getFunctionLikeDefinition(array $indexBuilders = [], bool $withSideEffects = false): FunctionLikeDefinition
     {

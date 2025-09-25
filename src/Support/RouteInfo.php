@@ -4,8 +4,8 @@ namespace Dedoc\Scramble\Support;
 
 use Closure;
 use Dedoc\Scramble\Infer;
-use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Infer\Reflector\ClosureReflector;
+use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Support\IndexBuilders\Bag;
 use Dedoc\Scramble\Support\IndexBuilders\RequestParametersBuilder;
 use Dedoc\Scramble\Support\IndexBuilders\ScopeCollector;
@@ -198,6 +198,7 @@ class RouteInfo
 
     /**
      * @deprecated use `getActionType`
+     *
      * @todo Maybe better name is needed as this method performs method analysis, indexes building, etc.
      */
     public function getMethodType(): ?FunctionType
