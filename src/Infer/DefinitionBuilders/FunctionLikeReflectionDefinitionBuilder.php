@@ -87,7 +87,6 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
                 $definition->type->templates,
             );
         }
-$a = 1;
     }
 
     /**
@@ -126,6 +125,15 @@ $a = 1;
             ])
             ->all();
 
+        $argumentDefaults = collect($this->reflection->getParameters())
+            ->mapWithKeys(fn (ReflectionParameter $p) => [
+                $p->name => rescue(function () use ($p) {
+                    return TypeHelper::createTypeFromValue($p->getDefaultValue());
+                }),
+            ])
+            ->filter()
+            ->all();
+
         $returnType = ($retType = $this->reflection->getReturnType())
             ? TypeHelper::createTypeFromReflectionType($retType)
             : new UnknownType;
@@ -134,6 +142,7 @@ $a = 1;
 
         return new FunctionLikeDefinition(
             $type,
+            argumentsDefaults: $argumentDefaults,
             definingClassName: $this->reflection instanceof ReflectionMethod ? $this->reflection->class : null,
         );
     }

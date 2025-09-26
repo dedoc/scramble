@@ -7,7 +7,9 @@ use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
@@ -121,6 +123,15 @@ it('handles collection get call', function () {
     $type = getStatementType('(new '.Collection::class.'())->get(1, fn () => 1)');
 
     expect($type->toString())->toBe('unknown|int(1)');
+});
+
+it('handles collection first call', function () {
+    $type = ReferenceTypeResolver::getInstance()->resolve(
+        new GlobalScope,
+        new MethodCallReferenceType(new Generic(Collection::class, [new IntegerType, new IntegerType]), 'first', [new FunctionType('{}', [], new IntegerType)]),
+    );
+
+    expect($type->toString())->toBe('int|null');
 });
 
 it('handles collection map call', function () {
