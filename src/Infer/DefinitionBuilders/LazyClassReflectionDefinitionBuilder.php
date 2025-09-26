@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition as ClassDefinitionData;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Definition\LazyClassDefinition;
 use Dedoc\Scramble\Infer\Definition\LazyShallowClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
@@ -118,7 +119,10 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
         }
 
         $classDefinitionData->parentDefinedTemplates = $this->getParentDefinedTemplates($parentDefinition, $classPhpDoc, $classDefinitionData->templateTypes);
-        $classDefinitionData->mixinsDefinedTemplates = $mixinsDefinedTemplates;
+        $classDefinitionData->mixinsDefinedTemplates = array_merge_recursive(
+            $this->getParentDefinedMixinTemplates($parentDefinition, $classDefinitionData),
+            $mixinsDefinedTemplates,
+        );
         $classDefinitionData->interfacesDefinedTemplates = [];
 
         //        Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($this->reflection->name, $classDefinition));
@@ -269,7 +273,6 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             return [];
         }
 
-
         $mixinDefinition = (new self(
             $this->index,
             $mixinReflection,
@@ -325,5 +328,28 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                 ];
             })
             ->all();
+    }
+
+    private function getParentDefinedMixinTemplates(ClassDefinitionData $parentDefinition, LazyShallowClassDefinition $classDefinitionData): array
+    {
+        if (! $parentDefinition instanceof LazyShallowClassDefinition) {
+            return [];
+        }
+
+        if (! $parentDefinition->mixinsDefinedTemplates) {
+            return [];
+        }
+
+        return array_map(function ($mixinDefinedTemplates) use ($classDefinitionData) {
+            return array_map(function ($type) use ($classDefinitionData) {
+                if (! $type instanceof TemplateType) {
+                    return $type;
+                }
+                if (! array_key_exists($type->name, $classDefinitionData->parentDefinedTemplates)) {
+                    return $type;
+                }
+                return $classDefinitionData->parentDefinedTemplates[$type->name];
+            }, $mixinDefinedTemplates);
+        }, $parentDefinition->mixinsDefinedTemplates);
     }
 }

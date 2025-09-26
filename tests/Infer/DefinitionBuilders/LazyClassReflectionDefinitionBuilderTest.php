@@ -175,3 +175,15 @@ test('builds class definition with use annotation', function () {
 
     expect($definition->getMethod('get')->type->toString())->toBe('(): TBar');
 });
+
+/** @extends BarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest<int> */
+class ExtendsBarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest extends BarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest {}
+
+test('builds class definition with use annotation and extends', function () {
+    $definition = (new LazyClassReflectionDefinitionBuilder(
+        $this->index,
+        new \ReflectionClass(ExtendsBarTemplatedTrait_LazyClassReflectionDefinitionBuilderTest::class),
+    ))->build();
+
+    expect($definition->getMethod('get')->type->toString())->toBe('(): int');
+});

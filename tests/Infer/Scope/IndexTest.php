@@ -2,9 +2,16 @@
 
 namespace Dedoc\Scramble\Tests\Infer\Scope;
 
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\SelfType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
@@ -29,7 +36,7 @@ it('builds definition', function () {
         ->and($definition->getData()->methods['fill']->isFullyAnalyzed)
         ->toBeFalse()
         ->and($definition->getMethod('update')->type->toString())
-        ->toBe('(array, array): boolean');
+        ->toBe('(array<mixed>, array<mixed>): boolean');
 });
 
 it('returns vendor class definition when requested', function () {
@@ -88,8 +95,21 @@ it('handles chained method call', function () {
     expect($type->toString())->toBe(UserModel_IndexTest::class);
 });
 
-it('handles chained method call rel', function () {
+it('handles chained method call relation', function () {
     $type = getStatementType('(new '.UserModel_IndexTest::class . ')->posts()');
 
     expect($type->toString())->toBe('Illuminate\Database\Eloquent\Relations\HasMany<'.PostModel_IndexTest::class.', self>');
+});
+
+it('handles chained method call relation first', function () {
+    $hasMany = new Generic(HasMany::class, [
+        new ObjectType(PostModel_IndexTest::class),
+        new SelfType(''),
+    ]);
+    $type = ReferenceTypeResolver::getInstance()->resolve(
+        new GlobalScope,
+        new MethodCallReferenceType($hasMany, 'first', []),
+    );
+
+    expect($type->toString())->toBe(PostModel_IndexTest::class.'|null');
 });
