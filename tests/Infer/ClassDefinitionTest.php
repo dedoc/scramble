@@ -9,10 +9,8 @@ use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type\GenericClassStringType;
-use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
-use Dedoc\Scramble\Support\Type\TypePath;
 use Illuminate\Database\Eloquent\Builder;
 
 beforeEach(function () {

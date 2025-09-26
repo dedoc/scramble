@@ -38,7 +38,6 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
-use function Pest\Laravel\instance;
 
 class ReferenceTypeResolver
 {
@@ -99,8 +98,10 @@ class ReferenceTypeResolver
         return (new TypeWalker)->map($type, function (Type $t) use ($staticType) {
             if ($t instanceof Generic && $staticType instanceof ObjectType && $t->name === StaticReference::STATIC) {
                 $t->name = $staticType->name;
+
                 return $t;
             }
+
             return $t instanceof ObjectType && $t->name === StaticReference::STATIC ? $staticType : $t;
         });
     }
