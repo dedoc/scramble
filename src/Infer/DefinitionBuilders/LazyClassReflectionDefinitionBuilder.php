@@ -124,7 +124,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
         );
         $classDefinitionData->interfacesDefinedTemplates = [];
 
-        //        Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($this->reflection->name, $classDefinition));
+        Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($this->reflection->name, $classDefinitionData));
 
         return $classDefinitionData;
     }

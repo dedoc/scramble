@@ -346,7 +346,7 @@ class ReferenceTypeResolver
                 $classDefinition->properties,
             );
 
-        $constructorDefinition = $classDefinition->getMethod('__construct', $scope);
+        $constructorDefinition = $classDefinition->getMethod('__construct');
 
         $templatesMap = (new TemplateTypesSolver)
             ->getClassConstructorContextTemplates(
