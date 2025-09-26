@@ -87,6 +87,7 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
                 $definition->type->templates,
             );
         }
+$a = 1;
     }
 
     /**

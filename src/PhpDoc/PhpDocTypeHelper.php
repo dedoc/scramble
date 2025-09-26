@@ -6,6 +6,7 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\GenericClassStringType;
 use Dedoc\Scramble\Support\Type\IntegerType;
@@ -27,6 +28,7 @@ use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprStringNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeItemNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\CallableTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\ConstTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
@@ -79,6 +81,7 @@ class PhpDocTypeHelper
                     key: static::toType($type->genericTypes[0]),
                 );
             }
+
             if ($type->type->name === 'class-string') {
                 return new GenericClassStringType(static::toType($type->genericTypes[0]));
             }
@@ -132,6 +135,14 @@ class PhpDocTypeHelper
             if ($type->constExpr instanceof ConstExprFloatNode) {
                 return new FloatType; // todo: float literal?
             }
+        }
+
+        if ($type instanceof CallableTypeNode) {
+            return new FunctionType(
+                name: '{closure}',
+                arguments: [],
+                returnType: self::toType($type->returnType),
+            );
         }
 
         return new UnknownType('Unknown phpDoc type ['.$type.']');

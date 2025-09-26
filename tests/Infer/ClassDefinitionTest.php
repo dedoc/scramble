@@ -21,19 +21,6 @@ beforeEach(function () {
     $this->classAnalyzer = new ClassAnalyzer($this->index);
 });
 
-it('finds type', function () {
-    $type = getStatementType(<<<'EOD'
-['a' => fn (int $b) => 123]
-EOD);
-
-    $path = TypePath::findFirst(
-        $type,
-        fn ($t) => $t instanceof LiteralIntegerType,
-    );
-
-    expect($path?->getFrom($type)->toString())->toBe('int(123)');
-})->todo('move to its own test case');
-
 it('infers from property default type', function () {
     Scramble::registerExtension(AfterFoo_ClassDefinitionTest::class);
 

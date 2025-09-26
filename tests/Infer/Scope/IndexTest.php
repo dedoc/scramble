@@ -110,3 +110,33 @@ it('handles chained method call relation first', function () {
 
     expect($type->toString())->toBe(PostModel_IndexTest::class.'|null');
 });
+
+it('handles updateOrCreate model call ', function () {
+    $type = getStatementType(PostModel_IndexTest::class.'::updateOrCreate()');
+
+    expect($type->toString())->toBe(PostModel_IndexTest::class);
+});
+
+it('handles collection get call', function () {
+    $type = getStatementType('(new '.Collection::class.'())->get(1, fn () => 1)');
+
+    expect($type->toString())->toBe('unknown|int(1)');
+});
+
+it('handles collection map call', function () {
+    $type = getStatementType('(new '.Collection::class.'())->map(fn () => 1)');
+
+    expect($type->toString())->toBe('Illuminate\Support\Collection<unknown, int(1)>');
+});
+
+it('handles collection map deep call', function () {
+    $type = getStatementType('(new '.Collection::class.'())->map(fn () => ["a" => "foo"])');
+
+    expect($type->toString())->toBe('Illuminate\Support\Collection<unknown, int(1)>');
+});
+
+it('handles collection construct call', function () {
+    $type = getStatementType('(new '.Collection::class.'([42]))');
+
+    expect($type->toString())->toBe('Illuminate\Support\Collection<unknown, int(1)>');
+});

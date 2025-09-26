@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\Type;
 
 use Closure;
+use Illuminate\Support\Arr;
 
 class TypePath
 {
