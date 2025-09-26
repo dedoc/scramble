@@ -25,7 +25,6 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use League\Uri\UriTemplate\Template;
 use PHPStan\PhpDocParser\Ast\PhpDoc\MixinTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\TemplateTagValueNode;
@@ -89,10 +88,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             $classDefinitionData->properties[$reflectionProperty->name] = $this->buildPropertyDefinition($reflectionProperty, $classTemplates);
         }
 
-        $classSource = rescue(
-            fn () => ClassReflector::make($this->reflection->name)->getSource(),
-            '',
-        );
+        $classSource = rescue(fn () => ClassReflector::make($this->reflection->name)->getSource(), '');
 
         foreach ($this->reflection->getMethods() as $reflectionMethod) {
             if ($reflectionMethod->class !== $this->reflection->name) {

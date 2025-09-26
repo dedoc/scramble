@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\GenericClassStringType;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\IntersectionType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -77,6 +78,9 @@ class PhpDocTypeHelper
                     value: static::toType($type->genericTypes[1]),
                     key: static::toType($type->genericTypes[0]),
                 );
+            }
+            if ($type->type->name === 'class-string') {
+                return new GenericClassStringType(static::toType($type->genericTypes[0]));
             }
 
             if ($type->type->name === 'list') {

@@ -10,11 +10,15 @@ use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\SelfType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionFunction;
 use ReflectionMethod;
 use ReflectionParameter;
@@ -40,6 +44,80 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
 
     public function build(): FunctionLikeDefinition
     {
+        $functionDefinition = $this->buildFunctionDefinitionFromTypeHints();
+
+        $this->applyPhpDoc(
+            $functionDefinition,
+            PhpDoc::parse($this->reflection->getDocComment() ?: '/** */', FileNameResolver::createForFile($this->reflection->getFileName())),
+        );
+
+        $functionDefinition->isFullyAnalyzed = true;
+
+        return $functionDefinition;
+    }
+
+    private function applyPhpDoc(FunctionLikeDefinition $definition, PhpDocNode $phpDoc): void
+    {
+        foreach ($phpDoc->getTemplateTagValues() as $templateTagValue) {
+            $definition->type->templates[] = new TemplateType(
+                name: $templateTagValue->name,
+            );
+        }
+
+        foreach ($phpDoc->getParamTagValues() as $paramTagValue) {
+            $name = Str::replaceFirst('$', '', $paramTagValue->parameterName);
+            if (! array_key_exists($name, $definition->type->arguments)) {
+                continue;
+            }
+            $definition->type->arguments[$name] = $this->handleStatic(
+                PhpDocTypeHelper::toType($paramTagValue->type),
+                $definition->type->templates,
+            );
+        }
+
+        foreach ($phpDoc->getThrowsTagValues() as $throwsTagValue) {
+            $definition->type->exceptions[] = $this->handleStatic(
+                PhpDocTypeHelper::toType($throwsTagValue->type),
+                $definition->type->templates,
+            );
+        }
+
+        if ($returnTagValues = array_values($phpDoc->getReturnTagValues())) {
+            $definition->type->returnType = $this->handleStatic(
+                PhpDocTypeHelper::toType($returnTagValues[0]->type),
+                $definition->type->templates,
+            );
+        }
+    }
+
+    /**
+     * @param TemplateType[] $functionTemplates
+     */
+    private function handleStatic(Type $type, array $functionTemplates): Type
+    {
+        $functionTemplatesByKeys = collect($functionTemplates)->keyBy->name;
+
+        return (new TypeWalker)->map($type, function (Type $t) use ($functionTemplatesByKeys) {
+            if (! $t instanceof ObjectType) {
+                return $t;
+            }
+
+            $t->name = ltrim($t->name, '\\');
+
+            if ($definedTemplate = $this->classTemplates->get($t->name)) {
+                return $definedTemplate;
+            }
+
+            if ($definedFnTemplate = $functionTemplatesByKeys->get($t->name)) {
+                return $definedFnTemplate;
+            }
+
+            return $t;
+        });
+    }
+
+    private function buildFunctionDefinitionFromTypeHints(): FunctionLikeDefinition
+    {
         $parameters = collect($this->reflection->getParameters())
             ->mapWithKeys(fn (ReflectionParameter $p) => [
                 $p->name => ($paramType = $p->getType())
@@ -54,40 +132,9 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
 
         $type = new FunctionType($this->name, $parameters, $returnType);
 
-        // add phpdoc annotations
-        $className = $this->reflection instanceof ReflectionMethod ? $this->reflection->class : null;
-
-        $handleStatic = fn (Type $type) => (new TypeWalker)->map($type, function (Type $t) {
-            if ($t instanceof ObjectType) {
-                $newType = clone $t;
-                $newType->name = ltrim($t->name, '\\');
-
-                if ($existingType = $this->classTemplates->get($newType->name)) {
-                    return $existingType;
-                }
-
-                return $newType;
-            }
-
-            return $t;
-        });
-        $nameResolver = FileNameResolver::createForFile($this->reflection->getFileName());
-
-        $phpDoc = PhpDoc::parse($this->reflection->getDocComment() ?: '/** */', $nameResolver);
-        foreach ($phpDoc->getThrowsTagValues() as $throwsTagValue) {
-            $type->exceptions[] = $handleStatic(PhpDocTypeHelper::toType($throwsTagValue->type));
-        }
-        if ($returnTagValues = array_values($phpDoc->getReturnTagValues())) {
-            $type->returnType = $handleStatic(PhpDocTypeHelper::toType($returnTagValues[0]->type));
-        }
-
-        $functionDefinition = new FunctionLikeDefinition(
+        return new FunctionLikeDefinition(
             $type,
-            definingClassName: $className,
+            definingClassName: $this->reflection instanceof ReflectionMethod ? $this->reflection->class : null,
         );
-
-        $functionDefinition->isFullyAnalyzed = true;
-
-        return $functionDefinition;
     }
 }

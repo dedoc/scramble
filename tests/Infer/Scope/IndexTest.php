@@ -55,10 +55,19 @@ it('infers query method of the model', function () {
 
 class UserModel_IndexTest extends Model
 {
+    public function posts()
+    {
+        return $this->hasMany(PostModel_IndexTest::class);
+    }
+
     public function foo()
     {
         return 42;
     }
+}
+
+class PostModel_IndexTest extends Model
+{
 }
 
 it('handles static', function () {
@@ -77,4 +86,10 @@ it('handles chained method call', function () {
     $type = getStatementType(UserModel_IndexTest::class . '::query()->where()->firstOrFail()');
 
     expect($type->toString())->toBe(UserModel_IndexTest::class);
+});
+
+it('handles chained method call rel', function () {
+    $type = getStatementType('(new '.UserModel_IndexTest::class . ')->posts()');
+
+    expect($type->toString())->toBe('Illuminate\Database\Eloquent\Relations\HasMany<'.PostModel_IndexTest::class.', self>');
 });

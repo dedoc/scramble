@@ -148,7 +148,7 @@ class SelfOutTypeBuilder
                     continue;
                 }
 
-                if (! $methodDefinition = $classDefinition->getMethodDefinition($potentialSetterCall->name->name)) {  // @phpstan-ignore property.notFound
+                if (! $methodDefinition = $classDefinition->getMethod($potentialSetterCall->name->name)) {  // @phpstan-ignore property.notFound
                     continue;
                 }
 

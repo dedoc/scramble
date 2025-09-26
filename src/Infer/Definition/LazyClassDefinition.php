@@ -62,5 +62,9 @@ class LazyClassDefinition extends ClassDefinition
             $reflectionMethod,
             collect($this->templateTypes)->keyBy('name'),
         ))->build();
+
+        dd(dd($res)->type->toString());
+
+        return $res;
     }
 }
