@@ -8,7 +8,6 @@ use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition as ClassDefinitionData;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
-use Dedoc\Scramble\Infer\Definition\LazyClassDefinition;
 use Dedoc\Scramble\Infer\Definition\LazyShallowClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
@@ -49,7 +48,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
     {
         $parentDefinition = ($parentName = ($this->reflection->getParentClass() ?: null)?->name)
             ? (! in_array($parentName, $this->ignoreClasses) ? ((
-            (new self($this->index, $this->reflection->getParentClass(), [...$this->ignoreClasses, $this->reflection->name]))->build() // @phpstan-ignore argument.type
+                (new self($this->index, $this->reflection->getParentClass(), [...$this->ignoreClasses, $this->reflection->name]))->build() // @phpstan-ignore argument.type
             )->getData()) : new ClassDefinitionData(name: ''))
             : new ClassDefinitionData(name: '');
 
@@ -348,6 +347,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                 if (! array_key_exists($type->name, $classDefinitionData->parentDefinedTemplates)) {
                     return $type;
                 }
+
                 return $classDefinitionData->parentDefinedTemplates[$type->name];
             }, $mixinDefinedTemplates);
         }, $parentDefinition->mixinsDefinedTemplates);

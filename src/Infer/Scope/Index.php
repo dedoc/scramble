@@ -43,12 +43,12 @@ class Index implements IndexContract
         }
 
         if (! Scramble::infer()->config->shouldAnalyzeAst($className)) {
-//            return $this->classesDefinitions[$className] = (new ShallowClassReflectionDefinitionBuilder($this, $reflection))->build();
+            //            return $this->classesDefinitions[$className] = (new ShallowClassReflectionDefinitionBuilder($this, $reflection))->build();
             return $this->classesDefinitions[$className] = (new LazyClassReflectionDefinitionBuilder($this, $reflection))->build();
         }
 
         return (new LazyClassDefinitionBuilder($this, $reflection))->build();
-//        return (new ClassAnalyzer($this))->analyze($className);
+        //        return (new ClassAnalyzer($this))->analyze($className);
     }
 
     public function registerClassDefinition(ClassDefinition $classDefinition): void

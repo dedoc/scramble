@@ -2,22 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
-use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
-use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
-use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition as ClassDefinitionData;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
-use Dedoc\Scramble\Infer\Reflector\ClassReflector;
-use Dedoc\Scramble\Infer\Scope\Index;
-use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
-use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Infer\Scope\ScopeContext;
-use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Scramble;
-use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
-use PhpParser\ErrorHandler\Throwing;
-use PhpParser\NameContext;
 use ReflectionClass;
 
 /**

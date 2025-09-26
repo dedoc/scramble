@@ -10,7 +10,6 @@ use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
@@ -91,7 +90,7 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
     }
 
     /**
-     * @param TemplateType[] $functionTemplates
+     * @param  TemplateType[]  $functionTemplates
      */
     private function handleStatic(Type $type, array $functionTemplates): Type
     {

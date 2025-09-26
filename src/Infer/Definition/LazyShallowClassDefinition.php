@@ -2,10 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
-use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition as ClassDefinitionData;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
-use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Support\Collection;
 use ReflectionClass;
@@ -18,9 +16,10 @@ class LazyShallowClassDefinition extends ClassDefinition
      * @param  array<string, array<string, Type>>  $mixinsDefinedTemplates
      * @param  array<string, array<string, Type>>  $interfacesDefinedTemplates
      */
-
     public array $parentDefinedTemplates = [];
+
     public array $mixinsDefinedTemplates = [];
+
     public array $interfacesDefinedTemplates = [];
 
     public function getMethod(string $name): ?FunctionLikeDefinition
