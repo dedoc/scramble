@@ -180,8 +180,8 @@ class ReferenceTypeResolver
             return new UnknownType;
         }
 
-        if (! $methodDefinition = $calleeType->getMethodDefinition($type->methodName, $scope)) {
-            return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeType->name]");
+        if (! $methodDefinition = $classDefinition->getMethod($type->methodName)) {
+            return new UnknownType("Cannot get a method type [$type->methodName] on type [$classDefinition->name]");
         }
 
         $resultingType = $this->getFunctionCallResult($methodDefinition, new AutoResolvingArgumentTypeBag($scope, $type->arguments), $calleeType);
@@ -245,7 +245,7 @@ class ReferenceTypeResolver
             return new UnknownType;
         }
 
-        if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
+        if (! $methodDefinition = $calleeDefinition->getMethod($type->methodName)) {
             return new UnknownType("Cannot get a method type [$type->methodName] on type [$contextualClassName]");
         }
 
@@ -282,7 +282,7 @@ class ReferenceTypeResolver
         }
 
         $calleeType = $callee instanceof CallableStringType
-            ? $this->index->getFunctionDefinition($callee->name)
+            ? $this->index->getFunction($callee->name)
             : $callee;
 
         if (! $calleeType) {
@@ -341,7 +341,7 @@ class ReferenceTypeResolver
                 $classDefinition->properties,
             );
 
-        $constructorDefinition = $classDefinition->getMethodDefinition('__construct', $scope);
+        $constructorDefinition = $classDefinition->getMethod('__construct');
 
         $templatesMap = (new TemplateTypesSolver)
             ->getClassConstructorContextTemplates(

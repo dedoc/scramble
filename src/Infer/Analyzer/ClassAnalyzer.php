@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Definition\LazyClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -34,7 +35,7 @@ class ClassAnalyzer
          * @todo consider more advanced cloning implementation.
          * Currently just cloning property definition feels alright as only its `defaultType` may change.
          */
-        $classDefinition = new ClassDefinition(
+        $classDefinition = new LazyClassDefinition(
             name: $name,
             templateTypes: $parentDefinition?->templateTypes ?: [],
             properties: array_map(fn ($pd) => clone $pd, $parentDefinition?->properties ?: []),

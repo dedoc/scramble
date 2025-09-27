@@ -12,6 +12,7 @@ use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
+use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Dedoc\Scramble\Infer\Extensions\IndexBuildingBroker;
@@ -104,6 +105,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ]
             );
         });
+
+        $this->app->singleton(IndexContract::class, Index::class);
 
         $this->app->singleton(Index::class, function () {
             $index = new Index;
