@@ -13,9 +13,9 @@ use InvalidArgumentException;
 /** @internal */
 class OperationBuilder
 {
-    public function build(RouteInfo $routeInfo, OpenApi $openApi, GeneratorConfig $config, TypeTransformer $typeTransformer)
+    public function build(RouteInfo $routeInfo, OpenApi $openApi, GeneratorConfig $config, TypeTransformer $typeTransformer, string $method)
     {
-        $operation = new Operation('get');
+        $operation = new Operation(strtolower($method));
 
         foreach ($config->operationTransformers->all() as $operationTransformerClass) {
             $instance = is_callable($operationTransformerClass)

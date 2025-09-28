@@ -3,22 +3,22 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
+use Dedoc\Scramble\Support\Generator\Operation;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Route;
 
 class FormRequestRulesEvaluator implements RulesEvaluator
 {
     public function __construct(
         private ClassReflector $classReflector,
-        private Route $route,
+        private Operation $operation
     ) {}
 
     public function handle(): array
     {
-        return $this->rules($this->classReflector->className, $this->route);
+        return $this->rules($this->classReflector->className);
     }
 
-    protected function rules(string $requestClassName, Route $route)
+    protected function rules(string $requestClassName)
     {
         /** @var Request $request */
         $request = (new $requestClassName);
@@ -26,7 +26,7 @@ class FormRequestRulesEvaluator implements RulesEvaluator
         $rules = [];
 
         if (method_exists($request, 'setMethod')) {
-            $request->setMethod($route->methods()[0]);
+            $request->setMethod(strtoupper($this->operation->method));
         }
 
         if (method_exists($request, 'rules')) {

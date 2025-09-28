@@ -49,7 +49,10 @@ class AnalyzeDocumentation extends Command
     private function groupExceptions(array $exceptions): Collection
     {
         return collect($exceptions)
-            ->groupBy(fn ($e) => $e instanceof RouteAware ? $this->getRouteKey($e->getRoute()) : '');
+            ->groupBy(fn ($e) => $e instanceof RouteAware
+                ? implode(', ', $this->getRouteKeys($e->getRoute()))
+                : ''
+            );
     }
 
     /**
@@ -69,16 +72,18 @@ class AnalyzeDocumentation extends Command
         });
     }
 
-    private function getRouteKey(?Route $route): string
+    private function getRouteKeys(?Route $route): array
     {
         if (! $route) {
-            return '';
+            return [];
         }
 
-        $method = $route->methods()[0];
         $action = $route->getAction('uses');
 
-        return "$method.$action";
+        return array_map(
+            fn (string $method) => "$method.$action",
+            $route->methods()
+        );
     }
 
     /**
@@ -89,11 +94,11 @@ class AnalyzeDocumentation extends Command
         $firstException = $exceptions->first();
         $route = $firstException->getRoute();
 
-        $method = $route->methods()[0];
+        $methods = implode(', ', $route->methods());
         $errorsMessage = ($count = $exceptions->count()).' '.Str::plural('error', $count);
 
         $tocComponent = new TermsOfContentItem(
-            right: '<options=bold;fg='.$this->getHttpMethodColor($method).'>'.$method."</> $route->uri <fg=red>$errorsMessage</>",
+            right: '<options=bold;fg='.$this->getHttpMethodColor($route->methods()[0]).'>'.$methods."</> $route->uri <fg=red>$errorsMessage</>",
             left: $this->getRouteAction($route),
         );
 

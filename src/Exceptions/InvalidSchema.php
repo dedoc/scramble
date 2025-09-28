@@ -44,7 +44,7 @@ class InvalidSchema extends Exception implements ConsoleRenderable, RouteAware
 
     public function getRouteAwareMessage(Route $route, string $msg): string
     {
-        $method = $route->methods()[0];
+        $method = implode(', ', $route->methods());
         $action = $route->getAction('uses');
 
         return "'$method $route->uri' ($action): ".$msg;

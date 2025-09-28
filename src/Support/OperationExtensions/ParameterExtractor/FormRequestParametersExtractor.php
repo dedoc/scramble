@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
 use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\ComposedFormRequestRulesEvaluator;
@@ -25,6 +26,7 @@ class FormRequestParametersExtractor implements ParameterExtractor
     public function __construct(
         private PrettyPrinter $printer,
         private TypeTransformer $openApiTransformer,
+        private Operation $operation
     ) {}
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
@@ -85,17 +87,17 @@ class FormRequestParametersExtractor implements ParameterExtractor
 
         $schemaName = ($phpDocReflector->getTagValue('@ignoreSchema')->value ?? null) !== null
             ? null
-            : $phpDocReflector->getSchemaName($requestClassName);
+            : $phpDocReflector->getSchemaName($requestClassName) . '.' . $this->operation->method;
 
         return new ParametersExtractionResult(
             parameters: $this->makeParameters(
-                rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->route))->handle(),
+                rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $this->operation))->handle(),
                 typeTransformer: $this->openApiTransformer,
                 rulesDocsRetriever: new TypeBasedRulesDocumentationRetriever(
                     $routeInfo->getScope(),
                     new MethodCallReferenceType(new ObjectType($requestClassName), 'rules', []),
                 ),
-                in: in_array(mb_strtolower($routeInfo->route->methods()[0]), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
+                in: in_array(mb_strtolower($this->operation->method), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
                     ? 'query'
                     : 'body',
             ),

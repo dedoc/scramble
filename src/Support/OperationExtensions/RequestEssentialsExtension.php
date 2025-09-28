@@ -71,7 +71,6 @@ class RequestEssentialsExtension extends OperationExtension
         $uriWithoutOptionalParams = Str::replace('?}', '}', $routeInfo->route->uri);
 
         $operation
-            ->setMethod(strtolower($routeInfo->route->methods()[0]))
             ->setPath(Str::replace(
                 collect($pathAliases)->keys()->map(fn ($k) => '{'.$k.'}')->all(),
                 collect($pathAliases)->values()->map(fn ($v) => '{'.$v.'}')->all(),

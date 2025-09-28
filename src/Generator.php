@@ -56,24 +56,27 @@ class Generator
         $typeTransformer = $this->buildTypeTransformer($context);
 
         $this->getRoutes($config)
-            ->map(function (Route $route, int $index) use ($openApi, $config, $typeTransformer) {
+            ->flatMap(function (Route $route, int $index) use ($openApi, $config, $typeTransformer) {
                 try {
-                    $operation = $this->routeToOperation($openApi, $route, $config, $typeTransformer);
+                    $operations = $this->routeToOperations($openApi, $route, $config, $typeTransformer);
 
-                    if (! $operation) {
+                    if (empty($operations)) {
                         return null;
                     }
 
-                    $operation->setAttribute('index', $index);
+                    array_map(
+                        fn (Operation $operation) => $operation->setAttribute('index', $index),
+                        $operations
+                    );
 
-                    return $operation;
+                    return $operations;
                 } catch (Throwable $e) {
                     if ($e instanceof RouteAware) {
                         $e->setRoute($route);
                     }
 
                     if (config('app.debug', false)) {
-                        $method = $route->methods()[0];
+                        $method = implode(', ', $route->methods());
                         $action = $route->getAction('uses');
                         if ($action instanceof \Closure) {
                             $action = '{closure}';
@@ -230,15 +233,18 @@ class Generator
         ]);
     }
 
-    private function routeToOperation(OpenApi $openApi, Route $route, GeneratorConfig $config, TypeTransformer $typeTransformer)
+    private function routeToOperations(OpenApi $openApi, Route $route, GeneratorConfig $config, TypeTransformer $typeTransformer): array
     {
         $routeInfo = new RouteInfo($route, $this->infer);
+        $operations = [];
 
-        $operation = $this->operationBuilder->build($routeInfo, $openApi, $config, $typeTransformer);
+        foreach ($routeInfo->route->methods() as $method) {
+            $operation = $this->operationBuilder->build($routeInfo, $openApi, $config, $typeTransformer, $method);
+            $this->ensureSchemaTypes($route, $operation);
+            $operations[] = $operation;
+        }
 
-        $this->ensureSchemaTypes($route, $operation);
-
-        return $operation;
+        return $operations;
     }
 
     private function ensureSchemaTypes(Route $route, Operation $operation): void
@@ -313,7 +319,7 @@ class Generator
 
             $name = $operation->getAttribute('operationId');
 
-            $operation->setOperationId($names->getUniqueName($name, function (string $fallback) use ($index) { // @phpstan-ignore argument.type
+            $operation->setOperationId($names->getUniqueName($name, function (string $fallback) use ($index, $operation) { // @phpstan-ignore argument.type
                 return "{$fallback}_{$index}";
             }));
         });

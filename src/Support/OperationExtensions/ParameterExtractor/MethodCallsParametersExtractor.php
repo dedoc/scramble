@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
+use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
@@ -11,6 +12,7 @@ class MethodCallsParametersExtractor implements ParameterExtractor
 {
     public function __construct(
         private TypeTransformer $openApiTransformer,
+        private Operation $operation
     ) {}
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
@@ -30,7 +32,7 @@ class MethodCallsParametersExtractor implements ParameterExtractor
         $parameters = array_map(function (InferredParameter $p) use ($routeInfo) {
             $parameter = $p->toOpenApiParameter($this->openApiTransformer);
 
-            $parameter->in = in_array(mb_strtolower($routeInfo->route->methods()[0]), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
+            $parameter->in = in_array(mb_strtolower($this->operation->method), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
                 ? 'query'
                 : 'body';
 
