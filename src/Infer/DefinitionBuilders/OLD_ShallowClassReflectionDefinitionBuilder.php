@@ -6,8 +6,6 @@ use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinitionBuilder;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\LazyClassDefinition;
-use Dedoc\Scramble\Infer\Definition\ShallowClassDefinition;
-use Dedoc\Scramble\Infer\Definition\V2_ShallowClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use ReflectionClass;

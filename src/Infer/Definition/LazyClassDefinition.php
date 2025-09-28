@@ -145,7 +145,7 @@ class LazyClassDefinition extends ClassDefinition
         $contextPhpDoc = Str::matchAll(
             '/@(?:uses|extends|mixin)\s+[^\r\n*]+/',
             $classSource,
-        )->map(fn ($s) => " * $s")->prepend("/**")->push("*/")->join("\n");
+        )->map(fn ($s) => " * $s")->prepend('/**')->push('*/')->join("\n");
 
         $phpDoc = PhpDoc::parse(
             $contextPhpDoc,
@@ -164,6 +164,7 @@ class LazyClassDefinition extends ClassDefinition
 
             if (! $type instanceof Generic) {
                 $classContexts->offsetSet($type->name, collect());
+
                 continue;
             }
 
@@ -183,5 +184,4 @@ class LazyClassDefinition extends ClassDefinition
 
         return $this->classContexts = $classContexts;
     }
-
 }

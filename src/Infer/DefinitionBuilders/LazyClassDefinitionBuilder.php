@@ -94,21 +94,21 @@ class LazyClassDefinitionBuilder implements ClassDefinitionBuilder
             }
         }
 
-//        foreach ($classReflection->getMethods() as $reflectionMethod) {
-//            if ($reflectionMethod->class !== $this->name) {
-//                continue;
-//            }
-//
-//            $classDefinition->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
-//                new FunctionType(
-//                    $reflectionMethod->name,
-//                    arguments: [],
-//                    returnType: new UnknownType,
-//                ),
-//                definingClassName: $this->name,
-//                isStatic: $reflectionMethod->isStatic(),
-//            );
-//        }
+        //        foreach ($classReflection->getMethods() as $reflectionMethod) {
+        //            if ($reflectionMethod->class !== $this->name) {
+        //                continue;
+        //            }
+        //
+        //            $classDefinition->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
+        //                new FunctionType(
+        //                    $reflectionMethod->name,
+        //                    arguments: [],
+        //                    returnType: new UnknownType,
+        //                ),
+        //                definingClassName: $this->name,
+        //                isStatic: $reflectionMethod->isStatic(),
+        //            );
+        //        }
 
         $this->index->registerClassDefinition($classDefinition);
 

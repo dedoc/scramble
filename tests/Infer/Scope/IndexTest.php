@@ -32,7 +32,7 @@ beforeEach(function () {
             BarGeneric_IndexTest::class,
         ]);
 
-    $this->index = new Index();
+    $this->index = new Index;
 });
 
 class Foo_IndexTest extends Bar_IndexTest {}
@@ -84,10 +84,12 @@ test('builds class definition with mixin without trait', function () {
     expect($type->toString())->toBe('int');
 });
 
-trait BarT_IndexTest {
+trait BarT_IndexTest
+{
     public function foo(): bool {}
 }
-class FooTrait_IndexTest {
+class FooTrait_IndexTest
+{
     use BarT_IndexTest;
 }
 test('builds class definition with mixin with trait', function () {
@@ -99,11 +101,13 @@ test('builds class definition with mixin with trait', function () {
 });
 
 /** @template T */
-trait BarTGeneric_IndexTest {
+trait BarTGeneric_IndexTest
+{
     /** @return T */
     public function foo() {}
 }
-class FooTraitGeneric_IndexTest {
+class FooTraitGeneric_IndexTest
+{
     /** @uses BarTGeneric_IndexTest<42> */
     use BarTGeneric_IndexTest;
 }
