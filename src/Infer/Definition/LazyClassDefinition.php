@@ -37,11 +37,11 @@ class LazyClassDefinition extends ClassDefinition
             return parent::getMethod($name);
         }
 
-        if (! $classReflection = rescue(fn () => new \ReflectionClass($this->name))) {
+        if (! $classReflection = rescue(fn () => new \ReflectionClass($this->name), report: false)) {
             return null;
         }
         /** @var \ReflectionClass $classReflection */
-        if (! $methodReflection = rescue(fn () => $classReflection->getMethod($name))) {
+        if (! $methodReflection = rescue(fn () => $classReflection->getMethod($name), report: false)) {
             return null;
         }
         /** @var \ReflectionMethod $methodReflection */
