@@ -1,13 +1,14 @@
 <?php
 
-namespace Dedoc\Scramble\Infer\Analyzer;
+namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 
+use Dedoc\Scramble\Infer\Analyzer\PropertyAnalyzer;
 use Dedoc\Scramble\Infer\Context;
+use Dedoc\Scramble\Infer\Contracts\ClassDefinitionBuilder;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Definition\LazyClassDefinition;
-use Dedoc\Scramble\Infer\DefinitionBuilders\LazyClassDefinitionBuilder;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -17,17 +18,16 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
 use ReflectionClass;
 
-class ClassAnalyzer
+class LazyClassDefinitionBuilder implements ClassDefinitionBuilder
 {
-    public function __construct(private Index $index) {}
+    public function __construct(
+        private Index $index,
+        private string $name,
+    ) {}
 
-    /**
-     * @throws \ReflectionException
-     */
-    public function analyze(string $name): ClassDefinition
+    public function build(): ClassDefinition
     {
-        return (new LazyClassDefinitionBuilder($this->index, $name))->build();
-        $classReflection = new ReflectionClass($name); // @phpstan-ignore argument.type
+        $classReflection = new ReflectionClass($this->name); // @phpstan-ignore argument.type
 
         $parentName = ($classReflection->getParentClass() ?: null)?->name;
 
@@ -38,7 +38,7 @@ class ClassAnalyzer
          * Currently just cloning property definition feels alright as only its `defaultType` may change.
          */
         $classDefinition = new LazyClassDefinition(
-            name: $name,
+            name: $this->name,
             templateTypes: $parentDefinition?->templateTypes ?: [],
             properties: array_map(fn ($pd) => clone $pd, $parentDefinition?->properties ?: []),
             methods: array_map(fn ($md) => $md->copyFromParent(), $parentDefinition?->methods ?: []),
@@ -52,7 +52,7 @@ class ClassAnalyzer
          */
 
         foreach ($classReflection->getProperties() as $reflectionProperty) {
-            if ($reflectionProperty->class !== $name) {
+            if ($reflectionProperty->class !== $this->name) {
                 continue;
             }
 
@@ -94,26 +94,27 @@ class ClassAnalyzer
             }
         }
 
-        foreach ($classReflection->getMethods() as $reflectionMethod) {
-            if ($reflectionMethod->class !== $name) {
-                continue;
-            }
-
-            $classDefinition->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
-                new FunctionType(
-                    $reflectionMethod->name,
-                    arguments: [],
-                    returnType: new UnknownType,
-                ),
-                definingClassName: $name,
-                isStatic: $reflectionMethod->isStatic(),
-            );
-        }
+//        foreach ($classReflection->getMethods() as $reflectionMethod) {
+//            if ($reflectionMethod->class !== $this->name) {
+//                continue;
+//            }
+//
+//            $classDefinition->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
+//                new FunctionType(
+//                    $reflectionMethod->name,
+//                    arguments: [],
+//                    returnType: new UnknownType,
+//                ),
+//                definingClassName: $this->name,
+//                isStatic: $reflectionMethod->isStatic(),
+//            );
+//        }
 
         $this->index->registerClassDefinition($classDefinition);
 
         Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($classDefinition->name, $classDefinition));
 
         return $classDefinition;
+
     }
 }

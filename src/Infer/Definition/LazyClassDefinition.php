@@ -4,10 +4,14 @@ namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\PhpDoc;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Collection;
@@ -25,6 +29,50 @@ class LazyClassDefinition extends ClassDefinition
         $this->index = $index;
     }
 
+    public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [], bool $withSideEffects = false): ?FunctionLikeDefinition
+    {
+        if (! array_key_exists($name, $this->methods)) {
+            $methodReflection = $this->findReflectionMethod($name);
+
+            $this->methods[$methodReflection->name] = new FunctionLikeDefinition(
+                new FunctionType(
+                    $methodReflection->name,
+                    arguments: [],
+                    returnType: new UnknownType,
+                ),
+                definingClassName: $this->name,
+                isStatic: $methodReflection->isStatic(),
+            );
+        }
+
+        return parent::getMethodDefinition($name, $scope, $indexBuilders, $withSideEffects);
+    }
+
+    public function getMethodDefinitionWithoutAnalysis(string $name): ?FunctionLikeDefinition
+    {
+        if (! array_key_exists($name, $this->methods)) {
+            if (! $methodReflection = $this->findReflectionMethod($name)) {
+                return null;
+            }
+
+            if ($methodReflection->class !== $this->name) {
+                return null;
+            }
+
+            return new FunctionLikeDefinition(
+                new FunctionType(
+                    $methodReflection->name,
+                    arguments: [],
+                    returnType: new UnknownType,
+                ),
+                definingClassName: $this->name,
+                isStatic: $methodReflection->isStatic(),
+            );
+        }
+
+        return parent::getMethodDefinitionWithoutAnalysis($name);
+    }
+
     public function getMethod(string $name): ?FunctionLikeDefinition
     {
         if (array_key_exists($name, $this->methods)) {
@@ -33,6 +81,10 @@ class LazyClassDefinition extends ClassDefinition
 
         if (! $methodReflection = $this->findReflectionMethod($name)) {
             return null;
+        }
+
+        if (Scramble::infer()->config->shouldAnalyzeAst($methodReflection->class)) {
+            return parent::getMethod($name);
         }
 
         return $this->methods[$name] = (new FunctionLikeReflectionDefinitionBuilder(
@@ -91,7 +143,7 @@ class LazyClassDefinition extends ClassDefinition
         $classSource = ($reflector->getReflection()->getDocComment() ?: '')."\n".rescue($reflector->getSource(...), '', report: false);
 
         $contextPhpDoc = Str::matchAll(
-            '/@(?:use|extends|mixin)\s+[^\r\n*]+/',
+            '/@(?:uses|extends|mixin)\s+[^\r\n*]+/',
             $classSource,
         )->map(fn ($s) => " * $s")->prepend("/**")->push("*/")->join("\n");
 

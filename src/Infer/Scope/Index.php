@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\DefinitionBuilders\LazyClassDefinitionBuilder;
 use Dedoc\Scramble\Infer\DefinitionBuilders\ShallowClassReflectionDefinitionBuilder;
 use Dedoc\Scramble\Scramble;
 use ReflectionClass;
@@ -44,7 +45,7 @@ class Index implements IndexContract
             return $this->classesDefinitions[$className] = (new ShallowClassReflectionDefinitionBuilder($this, $reflection))->build();
         }
 
-        return (new ClassAnalyzer($this))->analyze($className);
+        return (new LazyClassDefinitionBuilder($this, $className))->build();
     }
 
     public function registerClassDefinition(ClassDefinition $classDefinition): void
