@@ -42,6 +42,7 @@ class ClassAnalyzer
             methods: array_map(fn ($md) => $md->copyFromParent(), $parentDefinition?->methods ?: []),
             parentFqn: $parentName,
         );
+        $classDefinition->setIndex($this->index);
 
         /*
          * Traits get analyzed by embracing default behavior of PHP reflection: reflection properties and
