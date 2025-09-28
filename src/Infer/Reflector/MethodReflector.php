@@ -65,7 +65,7 @@ class MethodReflector
     public function getAstNode(): ?ClassMethod
     {
         if (! $this->methodNode) {
-//             \App\Support\TimeTracker::count('method ast parse');
+            //             \App\Support\TimeTracker::count('method ast parse');
 
             $className = class_basename($this->className);
             $methodReflection = $this->getReflection();

@@ -14,12 +14,12 @@ it('doesnt fail on internal class definition request', function () {
     expect($def)->toBeInstanceOf(ClassDefinition::class);
 });
 
-class Bar_IndexTest {
+class Bar_IndexTest
+{
     public function foo(): int {}
 }
 
-class Foo_IndexTest extends Bar_IndexTest {
-}
+class Foo_IndexTest extends Bar_IndexTest {}
 it('can get primitive type from non-ast analyzable class', function () {
     Scramble::infer()
         ->configure()
