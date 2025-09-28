@@ -50,6 +50,7 @@ class PhpDoc
 
         if ($nameResolver) {
             $tagValues = [
+                ...$node->getMixinTagValues(),
                 ...$node->getExtendsTagValues(),
                 ...$node->getReturnTagValues(),
                 ...$node->getReturnTagValues('@response'),
