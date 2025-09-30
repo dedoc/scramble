@@ -63,61 +63,36 @@ class ClassDefinition implements ClassDefinitionContract
     public function getMethodDefinitionWithoutAnalysis(string $name): ?FunctionLikeDefinition
     {
         return $this->lazilyLoadMethodDefinition($name);
-        dump([
-            "$this->name@$name" => $method ? $method::class : null,
-        ]);
-        return $method;
-//        if (! array_key_exists($name, $this->methods)) {
-//            return null;
-//        }
-//
-//        return $this->methods[$name];
     }
 
     protected array $loadedMethods = [];
 
     protected function lazilyLoadMethodDefinition(string $name): ?FunctionLikeDefinition
     {
-//        if (! array_key_exists($name, $this->methods)) {
-//            return null;
-//        }
-//
-//        return $this->methods[$name];
-
         if (array_key_exists($name, $this->loadedMethods)) {
             return $this->methods[$name] ?? null;
         }
 
         $this->loadedMethods[$name] = true;
 
-        if (
-            class_exists($this->name)
-//            && ! Scramble::infer()->config->shouldAnalyzeAst($this->name)
-            && $this instanceof ShallowClassDefinition
-        ) {
+        if ($this instanceof ShallowClassDefinition) {
             return $this->methods[$name] ?? null;
         }
 
         /** @var \ReflectionMethod|null $reflectionMethod */
-        $reflectionMethod = rescue(fn () => (new \ReflectionClass($this->name))->getMethod($name), report: false);
+        $reflectionMethod = rescue(
+            fn () => (new \ReflectionClass($this->name))->getMethod($name),
+            report: false,
+        );
 
         if (! $reflectionMethod) {
             return $this->methods[$name] ?? null;
         }
 
-        if ($reflectionMethod->class === $this->name) {
-            return $this->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
-                new FunctionType(
-                    $reflectionMethod->name,
-                    arguments: [],
-                    returnType: new UnknownType,
-                ),
-                definingClassName: $reflectionMethod->class,
-                isStatic: $reflectionMethod->isStatic(),
-            );
-        }
-
-        if (Scramble::infer()->config->shouldAnalyzeAst($reflectionMethod->class)) {
+        if (
+            $reflectionMethod->class === $this->name
+            || Scramble::infer()->config->shouldAnalyzeAst($reflectionMethod->class)
+        ) {
             return $this->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
                 new FunctionType(
                     $reflectionMethod->name,
@@ -130,22 +105,6 @@ class ClassDefinition implements ClassDefinitionContract
         }
 
         return $this->methods[$name] ?? null;
-
-
-        // ??neeeded?
-         if (isset($this->methods[$name]) && $reflectionMethod->class !== $this->name) {
-             return $this->methods[$name];
-         }
-
-        return $this->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
-            new FunctionType(
-                $reflectionMethod->name,
-                arguments: [],
-                returnType: new UnknownType,
-            ),
-            definingClassName: $reflectionMethod->class,
-            isStatic: $reflectionMethod->isStatic(),
-        );
     }
 
     public function getMethodDefiningClassName(string $name, Index $index)
@@ -176,12 +135,7 @@ class ClassDefinition implements ClassDefinitionContract
         if (! $methodDefinition = $this->lazilyLoadMethodDefinition($name)) {
             return null;
         }
-//        if (! array_key_exists($name, $this->methods)) {
-//            return null;
-//        }
-//
-//        $methodDefinition = $this->methods[$name];
-//
+
         if (! $methodDefinition->isFullyAnalyzed()) {
             $this->methods[$name] = (new MethodAnalyzer(
                 $scope->index,
