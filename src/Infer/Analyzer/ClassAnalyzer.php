@@ -90,21 +90,21 @@ class ClassAnalyzer
             }
         }
 
-        foreach ($classReflection->getMethods() as $reflectionMethod) {
-            if ($reflectionMethod->class !== $name) {
-                continue;
-            }
-
-            $classDefinition->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
-                new FunctionType(
-                    $reflectionMethod->name,
-                    arguments: [],
-                    returnType: new UnknownType,
-                ),
-                definingClassName: $name,
-                isStatic: $reflectionMethod->isStatic(),
-            );
-        }
+//        foreach ($classReflection->getMethods() as $reflectionMethod) {
+//            if ($reflectionMethod->class !== $name) {
+//                continue;
+//            }
+//
+//            $classDefinition->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
+//                new FunctionType(
+//                    $reflectionMethod->name,
+//                    arguments: [],
+//                    returnType: new UnknownType,
+//                ),
+//                definingClassName: $name,
+//                isStatic: $reflectionMethod->isStatic(),
+//            );
+//        }
 
         $this->index->registerClassDefinition($classDefinition);
 
