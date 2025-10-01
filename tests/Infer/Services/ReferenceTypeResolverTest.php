@@ -1,6 +1,8 @@
 <?php
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
@@ -175,9 +177,11 @@ it('allows overriding types accepted by another type', function () {
         new StringType,
     );
 
-    \Dedoc\Scramble\Infer\Definition\ClassDefinition::resolveFunctionReturnReferences(
+    $def = new FunctionLikeDefinition($functionType);
+
+    ClassDefinition::resolveFunctionReturnReferences(
         new GlobalScope,
-        $functionType,
+        $def,
     );
 
     expect($actualReturnType = $functionType->getReturnType())

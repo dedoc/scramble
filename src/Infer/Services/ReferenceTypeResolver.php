@@ -464,7 +464,7 @@ class ReferenceTypeResolver
         /* When this is a handling for method call */
         ObjectType|SelfType|null $calledOnType = null,
     ): Type {
-        $returnType = $callee->type->getReturnType();
+        $returnType = $callee->getReturnType();
 
         if ($isSelf = $returnType instanceof SelfType && $calledOnType) {
             $returnType = $calledOnType;

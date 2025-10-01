@@ -57,7 +57,6 @@ class ClassDefinition implements ClassDefinitionContract
     public function hasMethodDefinition(string $name): bool
     {
         return $this->lazilyLoadMethodDefinition($name) !== null;
-//        return array_key_exists($name, $this->methods);
     }
 
     public function getMethodDefinitionWithoutAnalysis(string $name): ?FunctionLikeDefinition
@@ -143,7 +142,7 @@ class ClassDefinition implements ClassDefinitionContract
             ))->analyze($methodDefinition, $indexBuilders, $withSideEffects);
         }
 
-        if (! $this->methods[$name]->referencesResolved) { // @todo make a part of !$methodDefinition->isFullyAnalyzed() (a part of method definition building)
+        if (! $this->methods[$name]->referencesResolved) {
             $methodScope = new Scope(
                 $scope->index,
                 new NodeTypesResolver,
@@ -155,9 +154,9 @@ class ClassDefinition implements ClassDefinitionContract
                 ),
             );
 
-            static::resolveFunctionReturnReferences($methodScope, $this->methods[$name]->type);
+            static::resolveFunctionReturnReferences($methodScope, $this->methods[$name]);
 
-            static::resolveFunctionExceptions($methodScope, $this->methods[$name]->type);
+            static::resolveFunctionExceptions($methodScope, $this->methods[$name]);
 
             $this->methods[$name]->referencesResolved = true;
         }
@@ -165,16 +164,20 @@ class ClassDefinition implements ClassDefinitionContract
         return $this->methods[$name];
     }
 
-    public static function resolveFunctionExceptions(Scope $scope, FunctionLikeType $functionType): void
+    public static function resolveFunctionExceptions(Scope $scope, FunctionLikeDefinition $functionLikeDefinition): void
     {
+        $functionType = $functionLikeDefinition->type;
+
         foreach ($functionType->exceptions as $i => $exceptionType) { // @phpstan-ignore property.notFound
             $functionType->exceptions[$i] = (new ReferenceTypeResolver($scope->index))
                 ->resolve($scope, $exceptionType);
         }
     }
 
-    public static function resolveFunctionReturnReferences(Scope $scope, FunctionLikeType $functionType): void
+    public static function resolveFunctionReturnReferences(Scope $scope, FunctionLikeDefinition $functionLikeDefinition): void
     {
+        $functionType = $functionLikeDefinition->type;
+
         $returnType = $functionType->getReturnType();
         $resolvedReference = ReferenceTypeResolver::getInstance()->resolve($scope, $returnType);
         $functionType->setReturnType($resolvedReference);
@@ -242,36 +245,10 @@ class ClassDefinition implements ClassDefinitionContract
         return array_key_exists($name, $this->properties);
     }
 
-    public function getMethodCallType(string $name, ?ObjectType $calledOn = null)
+    public function getMethodCallType(string $name)
     {
-        $methodDefinition = $this->methods[$name] ?? null;
-
-        if (! $methodDefinition) {
-            return new UnknownType("Cannot get type of calling method [$name] on object [$this->name]");
-        }
-
-        // Ignoring static analysis issue here because method definition is guaranteed to be present due to null check above.
-        $type = $this->getMethodDefinition($name)->type; // @phpstan-ignore property.nonObject
-
-        if (! $calledOn instanceof Generic) {
-            return $type->getReturnType();
-        }
-
-        return $this->replaceTemplateInType($type, $calledOn->templateTypesMap)->getReturnType();
-    }
-
-    private function replaceTemplateInType(Type $type, array $templateTypesMap)
-    {
-        $type = clone $type;
-
-        foreach ($templateTypesMap as $templateName => $templateValue) {
-            (new TypeWalker)->replace(
-                $type,
-                fn ($t) => $t instanceof TemplateType && $t->name === $templateName ? $templateValue : null
-            );
-        }
-
-        return $type;
+        return $this->getMethodDefinition($name)?->getReturnType()
+            ?: new UnknownType("Cannot get type of calling method [$name] on object [$this->name]");
     }
 
     public function getMethod(string $name): ?FunctionLikeDefinition

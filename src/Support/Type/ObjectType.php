@@ -75,7 +75,7 @@ class ObjectType extends AbstractType
             return new UnknownType("No method {$definingClassName}@{$methodName} definition found, it may be located in `vendor` which is not analyzed.");
         }
 
-        $returnType = $methodDefinition->type->getReturnType();
+        $returnType = $methodDefinition->getReturnType();
 
         // Here templates should be replaced for generics and arguments should be taken into account.
         return $returnType instanceof TemplateType && $returnType->is

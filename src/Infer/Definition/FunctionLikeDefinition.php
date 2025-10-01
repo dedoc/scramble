@@ -2,10 +2,18 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
+use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
 use Dedoc\Scramble\Infer\DefinitionBuilders\SelfOutTypeBuilder;
+use Dedoc\Scramble\Infer\Reflector\ClassReflector;
+use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
+use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Scope\ScopeContext;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Type;
+use PhpParser\ErrorHandler\Throwing;
+use PhpParser\NameContext;
 
 class FunctionLikeDefinition
 {
@@ -41,6 +49,37 @@ class FunctionLikeDefinition
     public function getSelfOutType(): ?Generic
     {
         return $this->_selfOutType ??= $this->selfOutTypeBuilder?->build();
+    }
+
+    public function getReturnType(): Type
+    {
+//        if (! $methodDefinition->isFullyAnalyzed()) {
+//            $this->methods[$name] = (new MethodAnalyzer(
+//                $scope->index,
+//                $this,
+//            ))->analyze($methodDefinition, $indexBuilders, $withSideEffects);
+//        }
+//
+//        if (! $this->referencesResolved) { // @todo make a part of !$methodDefinition->isFullyAnalyzed() (a part of method definition building)
+//            $methodScope = new Scope(
+//                $scope->index,
+//                new NodeTypesResolver,
+//                new ScopeContext(new ClassDefinition($this->definingClassName), $methodDefinition),
+//                new FileNameResolver(
+//                    class_exists($this->definingClassName)
+//                        ? ClassReflector::make($this->definingClassName)->getNameContext()
+//                        : tap(new NameContext(new Throwing), fn(NameContext $nc) => $nc->startNamespace()),
+//                ),
+//            );
+//
+//            ClassDefinition::resolveFunctionReturnReferences($methodScope, $this);
+//
+//            ClassDefinition::resolveFunctionExceptions($methodScope, $this);
+//
+//            $this->referencesResolved = true;
+//        }
+
+        return $this->type->getReturnType();
     }
 
     /**
