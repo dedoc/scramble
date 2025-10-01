@@ -67,7 +67,7 @@ class FooGeneric_IndexTest extends BarGeneric_IndexTest {}
 it('can get generic type from extended non-ast analyzable class', function () {
     $type = $this->index->getClass(FooGeneric_IndexTest::class)
         ->getMethod('foo')
-        ->type->getReturnType();
+        ->getReturnType();
 
     expect($type->toString())->toBe('string');
 });

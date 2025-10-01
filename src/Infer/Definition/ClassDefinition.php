@@ -13,8 +13,10 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
+use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\FunctionLikeType;
@@ -27,9 +29,14 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use LogicException;
 use PhpParser\ErrorHandler\Throwing;
 use PhpParser\NameContext;
+use PHPStan\PhpDocParser\Ast\PhpDoc\ExtendsTagValueNode;
+use PHPStan\PhpDocParser\Ast\PhpDoc\MixinTagValueNode;
+use PHPStan\PhpDocParser\Ast\PhpDoc\UsesTagValueNode;
 
 class ClassDefinition implements ClassDefinitionContract
 {
@@ -74,10 +81,6 @@ class ClassDefinition implements ClassDefinitionContract
         }
 
         $this->loadedMethods[$name] = true;
-
-        if ($this instanceof ShallowClassDefinition) {
-            return $this->methods[$name] ?? null;
-        }
 
         /** @var \ReflectionMethod|null $reflectionMethod */
         $reflectionMethod = rescue(
@@ -178,9 +181,8 @@ class ClassDefinition implements ClassDefinitionContract
         return $this->methods[$name] = (new FunctionLikeReflectionDefinitionBuilder(
             $name,
             $methodReflection,
-            collect([]),
-//            collect($this->templateTypes)->keyBy->name
-//                ->merge($this->getMethodContextTemplates($methodReflection)),
+            collect($this->templateTypes)->keyBy->name
+                ->merge($this->getMethodContextTemplates($methodReflection)),
         ))->build();
     }
 
@@ -219,6 +221,77 @@ class ClassDefinition implements ClassDefinitionContract
         }
 
         return $this->methods[$name];
+    }
+
+    private function getMethodContextTemplates(\ReflectionMethod $methodReflection): Collection
+    {
+        $classContexts = $this->getClassContexts();
+
+        return $classContexts->get($methodReflection->class, collect());
+    }
+
+    private Collection $classContexts;
+
+    public function getClassContexts()
+    {
+        if (isset($this->classContexts)) {
+            return $this->classContexts;
+        }
+
+        $classContexts = collect();
+
+        $reflector = ClassReflector::make($this->name);
+
+        $classSource = ($reflector->getReflection()->getDocComment() ?: '')."\n".rescue($reflector->getSource(...), '', report: false);
+
+        $contextPhpDoc = Str::matchAll(
+            '/@(?:uses|extends|mixin)\s+[^\r\n*]+/',
+            $classSource,
+        )->map(fn ($s) => " * $s")->prepend('/**')->push('*/')->join("\n");
+
+        $phpDoc = PhpDoc::parse(
+            $contextPhpDoc,
+            new FileNameResolver($reflector->getNameContext()),
+        );
+
+        /** @var (ExtendsTagValueNode|UsesTagValueNode|MixinTagValueNode)[] $tags */
+        $tags = [
+            ...array_values($phpDoc->getExtendsTagValues()),
+            ...array_values($phpDoc->getUsesTagValues()),
+            ...array_values($phpDoc->getMixinTagValues()),
+        ];
+
+        foreach ($tags as $tag) {
+            $type = PhpDocTypeHelper::toType($tag->type);
+
+            if (! $type instanceof Generic) {
+                $classContexts->offsetSet($type->name, collect());
+
+                continue;
+            }
+
+            if (! $definition = $this->index->getClass($type->name)) {
+                continue;
+            }
+
+            $classContext = collect();
+            foreach ($definition->templateTypes as $i => $templateType) {
+                $classContext->offsetSet(
+                    $templateType->name,
+                    $type->templateTypes[$i] ?? $templateType->default ?? new UnknownType,
+                );
+            }
+            $classContexts->offsetSet($type->name, $classContext);
+        }
+
+        return $this->classContexts = $classContexts;
+    }
+
+    private Index $index;
+
+    public function setIndex(Index $index): void
+    {
+        $this->index = $index;
     }
 
     public static function resolveFunctionExceptions(Scope $scope, FunctionLikeDefinition $functionLikeDefinition): void

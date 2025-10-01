@@ -106,6 +106,8 @@ class ClassAnalyzer
 //            );
 //        }
 
+        $classDefinition->setIndex($this->index);
+
         $this->index->registerClassDefinition($classDefinition);
 
         Context::getInstance()->extensionsBroker->afterClassDefinitionCreated(new ClassDefinitionCreatedEvent($classDefinition->name, $classDefinition));
