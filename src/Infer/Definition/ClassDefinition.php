@@ -201,6 +201,10 @@ class ClassDefinition implements ClassDefinitionContract
             ))->analyze($methodDefinition, $indexBuilders, $withSideEffects);
         }
 
+        if (! $this->methods[$name]) {
+            return $this->methods[$name];
+        }
+
         if (! $this->methods[$name]->referencesResolved) {
             $methodScope = new Scope(
                 $scope->index,
