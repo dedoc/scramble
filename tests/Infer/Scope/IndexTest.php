@@ -79,7 +79,7 @@ class FooMixin_IndexTest {}
 test('builds class definition with mixin without trait', function () {
     $type = $this->index->getClass(FooMixin_IndexTest::class)
         ->getMethod('foo')
-        ->type->getReturnType();
+        ->getReturnType();
 
     expect($type->toString())->toBe('int');
 });

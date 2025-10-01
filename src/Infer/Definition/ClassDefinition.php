@@ -153,17 +153,17 @@ class ClassDefinition implements ClassDefinitionContract
         if ($methodReflection) {
             return $methodReflection;
         }
-//
-//        foreach ($this->getClassContexts()->keys() as $class) {
-//            /** @var \ReflectionClass|null $classReflection */
-//            $classReflection = rescue(fn () => new \ReflectionClass($class), report: false);
-//            /** @var \ReflectionMethod|null $methodReflection */
-//            $methodReflection = rescue(fn () => $classReflection?->getMethod($name), report: false);
-//
-//            if ($methodReflection) {
-//                return $methodReflection;
-//            }
-//        }
+
+        foreach ($this->getClassContexts()->keys() as $class) {
+            /** @var \ReflectionClass|null $classReflection */
+            $classReflection = rescue(fn () => new \ReflectionClass($class), report: false);
+            /** @var \ReflectionMethod|null $methodReflection */
+            $methodReflection = rescue(fn () => $classReflection?->getMethod($name), report: false);
+
+            if ($methodReflection) {
+                return $methodReflection;
+            }
+        }
 
         return null;
     }
@@ -242,16 +242,20 @@ class ClassDefinition implements ClassDefinitionContract
 
         $reflector = ClassReflector::make($this->name);
 
-        $classSource = ($reflector->getReflection()->getDocComment() ?: '')."\n".rescue($reflector->getSource(...), '', report: false);
+        $docComment = rescue(fn () => $reflector->getReflection()->getDocComment(), report: false) ?: '';
+
+        $classSource = $docComment."\n".rescue($reflector->getSource(...), '', report: false);
 
         $contextPhpDoc = Str::matchAll(
             '/@(?:uses|extends|mixin)\s+[^\r\n*]+/',
             $classSource,
         )->map(fn ($s) => " * $s")->prepend('/**')->push('*/')->join("\n");
 
+        $nameContext = rescue($reflector->getNameContext(...), report: false);
+
         $phpDoc = PhpDoc::parse(
             $contextPhpDoc,
-            new FileNameResolver($reflector->getNameContext()),
+            $nameContext ? new FileNameResolver($nameContext) : null,
         );
 
         /** @var (ExtendsTagValueNode|UsesTagValueNode|MixinTagValueNode)[] $tags */
