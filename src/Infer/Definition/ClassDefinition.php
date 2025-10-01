@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
+use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
@@ -132,9 +133,65 @@ class ClassDefinition implements ClassDefinitionContract
     public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [], bool $withSideEffects = false): ?FunctionLikeDefinition
     {
         if (! $methodDefinition = $this->lazilyLoadMethodDefinition($name)) {
+            return $this->getFunctionLikeDefinitionBuiltFromReflection($name);
+        }
+
+        return $this->getFunctionLikeDefinitionBuiltFromAst($methodDefinition, $name, $scope, $indexBuilders, $withSideEffects);
+    }
+
+    private function findReflectionMethod(string $name): ?\ReflectionMethod
+    {
+        /** @var \ReflectionClass|null $classReflection */
+        $classReflection = rescue(fn () => new \ReflectionClass($this->name), report: false);
+        /** @var \ReflectionMethod|null $methodReflection */
+        $methodReflection = rescue(fn () => $classReflection?->getMethod($name), report: false);
+
+        // The case when method is defined in the class or its parents.
+        if ($methodReflection) {
+            return $methodReflection;
+        }
+//
+//        foreach ($this->getClassContexts()->keys() as $class) {
+//            /** @var \ReflectionClass|null $classReflection */
+//            $classReflection = rescue(fn () => new \ReflectionClass($class), report: false);
+//            /** @var \ReflectionMethod|null $methodReflection */
+//            $methodReflection = rescue(fn () => $classReflection?->getMethod($name), report: false);
+//
+//            if ($methodReflection) {
+//                return $methodReflection;
+//            }
+//        }
+
+        return null;
+    }
+
+    protected function getFunctionLikeDefinitionBuiltFromReflection(string $name): ?FunctionLikeDefinition
+    {
+        if (array_key_exists($name, $this->methods)) {
+            return $this->methods[$name];
+        }
+
+        if (! $methodReflection = $this->findReflectionMethod($name)) {
             return null;
         }
 
+        return $this->methods[$name] = (new FunctionLikeReflectionDefinitionBuilder(
+            $name,
+            $methodReflection,
+            collect([]),
+//            collect($this->templateTypes)->keyBy->name
+//                ->merge($this->getMethodContextTemplates($methodReflection)),
+        ))->build();
+    }
+
+    protected function getFunctionLikeDefinitionBuiltFromAst(
+        FunctionLikeDefinition $methodDefinition,
+        string $name,
+        Scope $scope = new GlobalScope,
+        array $indexBuilders = [],
+        bool $withSideEffects = false,
+    )
+    {
         if (! $methodDefinition->isFullyAnalyzed()) {
             $this->methods[$name] = (new MethodAnalyzer(
                 $scope->index,
