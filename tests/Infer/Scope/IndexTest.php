@@ -43,6 +43,27 @@ it('can get primitive type from non-ast analyzable class', function () {
     expect($type->toString())->toBe('int');
 });
 
+class Template_IndexTest
+{
+    /**
+     * @template T
+     * @param T $a
+     * @return T
+     */
+    public function foo($a){}
+}
+it('can get template type from non-ast analyzable class', function () {
+    Scramble::infer()
+        ->configure()
+        ->buildDefinitionsUsingReflectionFor([
+            Template_IndexTest::class,
+        ]);
+
+    $type = $this->index->getClass(Template_IndexTest::class)->getMethod('foo')->type->toString();
+
+    expect($type)->toBe('<T>(T): T');
+});
+
 /** @template T */
 class BarGeneric_IndexTest
 {

@@ -64,7 +64,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         }
 
         if (! $array instanceof KeyedArrayType) {
-            return new UnknownType;
+            return $this->openApiTransformer->transform($array);
         }
 
         $array->items = $this->flattenMergeValues($array->items);

@@ -95,10 +95,15 @@ class ReferenceTypeResolver
 
     private function finalizeStatic(Type $type, Type $staticType): Type
     {
-        return (new TypeWalker)->map(
-            $type,
-            fn (Type $t) => $t instanceof ObjectType && $t->name === StaticReference::STATIC ? $staticType : $t,
-        );
+        return (new TypeWalker)->map($type, function (Type $t) use ($staticType) {
+            if ($t instanceof Generic && $staticType instanceof ObjectType && $t->name === StaticReference::STATIC) {
+                $t->name = $staticType->name;
+
+                return $t;
+            }
+
+            return $t instanceof ObjectType && $t->name === StaticReference::STATIC ? $staticType : $t;
+        });
     }
 
     private function resolveLateTypeEarly(LateResolvingType $type): Type

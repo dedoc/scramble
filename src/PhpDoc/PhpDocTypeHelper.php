@@ -6,7 +6,9 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FloatType;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\GenericClassStringType;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\IntersectionType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -16,6 +18,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -25,10 +28,12 @@ use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprStringNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeItemNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\CallableTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\ConstTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IntersectionTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\ThisTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 
@@ -77,6 +82,10 @@ class PhpDocTypeHelper
                 );
             }
 
+            if ($type->type->name === 'class-string') {
+                return new GenericClassStringType(static::toType($type->genericTypes[0]));
+            }
+
             if ($type->type->name === 'list') {
                 $valueType = isset($type->genericTypes[0]) ? static::toType($type->genericTypes[0]) : new MixedType;
 
@@ -103,6 +112,10 @@ class PhpDocTypeHelper
             ));
         }
 
+        if ($type instanceof ThisTypeNode) {
+            return new SelfType(''/** ??? */);
+        }
+
         if ($type instanceof UnionTypeNode) {
             return new Union(array_map(
                 fn ($t) => static::toType($t),
@@ -122,6 +135,14 @@ class PhpDocTypeHelper
             if ($type->constExpr instanceof ConstExprFloatNode) {
                 return new FloatType; // todo: float literal?
             }
+        }
+
+        if ($type instanceof CallableTypeNode) {
+            return new FunctionType(
+                name: '{closure}',
+                arguments: [],
+                returnType: self::toType($type->returnType),
+            );
         }
 
         return new UnknownType('Unknown phpDoc type ['.$type.']');
