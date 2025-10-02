@@ -44,7 +44,7 @@ class ResourceCollectionTypeInfer implements MethodReturnTypeExtension
         $parentType = $this->getCollectionType($event->getInstance(), $event->scope->index);
 
         $realType = $event->getDefinition()->getMethodDefinition('toArray')?->getReturnType();
-        if ($realType instanceof UnknownType) {
+        if ($realType instanceof UnknownType || ($realType instanceof ArrayType && $realType->value instanceof UnknownType)) {
             /**
              * When inferred return type of `toArray` method cannot be inferred, we'd like to fall back to
              * the default behavior of ResourceCollection, so there is still SOME information.
