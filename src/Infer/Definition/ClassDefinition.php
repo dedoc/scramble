@@ -227,6 +227,10 @@ class ClassDefinition implements ClassDefinitionContract
             }
         }
 
+        if ($methodReflection) {
+            return $methodReflection;
+        }
+
         return null;
     }
 

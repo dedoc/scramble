@@ -12,6 +12,7 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypePath;
+use Dedoc\Scramble\Support\Type\TypePathSet;
 use Dedoc\Scramble\Support\Type\UnknownType;
 
 class TemplateTypesSolver
@@ -173,15 +174,15 @@ class TemplateTypesSolver
         return $this->getTypeByPath($type, $path);
     }
 
-    private function findTemplatePath(TemplateType $template, Type $typeWithTemplate): ?TypePath
+    private function findTemplatePath(TemplateType $template, Type $typeWithTemplate): ?TypePathSet
     {
-        return TypePath::findFirst(
+        return TypePathSet::find(
             $typeWithTemplate,
             fn (Type $t) => $t === $template,
         );
     }
 
-    private function getTypeByPath(Type $type, TypePath $path): ?Type
+    private function getTypeByPath(Type $type, TypePathSet $path): ?Type
     {
         $result = $path->getFrom($type);
 
