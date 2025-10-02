@@ -50,7 +50,9 @@ class ClassDefinition implements ClassDefinitionContract
         /** @var array<string, FunctionLikeDefinition> $methods */
         public array $methods = [],
         public ?string $parentFqn = null,
-    ) {}
+    )
+    {
+    }
 
     public function isInstanceOf(string $className)
     {
@@ -131,7 +133,7 @@ class ClassDefinition implements ClassDefinitionContract
     }
 
     /**
-     * @param  IndexBuilder<array<string, mixed>>[]  $indexBuilders
+     * @param IndexBuilder<array<string, mixed>>[] $indexBuilders
      */
     public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [], bool $withSideEffects = false): ?FunctionLikeDefinition
     {
@@ -139,7 +141,67 @@ class ClassDefinition implements ClassDefinitionContract
             return $this->getFunctionLikeDefinitionBuiltFromReflection($name);
         }
 
+        if ($this->isMethodDefinedInNonAstAnalyzableTrait($name)) {
+            return $this->getFunctionLikeDefinitionBuiltFromReflection($name);
+        }
+
         return $this->getFunctionLikeDefinitionBuiltFromAst($methodDefinition, $name, $scope, $indexBuilders, $withSideEffects);
+    }
+
+    private function isMethodDefinedInNonAstAnalyzableTrait(string $name): bool
+    {
+        if (! $reflectionMethod = $this->findReflectionMethod($name)) {
+            return false;
+        }
+        /** @var \ReflectionClass|null $classReflection */
+        $classReflection = rescue(fn () => new \ReflectionClass($this->name), report: false);
+
+        if (! $classReflection) {
+            return false;
+        }
+
+        if ($this->isDeclaredIn($reflectionMethod, $classReflection)) {
+            return false;
+        }
+
+        foreach (class_uses_recursive($classReflection->name) as $traitName) {
+            $traitReflection = rescue(
+                fn () => new \ReflectionClass($traitName),
+                report: false,
+            );
+
+            if (! $traitReflection) {
+                continue;
+            }
+
+            if (! $this->isDeclaredIn($reflectionMethod, $traitReflection)) {
+                return false;
+            }
+
+            return ! Scramble::infer()->config->shouldAnalyzeAst($traitName);
+        }
+
+        return false;
+    }
+
+    private function isDeclaredIn(\ReflectionMethod $reflectionMethod, \ReflectionClass $class): bool
+    {
+        $reflectionMethodFileName = $reflectionMethod->getFileName();
+        $reflectionMethodStartLine = $reflectionMethod->getStartLine();
+
+        $classFileName = $class->getFileName();
+        $classStartLine = $class->getStartLine();
+        $classEndLine = $class->getEndLine();
+
+        if (! $reflectionMethodFileName || ! $classFileName) {
+            return false;
+        }
+
+        if ($reflectionMethodFileName !== $classFileName) {
+            return false;
+        }
+
+        return $reflectionMethodStartLine > $classStartLine && $reflectionMethodStartLine < $classEndLine;
     }
 
     private function findReflectionMethod(string $name): ?\ReflectionMethod
@@ -150,7 +212,7 @@ class ClassDefinition implements ClassDefinitionContract
         $methodReflection = rescue(fn () => $classReflection?->getMethod($name), report: false);
 
         // The case when method is defined in the class or its parents.
-        if ($methodReflection) {
+        if ($methodReflection && $this->isDeclaredIn($methodReflection, $methodReflection->getDeclaringClass())) {
             return $methodReflection;
         }
 
@@ -170,7 +232,10 @@ class ClassDefinition implements ClassDefinitionContract
 
     protected function getFunctionLikeDefinitionBuiltFromReflection(string $name): ?FunctionLikeDefinition
     {
-        if (array_key_exists($name, $this->methods)) {
+        if (
+            array_key_exists($name, $this->methods)
+            && ($this->methods[$name]->type->getAttribute('r'))
+        ) {
             return $this->methods[$name];
         }
 
@@ -178,12 +243,16 @@ class ClassDefinition implements ClassDefinitionContract
             return null;
         }
 
-        return $this->methods[$name] = (new FunctionLikeReflectionDefinitionBuilder(
+        $definition = (new FunctionLikeReflectionDefinitionBuilder(
             $name,
             $methodReflection,
             collect($this->templateTypes)->keyBy->name
                 ->merge($this->getMethodContextTemplates($methodReflection)),
         ))->build();
+
+        $definition->type->setAttribute('r', true);
+
+        return $this->methods[$name] = $definition;
     }
 
     protected function getFunctionLikeDefinitionBuiltFromAst(
@@ -251,7 +320,7 @@ class ClassDefinition implements ClassDefinitionContract
         $classSource = $docComment."\n".rescue($reflector->getSource(...), '', report: false);
 
         $contextPhpDoc = Str::matchAll(
-            '/@(?:uses|extends|mixin)\s+[^\r\n*]+/',
+            '/@(?:use|extends|mixin)\s+[^\r\n*]+/',
             $classSource,
         )->map(fn ($s) => " * $s")->prepend('/**')->push('*/')->join("\n");
 

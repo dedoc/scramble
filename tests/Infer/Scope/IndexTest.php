@@ -10,6 +10,7 @@ use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Illuminate\Database\Query\Builder;
 
 it('doesnt fail on internal class definition request', function () {
     $index = new Index;
@@ -108,7 +109,7 @@ trait BarTGeneric_IndexTest
 }
 class FooTraitGeneric_IndexTest
 {
-    /** @uses BarTGeneric_IndexTest<42> */
+    /** @use BarTGeneric_IndexTest<42> */
     use BarTGeneric_IndexTest;
 }
 test('builds class definition with mixin with generic trait', function () {
@@ -120,7 +121,7 @@ test('builds class definition with mixin with generic trait', function () {
 
     $type = $this->index->getClass(FooTraitGeneric_IndexTest::class)
         ->getMethod('foo')
-        ->type->getReturnType();
+        ->getReturnType();
 
     expect($type->toString())->toBe('int(42)');
 });
