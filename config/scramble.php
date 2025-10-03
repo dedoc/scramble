@@ -102,6 +102,15 @@ return [
      */
     'enum_cases_description_strategy' => 'description',
 
+    /**
+     * Determines how Scramble stores the names of enum cases.
+     * Available options:
+     * - 'names' – Case names are stored in the `x-enumNames` enum schema extension.
+     * - 'varnames' - Case names are stored in the `x-enum-varnames` enum schema extension.
+     * - false - Case names are not stored.
+     */
+    'enum_cases_names_strategy' => false,
+
     'middleware' => [
         'web',
         RestrictedDocsAccess::class,
