@@ -14,6 +14,10 @@ class ShallowClassDefinition extends ClassDefinition
 
     public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [], bool $withSideEffects = false): ?FunctionLikeDefinition
     {
+        if ($this->isMethodDefinedInNonAstAnalyzableTrait($name)) {
+            return $this->getFunctionLikeDefinitionBuiltFromReflection($name);
+        }
+
         return $this->getMethodDefinitionWithoutAnalysis($name) ?: $this->getFunctionLikeDefinitionBuiltFromReflection($name);
     }
 }

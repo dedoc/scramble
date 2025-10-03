@@ -148,7 +148,7 @@ class ClassDefinition implements ClassDefinitionContract
         return $this->getFunctionLikeDefinitionBuiltFromAst($methodDefinition, $name, $scope, $indexBuilders, $withSideEffects);
     }
 
-    private function isMethodDefinedInNonAstAnalyzableTrait(string $name): bool
+    protected function isMethodDefinedInNonAstAnalyzableTrait(string $name): bool
     {
         if (! $reflectionMethod = $this->findReflectionMethod($name)) {
             return false;

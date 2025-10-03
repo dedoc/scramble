@@ -51,7 +51,7 @@ class ShallowClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
          */
         $classDefinition = new ShallowClassDefinition(
             name: $this->reflection->name,
-            templateTypes: array_merge($classTemplates->values()->all(), $parentDefinition?->templateTypes ?: []),
+            templateTypes: $classTemplates->values()->all(),
             properties: array_map(fn ($pd) => clone $pd, $parentDefinition?->properties ?: []),
             methods: $parentDefinition?->methods ?: [],
             parentFqn: $parentName,

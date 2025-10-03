@@ -193,6 +193,49 @@ it('handles chained method call relation', function () {
     expect($type->toString())->toBe('Illuminate\Database\Eloquent\Relations\HasMany<'.PostModel_IndexTest::class.', self>');
 });
 
+/**
+ * @template T
+ * @extends TParent_IndexTest<T>
+ */
+class T_IndexTest extends TParent_IndexTest {}
+/** @template T */
+class TParent_IndexTest {}
+it('properly stores templates in definitions', function () {
+    Scramble::infer()
+        ->configure()
+        ->buildDefinitionsUsingReflectionFor([
+            T_IndexTest::class,
+            TParent_IndexTest::class,
+        ]);
+
+    $definition = $this->index->getClass(T_IndexTest::class);
+
+    expect($definition->templateTypes)->toHaveCount(1)
+        ->and($definition->templateTypes[0]->name)->toBe('T');
+});
+
+/** @mixin BazTrait_IndexTest<int> */
+class BazParent_IndexTest {}
+/** @template T */
+trait BazTrait_IndexTest {
+    /** @return T */
+    public function foo() {}
+}
+class Baz_IndexTest extends BazParent_IndexTest {}
+it('handles deep context', function () {
+    Scramble::infer()
+        ->configure()
+        ->buildDefinitionsUsingReflectionFor([
+            BazParent_IndexTest::class,
+            BazTrait_IndexTest::class,
+            Baz_IndexTest::class,
+        ]);
+
+    $definition = $this->index->getClass(Baz_IndexTest::class);
+
+    expect($definition->getMethod('foo')->getReturnType()->toString())->toBe('int');
+});
+
 it('handles chained method call relation first', function () {
     $hasMany = new Generic(HasMany::class, [
         new ObjectType(PostModel_IndexTest::class),
