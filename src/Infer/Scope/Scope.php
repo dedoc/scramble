@@ -80,6 +80,13 @@ class Scope
             ]);
         }
 
+        if ($node instanceof Node\Expr\BinaryOp\Coalesce) {
+            return Union::wrap([
+                $this->getType($node->left),
+                $this->getType($node->right),
+            ]);
+        }
+
         if ($node instanceof Node\Expr\Match_) {
             return Union::wrap(array_map(fn (Node\MatchArm $arm) => $this->getType($arm->body), $node->arms));
         }

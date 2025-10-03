@@ -27,6 +27,17 @@ it('infers ternary expressions nodes types', function ($code, $expectedTypeStrin
     ['unknown() ?: unknown() ?: unknown()', 'unknown'],
 ]);
 
+it('infers expressions from a null coalescing operator', function ($code, $expectedTypeString) {
+    expect(getStatementTypeForScopeTest($code)->toString())->toBe($expectedTypeString);
+})->with([
+    ['unknown() ?? 1', 'unknown|int(1)'],
+    ['(int) unknown() ?? 1', 'int|int(1)'],
+    ['1 ?? 1', 'int(1)'],
+    ['unknown() ?? unknown()', 'unknown'],
+    ['unknown() ?? true ?? 1', 'unknown|boolean(true)|int(1)'],
+    ['unknown() ?? unknown() ?? unknown()', 'unknown'],
+]);
+
 it('infers match node type', function ($code, $expectedTypeString) {
     expect(getStatementTypeForScopeTest($code)->toString())->toBe($expectedTypeString);
 })->with([
