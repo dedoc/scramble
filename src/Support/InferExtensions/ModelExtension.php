@@ -17,6 +17,7 @@ use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
@@ -149,12 +150,8 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         return new ObjectType($relation['related']);
     }
 
-    public function getMethodReturnType(MethodCallEvent $event): ?Type
+    protected function getToArrayMethodReturnType(MethodCallEvent $event): ?Type
     {
-        if ($event->getName() !== 'toArray') {
-            return null;
-        }
-
         if ($this->getRealToArrayMethodDefinitionClassName($event) !== Model::class) {
             return null;
         }
@@ -192,6 +189,28 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             ...$arrayableAttributesTypes->map(fn ($type, $name) => new ArrayItemType_($name, $type))->values()->all(),
             ...$arrayableRelationsTypes->map(fn ($type, $name) => new ArrayItemType_($name, $type, isOptional: true))->values()->all(),
         ]);
+    }
+
+    protected function getGetOriginalMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        $key = $event->getArg('key', 0);
+
+        if (! $key instanceof LiteralStringType) {
+            return null;
+        }
+
+        return $this->getPropertyType(
+            new PropertyFetchEvent($event->getInstance(), $key->value, $event->scope)
+        );
+    }
+
+    public function getMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        return match ($event->getName()) {
+            'toArray' => $this->getToArrayMethodReturnType($event),
+            'getOriginal' => $this->getGetOriginalMethodReturnType($event),
+            default => null,
+        };
     }
 
     private function getModelInfo(ObjectType $type)
