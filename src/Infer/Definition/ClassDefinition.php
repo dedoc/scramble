@@ -19,14 +19,12 @@ use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
-use Dedoc\Scramble\Support\Type\FunctionLikeType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Collection;
@@ -50,9 +48,7 @@ class ClassDefinition implements ClassDefinitionContract
         /** @var array<string, FunctionLikeDefinition> $methods */
         public array $methods = [],
         public ?string $parentFqn = null,
-    )
-    {
-    }
+    ) {}
 
     public function isInstanceOf(string $className)
     {
@@ -133,7 +129,7 @@ class ClassDefinition implements ClassDefinitionContract
     }
 
     /**
-     * @param IndexBuilder<array<string, mixed>>[] $indexBuilders
+     * @param  IndexBuilder<array<string, mixed>>[]  $indexBuilders
      */
     public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [], bool $withSideEffects = false): ?FunctionLikeDefinition
     {
@@ -265,8 +261,7 @@ class ClassDefinition implements ClassDefinitionContract
         Scope $scope = new GlobalScope,
         array $indexBuilders = [],
         bool $withSideEffects = false,
-    )
-    {
+    ) {
         if (! $methodDefinition->isFullyAnalyzed()) {
             $this->methods[$name] = (new MethodAnalyzer(
                 $scope->index,

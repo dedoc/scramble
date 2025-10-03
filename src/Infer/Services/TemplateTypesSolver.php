@@ -11,7 +11,6 @@ use Dedoc\Scramble\Support\Type\MissingType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypePath;
 use Dedoc\Scramble\Support\Type\TypePathSet;
 use Dedoc\Scramble\Support\Type\UnknownType;
 

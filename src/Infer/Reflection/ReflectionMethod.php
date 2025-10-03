@@ -9,7 +9,7 @@ class ReflectionMethod extends BaseReflectionMethod
 {
     /**
      * If the method is declared in trait, returns the reflection class of the trait.
-     * @return ReflectionClass|false
+     *
      * @throws \ReflectionException
      */
     public function getDeclaringTrait(): ReflectionClass|false

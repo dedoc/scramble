@@ -15,9 +15,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class AfterAnonymousResourceCollectionDefinitionCreatedExtension implements AfterClassDefinitionCreatedExtension
 {
-    public function __construct(private Index $index)
-    {
-    }
+    public function __construct(private Index $index) {}
 
     public function shouldHandle(string $name): bool
     {
