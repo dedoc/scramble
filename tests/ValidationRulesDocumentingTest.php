@@ -561,18 +561,26 @@ it('documents date rule with Y-m-d format', function () {
         ->toHaveProperty('format', 'date');
 });
 
-it('documents date_format rule with Y-m-d format', function () {
+it('documents date_format rule with format', function () {
     $rules = [
         'some_date' => 'date_format:Y-m-d',
+        'some_date_time' => 'date_format:Y-m-d H:i:s',
+        'some_time' => 'date_format:H:i',
     ];
 
     $params = ($this->buildRulesToParameters)($rules)->handle();
 
     expect($params = collect($params)->all())
-        ->toHaveCount(1)
+        ->toHaveCount(3)
         ->and($params[0]->schema->type)
         ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
-        ->toHaveProperty('format', 'date');
+        ->toHaveProperty('format', 'date')        
+        ->and($params[1]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toHaveProperty('format', 'date-time')        
+        ->and($params[2]->schema->type)
+        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toHaveProperty('format', '');
 });
 
 it('supports prohibited if rule evaluation', function () {
