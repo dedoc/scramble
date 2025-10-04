@@ -247,7 +247,6 @@ class RulesMapper
             $type = $this->string($type);
         }
 
-        $dateFormat = $params[0] ?? '';
         switch ($params[0] ?? 'Y-m-d H:i:s') {
             case 'Y-m-d':
                 $type->format('date');
