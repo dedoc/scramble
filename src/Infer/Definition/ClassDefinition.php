@@ -74,7 +74,7 @@ class ClassDefinition implements ClassDefinitionContract
 
     public function hasMethodDefinition(string $name): bool
     {
-        return $this->lazilyLoadMethodDefinition($name) !== null;
+        return $this->lazilyLoadMethodDefinition($name) || $this->findReflectionMethod($name);
     }
 
     public function getMethodDefinitionWithoutAnalysis(string $name): ?FunctionLikeDefinition
