@@ -385,7 +385,7 @@ class ClassDefinition implements ClassDefinitionContract
             if (! $classDef = $this->getIndex()->getClass($class)) {
                 continue;
             }
-            
+
             $classContext = $classDef->getClassContexts([...$ignoreClasses, $this->name]);
 
             $localizedClassContext = $classContext->map->map(function ($type) use ($localContext) {
