@@ -20,7 +20,7 @@ class MethodAnalyzer
     {
         try {
             $node = $this->getClassReflector()->getMethod($methodDefinition->type->name)->getAstNode();
-        }catch (\ReflectionException) {
+        } catch (\ReflectionException) {
             return null;
         }
 

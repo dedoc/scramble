@@ -19,9 +19,7 @@ use Illuminate\Support\Collection;
 
 class AfterResourceCollectionDefinitionCreatedExtension implements AfterClassDefinitionCreatedExtension
 {
-    public function __construct(private Index $index)
-    {
-    }
+    public function __construct(private Index $index) {}
 
     public function shouldHandle(string $name): bool
     {

@@ -16,7 +16,6 @@ use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 
 it('doesnt fail on internal class definition request', function () {
@@ -54,10 +53,11 @@ class Template_IndexTest
 {
     /**
      * @template T
-     * @param T $a
+     *
+     * @param  T  $a
      * @return T
      */
-    public function foo($a){}
+    public function foo($a) {}
 }
 it('can get template type from non-ast analyzable class', function () {
     Scramble::infer()
@@ -195,6 +195,7 @@ it('handles chained method call relation', function () {
 
 /**
  * @template T
+ *
  * @extends TParent_IndexTest<T>
  */
 class T_IndexTest extends TParent_IndexTest {}
@@ -217,7 +218,8 @@ it('properly stores templates in definitions', function () {
 /** @mixin BazTrait_IndexTest<int> */
 class BazParent_IndexTest {}
 /** @template T */
-trait BazTrait_IndexTest {
+trait BazTrait_IndexTest
+{
     /** @return T */
     public function foo() {}
 }
@@ -237,7 +239,8 @@ it('handles deep context with mixin', function () {
 });
 
 /** @template T */
-class BazUseParent_IndexTest {
+class BazUseParent_IndexTest
+{
     /** @use BazTrait_IndexTest<T> */
     use BazTrait_IndexTest;
 }

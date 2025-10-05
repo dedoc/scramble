@@ -53,31 +53,31 @@ class FunctionLikeDefinition
 
     public function getReturnType(): Type
     {
-//        if (! $methodDefinition->isFullyAnalyzed()) {
-//            $this->methods[$name] = (new MethodAnalyzer(
-//                $scope->index,
-//                $this,
-//            ))->analyze($methodDefinition, $indexBuilders, $withSideEffects);
-//        }
-//
-//        if (! $this->referencesResolved) { // @todo make a part of !$methodDefinition->isFullyAnalyzed() (a part of method definition building)
-//            $methodScope = new Scope(
-//                $scope->index,
-//                new NodeTypesResolver,
-//                new ScopeContext(new ClassDefinition($this->definingClassName), $methodDefinition),
-//                new FileNameResolver(
-//                    class_exists($this->definingClassName)
-//                        ? ClassReflector::make($this->definingClassName)->getNameContext()
-//                        : tap(new NameContext(new Throwing), fn(NameContext $nc) => $nc->startNamespace()),
-//                ),
-//            );
-//
-//            ClassDefinition::resolveFunctionReturnReferences($methodScope, $this);
-//
-//            ClassDefinition::resolveFunctionExceptions($methodScope, $this);
-//
-//            $this->referencesResolved = true;
-//        }
+        //        if (! $methodDefinition->isFullyAnalyzed()) {
+        //            $this->methods[$name] = (new MethodAnalyzer(
+        //                $scope->index,
+        //                $this,
+        //            ))->analyze($methodDefinition, $indexBuilders, $withSideEffects);
+        //        }
+        //
+        //        if (! $this->referencesResolved) { // @todo make a part of !$methodDefinition->isFullyAnalyzed() (a part of method definition building)
+        //            $methodScope = new Scope(
+        //                $scope->index,
+        //                new NodeTypesResolver,
+        //                new ScopeContext(new ClassDefinition($this->definingClassName), $methodDefinition),
+        //                new FileNameResolver(
+        //                    class_exists($this->definingClassName)
+        //                        ? ClassReflector::make($this->definingClassName)->getNameContext()
+        //                        : tap(new NameContext(new Throwing), fn(NameContext $nc) => $nc->startNamespace()),
+        //                ),
+        //            );
+        //
+        //            ClassDefinition::resolveFunctionReturnReferences($methodScope, $this);
+        //
+        //            ClassDefinition::resolveFunctionExceptions($methodScope, $this);
+        //
+        //            $this->referencesResolved = true;
+        //        }
 
         return $this->type->getReturnType();
     }
