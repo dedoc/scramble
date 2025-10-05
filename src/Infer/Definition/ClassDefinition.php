@@ -40,6 +40,8 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\UsesTagValueNode;
 
 class ClassDefinition implements ClassDefinitionContract
 {
+    private bool $propagatesTemplates = false;
+
     public function __construct(
         // FQ name
         public string $name,
@@ -52,6 +54,15 @@ class ClassDefinition implements ClassDefinitionContract
         public ?string $parentFqn = null,
     )
     {
+    }
+
+    public function propagatesTemplates(?bool $propagatesTemplates = null): bool
+    {
+        if ($propagatesTemplates === null) {
+            return $this->propagatesTemplates;
+        }
+
+        return $this->propagatesTemplates = $propagatesTemplates;
     }
 
     public function isInstanceOf(string $className)
@@ -219,11 +230,11 @@ class ClassDefinition implements ClassDefinitionContract
         foreach ($this->getClassContexts()->keys() as $class) {
             /** @var \ReflectionClass|null $classReflection */
             $classReflection = rescue(fn () => new \ReflectionClass($class), report: false);
-            /** @var \ReflectionMethod|null $methodReflection */
-            $methodReflection = rescue(fn () => $classReflection?->getMethod($name), report: false);
+            /** @var \ReflectionMethod|null $traitMethodReflection */
+            $traitMethodReflection = rescue(fn () => $classReflection?->getMethod($name), report: false);
 
-            if ($methodReflection) {
-                return $methodReflection;
+            if ($traitMethodReflection) {
+                return $traitMethodReflection;
             }
         }
 
@@ -315,7 +326,9 @@ class ClassDefinition implements ClassDefinitionContract
             return $this->classContexts;
         }
 
-        $classContexts = collect();
+        $classContexts = $this->parentFqn && isset($this->index)
+            ? clone ($this->index->getClass($this->parentFqn)?->getClassContexts() ?: collect())
+            : collect();
 
         $reflector = ClassReflector::make($this->name);
 
@@ -342,6 +355,8 @@ class ClassDefinition implements ClassDefinitionContract
             ...array_values($phpDoc->getMixinTagValues()),
         ];
 
+        $classTemplatesByName = collect($this->templateTypes)->keyBy->name;
+
         foreach ($tags as $tag) {
             $type = PhpDocTypeHelper::toType($tag->type);
 
@@ -357,13 +372,20 @@ class ClassDefinition implements ClassDefinitionContract
 
             $classContext = collect();
             foreach ($definition->templateTypes as $i => $templateType) {
-                $classContext->offsetSet(
-                    $templateType->name,
+                $concreteType = (new TypeWalker)->map(
                     $type->templateTypes[$i] ?? $templateType->default ?? new UnknownType,
+                    fn ($t) => $t instanceof ObjectType ? $classTemplatesByName->get($t->name, $t) : $t,
                 );
+
+                $classContext->offsetSet($templateType->name, $concreteType);
             }
             $classContexts->offsetSet($type->name, $classContext);
         }
+
+        dump([
+            $this->name => $classContexts->toArray(),
+            'templates' => $this->templateTypes,
+        ]);
 
         return $this->classContexts = $classContexts;
     }

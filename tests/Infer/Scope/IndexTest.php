@@ -222,7 +222,7 @@ trait BazTrait_IndexTest {
     public function foo() {}
 }
 class Baz_IndexTest extends BazParent_IndexTest {}
-it('handles deep context', function () {
+it('handles deep context with mixin', function () {
     Scramble::infer()
         ->configure()
         ->buildDefinitionsUsingReflectionFor([
@@ -232,6 +232,27 @@ it('handles deep context', function () {
         ]);
 
     $definition = $this->index->getClass(Baz_IndexTest::class);
+
+    expect($definition->getMethod('foo')->getReturnType()->toString())->toBe('int');
+});
+
+/** @template T */
+class BazUseParent_IndexTest {
+    /** @use BazTrait_IndexTest<T> */
+    use BazTrait_IndexTest;
+}
+/** @extends BazUseParent_IndexTest<int> */
+class BazUse_IndexTest extends BazUseParent_IndexTest {}
+it('handles deep context with use', function () {
+    Scramble::infer()
+        ->configure()
+        ->buildDefinitionsUsingReflectionFor([
+            BazUseParent_IndexTest::class,
+            BazTrait_IndexTest::class,
+            BazUse_IndexTest::class,
+        ]);
+
+    $definition = $this->index->getClass(BazUse_IndexTest::class);
 
     expect($definition->getMethod('foo')->getReturnType()->toString())->toBe('int');
 });
