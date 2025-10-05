@@ -269,6 +269,24 @@ it('handles mixin data', function () {
     expect($firstMethod->getReturnType()->toString())->toBe('TRelatedModel|null');
 });
 
+it('infers complex type from flatMap', function () {
+    $collectionType = new Generic(Collection::class, [
+        new IntegerType,
+        new StringType,
+    ]);
+    $type = ReferenceTypeResolver::getInstance()->resolve(
+        new GlobalScope,
+        new MethodCallReferenceType($collectionType, 'flatMap', [
+            new FunctionType('{}', [], new Generic(Collection::class, [
+                new IntegerType,
+                new IntegerType,
+            ]))
+        ]),
+    );
+
+    expect($type->toString())->toBe(Collection::class.'<int, int>');
+});
+
 it('handles chained method call relation first', function () {
     $hasMany = new Generic(HasMany::class, [
         new ObjectType(PostModel_IndexTest::class),
@@ -311,6 +329,12 @@ it('handles collection map call', function () {
 
 it('handles collection map deep call', function () {
     $type = getStatementType('(new '.Collection::class.'())->map(fn () => 1)');
+
+    expect($type->toString())->toBe('Illuminate\Support\Collection<unknown, int(1)>');
+});
+
+it('handles collection empty construct call', function () {
+    $type = getStatementType('(new '.Collection::class.'([]))');
 
     expect($type->toString())->toBe('Illuminate\Support\Collection<unknown, int(1)>');
 });

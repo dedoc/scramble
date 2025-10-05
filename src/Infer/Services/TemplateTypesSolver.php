@@ -9,6 +9,7 @@ use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\MissingType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\RecursiveTemplateSolver;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypePathSet;
@@ -166,30 +167,6 @@ class TemplateTypesSolver
 
     private function inferTemplate(TemplateType $template, Type $typeWithTemplate, Type $type): ?Type
     {
-        if (! $path = $this->findTemplatePath($template, $typeWithTemplate)) {
-            return null;
-        }
-
-        return $this->getTypeByPath($type, $path);
-    }
-
-    private function findTemplatePath(TemplateType $template, Type $typeWithTemplate): ?TypePathSet
-    {
-        return TypePathSet::find(
-            $typeWithTemplate,
-            fn (Type $t) => $t === $template,
-        );
-    }
-
-    private function getTypeByPath(Type $type, TypePathSet $path): ?Type
-    {
-        $result = $path->getFrom($type);
-
-        if (! $result instanceof Type) {
-            // Path retrieval result should always be a type due to the found template
-            return null;
-        }
-
-        return $result;
+        return (new RecursiveTemplateSolver())->solve($typeWithTemplate, $type, $template);
     }
 }

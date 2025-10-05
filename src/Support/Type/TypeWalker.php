@@ -140,4 +140,35 @@ class TypeWalker
 
         return $mappedSubject;
     }
+
+    /**
+     * @param  callable(Type, TypePath): void  $cb
+     * @param  (callable(Type): (string[]))|null  $nodesNamesGetter
+     */
+    public function walk(
+        Type $subject,
+        callable $cb,
+        ?callable $nodesNamesGetter = null,
+    ): void {
+        $nodesNamesGetter ??= fn (Type $t) => $t->nodes();
+
+        if ($this->visitedNodesWeakMap->offsetExists($subject)) {
+            return;
+        }
+
+        $cb($subject);
+
+        $this->visitedNodesWeakMap->offsetSet($subject, $subject);
+
+        foreach ($nodesNamesGetter($subject) as $propertyWithNode) {
+            $node = $subject->$propertyWithNode;
+            if (! is_array($node)) {
+                $this->walk($node, $cb, $nodesNamesGetter);
+            } else {
+                foreach ($node as $index => $item) {
+                    $this->walk($item, $cb, $nodesNamesGetter);
+                }
+            }
+        }
+    }
 }
