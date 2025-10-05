@@ -316,15 +316,11 @@ class ClassDefinition implements ClassDefinitionContract
 
     private Collection $classContexts;
 
-    public function getClassContexts()
+    public function getClassContexts(array $ignoreClasses = [])
     {
         if (isset($this->classContexts)) {
             return $this->classContexts;
         }
-
-        $classContexts = $this->parentFqn && isset($this->index)
-            ? clone ($this->index->getClass($this->parentFqn)?->getClassContexts() ?: collect())
-            : collect();
 
         $reflector = ClassReflector::make($this->name);
 
@@ -353,37 +349,77 @@ class ClassDefinition implements ClassDefinitionContract
 
         $classTemplatesByName = collect($this->templateTypes)->keyBy->name;
 
-        foreach ($tags as $tag) {
-            $type = PhpDocTypeHelper::toType($tag->type);
+        $types = collect($tags)
+            ->map(fn ($tag) => PhpDocTypeHelper::toType($tag->type))
+            ->filter(fn ($type) => $type instanceof ObjectType)
+            ->when(
+                $this->parentFqn,
+                fn (Collection $types) => $types->firstWhere('name', $this->parentFqn) ? null : $types->push(new ObjectType($this->parentFqn))
+            );
 
-            if (! $type instanceof Generic) {
-                $classContexts->offsetSet($type->name, collect());
+        $classContexts = collect();
 
-                continue;
-            }
-
-            if (! $definition = $this->index->getClass($type->name)) {
-                continue;
-            }
-
+        foreach ($types as $type) {
             $classContext = collect();
-            foreach ($definition->templateTypes as $i => $templateType) {
-                $concreteType = (new TypeWalker)->map(
-                    $type->templateTypes[$i] ?? $templateType->default ?? new UnknownType,
-                    fn ($t) => $t instanceof ObjectType ? $classTemplatesByName->get($t->name, $t) : $t,
-                );
+            $type = ! $type instanceof Generic ? new Generic($type->name) : $type;
 
-                $classContext->offsetSet($templateType->name, $concreteType);
+            if ($definition = $this->getIndex()->getClass($type->name)) {
+                foreach ($definition->templateTypes as $i => $templateType) {
+                    $concreteType = (new TypeWalker)->map(
+                        $type->templateTypes[$i] ?? $templateType->default ?? new UnknownType,
+                        fn ($t) => $t instanceof ObjectType ? $classTemplatesByName->get($t->name, $t) : $t,
+                    );
+
+                    $classContext->offsetSet($templateType->name, $concreteType);
+                }
             }
+
             $classContexts->offsetSet($type->name, $classContext);
         }
 
-        dump([
-            $this->name => $classContexts->toArray(),
-            'templates' => $this->templateTypes,
-        ]);
+        foreach ($classContexts as $class => $localContext) {
+            if (in_array($class, $ignoreClasses, true)) {
+                continue;
+            }
+
+            $classDef = $this->getIndex()->getClass($class);
+            $classContext = $classDef->getClassContexts([...$ignoreClasses, $this->name]);
+
+            $localizedClassContext = $classContext->map->map(function ($type) use ($localContext) {
+                return (new TypeWalker)->map(
+                    $type,
+                    fn ($t) => $type instanceof TemplateType
+                        ? $localContext->get($type->name, new UnknownType)
+                        : $type,
+                );
+            });
+
+            $classContexts = $localizedClassContext->merge($classContexts);
+        }
+
+        // $this->dumpContext($this, $classContexts);
 
         return $this->classContexts = $classContexts;
+    }
+
+    private function dumpContext(ClassDefinition $def, Collection $classContexts): void
+    {
+        $className = $def->name.($def->templateTypes ? '<'.implode(',', array_map($this->dumpTemplateName(...), $def->templateTypes)).'>' : '');
+
+        $contextNames = $classContexts->map(function ($contexts, $name, ) {
+            $templates = $contexts->map(fn($t) => $t instanceof TemplateType ? $this->dumpTemplateName($t) : $t->toString());
+
+            return $name . ($templates->count() ? '<'.$templates->join(',').'>' : '');
+        })->values()->toArray();
+
+        dump([
+            $className => $contextNames,
+        ]);
+    }
+
+    private function dumpTemplateName(TemplateType $tt): string
+    {
+        return $tt->name.'#'.spl_object_id($tt);
     }
 
     private Index $index;
@@ -391,6 +427,11 @@ class ClassDefinition implements ClassDefinitionContract
     public function setIndex(Index $index): void
     {
         $this->index = $index;
+    }
+
+    protected function getIndex(): Index
+    {
+        return isset($this->index) ? $this->index : app(Index::class);
     }
 
     public static function resolveFunctionExceptions(Scope $scope, FunctionLikeDefinition $functionLikeDefinition): void

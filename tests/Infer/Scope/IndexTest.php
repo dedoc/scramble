@@ -16,6 +16,7 @@ use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 
 it('doesnt fail on internal class definition request', function () {
@@ -258,6 +259,14 @@ it('handles deep context with use', function () {
     $definition = $this->index->getClass(BazUse_IndexTest::class);
 
     expect($definition->getMethod('foo')->getReturnType()->toString())->toBe('int');
+});
+
+it('handles mixin data', function () {
+    $def = $this->index->getClass(Relation::class);
+
+    $firstMethod = $def->getMethod('first');
+
+    expect($firstMethod->getReturnType()->toString())->toBe('TRelatedModel|null');
 });
 
 it('handles chained method call relation first', function () {
