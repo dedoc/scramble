@@ -29,6 +29,7 @@ use PHPStan\PhpDocParser\Ast\Type\ArrayShapeItemNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\CallableTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\CallableTypeParameterNode;
 use PHPStan\PhpDocParser\Ast\Type\ConstTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
@@ -140,7 +141,10 @@ class PhpDocTypeHelper
         if ($type instanceof CallableTypeNode) {
             return new FunctionType(
                 name: '{closure}',
-                arguments: [],
+                arguments: array_map(
+                    fn (CallableTypeParameterNode $n) => self::toType($n->type),
+                    $type->parameters,
+                ),
                 returnType: self::toType($type->returnType),
             );
         }

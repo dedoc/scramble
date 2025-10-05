@@ -340,9 +340,15 @@ it('handles collection construct call', function () {
 });
 
 it('handles collection map call with undefined type', function () {
-    $type = getStatementType('(new '.Collection::class.'([42]))->map(fn ($v) => $v)');
+    $type = getStatementType('(new '.Collection::class.'([["a" => 42]]))->map(fn ($v) => $v["a"])');
 
     expect($type->toString())->toBe('Illuminate\Support\Collection<int, int(42)>');
+});
+
+it('handles collection map call with primitive type', function () {
+    $type = getStatementType('(new '.Collection::class.'([["a" => 42]]))->map(fn (int $v) => $v)');
+
+    expect($type->toString())->toBe('Illuminate\Support\Collection<int, int>');
 });
 
 it('handles collection keys call', function () {

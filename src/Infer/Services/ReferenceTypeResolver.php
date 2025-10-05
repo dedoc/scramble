@@ -17,6 +17,7 @@ use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -477,9 +478,20 @@ class ReferenceTypeResolver
 
         $classDefinition = $calledOnType instanceof ObjectType ? $this->index->getClass($calledOnType->name) : null;
 
+        $classContextTemplates = $calledOnType && $classDefinition
+            ? (new TemplateTypesSolver)->getClassContextTemplates($calledOnType, $classDefinition)
+            : [];
+
+        $arguments = $arguments->map(fn ($t, $nameOrPosition) => (new TemplateTypesSolver)->addContextTypesToTypelessParametersOfCallableArgument(
+            $t,
+            $nameOrPosition,
+            $callee,
+            $classContextTemplates,
+        ));
+
         $templatesMap = (new TemplateTypesSolver)
             ->getFunctionContextTemplates($callee, $arguments)
-            ->prepend($calledOnType && $classDefinition ? (new TemplateTypesSolver)->getClassContextTemplates($calledOnType, $classDefinition) : []);
+            ->prepend($classContextTemplates);
 
         $returnType = (new TypeWalker)->map(
             $returnType,

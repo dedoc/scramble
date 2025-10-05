@@ -24,6 +24,14 @@ class AutoResolvingArgumentTypeBag implements ArgumentTypeBag
         return $default;
     }
 
+    public function map(callable $cb): ArgumentTypeBag
+    {
+        return new self(
+            $this->scope,
+            collect($this->arguments)->map(fn ($t, $key) => $cb($t, $key))->all(),
+        );
+    }
+
     public function all(): array
     {
         return array_map(
