@@ -14,13 +14,13 @@ use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Collection;
 
 beforeEach(function () {
-    $this->solver = new RecursiveTemplateSolver();
+    $this->solver = new RecursiveTemplateSolver;
 });
 
 it('finds simplest type', function () {
     $foundType = $this->solver->solve(
         $t = new TemplateType('T'),
-        new IntegerType(),
+        new IntegerType,
         $t,
     );
 
@@ -34,8 +34,8 @@ it('finds union type', function () {
             new TemplateType('G'),
         ]),
         new Union([
-            new IntegerType(),
-            new StringType(),
+            new IntegerType,
+            new StringType,
         ]),
         $t,
     );

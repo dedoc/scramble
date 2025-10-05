@@ -75,8 +75,7 @@ class RecursiveTemplateSolver
     }
 
     /**
-     * @param Union $parameter
-     * @param Type[] $types
+     * @param  Type[]  $types
      * @return Type[]
      */
     private function getStructurallyMatchingTypes(Union $parameter, Type $argument): array
@@ -90,11 +89,13 @@ class RecursiveTemplateSolver
                 && $pt->isInstanceOf($argument->name)
             ) {
                 $matching[] = $pt;
+
                 continue;
             }
 
             if ($pt::class === $argument::class) {
                 $matching[] = $pt;
+
                 continue;
             }
 
@@ -111,7 +112,7 @@ class RecursiveTemplateSolver
     }
 
     /**
-     * @param Type[] $types
+     * @param  Type[]  $types
      */
     private function makeUnion(array $types): ?Type
     {

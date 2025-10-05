@@ -280,7 +280,7 @@ it('infers complex type from flatMap', function () {
             new FunctionType('{}', [], new Generic(Collection::class, [
                 new IntegerType,
                 new IntegerType,
-            ]))
+            ])),
         ]),
     );
 

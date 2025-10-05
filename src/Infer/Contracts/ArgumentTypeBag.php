@@ -14,7 +14,7 @@ interface ArgumentTypeBag extends Countable
     public function all(): array;
 
     /**
-     * @param callable(Type, string|int): Type $cb
+     * @param  callable(Type, string|int): Type  $cb
      * @return $this
      */
     public function map(callable $cb): self;

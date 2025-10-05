@@ -9,13 +9,11 @@ use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\MissingType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\RecursiveTemplateSolver;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypePathSet;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 
@@ -171,7 +169,7 @@ class TemplateTypesSolver
 
     private function inferTemplate(TemplateType $template, Type $typeWithTemplate, Type $type): ?Type
     {
-        return (new RecursiveTemplateSolver())->solve($typeWithTemplate, $type, $template);
+        return (new RecursiveTemplateSolver)->solve($typeWithTemplate, $type, $template);
     }
 
     public function addContextTypesToTypelessParametersOfCallableArgument(
@@ -179,8 +177,7 @@ class TemplateTypesSolver
         string|int $nameOrPosition,
         FunctionLikeDefinition $definition,
         array $templates,
-    )
-    {
+    ) {
         if (! $argument instanceof FunctionType) {
             return $argument;
         }
@@ -221,7 +218,7 @@ class TemplateTypesSolver
 
         $argument->templates = array_filter(
             $argument->templates,
-            fn (TemplateType $tt) => !array_key_exists($tt->name, $replacedTemplates),
+            fn (TemplateType $tt) => ! array_key_exists($tt->name, $replacedTemplates),
         );
 
         $argument = (new TypeWalker)->map(
