@@ -406,10 +406,10 @@ class ClassDefinition implements ClassDefinitionContract
     {
         $className = $def->name.($def->templateTypes ? '<'.implode(',', array_map($this->dumpTemplateName(...), $def->templateTypes)).'>' : '');
 
-        $contextNames = $classContexts->map(function ($contexts, $name, ) {
-            $templates = $contexts->map(fn($t) => $t instanceof TemplateType ? $this->dumpTemplateName($t) : $t->toString());
+        $contextNames = $classContexts->map(function ($contexts, $name) {
+            $templates = $contexts->map(fn ($t) => $t instanceof TemplateType ? $this->dumpTemplateName($t) : $t->toString());
 
-            return $name . ($templates->count() ? '<'.$templates->join(',').'>' : '');
+            return $name.($templates->count() ? '<'.$templates->join(',').'>' : '');
         })->values()->toArray();
 
         dump([
