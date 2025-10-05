@@ -324,23 +324,29 @@ it('handles collection first call', function () {
 it('handles collection map call', function () {
     $type = getStatementType('(new '.Collection::class.'())->map(fn () => 1)');
 
-    expect($type->toString())->toBe('Illuminate\Support\Collection<unknown, int(1)>');
-});
-
-it('handles collection map deep call', function () {
-    $type = getStatementType('(new '.Collection::class.'())->map(fn () => 1)');
-
-    expect($type->toString())->toBe('Illuminate\Support\Collection<unknown, int(1)>');
+    expect($type->toString())->toBe('Illuminate\Support\Collection<int|string, int(1)>');
 });
 
 it('handles collection empty construct call', function () {
     $type = getStatementType('(new '.Collection::class.'([]))');
 
-    expect($type->toString())->toBe('Illuminate\Support\Collection<unknown, int(1)>');
+    expect($type->toString())->toBe('Illuminate\Support\Collection<int|string, unknown>');
 });
 
 it('handles collection construct call', function () {
     $type = getStatementType('(new '.Collection::class.'([42]))');
 
-    expect($type->toString())->toBe('Illuminate\Support\Collection<unknown, int(1)>');
+    expect($type->toString())->toBe('Illuminate\Support\Collection<int, int(42)>');
+});
+
+it('handles collection map call with undefined type', function () {
+    $type = getStatementType('(new '.Collection::class.'([42]))->map(fn ($v) => $v)');
+
+    expect($type->toString())->toBe('Illuminate\Support\Collection<int, int(42)>');
+});
+
+it('handles collection keys call', function () {
+    $type = getStatementType('(new '.Collection::class.'(["foo" => "bar"]))');
+
+    expect($type->toString())->toBe('Illuminate\Support\Collection<string(foo), string(bar)>');
 });

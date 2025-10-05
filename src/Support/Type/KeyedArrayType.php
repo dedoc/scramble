@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Support\Type\Contracts\LiteralType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 
 /**
  * Represents an array with known keys. This may represent a list as well.
@@ -50,6 +51,23 @@ class KeyedArrayType extends AbstractType
         }
 
         return $default;
+    }
+
+    public function getKeyType(): Type
+    {
+        $items = collect($this->items);
+
+        if ($items->isNotEmpty() && $items->every(fn (ArrayItemType_ $t) => $t->key === null || is_int($t->key))) {
+            return new IntegerType;
+        }
+
+        if ($items->isNotEmpty() && $items->every(fn (ArrayItemType_ $t) => is_string($t->key))) {
+            return new Union(
+                $items->map(fn (ArrayItemType_ $t) => new LiteralStringType($t->key))->all(),
+            );
+        }
+
+        return new Union([new IntegerType, new StringType]);
     }
 
     public function getOffsetValueType(Type $offset): Type

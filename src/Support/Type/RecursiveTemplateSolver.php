@@ -63,8 +63,10 @@ class RecursiveTemplateSolver
 
         if ($argument instanceof KeyedArrayType) {
             return new Generic('iterable', [
-                new Union([new IntegerType, new StringType]),
-                new Union(array_map(fn (ArrayItemType_ $t) => $t->value, $argument->items)),
+                $argument->getKeyType(),
+                $argument->items
+                    ? new Union(array_map(fn (ArrayItemType_ $t) => $t->value, $argument->items))
+                    : new UnknownType,
             ]);
         }
 
