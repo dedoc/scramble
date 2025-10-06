@@ -3,6 +3,7 @@
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
@@ -179,7 +180,7 @@ it('allows overriding types accepted by another type', function () {
 
     $def = new FunctionLikeDefinition($functionType);
 
-    ClassDefinition::resolveFunctionReturnReferences(
+    FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences(
         new GlobalScope,
         $def,
     );

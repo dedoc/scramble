@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\Analyzer\MethodAnalyzer;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinition as ClassDefinitionContract;
+use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
@@ -12,25 +13,18 @@ use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\PhpDoc;
-use Dedoc\Scramble\Support\Type\ArrayType;
-use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
-use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
-use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use LogicException;
 use PhpParser\ErrorHandler\Throwing;
 use PhpParser\NameContext;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ExtendsTagValueNode;
@@ -40,6 +34,12 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\UsesTagValueNode;
 class ClassDefinition implements ClassDefinitionContract
 {
     private bool $propagatesTemplates = false;
+
+    protected array $loadedMethods = [];
+
+    private Collection $classContexts;
+
+    private Index $index;
 
     public function __construct(
         // FQ name
@@ -81,8 +81,6 @@ class ClassDefinition implements ClassDefinitionContract
     {
         return $this->lazilyLoadMethodDefinition($name);
     }
-
-    protected array $loadedMethods = [];
 
     protected function lazilyLoadMethodDefinition(string $name): ?FunctionLikeDefinition
     {
@@ -235,11 +233,7 @@ class ClassDefinition implements ClassDefinitionContract
             }
         }
 
-        if ($methodReflection) {
-            return $methodReflection;
-        }
-
-        return null;
+        return $methodReflection;
     }
 
     protected function getFunctionLikeDefinitionBuiltFromReflection(string $name): ?FunctionLikeDefinition
@@ -297,9 +291,9 @@ class ClassDefinition implements ClassDefinitionContract
                 ),
             );
 
-            static::resolveFunctionReturnReferences($methodScope, $this->methods[$name]);
+            FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences($methodScope, $this->methods[$name]);
 
-            static::resolveFunctionExceptions($methodScope, $this->methods[$name]);
+            FunctionLikeAstDefinitionBuilder::resolveFunctionExceptions($methodScope, $this->methods[$name]);
 
             $this->methods[$name]->referencesResolved = true;
         }
@@ -313,8 +307,6 @@ class ClassDefinition implements ClassDefinitionContract
 
         return $classContexts->get($methodReflection->class, collect());
     }
-
-    private Collection $classContexts;
 
     public function getClassContexts(array $ignoreClasses = [])
     {
@@ -425,8 +417,6 @@ class ClassDefinition implements ClassDefinitionContract
         return $tt->name.'#'.spl_object_id($tt);
     }
 
-    private Index $index;
-
     public function setIndex(Index $index): void
     {
         $this->index = $index;
@@ -435,77 +425,6 @@ class ClassDefinition implements ClassDefinitionContract
     protected function getIndex(): Index
     {
         return isset($this->index) ? $this->index : app(Index::class);
-    }
-
-    public static function resolveFunctionExceptions(Scope $scope, FunctionLikeDefinition $functionLikeDefinition): void
-    {
-        $functionType = $functionLikeDefinition->type;
-
-        foreach ($functionType->exceptions as $i => $exceptionType) { // @phpstan-ignore property.notFound
-            $functionType->exceptions[$i] = (new ReferenceTypeResolver($scope->index))
-                ->resolve($scope, $exceptionType);
-        }
-    }
-
-    public static function resolveFunctionReturnReferences(Scope $scope, FunctionLikeDefinition $functionLikeDefinition): void
-    {
-        $functionType = $functionLikeDefinition->type;
-
-        $returnType = $functionType->getReturnType();
-        $resolvedReference = ReferenceTypeResolver::getInstance()->resolve($scope, $returnType);
-        $functionType->setReturnType($resolvedReference);
-
-        if ($annotatedReturnType = $functionType->getAttribute('annotatedReturnType')) {
-            if (! $functionType->getAttribute('inferredReturnType')) {
-                $functionType->setAttribute('inferredReturnType', clone $functionType->getReturnType());
-            }
-
-            $functionType->setReturnType(
-                self::addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType, $scope)
-            );
-        }
-    }
-
-    private static function addAnnotatedReturnType(Type $inferredReturnType, Type $annotatedReturnType, Scope $scope): Type
-    {
-        $types = $inferredReturnType instanceof Union
-            ? $inferredReturnType->types
-            : [$inferredReturnType];
-
-        // @todo: Handle case when annotated return type is union.
-        if ($annotatedReturnType instanceof ObjectType) {
-            $resolvedName = ReferenceTypeResolver::resolveClassName($scope, $annotatedReturnType->name);
-            if (! $resolvedName) {
-                throw new LogicException("Got null after class name resolution of [$annotatedReturnType->name], string expected");
-            }
-            $annotatedReturnType->name = $resolvedName;
-        }
-
-        $annotatedTypeCanAcceptAnyInferredType = collect($types)
-            ->some(function (Type $t) use ($annotatedReturnType) {
-                $isAnnotatedAsArray = $annotatedReturnType instanceof ArrayType
-                    || $annotatedReturnType instanceof KeyedArrayType;
-
-                if ($isAnnotatedAsArray && $t instanceof LateResolvingType) {
-                    return true;
-                }
-
-                if ($t instanceof TemplateType && ! $t->is) {
-                    return true;
-                }
-
-                if ($annotatedReturnType->accepts($t)) {
-                    return true;
-                }
-
-                return $t->acceptedBy($annotatedReturnType);
-            });
-
-        if (! $annotatedTypeCanAcceptAnyInferredType) {
-            return $annotatedReturnType;
-        }
-
-        return Union::wrap($types)->mergeAttributes($inferredReturnType->attributes());
     }
 
     public function getPropertyDefinition($name)

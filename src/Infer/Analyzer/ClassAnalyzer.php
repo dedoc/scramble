@@ -30,10 +30,6 @@ class ClassAnalyzer
 
         $parentDefinition = $parentName ? $this->index->getClass($parentName) : null;
 
-        /*
-         * @todo consider more advanced cloning implementation.
-         * Currently just cloning property definition feels alright as only its `defaultType` may change.
-         */
         $classDefinition = new ClassDefinition(
             name: $name,
             templateTypes: $parentDefinition?->templateTypes ?: [],
@@ -89,22 +85,6 @@ class ClassAnalyzer
                 }
             }
         }
-
-        //        foreach ($classReflection->getMethods() as $reflectionMethod) {
-        //            if ($reflectionMethod->class !== $name) {
-        //                continue;
-        //            }
-        //
-        //            $classDefinition->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
-        //                new FunctionType(
-        //                    $reflectionMethod->name,
-        //                    arguments: [],
-        //                    returnType: new UnknownType,
-        //                ),
-        //                definingClassName: $name,
-        //                isStatic: $reflectionMethod->isStatic(),
-        //            );
-        //        }
 
         $classDefinition->setIndex($this->index);
 

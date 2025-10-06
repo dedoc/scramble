@@ -158,8 +158,8 @@ class ClosureReflector
             throw new \LogicException('Cannot get scope of closure');
         }
 
-        Infer\Definition\ClassDefinition::resolveFunctionReturnReferences($scope, $closureDefinition);
-        Infer\Definition\ClassDefinition::resolveFunctionExceptions($scope, $closureDefinition);
+        Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences($scope, $closureDefinition);
+        Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder::resolveFunctionExceptions($scope, $closureDefinition);
 
         $closureDefinition->referencesResolved = true;
 
