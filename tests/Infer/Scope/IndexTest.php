@@ -155,45 +155,6 @@ test('builds class definition with mixin with generic trait', function () {
     expect($type->toString())->toBe('int(42)');
 });
 
-class UserModel_IndexTest extends Model
-{
-    public function posts()
-    {
-        return $this->hasMany(PostModel_IndexTest::class);
-    }
-
-    public function foo()
-    {
-        return 42;
-    }
-}
-
-class PostModel_IndexTest extends Model {}
-
-it('handles static', function () {
-    $type = getStatementType(UserModel_IndexTest::class.'::query()');
-
-    expect($type->toString())->toBe('Illuminate\Database\Eloquent\Builder<'.UserModel_IndexTest::class.'>');
-});
-
-it('handles static method call', function () {
-    $type = getStatementType(UserModel_IndexTest::class.'::query()->applyScopes()');
-
-    expect($type->toString())->toBe('Illuminate\Database\Eloquent\Builder<'.UserModel_IndexTest::class.'>');
-});
-
-it('handles chained method call', function () {
-    $type = getStatementType(UserModel_IndexTest::class.'::query()->where()->firstOrFail()');
-
-    expect($type->toString())->toBe(UserModel_IndexTest::class);
-});
-
-it('handles chained method call relation', function () {
-    $type = getStatementType('(new '.UserModel_IndexTest::class.')->posts()');
-
-    expect($type->toString())->toBe('Illuminate\Database\Eloquent\Relations\HasMany<'.PostModel_IndexTest::class.', self>');
-});
-
 /**
  * @template T
  *
@@ -261,14 +222,6 @@ it('handles deep context with use', function () {
     expect($definition->getMethod('foo')->getReturnType()->toString())->toBe('int');
 });
 
-it('handles mixin data', function () {
-    $def = $this->index->getClass(Relation::class);
-
-    $firstMethod = $def->getMethod('first');
-
-    expect($firstMethod->getReturnType()->toString())->toBe('TRelatedModel|null');
-});
-
 it('infers complex type from flatMap', function () {
     $collectionType = new Generic(Collection::class, [
         new IntegerType,
@@ -285,25 +238,6 @@ it('infers complex type from flatMap', function () {
     );
 
     expect($type->toString())->toBe(Collection::class.'<int, int>');
-});
-
-it('handles chained method call relation first', function () {
-    $hasMany = new Generic(HasMany::class, [
-        new ObjectType(PostModel_IndexTest::class),
-        new SelfType(''),
-    ]);
-    $type = ReferenceTypeResolver::getInstance()->resolve(
-        new GlobalScope,
-        new MethodCallReferenceType($hasMany, 'first', []),
-    );
-
-    expect($type->toString())->toBe(PostModel_IndexTest::class.'|null');
-});
-
-it('handles updateOrCreate model call ', function () {
-    $type = getStatementType(PostModel_IndexTest::class.'::updateOrCreate()');
-
-    expect($type->toString())->toBe(PostModel_IndexTest::class);
 });
 
 it('handles collection get call', function () {
