@@ -1,7 +1,6 @@
 <?php
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;

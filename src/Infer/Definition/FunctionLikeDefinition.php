@@ -3,16 +3,9 @@
 namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\DefinitionBuilders\SelfOutTypeBuilder;
-use Dedoc\Scramble\Infer\Reflector\ClassReflector;
-use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
-use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Infer\Scope\ScopeContext;
-use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Type;
-use PhpParser\ErrorHandler\Throwing;
-use PhpParser\NameContext;
 
 class FunctionLikeDefinition
 {
