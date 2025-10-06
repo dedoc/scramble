@@ -6,7 +6,7 @@ use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Illuminate\Database\Eloquent\Builder;
 
 test('forwards call to scope', function (string $method, string $expectedType) {
-    dump(getStatementType(SamplePostModel::class.'::query()'));
+    dump(getStatementType(SamplePostModel::class.'::query()')->toString());
 
     $type = getStatementType(SamplePostModel::class.'::query()->'.$method.'()');
 
