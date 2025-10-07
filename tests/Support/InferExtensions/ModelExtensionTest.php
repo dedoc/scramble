@@ -83,4 +83,4 @@ describe('model annotations (introduced in 11.x)', function () {
 
         expect($type->toString())->toBe(PostModel_ModelExtensionTest::class);
     });
-})->skip(fn () => version_compare(app()->version(), '11.0.0', '>='));
+})->skip(fn () => ! version_compare(app()->version(), '11.0.0', '>='));
