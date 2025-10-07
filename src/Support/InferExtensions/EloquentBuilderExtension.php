@@ -54,7 +54,9 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
     {
         $type = $this->normalizeType($instance);
 
-        if (! $modelType = $type->templateTypes[0] ?? null) {
+        $modelType = $type->templateTypes[0] ?? null;
+
+        if (! $modelType instanceof ObjectType) {
             return null;
         }
 

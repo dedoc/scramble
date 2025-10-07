@@ -16,6 +16,7 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use League\Uri\UriTemplate\Template;
 
 class TemplateTypesSolver
 {
@@ -172,12 +173,15 @@ class TemplateTypesSolver
         return (new RecursiveTemplateSolver)->solve($typeWithTemplate, $type, $template);
     }
 
+    /**
+     * @param array<string, Type> $templates
+     */
     public function addContextTypesToTypelessParametersOfCallableArgument(
         Type $argument,
         string|int $nameOrPosition,
         FunctionLikeDefinition $definition,
         array $templates,
-    ) {
+    ): Type {
         if (! $argument instanceof FunctionType) {
             return $argument;
         }

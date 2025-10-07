@@ -195,6 +195,27 @@ it('handles deep context with mixin', function () {
     expect($definition->getMethod('foo')->getReturnType()->toString())->toBe('int');
 });
 
+/** @mixin BazClass_IndexTest<int> */
+class BazUsesClass_IndexTest {}
+/** @template T */
+class BazClass_IndexTest
+{
+    /** @return T */
+    public function foo() {}
+}
+it('handles deep context with mixed in class', function () {
+    Scramble::infer()
+        ->configure()
+        ->buildDefinitionsUsingReflectionFor([
+            BazUsesClass_IndexTest::class,
+            BazClass_IndexTest::class,
+        ]);
+
+    $definition = $this->index->getClass(BazUsesClass_IndexTest::class);
+
+    expect($definition->getMethod('foo')->getReturnType()->toString())->toBe('int');
+});
+
 /** @template T */
 class BazUseParent_IndexTest
 {

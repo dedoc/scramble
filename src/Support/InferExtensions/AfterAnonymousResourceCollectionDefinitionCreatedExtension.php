@@ -27,7 +27,7 @@ class AfterAnonymousResourceCollectionDefinitionCreatedExtension implements Afte
         $definition = $event->classDefinition;
 
         if ($definition->parentFqn) {
-            $definition->templateTypes = $this->index->getClass($definition->parentFqn)?->templateTypes ?? [];
+            $definition->templateTypes = $this->index->getClass($definition->parentFqn)->templateTypes ?? [];
         }
 
         $tResource = collect($definition->templateTypes)->firstOrFail('name', 'TResource');

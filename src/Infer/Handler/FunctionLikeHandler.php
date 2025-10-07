@@ -243,7 +243,7 @@ class FunctionLikeHandler implements CreatesScope
 
         $promotedProperties = collect($node->getParams())
             ->filter(fn (Node\Param $p) => $p->isPromoted())
-            ->mapWithKeys(fn (Node\Param $param) => $param->var instanceof Node\Expr\Variable ? [
+            ->mapWithKeys(fn (Node\Param $param) => $param->var instanceof Node\Expr\Variable && is_string($param->var->name) ? [
                 $param->var->name => $scope->classDefinition()->properties[$param->var->name]->type,
             ] : [])
             ->toArray();

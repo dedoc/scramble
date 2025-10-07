@@ -55,7 +55,7 @@ class RecursiveTemplateSolver
         return $this->makeUnion($solutions);
     }
 
-    private function normalizeIterable(Type $argument): ?Type
+    private function normalizeIterable(Type $argument): Type
     {
         if ($argument instanceof ArrayType) {
             return new Generic('iterable', [$argument->key, $argument->value]);
@@ -75,7 +75,6 @@ class RecursiveTemplateSolver
     }
 
     /**
-     * @param  Type[]  $types
      * @return Type[]
      */
     private function getStructurallyMatchingTypes(Union $parameter, Type $argument): array
@@ -112,7 +111,7 @@ class RecursiveTemplateSolver
     }
 
     /**
-     * @param  Type[]  $types
+     * @param  (Type|null)[]  $types
      */
     private function makeUnion(array $types): ?Type
     {

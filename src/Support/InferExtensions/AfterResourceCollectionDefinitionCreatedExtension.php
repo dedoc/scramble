@@ -31,7 +31,7 @@ class AfterResourceCollectionDefinitionCreatedExtension implements AfterClassDef
         $definition = $event->classDefinition;
 
         if ($definition->parentFqn) {
-            $definition->templateTypes = $this->index->getClass($definition->parentFqn)?->templateTypes ?? [];
+            $definition->templateTypes = $this->index->getClass($definition->parentFqn)->templateTypes ?? [];
         }
 
         $definition->templateTypes[] = $tCollects = new TemplateType(

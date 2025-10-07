@@ -20,6 +20,7 @@ use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionAttribute;
@@ -126,6 +127,7 @@ class RequestEssentialsExtension extends OperationExtension
             [, $urlPart] = explode('://', $url);
             [$domain, $path] = count($parts = explode('/', $urlPart, 2)) !== 2 ? [$parts[0], ''] : $parts;
 
+            /** @var Collection<int, string> $params */
             $params = Str::of($domain)->matchAll('/\{(.*?)\}/');
 
             return $params->join('.').'/'.$path;

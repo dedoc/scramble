@@ -120,6 +120,7 @@ class Generator
                 continue;
             }
 
+            // @phpstan-ignore deadCode.unreachable
             throw new InvalidArgumentException('(callable(OpenApi, OpenApiContext): void)|DocumentTransformer type for document transformer expected, received '.$openApiTransformer::class);
         }
 

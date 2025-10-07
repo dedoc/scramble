@@ -175,22 +175,24 @@ class TypeTransformer
                 }
             } else {
                 [$literals, $otherTypes] = collect($type->types)
-                    ->partition(fn ($t) => $t instanceof LiteralStringType || $t instanceof LiteralIntegerType);
+                    ->partition(fn ($t) => $t instanceof LiteralStringType || $t instanceof LiteralIntegerType)
+                    ->all();
 
                 [$stringLiterals, $integerLiterals] = collect($literals)
-                    ->partition(fn ($t) => $t instanceof LiteralStringType);
+                    ->partition(fn ($t) => $t instanceof LiteralStringType)
+                    ->all();
 
-                $items = array_map($this->transform(...), $otherTypes->values()->toArray());
+                $items = array_map($this->transform(...), $otherTypes->values()->toArray()); // @phpstan-ignore argument.type
 
                 if ($stringLiterals->count()) {
                     $items[] = (new StringType)->enum(
-                        $stringLiterals->map->value->unique()->values()->toArray()
+                        $stringLiterals->map->value->unique()->values()->toArray() // @phpstan-ignore property.notFound
                     );
                 }
 
                 if ($integerLiterals->count()) {
                     $items[] = (new IntegerType)->enum(
-                        $integerLiterals->map->value->unique()->values()->toArray()
+                        $integerLiterals->map->value->unique()->values()->toArray() // @phpstan-ignore property.notFound
                     );
                 }
 

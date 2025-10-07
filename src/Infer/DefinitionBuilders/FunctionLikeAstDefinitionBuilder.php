@@ -21,6 +21,7 @@ use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -230,8 +231,11 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         $functionType = $functionLikeDefinition->type;
 
         foreach ($functionType->exceptions as $i => $exceptionType) { // @phpstan-ignore property.notFound
-            $functionType->exceptions[$i] = (new ReferenceTypeResolver($scope->index))
-                ->resolve($scope, $exceptionType);
+            $exception = (new ReferenceTypeResolver($scope->index))->resolve($scope, $exceptionType);
+            if (! $exception instanceof ObjectType) {
+                continue;
+            }
+            $functionType->exceptions[$i] = $exception;
         }
     }
 
@@ -243,7 +247,9 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         $resolvedReference = ReferenceTypeResolver::getInstance()->resolve($scope, $returnType);
         $functionType->setReturnType($resolvedReference);
 
-        if ($annotatedReturnType = $functionType->getAttribute('annotatedReturnType')) {
+        $annotatedReturnType = $functionType->getAttribute('annotatedReturnType');
+
+        if ($annotatedReturnType instanceof Type) {
             if (! $functionType->getAttribute('inferredReturnType')) {
                 $functionType->setAttribute('inferredReturnType', clone $functionType->getReturnType());
             }

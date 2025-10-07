@@ -25,6 +25,7 @@ use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -273,7 +274,8 @@ class Scope
         );
     }
 
-    public function getContextTemplates()
+    /** @return TemplateType[] */
+    public function getContextTemplates(): array
     {
         return [
             ...($this->classDefinition()?->templateTypes ?: []),
@@ -288,7 +290,7 @@ class Scope
             ->pluck('name')
             ->unique()
             ->values()
-            ->filter(fn ($n) => preg_match('/^'.$name.'(\d*)?$/m', $n) === 1)
+            ->filter(fn ($n) => preg_match('/^'.$name.'(\d*)?$/m', $n) === 1) // @phpstan-ignore argument.type
             ->all();
 
         return $name.($scopeDuplicateTemplates ? count($scopeDuplicateTemplates) : '');

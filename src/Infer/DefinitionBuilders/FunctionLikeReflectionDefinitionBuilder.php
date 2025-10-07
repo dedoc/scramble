@@ -29,6 +29,9 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
     /** @var Collection<string, covariant Type> */
     private Collection $classTemplates;
 
+    /**
+     * @param Collection<string, covariant Type>|null $classTemplates
+     */
     public function __construct(
         public string $name,
         ReflectionFunction|ReflectionMethod|null $reflection = null,

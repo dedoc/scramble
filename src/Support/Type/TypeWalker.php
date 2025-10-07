@@ -142,7 +142,7 @@ class TypeWalker
     }
 
     /**
-     * @param  callable(Type, TypePath): void  $cb
+     * @param  callable(Type): void  $cb
      * @param  (callable(Type): (string[]))|null  $nodesNamesGetter
      */
     public function walk(
@@ -161,6 +161,7 @@ class TypeWalker
         $this->visitedNodesWeakMap->offsetSet($subject, $subject);
 
         foreach ($nodesNamesGetter($subject) as $propertyWithNode) {
+            /** @var Type[]|Type $node */
             $node = $subject->$propertyWithNode;
             if (! is_array($node)) {
                 $this->walk($node, $cb, $nodesNamesGetter);

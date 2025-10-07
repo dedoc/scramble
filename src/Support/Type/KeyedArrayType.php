@@ -63,7 +63,7 @@ class KeyedArrayType extends AbstractType
 
         if ($items->isNotEmpty() && $items->every(fn (ArrayItemType_ $t) => is_string($t->key))) {
             return new Union(
-                $items->map(fn (ArrayItemType_ $t) => new LiteralStringType($t->key))->all(),
+                $items->map(fn (ArrayItemType_ $t) => new LiteralStringType((string) $t->key))->all(),
             );
         }
 

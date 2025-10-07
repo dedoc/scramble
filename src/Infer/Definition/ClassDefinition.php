@@ -21,6 +21,7 @@ use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Collection;
@@ -35,8 +36,10 @@ class ClassDefinition implements ClassDefinitionContract
 {
     private bool $propagatesTemplates = false;
 
+    /** @var array<string, true> */
     protected array $loadedMethods = [];
 
+    /** @var Collection<string, Collection<string, Type>> */
     private Collection $classContexts;
 
     private Index $index;
@@ -92,7 +95,7 @@ class ClassDefinition implements ClassDefinitionContract
 
         /** @var \ReflectionMethod|null $reflectionMethod */
         $reflectionMethod = rescue(
-            fn () => (new \ReflectionClass($this->name))->getMethod($name),
+            fn () => (new \ReflectionClass($this->name))->getMethod($name), // @phpstan-ignore argument.type
             report: false,
         );
 
@@ -159,8 +162,8 @@ class ClassDefinition implements ClassDefinitionContract
         if (! $reflectionMethod = $this->findReflectionMethod($name)) {
             return false;
         }
-        /** @var \ReflectionClass|null $classReflection */
-        $classReflection = rescue(fn () => new \ReflectionClass($this->name), report: false);
+        /** @var \ReflectionClass<object>|null $classReflection */
+        $classReflection = rescue(fn () => new \ReflectionClass($this->name), report: false); // @phpstan-ignore argument.type
 
         if (! $classReflection) {
             return false;
@@ -172,7 +175,7 @@ class ClassDefinition implements ClassDefinitionContract
 
         foreach (class_uses_recursive($classReflection->name) as $traitName) {
             $traitReflection = rescue(
-                fn () => new \ReflectionClass($traitName),
+                fn () => new \ReflectionClass($traitName), // @phpstan-ignore argument.type
                 report: false,
             );
 
@@ -190,6 +193,9 @@ class ClassDefinition implements ClassDefinitionContract
         return false;
     }
 
+    /**
+     * @param \ReflectionClass<object> $class
+     */
     private function isDeclaredIn(\ReflectionMethod $reflectionMethod, \ReflectionClass $class): bool
     {
         $reflectionMethodFileName = $reflectionMethod->getFileName();
@@ -212,8 +218,8 @@ class ClassDefinition implements ClassDefinitionContract
 
     private function findReflectionMethod(string $name): ?\ReflectionMethod
     {
-        /** @var \ReflectionClass|null $classReflection */
-        $classReflection = rescue(fn () => new \ReflectionClass($this->name), report: false);
+        /** @var \ReflectionClass<object>|null $classReflection */
+        $classReflection = rescue(fn () => new \ReflectionClass($this->name), report: false); // @phpstan-ignore argument.type
         /** @var \ReflectionMethod|null $methodReflection */
         $methodReflection = rescue(fn () => $classReflection?->getMethod($name), report: false);
 
@@ -223,8 +229,8 @@ class ClassDefinition implements ClassDefinitionContract
         }
 
         foreach ($this->getClassContexts()->keys() as $class) {
-            /** @var \ReflectionClass|null $classReflection */
-            $classReflection = rescue(fn () => new \ReflectionClass($class), report: false);
+            /** @var \ReflectionClass<object>|null $classReflection */
+            $classReflection = rescue(fn () => new \ReflectionClass($class), report: false); // @phpstan-ignore argument.type
             /** @var \ReflectionMethod|null $traitMethodReflection */
             $traitMethodReflection = rescue(fn () => $classReflection?->getMethod($name), report: false);
 
@@ -253,7 +259,7 @@ class ClassDefinition implements ClassDefinitionContract
             $name,
             $methodReflection,
             collect($this->templateTypes)->keyBy->name
-                ->merge($this->getMethodContextTemplates($methodReflection)),
+                ->merge($this->getMethodContextTemplates($methodReflection)), // @phpstan-ignore argument.type
         ))->build();
 
         $definition->type->setAttribute('r', true);
@@ -261,13 +267,16 @@ class ClassDefinition implements ClassDefinitionContract
         return $this->methods[$name] = $definition;
     }
 
+    /**
+     * @param IndexBuilder<array<string, mixed>>[] $indexBuilders
+     */
     protected function getFunctionLikeDefinitionBuiltFromAst(
         FunctionLikeDefinition $methodDefinition,
         string $name,
         Scope $scope = new GlobalScope,
         array $indexBuilders = [],
         bool $withSideEffects = false,
-    ) {
+    ): ?FunctionLikeDefinition {
         if (! $methodDefinition->isFullyAnalyzed()) {
             $this->methods[$name] = (new MethodAnalyzer(
                 $scope->index,
@@ -275,7 +284,7 @@ class ClassDefinition implements ClassDefinitionContract
             ))->analyze($methodDefinition, $indexBuilders, $withSideEffects);
         }
 
-        if (! $this->methods[$name]) {
+        if (! $this->methods[$name]) { // @phpstan-ignore booleanNot.alwaysFalse
             return $this->methods[$name];
         }
 
@@ -301,6 +310,9 @@ class ClassDefinition implements ClassDefinitionContract
         return $this->methods[$name];
     }
 
+    /**
+     * @return Collection<string, Type>
+     */
     private function getMethodContextTemplates(\ReflectionMethod $methodReflection): Collection
     {
         $classContexts = $this->getClassContexts();
@@ -308,7 +320,11 @@ class ClassDefinition implements ClassDefinitionContract
         return $classContexts->get($methodReflection->class, collect());
     }
 
-    public function getClassContexts(array $ignoreClasses = [])
+    /**
+     * @param string[] $ignoreClasses
+     * @return Collection<string, Collection<string, Type>>
+     */
+    public function getClassContexts(array $ignoreClasses = []): Collection
     {
         if (isset($this->classContexts)) {
             return $this->classContexts;
@@ -320,10 +336,9 @@ class ClassDefinition implements ClassDefinitionContract
 
         $classSource = $docComment."\n".rescue($reflector->getSource(...), '', report: false);
 
-        $contextPhpDoc = Str::matchAll(
-            '/@(?:use|extends|mixin)\s+[^\r\n*]+/',
-            $classSource,
-        )->map(fn ($s) => " * $s")->prepend('/**')->push('*/')->join("\n");
+        /** @var Collection<int, string> $tagsDoc */
+        $tagsDoc = Str::matchAll('/@(?:use|extends|mixin)\s+[^\r\n*]+/', $classSource);
+        $contextPhpDoc = $tagsDoc->map(fn ($s) => " * $s")->prepend('/**')->push('*/')->join("\n");
 
         $nameContext = rescue($reflector->getNameContext(...), report: false);
 
@@ -343,11 +358,11 @@ class ClassDefinition implements ClassDefinitionContract
 
         $types = collect($tags)
             ->map(fn ($tag) => PhpDocTypeHelper::toType($tag->type))
-            ->filter(fn ($type) => $type instanceof ObjectType)
-            ->when(
-                $this->parentFqn,
-                fn (Collection $types) => $types->firstWhere('name', $this->parentFqn) ? null : $types->push(new ObjectType($this->parentFqn))
-            );
+            ->filter(fn ($type) => $type instanceof ObjectType);
+
+        if ($this->parentFqn && ! $types->firstWhere('name', $this->parentFqn)) {
+            $types->push(new ObjectType($this->parentFqn));
+        }
 
         $classContexts = collect();
 
@@ -397,7 +412,10 @@ class ClassDefinition implements ClassDefinitionContract
         return $this->classContexts = $classContexts;
     }
 
-    private function dumpContext(ClassDefinition $def, Collection $classContexts): void
+    /**
+     * @param Collection<string, Collection<string, Type>> $classContexts
+     */
+    private function dumpContext(ClassDefinition $def, Collection $classContexts): void // @phpstan-ignore method.unused
     {
         $className = $def->name.($def->templateTypes ? '<'.implode(',', array_map($this->dumpTemplateName(...), $def->templateTypes)).'>' : '');
 
