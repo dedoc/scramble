@@ -247,7 +247,6 @@ it('handles deep context with use', function () {
     expect($definition->getMethod('foo')->getReturnType()->toString())->toBe('int');
 });
 
-
 it('infers complex type from flatMap', function () {
     $collectionType = new Generic(Collection::class, [
         new IntegerType,
