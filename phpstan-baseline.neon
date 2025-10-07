@@ -85,12 +85,6 @@ parameters:
 			path: src/Attributes/QueryParameter.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Configuration\\DocumentTransformers\:\:all\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Configuration/DocumentTransformers.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Configuration\\DocumentTransformers\:\:append\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -167,12 +161,6 @@ parameters:
 			identifier: argument.type
 			count: 2
 			path: src/Configuration/GeneratorConfigCollection.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Configuration\\OperationTransformers\:\:all\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Configuration/OperationTransformers.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Configuration\\OperationTransformers\:\:append\(\) has no return type specified\.$#'
@@ -289,12 +277,6 @@ parameters:
 			path: src/Console/Commands/AnalyzeDocumentation.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Console\\Commands\\AnalyzeDocumentation\:\:renderException\(\) has parameter \$exception with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Console/Commands/AnalyzeDocumentation.php
-
-		-
 			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|string\|null given\.$#'
 			identifier: argument.type
 			count: 1
@@ -321,12 +303,6 @@ parameters:
 		-
 			message: '#^Part \$message \(iterable\<string\>\|string\) of encapsed string cannot be cast to string\.$#'
 			identifier: encapsedStringPart.nonString
-			count: 1
-			path: src/Console/Commands/AnalyzeDocumentation.php
-
-		-
-			message: '#^Unable to resolve the template type TSubject in call to method static method Illuminate\\Support\\Str\:\:replace\(\)$#'
-			identifier: argument.templateType
 			count: 1
 			path: src/Console/Commands/AnalyzeDocumentation.php
 
@@ -571,12 +547,6 @@ parameters:
 			path: src/Generator.php
 
 		-
-			message: '#^Unable to resolve the template type T in call to method static method Dedoc\\Scramble\\Support\\ContainerUtils\:\:makeContextable\(\)$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Generator.php
-
-		-
 			message: '#^Unable to resolve the template type TKey in call to function collect$#'
 			identifier: argument.templateType
 			count: 1
@@ -757,12 +727,6 @@ parameters:
 			path: src/Infer/Context.php
 
 		-
-			message: '#^Access to an undefined property Dedoc\\Scramble\\Support\\Type\\Generic\:\:\$templateTypesMap\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Infer/Definition/ClassDefinition.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\:\:getMethodCallType\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -795,18 +759,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\:\:isInstanceOf\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Infer/Definition/ClassDefinition.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\:\:replaceTemplateInType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Definition/ClassDefinition.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\:\:replaceTemplateInType\(\) has parameter \$templateTypesMap with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Infer/Definition/ClassDefinition.php
 
@@ -1233,13 +1185,13 @@ parameters:
 		-
 			message: '#^Possibly invalid array key type PhpParser\\Node\\Expr\|string\.$#'
 			identifier: array.invalidKey
-			count: 4
+			count: 3
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
 		-
 			message: '#^Possibly invalid array key type PhpParser\\Node\\Expr\|string\.$#'
 			identifier: offsetAccess.invalidOffset
-			count: 4
+			count: 3
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
 		-
@@ -1489,12 +1441,6 @@ parameters:
 			path: src/Infer/Scope/Scope.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:getContextTemplates\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:getMethodCalls\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -1521,18 +1467,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:setType\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Unable to resolve the template type TKey in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function collect$#'
-			identifier: argument.templateType
 			count: 1
 			path: src/Infer/Scope/Scope.php
 
@@ -2000,12 +1934,6 @@ parameters:
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Scramble\:\:extendOpenApi\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Scramble.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
 			path: src/Scramble.php
@@ -3022,18 +2950,6 @@ parameters:
 			path: src/Support/Generator/TypeTransformer.php
 
 		-
-			message: '#^Unable to resolve the template type TKey in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Support/Generator/TypeTransformer.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Support/Generator/TypeTransformer.php
-
-		-
 			message: '#^Variable \$docNode in PHPDoc tag @var does not exist\.$#'
 			identifier: varTag.variableNotFound
 			count: 1
@@ -3618,12 +3534,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationBuilder\:\:build\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationBuilder.php
-
-		-
-			message: '#^Unable to resolve the template type T in call to method static method Dedoc\\Scramble\\Support\\ContainerUtils\:\:makeContextable\(\)$#'
-			identifier: argument.templateType
 			count: 1
 			path: src/Support/OperationBuilder.php
 

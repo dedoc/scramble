@@ -230,7 +230,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
     {
         $functionType = $functionLikeDefinition->type;
 
-        foreach ($functionType->exceptions as $i => $exceptionType) { // @phpstan-ignore property.notFound
+        foreach ($functionType->exceptions as $i => $exceptionType) {
             $exception = (new ReferenceTypeResolver($scope->index))->resolve($scope, $exceptionType);
             if (! $exception instanceof ObjectType) {
                 continue;
