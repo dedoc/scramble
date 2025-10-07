@@ -32,7 +32,7 @@ class UserModel_ModelExtensionTest extends Model
 
 class PostModel_ModelExtensionTest extends Model {}
 
-describe('model annotations (introduced in 11.x)', function () {
+describe('model annotations (introduced in 11.15.0)', function () {
     it('handles static', function () {
         $type = getStatementType(UserModel_ModelExtensionTest::class.'::query()');
 
@@ -83,4 +83,4 @@ describe('model annotations (introduced in 11.x)', function () {
 
         expect($type->toString())->toBe(PostModel_ModelExtensionTest::class);
     });
-})->skip(fn () => ! version_compare(app()->version(), '11.0.0', '>='));
+})->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
