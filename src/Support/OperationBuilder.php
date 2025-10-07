@@ -39,7 +39,7 @@ class OperationBuilder
                 continue;
             }
 
-            //@phpstan-ignore deadCode.unreachable
+            // @phpstan-ignore deadCode.unreachable
             throw new InvalidArgumentException('(callable(Operation, RouteInfo): void)|OperationTransformer type for operation transformer expected, received '.$instance::class);
         }
 

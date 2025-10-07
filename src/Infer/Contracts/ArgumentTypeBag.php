@@ -15,7 +15,6 @@ interface ArgumentTypeBag extends Countable
 
     /**
      * @param  callable(Type, string|int): Type  $cb
-     * @return self
      */
     public function map(callable $cb): self;
 }

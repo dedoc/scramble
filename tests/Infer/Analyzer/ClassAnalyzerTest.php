@@ -7,14 +7,12 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
-use Dedoc\Scramble\Tests\Infer\stubs\Bar;
 use Dedoc\Scramble\Tests\Infer\stubs\Child;
 use Dedoc\Scramble\Tests\Infer\stubs\ChildParentSetterCalls;
 use Dedoc\Scramble\Tests\Infer\stubs\ChildPromotion;
 use Dedoc\Scramble\Tests\Infer\stubs\DeepChild;
 use Dedoc\Scramble\Tests\Infer\stubs\Foo;
 use Dedoc\Scramble\Tests\Infer\stubs\FooWithDefaultProperties;
-use Dedoc\Scramble\Tests\Infer\stubs\FooWithTrait;
 
 beforeEach(function () {
     $this->index = app(Index::class);

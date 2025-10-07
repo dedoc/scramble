@@ -174,7 +174,7 @@ class TemplateTypesSolver
     }
 
     /**
-     * @param array<string, Type> $templates
+     * @param  array<string, Type>  $templates
      */
     public function addContextTypesToTypelessParametersOfCallableArgument(
         Type $argument,

@@ -21,7 +21,6 @@ use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
-use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;

@@ -194,7 +194,7 @@ class ClassDefinition implements ClassDefinitionContract
     }
 
     /**
-     * @param \ReflectionClass<object> $class
+     * @param  \ReflectionClass<object>  $class
      */
     private function isDeclaredIn(\ReflectionMethod $reflectionMethod, \ReflectionClass $class): bool
     {
@@ -268,7 +268,7 @@ class ClassDefinition implements ClassDefinitionContract
     }
 
     /**
-     * @param IndexBuilder<array<string, mixed>>[] $indexBuilders
+     * @param  IndexBuilder<array<string, mixed>>[]  $indexBuilders
      */
     protected function getFunctionLikeDefinitionBuiltFromAst(
         FunctionLikeDefinition $methodDefinition,
@@ -321,7 +321,7 @@ class ClassDefinition implements ClassDefinitionContract
     }
 
     /**
-     * @param string[] $ignoreClasses
+     * @param  string[]  $ignoreClasses
      * @return Collection<string, Collection<string, Type>>
      */
     public function getClassContexts(array $ignoreClasses = []): Collection
@@ -413,7 +413,7 @@ class ClassDefinition implements ClassDefinitionContract
     }
 
     /**
-     * @param Collection<string, Collection<string, Type>> $classContexts
+     * @param  Collection<string, Collection<string, Type>>  $classContexts
      */
     private function dumpContext(ClassDefinition $def, Collection $classContexts): void // @phpstan-ignore method.unused
     {
