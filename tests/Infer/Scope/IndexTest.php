@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Tests\Infer\Scope;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
@@ -14,12 +15,20 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Illuminate\Support\Collection;
 
-it('doesnt fail on internal class definition request', function () {
-    $index = new Index;
+beforeEach(function () {
+    $this->index = new Index;
+});
 
-    $def = $index->getClass(\Error::class);
+it('doesnt fail on internal class definition request', function () {
+    $def = $this->index->getClass(\Error::class);
 
     expect($def)->toBeInstanceOf(ClassDefinition::class);
+});
+
+it('retrieves function definitions', function () {
+    $def = $this->index->getFunction('is_null');
+
+    expect($def)->toBeInstanceOf(FunctionLikeDefinition::class);
 });
 
 class Bar_IndexTest
@@ -237,6 +246,7 @@ it('handles deep context with use', function () {
 
     expect($definition->getMethod('foo')->getReturnType()->toString())->toBe('int');
 });
+
 
 it('infers complex type from flatMap', function () {
     $collectionType = new Generic(Collection::class, [

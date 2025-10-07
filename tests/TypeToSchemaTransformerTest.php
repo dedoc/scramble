@@ -321,10 +321,12 @@ it('supports simple comments descriptions in api resource', function () {
 
     expect($this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithSimpleDescription::class)->toArray()['properties']['now'])->toBe([
         'type' => 'string',
+        'format' => 'date-time',
         'description' => 'The date of the current moment.',
     ]);
     expect($this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithSimpleDescription::class)->toArray()['properties']['now2'])->toBe([
         'type' => 'string',
+        'format' => 'date-time',
         'description' => 'Inline comments are also supported.',
     ]);
 });
