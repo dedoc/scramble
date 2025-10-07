@@ -24,16 +24,6 @@ beforeEach(function () {
     $this->resolver = new ReferenceTypeResolver($this->index);
 });
 
-it('creates a definition from the given class', function () {
-    $definition = $this->classAnalyzer->analyze(Foo::class);
-
-    expect($this->index->classesDefinitions)
-        ->toHaveKeys([Foo::class, Bar::class])
-        ->and($definition->methods)->toHaveKey('foo')
-        ->and(($fooRawDef = $definition->methods['foo'])->isFullyAnalyzed())->toBeFalse()
-        ->and($fooRawDef->type->getReturnType()->toString())->toBe('unknown');
-})->skip('not needed');
-
 it('resolves function return type after explicitly requested', function () {
     $fooDef = $this->classAnalyzer
         ->analyze(Foo::class)
@@ -307,19 +297,6 @@ it('resolves pending returns lazily', function () {
 
     expect($barReturnType->toString())->toBe('int(243)');
 });
-
-it('analyzes traits', function () {
-    $classDef = $this->classAnalyzer->analyze(FooWithTrait::class);
-
-    expect($classDef->properties)->toHaveCount(1)->toHaveKeys([
-        'propBaz',
-    ]);
-    expect($classDef->methods)->toHaveCount(3)->toHaveKeys([
-        'something',
-        'methodBaz',
-        'methodInvokingFooTraitMethod',
-    ]);
-})->skip('not needed');
 
 it('preserves comments in property defaults', function () {
     $classDef = $this->classAnalyzer->analyze(FooWithDefaultProperties::class);
