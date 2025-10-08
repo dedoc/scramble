@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -44,7 +45,7 @@ class ResourceCollectionTypeInfer implements MethodReturnTypeExtension
         $parentType = $this->getCollectionType($event->getInstance(), $event->scope->index);
 
         $realType = $event->getDefinition()->getMethodDefinition('toArray')?->getReturnType();
-        if ($realType instanceof UnknownType || ($realType instanceof ArrayType && $realType->value instanceof UnknownType)) {
+        if ($realType instanceof UnknownType) {
             /**
              * When inferred return type of `toArray` method cannot be inferred, we'd like to fall back to
              * the default behavior of ResourceCollection, so there is still SOME information.

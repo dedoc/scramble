@@ -55,6 +55,7 @@ class PhpDoc
                 ...$node->getUsesTagValues(),
                 ...$node->getReturnTagValues(),
                 ...$node->getReturnTagValues('@response'),
+                ...$node->getReturnTagValues('@scramble-return'),
                 ...$node->getVarTagValues(),
                 ...$node->getThrowsTagValues(),
             ];
