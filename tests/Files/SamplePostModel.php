@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Tests\Files;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -42,5 +43,15 @@ class SamplePostModel extends Model
     public function user()
     {
         return $this->belongsTo(SampleUserModel::class, 'user_id');
+    }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('approved_at', '>', now());
+    }
+
+    public function scopeApprovedTypedParam(Builder $query)
+    {
+        return $query->where('approved_at', '>', now());
     }
 }

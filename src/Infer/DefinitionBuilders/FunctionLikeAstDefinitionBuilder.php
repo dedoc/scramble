@@ -18,9 +18,16 @@ use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\Services\ShallowTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
+use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
+use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
+use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Arr;
 use LogicException;
 use PhpParser\Node;
@@ -34,6 +41,8 @@ use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeTraverser;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+use PHPStan\PhpDocParser\Ast\PhpDoc\ReturnTagValueNode;
 
 class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
 {
@@ -67,6 +76,8 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         if ($this->functionLike instanceof ClassMethod && $scope) { // @phpstan-ignore booleanAnd.rightAlwaysTrue
             $definition->selfOutTypeBuilder = new SelfOutTypeBuilder($scope, $this->functionLike);
         }
+
+        $this->overrideInferredReturnTypeWithManualAnnotation($definition);
 
         if ($this->withSideEffects) {
             $this->analyzeSideEffects($definition, $inferrer);
@@ -218,5 +229,101 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         }
 
         Context::getInstance()->extensionsBroker->afterSideEffectCallAnalyzed($event);
+    }
+
+    private function overrideInferredReturnTypeWithManualAnnotation(FunctionLikeDefinition $definition): void
+    {
+        $phpDoc = $this->functionLike->getAttribute('parsedPhpDoc');
+        if (! $phpDoc instanceof PhpDocNode) {
+            return;
+        }
+
+        /** @var ReturnTagValueNode|null $scrambleReturn */
+        if (! $scrambleReturn = Arr::first($phpDoc->getReturnTagValues('@scramble-return'))) {
+            return;
+        }
+
+        $type = PhpDocTypeHelper::toType($scrambleReturn->type);
+        foreach (($this->classDefinition?->templateTypes ?: []) as $template) {
+            $type = (new TypeWalker)->map($type, fn ($t) => $t instanceof ObjectType && $t->name === $template->name ? $template : $t);
+        }
+
+        $definition->type->setReturnType($type);
+    }
+
+    public static function resolveFunctionExceptions(Scope $scope, FunctionLikeDefinition $functionLikeDefinition): void
+    {
+        $functionType = $functionLikeDefinition->type;
+
+        foreach ($functionType->exceptions as $i => $exceptionType) {
+            $exception = (new ReferenceTypeResolver($scope->index))->resolve($scope, $exceptionType);
+            if (! $exception instanceof ObjectType) {
+                continue;
+            }
+            $functionType->exceptions[$i] = $exception;
+        }
+    }
+
+    public static function resolveFunctionReturnReferences(Scope $scope, FunctionLikeDefinition $functionLikeDefinition): void
+    {
+        $functionType = $functionLikeDefinition->type;
+
+        $returnType = $functionType->getReturnType();
+        $resolvedReference = ReferenceTypeResolver::getInstance()->resolve($scope, $returnType);
+        $functionType->setReturnType($resolvedReference);
+
+        $annotatedReturnType = $functionType->getAttribute('annotatedReturnType');
+
+        if ($annotatedReturnType instanceof Type) {
+            if (! $functionType->getAttribute('inferredReturnType')) {
+                $functionType->setAttribute('inferredReturnType', clone $functionType->getReturnType());
+            }
+
+            $functionType->setReturnType(
+                self::addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType, $scope)
+            );
+        }
+    }
+
+    private static function addAnnotatedReturnType(Type $inferredReturnType, Type $annotatedReturnType, Scope $scope): Type
+    {
+        $types = $inferredReturnType instanceof Union
+            ? $inferredReturnType->types
+            : [$inferredReturnType];
+
+        // @todo: Handle case when annotated return type is union.
+        if ($annotatedReturnType instanceof ObjectType) {
+            $resolvedName = ReferenceTypeResolver::resolveClassName($scope, $annotatedReturnType->name);
+            if (! $resolvedName) {
+                throw new LogicException("Got null after class name resolution of [$annotatedReturnType->name], string expected");
+            }
+            $annotatedReturnType->name = $resolvedName;
+        }
+
+        $annotatedTypeCanAcceptAnyInferredType = collect($types)
+            ->some(function (Type $t) use ($annotatedReturnType) {
+                $isAnnotatedAsArray = $annotatedReturnType instanceof ArrayType
+                    || $annotatedReturnType instanceof KeyedArrayType;
+
+                if ($isAnnotatedAsArray && $t instanceof LateResolvingType) {
+                    return true;
+                }
+
+                if ($t instanceof TemplateType && ! $t->is) {
+                    return true;
+                }
+
+                if ($annotatedReturnType->accepts($t)) {
+                    return true;
+                }
+
+                return $t->acceptedBy($annotatedReturnType);
+            });
+
+        if (! $annotatedTypeCanAcceptAnyInferredType) {
+            return $annotatedReturnType;
+        }
+
+        return Union::wrap($types)->mergeAttributes($inferredReturnType->attributes());
     }
 }

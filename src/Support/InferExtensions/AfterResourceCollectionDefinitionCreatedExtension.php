@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Extensions\AfterClassDefinitionCreatedExtension;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -18,6 +19,8 @@ use Illuminate\Support\Collection;
 
 class AfterResourceCollectionDefinitionCreatedExtension implements AfterClassDefinitionCreatedExtension
 {
+    public function __construct(private Index $index) {}
+
     public function shouldHandle(string $name): bool
     {
         return $name === ResourceCollection::class;
@@ -26,6 +29,10 @@ class AfterResourceCollectionDefinitionCreatedExtension implements AfterClassDef
     public function afterClassDefinitionCreated(ClassDefinitionCreatedEvent $event): void
     {
         $definition = $event->classDefinition;
+
+        if ($definition->parentFqn) {
+            $definition->templateTypes = $this->index->getClass($definition->parentFqn)->templateTypes ?? [];
+        }
 
         $definition->templateTypes[] = $tCollects = new TemplateType(
             'TCollects', // @todo rename to TCollectedResource

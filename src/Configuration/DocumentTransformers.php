@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Configuration;
 
+use Dedoc\Scramble\Contracts\DocumentTransformer;
 use Illuminate\Support\Arr;
 
 class DocumentTransformers
@@ -39,6 +40,9 @@ class DocumentTransformers
         return $this;
     }
 
+    /**
+     * @return (callable|class-string<DocumentTransformer>)[]
+     */
     public function all(): array
     {
         $base = $this->transformers;

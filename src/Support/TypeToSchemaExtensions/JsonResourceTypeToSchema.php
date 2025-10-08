@@ -9,7 +9,6 @@ use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Generator\Components;
-use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -64,7 +63,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         }
 
         if (! $array instanceof KeyedArrayType) {
-            return new UnknownType;
+            return $this->openApiTransformer->transform($array);
         }
 
         $array->items = $this->flattenMergeValues($array->items);

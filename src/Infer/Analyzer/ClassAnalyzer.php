@@ -5,10 +5,8 @@ namespace Dedoc\Scramble\Infer\Analyzer;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
-use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
-use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -30,10 +28,6 @@ class ClassAnalyzer
 
         $parentDefinition = $parentName ? $this->index->getClass($parentName) : null;
 
-        /*
-         * @todo consider more advanced cloning implementation.
-         * Currently just cloning property definition feels alright as only its `defaultType` may change.
-         */
         $classDefinition = new ClassDefinition(
             name: $name,
             templateTypes: $parentDefinition?->templateTypes ?: [],
@@ -90,21 +84,7 @@ class ClassAnalyzer
             }
         }
 
-        foreach ($classReflection->getMethods() as $reflectionMethod) {
-            if ($reflectionMethod->class !== $name) {
-                continue;
-            }
-
-            $classDefinition->methods[$reflectionMethod->name] = new FunctionLikeDefinition(
-                new FunctionType(
-                    $reflectionMethod->name,
-                    arguments: [],
-                    returnType: new UnknownType,
-                ),
-                definingClassName: $name,
-                isStatic: $reflectionMethod->isStatic(),
-            );
-        }
+        $classDefinition->setIndex($this->index);
 
         $this->index->registerClassDefinition($classDefinition);
 

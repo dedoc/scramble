@@ -206,7 +206,7 @@ class Foo
     public function returnSomeCall()
     {
         if ($a) {
-            return call_user_func($erw);
+            return foobarfoo($erw);
         }
         return (new Bar)->some()->call();
     }

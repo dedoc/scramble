@@ -23,8 +23,7 @@ class MethodReflector
 
     private ?ClassMethod $methodNode = null;
 
-    private function __construct(
-        private FileParser $parser, public string $className, public string $name) {}
+    private function __construct(private FileParser $parser, public string $className, public string $name) {}
 
     public static function make(string $className, string $name)
     {

@@ -128,9 +128,9 @@ class AnalyzeDocumentation extends Command
         return "<fg=gray>{$eloquentClassName}@{$method}</>";
     }
 
-    private function renderException($exception, int $i): void
+    private function renderException(Throwable $exception, int $i): void
     {
-        $message = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', property_exists($exception, 'originalMessage') ? $exception->originalMessage : $exception->getMessage());
+        $message = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', property_exists($exception, 'originalMessage') ? $exception->originalMessage : $exception->getMessage()); // @phpstan-ignore argument.templateType
 
         $this->output->writeln("<options=bold>$i. {$message}</>");
 

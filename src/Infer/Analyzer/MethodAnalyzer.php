@@ -18,7 +18,11 @@ class MethodAnalyzer
 
     public function analyze(FunctionLikeDefinition $methodDefinition, array $indexBuilders = [], bool $withSideEffects = false)
     {
-        $node = $this->getClassReflector()->getMethod($methodDefinition->type->name)->getAstNode();
+        try {
+            $node = $this->getClassReflector()->getMethod($methodDefinition->type->name)->getAstNode();
+        } catch (\ReflectionException) {
+            return null;
+        }
 
         if (! $node) {
             return $methodDefinition;

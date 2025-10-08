@@ -19,6 +19,10 @@ class ObjectType extends AbstractType
 
     public function isInstanceOf(string $className)
     {
+        if ($this->name === 'iterable' && $className === 'iterable') {
+            return true;
+        }
+
         return is_a($this->name, $className, true);
     }
 
@@ -75,7 +79,7 @@ class ObjectType extends AbstractType
             return new UnknownType("No method {$definingClassName}@{$methodName} definition found, it may be located in `vendor` which is not analyzed.");
         }
 
-        $returnType = $methodDefinition->type->getReturnType();
+        $returnType = $methodDefinition->getReturnType();
 
         // Here templates should be replaced for generics and arguments should be taken into account.
         return $returnType instanceof TemplateType && $returnType->is

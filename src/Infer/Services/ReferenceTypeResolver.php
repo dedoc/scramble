@@ -95,10 +95,15 @@ class ReferenceTypeResolver
 
     private function finalizeStatic(Type $type, Type $staticType): Type
     {
-        return (new TypeWalker)->map(
-            $type,
-            fn (Type $t) => $t instanceof ObjectType && $t->name === StaticReference::STATIC ? $staticType : $t,
-        );
+        return (new TypeWalker)->map($type, function (Type $t) use ($staticType) {
+            if ($t instanceof Generic && $staticType instanceof ObjectType && $t->name === StaticReference::STATIC) {
+                $t->name = $staticType->name;
+
+                return $t;
+            }
+
+            return $t instanceof ObjectType && $t->name === StaticReference::STATIC ? $staticType : $t;
+        });
     }
 
     private function resolveLateTypeEarly(LateResolvingType $type): Type
@@ -464,7 +469,7 @@ class ReferenceTypeResolver
         /* When this is a handling for method call */
         ObjectType|SelfType|null $calledOnType = null,
     ): Type {
-        $returnType = $callee->type->getReturnType();
+        $returnType = $callee->getReturnType();
 
         if ($isSelf = $returnType instanceof SelfType && $calledOnType) {
             $returnType = $calledOnType;
@@ -472,9 +477,20 @@ class ReferenceTypeResolver
 
         $classDefinition = $calledOnType instanceof ObjectType ? $this->index->getClass($calledOnType->name) : null;
 
+        $classContextTemplates = $calledOnType && $classDefinition
+            ? (new TemplateTypesSolver)->getClassContextTemplates($calledOnType, $classDefinition)
+            : [];
+
+        $arguments = $arguments->map(fn ($t, $nameOrPosition) => (new TemplateTypesSolver)->addContextTypesToTypelessParametersOfCallableArgument(
+            $t,
+            $nameOrPosition,
+            $callee,
+            $classContextTemplates,
+        ));
+
         $templatesMap = (new TemplateTypesSolver)
             ->getFunctionContextTemplates($callee, $arguments)
-            ->prepend($calledOnType && $classDefinition ? (new TemplateTypesSolver)->getClassContextTemplates($calledOnType, $classDefinition) : []);
+            ->prepend($classContextTemplates);
 
         $returnType = (new TypeWalker)->map(
             $returnType,

@@ -28,6 +28,8 @@ class AfterJsonResourceDefinitionCreatedExtension implements AfterClassDefinitio
     {
         $definition = $event->classDefinition;
 
+        $definition->propagatesTemplates(true);
+
         $definition->templateTypes = [
             $tResource = new TemplateType('TResource'),
             $tAdditional = new TemplateType('TAdditional', default: new ArrayType),
