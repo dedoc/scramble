@@ -23,6 +23,10 @@ class ResponseExtension extends OperationExtension
 {
     public function handle(Operation $operation, RouteInfo $routeInfo): void
     {
+        if ($operation->method === 'head') {
+            return;
+        }
+
         $inferredResponses = $this->collectInferredResponses($routeInfo);
 
         $responses = $this->applyResponsesAttributes($inferredResponses, $routeInfo);
