@@ -7,7 +7,6 @@ use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;

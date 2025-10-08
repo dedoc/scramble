@@ -12,7 +12,8 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Illuminate\Support\Collection;
 
-function buildAstFunctionDefinition(MethodReflector $reflector, ?ClassDefinition $classDefinition = null): FunctionLikeDefinition {
+function buildAstFunctionDefinition(MethodReflector $reflector, ?ClassDefinition $classDefinition = null): FunctionLikeDefinition
+{
     return (new FunctionLikeAstDefinitionBuilder(
         $reflector->name,
         $reflector->getAstNode(),
@@ -55,17 +56,17 @@ class Foo_FunctionLikeAstDefinitionBuilderTest
     /**
      * @scramble-return int
      */
-    public function foo(){}
+    public function foo() {}
 
     /**
      * @scramble-return \Illuminate\Support\Collection<int, string>
      */
-    public function bar(){}
+    public function bar() {}
 
     /**
      * @scramble-return \Illuminate\Support\Collection<int, TNonExisting>
      */
-    public function fail(){}
+    public function fail() {}
 }
 
 class Bar_FunctionLikeAstDefinitionBuilderTest
@@ -73,5 +74,5 @@ class Bar_FunctionLikeAstDefinitionBuilderTest
     /**
      * @scramble-return \Illuminate\Support\Collection<int, TFoo>
      */
-    public function templated(){}
+    public function templated() {}
 }
