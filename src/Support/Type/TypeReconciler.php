@@ -87,12 +87,6 @@ class TypeReconciler
             return new StringType();
         }
 
-        foreach ($this->reconcilers as $reconciler) {
-            if ($reconciled = $reconciler($a, $b)) {
-                return $reconciled;
-            }
-        }
-
         return null;
     }
 }
