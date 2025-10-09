@@ -10,7 +10,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 class TypeReconciler
 {
     /**
-     * @param Type[] $types
+     * @param  Type[]  $types
      */
     public function reconcile(array $types): Type
     {
@@ -31,6 +31,7 @@ class TypeReconciler
                         $items[] = $merged;
                         $items = array_values($items);
                         $changed = true;
+
                         continue 3;
                     }
                 }
@@ -52,7 +53,7 @@ class TypeReconciler
             ($a instanceof LiteralBooleanType && $a->value === true)
             && ($b instanceof LiteralBooleanType && $b->value === false)
         ) {
-            return new BooleanType();
+            return new BooleanType;
         }
 
         // bool|false or bool|true -> bool
@@ -60,7 +61,7 @@ class TypeReconciler
             ($a instanceof BooleanType && ! $a instanceof LiteralBooleanType)
             && $b instanceof LiteralBooleanType
         ) {
-            return new BooleanType();
+            return new BooleanType;
         }
 
         // int|42 -> int
@@ -68,7 +69,7 @@ class TypeReconciler
             ($a instanceof IntegerType && ! $a instanceof LiteralIntegerType)
             && $b instanceof LiteralIntegerType
         ) {
-            return new IntegerType();
+            return new IntegerType;
         }
 
         // float|42 -> float
@@ -76,7 +77,7 @@ class TypeReconciler
             ($a instanceof FloatType && ! $a instanceof LiteralFloatType)
             && ($b instanceof LiteralFloatType || $b instanceof LiteralIntegerType)
         ) {
-            return new FloatType();
+            return new FloatType;
         }
 
         // string|'wow' -> string
@@ -84,7 +85,7 @@ class TypeReconciler
             ($a instanceof StringType && ! $a instanceof LiteralStringType)
             && $b instanceof LiteralStringType
         ) {
-            return new StringType();
+            return new StringType;
         }
 
         return null;

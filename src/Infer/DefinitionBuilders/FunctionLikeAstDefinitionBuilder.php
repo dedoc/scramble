@@ -243,7 +243,6 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         }
 
         /** @var ReturnTagValueNode $scrambleReturn */
-
         $type = PhpDocTypeHelper::toType($scrambleReturn->type);
         foreach (($this->classDefinition?->templateTypes ?: []) as $template) {
             $type = (new TypeWalker)->map($type, fn ($t) => $t instanceof ObjectType && $t->name === $template->name ? $template : $t);
