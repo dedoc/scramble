@@ -51,6 +51,12 @@ describe('model annotations (introduced in 11.15.0)', function () {
         expect($type->toString())->toBe(UserModel_ModelExtensionTest::class);
     });
 
+    it('handles chained method get call', function () {
+        $type = getStatementType(UserModel_ModelExtensionTest::class.'::query()->where()->get()');
+
+        expect($type->toString())->toBe(UserModel_ModelExtensionTest::class);
+    });
+
     it('handles chained method call relation', function () {
         $type = getStatementType('(new '.UserModel_ModelExtensionTest::class.')->posts()');
 

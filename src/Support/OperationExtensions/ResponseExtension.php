@@ -48,6 +48,7 @@ class ResponseExtension extends OperationExtension
             : [$returnType];
 
         $responses = collect($returnTypes)
+            ->map->toString()->dd()
             ->merge($routeInfo->getActionType()->exceptions ?? [])
             ->map(function (Type $type) use ($routeInfo) {
                 /*
