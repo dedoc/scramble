@@ -6,13 +6,17 @@ use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\MissingType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\RecursiveTemplateSolver;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypePath;
+use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use League\Uri\UriTemplate\Template;
 
 class TemplateTypesSolver
 {
@@ -166,30 +170,69 @@ class TemplateTypesSolver
 
     private function inferTemplate(TemplateType $template, Type $typeWithTemplate, Type $type): ?Type
     {
-        if (! $path = $this->findTemplatePath($template, $typeWithTemplate)) {
-            return null;
-        }
-
-        return $this->getTypeByPath($type, $path);
+        return (new RecursiveTemplateSolver)->solve($typeWithTemplate, $type, $template);
     }
 
-    private function findTemplatePath(TemplateType $template, Type $typeWithTemplate): ?TypePath
-    {
-        return TypePath::findFirst(
-            $typeWithTemplate,
-            fn (Type $t) => $t === $template,
+    /**
+     * @param  array<string, Type>  $templates
+     */
+    public function addContextTypesToTypelessParametersOfCallableArgument(
+        Type $argument,
+        string|int $nameOrPosition,
+        FunctionLikeDefinition $definition,
+        array $templates,
+    ): Type {
+        if (! $argument instanceof FunctionType) {
+            return $argument;
+        }
+
+        $correspondingParameterType = is_string($nameOrPosition)
+            ? ($definition->type->arguments[$nameOrPosition] ?? null)
+            : (array_values($definition->type->arguments)[$nameOrPosition] ?? null);
+
+        // @todo: this will not work when parameter annotated as union
+        if (! $correspondingParameterType instanceof FunctionType) {
+            return $argument;
+        }
+
+        $argument = $argument->clone();
+        $replacedTemplates = [];
+
+        $i = -1;
+        foreach ($argument->arguments as $name => $arg) {
+            $i++;
+
+            if (! $arg instanceof TemplateType || $arg->is instanceof ObjectType) {
+                continue;
+            }
+
+            $argShouldBeReplaced = ! $arg->is || $arg->is instanceof ArrayType;
+
+            $param = $argShouldBeReplaced
+                ? $correspondingParameterType->arguments[$i] ?? null
+                : $arg->is;
+
+            if (! $param) {
+                continue;
+            }
+
+            $replacedTemplates[$arg->name] = $param;
+            $argument->arguments[$name] = $param;
+        }
+
+        $argument->templates = array_filter(
+            $argument->templates,
+            fn (TemplateType $tt) => ! array_key_exists($tt->name, $replacedTemplates),
         );
-    }
 
-    private function getTypeByPath(Type $type, TypePath $path): ?Type
-    {
-        $result = $path->getFrom($type);
+        $argument = (new TypeWalker)->map(
+            $argument,
+            fn ($t) => $t instanceof TemplateType ? $replacedTemplates[$t->name] ?? $t : $t,
+        );
 
-        if (! $result instanceof Type) {
-            // Path retrieval result should always be a type due to the found template
-            return null;
-        }
-
-        return $result;
+        return (new TypeWalker)->map(
+            $argument,
+            fn ($t) => $t instanceof TemplateType ? $templates[$t->name] ?? $t : $t,
+        );
     }
 }

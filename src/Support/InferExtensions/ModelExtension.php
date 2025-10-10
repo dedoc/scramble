@@ -4,10 +4,14 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Dedoc\Scramble\Infer\AutoResolvingArgumentTypeBag;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
+use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\AbstractType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
@@ -17,25 +21,32 @@ use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Throwable;
 
-class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
+class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension, StaticMethodReturnTypeExtension
 {
     private static $cache;
 
-    public function shouldHandle(ObjectType $type): bool
+    public function shouldHandle(ObjectType|string $type): bool
     {
+        if (is_string($type)) {
+            return is_a($type, Model::class, true);
+        }
+
         return $type->isInstanceOf(Model::class);
     }
 
@@ -149,12 +160,8 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         return new ObjectType($relation['related']);
     }
 
-    public function getMethodReturnType(MethodCallEvent $event): ?Type
+    protected function getToArrayMethodReturnType(MethodCallEvent $event): ?Type
     {
-        if ($event->getName() !== 'toArray') {
-            return null;
-        }
-
         if ($this->getRealToArrayMethodDefinitionClassName($event) !== Model::class) {
             return null;
         }
@@ -192,6 +199,52 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             ...$arrayableAttributesTypes->map(fn ($type, $name) => new ArrayItemType_($name, $type))->values()->all(),
             ...$arrayableRelationsTypes->map(fn ($type, $name) => new ArrayItemType_($name, $type, isOptional: true))->values()->all(),
         ]);
+    }
+
+    protected function getGetOriginalMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        $key = $event->getArg('key', 0);
+
+        if (! $key instanceof LiteralStringType) {
+            return null;
+        }
+
+        return $this->getPropertyType(
+            new PropertyFetchEvent($event->getInstance(), $key->value, $event->scope)
+        );
+    }
+
+    public function getMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        return match ($event->getName()) {
+            'toArray' => $this->getToArrayMethodReturnType($event),
+            'getOriginal' => $this->getGetOriginalMethodReturnType($event),
+            default => $this->maybeProxyMethodCallToBuilder($event),
+        };
+    }
+
+    public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
+    {
+        return $this->maybeProxyMethodCallToBuilder($event);
+    }
+
+    private function maybeProxyMethodCallToBuilder(MethodCallEvent|StaticMethodCallEvent $event): ?Type
+    {
+        if (! $definition = $event->getDefinition()) {
+            return null;
+        }
+
+        if ($definition->hasMethodDefinition($event->getName())) {
+            return null;
+        }
+
+        $referenceCall = new MethodCallReferenceType(
+            new Generic(Builder::class, [new ObjectType($definition->name)]),
+            $event->getName(),
+            $event->arguments instanceof AutoResolvingArgumentTypeBag ? $event->arguments->allUnresolved() : $event->arguments->all(),
+        );
+
+        return ReferenceTypeResolver::getInstance()->resolve($event->scope, $referenceCall);
     }
 
     private function getModelInfo(ObjectType $type)

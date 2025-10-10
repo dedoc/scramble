@@ -15,7 +15,7 @@ it('infers response factory expressions', function (string $expression, string $
     ['response()->json()', 'Illuminate\Http\JsonResponse<array<mixed>, int(200), array<mixed>>'],
     ['response()->json(status: 329)', 'Illuminate\Http\JsonResponse<array<mixed>, int(329), array<mixed>>'],
     ["response()->make('Hello')", 'Illuminate\Http\Response<string(Hello), int(200), array<mixed>>'],
-    ["response()->download(base_path('/tmp/wow.txt'))", 'Symfony\Component\HttpFoundation\BinaryFileResponse<unknown, int(200), array<mixed>, string(attachment)>', [
+    ["response()->download(base_path('/tmp/wow.txt'))", 'Symfony\Component\HttpFoundation\BinaryFileResponse<string, int(200), array<mixed>, string(attachment)>', [
         'mimeType' => 'text/plain',
         'contentDisposition' => 'attachment; filename=wow.txt',
     ]],

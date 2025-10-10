@@ -43,22 +43,25 @@ class PhpDoc
 
         $tokens = new TokenIterator($lexer->tokenize($docComment));
 
+        /** @var PhpDocNode $node */
         $node = $phpDocParser->parse($tokens);
 
         static::addSummaryAttributes($node);
 
         if ($nameResolver) {
             $tagValues = [
+                ...$node->getParamTagValues(),
+                ...$node->getMixinTagValues(),
+                ...$node->getExtendsTagValues(),
+                ...$node->getUsesTagValues(),
                 ...$node->getReturnTagValues(),
                 ...$node->getReturnTagValues('@response'),
+                ...$node->getReturnTagValues('@scramble-return'),
                 ...$node->getVarTagValues(),
                 ...$node->getThrowsTagValues(),
             ];
 
             foreach ($tagValues as $tagValue) {
-                if (! $tagValue->type) {
-                    continue;
-                }
                 PhpDocTypeWalker::traverse($tagValue->type, [
                     new ResolveFqnPhpDocTypeVisitor($nameResolver),
                 ]);

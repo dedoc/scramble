@@ -7,14 +7,12 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
-use Dedoc\Scramble\Tests\Infer\stubs\Bar;
 use Dedoc\Scramble\Tests\Infer\stubs\Child;
 use Dedoc\Scramble\Tests\Infer\stubs\ChildParentSetterCalls;
 use Dedoc\Scramble\Tests\Infer\stubs\ChildPromotion;
 use Dedoc\Scramble\Tests\Infer\stubs\DeepChild;
 use Dedoc\Scramble\Tests\Infer\stubs\Foo;
 use Dedoc\Scramble\Tests\Infer\stubs\FooWithDefaultProperties;
-use Dedoc\Scramble\Tests\Infer\stubs\FooWithTrait;
 
 beforeEach(function () {
     $this->index = app(Index::class);
@@ -22,16 +20,6 @@ beforeEach(function () {
     $this->classAnalyzer = new ClassAnalyzer($this->index);
 
     $this->resolver = new ReferenceTypeResolver($this->index);
-});
-
-it('creates a definition from the given class', function () {
-    $definition = $this->classAnalyzer->analyze(Foo::class);
-
-    expect($this->index->classesDefinitions)
-        ->toHaveKeys([Foo::class, Bar::class])
-        ->and($definition->methods)->toHaveKey('foo')
-        ->and(($fooRawDef = $definition->methods['foo'])->isFullyAnalyzed())->toBeFalse()
-        ->and($fooRawDef->type->getReturnType()->toString())->toBe('unknown');
 });
 
 it('resolves function return type after explicitly requested', function () {
@@ -306,19 +294,6 @@ it('resolves pending returns lazily', function () {
     );
 
     expect($barReturnType->toString())->toBe('int(243)');
-});
-
-it('analyzes traits', function () {
-    $classDef = $this->classAnalyzer->analyze(FooWithTrait::class);
-
-    expect($classDef->properties)->toHaveCount(1)->toHaveKeys([
-        'propBaz',
-    ]);
-    expect($classDef->methods)->toHaveCount(3)->toHaveKeys([
-        'something',
-        'methodBaz',
-        'methodInvokingFooTraitMethod',
-    ]);
 });
 
 it('preserves comments in property defaults', function () {

@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\DefinitionBuilders\ShallowClassReflectionDefinitionBuilder;
 use Dedoc\Scramble\Scramble;
 use ReflectionClass;
@@ -64,7 +65,20 @@ class Index implements IndexContract
 
     public function getFunctionDefinition(string $fnName): ?FunctionLikeDefinition
     {
-        return $this->functionsDefinitions[$fnName] ?? null;
+        if (array_key_exists($fnName, $this->functionsDefinitions)) {
+            return $this->functionsDefinitions[$fnName];
+        }
+
+        /** @var \ReflectionFunction|null $reflection */
+        $reflection = rescue(fn () => new \ReflectionFunction($fnName), report: false);
+        if (! $reflection) {
+            return null;
+        }
+
+        return $this->functionsDefinitions[$fnName] = (new FunctionLikeReflectionDefinitionBuilder(
+            $fnName,
+            $reflection,
+        ))->build();
     }
 
     /** @return ?ReflectionClass<object> */

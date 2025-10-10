@@ -13,7 +13,7 @@ class FunctionLikeDefinition
 
     public bool $referencesResolved = false;
 
-    private ?Generic $_selfOutType;
+    private ?Generic $selfOutType;
 
     /**
      * @param  array<string, Type>  $argumentsDefaults  A map where the key is arg name and value is a default type.
@@ -40,7 +40,12 @@ class FunctionLikeDefinition
 
     public function getSelfOutType(): ?Generic
     {
-        return $this->_selfOutType ??= $this->selfOutTypeBuilder?->build();
+        return $this->selfOutType ??= $this->selfOutTypeBuilder?->build();
+    }
+
+    public function getReturnType(): Type
+    {
+        return $this->type->getReturnType();
     }
 
     /**

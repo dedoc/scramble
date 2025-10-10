@@ -14,6 +14,10 @@ class PhpDocParser extends VendorPhpDocParser
             $tag = '@return';
         }
 
+        if ($tag === '@scramble-return') {
+            $tag = '@return';
+        }
+
         return parent::parseTagValue($tokens, $tag);
     }
 }

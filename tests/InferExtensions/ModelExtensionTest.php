@@ -3,7 +3,9 @@
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
@@ -119,4 +121,16 @@ it('can fetch properties from vendor Role model', function () {
         expect(Str::replace('Dedoc\\Scramble\\Tests\\Files\\', '', $propertyType->toString()))
             ->toBe($type);
     }
+});
+
+it('supports getOriginal', function () {
+    $object = new ObjectType(SampleUserModel::class);
+
+    $originalType = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType($object, 'getOriginal', [new LiteralStringType('id')])
+        );
+
+    expect($originalType->toString())->toBe('int');
 });

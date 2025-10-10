@@ -18,6 +18,11 @@ class UnresolvableArgumentTypeBag implements ArgumentTypeBag
         return $this->arguments[$name] ?? $this->arguments[$position] ?? $default;
     }
 
+    public function map(callable $cb): ArgumentTypeBag
+    {
+        return new self(collect($this->arguments)->map(fn ($t, $key) => $cb($t, $key))->all());
+    }
+
     public function all(): array
     {
         return $this->arguments;
