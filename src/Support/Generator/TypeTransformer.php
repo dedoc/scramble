@@ -346,20 +346,17 @@ class TypeTransformer
     private function handleResponseUsingExtensions(Type $type)
     {
         if (! $type->isInstanceOf(\Throwable::class)) {
-            return array_reduce(
-                $this->typeToSchemaExtensions,
-                function ($acc, $extension) use ($type) {
+            if (! $type->isInstanceOf(\Throwable::class)) {
+                foreach (array_reverse($this->typeToSchemaExtensions) as $extension) {
                     if (! $extension->shouldHandle($type)) {
-                        return $acc;
+                        continue;
                     }
 
-                    if ($response = $extension->toResponse($type, $acc)) {
+                    if ($response = $extension->toResponse($type, null)) {
                         return $response;
                     }
-
-                    return $acc;
                 }
-            );
+            }
         }
 
         // We want latter registered extensions to have a higher priority to allow custom extensions to override default ones.
