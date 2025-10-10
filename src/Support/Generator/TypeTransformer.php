@@ -346,15 +346,13 @@ class TypeTransformer
     private function handleResponseUsingExtensions(Type $type)
     {
         if (! $type->isInstanceOf(\Throwable::class)) {
-            if (! $type->isInstanceOf(\Throwable::class)) {
-                foreach (array_reverse($this->typeToSchemaExtensions) as $extension) {
-                    if (! $extension->shouldHandle($type)) {
-                        continue;
-                    }
+            foreach (array_reverse($this->typeToSchemaExtensions) as $extension) {
+                if (! $extension->shouldHandle($type)) {
+                    continue;
+                }
 
-                    if ($response = $extension->toResponse($type, null)) {
-                        return $response;
-                    }
+                if ($response = $extension->toResponse($type, null)) {
+                    return $response;
                 }
             }
         }
