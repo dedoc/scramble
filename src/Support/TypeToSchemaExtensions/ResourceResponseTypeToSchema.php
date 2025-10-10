@@ -254,11 +254,11 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
         return $schema;
     }
 
-    protected function getWithType(ObjectType $resource): ?KeyedArrayType
+    protected function getWithType(ObjectType $type): ?KeyedArrayType
     {
         $withArray = ReferenceTypeResolver::getInstance()->resolve(
             new Infer\Scope\GlobalScope,
-            new MethodCallReferenceType($resource, 'with', [])
+            new MethodCallReferenceType($type, 'with', [])
         );
 
         if (! $withArray instanceof KeyedArrayType) {
