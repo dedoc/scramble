@@ -237,14 +237,11 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 
     protected function getWithSchema(ObjectType $resource): ?OpenApiObjectType
     {
-        $withArray = ReferenceTypeResolver::getInstance()->resolve(
-            new Infer\Scope\GlobalScope,
-            new MethodCallReferenceType($resource, 'with', [])
-        );
-
-        if (! $withArray instanceof KeyedArrayType) {
+        if (! $withArray = $this->getWithType($resource)) {
             return null;
         }
+
+        $withArray = $withArray->clone();
 
         $withArray->items = $this->flattenMergeValues($withArray->items);
 
@@ -255,6 +252,20 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
         }
 
         return $schema;
+    }
+
+    protected function getWithType(ObjectType $resource): ?KeyedArrayType
+    {
+        $withArray = ReferenceTypeResolver::getInstance()->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType($resource, 'with', [])
+        );
+
+        if (! $withArray instanceof KeyedArrayType) {
+            return null;
+        }
+
+        return $withArray;
     }
 
     protected function getAdditionalSchema(ObjectType $resource): ?OpenApiObjectType

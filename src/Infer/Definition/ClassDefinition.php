@@ -103,6 +103,10 @@ class ClassDefinition implements ClassDefinitionContract
             return $this->methods[$name] ?? null;
         }
 
+        if ($this->isMethodDefinedInNonAstAnalyzableTrait($name)) {
+            return $this->methods[$name] ?? null;
+        }
+
         if (
             $reflectionMethod->class === $this->name
             || Scramble::infer()->config->shouldAnalyzeAst($reflectionMethod->class)
@@ -147,10 +151,6 @@ class ClassDefinition implements ClassDefinitionContract
     public function getMethodDefinition(string $name, Scope $scope = new GlobalScope, array $indexBuilders = [], bool $withSideEffects = false): ?FunctionLikeDefinition
     {
         if (! $methodDefinition = $this->lazilyLoadMethodDefinition($name)) {
-            return $this->getFunctionLikeDefinitionBuiltFromReflection($name);
-        }
-
-        if ($this->isMethodDefinedInNonAstAnalyzableTrait($name)) {
             return $this->getFunctionLikeDefinitionBuiltFromReflection($name);
         }
 
@@ -246,7 +246,6 @@ class ClassDefinition implements ClassDefinitionContract
     {
         if (
             array_key_exists($name, $this->methods)
-            && ($this->methods[$name]->type->getAttribute('r'))
         ) {
             return $this->methods[$name];
         }
@@ -261,8 +260,6 @@ class ClassDefinition implements ClassDefinitionContract
             collect($this->templateTypes)->keyBy->name
                 ->merge($this->getMethodContextTemplates($methodReflection)), // @phpstan-ignore argument.type
         ))->build();
-
-        $definition->type->setAttribute('r', true);
 
         return $this->methods[$name] = $definition;
     }
