@@ -3,9 +3,15 @@
 namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\DefinitionBuilders\SelfOutTypeBuilder;
+use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\MissingType;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\StaticReference;
+use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeHelper;
 
 class FunctionLikeDefinition
 {
@@ -14,6 +20,8 @@ class FunctionLikeDefinition
     public bool $referencesResolved = false;
 
     private ?Generic $selfOutType;
+
+    private ?Type $returnDeclarationType;
 
     /**
      * @param  array<string, Type>  $argumentsDefaults  A map where the key is arg name and value is a default type.
@@ -24,7 +32,9 @@ class FunctionLikeDefinition
         public ?string $definingClassName = null,
         public bool $isStatic = false,
         public ?SelfOutTypeBuilder $selfOutTypeBuilder = null,
-    ) {}
+    ) {
+        $this->returnDeclarationType = new MissingType;
+    }
 
     public function isFullyAnalyzed(): bool
     {
@@ -43,9 +53,62 @@ class FunctionLikeDefinition
         return $this->selfOutType ??= $this->selfOutTypeBuilder?->build();
     }
 
+    public function getReturnDeclarationType(): ?Type
+    {
+        if (! $this->returnDeclarationType instanceof MissingType) {
+            return $this->returnDeclarationType;
+        }
+
+        if (! $this->definingClassName) {
+            return $this->returnDeclarationType = null;
+        }
+
+        /** @var \ReflectionMethod $reflection */
+        $reflection = rescue(
+            fn () => MethodReflector::make($this->definingClassName, $this->type->name)->getReflection(),
+            report: false,
+        );
+
+        if (! $reflection) {
+            return $this->returnDeclarationType = null;
+        }
+
+        if (! $reflection->getReturnType()) {
+            return $this->returnDeclarationType = null;
+        }
+
+        $returnDeclarationType = TypeHelper::createTypeFromReflectionType($reflection->getReturnType());
+
+        if ($returnDeclarationType instanceof ObjectType && $returnDeclarationType->name === StaticReference::SELF) {
+            $returnDeclarationType = new ObjectType($this->definingClassName);
+        }
+
+        return $this->returnDeclarationType = $returnDeclarationType;
+    }
+
     public function getReturnType(): Type
     {
-        return $this->type->getReturnType();
+        $inferredReturnType = $this->type->getReturnType();
+
+        $returnDeclarationType = $this->getReturnDeclarationType();
+
+//        dump([
+//            "$this->definingClassName@{$this->type->name}" => [
+//                $inferredReturnType?->toString(),
+//                $returnDeclarationType?->toString(),
+//                ($returnDeclarationType && ! $returnDeclarationType->accepts($inferredReturnType) ? $returnDeclarationType : $inferredReturnType)->toString()
+//            ]
+//        ]);
+
+        if (! $returnDeclarationType) {
+            return $inferredReturnType;
+        }
+
+        if ($returnDeclarationType->accepts($inferredReturnType) || $inferredReturnType->acceptedBy($returnDeclarationType)) {
+            return $inferredReturnType;
+        }
+
+        return $returnDeclarationType;
     }
 
     /**

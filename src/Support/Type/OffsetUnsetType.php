@@ -19,6 +19,14 @@ class OffsetUnsetType extends AbstractType implements LateResolvingType
         return ['type', 'offset'];
     }
 
+    public function acceptedBy(Type $otherType): bool
+    {
+        return $otherType instanceof ArrayType
+            || $otherType instanceof KeyedArrayType
+            || $otherType instanceof OffsetSetType
+            || $otherType instanceof OffsetUnsetType;
+    }
+
     public function resolve(): Type
     {
         if (! $this->offset instanceof KeyedArrayType) {

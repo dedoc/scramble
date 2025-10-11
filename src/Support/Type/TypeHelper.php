@@ -224,6 +224,10 @@ class TypeHelper
                 return new FloatType;
             }
 
+            if ($reflectionType->getName() === 'array') {
+                return new ArrayType;
+            }
+
             return new ObjectType($reflectionType->getName());
         }
 

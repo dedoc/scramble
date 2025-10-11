@@ -42,6 +42,14 @@ class OffsetSetType extends AbstractType implements LateResolvingType
         return $this->applyPath($this->type->clone(), $path, $this->value);
     }
 
+    public function acceptedBy(Type $otherType): bool
+    {
+        return $otherType instanceof ArrayType
+            || $otherType instanceof KeyedArrayType
+            || $otherType instanceof OffsetSetType
+            || $otherType instanceof OffsetUnsetType;
+    }
+
     public function isResolvable(): bool
     {
         return TypeHelper::isResolvable($this->type)
