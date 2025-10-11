@@ -240,6 +240,69 @@ class UserCollection_Eight extends \Illuminate\Http\Resources\Json\ResourceColle
     }
 }
 
+// Tests for global paginationInformation macro support
+test('transforms collection with global paginationInformation macro', function () {
+    // Register a global macro on ResourceCollection
+    \Illuminate\Http\Resources\Json\ResourceCollection::macro('paginationInformation', function ($request, $paginated, $default) {
+        return [
+            'pagination' => [
+                'total' => $default['meta']['total'],
+                'count' => $default['meta']['to'] - $default['meta']['from'] + 1,
+                'per_page' => $default['meta']['per_page'],
+                'current_page' => $default['meta']['current_page'],
+                'total_pages' => $default['meta']['last_page'],
+            ],
+            'links' => $default['links'],
+        ];
+    });
+
+    $type = getStatementType('new '.UserCollection_Nine::class.'('.\Dedoc\Scramble\Tests\Files\SampleUserModel::class.'::paginate())');
+
+    $response = $this->transformer->toResponse($type)->toArray();
+
+    // Clean up the macro after test
+    \Illuminate\Http\Resources\Json\ResourceCollection::flushMacros();
+
+    assertMatchesSnapshot($response);
+});
+class UserCollection_Nine extends \Illuminate\Http\Resources\Json\ResourceCollection
+{
+    public $collects = UserResource::class;
+}
+
+test('class-level paginationInformation takes precedence over macro', function () {
+    // Register a global macro on ResourceCollection
+    \Illuminate\Http\Resources\Json\ResourceCollection::macro('paginationInformation', function ($request, $paginated, $default) {
+        return [
+            'macro' => 'should not appear',
+        ];
+    });
+
+    $type = getStatementType('new '.UserCollection_Ten::class.'('.\Dedoc\Scramble\Tests\Files\SampleUserModel::class.'::paginate())');
+
+    $response = $this->transformer->toResponse($type)->toArray();
+
+    // Clean up the macro after test
+    \Illuminate\Http\Resources\Json\ResourceCollection::flushMacros();
+
+    // The response should use the class method, not the macro
+    expect($response['content']['application/json']['schema']['properties'])
+        ->toHaveKey('classMethod')
+        ->not->toHaveKey('macro');
+});
+class UserCollection_Ten extends \Illuminate\Http\Resources\Json\ResourceCollection
+{
+    public $collects = UserResource::class;
+
+    public function paginationInformation($request, $paginated, $default): array
+    {
+        return [
+            'classMethod' => 'used',
+            'links' => $default['links'],
+        ];
+    }
+}
+
 class UserResource extends \Illuminate\Http\Resources\Json\JsonResource
 {
     public function toArray($request)

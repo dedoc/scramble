@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Reflector\ClosureReflector;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Generator\Response;
@@ -30,6 +31,7 @@ use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use LogicException;
+use ReflectionClass;
 
 class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
 {
@@ -118,6 +120,11 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
         $method = $resourceTypeDefinition?->getMethod('paginationInformation');
 
         if (! $method) {
+            // Check if there's a global macro defined on given $resourceType
+            if ($macro = $this->getPaginationInformationMacro($resourceType)) {
+                return $macro;
+            }
+
             return null;
         }
 
@@ -127,6 +134,53 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
     protected function isUserDefinedPaginationInformationMethod(FunctionLikeDefinition $method): bool
     {
         return true;
+    }
+
+    /**
+     * Get the paginationInformation macro if it exists on ResourceCollection.
+     */
+    protected function getPaginationInformationMacro(ObjectType $resourceType): ?FunctionLikeDefinition
+    {
+        try {
+            // Check if $resourceType uses Macroable trait and has the macro
+            if (
+                !method_exists($resourceType->name, 'hasMacro')
+                || !$resourceType->name::hasMacro('paginationInformation')
+            ) {
+                return null;
+            }
+
+            // Get the macro closure using reflection
+            $macrosProperty = (new ReflectionClass($resourceType->name))->getProperty('macros');
+            $macrosProperty->setAccessible(true);
+            $macros = $macrosProperty->getValue();
+
+            if (!isset($macros['paginationInformation']) || !$macros['paginationInformation'] instanceof \Closure) {
+                return null;
+            }
+
+            $closure = $macros['paginationInformation'];
+
+            return $this->analyzeMacroClosure($closure, $resourceType);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Analyze a macro closure to create a FunctionLikeDefinition.
+     */
+    protected function analyzeMacroClosure(\Closure $closure, ObjectType $resourceType): ?FunctionLikeDefinition
+    {
+        try {
+            $closureReflector = ClosureReflector::make($closure);
+            $definition = $closureReflector->getFunctionLikeDefinition();
+            $definition->definingClassName = $resourceType->name;
+
+            return $definition;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     protected function getPaginatedArray(Generic $type): KeyedArrayType
