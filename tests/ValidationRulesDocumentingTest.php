@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
+use function PHPUnit\Framework\assertCount;
+use function PHPUnit\Framework\assertEquals;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 beforeEach(function () {
@@ -315,6 +317,30 @@ it('extract rules from array rules', function () {
     $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
+});
+
+it('extract rules from array rules with both wildcard and specific props', function () {
+    $rules = [
+        'foo' => 'array:a,b,c,d',
+        'foo.*' => 'int',
+        'foo.a' => 'boolean',
+        'foo.b' => 'array:x,y,z',
+        'other' => 'int',
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    $fooParams = collect($params)->keyBy('name')->get('foo');
+    $fooProperties = $fooParams->schema->toArray()['properties'];
+
+    $otherParams = collect($params)->keyBy('name')->get('other');
+
+    assertCount(4, $fooProperties);
+    assertEquals('boolean', $fooProperties['a']['type']);
+    assertEquals('object', $fooProperties['b']['type']);
+    assertEquals('integer', $fooProperties['c']['type']);
+    assertEquals('integer', $fooProperties['d']['type']);
+    assertEquals('integer', $otherParams->schema->toArray()['type']);
 });
 
 it('supports array rule details', function () {
