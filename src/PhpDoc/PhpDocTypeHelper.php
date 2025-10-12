@@ -179,6 +179,12 @@ class PhpDocTypeHelper
         if ($type->name === 'array') {
             return new ArrayType;
         }
+        if ($type->name === 'array-key') {
+            return new Union([
+                new IntegerType(),
+                new StringType(),
+            ]);
+        }
         if ($type->name === 'list') {
             return new ArrayType;
         }

@@ -27,6 +27,28 @@ class Union extends AbstractType
         return app(TypeReconciler::class)->reconcile($this->types)->mergeAttributes($this->attributes());
     }
 
+    public function accepts(Type $otherType): bool
+    {
+        foreach ($this->types as $type) {
+            if ($type->accepts($otherType)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function acceptedBy(Type $otherType): bool
+    {
+        foreach ($this->types as $type) {
+            if (! $type->acceptedBy($otherType)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /**
      * @param  Type|Type[]  $types
      */
