@@ -9,6 +9,11 @@ class MixedType extends AbstractType
         return false;
     }
 
+    public function accepts(Type $otherType): bool
+    {
+        return ! $otherType instanceof UnknownType;
+    }
+
     public function toString(): string
     {
         return 'mixed';
