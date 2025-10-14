@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Handler;
 
+use Dedoc\Scramble\Infer\Definition\FunctionLikeAstDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\FloatType;
@@ -45,7 +46,7 @@ class FunctionLikeHandler implements CreatesScope
         // is to set node param types to scope.
         // Also, if here we add a reference to the function node type, it may allow us to
         // set function return types not in leave function, but in the return handlers.
-        $scope->context->setFunctionDefinition($fnDefinition = new FunctionLikeDefinition(
+        $scope->context->setFunctionDefinition($fnDefinition = new FunctionLikeAstDefinition(
             type: $fnType = new FunctionType($node->name->name ?? 'anonymous'),
             definingClassName: $scope->context->classDefinition?->name,
             isStatic: $node instanceof Node\Stmt\ClassMethod ? $node->isStatic() : false,
