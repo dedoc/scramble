@@ -358,6 +358,52 @@ it('supports list types', function () {
         ]);
 });
 
+it('supports integers', function () {
+    $transformer = new TypeTransformer(app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(ApiResourceTest_ResourceWithIntegers::class);
+
+    $schema = $transformer->transform($type)->toArray();
+    $component = $this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithIntegers::class)->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithIntegers',
+    ]);
+
+    expect($component)
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                'zero' => [
+                    'type' => 'integer',
+                ],
+                'one' => [
+                    'type' => 'integer',
+                ],
+                'minus_one' => [
+                    'type' => 'integer',
+                ],
+                'minus_two' => [
+                    'type' => 'integer',
+                ],
+                'two' => [
+                    'type' => 'integer',
+                ],
+                'three' => [
+                    'type' => 'integer',
+                ],
+            ],
+            'required' => [
+                'zero',
+                'one',
+                'minus_one',
+                'minus_two',
+                'two',
+                'three',
+            ],
+        ]);
+});
+
 class ComplexTypeHandlersTest_SampleType extends JsonResource
 {
     public function toArray($request)
@@ -519,6 +565,27 @@ class ApiResourceTest_ResourceWithSimpleDescription extends JsonResource
             'now' => now(),
             // Inline comments are also supported.
             'now2' => now(),
+        ];
+    }
+}
+
+class ApiResourceTest_ResourceWithIntegers extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            /** @var int */
+            'zero' => 0,
+            /** @var positive-int */
+            'one' => 1,
+            /** @var negative-int */
+            'minus_one' => -1,
+            /** @var non-positive-int */
+            'minus_two' => -2,
+            /** @var non-negative-int */
+            'two' => 2,
+            /** @var non-zero-int */
+            'three' => 3,
         ];
     }
 }

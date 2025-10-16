@@ -35,3 +35,17 @@ it('parses list', function (string $phpDocType, string $expectedTypeString) {
 })->with([
     ['/** @var list<float> */', 'array<float>'],
 ]);
+
+it('parses integers', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    ['/** @var int */', 'int'],
+    ['/** @var integer */', 'int'],
+    ['/** @var positive-int */', 'int'],
+    ['/** @var negative-int */', 'int'],
+    ['/** @var non-positive-int */', 'int'],
+    ['/** @var non-negative-int */', 'int'],
+    ['/** @var non-zero-int */', 'int'],
+]);

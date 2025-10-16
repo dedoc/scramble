@@ -160,7 +160,15 @@ class PhpDocTypeHelper
         if (in_array($type->name, ['float', 'double'])) {
             return new FloatType;
         }
-        if (in_array($type->name, ['int', 'integer'])) {
+        if (in_array($type->name, [
+            'int',
+            'integer',
+            'positive-int',
+            'negative-int',
+            'non-positive-int',
+            'non-negative-int',
+            'non-zero-int',
+        ])) {
             return new IntegerType;
         }
         if (in_array($type->name, ['bool', 'boolean'])) {
