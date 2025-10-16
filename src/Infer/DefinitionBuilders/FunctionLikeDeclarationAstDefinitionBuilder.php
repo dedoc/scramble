@@ -20,9 +20,7 @@ class FunctionLikeDeclarationAstDefinitionBuilder implements FunctionLikeDefinit
     public function __construct(
         private FunctionLike $node,
         private ?ClassDefinition $classDefinition = null,
-    )
-    {
-    }
+    ) {}
 
     public function build(): FunctionLikeDefinition
     {
@@ -76,7 +74,7 @@ class FunctionLikeDeclarationAstDefinitionBuilder implements FunctionLikeDefinit
                 }
 
                 return [
-                    $param->var->name => (new GlobalScope)->getType($param->default)
+                    $param->var->name => (new GlobalScope)->getType($param->default),
                 ];
             })
             ->filter()

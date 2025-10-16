@@ -24,8 +24,7 @@ class FunctionLikeDefinition
         public ?string $definingClassName = null,
         public bool $isStatic = false,
         public ?SelfOutTypeBuilder $selfOutTypeBuilder = null,
-    ) {
-    }
+    ) {}
 
     public function isFullyAnalyzed(): bool
     {

@@ -5,22 +5,13 @@ namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinitionBuilder;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
-use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\Support\Type\FunctionType;
-use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
-use PhpParser\Node;
-use PhpParser\Node\FunctionLike;
-use PhpParser\Node\Stmt\ClassMethod;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
-use function DeepCopy\deep_copy;
 
 class FunctionLikeDeclarationPhpDocDefinitionBuilder implements FunctionLikeDefinitionBuilder
 {
@@ -30,8 +21,7 @@ class FunctionLikeDeclarationPhpDocDefinitionBuilder implements FunctionLikeDefi
         private FunctionLikeDefinition $definition,
         ?PhpDocNode $phpDocNode = null,
         private ?ClassDefinition $classDefinition = null,
-    )
-    {
+    ) {
         $this->phpDocNode = $phpDocNode ?: new PhpDocNode([]);
     }
 

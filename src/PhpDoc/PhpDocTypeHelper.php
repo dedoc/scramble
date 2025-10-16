@@ -181,8 +181,8 @@ class PhpDocTypeHelper
         }
         if ($type->name === 'array-key') {
             return new Union([
-                new IntegerType(),
-                new StringType(),
+                new IntegerType,
+                new StringType,
             ]);
         }
         if ($type->name === 'list') {

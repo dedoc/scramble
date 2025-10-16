@@ -21,7 +21,5 @@ test('creates declaration definition from ast', function () {
 
 class Foo_FunctionLikeDeclarationAstDefinitionBuilderTest
 {
-    public function foo(string $b = 'foo'): int
-    {
-    }
+    public function foo(string $b = 'foo'): int {}
 }

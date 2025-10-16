@@ -29,7 +29,6 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Arr;
 use LogicException;
 use PhpParser\Node;
@@ -277,7 +276,8 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             }
 
             return new ReflectionFunction($this->name);
-        } catch (\ReflectionException) {}
+        } catch (\ReflectionException) {
+        }
 
         return null;
     }
@@ -325,17 +325,17 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         $resolvedReference = ReferenceTypeResolver::getInstance()->resolve($scope, $returnType);
         $functionType->setReturnType($resolvedReference);
 
-//        $annotatedReturnType = $functionType->getAttribute('annotatedReturnType');
+        //        $annotatedReturnType = $functionType->getAttribute('annotatedReturnType');
 
-//        if ($annotatedReturnType instanceof Type) {
-//            if (! $functionType->getAttribute('inferredReturnType')) {
-//                $functionType->setAttribute('inferredReturnType', clone $functionType->getReturnType());
-//            }
-//
-//            $functionType->setReturnType(
-//                self::addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType, $scope)
-//            );
-//        }
+        //        if ($annotatedReturnType instanceof Type) {
+        //            if (! $functionType->getAttribute('inferredReturnType')) {
+        //                $functionType->setAttribute('inferredReturnType', clone $functionType->getReturnType());
+        //            }
+        //
+        //            $functionType->setReturnType(
+        //                self::addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType, $scope)
+        //            );
+        //        }
     }
 
     private static function addAnnotatedReturnType(Type $inferredReturnType, Type $annotatedReturnType, Scope $scope): Type
