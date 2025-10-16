@@ -244,9 +244,7 @@ class ClassDefinition implements ClassDefinitionContract
 
     protected function getFunctionLikeDefinitionBuiltFromReflection(string $name): ?FunctionLikeDefinition
     {
-        if (
-            array_key_exists($name, $this->methods)
-        ) {
+        if (array_key_exists($name, $this->methods)) {
             return $this->methods[$name];
         }
 

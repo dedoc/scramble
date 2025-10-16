@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Infer\Definition;
 use Dedoc\Scramble\Infer\DefinitionBuilders\SelfOutTypeBuilder;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\MissingType;
 use Dedoc\Scramble\Support\Type\Type;
 
 class FunctionLikeDefinition
@@ -26,11 +25,6 @@ class FunctionLikeDefinition
         public bool $isStatic = false,
         public ?SelfOutTypeBuilder $selfOutTypeBuilder = null,
     ) {
-        $this->init();
-    }
-
-    protected function init(): void
-    {
     }
 
     public function isFullyAnalyzed(): bool

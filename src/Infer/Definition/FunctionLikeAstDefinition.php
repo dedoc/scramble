@@ -2,136 +2,61 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
-use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
-use Dedoc\Scramble\Infer\DefinitionBuilders\SelfOutTypeBuilder;
-use Dedoc\Scramble\Infer\Reflector\MethodReflector;
-use Dedoc\Scramble\Infer\Scope\Index;
-use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\Support\PhpDoc;
-use Dedoc\Scramble\Support\Type\FunctionType;
-use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\MissingType;
-use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Reference\StaticReference;
-use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
 
 class FunctionLikeAstDefinition extends FunctionLikeDefinition
 {
-    private ?Type $returnDeclarationType;
+    use IndexAware;
 
-    private ?Type $returnPhpDocType;
+    private ?FunctionLikeDefinition $declarationDefinition = null;
 
-    public function init(): void
+    public function setDeclarationDefinition(?FunctionLikeDefinition $declarationDefinition): self
     {
-        $this->returnDeclarationType = new MissingType;
-        $this->returnPhpDocType = new MissingType;
+        $this->declarationDefinition = $declarationDefinition;
+
+        return $this;
+    }
+
+    public function getDeclarationDefinition(): ?FunctionLikeDefinition
+    {
+        return $this->declarationDefinition;
+    }
+
+    public function getInferredReturnType(): Type
+    {
+        return $this->type->getReturnType();
     }
 
     public function getReturnType(): Type
     {
         $inferredReturnType = $this->type->getReturnType();
 
-        $returnDeclarationType = $this->getReturnPhpDocType() ?? $this->getReturnDeclarationType();
-
-        if (! $returnDeclarationType) {
+        if ($inferredReturnType->getAttribute('fromScrambleReturn') === true) {
             return $inferredReturnType;
         }
 
-        if ($returnDeclarationType->accepts($inferredReturnType) || $inferredReturnType->acceptedBy($returnDeclarationType)) {
-            return $inferredReturnType;
-        }
+        $returnDeclarationType = $this->getDeclarationDefinition()?->getReturnType();
 
-//        dump([
-//            "$this->definingClassName@{$this->type->name}" => [
-////                $inferredReturnType,$returnDeclarationType,
-//                $inferredReturnType?->toString(),
-//                $returnDeclarationType?->toString(),
-//                ($returnDeclarationType && ! $returnDeclarationType->accepts($inferredReturnType) ? $returnDeclarationType : $inferredReturnType)->toString()
-//            ]
-//        ]);
-
-        return $returnDeclarationType;
+        return $this->prefersInferredReturnType($returnDeclarationType, $inferredReturnType)
+            ? $inferredReturnType
+            : $returnDeclarationType;
     }
 
-    protected function getReturnDeclarationType(): ?Type
+    private function prefersInferredReturnType(?Type $declarationType, Type $inferredType): bool
     {
-        if (! $this->returnDeclarationType instanceof MissingType) {
-            return $this->returnDeclarationType;
+        if (! $declarationType || $declarationType instanceof UnknownType) {
+            return true;
         }
 
-        if (! $this->definingClassName) {
-            return $this->returnDeclarationType = null;
+        if ($declarationType->accepts($inferredType)) {
+            return true;
         }
 
-        /** @var \ReflectionMethod $reflection */
-        $reflection = rescue(
-            fn () => MethodReflector::make($this->definingClassName, $this->type->name)->getReflection(),
-            report: false,
-        );
-
-        if (! $reflection) {
-            return $this->returnDeclarationType = null;
+        if ($inferredType->acceptedBy($declarationType)) {
+            return true;
         }
 
-        if (! $reflection->getReturnType()) {
-            return $this->returnDeclarationType = null;
-        }
-
-        $returnDeclarationType = TypeHelper::createTypeFromReflectionType($reflection->getReturnType());
-
-        if ($returnDeclarationType instanceof ObjectType && $returnDeclarationType->name === StaticReference::SELF) {
-            $returnDeclarationType = new ObjectType($this->definingClassName);
-        }
-
-        return $this->returnDeclarationType = $returnDeclarationType;
-    }
-
-    protected function getReturnPhpDocType(): ?Type
-    {
-        if (! $this->returnPhpDocType instanceof MissingType) {
-            return $this->returnPhpDocType;
-        }
-
-        if (! $this->definingClassName) {
-            return $this->returnPhpDocType = null;
-        }
-
-        $reflector = MethodReflector::make($this->definingClassName, $this->type->name);
-
-        /** @var \ReflectionMethod $reflection */
-        $reflection = rescue(fn () => $reflector->getReflection(), report: false);
-
-        if (! $reflection) {
-            return $this->returnPhpDocType = null;
-        }
-
-        if (! $docComment = $reflection->getDocComment()) {
-            return $this->returnPhpDocType = null;
-        }
-
-        $phpDocNode = PhpDoc::parse(
-            $docComment,
-            new FileNameResolver($reflector->getClassReflector()->getNameContext()),
-        );
-
-        if ($phpDocNode->getReturnTagValues('@scramble-return')) {
-            return $this->returnPhpDocType = null;
-        }
-
-        $returnType = (new FunctionLikeReflectionDefinitionBuilder(
-            $this->type->name,
-            $reflection,
-            collect(app(Index::class)->getClass($this->definingClassName)?->templateTypes ?: [])->keyBy->name,
-        ))->build()->type->getReturnType();
-
-        if ($returnType instanceof UnknownType) {
-            return $this->returnPhpDocType = null;
-        }
-
-        return $this->returnPhpDocType = $returnType;
+        return false;
     }
 }

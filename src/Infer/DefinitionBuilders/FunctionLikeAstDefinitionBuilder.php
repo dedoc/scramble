@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinitionBuilder;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\FunctionLikeAstDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
 use Dedoc\Scramble\Infer\Handler\IndexBuildingHandler;
@@ -28,6 +29,7 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
+use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Arr;
 use LogicException;
 use PhpParser\Node;
@@ -43,6 +45,9 @@ use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeTraverser;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ReturnTagValueNode;
+use ReflectionClass;
+use ReflectionFunction;
+use ReflectionMethod;
 
 class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
 {
@@ -63,19 +68,23 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         $this->shallowIndex = app(LazyShallowReflectionIndex::class);
     }
 
-    public function build(): FunctionLikeDefinition
+    public function build(): FunctionLikeAstDefinition
     {
         $inferrer = $this->traverseAstNode($this->functionLike);
 
         $scope = $inferrer->getFunctionLikeScope($this->functionLike);
 
-        if (! $definition = $scope?->context->functionDefinition) {
-            throw new LogicException('No definition in scope found.');
+        $definition = $scope?->context->functionDefinition;
+
+        if (! $definition instanceof FunctionLikeAstDefinition) {
+            throw new LogicException('Definition must be an instance of FunctionLikeAstDefinition');
         }
 
         if ($this->functionLike instanceof ClassMethod && $scope) { // @phpstan-ignore booleanAnd.rightAlwaysTrue
             $definition->selfOutTypeBuilder = new SelfOutTypeBuilder($scope, $this->functionLike);
         }
+
+        $definition->setDeclarationDefinition($this->buildDeclarationDefinition());
 
         $this->overrideInferredReturnTypeWithManualAnnotation($definition);
 
@@ -233,13 +242,55 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
 
     private function overrideInferredReturnTypeWithManualAnnotation(FunctionLikeDefinition $definition): void
     {
-        $phpDoc = $this->functionLike->getAttribute('parsedPhpDoc');
-        if (! $phpDoc instanceof PhpDocNode) {
+        if (! $type = $this->getExplicitScrambleReturnType()) {
             return;
         }
 
+        $definition->type->setReturnType($type);
+    }
+
+    protected function buildDeclarationDefinition(): ?FunctionLikeDefinition
+    {
+        $reflection = $this->getReflection();
+        $definition = (new FunctionLikeDeclarationAstDefinitionBuilder(
+            $this->functionLike,
+            $this->classDefinition,
+        ))->build();
+
+        $phpDocNode = $this->functionLike->getAttribute('parsedPhpDoc');
+        if (! $phpDocNode instanceof PhpDocNode) {
+            return $definition;
+        }
+
+        return (new FunctionLikeDeclarationPhpDocDefinitionBuilder(
+            $definition,
+            $phpDocNode,
+            $this->classDefinition,
+        ))->build();
+    }
+
+    protected function getReflection(): ReflectionFunction|ReflectionMethod|null
+    {
+        try {
+            if ($this->classDefinition) {
+                return (new ReflectionClass($this->classDefinition->name))->getMethod($this->name);
+            }
+
+            return new ReflectionFunction($this->name);
+        } catch (\ReflectionException) {}
+
+        return null;
+    }
+
+    private function getExplicitScrambleReturnType(): ?Type
+    {
+        $phpDoc = $this->functionLike->getAttribute('parsedPhpDoc');
+        if (! $phpDoc instanceof PhpDocNode) {
+            return null;
+        }
+
         if (! $scrambleReturn = Arr::first($phpDoc->getReturnTagValues('@scramble-return'))) {
-            return;
+            return null;
         }
 
         /** @var ReturnTagValueNode $scrambleReturn */
@@ -248,7 +299,9 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             $type = (new TypeWalker)->map($type, fn ($t) => $t instanceof ObjectType && $t->name === $template->name ? $template : $t);
         }
 
-        $definition->type->setReturnType($type);
+        $type->setAttribute('fromScrambleReturn', true);
+
+        return $type;
     }
 
     public static function resolveFunctionExceptions(Scope $scope, FunctionLikeDefinition $functionLikeDefinition): void
@@ -272,17 +325,17 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         $resolvedReference = ReferenceTypeResolver::getInstance()->resolve($scope, $returnType);
         $functionType->setReturnType($resolvedReference);
 
-        $annotatedReturnType = $functionType->getAttribute('annotatedReturnType');
+//        $annotatedReturnType = $functionType->getAttribute('annotatedReturnType');
 
-        if ($annotatedReturnType instanceof Type) {
-            if (! $functionType->getAttribute('inferredReturnType')) {
-                $functionType->setAttribute('inferredReturnType', clone $functionType->getReturnType());
-            }
-
-            $functionType->setReturnType(
-                self::addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType, $scope)
-            );
-        }
+//        if ($annotatedReturnType instanceof Type) {
+//            if (! $functionType->getAttribute('inferredReturnType')) {
+//                $functionType->setAttribute('inferredReturnType', clone $functionType->getReturnType());
+//            }
+//
+//            $functionType->setReturnType(
+//                self::addAnnotatedReturnType($functionType->getReturnType(), $annotatedReturnType, $scope)
+//            );
+//        }
     }
 
     private static function addAnnotatedReturnType(Type $inferredReturnType, Type $annotatedReturnType, Scope $scope): Type
