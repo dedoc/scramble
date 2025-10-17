@@ -379,17 +379,40 @@ it('supports integers', function () {
                 ],
                 'one' => [
                     'type' => 'integer',
+                    'minimum' => 1,
                 ],
                 'minus_one' => [
                     'type' => 'integer',
+                    'maximum' => -1,
                 ],
                 'minus_two' => [
                     'type' => 'integer',
+                    'maximum' => 0,
                 ],
                 'two' => [
                     'type' => 'integer',
+                    'minimum' => 0,
                 ],
                 'three' => [
+                    'type' => 'integer',
+                ],
+                'four' => [
+                    'type' => 'integer',
+                    'minimum' => 4,
+                    'maximum' => 5,
+                ],
+                'four_max' => [
+                    'type' => 'integer',
+                    'minimum' => 4,
+                ],
+                'min_to_five' => [
+                    'type' => 'integer',
+                    'maximum' => 5,
+                ],
+                'max_to_five' => [
+                    'type' => 'integer',
+                ],
+                'five_to_min' => [
                     'type' => 'integer',
                 ],
             ],
@@ -400,6 +423,11 @@ it('supports integers', function () {
                 'minus_two',
                 'two',
                 'three',
+                'four',
+                'four_max',
+                'min_to_five',
+                'max_to_five',
+                'five_to_min',
             ],
         ]);
 });
@@ -586,6 +614,16 @@ class ApiResourceTest_ResourceWithIntegers extends JsonResource
             'two' => 2,
             /** @var non-zero-int */
             'three' => 3,
+            /** @var int<4, 5> */
+            'four' => 4,
+            /** @var int<4, max> */
+            'four_max' => 4,
+            /** @var int<min, 5> */
+            'min_to_five' => 4,
+            /** @var int<max, 5> */
+            'max_to_five' => 4,
+            /** @var int<5, min> */
+            'five_to_min' => 4,
         ];
     }
 }

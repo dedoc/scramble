@@ -43,9 +43,14 @@ it('parses integers', function (string $phpDocType, string $expectedTypeString) 
 })->with([
     ['/** @var int */', 'int'],
     ['/** @var integer */', 'int'],
-    ['/** @var positive-int */', 'int'],
-    ['/** @var negative-int */', 'int'],
-    ['/** @var non-positive-int */', 'int'],
-    ['/** @var non-negative-int */', 'int'],
+    ['/** @var positive-int */', 'int<1, max>'],
+    ['/** @var negative-int */', 'int<min, -1>'],
+    ['/** @var non-positive-int */', 'int<min, 0>'],
+    ['/** @var non-negative-int */', 'int<0, max>'],
     ['/** @var non-zero-int */', 'int'],
+    ['/** @var int<10, 11> */', 'int<10, 11>'],
+    ['/** @var int<10, max> */', 'int<10, max>'],
+    ['/** @var int<min, 10> */', 'int<min, 10>'],
+    ['/** @var int<max, 10> */', 'int'],
+    ['/** @var int<10, min> */', 'int'],
 ]);
