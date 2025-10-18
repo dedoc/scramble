@@ -53,7 +53,7 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
 
         $shouldBeHandled = $event->getInstance() instanceof UnknownType
             || $this->isQueryLike($event->getInstance())
-            || $event->getDefinition()?->getMethod($event->name)?->definingClassName !== Builder::class;
+            || $event->getDefinition()?->getMethodDefinition($event->name)?->definingClassName === Builder::class;
 
         if (! $shouldBeHandled) {
             return null;
