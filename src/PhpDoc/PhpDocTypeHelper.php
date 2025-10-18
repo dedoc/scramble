@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\GenericClassStringType;
+use Dedoc\Scramble\Support\Type\IntegerRangeType;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\IntersectionType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -42,6 +43,10 @@ class PhpDocTypeHelper
 {
     public static function toType(TypeNode $type)
     {
+        if ($type instanceof GenericTypeNode && $type->type->name === 'int') {
+            return static::handleGenericInteger($type->genericTypes);
+        }
+
         if ($type instanceof IdentifierTypeNode) {
             return static::handleIdentifierNode($type);
         }
@@ -160,8 +165,22 @@ class PhpDocTypeHelper
         if (in_array($type->name, ['float', 'double'])) {
             return new FloatType;
         }
-        if (in_array($type->name, ['int', 'integer'])) {
-            return new IntegerType;
+        if (in_array($type->name, [
+            'int',
+            'integer',
+            'positive-int',
+            'negative-int',
+            'non-positive-int',
+            'non-negative-int',
+            'non-zero-int',
+        ])) {
+            return match ($type->name) {
+                'int', 'integer', 'non-zero-int' => new IntegerType,
+                'positive-int' => new IntegerRangeType(min: 1),
+                'negative-int' => new IntegerRangeType(max: -1),
+                'non-positive-int' => new IntegerRangeType(max: 0),
+                'non-negative-int' => new IntegerRangeType(min: 0),
+            };
         }
         if (in_array($type->name, ['bool', 'boolean'])) {
             return new BooleanType;
@@ -193,5 +212,54 @@ class PhpDocTypeHelper
         }
 
         return new ObjectType($type->name);
+    }
+
+    /**
+     * @param  list<\PHPStan\PhpDocParser\Ast\Type\TypeNode>  $genericTypes
+     */
+    private static function handleGenericInteger(array $genericTypes): IntegerType
+    {
+        if (count($genericTypes) !== 2) {
+            return new IntegerType;
+        }
+
+        if (! ($genericTypes[0] instanceof ConstTypeNode || $genericTypes[0] instanceof IdentifierTypeNode)) {
+            return new IntegerType;
+        }
+
+        if ($genericTypes[0] instanceof ConstTypeNode && ! $genericTypes[0]->constExpr instanceof ConstExprIntegerNode) {
+            return new IntegerType;
+        }
+
+        if ($genericTypes[0] instanceof IdentifierTypeNode && $genericTypes[0]->name !== 'min') {
+            return new IntegerType;
+        }
+
+        if (! ($genericTypes[1] instanceof ConstTypeNode || $genericTypes[1] instanceof IdentifierTypeNode)) {
+            return new IntegerType;
+        }
+
+        if ($genericTypes[1] instanceof ConstTypeNode && ! $genericTypes[1]->constExpr instanceof ConstExprIntegerNode) {
+            return new IntegerType;
+        }
+
+        if ($genericTypes[1] instanceof IdentifierTypeNode && $genericTypes[1]->name !== 'max') {
+            return new IntegerType;
+        }
+
+        $min = match (true) {
+            $genericTypes[0] instanceof ConstTypeNode => $genericTypes[0]->constExpr->value,
+            $genericTypes[0] instanceof IdentifierTypeNode => null,
+        };
+
+        $max = match (true) {
+            $genericTypes[1] instanceof ConstTypeNode => $genericTypes[1]->constExpr->value,
+            $genericTypes[1] instanceof IdentifierTypeNode => null,
+        };
+
+        return new IntegerRangeType(
+            min: $min,
+            max: $max,
+        );
     }
 }

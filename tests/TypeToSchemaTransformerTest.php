@@ -358,6 +358,80 @@ it('supports list types', function () {
         ]);
 });
 
+it('supports integers', function () {
+    $transformer = new TypeTransformer(app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(ApiResourceTest_ResourceWithIntegers::class);
+
+    $schema = $transformer->transform($type)->toArray();
+    $component = $this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithIntegers::class)->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithIntegers',
+    ]);
+
+    expect($component)
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                'zero' => [
+                    'type' => 'integer',
+                ],
+                'one' => [
+                    'type' => 'integer',
+                    'minimum' => 1,
+                ],
+                'minus_one' => [
+                    'type' => 'integer',
+                    'maximum' => -1,
+                ],
+                'minus_two' => [
+                    'type' => 'integer',
+                    'maximum' => 0,
+                ],
+                'two' => [
+                    'type' => 'integer',
+                    'minimum' => 0,
+                ],
+                'three' => [
+                    'type' => 'integer',
+                ],
+                'four' => [
+                    'type' => 'integer',
+                    'minimum' => 4,
+                    'maximum' => 5,
+                ],
+                'four_max' => [
+                    'type' => 'integer',
+                    'minimum' => 4,
+                ],
+                'min_to_five' => [
+                    'type' => 'integer',
+                    'maximum' => 5,
+                ],
+                'max_to_five' => [
+                    'type' => 'integer',
+                ],
+                'five_to_min' => [
+                    'type' => 'integer',
+                ],
+            ],
+            'required' => [
+                'zero',
+                'one',
+                'minus_one',
+                'minus_two',
+                'two',
+                'three',
+                'four',
+                'four_max',
+                'min_to_five',
+                'max_to_five',
+                'five_to_min',
+            ],
+        ]);
+});
+
 class ComplexTypeHandlersTest_SampleType extends JsonResource
 {
     public function toArray($request)
@@ -519,6 +593,37 @@ class ApiResourceTest_ResourceWithSimpleDescription extends JsonResource
             'now' => now(),
             // Inline comments are also supported.
             'now2' => now(),
+        ];
+    }
+}
+
+class ApiResourceTest_ResourceWithIntegers extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            /** @var int */
+            'zero' => 0,
+            /** @var positive-int */
+            'one' => 1,
+            /** @var negative-int */
+            'minus_one' => -1,
+            /** @var non-positive-int */
+            'minus_two' => -2,
+            /** @var non-negative-int */
+            'two' => 2,
+            /** @var non-zero-int */
+            'three' => 3,
+            /** @var int<4, 5> */
+            'four' => 4,
+            /** @var int<4, max> */
+            'four_max' => 4,
+            /** @var int<min, 5> */
+            'min_to_five' => 4,
+            /** @var int<max, 5> */
+            'max_to_five' => 4,
+            /** @var int<5, min> */
+            'five_to_min' => 4,
         ];
     }
 }

@@ -210,6 +210,16 @@ class TypeTransformer
             $openApiType = new StringType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\FloatType) {
             $openApiType = new NumberType;
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntegerRangeType) {
+            $openApiType = new IntegerType;
+
+            if ($type->min !== null) {
+                $openApiType->setMin($type->min);
+            }
+
+            if ($type->max !== null) {
+                $openApiType->setMax($type->max);
+            }
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntegerType) {
             $openApiType = new IntegerType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\BooleanType) {
