@@ -129,7 +129,7 @@ class FooTrait_IndexTest
 test('builds class definition with mixin with trait', function () {
     $type = $this->index->getClass(FooTrait_IndexTest::class)
         ->getMethod('foo')
-        ->type->getReturnType();
+        ->getReturnType();
 
     expect($type->toString())->toBe('boolean');
 });

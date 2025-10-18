@@ -7,12 +7,12 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 
-class TypeReconciler
+class TypeWidener
 {
     /**
      * @param  Type[]  $types
      */
-    public function reconcile(array $types): Type
+    public function widen(array $types): Type
     {
         $items = $types;
         $changed = true;
@@ -24,7 +24,7 @@ class TypeReconciler
                     $a = $items[$i];
                     $b = $items[$j];
 
-                    $merged = $this->reconcilePair($a, $b) ?: $this->reconcilePair($b, $a);
+                    $merged = $this->widenPair($a, $b) ?: $this->widenPair($b, $a);
 
                     if ($merged !== null) {
                         unset($items[$i], $items[$j]);
@@ -41,7 +41,7 @@ class TypeReconciler
         return Union::wrap($items);
     }
 
-    private function reconcilePair(Type $a, Type $b): ?Type
+    private function widenPair(Type $a, Type $b): ?Type
     {
         // mixed|* -> mixed
         if ($a instanceof MixedType) {
@@ -72,7 +72,7 @@ class TypeReconciler
             return new IntegerType;
         }
 
-        // float|42 -> float
+        // float|42 -> float (?)
         if (
             ($a instanceof FloatType && ! $a instanceof LiteralFloatType)
             && ($b instanceof LiteralFloatType || $b instanceof LiteralIntegerType)
@@ -86,6 +86,18 @@ class TypeReconciler
             && $b instanceof LiteralStringType
         ) {
             return new StringType;
+        }
+
+        if (
+            $a instanceof Generic
+            && $b instanceof Generic
+            && $a->name === $b->name
+            && $a->isInstanceOf(\Traversable::class)
+        ) {
+            return new Generic($a->name, [
+                (new Union([$a->templateTypes[0] ?? new UnknownType, $b->templateTypes[0] ?? new UnknownType]))->widen(),
+                (new Union([$a->templateTypes[1] ?? new UnknownType, $b->templateTypes[1] ?? new UnknownType]))->widen(),
+            ]);
         }
 
         return null;

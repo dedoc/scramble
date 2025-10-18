@@ -66,7 +66,7 @@ class ReferenceTypeResolver
             fn (Type $t) => $t instanceof Union ? TypeHelper::mergeTypes(...$t->types) : null,
         );
 
-        return $this->resolveLateTypes($finalizedResolvedType->setOriginal($originalType), $originalType)->reconcile();
+        return $this->resolveLateTypes($finalizedResolvedType->setOriginal($originalType), $originalType)->widen();
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type
@@ -97,6 +97,12 @@ class ReferenceTypeResolver
     {
         return (new TypeWalker)->map($type, function (Type $t) use ($staticType) {
             if ($t instanceof Generic && $staticType instanceof ObjectType && $t->name === StaticReference::STATIC) {
+                $t->name = $staticType->name;
+
+                return $t;
+            }
+
+            if ($staticType instanceof ObjectType && $t instanceof ObjectType && $t->name === StaticReference::SELF) {
                 $t->name = $staticType->name;
 
                 return $t;

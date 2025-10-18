@@ -16,6 +16,7 @@ use Illuminate\Contracts\Database\Query\Builder as BaseBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
@@ -52,7 +53,7 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
 
         $shouldBeHandled = $event->getInstance() instanceof UnknownType
             || $this->isQueryLike($event->getInstance())
-            || ! $event->getDefinition()?->hasMethodDefinition($event->name);
+            || $event->getDefinition()?->getMethodDefinition($event->name)?->definingClassName === Builder::class;
 
         if (! $shouldBeHandled) {
             return null;

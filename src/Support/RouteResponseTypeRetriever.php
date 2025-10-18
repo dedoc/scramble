@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support;
 
+use Dedoc\Scramble\Infer\Definition\FunctionLikeAstDefinition;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
@@ -23,12 +24,13 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 
 class RouteResponseTypeRetriever
 {
     public function __construct(private RouteInfo $routeInfo) {}
 
-    public function getResponseType()
+    public function getResponseType(): ?Type
     {
         if (! $this->routeInfo->getActionType()) {
             return null;
@@ -41,24 +43,28 @@ class RouteResponseTypeRetriever
         return $this->getInferredType();
     }
 
-    private function getManuallyDefinedType()
+    private function getManuallyDefinedType(): ?Type
     {
-        if ($phpDocType = $this->getMethodPhpDocReturnType()) {
-            return $phpDocType;
-        }
-
         if ($annotatedBodyType = $this->getAnnotatedBodyType()) {
             return $annotatedBodyType;
+        }
+
+        if ($phpDocType = $this->getMethodPhpDocReturnType()) {
+            return $phpDocType;
         }
 
         return null;
     }
 
-    private function getAnnotatedBodyType()
+    private function getAnnotatedBodyType(): ?Type
     {
-        if (! $inferredTypeAttribute = $this->routeInfo->getActionType()->getAttribute('inferredReturnType')) {
+        $definition = $this->routeInfo->getActionDefinition();
+
+        if (! $definition instanceof FunctionLikeAstDefinition) {
             return null;
         }
+
+        $inferredTypeAttribute = $definition->getInferredReturnType();
 
         $types = $inferredTypeAttribute instanceof Union
             ? $inferredTypeAttribute->types
@@ -80,7 +86,7 @@ class RouteResponseTypeRetriever
         return null;
     }
 
-    private function getInferredType()
+    private function getInferredType(): ?Type
     {
         if ($this->routeInfo->isClassBased()) {
             if (! $methodType = $this->routeInfo->getActionType()) {
@@ -102,7 +108,7 @@ class RouteResponseTypeRetriever
             );
     }
 
-    private function getMethodPhpDocReturnType()
+    private function getMethodPhpDocReturnType(): ?Type
     {
         if (! $phpDocReturnNode = $this->getDocReturnNode()) {
             return null;
@@ -121,7 +127,7 @@ class RouteResponseTypeRetriever
          */
         $inferredReturnType = $this->getInferredType();
 
-        if ($inferredReturnType instanceof UnknownType) {
+        if (! $inferredReturnType || $inferredReturnType instanceof UnknownType) {
             return $phpDocReturnType;
         }
 
@@ -141,7 +147,7 @@ class RouteResponseTypeRetriever
         return null;
     }
 
-    private function getDocReturnNode()
+    private function getDocReturnNode(): ?TypeNode
     {
         if (! $this->routeInfo->phpDoc()) {
             return null;
@@ -160,7 +166,7 @@ class RouteResponseTypeRetriever
         return null;
     }
 
-    private function countKnownTypes(Type $type)
+    private function countKnownTypes(Type $type): int
     {
         $counterVisitor = new class extends AbstractTypeVisitor
         {

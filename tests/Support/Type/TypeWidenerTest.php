@@ -4,10 +4,10 @@ namespace Dedoc\Scramble\Tests\Support\Type;
 
 use Dedoc\Scramble\Tests\TestUtils;
 
-test('types reconcile', function (string $type, string $expectedType) {
+test('types widening', function (string $type, string $expectedType) {
     $type = TestUtils::parseType($type);
 
-    expect($type->reconcile()->toString())->toBe($expectedType);
+    expect($type->widen()->toString())->toBe($expectedType);
 })->with([
     ['true|false', 'boolean'],
     ['true|false|true', 'boolean'],

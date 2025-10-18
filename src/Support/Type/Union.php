@@ -22,9 +22,31 @@ class Union extends AbstractType
             && collect($this->types)->every(fn (Type $t, $i) => $t->isSame($type->types[$i]));
     }
 
-    public function reconcile(): Type
+    public function widen(): Type
     {
-        return app(TypeReconciler::class)->reconcile($this->types)->mergeAttributes($this->attributes());
+        return app(TypeWidener::class)->widen($this->types)->mergeAttributes($this->attributes());
+    }
+
+    public function accepts(Type $otherType): bool
+    {
+        foreach ($this->types as $type) {
+            if ($type->accepts($otherType)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function acceptedBy(Type $otherType): bool
+    {
+        foreach ($this->types as $type) {
+            if (! $type->acceptedBy($otherType)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
