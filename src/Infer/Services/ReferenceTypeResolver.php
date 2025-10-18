@@ -102,6 +102,12 @@ class ReferenceTypeResolver
                 return $t;
             }
 
+            if ($staticType instanceof ObjectType && $t instanceof ObjectType && $t->name === StaticReference::SELF) {
+                $t->name = $staticType->name;
+
+                return $t;
+            }
+
             return $t instanceof ObjectType && $t->name === StaticReference::STATIC ? $staticType : $t;
         });
     }
