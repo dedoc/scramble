@@ -66,7 +66,7 @@ class ReferenceTypeResolver
             fn (Type $t) => $t instanceof Union ? TypeHelper::mergeTypes(...$t->types) : null,
         );
 
-        return $this->resolveLateTypes($finalizedResolvedType->setOriginal($originalType), $originalType)->reconcile();
+        return $this->resolveLateTypes($finalizedResolvedType->setOriginal($originalType), $originalType)->widen();
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type

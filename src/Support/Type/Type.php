@@ -47,7 +47,7 @@ interface Type
 
     public function getOriginal(): ?Type;
 
-    public function reconcile(): Type;
+    public function widen(): Type;
 
     /**
      * @return bool

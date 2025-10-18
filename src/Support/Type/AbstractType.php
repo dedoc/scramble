@@ -57,7 +57,7 @@ abstract class AbstractType implements Type
         return new UnknownType('Cannot get an offset value type '.$this::class);
     }
 
-    public function reconcile(): Type
+    public function widen(): Type
     {
         return $this;
     }
