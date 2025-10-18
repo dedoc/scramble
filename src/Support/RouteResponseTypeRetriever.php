@@ -127,7 +127,7 @@ class RouteResponseTypeRetriever
          */
         $inferredReturnType = $this->getInferredType();
 
-        if ($inferredReturnType instanceof UnknownType) {
+        if (! $inferredReturnType || $inferredReturnType instanceof UnknownType) {
             return $phpDocReturnType;
         }
 

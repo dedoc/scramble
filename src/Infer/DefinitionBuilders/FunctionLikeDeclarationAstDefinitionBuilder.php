@@ -55,6 +55,10 @@ class FunctionLikeDeclarationAstDefinitionBuilder implements FunctionLikeDefinit
     {
         return collect($this->node->getParams())
             ->mapWithKeys(function (Node\Param $param) {
+                if (! $param->var instanceof Node\Expr\Variable || ! is_string($param->var->name)) {
+                    return [];
+                }
+
                 $type = $param->type
                     ? TypeHelper::createTypeFromTypeNode($param->type)
                     : new MixedType;
@@ -70,6 +74,10 @@ class FunctionLikeDeclarationAstDefinitionBuilder implements FunctionLikeDefinit
         return collect($this->node->getParams())
             ->mapWithKeys(function (Node\Param $param) {
                 if (! $param->default) {
+                    return [];
+                }
+
+                if (! $param->var instanceof Node\Expr\Variable || ! is_string($param->var->name)) {
                     return [];
                 }
 

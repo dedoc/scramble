@@ -75,7 +75,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             throw new LogicException('Definition must be an instance of FunctionLikeAstDefinition');
         }
 
-        if ($this->functionLike instanceof ClassMethod && $scope) { // @phpstan-ignore booleanAnd.rightAlwaysTrue
+        if ($this->functionLike instanceof ClassMethod && $scope) {
             $definition->selfOutTypeBuilder = new SelfOutTypeBuilder($scope, $this->functionLike);
         }
 
@@ -267,7 +267,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
     {
         try {
             if ($this->classDefinition) {
-                return (new ReflectionClass($this->classDefinition->name))->getMethod($this->name);
+                return (new ReflectionClass($this->classDefinition->name))->getMethod($this->name); // @phpstan-ignore argument.type
             }
 
             return new ReflectionFunction($this->name);

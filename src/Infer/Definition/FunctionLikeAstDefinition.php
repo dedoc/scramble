@@ -36,7 +36,9 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
             return $inferredReturnType;
         }
 
-        $returnDeclarationType = $this->getDeclarationDefinition()?->getReturnType();
+        if (! $returnDeclarationType = $this->getDeclarationDefinition()?->getReturnType()) {
+            return $inferredReturnType;
+        }
 
         return $this->prefersInferredReturnType($returnDeclarationType, $inferredReturnType)
             ? $inferredReturnType
