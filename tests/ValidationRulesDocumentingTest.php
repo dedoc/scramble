@@ -317,6 +317,30 @@ it('extract rules from array rules', function () {
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
 
+it('extract rules from array rules with both wildcard and specific props', function () {
+    $rules = [
+        'foo' => 'array:a,b,c,d',
+        'foo.*' => 'int',
+        'foo.a' => 'boolean',
+        'foo.b' => 'array:x,y,z',
+        'other' => 'int',
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    $fooParams = collect($params)->keyBy('name')->get('foo');
+    $fooProperties = $fooParams->schema->toArray()['properties'];
+
+    $otherParams = collect($params)->keyBy('name')->get('other');
+
+    expect($fooProperties)->toHaveCount(4)
+        ->and($fooProperties['a']['type'])->toBe('boolean')
+        ->and($fooProperties['b']['type'])->toBe('object')
+        ->and($fooProperties['c']['type'])->toBe('integer')
+        ->and($fooProperties['d']['type'])->toBe('integer')
+        ->and($otherParams->schema->toArray()['type'])->toBe('integer');
+});
+
 it('supports array rule details', function () {
     $rules = [
         'destination' => 'array:lat,lon|required',
