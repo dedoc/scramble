@@ -16,9 +16,6 @@ use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
-
-use function PHPUnit\Framework\assertCount;
-use function PHPUnit\Framework\assertEquals;
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 beforeEach(function () {
@@ -335,12 +332,12 @@ it('extract rules from array rules with both wildcard and specific props', funct
 
     $otherParams = collect($params)->keyBy('name')->get('other');
 
-    assertCount(4, $fooProperties);
-    assertEquals('boolean', $fooProperties['a']['type']);
-    assertEquals('object', $fooProperties['b']['type']);
-    assertEquals('integer', $fooProperties['c']['type']);
-    assertEquals('integer', $fooProperties['d']['type']);
-    assertEquals('integer', $otherParams->schema->toArray()['type']);
+    expect($fooProperties)->toHaveCount(4)
+        ->and($fooProperties['a']['type'])->toBe('boolean')
+        ->and($fooProperties['b']['type'])->toBe('object')
+        ->and($fooProperties['c']['type'])->toBe('integer')
+        ->and($fooProperties['d']['type'])->toBe('integer')
+        ->and($otherParams->schema->toArray()['type'])->toBe('integer');
 });
 
 it('supports array rule details', function () {
