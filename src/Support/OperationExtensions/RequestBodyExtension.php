@@ -50,16 +50,12 @@ class RequestBodyExtension extends OperationExtension
 
         $allParams = $rulesResults->flatMap(fn ($p) => $p->parameters)->unique(fn ($p) => "$p->name.$p->in")->values()->all();
 
-        $mediaType = $this->getMediaType($operation, $routeInfo, $allParams);
-
         if (empty($allParams)) {
             return;
         }
 
         if (in_array($operation->method, static::HTTP_METHODS_WITHOUT_REQUEST_BODY)) {
-            $operation->addParameters(
-                $this->convertDotNamedParamsToQueryParams($allParams)
-            );
+            $operation->addParameters($this->prepareQueryParams($allParams));
 
             return;
         }
@@ -71,9 +67,7 @@ class RequestBodyExtension extends OperationExtension
                 ->all(),
         );
 
-        $operation->addParameters(
-            $this->convertDotNamedParamsToQueryParams($nonBodyParams)
-        );
+        $operation->addParameters($this->prepareQueryParams($nonBodyParams));
 
         if (! $bodyParams) {
             return;
@@ -104,7 +98,7 @@ class RequestBodyExtension extends OperationExtension
 
         $operation->addRequestBodyObject(
             RequestBodyObject::make()
-                ->setContent($mediaType, $schema)
+                ->setContent($this->getMediaType($operation, $routeInfo, $allParams), $schema)
                 ->required($this->isSchemaRequired($schema))
         );
     }
@@ -174,7 +168,18 @@ class RequestBodyExtension extends OperationExtension
      * @param  Parameter[]  $params
      * @return Parameter[]
      */
-    protected function convertDotNamedParamsToComplexStructures($params): array
+    protected function prepareQueryParams(array $params): array
+    {
+        return config('scramble.flatten_deep_query_parameters', true)
+            ? $this->convertDotNamedParamsToFlatQueryParams($params)
+            : $this->convertDotNamedParamsToComplexStructures($params);
+    }
+
+    /**
+     * @param  Parameter[]  $params
+     * @return Parameter[]
+     */
+    protected function convertDotNamedParamsToComplexStructures(array $params): array
     {
         return (new DeepParametersMerger(collect($params)))->handle();
     }
@@ -183,7 +188,7 @@ class RequestBodyExtension extends OperationExtension
      * @param  Parameter[]  $params
      * @return Parameter[]
      */
-    protected function convertDotNamedParamsToQueryParams(array $params): array
+    protected function convertDotNamedParamsToFlatQueryParams(array $params): array
     {
         return (new QueryParametersConverter(collect($params)))->handle();
     }
