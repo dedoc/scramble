@@ -680,10 +680,10 @@ it('documents date_format rule with format', function () {
         ->toHaveCount(3)
         ->and($params[0]->schema->type)
         ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
-        ->toHaveProperty('format', 'date')        
+        ->toHaveProperty('format', 'date')
         ->and($params[1]->schema->type)
         ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
-        ->toHaveProperty('format', 'date-time')        
+        ->toHaveProperty('format', 'date-time')
         ->and($params[2]->schema->type)
         ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
         ->toHaveProperty('format', '');
