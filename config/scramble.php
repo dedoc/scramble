@@ -102,6 +102,22 @@ return [
      */
     'enum_cases_description_strategy' => 'description',
 
+    /**
+     * When Scramble encounters deep objects in query parameters, it flattens the parameters so the generated
+     * OpenAPI document correctly describes the API. Flattening deep query parameters is relevant until
+     * OpenAPI 3.2 is released and query string structure can be described properly.
+     *
+     * For example, this nested validation rule describes the object with `bar` property:
+     * `['foo.bar' => ['required', 'int']]`.
+     *
+     * When `flatten_deep_query_parameters` is `true`, Scramble will document the parameter like so:
+     * `{"name":"foo[bar]", "schema":{"type":"int"}, "required":true}`.
+     *
+     * When `flatten_deep_query_parameters` is `false`, Scramble will document the parameter like so:
+     *  `{"name":"foo", "schema": {"type":"object", "properties":{"bar":{"type": "int"}}, "required": ["bar"]}, "required":true}`.
+     */
+    'flatten_deep_query_parameters' => true,
+
     'middleware' => [
         'web',
         RestrictedDocsAccess::class,
