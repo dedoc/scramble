@@ -247,16 +247,11 @@ class RulesMapper
             $type = $this->string($type);
         }
 
-        switch ($params[0] ?? 'Y-m-d H:i:s') {
-            case 'Y-m-d':
-                $type->format('date');
-                break;
-            case 'Y-m-d H:i:s':
-                $type->format('date-time');
-                break;
-        }
-
-        return $type;
+        return match ($params[0] ?? 'Y-m-d H:i:s') {
+            'Y-m-d' => $type->format('date'),
+            'Y-m-d H:i:s' => $type->format('date-time'),
+            default => $type,
+        };
     }
 
     public function date_format(Type $type, $params)
