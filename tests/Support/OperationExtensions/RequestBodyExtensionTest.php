@@ -623,6 +623,27 @@ it('documents deep query parameters with container according to how they can be 
             ],
         ]);
 });
+it('documents deep query parameters without flattening', function () {
+    config()->set('scramble.flatten_deep_query_parameters', false);
+
+    $document = generateForRoute(fn () => RouteFacade::get('test', RequestBodyExtensionTest_DeepQueryParametersWithContainerController::class));
+
+    expect($parameters = $document['paths']['/test']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($parameters[0])
+        ->toBe([
+            'name' => 'filter',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'accountable' => [
+                        'type' => 'integer',
+                    ],
+                ],
+            ],
+        ]);
+});
 class RequestBodyExtensionTest_DeepQueryParametersWithContainerController
 {
     public function __invoke(Request $request)
