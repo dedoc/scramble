@@ -164,6 +164,51 @@ it('gets enum with values type and description with extensions', function () {
         ]);
 });
 
+it('gets enum with values type and names as varnames with extensions', function () {
+    config()->set('scramble.enum_cases_names_strategy', 'varnames');
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [EnumToSchema::class]);
+    $extension = new EnumToSchema($infer, $transformer, $this->context->openApi->components);
+
+    $type = new ObjectType(InvalidEnumValues::class);
+
+    expect($extension->toSchema($type)->toArray()['x-enum-varnames'])
+        ->toBe([
+            'PLUS',
+            'MINUS',
+            'ONE',
+        ]);
+});
+
+it('gets enum with values type without names with extensions', function () {
+    config()->set('scramble.enum_cases_names_strategy', false);
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [EnumToSchema::class]);
+    $extension = new EnumToSchema($infer, $transformer, $this->context->openApi->components);
+
+    $type = new ObjectType(InvalidEnumValues::class);
+
+    expect(array_keys($extension->toSchema($type)->toArray()))
+        ->not()
+        ->toContain('x-enumNames', 'x-enum-varnames');
+});
+
+it('gets enum with values type and names as enumNames with extensions', function () {
+    config()->set('scramble.enum_cases_names_strategy', 'names');
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [EnumToSchema::class]);
+    $extension = new EnumToSchema($infer, $transformer, $this->context->openApi->components);
+
+    $type = new ObjectType(InvalidEnumValues::class);
+
+    expect($extension->toSchema($type)->toArray()['x-enumNames'])
+        ->toBe([
+            'PLUS',
+            'MINUS',
+            'ONE',
+        ]);
+});
+
 it('gets enum with values type and description without cases', function () {
     config()->set('scramble.enum_cases_description_strategy', false);
 
@@ -660,4 +705,11 @@ enum StatusFour: string
      * Drafts are the posts that are not visible by visitors.
      */
     case DRAFT = 'draft';
+}
+
+enum InvalidEnumValues: string
+{
+    case PLUS = '+';
+    case MINUS = '-';
+    case ONE = '1';
 }
