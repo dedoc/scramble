@@ -91,7 +91,7 @@ class Generator
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
                     (string) Str::of($operation->path)
-                        ->replaceFirst($config->get('api_path', 'api'), '')
+                        ->replaceStart($config->get('api_path', 'api'), '')
                         ->trim('/')
                 )->addOperation($operation)
             ))
