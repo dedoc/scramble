@@ -487,12 +487,13 @@ class ReferenceTypeResolver
             ? (new TemplateTypesSolver)->getClassContextTemplates($calledOnType, $classDefinition)
             : [];
 
-        $arguments = $arguments->map(fn ($t, $nameOrPosition) => (new TemplateTypesSolver)->addContextTypesToTypelessParametersOfCallableArgument(
-            $t,
-            $nameOrPosition,
-            $callee,
-            $classContextTemplates,
-        ));
+        $arguments = $arguments
+            ->map(fn ($t, $nameOrPosition) => (new TemplateTypesSolver)->addContextTypesToTypelessParametersOfCallableArgument(
+                $t,
+                $nameOrPosition,
+                $callee,
+                $classContextTemplates,
+            ));
 
         $templatesMap = (new TemplateTypesSolver)
             ->getFunctionContextTemplates($callee, $arguments)
