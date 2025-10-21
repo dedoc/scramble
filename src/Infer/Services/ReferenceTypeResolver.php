@@ -13,6 +13,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -487,15 +488,19 @@ class ReferenceTypeResolver
             ? (new TemplateTypesSolver)->getClassContextTemplates($calledOnType, $classDefinition)
             : [];
 
-        $arguments = $arguments->map(fn ($t, $nameOrPosition) => (new TemplateTypesSolver)->addContextTypesToTypelessParametersOfCallableArgument(
-            $t,
-            $nameOrPosition,
-            $callee,
-            $classContextTemplates,
-        ));
+        $arguments = $arguments
+            ->map(fn ($t, $nameOrPosition) => (new TemplateTypesSolver)->addContextTypesToTypelessParametersOfCallableArgument(
+                $t,
+                $nameOrPosition,
+                $callee,
+                $classContextTemplates,
+            ));
 
         $templatesMap = (new TemplateTypesSolver)
-            ->getFunctionContextTemplates($callee, $arguments)
+            ->getFunctionContextTemplates(
+                $callee,
+                new UnresolvableArgumentTypeBag($arguments instanceof AutoResolvingArgumentTypeBag ? $arguments->allUnresolved() : $arguments->all()),
+            )
             ->prepend($classContextTemplates);
 
         $returnType = (new TypeWalker)->map(
