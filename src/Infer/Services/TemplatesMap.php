@@ -18,10 +18,9 @@ class TemplatesMap
     public array $additional = [];
 
     /**
-     * @param TemplateType[] $templates
-     * @param array<string, Type> $parameters
-     * @param ArgumentTypeBag $arguments
-     * @param array<string, Type> $defaults
+     * @param  TemplateType[]  $templates
+     * @param  array<string, Type>  $parameters
+     * @param  array<string, Type>  $defaults
      */
     public function __construct(
         public array $templates,

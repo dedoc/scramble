@@ -114,15 +114,15 @@ class EnumToSchema extends TypeToSchemaExtension
     {
         $enumNameStrategy = config('scramble.enum_cases_names_strategy');
 
-        if (!$enumNameStrategy) {
+        if (! $enumNameStrategy) {
             return;
         }
 
         $enumReflection = new ReflectionEnum($type->name); // @phpstan-ignore argument.type
 
         $nameCases = collect($enumReflection->getCases())
-            ->keyBy(fn(ReflectionEnumBackedCase $case): int|string => $case->getBackingValue())
-            ->map(fn(ReflectionEnumBackedCase $case) => $case->getName());
+            ->keyBy(fn (ReflectionEnumBackedCase $case): int|string => $case->getBackingValue())
+            ->map(fn (ReflectionEnumBackedCase $case) => $case->getName());
 
         $this->handleEnumNames($schemaType, $nameCases, $enumNameStrategy);
     }
@@ -159,7 +159,7 @@ class EnumToSchema extends TypeToSchemaExtension
     }
 
     /**
-     * @param 'name'|'varnames' $strategy
+     * @param  'name'|'varnames'  $strategy
      */
     protected function handleEnumNames(OpenApi\Type $schema, Collection $cases, string $strategy): void
     {

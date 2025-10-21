@@ -6,10 +6,9 @@ use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\Type\AbstractType;
 use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\FunctionType;
-use Dedoc\Scramble\Support\Type\AbstractType;
-use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
@@ -205,9 +204,10 @@ it('resolves only arguments with templates referenced in return type', function 
     ), fn ($f) => $f->templates = $templates);
 
     expect(ReferenceTypeResolver::getInstance()->resolve(
-        new GlobalScope(),
+        new GlobalScope,
         new CallableCallReferenceType($fn, [
-            new class extends AbstractType implements LateResolvingType {
+            new class extends AbstractType implements LateResolvingType
+            {
                 public function resolve(): Type
                 {
                     throw new LogicException('should not happen');
@@ -227,7 +227,7 @@ it('resolves only arguments with templates referenced in return type', function 
                 {
                     return '__test__';
                 }
-            }
+            },
         ]),
     )->toString())->toBe('string(wow)');
 });
