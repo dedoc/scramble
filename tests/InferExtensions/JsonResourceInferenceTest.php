@@ -21,22 +21,22 @@ beforeEach(function () {
 it('infers json resource creation', function ($expression, $expectedType) {
     expect(getStatementType($expression)->toString())->toBe($expectedType);
 })->with([
-//    [
-//        'new '.Foo_JsonResourceInferenceTest::class.'(42)',
-//        Foo_JsonResourceInferenceTest::class.'<int(42)>',
-//    ],
-//    [
-//        '(new '.Foo_JsonResourceInferenceTest::class.'(42))->additional(1)',
-//        Foo_JsonResourceInferenceTest::class.'<int(42), int(1)>',
-//    ],
+    [
+        'new '.Foo_JsonResourceInferenceTest::class.'(42)',
+        Foo_JsonResourceInferenceTest::class.'<int(42)>',
+    ],
+    [
+        '(new '.Foo_JsonResourceInferenceTest::class.'(42))->additional(1)',
+        Foo_JsonResourceInferenceTest::class.'<int(42), int(1)>',
+    ],
     [
         '(new '.ManualConstructCall_JsonResourceInferenceTest::class.'(42))',
         ManualConstructCall_JsonResourceInferenceTest::class.'<int(42)>',
     ],
-//    [
-//        '(new '.ManualConstructCallWithData_JsonResourceInferenceTest::class.'(42))',
-//        ManualConstructCallWithData_JsonResourceInferenceTest::class.'<int(23)>',
-//    ],
+    [
+        '(new '.ManualConstructCallWithData_JsonResourceInferenceTest::class.'(42))',
+        ManualConstructCallWithData_JsonResourceInferenceTest::class.'<int(23)>',
+    ],
 ]);
 class Bar_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\JsonResource {}
 class Foo_JsonResourceInferenceTest extends Bar_JsonResourceInferenceTest {}

@@ -43,13 +43,6 @@ class TemplatesMap
 
     public function get(string $name, Type $defaultType = new UnknownType): Type
     {
-        $result = $this->getF($name, $defaultType);
-//        dump([$name => $result->toString()]);
-        return $result;
-    }
-
-    public function getF(string $name, Type $defaultType = new UnknownType): Type
-    {
         if ($name === self::ARGUMENTS) {
             return new KeyedArrayType(collect($this->arguments->all())->map(fn ($t, $k) => new ArrayItemType_($k, $t))->all());
         }
@@ -87,11 +80,24 @@ class TemplatesMap
         return (bool) (new TypeWalker)->first($parameterType, fn ($t) => $t === $templateType);
     }
 
+    private function hasTemplateInAnyParameter(string $name): bool
+    {
+        $template = collect($this->templates)->first(fn (TemplateType $t) => $t->name === $name);
+
+        if (! $template) {
+            return false;
+        }
+
+        return collect($this->parameters)->some(function ($pt) use ($template) {
+            return $this->hasTemplateIn($pt, $template);
+        });
+    }
+
     public function has(string $name): bool
     {
         return $name === self::ARGUMENTS
             || array_key_exists($name, $this->additional)
-            || (bool) collect($this->templates)->first(fn ($t) => $t->name === $name);
+            || $this->hasTemplateInAnyParameter($name);
     }
 
     private function inferTemplate(TemplateType $template, Type $typeWithTemplate, Type $type): ?Type

@@ -53,7 +53,6 @@ class ReferenceTypeResolver
 
     public function resolve(Scope $scope, Type $type): Type
     {
-         \App\Support\TimeTracker::count('resolve');
         $originalType = $type;
 
         $resolvedType = RecursionGuard::run(
