@@ -53,6 +53,7 @@ class ReferenceTypeResolver
 
     public function resolve(Scope $scope, Type $type): Type
     {
+         \App\Support\TimeTracker::count('resolve');
         $originalType = $type;
 
         $resolvedType = RecursionGuard::run(
@@ -497,10 +498,7 @@ class ReferenceTypeResolver
             ));
 
         $templatesMap = (new TemplateTypesSolver)
-            ->getFunctionContextTemplates(
-                $callee,
-                new UnresolvableArgumentTypeBag($arguments instanceof AutoResolvingArgumentTypeBag ? $arguments->allUnresolved() : $arguments->all()),
-            )
+            ->getFunctionContextTemplates($callee, $arguments)
             ->prepend($classContextTemplates);
 
         $returnType = (new TypeWalker)->map(

@@ -35,6 +35,12 @@ class TemplateTypesSolver
     public function getFunctionContextTemplates(FunctionLikeDefinition $functionLikeDefinition, ArgumentTypeBag $arguments): TemplatesMap
     {
         return new TemplatesMap(
+            templates: $functionLikeDefinition->type->templates,
+            parameters: $functionLikeDefinition->type->arguments,
+            arguments: $arguments,
+            defaults: $functionLikeDefinition->argumentsDefaults,
+        );
+        return new TemplatesMap_(
             bag: $this->resolveTypesTemplatesFromArguments(
                 $functionLikeDefinition->type->templates,
                 $functionLikeDefinition->type->arguments,
@@ -47,6 +53,12 @@ class TemplateTypesSolver
     public function getClassConstructorContextTemplates(ClassDefinition $classDefinition, ?FunctionLikeDefinition $functionLikeDefinition, ArgumentTypeBag $arguments): TemplatesMap
     {
         return new TemplatesMap(
+            templates: ($functionLikeDefinition->type->templates ?? []) + $classDefinition->templateTypes,
+            parameters: $functionLikeDefinition->type->arguments ?? [],
+            arguments: $arguments,
+            defaults: $functionLikeDefinition->argumentsDefaults ?? [],
+        );
+        return new TemplatesMap_(
             bag: $this->resolveTypesTemplatesFromArguments(
                 ($functionLikeDefinition->type->templates ?? []) + $classDefinition->templateTypes,
                 ($functionLikeDefinition->type->arguments ?? []),
