@@ -17,7 +17,7 @@ class RequestExtension implements MethodReturnTypeExtension
 
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
-        return match($event->getName()) {
+        return match ($event->getName()) {
             'user' => new ObjectType($this->getUserModelClass()),
             default => null,
         };
