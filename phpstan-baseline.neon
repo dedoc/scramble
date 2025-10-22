@@ -1795,12 +1795,6 @@ parameters:
 			path: src/PhpDoc/PhpDocTypeHelper.php
 
 		-
-			message: '#^Unsafe call to private method Dedoc\\Scramble\\PhpDoc\\PhpDocTypeHelper\:\:handleIdentifierNode\(\) through static\:\:\.$#'
-			identifier: staticClassAccess.privateMethod
-			count: 1
-			path: src/PhpDoc/PhpDocTypeHelper.php
-
-		-
 			message: '#^If condition is always true\.$#'
 			identifier: if.alwaysTrue
 			count: 1
@@ -4074,12 +4068,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesMapper\:\:uuid\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between '''' and ''Y\-m\-d'' will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
 			count: 1
 			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
 

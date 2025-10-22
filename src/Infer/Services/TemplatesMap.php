@@ -15,6 +15,7 @@ class TemplatesMap
 {
     private const ARGUMENTS = 'Arguments';
 
+    /** @var array<string, Type> */
     public array $additional = [];
 
     /**

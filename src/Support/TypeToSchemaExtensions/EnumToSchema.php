@@ -16,6 +16,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use ReflectionEnum;
 use ReflectionEnumBackedCase;
+use ReflectionEnumUnitCase;
 
 class EnumToSchema extends TypeToSchemaExtension
 {
@@ -112,6 +113,7 @@ class EnumToSchema extends TypeToSchemaExtension
 
     protected function addEnumNames(ObjectType $type, OpenApi\Type $schemaType): void
     {
+        /** @var 'name'|'varnames'|null $enumNameStrategy */
         $enumNameStrategy = config('scramble.enum_cases_names_strategy');
 
         if (! $enumNameStrategy) {
@@ -121,6 +123,7 @@ class EnumToSchema extends TypeToSchemaExtension
         $enumReflection = new ReflectionEnum($type->name); // @phpstan-ignore argument.type
 
         $nameCases = collect($enumReflection->getCases())
+            ->filter(fn (ReflectionEnumUnitCase $case) => $case instanceof ReflectionEnumBackedCase)
             ->keyBy(fn (ReflectionEnumBackedCase $case): int|string => $case->getBackingValue())
             ->map(fn (ReflectionEnumBackedCase $case) => $case->getName());
 
@@ -160,6 +163,7 @@ class EnumToSchema extends TypeToSchemaExtension
 
     /**
      * @param  'name'|'varnames'  $strategy
+     * @param  Collection<int|string, string>  $cases
      */
     protected function handleEnumNames(OpenApi\Type $schema, Collection $cases, string $strategy): void
     {
