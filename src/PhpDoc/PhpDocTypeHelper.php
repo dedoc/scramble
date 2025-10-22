@@ -44,11 +44,11 @@ class PhpDocTypeHelper
     public static function toType(TypeNode $type)
     {
         if ($type instanceof GenericTypeNode && $type->type->name === 'int') {
-            return static::handleGenericInteger($type->genericTypes);
+            return self::handleGenericInteger($type->genericTypes);
         }
 
         if ($type instanceof IdentifierTypeNode) {
-            return static::handleIdentifierNode($type);
+            return self::handleIdentifierNode($type);
         }
 
         if ($type instanceof ArrayShapeNode) {
@@ -221,7 +221,7 @@ class PhpDocTypeHelper
     }
 
     /**
-     * @param  list<\PHPStan\PhpDocParser\Ast\Type\TypeNode>  $genericTypes
+     * @param  TypeNode[]  $genericTypes
      */
     private static function handleGenericInteger(array $genericTypes): IntegerType
     {
@@ -254,12 +254,12 @@ class PhpDocTypeHelper
         }
 
         $min = match (true) {
-            $genericTypes[0] instanceof ConstTypeNode => $genericTypes[0]->constExpr->value,
+            $genericTypes[0] instanceof ConstTypeNode => $genericTypes[0]->constExpr->value, // @phpstan-ignore property.notFound
             $genericTypes[0] instanceof IdentifierTypeNode => null,
         };
 
         $max = match (true) {
-            $genericTypes[1] instanceof ConstTypeNode => $genericTypes[1]->constExpr->value,
+            $genericTypes[1] instanceof ConstTypeNode => $genericTypes[1]->constExpr->value, // @phpstan-ignore property.notFound
             $genericTypes[1] instanceof IdentifierTypeNode => null,
         };
 
