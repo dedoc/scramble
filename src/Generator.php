@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Closure;
 use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
 use Dedoc\Scramble\Contracts\DocumentTransformer;
@@ -60,8 +61,8 @@ class Generator
                 try {
                     $operation = $this->routeToOperation($openApi, $route, $config, $typeTransformer);
 
-                    if (! $operation) {
-                        return null;
+                    if ($route->getAction('uses') instanceof Closure) {
+                        $operation->setAttribute('isClosure', true);
                     }
 
                     $operation->setAttribute('index', $index);
@@ -75,7 +76,7 @@ class Generator
                     if (config('app.debug', false)) {
                         $method = $route->methods()[0];
                         $action = $route->getAction('uses');
-                        if ($action instanceof \Closure) {
+                        if ($action instanceof Closure) {
                             $action = '{closure}';
                         }
 
@@ -86,7 +87,7 @@ class Generator
                     throw $e;
                 }
             })
-            ->filter() // Closure based routes are filtered out for now, right here
+            ->filter()
             ->sortBy($this->createOperationsSorter())
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
@@ -313,6 +314,10 @@ class Generator
             }
 
             $name = $operation->getAttribute('operationId');
+
+            if (! $name->eloquent && $operation->getAttribute('isClosure')) {
+                return;
+            }
 
             $operation->setOperationId($names->getUniqueName($name, function (string $fallback) use ($index) { // @phpstan-ignore argument.type
                 return "{$fallback}_{$index}";
