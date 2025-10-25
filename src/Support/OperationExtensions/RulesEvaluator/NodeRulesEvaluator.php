@@ -3,10 +3,15 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Optional;
 use PhpParser\ConstExprEvaluator;
 use PhpParser\Node;
+use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\FunctionLike;
+use PhpParser\Node\Stmt;
+use PhpParser\NodeFinder;
 use PhpParser\PrettyPrinter;
 use stdClass;
 
@@ -16,6 +21,7 @@ class NodeRulesEvaluator implements RulesEvaluator
         private PrettyPrinter $printer,
         private FunctionLike $functionLikeNode,
         private ?Node $rulesNode,
+        private Route $route,
         private ?string $className,
     ) {}
 
@@ -52,7 +58,10 @@ class NodeRulesEvaluator implements RulesEvaluator
             })
             ->all();
 
-        $rules = (new ConstExprEvaluator(function ($expr) use ($injectableParams) {
+        $variableNames = $this->collectVariableNames($injectableParams);
+        $injectableVariables = $this->evaluateVariableAssigment($variableNames, $injectableParams);
+
+        $rules = (new ConstExprEvaluator(function ($expr) use ($injectableParams, $injectableVariables) {
             $default = new stdClass;
 
             $evaluatedConstFetch = (new ConstFetchEvaluator([
@@ -66,10 +75,16 @@ class NodeRulesEvaluator implements RulesEvaluator
 
             $code = $this->printer->prettyPrint([$expr]);
 
+            extract($injectableVariables);
             extract($injectableParams);
+            $request = request();
+
+            if (method_exists($request, 'setMethod')) {
+                $request->setMethod($this->route->methods()[0]);
+            }
 
             try {
-                return eval("\$request = request(); return $code;");
+                return eval("return $code;");
             } catch (\Throwable $e) {
                 // @todo communicate error
             }
@@ -90,5 +105,44 @@ class NodeRulesEvaluator implements RulesEvaluator
         }
 
         return $rules;
+    }
+
+    private function collectVariableNames(array $excludeVariables = []): array
+    {
+        return collect((new NodeFinder)
+            ->find($this->rulesNode, function ($n) {
+                return $n instanceof Variable && is_string($n->name);
+            }))
+            ->filter(fn (Variable $variable) => ! array_key_exists($variable->name, $excludeVariables))
+            ->unique(fn (Variable $variable) => $variable->name)
+            ->map(fn (Variable $variable) => $variable->name)
+            ->all();
+    }
+
+    private function evaluateVariableAssigment(array $variables, array $predefinedVariables = []): array
+    {
+        if (empty($variables)) {
+            return [];
+        }
+
+        return collect($this->functionLikeNode->getStmts())
+            ->filter(fn (Stmt $stmt) => $stmt->expr instanceof Assign)
+            ->filter(fn (Stmt $stmt) => isset($stmt->expr->var->name) && in_array($stmt->expr->var->name, $variables))
+            ->flatMap(function (Stmt $stmt) use ($predefinedVariables) {
+                try {
+                    $code = $this->printer->prettyPrint([$stmt->expr]);
+                    extract($predefinedVariables);
+                    $request = request();
+
+                    if (method_exists($request, 'setMethod')) {
+                        $request->setMethod($this->route->methods()[0]);
+                    }
+
+                    return [$stmt->expr->var->name => eval("return $code;")];
+                } catch (\Throwable $e) {
+                    // @todo communicate error
+                }
+            })
+            ->all();
     }
 }
