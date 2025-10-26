@@ -15,5 +15,13 @@ class Endpoint
          * Assigns an OperationID to a controller method.
          */
         public readonly ?string $operationId = null,
+        /**
+         * Sets the title (summary) of the endpoint.
+         */
+        public readonly ?string $title = null,
+        /**
+         * Sets the description of the endpoint.
+         */
+        public readonly ?string $description = null,
     ) {}
 }
