@@ -17,6 +17,7 @@ use Dedoc\Scramble\Support\Generator\Path;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Server;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Generator\UniqueNameOptions;
 use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\RouteInfo;
@@ -314,12 +315,15 @@ class Generator
             }
 
             $name = $operation->getAttribute('operationId');
+            if (! $name instanceof UniqueNameOptions) {
+                return;
+            }
 
             if (! $name->eloquent && $operation->getAttribute('isClosure')) {
                 return;
             }
 
-            $operation->setOperationId($names->getUniqueName($name, function (string $fallback) use ($index) { // @phpstan-ignore argument.type
+            $operation->setOperationId($names->getUniqueName($name, function (string $fallback) use ($index) {
                 return "{$fallback}_{$index}";
             }));
         });
