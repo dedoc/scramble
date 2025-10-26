@@ -156,7 +156,7 @@ class RouteInfo
         return (new RouteResponseTypeRetriever($this))->getResponseType();
     }
 
-    protected function getActionReflector(): MethodReflector|ClosureReflector
+    public function getActionReflector(): MethodReflector|ClosureReflector
     {
         if ($this->isClassBased()) {
             return MethodReflector::make(...explode('@', $this->route->getAction('uses')));
