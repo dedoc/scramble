@@ -78,10 +78,7 @@ class NodeRulesEvaluator implements RulesEvaluator
             extract($injectableVariables);
             extract($injectableParams);
             $request = request();
-
-            if (method_exists($request, 'setMethod')) {
-                $request->setMethod($this->route->methods()[0]);
-            }
+            $request->setMethod($this->route->methods()[0]);
 
             try {
                 return eval("return $code;");
@@ -107,18 +104,41 @@ class NodeRulesEvaluator implements RulesEvaluator
         return $rules;
     }
 
+    /**
+     * @param  array<string, mixed>  $excludeVariables
+     * @return array<string>
+     */
     private function collectVariableNames(array $excludeVariables = []): array
     {
-        return collect((new NodeFinder)
-            ->find($this->rulesNode, function ($n) {
-                return $n instanceof Variable && is_string($n->name);
-            }))
-            ->filter(fn (Variable $variable) => ! array_key_exists($variable->name, $excludeVariables))
-            ->unique(fn (Variable $variable) => $variable->name)
-            ->map(fn (Variable $variable) => $variable->name)
-            ->all();
+        if (! $this->rulesNode) {
+            return [];
+        }
+
+        $finder = new NodeFinder;
+        $seen = [];
+        /** @var array<Variable> $vars */
+        $vars = $finder->findInstanceOf($this->rulesNode, Variable::class);
+
+        foreach ($vars as $var) {
+            if (! is_string($var->name)) {
+                continue;
+            }
+
+            if (array_key_exists($var->name, $excludeVariables)) {
+                continue;
+            }
+
+            $seen[$var->name] = true;
+        }
+
+        return array_keys($seen);
     }
 
+    /**
+     * @param  array<string>  $variables
+     * @param  array<string, mixed>  $predefinedVariables
+     * @return array<string, mixed>
+     */
     private function evaluateVariableAssigment(array $variables, array $predefinedVariables = []): array
     {
         if (empty($variables)) {
@@ -126,17 +146,14 @@ class NodeRulesEvaluator implements RulesEvaluator
         }
 
         return collect($this->functionLikeNode->getStmts())
-            ->filter(fn (Stmt $stmt) => $stmt->expr instanceof Assign)
+            ->filter(fn (Stmt $stmt) => property_exists($stmt, 'expr') && $stmt->expr instanceof Assign)
             ->filter(fn (Stmt $stmt) => isset($stmt->expr->var->name) && in_array($stmt->expr->var->name, $variables))
             ->flatMap(function (Stmt $stmt) use ($predefinedVariables) {
                 try {
                     $code = $this->printer->prettyPrint([$stmt->expr]);
                     extract($predefinedVariables);
                     $request = request();
-
-                    if (method_exists($request, 'setMethod')) {
-                        $request->setMethod($this->route->methods()[0]);
-                    }
+                    $request->setMethod($this->route->methods()[0]);
 
                     return [$stmt->expr->var->name => eval("return $code;")];
                 } catch (\Throwable $e) {

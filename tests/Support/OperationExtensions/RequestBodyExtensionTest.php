@@ -750,10 +750,10 @@ it('document request body use the HTTP method', function (string $httpMethod, ar
             'bar' => [
                 'type' => 'string',
             ],
-        ]
+        ],
     ];
 
-    if (!empty($required)) {
+    if (! empty($required)) {
         $result['required'] = $required;
     }
 
@@ -761,7 +761,7 @@ it('document request body use the HTTP method', function (string $httpMethod, ar
         ->toBe($result);
 })->with([
     ['put', ['foo', 'bar']],
-    ['patch', []]
+    ['patch', []],
 ]);
 
 class RequestBodyExtensionTest_UseHttpMethodsWithValidationRulesController
