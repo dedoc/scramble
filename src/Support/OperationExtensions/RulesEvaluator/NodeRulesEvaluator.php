@@ -31,10 +31,9 @@ class NodeRulesEvaluator implements RulesEvaluator
             return [];
         }
 
-        $parameters = $this->evaluateParameters();
-        $variables = $this->evaluateVariables($parameters);
+        $vars = $this->evaluateDefinedVars();
 
-        $rules = $this->evaluateExpression($this->rulesNode, array_merge($variables, $parameters)) ?? [];
+        $rules = $this->evaluateExpression($this->rulesNode, $vars) ?? [];
 
         foreach ($rules as &$item) {
             if (is_string($item)) {
@@ -49,6 +48,18 @@ class NodeRulesEvaluator implements RulesEvaluator
         }
 
         return $rules;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function evaluateDefinedVars(): array
+    {
+        $parameters = $this->evaluateParameters();
+
+        $variables = $this->evaluateVariables($parameters);
+
+        return array_merge($variables, $parameters);
     }
 
     /**
