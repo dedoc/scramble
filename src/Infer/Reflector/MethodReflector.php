@@ -34,6 +34,11 @@ class MethodReflector
         );
     }
 
+    public function getNameContext(): NameContext
+    {
+        return $this->getClassReflector()->getNameContext();
+    }
+
     public function getMethodCode(): string
     {
         $reflection = $this->getReflection();

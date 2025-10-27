@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble;
 
+use Closure;
 use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
 use Dedoc\Scramble\Contracts\DocumentTransformer;
@@ -16,6 +17,7 @@ use Dedoc\Scramble\Support\Generator\Path;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Server;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Generator\UniqueNameOptions;
 use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\RouteInfo;
@@ -60,8 +62,8 @@ class Generator
                 try {
                     $operation = $this->routeToOperation($openApi, $route, $config, $typeTransformer);
 
-                    if (! $operation) {
-                        return null;
+                    if ($route->getAction('uses') instanceof Closure) {
+                        $operation->setAttribute('isClosure', true);
                     }
 
                     $operation->setAttribute('index', $index);
@@ -75,7 +77,7 @@ class Generator
                     if (config('app.debug', false)) {
                         $method = $route->methods()[0];
                         $action = $route->getAction('uses');
-                        if ($action instanceof \Closure) {
+                        if ($action instanceof Closure) {
                             $action = '{closure}';
                         }
 
@@ -86,7 +88,7 @@ class Generator
                     throw $e;
                 }
             })
-            ->filter() // Closure based routes are filtered out for now, right here
+            ->filter()
             ->sortBy($this->createOperationsSorter())
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
@@ -313,8 +315,15 @@ class Generator
             }
 
             $name = $operation->getAttribute('operationId');
+            if (! $name instanceof UniqueNameOptions) {
+                return;
+            }
 
-            $operation->setOperationId($names->getUniqueName($name, function (string $fallback) use ($index) { // @phpstan-ignore argument.type
+            if (! $name->eloquent && $operation->getAttribute('isClosure')) {
+                return;
+            }
+
+            $operation->setOperationId($names->getUniqueName($name, function (string $fallback) use ($index) {
                 return "{$fallback}_{$index}";
             }));
         });
