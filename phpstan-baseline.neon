@@ -3850,12 +3850,6 @@ parameters:
 			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
 
 		-
-			message: '#^Parameter \#1 \$expr of method PhpParser\\ConstExprEvaluator\:\:evaluateDirectly\(\) expects PhpParser\\Node\\Expr, PhpParser\\Node given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
-
-		-
 			message: '#^Possibly invalid array key type PhpParser\\Node\\Expr\|string\.$#'
 			identifier: array.invalidKey
 			count: 2
