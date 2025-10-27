@@ -128,7 +128,7 @@ class NodeRulesEvaluator implements RulesEvaluator
     }
 
     /**
-     * @param array<string, mixed> $variables
+     * @param  array<string, mixed>  $variables
      */
     private function evaluateExpression(?Node\Expr $expression, array $variables): mixed
     {
