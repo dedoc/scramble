@@ -319,7 +319,7 @@ it('handles collection keys call', function () {
 it('handles class definition logic when class is alias and mixin', function () {
     Scramble::infer()->configure()->buildDefinitionsUsingReflectionFor([
         'TheAliasForAliased_IndexTest',
-        Aliased_IndexTest::class
+        Aliased_IndexTest::class,
     ]);
 
     $def = $this->index
@@ -333,9 +333,6 @@ it('handles class definition logic when class is alias and mixin', function () {
  */
 class Aliased_IndexTest
 {
-    public function count()
-    {
-
-    }
+    public function count() {}
 }
 class_alias(Aliased_IndexTest::class, 'TheAliasForAliased_IndexTest');
