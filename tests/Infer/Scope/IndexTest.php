@@ -315,3 +315,27 @@ it('handles collection keys call', function () {
 
     expect($type->toString())->toBe('Illuminate\Support\Collection<string(foo), string(bar)>');
 });
+
+it('handles class definition logic when class is alias and mixin', function () {
+    Scramble::infer()->configure()->buildDefinitionsUsingReflectionFor([
+        'TheAliasForAliased_IndexTest',
+        Aliased_IndexTest::class
+    ]);
+
+    $def = $this->index
+        ->getClass(Aliased_IndexTest::class)
+        ->getMethod('count');
+
+    expect($def)->not->toBeNull();
+});
+/**
+ * @mixin \TheAliasForAliased_IndexTest
+ */
+class Aliased_IndexTest
+{
+    public function count()
+    {
+
+    }
+}
+class_alias(Aliased_IndexTest::class, 'TheAliasForAliased_IndexTest');

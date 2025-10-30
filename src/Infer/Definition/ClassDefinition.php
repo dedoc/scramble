@@ -24,6 +24,7 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use PhpParser\ErrorHandler\Throwing;
@@ -323,6 +324,10 @@ class ClassDefinition implements ClassDefinitionContract
     {
         if (isset($this->classContexts)) {
             return $this->classContexts;
+        }
+
+        if (in_array($this->name, $ignoreClasses, true)) {
+            return collect();
         }
 
         $reflector = ClassReflector::make($this->name);
