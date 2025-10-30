@@ -17,7 +17,7 @@ class ObjectType extends AbstractType
         public string $name,
     ) {}
 
-    public function isInstanceOf(string $className)
+    public function isInstanceOf(string $className): bool
     {
         if ($this->name === 'iterable' && $className === 'iterable') {
             return true;
