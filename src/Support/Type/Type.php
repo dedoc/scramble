@@ -25,7 +25,7 @@ interface Type
      */
     public function mergeAttributes(array $attributes): static;
 
-    public function isInstanceOf(string $className);
+    public function isInstanceOf(string $className): bool;
 
     public function accepts(Type $otherType): bool;
 

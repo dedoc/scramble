@@ -30,7 +30,7 @@ abstract class AbstractType implements Type
         return [];
     }
 
-    public function isInstanceOf(string $className)
+    public function isInstanceOf(string $className): bool
     {
         return false;
     }

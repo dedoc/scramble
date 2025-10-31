@@ -4420,12 +4420,6 @@ parameters:
 			path: src/Support/ServerFactory.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\AbstractType\:\:isInstanceOf\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/AbstractType.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\ArrayItemType_\:\:isNumericKey\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -4486,22 +4480,10 @@ parameters:
 			path: src/Support/Type/ObjectType.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\ObjectType\:\:isInstanceOf\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/ObjectType.php
-
-		-
 			message: '#^Call to function is_string\(\) with Dedoc\\Scramble\\Support\\Type\\Type will always evaluate to false\.$#'
 			identifier: function.impossibleType
 			count: 1
 			path: src/Support/Type/Reference/CallableCallReferenceType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Reference\\NewCallReferenceType\:\:isInstanceOf\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/Reference/NewCallReferenceType.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Reference\\StaticReference\:\:isParent\(\) has no return type specified\.$#'
@@ -4528,19 +4510,7 @@ parameters:
 			path: src/Support/Type/Reference/StaticReference.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\TemplateType\:\:isInstanceOf\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/TemplateType.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Type\:\:getAttribute\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/Type.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\Type\:\:isInstanceOf\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
 			path: src/Support/Type/Type.php

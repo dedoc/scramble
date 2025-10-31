@@ -17,7 +17,7 @@ class NewCallReferenceType extends AbstractReferenceType
         return ['arguments'];
     }
 
-    public function isInstanceOf(string $className)
+    public function isInstanceOf(string $className): bool
     {
         return is_string($this->name) && is_a($this->name, $className, true);
     }
