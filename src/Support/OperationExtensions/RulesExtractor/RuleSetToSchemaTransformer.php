@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
+use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -63,6 +64,10 @@ class RuleSetToSchemaTransformer
         return $rules->reduce(function (OpenApiType $type, $rule) {
             if (is_string($rule)) {
                 return $this->transformStringRuleToSchema($type, $rule);
+            }
+
+            if ($rule instanceof DocumentableRule) {
+                return $rule->toSchema($type, RuleTransformerContext::class);
             }
 
             return method_exists($rule, 'docs')
