@@ -12,6 +12,7 @@ use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
 
 class ModelToSchema extends TypeToSchemaExtension
@@ -28,7 +29,13 @@ class ModelToSchema extends TypeToSchemaExtension
     public function shouldHandle(Type $type)
     {
         return $type instanceof ObjectType
-            && $type->isInstanceOf(Model::class)
+            && (
+                (
+                    $type->isInstanceOf(Arrayable::class)
+                    && (stripos($type->name, '\\Models\\') !== false)
+                )
+                || $type->isInstanceOf(Model::class)
+            )
             && $type->name !== Model::class;
     }
 

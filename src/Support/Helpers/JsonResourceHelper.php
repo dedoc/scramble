@@ -31,7 +31,13 @@ class JsonResourceHelper
         );
 
         $modelType = new UnknownType("Cannot resolve [$modelClass] model type.");
-        if ($modelClass && is_a($modelClass, Model::class, true)) {
+        if (
+            $modelClass
+            && (
+                (stripos($modelClass, '\\Models\\') !== false)
+                || is_a($modelClass, Model::class, true)
+            )
+        ) {
             $modelType = new ObjectType($modelClass);
         }
 
