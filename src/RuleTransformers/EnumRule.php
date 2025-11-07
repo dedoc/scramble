@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\RuleMappers;
+namespace Dedoc\Scramble\RuleTransformers;
 
 use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Contracts\RuleTransformer;

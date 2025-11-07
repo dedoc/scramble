@@ -3,9 +3,13 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
 use Dedoc\Scramble\Contexts\RuleTransformerContext;
+use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
+use Dedoc\Scramble\Contracts\RuleTransformer;
+use Dedoc\Scramble\Support\ContainerUtils;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\NormalizedRule;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -37,6 +41,7 @@ class RuleSetToSchemaTransformer
 
     public function __construct(
         private TypeTransformer $openApiTransformer,
+        private RuleTransformerContext $context,
     ) {}
 
     /**
@@ -61,7 +66,11 @@ class RuleSetToSchemaTransformer
      */
     protected function transformToSchema(Collection $rules, OpenApiType $initialType): OpenApiType
     {
-        return $rules->reduce(function (OpenApiType $type, $rule) {
+        return $rules->reduce(function (OpenApiType $type, $rule) use ($rules) {
+            if ($schema = $this->handledUsingExtension($rules, $rule, $type)) {
+                return $schema;
+            }
+
             if (is_string($rule)) {
                 return $this->transformStringRuleToSchema($type, $rule);
             }
@@ -74,6 +83,46 @@ class RuleSetToSchemaTransformer
                 ? $rule->docs($type, $this->openApiTransformer)
                 : $this->transformRuleValueToSchema($type, $rule);
         }, $initialType);
+    }
+
+    /**
+     * @param  Collection<int, Rule>  $rules
+     */
+    protected function handledUsingExtension(Collection $rules, string|object $rule, OpenApiType $type): ?OpenApiType
+    {
+        $normalizedRule = $this->normalizeRule($rule);
+
+        $extensions = collect($this->context->config->ruleTransformers->all())
+            ->filter(fn ($ruleTransformerClass) => is_a($ruleTransformerClass, RuleTransformer::class, true))
+            ->map(fn ($ruleTransformerClass) => ContainerUtils::makeContextable($ruleTransformerClass, [
+                TypeTransformer::class => $this->openApiTransformer,
+            ]))
+            ->filter(fn (RuleTransformer $ruleTransformer) => $ruleTransformer->shouldHandle($normalizedRule))
+            ->values();
+
+        if ($extensions->isEmpty()) {
+            return null;
+        }
+
+        $context = $this->context->withFieldRules($rules);
+
+        return $extensions->reduce(function (OpenApiType $type, RuleTransformer $transformer) use ($normalizedRule, $context) {
+            return $transformer->toSchema($type, $normalizedRule, $context);
+        }, $type);
+    }
+
+    protected function normalizeRule(string|object $rule): NormalizedRule
+    {
+        if (is_string($rule)) {
+            $explodedRule = explode(':', $rule, 2);
+
+            $ruleName = $explodedRule[0];
+            $params = isset($explodedRule[1]) ? explode(',', $explodedRule[1]) : [];
+
+            return new NormalizedRule($ruleName, $params);
+        }
+
+        return new NormalizedRule($rule);
     }
 
     protected function transformStringRuleToSchema(OpenApiType $type, string $rule): OpenApiType

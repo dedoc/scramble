@@ -6,6 +6,7 @@ use Closure;
 use Dedoc\Scramble\Configuration\DocumentTransformers;
 use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Configuration\ParametersExtractors;
+use Dedoc\Scramble\Configuration\RuleTransformers;
 use Dedoc\Scramble\Configuration\ServerVariables;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Illuminate\Routing\Route;
@@ -33,6 +34,7 @@ class GeneratorConfig
         public readonly ParametersExtractors $parametersExtractors = new ParametersExtractors,
         public readonly OperationTransformers $operationTransformers = new OperationTransformers,
         public readonly DocumentTransformers $documentTransformers = new DocumentTransformers,
+        public readonly RuleTransformers $ruleTransformers = new RuleTransformers,
         public readonly ServerVariables $serverVariables = new ServerVariables,
     ) {}
 

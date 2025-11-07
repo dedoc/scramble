@@ -26,9 +26,19 @@ class ContainerUtils
                     ? $p->getType()->getName()
                     : null;
 
-                return $parameterClass && isset($contextfulBindings[$parameterClass]) ? [
-                    $p->name => $contextfulBindings[$parameterClass],
-                ] : [];
+                $missingValue = new \stdClass();
+
+                $parameterValue = ($parameterClass ? $contextfulBindings[$parameterClass] ?? null : null)
+                    ?? $contextfulBindings[$p->name]
+                    ?? $missingValue;
+
+                if ($parameterValue === $missingValue) {
+                    return [];
+                }
+
+                return [
+                    $p->name => $parameterValue,
+                ];
             })
             ->all();
 

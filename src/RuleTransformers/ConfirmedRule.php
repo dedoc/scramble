@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\RuleMappers;
+namespace Dedoc\Scramble\RuleTransformers;
 
 use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
@@ -11,9 +11,7 @@ class ConfirmedRule implements AllRulesSchemasTransformer
 {
     public function __construct(
         private RuleSetToSchemaTransformer $rulesToSchemaTransformer,
-    )
-    {
-    }
+    ) {}
 
     public function shouldHandle(NormalizedRule $rule): bool
     {
@@ -24,7 +22,7 @@ class ConfirmedRule implements AllRulesSchemasTransformer
     {
         $schemas->set(
             "{$context->field}_confirmation",
-            $this->rulesToSchemaTransformer->transform(array_filter($context->fieldRules, fn ($rule) => $rule !== 'confirmed')),
+            $this->rulesToSchemaTransformer->transform($context->fieldRules->filter(fn ($r) => $r !== 'confirmed')->all()),
         );
     }
 }

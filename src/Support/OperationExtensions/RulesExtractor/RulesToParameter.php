@@ -2,7 +2,11 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
+use Dedoc\Scramble\Contexts\RuleTransformerContext;
+use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
+use Dedoc\Scramble\Support\ContainerUtils;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
@@ -30,7 +34,17 @@ class RulesToParameter
             return null;
         }
 
-        $type = (new RuleSetToSchemaTransformer($this->openApiTransformer))->transform($this->rules);
+        $context = ContainerUtils::makeContextable(RuleTransformerContext::class, [
+            'field' => $this->name,
+            'rules' => $this->rules,
+            OpenApi::class => $this->openApiTransformer->context->openApi,
+            GeneratorConfig::class => $this->openApiTransformer->context->config,
+        ]);
+
+        $type = (new RuleSetToSchemaTransformer(
+            $this->openApiTransformer,
+            $context,
+        ))->transform($this->rules);
 
         $description = $type->description;
         $type->setDescription('');
