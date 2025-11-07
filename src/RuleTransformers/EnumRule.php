@@ -43,9 +43,9 @@ class EnumRule implements RuleTransformer
     }
 
     /**
-     * @param class-string<object> $enumName
-     * @param (string|int)[] $only
-     * @param (string|int)[] $except
+     * @param  class-string<object>  $enumName
+     * @param  (string|int)[]  $only
+     * @param  (string|int)[]  $except
      */
     private function createPartialEnum(string $enumName, array $only, array $except): Schema
     {

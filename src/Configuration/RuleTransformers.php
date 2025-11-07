@@ -5,13 +5,6 @@ namespace Dedoc\Scramble\Configuration;
 use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\RuleTransformers\EnumRule;
-use Dedoc\Scramble\RuleTransformers\InRule;
-use Dedoc\Scramble\Support\OperationExtensions\DeprecationExtension;
-use Dedoc\Scramble\Support\OperationExtensions\ErrorResponsesExtension;
-use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
-use Dedoc\Scramble\Support\OperationExtensions\RequestEssentialsExtension;
-use Dedoc\Scramble\Support\OperationExtensions\ResponseExtension;
-use Dedoc\Scramble\Support\OperationExtensions\ResponseHeadersExtension;
 use Illuminate\Support\Arr;
 
 class RuleTransformers

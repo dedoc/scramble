@@ -4,9 +4,6 @@ namespace Dedoc\Scramble\Contexts;
 
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Support\Generator\OpenApi;
-use Dedoc\Scramble\Support\Generator\Operation;
-use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesMapper;
 use Illuminate\Support\Collection;
 
 class RuleTransformerContext
@@ -19,9 +16,7 @@ class RuleTransformerContext
     ) {}
 
     /**
-     * @param Collection<int, Rule> $fieldRules
-     *
-     * @return static
+     * @param  Collection<int, Rule>  $fieldRules
      */
     public function withFieldRules(Collection $fieldRules): static
     {
