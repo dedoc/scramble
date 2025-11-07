@@ -8,8 +8,8 @@ namespace Dedoc\Scramble\Support;
 class NormalizedRule
 {
     /**
-     * @param TRule $rule
-     * @param list<mixed> $parameters
+     * @param  TRule  $rule
+     * @param  list<mixed>  $parameters
      */
     public function __construct(
         public readonly string|object $rule,
@@ -18,7 +18,8 @@ class NormalizedRule
 
     /**
      * @template TRuleParam
-     * @param TRuleParam $rule
+     *
+     * @param  TRuleParam  $rule
      * @return self<TRuleParam>
      */
     public static function fromValue(string|object $rule): self

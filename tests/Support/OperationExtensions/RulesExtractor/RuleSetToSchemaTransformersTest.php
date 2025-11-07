@@ -45,7 +45,7 @@ describe(EnumRule::class, function () {
         $rules = [
             Rule::enum(Enum_RuleSetToSchemaTransformerTest::class)->only([
                 Enum_RuleSetToSchemaTransformerTest::FOO,
-            ])
+            ]),
         ];
 
         $schema = $this->transformer->transform($rules);
@@ -61,7 +61,7 @@ describe(EnumRule::class, function () {
         $rules = [
             Rule::enum(Enum_RuleSetToSchemaTransformerTest::class)->except([
                 Enum_RuleSetToSchemaTransformerTest::FOO,
-            ])
+            ]),
         ];
 
         $schema = $this->transformer->transform($rules);
