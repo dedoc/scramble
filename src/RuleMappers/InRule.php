@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\RuleMappers;
 
-use Dedoc\Scramble\Contexts\RuleMappingContext;
+use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Support\Generator\Types\Type as Schema;
 use Dedoc\Scramble\Support\NormalizedRule;
@@ -15,7 +15,7 @@ class InRule implements RuleTransformer
         return $rule->is('in');
     }
 
-    public function toSchema(Schema $previous, NormalizedRule $rule, RuleMappingContext $context): Schema
+    public function toSchema(Schema $previous, NormalizedRule $rule, RuleTransformerContext $context): Schema
     {
         return $previous->enum(
             collect($rule->parameters)

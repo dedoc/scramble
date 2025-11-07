@@ -9,7 +9,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesMapper;
 use Illuminate\Support\Collection;
 
-class RuleMappingContext
+class RuleTransformerContext
 {
     public function __construct(
         public readonly string $field,

@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
-use Dedoc\Scramble\Contexts\RuleMappingContext;
+use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;

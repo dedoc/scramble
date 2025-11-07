@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\RuleMappers;
 
-use Dedoc\Scramble\Contexts\RuleMappingContext;
+use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
 use Dedoc\Scramble\Support\NormalizedRule;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RuleSetToSchemaTransformer;
@@ -20,7 +20,7 @@ class ConfirmedRule implements AllRulesSchemasTransformer
         return $rule->is('confirmed');
     }
 
-    public function transformAll(array $schemas, NormalizedRule $rule, RuleMappingContext $context): void
+    public function transformAll(array $schemas, NormalizedRule $rule, RuleTransformerContext $context): void
     {
         $schemas->set(
             "{$context->field}_confirmation",
