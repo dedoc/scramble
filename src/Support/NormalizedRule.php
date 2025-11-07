@@ -7,9 +7,7 @@ class NormalizedRule
     public function __construct(
         public readonly string|object $rule,
         public readonly array $parameters = [],
-    )
-    {
-    }
+    ) {}
 
     public function getRule(): object|string
     {
@@ -28,6 +26,6 @@ class NormalizedRule
 
     public function isInstanceOf(string $ruleClass): bool
     {
-        return !is_string($this->rule) && is_a(get_class($this->rule), $ruleClass, true);
+        return ! is_string($this->rule) && is_a(get_class($this->rule), $ruleClass, true);
     }
 }
