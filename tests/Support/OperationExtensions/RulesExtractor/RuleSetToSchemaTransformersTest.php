@@ -5,6 +5,8 @@ namespace Dedoc\Scramble\Tests\Support\OperationExtensions\RulesExtractor;
 use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\RuleTransformers\EnumRule;
+use Dedoc\Scramble\RuleTransformers\InRule;
 use Dedoc\Scramble\Support\ContainerUtils;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -25,17 +27,65 @@ beforeEach(function () {
     );
 });
 
-test('enum rule', function () {
-    $rules = [Rule::enum(Enum_RuleSetToSchemaTransformerTest::class)];
+describe(EnumRule::class, function () {
+    test('enum rule', function () {
+        $rules = [Rule::enum(Enum_RuleSetToSchemaTransformerTest::class)];
 
-    $schema = $this->transformer->transform($rules);
+        $schema = $this->transformer->transform($rules);
 
-    expect($schema->toArray())->toBe(['$ref' => '#/components/schemas/Enum_RuleSetToSchemaTransformerTest'])
-        ->and($this->openApiTransformer->getComponents()->getSchema('Enum_RuleSetToSchemaTransformerTest')->toArray())
-        ->toBe([
-            'type' => 'string',
-            'enum' => ['foo', 'bar'],
-        ]);
+        expect($schema->toArray())->toBe(['$ref' => '#/components/schemas/Enum_RuleSetToSchemaTransformerTest'])
+            ->and($this->openApiTransformer->getComponents()->getSchema('Enum_RuleSetToSchemaTransformerTest')->toArray())
+            ->toBe([
+                'type' => 'string',
+                'enum' => ['foo', 'bar'],
+            ]);
+    });
+
+    test('enum rule with only', function () {
+        $rules = [
+            Rule::enum(Enum_RuleSetToSchemaTransformerTest::class)->only([
+                Enum_RuleSetToSchemaTransformerTest::FOO,
+            ])
+        ];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'string',
+                'enum' => ['foo'],
+            ]);
+    });
+
+    test('enum rule with except', function () {
+        $rules = [
+            Rule::enum(Enum_RuleSetToSchemaTransformerTest::class)->except([
+                Enum_RuleSetToSchemaTransformerTest::FOO,
+            ])
+        ];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'string',
+                'enum' => ['bar'],
+            ]);
+    });
+});
+
+describe(InRule::class, function () {
+    test('in rule', function () {
+        $rules = [Rule::in(['a', 'b'])];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'string',
+                'enum' => ['a', 'b'],
+            ]);
+    });
 });
 
 enum Enum_RuleSetToSchemaTransformerTest: string

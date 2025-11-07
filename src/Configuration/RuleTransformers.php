@@ -56,6 +56,7 @@ class RuleTransformers
     {
         $base = $this->transformers ?: [
             EnumRule::class,
+            InRule::class,
         ];
 
         return array_values(array_unique([

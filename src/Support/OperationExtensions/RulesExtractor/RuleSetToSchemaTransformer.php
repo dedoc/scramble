@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
 use Dedoc\Scramble\Contexts\RuleTransformerContext;
-use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Support\ContainerUtils;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
@@ -90,7 +89,7 @@ class RuleSetToSchemaTransformer
      */
     protected function handledUsingExtension(Collection $rules, string|object $rule, OpenApiType $type): ?OpenApiType
     {
-        $normalizedRule = $this->normalizeRule($rule);
+        $normalizedRule = NormalizedRule::fromValue($rule);
 
         $extensions = collect($this->context->config->ruleTransformers->all())
             ->filter(fn ($ruleTransformerClass) => is_a($ruleTransformerClass, RuleTransformer::class, true))
@@ -111,31 +110,16 @@ class RuleSetToSchemaTransformer
         }, $type);
     }
 
-    protected function normalizeRule(string|object $rule): NormalizedRule
-    {
-        if (is_string($rule)) {
-            $explodedRule = explode(':', $rule, 2);
-
-            $ruleName = $explodedRule[0];
-            $params = isset($explodedRule[1]) ? explode(',', $explodedRule[1]) : [];
-
-            return new NormalizedRule($ruleName, $params);
-        }
-
-        return new NormalizedRule($rule);
-    }
-
     protected function transformStringRuleToSchema(OpenApiType $type, string $rule): OpenApiType
     {
         $rulesHandler = new RulesMapper($this->openApiTransformer, $this);
 
-        $explodedRule = explode(':', $rule, 2);
+        $normalizedRule = NormalizedRule::fromValue($rule);
 
-        $ruleName = $explodedRule[0];
-        $params = isset($explodedRule[1]) ? explode(',', $explodedRule[1]) : [];
+        $ruleName = $normalizedRule->getRule();
 
         return method_exists($rulesHandler, $ruleName)
-            ? $rulesHandler->$ruleName($type, $params)
+            ? $rulesHandler->$ruleName($type, $normalizedRule->getParameters())
             : $type;
     }
 
