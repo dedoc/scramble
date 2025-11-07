@@ -1,11 +1,13 @@
 <?php
 
-namespace Dedoc\Scramble\RuleTransformers;
+namespace Dedoc\Scramble\RuleMappers;
 
+use Dedoc\Scramble\Contexts\RuleMappingContext;
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Support\Generator\Types\Type as Schema;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\NormalizedRule;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\Union;
@@ -17,14 +19,15 @@ class EnumRule implements RuleTransformer
         protected TypeTransformer $openApiTransformer,
     ) {}
 
-    public function shouldHandle(object $rule): bool
+    public function shouldHandle(NormalizedRule $rule): bool
     {
-        return $rule instanceof Enum;
+        return $rule->isInstanceOf(Enum::class);
     }
 
-    /** @param Enum $rule */
-    public function toSchema(Schema $previous, object $rule): Schema
+    public function toSchema(Schema $previous, NormalizedRule $rule, RuleMappingContext $context): Schema
     {
+        $rule = $rule->getRule();
+
         $enumName = $this->getProtectedValue($rule, 'type');
 
         $objectType = new ObjectType($enumName);
