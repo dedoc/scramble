@@ -49,6 +49,7 @@ use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\VoidType;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ArrayableToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\BinaryFileResponseToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
@@ -223,6 +224,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ResourceResponseTypeToSchema::class,
                     PaginatedResourceResponseTypeToSchema::class,
                     VoidTypeToSchema::class,
+                    ArrayableToSchema::class,
                 ], $typesToSchemaExtensions),
                 exceptionToResponseExtensionsClasses: $parameters['exceptionToResponseExtensions'] ?? array_merge([
                     ValidationExceptionToResponseExtension::class,

@@ -12,9 +12,9 @@ use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Contracts\Support\Arrayable;
 
-class ModelToSchema extends TypeToSchemaExtension
+class ArrayableToSchema extends TypeToSchemaExtension
 {
     public function __construct(
         Infer $infer,
@@ -28,8 +28,8 @@ class ModelToSchema extends TypeToSchemaExtension
     public function shouldHandle(Type $type)
     {
         return $type instanceof ObjectType
-            && $type->isInstanceOf(Model::class)
-            && $type->name !== Model::class;
+            && $type->isInstanceOf(Arrayable::class)
+            && $type->name !== Arrayable::class;
     }
 
     /**

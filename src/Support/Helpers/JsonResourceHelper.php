@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -34,8 +35,8 @@ class JsonResourceHelper
         if (
             $modelClass
             && (
-                (stripos($modelClass, '\\Models\\') !== false)
-                || is_a($modelClass, Model::class, true)
+                is_a($modelClass, Model::class, true)
+                || is_a($modelClass, Arrayable::class, true)
             )
         ) {
             $modelType = new ObjectType($modelClass);
