@@ -15,15 +15,12 @@ use Illuminate\Validation\Rule;
 
 beforeEach(function () {
     $this->openApiTransformer = app(TypeTransformer::class, [
-        'context' => new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig),
+        'context' => new OpenApiContext(new OpenApi('3.1.0'), $config = new GeneratorConfig),
     ]);
-    $context = ContainerUtils::makeContextable(RuleTransformerContext::class, [
-        'field' => 'foo',
-        OpenApi::class => $this->openApiTransformer->context->openApi,
-    ]);
+
     $this->transformer = new RuleSetToSchemaTransformer(
         $this->openApiTransformer,
-        $context,
+        $config->ruleTransformers,
     );
 });
 

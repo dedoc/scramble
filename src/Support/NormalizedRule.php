@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support;
 
+use Illuminate\Support\Collection;
+
 /**
  * @template TRule of string|object
  */
@@ -34,6 +36,15 @@ class NormalizedRule
         }
 
         return new NormalizedRule($rule);
+    }
+
+    /**
+     * @param RuleSet $ruleSet
+     * @return Collection<int, self>
+     */
+    public static function fromSet(mixed $ruleSet): Collection
+    {
+
     }
 
     /**

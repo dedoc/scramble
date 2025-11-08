@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
+use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
@@ -210,7 +211,7 @@ class RulesMapper
         return $this->date($type, $params);
     }
 
-    public function conditionalRules(Type $type, ConditionalRules $rule): Type
+    public function conditionalRules(Type $type, ConditionalRules $rule, RuleTransformerContext $context): Type
     {
         $ifRules = $rule->rules();
         $elseRules = $rule->defaultRules();
@@ -224,7 +225,7 @@ class RulesMapper
         $newTypes = [];
         foreach ($rules as $conditionRules) {
             foreach ($types as $type) {
-                $newTypes[] = $newT = $this->rulesToSchemaTransformer->transform($conditionRules, clone $type);
+                $newTypes[] = $newT = $this->rulesToSchemaTransformer->transform($conditionRules, clone $type, $context);
                 if (! $conditionRules) {
                     $newT->setAttribute('isEmptyRules', true);
                 }
