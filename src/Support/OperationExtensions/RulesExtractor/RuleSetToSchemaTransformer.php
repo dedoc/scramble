@@ -50,8 +50,7 @@ class RuleSetToSchemaTransformer
         mixed $rules,
         OpenApiType $initialType = new UnknownType,
         ?RuleTransformerContext $context = null,
-    ): OpenApiType
-    {
+    ): OpenApiType {
         $rules = self::normalizeAndPrioritizeRules($rules);
 
         $schema = $this->transformToSchema($rules, $initialType, $context);

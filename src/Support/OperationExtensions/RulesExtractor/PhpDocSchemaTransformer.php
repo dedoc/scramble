@@ -14,9 +14,7 @@ class PhpDocSchemaTransformer
 {
     public function __construct(
         private TypeTransformer $openApiTransformer,
-    )
-    {
-    }
+    ) {}
 
     public function transform(Schema $type, PhpDocNode $docNode): Schema
     {

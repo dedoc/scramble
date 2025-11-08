@@ -8,7 +8,6 @@ use Dedoc\Scramble\RuleTransformers\ConfirmedRule;
 use Dedoc\Scramble\RuleTransformers\EnumRule;
 use Dedoc\Scramble\RuleTransformers\InRule;
 use Dedoc\Scramble\Support\ContainerUtils;
-use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
@@ -49,8 +48,9 @@ class RuleTransformers
 
     /**
      * @template TExtensionType of object
-     * @param class-string<TExtensionType> $type
-     * @param array<string, mixed> $contextfulBindings
+     *
+     * @param  class-string<TExtensionType>  $type
+     * @param  array<string, mixed>  $contextfulBindings
      * @return Collection<int, TExtensionType>
      */
     public function instances(string $type, array $contextfulBindings): Collection

@@ -39,13 +39,10 @@ class NormalizedRule
     }
 
     /**
-     * @param RuleSet $ruleSet
+     * @param  RuleSet  $ruleSet
      * @return Collection<int, self>
      */
-    public static function fromSet(mixed $ruleSet): Collection
-    {
-
-    }
+    public static function fromSet(mixed $ruleSet): Collection {}
 
     /**
      * @return TRule

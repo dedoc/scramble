@@ -2,12 +2,10 @@
 
 namespace Dedoc\Scramble\Tests\Support\OperationExtensions\RulesExtractor;
 
-use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\RuleTransformers\EnumRule;
 use Dedoc\Scramble\RuleTransformers\InRule;
-use Dedoc\Scramble\Support\ContainerUtils;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RuleSetToSchemaTransformer;
