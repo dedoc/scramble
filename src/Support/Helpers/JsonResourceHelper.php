@@ -25,6 +25,7 @@ class JsonResourceHelper
             return $cachedModelType;
         }
 
+        /** @var string|null $modelClass */
         $modelClass = static::getModelName(
             $jsonClass->name,
             new \ReflectionClass($jsonClass->name),

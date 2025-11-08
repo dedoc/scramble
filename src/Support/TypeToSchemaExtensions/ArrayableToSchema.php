@@ -25,7 +25,7 @@ class ArrayableToSchema extends TypeToSchemaExtension
         parent::__construct($infer, $openApiTransformer, $components);
     }
 
-    public function shouldHandle(Type $type)
+    public function shouldHandle(Type $type): bool
     {
         return $type instanceof ObjectType
             && $type->isInstanceOf(Arrayable::class)
@@ -35,7 +35,7 @@ class ArrayableToSchema extends TypeToSchemaExtension
     /**
      * @param  ObjectType  $type
      */
-    public function toSchema(Type $type)
+    public function toSchema(Type $type): \Dedoc\Scramble\Support\Generator\Types\Type|\Dedoc\Scramble\Support\Generator\Types\UnknownType
     {
         $this->infer->analyzeClass($type->name);
 
@@ -47,7 +47,7 @@ class ArrayableToSchema extends TypeToSchemaExtension
     /**
      * @param  ObjectType  $type
      */
-    public function toResponse(Type $type)
+    public function toResponse(Type $type): Response|null
     {
         return Response::make(200)
             ->setDescription('`'.$this->openApiContext->references->schemas->uniqueName($type->name).'`')
@@ -57,7 +57,7 @@ class ArrayableToSchema extends TypeToSchemaExtension
             );
     }
 
-    public function reference(ObjectType $type)
+    public function reference(ObjectType $type): \Dedoc\Scramble\Support\Generator\Reference
     {
         return ClassBasedReference::create('schemas', $type->name, $this->components);
     }
