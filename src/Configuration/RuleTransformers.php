@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Configuration;
 use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\RuleTransformers\EnumRule;
+use Dedoc\Scramble\RuleTransformers\InRule;
 use Illuminate\Support\Arr;
 
 class RuleTransformers

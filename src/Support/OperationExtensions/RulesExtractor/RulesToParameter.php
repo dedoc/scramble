@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiSchema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
 use Illuminate\Support\Str;
@@ -30,34 +31,37 @@ class RulesToParameter
 
     public function generate(): ?Parameter
     {
-        if (count($this->docNode?->getTagsByName('@ignoreParam') ?? [])) {
+        if ($this->shouldIgnoreParameter()) {
             return null;
         }
 
-        $context = ContainerUtils::makeContextable(RuleTransformerContext::class, [
-            'field' => $this->name,
-            'rules' => $this->rules,
-            OpenApi::class => $this->openApiTransformer->context->openApi,
-            GeneratorConfig::class => $this->openApiTransformer->context->config,
-        ]);
-
         $type = (new RuleSetToSchemaTransformer(
             $this->openApiTransformer,
-            $context,
+            $this->makeRuleTransformerContext(),
         ))->transform($this->rules);
 
-        $description = $type->description;
-        $type->setDescription('');
-
-        $parameter = Parameter::make($this->name, $this->in)
-            ->setSchema(Schema::fromType($type))
-            ->required((bool) $type->getAttribute('required', false))
-            ->description($description);
+        $parameter = $this->makeParameterFromSchema($type);
 
         return $this->applyDocsInfo($parameter);
     }
 
-    private function applyDocsInfo(Parameter $parameter)
+    public function shouldIgnoreParameter(): bool
+    {
+        return (bool) ($this->docNode?->getTagsByName('@ignoreParam') ?? []);
+    }
+
+    protected function makeParameterFromSchema(OpenApiSchema $schema): Parameter
+    {
+        $description = $schema->description;
+        $schema->setDescription('');
+
+        return Parameter::make($this->name, $this->in)
+            ->setSchema(Schema::fromType($schema))
+            ->required((bool) $schema->getAttribute('required', false))
+            ->description($description);
+    }
+
+    private function applyDocsInfo(Parameter $parameter): Parameter
     {
         if (! $this->docNode) {
             return $parameter;
@@ -98,5 +102,15 @@ class RulesToParameter
         }
 
         return $parameter;
+    }
+
+    private function makeRuleTransformerContext(): RuleTransformerContext
+    {
+        return ContainerUtils::makeContextable(RuleTransformerContext::class, [
+            'field' => $this->name,
+            'rules' => $this->rules,
+            OpenApi::class => $this->openApiTransformer->context->openApi,
+            GeneratorConfig::class => $this->openApiTransformer->context->config,
+        ]);
     }
 }

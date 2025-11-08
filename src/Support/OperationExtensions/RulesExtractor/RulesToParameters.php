@@ -6,6 +6,7 @@ use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\RulesDocumentationRetriever;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\RulesNodes;
+use Dedoc\Scramble\Support\SchemaBag;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use PhpParser\Node;
@@ -52,6 +53,42 @@ class RulesToParameters
         return collect($this->rules)
             ->pipe($this->handleConfirmed(...))
             ->map(fn ($rules, $name) => (new RulesToParameter($name, $rules, $this->rulesDocs[$name] ?? null, $this->openApiTransformer, $this->in))->generate())
+            ->filter()
+            ->values()
+            ->pipe(fn ($c) => $this->mergeDotNotatedKeys ? collect((new DeepParametersMerger($c))->handle()) : $c)
+            ->all();
+    }
+
+    /**
+     * @return Parameter[]
+     */
+    public function handle2(): array
+    {
+        $schemaBag = $this->createSchemaBag();
+
+        $this->applySchemaBagTransformingExtensions($schemaBag);
+
+        return $this->transformSchemaBagToParameters($schemaBag);
+    }
+
+    private function createSchemaBag(): SchemaBag
+    {
+        $bag = new SchemaBag();
+
+        foreach ($this->rules as $name => $ruleSet) {
+            $bag->set(
+                $name,
+                $this->rulesToSchemaTransformer->transform($name, $ruleSet, $this->rulesDocs[$name] ?? null)
+            );
+        }
+
+        return $bag;
+    }
+
+    /** @return array<int, Parameter> */
+    private function transformSchemaBagToParameters(SchemaBag $schemaBag): array
+    {
+        return collect($schemaBag->all())
             ->filter()
             ->values()
             ->pipe(fn ($c) => $this->mergeDotNotatedKeys ? collect((new DeepParametersMerger($c))->handle()) : $c)
