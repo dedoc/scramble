@@ -21,19 +21,7 @@ class RuleTransformerContext
     ) {}
 
     /**
-     * @param  Collection<int, Rule>  $fieldRules
-     */
-    public function withFieldRules(Collection $fieldRules): static
-    {
-        $copy = clone $this;
-
-        $copy->fieldRules = $fieldRules;
-
-        return $this;
-    }
-
-    /**
-     * @param  array<string, mixed>  $bindings
+     * @param  array{field?: string, fieldRules?: Collection<int, Rule>}  $bindings
      */
     public static function makeFromOpenApiContext(OpenApiContext $openApiContext, array $bindings = []): self
     {

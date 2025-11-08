@@ -68,10 +68,13 @@ class RuleSetToSchemaTransformer
      */
     protected function transformToSchema(Collection $rules, OpenApiType $initialType, ?RuleTransformerContext $context): OpenApiType
     {
-        $context ??= RuleTransformerContext::makeFromOpenApiContext($this->openApiTransformer->context, ['field' => '']);
+        $context ??= RuleTransformerContext::makeFromOpenApiContext($this->openApiTransformer->context, [
+            'field' => '',
+            'fieldRules' => $rules,
+        ]);
 
-        return $rules->reduce(function (OpenApiType $type, $rule) use ($rules, $context) {
-            if ($schema = $this->handledUsingExtension($rules, $rule, $type, $context)) {
+        return $rules->reduce(function (OpenApiType $type, $rule) use ($context) {
+            if ($schema = $this->handledUsingExtension($rule, $type, $context)) {
                 return $schema;
             }
 
@@ -89,10 +92,7 @@ class RuleSetToSchemaTransformer
         }, $initialType);
     }
 
-    /**
-     * @param  Collection<int, Rule>  $rules
-     */
-    protected function handledUsingExtension(Collection $rules, string|object $rule, OpenApiType $type, RuleTransformerContext $context): ?OpenApiType
+    protected function handledUsingExtension(string|object $rule, OpenApiType $type, RuleTransformerContext $context): ?OpenApiType
     {
         $normalizedRule = NormalizedRule::fromValue($rule);
 
@@ -104,8 +104,6 @@ class RuleSetToSchemaTransformer
         if ($extensions->isEmpty()) {
             return null;
         }
-
-        $context = $context->withFieldRules($rules);
 
         return $extensions->reduce(function (OpenApiType $type, RuleTransformer $transformer) use ($normalizedRule, $context) {
             return $transformer->toSchema($type, $normalizedRule, $context);
