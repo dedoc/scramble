@@ -23,7 +23,7 @@ class RuleTransformers
     protected array $prepends = [];
 
     /**
-     * @param class-string<RuleTransformer|AllRulesSchemasTransformer>|array<class-string<RuleTransformer|AllRulesSchemasTransformer>> $transformers
+     * @param  class-string<RuleTransformer|AllRulesSchemasTransformer>|array<class-string<RuleTransformer|AllRulesSchemasTransformer>>  $transformers
      */
     public function append(array|string $transformers): self
     {
@@ -36,7 +36,7 @@ class RuleTransformers
     }
 
     /**
-     * @param class-string<RuleTransformer|AllRulesSchemasTransformer>|array<class-string<RuleTransformer|AllRulesSchemasTransformer>> $transformers
+     * @param  class-string<RuleTransformer|AllRulesSchemasTransformer>|array<class-string<RuleTransformer|AllRulesSchemasTransformer>>  $transformers
      */
     public function prepend(array|string $transformers): self
     {
@@ -49,7 +49,7 @@ class RuleTransformers
     }
 
     /**
-     * @param array<class-string<RuleTransformer|AllRulesSchemasTransformer>> $transformers
+     * @param  array<class-string<RuleTransformer|AllRulesSchemasTransformer>>  $transformers
      */
     public function use(array $transformers): self
     {

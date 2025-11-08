@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 class RuleTransformerContext
 {
     /**
-     * @param Collection<int, Rule> $fieldRules
+     * @param  Collection<int, Rule>  $fieldRules
      */
     public function __construct(
         public string $field,
@@ -33,7 +33,7 @@ class RuleTransformerContext
     }
 
     /**
-     * @param array<string, mixed> $bindings
+     * @param  array<string, mixed>  $bindings
      */
     public static function makeFromOpenApiContext(OpenApiContext $openApiContext, array $bindings = []): self
     {

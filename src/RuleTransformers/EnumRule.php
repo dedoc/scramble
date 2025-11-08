@@ -26,7 +26,7 @@ class EnumRule implements RuleTransformer
     }
 
     /**
-     * @param NormalizedRule<Enum> $rule
+     * @param  NormalizedRule<Enum>  $rule
      */
     public function toSchema(Type $previous, NormalizedRule $rule, RuleTransformerContext $context): Type
     {
@@ -61,7 +61,7 @@ class EnumRule implements RuleTransformer
             ->filter(fn ($case) => ! $only || in_array($case, $only));
 
         if (! isset($cases->first()->value)) {
-            return new UnknownType(); // $enumName enum doesnt have values (only/except context)
+            return new UnknownType; // $enumName enum doesnt have values (only/except context)
         }
 
         return $this->openApiTransformer->transform(Union::wrap(
