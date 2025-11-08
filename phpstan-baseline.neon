@@ -3322,12 +3322,6 @@ parameters:
 			path: src/Support/Helpers/JsonResourceHelper.php
 
 		-
-			message: '#^Parameter \#1 \$name of class Dedoc\\Scramble\\Support\\Type\\ObjectType constructor expects string, class\-string\<Illuminate\\Contracts\\Support\\Arrayable\>\|Illuminate\\Contracts\\Support\\Arrayable given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/Helpers/JsonResourceHelper.php
-
-		-
 			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
 			identifier: argument.type
 			count: 1
@@ -4640,30 +4634,6 @@ parameters:
 			identifier: property.onlyWritten
 			count: 1
 			path: src/Support/Type/UnknownType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ArrayableToSchema\:\:reference\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ArrayableToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ArrayableToSchema\:\:shouldHandle\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ArrayableToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ArrayableToSchema\:\:toResponse\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ArrayableToSchema.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ArrayableToSchema\:\:toSchema\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ArrayableToSchema.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\CollectionToSchema\:\:shouldHandle\(\) has no return type specified\.$#'
