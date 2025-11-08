@@ -58,16 +58,11 @@ class RulesToParameter
 
         $schema->setDescription('')->example(new MissingValue);
 
-        $parameter = Parameter::make($this->name, $schema->getAttribute('isInQuery') ? 'query' : $this->in)
+        return Parameter::make($this->name, $schema->getAttribute('isInQuery') ? 'query' : $this->in)
             ->setSchema(Schema::fromType($schema))
+            ->example($example)
             ->required((bool) $schema->getAttribute('required', false))
             ->description($description);
-
-        if ($example !== null && ! $example instanceof MissingValue) {
-            $parameter->example($example);
-        }
-
-        return $parameter;
     }
 
     private function applyDocsInfo(OpenApiSchema $type): OpenApiSchema
