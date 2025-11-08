@@ -2,8 +2,6 @@
 
 namespace Dedoc\Scramble\Support;
 
-use Illuminate\Support\Collection;
-
 /**
  * @template TRule of string|object
  */
@@ -39,12 +37,6 @@ class NormalizedRule
     }
 
     /**
-     * @param  RuleSet  $ruleSet
-     * @return Collection<int, self>
-     */
-    public static function fromSet(mixed $ruleSet): Collection {}
-
-    /**
      * @return TRule
      */
     public function getRule(): object|string
@@ -62,11 +54,10 @@ class NormalizedRule
 
     public function is(object|string $rule): bool
     {
-        return $this->rule === $rule;
-    }
+        if (is_string($this->rule)) {
+            return $this->rule === $rule;
+        }
 
-    public function isInstanceOf(string $ruleClass): bool
-    {
-        return ! is_string($this->rule) && is_a(get_class($this->rule), $ruleClass, true);
+        return is_string($rule) && is_a(get_class($this->rule), $rule, true);
     }
 }

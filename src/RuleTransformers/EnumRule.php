@@ -4,7 +4,7 @@ namespace Dedoc\Scramble\RuleTransformers;
 
 use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Contracts\RuleTransformer;
-use Dedoc\Scramble\Support\Generator\Types\Type as Schema;
+use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\NormalizedRule;
@@ -21,10 +21,10 @@ class EnumRule implements RuleTransformer
 
     public function shouldHandle(NormalizedRule $rule): bool
     {
-        return $rule->isInstanceOf(Enum::class);
+        return $rule->is(Enum::class);
     }
 
-    public function toSchema(Schema $previous, NormalizedRule $rule, RuleTransformerContext $context): Schema
+    public function toSchema(Type $previous, NormalizedRule $rule, RuleTransformerContext $context): Type
     {
         $rule = $rule->getRule();
 
@@ -47,7 +47,7 @@ class EnumRule implements RuleTransformer
      * @param  (string|int)[]  $only
      * @param  (string|int)[]  $except
      */
-    private function createPartialEnum(string $enumName, array $only, array $except): Schema
+    private function createPartialEnum(string $enumName, array $only, array $except): Type
     {
         $cases = collect($enumName::cases())
             ->reject(fn ($case) => in_array($case, $except))
