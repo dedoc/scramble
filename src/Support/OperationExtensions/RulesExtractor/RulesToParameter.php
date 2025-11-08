@@ -6,6 +6,7 @@ use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\ContainerUtils;
+use Dedoc\Scramble\Support\Generator\MissingValue;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
@@ -40,9 +41,9 @@ class RulesToParameter
             $this->makeRuleTransformerContext(),
         ))->transform($this->rules);
 
-        $parameter = $this->makeParameterFromSchema($type);
+        $type = $this->applyDocsInfo($type);
 
-        return $this->applyDocsInfo($parameter);
+        return $this->makeParameterFromSchema($type);
     }
 
     public function shouldIgnoreParameter(): bool
@@ -53,18 +54,34 @@ class RulesToParameter
     protected function makeParameterFromSchema(OpenApiSchema $schema): Parameter
     {
         $description = $schema->description;
-        $schema->setDescription('');
+        $example = $schema->example;
 
-        return Parameter::make($this->name, $this->in)
+        $schema->setDescription('')->example(new MissingValue);
+
+        $parameter = Parameter::make($this->name, $schema->getAttribute('isInQuery') ? 'query' : $this->in)
             ->setSchema(Schema::fromType($schema))
             ->required((bool) $schema->getAttribute('required', false))
             ->description($description);
+
+        if ($example !== null && ! $example instanceof MissingValue) {
+            $parameter->example($example);
+        }
+
+        return $parameter;
     }
 
-    private function applyDocsInfo(Parameter $parameter): Parameter
+    private function applyDocsInfo(OpenApiSchema $type): OpenApiSchema
     {
         if (! $this->docNode) {
-            return $parameter;
+            return $type;
+        }
+
+        if (count($varTags = $this->docNode->getVarTagValues())) {
+            $varTag = array_values($varTags)[0];
+
+            $type = $this->openApiTransformer
+                ->transform(PhpDocTypeHelper::toType($varTag->type))
+                ->mergeAttributes($type->attributes());
         }
 
         $description = (string) Str::of($this->docNode->getAttribute('summary') ?: '')
@@ -72,36 +89,26 @@ class RulesToParameter
             ->trim();
 
         if ($description) {
-            $parameter->description($description);
+            $type->setDescription($description);
         }
 
-        if (count($varTags = $this->docNode->getVarTagValues())) {
-            $varTag = $varTags[0];
-
-            $parameter->setSchema(Schema::fromType(
-                $this->openApiTransformer->transform(PhpDocTypeHelper::toType($varTag->type)),
-            ));
+        if ($examples = ExamplesExtractor::make($this->docNode)->extract(preferString: $type instanceof StringType)) {
+            $type->example($examples[0]);
         }
 
-        if ($examples = ExamplesExtractor::make($this->docNode)->extract(preferString: $parameter->schema->type instanceof StringType)) {
-            $parameter->example($examples[0]);
-        }
-
-        if ($default = ExamplesExtractor::make($this->docNode, '@default')->extract(preferString: $parameter->schema->type instanceof StringType)) {
-            $parameter->schema->type->default($default[0]);
+        if ($default = ExamplesExtractor::make($this->docNode, '@default')->extract(preferString: $type instanceof StringType)) {
+            $type->default($default[0]);
         }
 
         if ($format = array_values($this->docNode->getTagsByName('@format'))[0]->value->value ?? null) {
-            $parameter->schema->type->format($format);
+            $type->format($format);
         }
 
         if ($this->docNode->getTagsByName('@query')) {
-            $parameter->setAttribute('isInQuery', true);
-
-            $parameter->in = 'query';
+            $type->setAttribute('isInQuery', true);
         }
 
-        return $parameter;
+        return $type;
     }
 
     private function makeRuleTransformerContext(): RuleTransformerContext
