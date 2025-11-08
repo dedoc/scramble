@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\RuleTransformers;
 
+use BackedEnum;
 use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Support\Generator\Types\Type;
@@ -24,16 +25,22 @@ class EnumRule implements RuleTransformer
         return $rule->is(Enum::class);
     }
 
+    /**
+     * @param NormalizedRule<Enum> $rule
+     */
     public function toSchema(Type $previous, NormalizedRule $rule, RuleTransformerContext $context): Type
     {
         $rule = $rule->getRule();
 
+        /** @var class-string<BackedEnum> $enumName */
         $enumName = $this->getProtectedValue($rule, 'type');
 
         $objectType = new ObjectType($enumName);
 
-        $except = method_exists(Enum::class, 'except') ? $this->getProtectedValue($rule, 'except') : [];
-        $only = method_exists(Enum::class, 'only') ? $this->getProtectedValue($rule, 'only') : [];
+        /** @var BackedEnum[] $except */
+        $except = method_exists(Enum::class, 'except') ? $this->getProtectedValue($rule, 'except') : []; // @phpstan-ignore function.alreadyNarrowedType
+        /** @var BackedEnum[] $only */
+        $only = method_exists(Enum::class, 'only') ? $this->getProtectedValue($rule, 'only') : []; // @phpstan-ignore function.alreadyNarrowedType
 
         if ($except || $only) {
             return $this->createPartialEnum($enumName, $only, $except);
@@ -43,9 +50,9 @@ class EnumRule implements RuleTransformer
     }
 
     /**
-     * @param  class-string<object>  $enumName
-     * @param  (string|int)[]  $only
-     * @param  (string|int)[]  $except
+     * @param  class-string<BackedEnum>  $enumName
+     * @param  BackedEnum[]  $only
+     * @param  BackedEnum[]  $except
      */
     private function createPartialEnum(string $enumName, array $only, array $except): Type
     {
@@ -53,8 +60,8 @@ class EnumRule implements RuleTransformer
             ->reject(fn ($case) => in_array($case, $except))
             ->filter(fn ($case) => ! $only || in_array($case, $only));
 
-        if (! isset($cases->first()?->value)) {
-            return new UnknownType("$enumName enum doesnt have values (only/except context)");
+        if (! isset($cases->first()->value)) {
+            return new UnknownType(); // $enumName enum doesnt have values (only/except context)
         }
 
         return $this->openApiTransformer->transform(Union::wrap(

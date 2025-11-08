@@ -3862,24 +3862,6 @@ parameters:
 			path: src/Support/OperationExtensions/RulesEvaluator/RulesEvaluator.php
 
 		-
-			message: '#^Call to function method_exists\(\) with ''Illuminate\\\\Validation\\\\Rules\\\\Enum'' and ''except'' will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
-
-		-
-			message: '#^Call to function method_exists\(\) with ''Illuminate\\\\Validation\\\\Rules\\\\Enum'' and ''only'' will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
-
-		-
-			message: '#^Class Dedoc\\Scramble\\Support\\Generator\\Types\\UnknownType constructor invoked with 1 parameter, 0 required\.$#'
-			identifier: arguments.count
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesMapper\:\:array\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -3940,12 +3922,6 @@ parameters:
 			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesMapper\:\:enum\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesMapper\:\:exists\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -3966,18 +3942,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesMapper\:\:image\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesMapper\:\:in\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesMapper\:\:in\(\) has parameter \$params with no type specified\.$#'
-			identifier: missingType.parameter
 			count: 1
 			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
 
@@ -4064,48 +4028,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
-
-		-
-			message: '#^Unable to resolve the template type TKey in call to function collect$#'
-			identifier: argument.templateType
-			count: 2
-			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function collect$#'
-			identifier: argument.templateType
-			count: 2
-			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>value" in isset\(\) is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
-
-		-
-			message: '#^Binary operation "\." between '' '' and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameter.php
-
-		-
-			message: '#^Cannot access property \$type on Dedoc\\Scramble\\Support\\Generator\\Schema\|null\.$#'
-			identifier: property.nonObject
-			count: 4
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameter.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesToParameter\:\:applyDocsInfo\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameter.php
-
-		-
-			message: '#^Parameter \#1 \$string of static method Illuminate\\Support\\Str\:\:of\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesToParameter.php
 
 		-
 			message: '#^Class Dedoc\\Scramble\\PhpDoc\\PhpDocParser constructor invoked with 2 parameters, 3 required\.$#'

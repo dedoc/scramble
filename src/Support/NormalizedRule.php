@@ -3,7 +3,7 @@
 namespace Dedoc\Scramble\Support;
 
 /**
- * @template TRule of string|object
+ * @template-covariant TRule of string|object = string|object
  */
 class NormalizedRule
 {
@@ -17,10 +17,10 @@ class NormalizedRule
     ) {}
 
     /**
-     * @template TRuleParam
+     * @template TRuleParam of string|object
      *
      * @param  TRuleParam  $rule
-     * @return self<TRuleParam>
+     * @return ($rule is string ? self<TRuleParam> : self<string>)
      */
     public static function fromValue(string|object $rule): self
     {

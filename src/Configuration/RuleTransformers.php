@@ -13,13 +13,19 @@ use Illuminate\Support\Collection;
 
 class RuleTransformers
 {
+    /** @var array<class-string<RuleTransformer|AllRulesSchemasTransformer>> */
     protected array $transformers = [];
 
+    /** @var array<class-string<RuleTransformer|AllRulesSchemasTransformer>> */
     protected array $appends = [];
 
+    /** @var array<class-string<RuleTransformer|AllRulesSchemasTransformer>> */
     protected array $prepends = [];
 
-    public function append(array|callable|string $transformers)
+    /**
+     * @param class-string<RuleTransformer|AllRulesSchemasTransformer>|array<class-string<RuleTransformer|AllRulesSchemasTransformer>> $transformers
+     */
+    public function append(array|string $transformers): self
     {
         $this->appends = array_merge(
             $this->appends,
@@ -29,7 +35,10 @@ class RuleTransformers
         return $this;
     }
 
-    public function prepend(array|callable|string $transformers)
+    /**
+     * @param class-string<RuleTransformer|AllRulesSchemasTransformer>|array<class-string<RuleTransformer|AllRulesSchemasTransformer>> $transformers
+     */
+    public function prepend(array|string $transformers): self
     {
         $this->prepends = array_merge(
             $this->prepends,
@@ -39,7 +48,10 @@ class RuleTransformers
         return $this;
     }
 
-    public function use(array $transformers)
+    /**
+     * @param array<class-string<RuleTransformer|AllRulesSchemasTransformer>> $transformers
+     */
+    public function use(array $transformers): self
     {
         $this->transformers = $transformers;
 
@@ -55,21 +67,20 @@ class RuleTransformers
      */
     public function instances(string $type, array $contextfulBindings): Collection
     {
-        return collect($this->all())
+        return collect($this->all()) // @phpstan-ignore return.type
             ->filter(fn ($class) => is_a($class, $type, true))
             ->map(fn ($class) => ContainerUtils::makeContextable($class, $contextfulBindings))
             ->values();
     }
 
     /**
-     * @return (callable|class-string<RuleTransformer|AllRulesSchemasTransformer>)[]
+     * @return class-string<RuleTransformer|AllRulesSchemasTransformer>[]
      */
     public function all(): array
     {
         $base = $this->transformers ?: [
             EnumRule::class,
             InRule::class,
-
             ConfirmedRule::class,
         ];
 

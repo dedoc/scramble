@@ -10,6 +10,9 @@ use Illuminate\Support\Collection;
 
 class RuleTransformerContext
 {
+    /**
+     * @param Collection<int, Rule> $fieldRules
+     */
     public function __construct(
         public string $field,
         public Collection $fieldRules,
@@ -29,6 +32,9 @@ class RuleTransformerContext
         return $this;
     }
 
+    /**
+     * @param array<string, mixed> $bindings
+     */
     public static function makeFromOpenApiContext(OpenApiContext $openApiContext, array $bindings = []): self
     {
         return ContainerUtils::makeContextable(RuleTransformerContext::class, [

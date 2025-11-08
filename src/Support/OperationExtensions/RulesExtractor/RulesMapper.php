@@ -18,7 +18,7 @@ use Illuminate\Validation\ConditionalRules;
 class RulesMapper
 {
     public function __construct(
-        private TypeTransformer $openApiTransformer,
+        private TypeTransformer $openApiTransformer, // @phpstan-ignore property.onlyWritten
         private RuleSetToSchemaTransformer $rulesToSchemaTransformer,
     ) {}
 

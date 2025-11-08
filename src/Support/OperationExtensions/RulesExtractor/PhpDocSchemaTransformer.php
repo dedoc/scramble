@@ -26,8 +26,8 @@ class PhpDocSchemaTransformer
                 ->mergeAttributes($type->attributes());
         }
 
-        $description = (string) Str::of($docNode->getAttribute('summary') ?: '')
-            ->append(' '.($docNode->getAttribute('description') ?: ''))
+        $description = (string) Str::of($docNode->getAttribute('summary') ?: '') // @phpstan-ignore argument.type
+            ->append(' '.($docNode->getAttribute('description') ?: '')) // @phpstan-ignore binaryOp.invalid
             ->trim();
 
         if ($description) {
