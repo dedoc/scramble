@@ -73,7 +73,7 @@ class RulesToParameters
 
     private function createSchemaBag(): SchemaBag
     {
-        $bag = new SchemaBag();
+        $bag = new SchemaBag;
 
         foreach ($this->rules as $name => $ruleSet) {
             $bag->set(

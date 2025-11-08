@@ -7,13 +7,11 @@ use Dedoc\Scramble\Support\Generator\Types\Type as Schema;
 class SchemaBag
 {
     /**
-     * @param array<string, Schema> $items
+     * @param  array<string, Schema>  $items
      */
     public function __construct(
         private array $items = []
-    )
-    {
-    }
+    ) {}
 
     public function get(string $name): ?Schema
     {
