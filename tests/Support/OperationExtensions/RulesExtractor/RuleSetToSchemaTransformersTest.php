@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\RuleTransforming\RuleSetToSchemaTransformer;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Enum;
 
 beforeEach(function () {
     $this->openApiTransformer = app(TypeTransformer::class, [
@@ -50,7 +51,7 @@ describe(EnumRule::class, function () {
                 'type' => 'string',
                 'enum' => ['foo'],
             ]);
-    });
+    })->skip(! method_exists(Enum::class, 'only'));
 
     test('enum rule with except', function () {
         $rules = [
@@ -66,7 +67,7 @@ describe(EnumRule::class, function () {
                 'type' => 'string',
                 'enum' => ['bar'],
             ]);
-    });
+    })->skip(! method_exists(Enum::class, 'except'));;
 });
 
 describe(InRule::class, function () {
