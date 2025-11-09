@@ -6,7 +6,7 @@ use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
-use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\IntegerRangeType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\StringType;
@@ -22,12 +22,12 @@ class LengthAwarePaginatorTypeManager
     public function getToArrayType(Type $dataType): KeyedArrayType
     {
         return new KeyedArrayType([
-            new ArrayItemType_('current_page', new IntegerType),
+            new ArrayItemType_('current_page', new IntegerRangeType(min: 1)),
             new ArrayItemType_('data', $dataType),
             new ArrayItemType_('first_page_url', new Union([new StringType, new NullType])),
-            new ArrayItemType_('from', new Union([new IntegerType, new NullType])),
+            new ArrayItemType_('from', new Union([new IntegerRangeType(min: 1), new NullType])),
             new ArrayItemType_('last_page_url', new Union([new StringType, new NullType])),
-            new ArrayItemType_('last_page', new IntegerType),
+            new ArrayItemType_('last_page', new IntegerRangeType(min: 1)),
             tap(new ArrayItemType_('links', new ArrayType), function (ArrayItemType_ $t) {
                 $t->setAttribute('docNode', PhpDoc::parse('/** Generated paginator links. */'));
                 $linkObject = new KeyedArrayType([
@@ -41,14 +41,14 @@ class LengthAwarePaginatorTypeManager
             tap(new ArrayItemType_('path', new Union([new StringType, new NullType])), function (ArrayItemType_ $t) {
                 $t->setAttribute('docNode', PhpDoc::parse('/** Base path for paginator generated URLs. */'));
             }),
-            tap(new ArrayItemType_('per_page', new IntegerType), function (ArrayItemType_ $t) {
+            tap(new ArrayItemType_('per_page', new IntegerRangeType(min: 0)), function (ArrayItemType_ $t) {
                 $t->setAttribute('docNode', PhpDoc::parse('/** Number of items shown per page. */'));
             }),
             new ArrayItemType_('prev_page_url', new Union([new StringType, new NullType])),
-            tap(new ArrayItemType_('to', new Union([new IntegerType, new NullType])), function (ArrayItemType_ $t) {
+            tap(new ArrayItemType_('to', new Union([new IntegerRangeType(min: 1), new NullType])), function (ArrayItemType_ $t) {
                 $t->setAttribute('docNode', PhpDoc::parse('/** Number of the last item in the slice. */'));
             }),
-            tap(new ArrayItemType_('total', new IntegerType), function (ArrayItemType_ $t) {
+            tap(new ArrayItemType_('total', new IntegerRangeType(min: 0)), function (ArrayItemType_ $t) {
                 $t->setAttribute('docNode', PhpDoc::parse('/** Total number of items being paginated. */'));
             }),
         ]);
