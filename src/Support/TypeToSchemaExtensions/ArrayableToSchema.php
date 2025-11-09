@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Support\Collection;
 
 class ArrayableToSchema extends TypeToSchemaExtension
 {
@@ -29,6 +30,7 @@ class ArrayableToSchema extends TypeToSchemaExtension
     {
         return $type instanceof ObjectType
             && $type->isInstanceOf(Arrayable::class)
+            && !$type->isInstanceOf(Collection::class)
             && $type->name !== Arrayable::class;
     }
 
