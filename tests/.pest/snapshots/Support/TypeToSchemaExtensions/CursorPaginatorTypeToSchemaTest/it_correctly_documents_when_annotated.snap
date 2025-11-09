@@ -20,7 +20,8 @@
                     },
                     "per_page": {
                         "type": "integer",
-                        "description": "Number of items shown per page."
+                        "description": "Number of items shown per page.",
+                        "minimum": 0
                     },
                     "next_cursor": {
                         "type": [

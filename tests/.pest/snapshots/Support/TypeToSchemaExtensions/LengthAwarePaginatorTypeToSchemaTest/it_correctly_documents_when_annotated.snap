@@ -6,7 +6,8 @@
                 "type": "object",
                 "properties": {
                     "current_page": {
-                        "type": "integer"
+                        "type": "integer",
+                        "minimum": 1
                     },
                     "data": {
                         "type": "array",
@@ -24,7 +25,8 @@
                         "type": [
                             "integer",
                             "null"
-                        ]
+                        ],
+                        "minimum": 1
                     },
                     "last_page_url": {
                         "type": [
@@ -33,7 +35,8 @@
                         ]
                     },
                     "last_page": {
-                        "type": "integer"
+                        "type": "integer",
+                        "minimum": 1
                     },
                     "links": {
                         "type": "array",
@@ -76,7 +79,8 @@
                     },
                     "per_page": {
                         "type": "integer",
-                        "description": "Number of items shown per page."
+                        "description": "Number of items shown per page.",
+                        "minimum": 0
                     },
                     "prev_page_url": {
                         "type": [
@@ -89,11 +93,13 @@
                             "integer",
                             "null"
                         ],
-                        "description": "Number of the last item in the slice."
+                        "description": "Number of the last item in the slice.",
+                        "minimum": 1
                     },
                     "total": {
                         "type": "integer",
-                        "description": "Total number of items being paginated."
+                        "description": "Total number of items being paginated.",
+                        "minimum": 0
                     }
                 },
                 "required": [
