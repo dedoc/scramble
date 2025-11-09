@@ -1,14 +1,15 @@
 <?php
 
-namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
+namespace Dedoc\Scramble\Support\RuleTransforming;
 
 use Dedoc\Scramble\Configuration\RuleTransformers;
-use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\NormalizedRule;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\Rule;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RuleSet;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesMapper;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;

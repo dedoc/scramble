@@ -1,8 +1,9 @@
 <?php
 
-namespace Dedoc\Scramble\Support;
+namespace Dedoc\Scramble\Support\RuleTransforming;
 
 use Dedoc\Scramble\Support\Generator\Types\Type;
+use OutOfBoundsException;
 
 class SchemaBag
 {
@@ -13,14 +14,35 @@ class SchemaBag
         private array $items = []
     ) {}
 
+    public function has(string $name): bool
+    {
+        return array_key_exists($name, $this->items);
+    }
+
     public function get(string $name): ?Type
     {
         return $this->items[$name] ?? null;
     }
 
+    public function getOrFail(string $name): Type
+    {
+        $item = $this->get($name);
+        if (! $item) {
+            throw new OutOfBoundsException("[$name] schema doesn't exist");
+        }
+        return $item;
+    }
+
     public function set(string $name, Type $schema): self
     {
         $this->items[$name] = $schema;
+
+        return $this;
+    }
+
+    public function remove(string $name): self
+    {
+        unset($this->items[$name]);
 
         return $this;
     }

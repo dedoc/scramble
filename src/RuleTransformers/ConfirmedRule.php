@@ -2,18 +2,13 @@
 
 namespace Dedoc\Scramble\RuleTransformers;
 
-use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
-use Dedoc\Scramble\Support\NormalizedRule;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RuleSetToSchemaTransformer;
-use Dedoc\Scramble\Support\SchemaBag;
+use Dedoc\Scramble\Support\RuleTransforming\NormalizedRule;
+use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
+use Dedoc\Scramble\Support\RuleTransforming\SchemaBag;
 
 class ConfirmedRule implements AllRulesSchemasTransformer
 {
-    public function __construct(
-        private RuleSetToSchemaTransformer $rulesToSchemaTransformer,
-    ) {}
-
     public function shouldHandle(NormalizedRule $rule): bool
     {
         return $rule->is('confirmed');
@@ -23,7 +18,7 @@ class ConfirmedRule implements AllRulesSchemasTransformer
     {
         $schemaBag->set(
             "{$context->field}_confirmation",
-            $this->rulesToSchemaTransformer->transform($context->fieldRules->filter(fn ($r) => $r !== 'confirmed')->all()),
+            clone $schemaBag->getOrFail($context->field),
         );
     }
 }

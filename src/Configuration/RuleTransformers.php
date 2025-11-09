@@ -13,43 +13,43 @@ use Illuminate\Support\Collection;
 
 class RuleTransformers
 {
-    /** @var array<class-string<RuleTransformer|AllRulesSchemasTransformer>> */
+    /** @var list<class-string<RuleTransformer|AllRulesSchemasTransformer>> */
     protected array $transformers = [];
 
-    /** @var array<class-string<RuleTransformer|AllRulesSchemasTransformer>> */
+    /** @var list<class-string<RuleTransformer|AllRulesSchemasTransformer>> */
     protected array $appends = [];
 
-    /** @var array<class-string<RuleTransformer|AllRulesSchemasTransformer>> */
+    /** @var list<class-string<RuleTransformer|AllRulesSchemasTransformer>> */
     protected array $prepends = [];
 
     /**
-     * @param  class-string<RuleTransformer|AllRulesSchemasTransformer>|array<class-string<RuleTransformer|AllRulesSchemasTransformer>>  $transformers
+     * @param  class-string<RuleTransformer|AllRulesSchemasTransformer>|list<class-string<RuleTransformer|AllRulesSchemasTransformer>>  $transformers
      */
     public function append(array|string $transformers): self
     {
-        $this->appends = array_merge(
+        $this->appends = array_values(array_merge(
             $this->appends,
             Arr::wrap($transformers)
-        );
+        ));
 
         return $this;
     }
 
     /**
-     * @param  class-string<RuleTransformer|AllRulesSchemasTransformer>|array<class-string<RuleTransformer|AllRulesSchemasTransformer>>  $transformers
+     * @param  class-string<RuleTransformer|AllRulesSchemasTransformer>|list<class-string<RuleTransformer|AllRulesSchemasTransformer>>  $transformers
      */
     public function prepend(array|string $transformers): self
     {
-        $this->prepends = array_merge(
+        $this->prepends = array_values(array_merge(
             $this->prepends,
             Arr::wrap($transformers)
-        );
+        ));
 
         return $this;
     }
 
     /**
-     * @param  array<class-string<RuleTransformer|AllRulesSchemasTransformer>>  $transformers
+     * @param  list<class-string<RuleTransformer|AllRulesSchemasTransformer>>  $transformers
      */
     public function use(array $transformers): self
     {
@@ -74,7 +74,7 @@ class RuleTransformers
     }
 
     /**
-     * @return class-string<RuleTransformer|AllRulesSchemasTransformer>[]
+     * @return list<class-string<RuleTransformer|AllRulesSchemasTransformer>>
      */
     public function all(): array
     {

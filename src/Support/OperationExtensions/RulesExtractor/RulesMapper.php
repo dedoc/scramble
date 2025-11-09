@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
-use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
@@ -12,6 +11,8 @@ use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\RuleTransforming\RuleSetToSchemaTransformer;
+use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ConditionalRules;
 

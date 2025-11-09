@@ -2,9 +2,9 @@
 
 namespace Dedoc\Scramble\Contracts;
 
-use Dedoc\Scramble\Contexts\RuleTransformerContext;
-use Dedoc\Scramble\Support\NormalizedRule;
-use Dedoc\Scramble\Support\SchemaBag;
+use Dedoc\Scramble\Support\RuleTransforming\NormalizedRule;
+use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
+use Dedoc\Scramble\Support\RuleTransforming\SchemaBag;
 
 interface AllRulesSchemasTransformer
 {

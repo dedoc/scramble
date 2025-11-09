@@ -8,7 +8,7 @@ use Dedoc\Scramble\RuleTransformers\EnumRule;
 use Dedoc\Scramble\RuleTransformers\InRule;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RuleSetToSchemaTransformer;
+use Dedoc\Scramble\Support\RuleTransforming\RuleSetToSchemaTransformer;
 use Illuminate\Validation\Rule;
 
 beforeEach(function () {

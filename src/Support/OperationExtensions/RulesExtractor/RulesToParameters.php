@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
-use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Support\Generator\MissingValue;
@@ -10,10 +9,12 @@ use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiSchema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\NormalizedRule;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\RulesDocumentationRetriever;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\RulesNodes;
-use Dedoc\Scramble\Support\SchemaBag;
+use Dedoc\Scramble\Support\RuleTransforming\NormalizedRule;
+use Dedoc\Scramble\Support\RuleTransforming\RuleSetToSchemaTransformer;
+use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
+use Dedoc\Scramble\Support\RuleTransforming\SchemaBag;
 use Illuminate\Support\Arr;
 use PhpParser\Node;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;

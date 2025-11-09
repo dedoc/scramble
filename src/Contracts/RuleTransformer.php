@@ -2,9 +2,9 @@
 
 namespace Dedoc\Scramble\Contracts;
 
-use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Support\Generator\Types\Type;
-use Dedoc\Scramble\Support\NormalizedRule;
+use Dedoc\Scramble\Support\RuleTransforming\NormalizedRule;
+use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
 
 interface RuleTransformer
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Contexts;
+namespace Dedoc\Scramble\Support\RuleTransforming;
 
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\OpenApiContext;

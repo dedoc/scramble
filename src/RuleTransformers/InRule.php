@@ -2,10 +2,10 @@
 
 namespace Dedoc\Scramble\RuleTransformers;
 
-use Dedoc\Scramble\Contexts\RuleTransformerContext;
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Support\Generator\Types\Type;
-use Dedoc\Scramble\Support\NormalizedRule;
+use Dedoc\Scramble\Support\RuleTransforming\NormalizedRule;
+use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
 use Illuminate\Support\Stringable;
 
 class InRule implements RuleTransformer

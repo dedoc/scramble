@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Support;
+namespace Dedoc\Scramble\Support\RuleTransforming;
 
 /**
  * @template-covariant TRule of string|object = string|object
@@ -20,7 +20,7 @@ class NormalizedRule
      * @template TRuleParam of string|object
      *
      * @param  TRuleParam  $rule
-     * @return ($rule is string ? self<TRuleParam> : self<string>)
+     * @return ($rule is string ? self<string> : self<TRuleParam>)
      */
     public static function fromValue(string|object $rule): self
     {
