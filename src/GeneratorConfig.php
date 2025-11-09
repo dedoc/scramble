@@ -130,7 +130,7 @@ class GeneratorConfig
     }
 
     /**
-     * @param list<class-string<RuleTransformer|AllRulesSchemasTransformer>>|class-string<RuleTransformer|AllRulesSchemasTransformer>|(callable(RuleTransformers): void) $cb
+     * @param  list<class-string<RuleTransformer|AllRulesSchemasTransformer>>|class-string<RuleTransformer|AllRulesSchemasTransformer>|(callable(RuleTransformers): void)  $cb
      */
     public function withRuleTransformers(array|string|callable $cb): self
     {
