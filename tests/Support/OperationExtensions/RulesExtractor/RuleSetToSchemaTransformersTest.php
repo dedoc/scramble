@@ -67,7 +67,7 @@ describe(EnumRule::class, function () {
                 'type' => 'string',
                 'enum' => ['bar'],
             ]);
-    })->skip(! method_exists(Enum::class, 'except'));;
+    })->skip(! method_exists(Enum::class, 'except'));
 });
 
 describe(InRule::class, function () {
