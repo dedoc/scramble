@@ -30,6 +30,7 @@ class SchemaBag
         if (! $item) {
             throw new OutOfBoundsException("[$name] schema doesn't exist");
         }
+
         return $item;
     }
 
