@@ -15,7 +15,6 @@ use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\MethodCall;
