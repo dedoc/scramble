@@ -1,6 +1,7 @@
 <?php
 
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -102,6 +103,31 @@ class MethodArgumentAssignment_ClassAnalyzerTest
     public function setFoo(int $something)
     {
         $this->foo = ['foo' => $something];
+    }
+}
+
+it('describes arguments foo assignments as self out type on any method', function () {
+    $method = $this->classAnalyzer
+        ->analyze(FooRecursive_ClassAnalyzerTest::class)
+        ->getMethodDefinition('__construct');
+
+    expect($method->selfOutTypeBuilder)
+        ->not->toBeNull()
+        ->and(ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $method->getSelfOutType())->toString())
+        ->toBe('self<unknown>');
+});
+class FooRecursive_ClassAnalyzerTest
+{
+    public $foo;
+
+    public function __construct()
+    {
+        $this->foo = $this->unwrapCacheValue();
+    }
+
+    protected function unwrapCacheValue()
+    {
+        return $this->unwrapCacheValue();
     }
 }
 

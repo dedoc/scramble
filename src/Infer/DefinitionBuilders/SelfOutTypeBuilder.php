@@ -2,7 +2,9 @@
 
 namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 
+use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Services\RecursionGuard;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\Services\TemplateTypesSolver;
 use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
@@ -13,6 +15,7 @@ use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\MethodCall;
@@ -152,7 +155,7 @@ class SelfOutTypeBuilder
                     continue;
                 }
 
-                if (! $methodSelfOutType = $methodDefinition->getSelfOutType()) {
+                if (! $methodSelfOutType = $this->getMethodSelfOutType($methodDefinition)) {
                     continue;
                 }
 
@@ -190,6 +193,15 @@ class SelfOutTypeBuilder
         return new Generic(
             'self',
             array_values(array_map(fn ($type) => $type ?: new TemplatePlaceholderType, $expectedTemplatesMap))
+        );
+    }
+
+    private function getMethodSelfOutType(FunctionLikeDefinition $methodDefinition): ?Generic
+    {
+        return RecursionGuard::run(
+            $methodDefinition,
+            fn () => $methodDefinition->getSelfOutType(),
+            fn () => null,
         );
     }
 
