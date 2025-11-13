@@ -87,7 +87,7 @@ class UnionTypeHint_ResponseExtensionTest_Controller
     public function __invoke(): Resource_ResponseExtensionTest|JsonResponse
     {
         if (foobar()) {
-            return new Resource_ResponseExtensionTest();
+            return new Resource_ResponseExtensionTest;
         }
 
         return response()->json([], 419);

@@ -36,6 +36,7 @@ class Union extends AbstractType
                     return false;
                 }
             }
+
             return true;
         }
 
