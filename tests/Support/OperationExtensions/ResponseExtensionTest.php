@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 it('extracts response from `@response` tag', function () {
@@ -69,5 +71,32 @@ class MultipleMimes_ResponseExtensionTest_Controller
         }
 
         return response()->download('data.pdf');
+    }
+}
+
+it('documents responses with union type hint', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', UnionTypeHint_ResponseExtensionTest_Controller::class));
+
+    expect($responses = $openApiDocument['paths']['/test']['get']['responses'])
+        ->toHaveKeys([200, 419])
+        ->and($responses[200]['content']['application/json']['schema']['type'])->toBe('object')
+        ->and($responses[419]['content']['application/json']['schema']['type'])->toBe('array');
+});
+class UnionTypeHint_ResponseExtensionTest_Controller
+{
+    public function __invoke(): Resource_ResponseExtensionTest|JsonResponse
+    {
+        if (foobar()) {
+            return new Resource_ResponseExtensionTest();
+        }
+
+        return response()->json([], 419);
+    }
+}
+class Resource_ResponseExtensionTest extends JsonResource
+{
+    public function toArray(\Illuminate\Http\Request $request)
+    {
+        return ['id' => 42];
     }
 }
