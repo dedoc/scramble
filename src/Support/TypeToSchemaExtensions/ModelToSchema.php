@@ -5,15 +5,15 @@ namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
-use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Generator\Components;
-use Dedoc\Scramble\Support\Generator\Response;
-use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @deprecated Not used, just for backward compatibility.
+ */
 class ModelToSchema extends TypeToSchemaExtension
 {
     public function __construct(
@@ -37,11 +37,7 @@ class ModelToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        $this->infer->analyzeClass($type->name);
-
-        $toArrayReturnType = $type->getMethodReturnType('toArray');
-
-        return $this->openApiTransformer->transform($toArrayReturnType);
+        return $this->createArrayableExtension()->toSchema($type);
     }
 
     /**
@@ -49,16 +45,21 @@ class ModelToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type)
     {
-        return Response::make(200)
-            ->setDescription('`'.$this->openApiContext->references->schemas->uniqueName($type->name).'`')
-            ->setContent(
-                'application/json',
-                Schema::fromType($this->openApiTransformer->transform($type)),
-            );
+        return $this->createArrayableExtension()->toResponse($type);
     }
 
     public function reference(ObjectType $type)
     {
-        return ClassBasedReference::create('schemas', $type->name, $this->components);
+        return $this->createArrayableExtension()->reference($type);
+    }
+
+    private function createArrayableExtension(): ArrayableToSchema
+    {
+        return new ArrayableToSchema(
+            $this->infer,
+            $this->openApiTransformer,
+            $this->components,
+            $this->openApiContext,
+        );
     }
 }
