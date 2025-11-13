@@ -44,6 +44,7 @@ class GeneratorConfigCollection
             parametersExtractors: clone $this->apis[Scramble::DEFAULT_API]->parametersExtractors,
             operationTransformers: clone $this->apis[Scramble::DEFAULT_API]->operationTransformers,
             documentTransformers: clone $this->apis[Scramble::DEFAULT_API]->documentTransformers,
+            ruleTransformers: clone $this->apis[Scramble::DEFAULT_API]->ruleTransformers,
             serverVariables: clone $this->apis[Scramble::DEFAULT_API]->serverVariables,
         );
 

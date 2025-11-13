@@ -26,7 +26,8 @@ class Reference extends Type
         Components $components,
         ?string $shortName = null,
     ) {
-        $this->type = '$ref';
+        parent::__construct('$ref');
+
         $this->referenceType = $referenceType;
         $this->fullName = $fullName;
         $this->components = $components;

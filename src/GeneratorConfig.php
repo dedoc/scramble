@@ -6,7 +6,10 @@ use Closure;
 use Dedoc\Scramble\Configuration\DocumentTransformers;
 use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Configuration\ParametersExtractors;
+use Dedoc\Scramble\Configuration\RuleTransformers;
 use Dedoc\Scramble\Configuration\ServerVariables;
+use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
+use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
@@ -33,6 +36,7 @@ class GeneratorConfig
         public readonly ParametersExtractors $parametersExtractors = new ParametersExtractors,
         public readonly OperationTransformers $operationTransformers = new OperationTransformers,
         public readonly DocumentTransformers $documentTransformers = new DocumentTransformers,
+        public readonly RuleTransformers $ruleTransformers = new RuleTransformers,
         public readonly ServerVariables $serverVariables = new ServerVariables,
     ) {}
 
@@ -121,6 +125,22 @@ class GeneratorConfig
         }
 
         $this->operationTransformers->append($cb);
+
+        return $this;
+    }
+
+    /**
+     * @param  list<class-string<RuleTransformer|AllRulesSchemasTransformer>>|class-string<RuleTransformer|AllRulesSchemasTransformer>|(callable(RuleTransformers): void)  $cb
+     */
+    public function withRuleTransformers(array|string|callable $cb): self
+    {
+        if (is_callable($cb)) {
+            $cb($this->ruleTransformers);
+
+            return $this;
+        }
+
+        $this->ruleTransformers->append($cb);
 
         return $this;
     }
