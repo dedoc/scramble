@@ -10,8 +10,8 @@ use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiSchema;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Contracts\Support\Arrayable;
@@ -50,7 +50,7 @@ class ArrayableToSchema extends TypeToSchemaExtension
     /**
      * @param  ObjectType  $type
      */
-    public function toResponse(Type $type): Response|null
+    public function toResponse(Type $type): ?Response
     {
         return Response::make(200)
             ->setDescription('`'.$this->openApiContext->references->schemas->uniqueName($type->name).'`')
