@@ -7,9 +7,11 @@ use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiSchema;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Contracts\Support\Arrayable;
@@ -30,14 +32,13 @@ class ArrayableToSchema extends TypeToSchemaExtension
     {
         return $type instanceof ObjectType
             && $type->isInstanceOf(Arrayable::class)
-            && !$type->isInstanceOf(Collection::class)
-            && $type->name !== Arrayable::class;
+            && ! $type->isInstanceOf(Collection::class); // handled in its own extension
     }
 
     /**
      * @param  ObjectType  $type
      */
-    public function toSchema(Type $type): \Dedoc\Scramble\Support\Generator\Types\Type|\Dedoc\Scramble\Support\Generator\Types\UnknownType
+    public function toSchema(Type $type): OpenApiSchema
     {
         $this->infer->analyzeClass($type->name);
 
@@ -59,7 +60,7 @@ class ArrayableToSchema extends TypeToSchemaExtension
             );
     }
 
-    public function reference(ObjectType $type): \Dedoc\Scramble\Support\Generator\Reference
+    public function reference(ObjectType $type): Reference
     {
         return ClassBasedReference::create('schemas', $type->name, $this->components);
     }

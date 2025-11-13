@@ -25,7 +25,6 @@ class JsonResourceHelper
             return $cachedModelType;
         }
 
-        /** @var string|null $modelClass */
         $modelClass = static::getModelName(
             $jsonClass->name,
             new \ReflectionClass($jsonClass->name),
@@ -33,13 +32,7 @@ class JsonResourceHelper
         );
 
         $modelType = new UnknownType("Cannot resolve [$modelClass] model type.");
-        if (
-            $modelClass
-            && (
-                is_a($modelClass, Model::class, true)
-                || is_a($modelClass, Arrayable::class, true)
-            )
-        ) {
+        if ($modelClass) {
             $modelType = new ObjectType($modelClass);
         }
 
