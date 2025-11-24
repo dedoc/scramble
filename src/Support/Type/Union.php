@@ -51,7 +51,13 @@ class Union extends AbstractType
 
     public function acceptedBy(Type $otherType): bool
     {
-        return $otherType->accepts($this);
+        foreach ($this->types as $type) {
+            if (! $otherType->accepts($type)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
