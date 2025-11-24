@@ -40,3 +40,31 @@ EOD)->getClassDefinition('Foo');
     expect($type->methods['foo']->type->toString())
         ->toBe('(): array{b: string(foo), 0: array{c: string(w), a: int(123)}}');
 });
+
+it('infers array spread from other methods #1026', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public function foo(): array
+    {
+        return [
+            'test1' => 'test1',
+            ...$this->test(),
+            ...[
+                'test3' => 'test3',
+            ],
+        ];
+    }
+
+    private function test(): array
+    {
+        return [
+            'test2' => 'test2',
+        ];
+    }
+}
+EOD)->getClassDefinition('Foo');
+
+    expect($type->methods['foo']->type->toString())
+        ->toBe('(): array{test1: string(test1), test2: string(test2), test3: string(test3)}');
+});
