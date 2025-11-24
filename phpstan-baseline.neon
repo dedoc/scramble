@@ -1099,24 +1099,6 @@ parameters:
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
 		-
-			message: '#^Cannot access property \$methods on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
-			message: '#^Cannot access property \$parentFqn on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
-			message: '#^Cannot access property \$properties on Dedoc\\Scramble\\Infer\\Definition\\ClassDefinition\|null\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
 			message: '#^Cannot cast PhpParser\\Node\\Expr\|string to string\.$#'
 			identifier: cast.string
 			count: 1
@@ -1153,19 +1135,7 @@ parameters:
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
 		-
-			message: '#^Parameter \#1 \$key of function array_key_exists expects int\|string, PhpParser\\Node\\Expr\|string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
 			message: '#^Parameter \#1 \$line of method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:addVariableType\(\) expects int, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
-			message: '#^Parameter \#1 \$value of static method Illuminate\\Support\\Str\:\:studly\(\) expects string, PhpParser\\Node\\Expr\|string given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Infer/Handler/FunctionLikeHandler.php
@@ -1174,12 +1144,6 @@ parameters:
 			message: '#^Parameter \#3 \$type of method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:addVariableType\(\) expects Dedoc\\Scramble\\Support\\Type\\Type, mixed given\.$#'
 			identifier: argument.type
 			count: 1
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
-			message: '#^Possibly invalid array key type PhpParser\\Node\\Expr\|string\.$#'
-			identifier: array.invalidKey
-			count: 3
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
 		-
@@ -1397,72 +1361,6 @@ parameters:
 			identifier: missingType.property
 			count: 1
 			path: src/Infer/Scope/NodeTypesResolver.php
-
-		-
-			message: '#^Cannot cast PhpParser\\Node\\Expr\|string to string\.$#'
-			identifier: cast.string
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:addVariableType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:createChildScope\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:functionDefinition\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:getArgsTypes\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:getArgsTypes\(\) has parameter \$args with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:getMethodCalls\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:getVariableType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:isInClass\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:isInFunction\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:setType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Scope/Scope.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Scope\\ScopeContext\:\:setFunctionDefinition\(\) has no return type specified\.$#'

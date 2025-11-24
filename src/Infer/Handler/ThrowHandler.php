@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use PhpParser\Node;
 use Throwable;
 
@@ -21,7 +22,7 @@ class ThrowHandler
 
         $exceptionType = $scope->getType($node->expr);
 
-        if (! $exceptionType->isInstanceOf(Throwable::class)) {
+        if (! $exceptionType instanceof ObjectType || ! $exceptionType->isInstanceOf(Throwable::class)) {
             return;
         }
 

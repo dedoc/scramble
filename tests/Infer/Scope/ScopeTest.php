@@ -54,3 +54,9 @@ it('infers throw node type', function ($code, $expectedTypeString) {
 })->with([
     ['throw new Exception("foo")', 'void'],
 ]);
+
+it('infers var var type', function ($code, $expectedTypeString) {
+    expect(getStatementTypeForScopeTest($code)->toString())->toBe($expectedTypeString);
+})->with([
+    ['$$a', 'unknown'],
+]);
