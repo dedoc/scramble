@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\ObjectType;
 use PhpParser\Node;
 use Throwable;
 
