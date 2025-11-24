@@ -775,12 +775,6 @@ parameters:
 			path: src/Infer/DefinitionBuilders/FunctionLikeReflectionDefinitionBuilder.php
 
 		-
-			message: '#^Property Dedoc\\Scramble\\Support\\Type\\FunctionType\:\:\$exceptions \(array\<Dedoc\\Scramble\\Support\\Type\\ObjectType\>\) does not accept array\<Dedoc\\Scramble\\Support\\Type\\Type\>\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: src/Infer/DefinitionBuilders/FunctionLikeReflectionDefinitionBuilder.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\DefinitionBuilders\\LazyClassReflectionDefinitionBuilder\:\:__construct\(\) has parameter \$reflection with generic class ReflectionClass but does not specify its types\: T$#'
 			identifier: missingType.generics
 			count: 1

@@ -50,7 +50,7 @@ class FunctionLikeDeclarationPhpDocDefinitionBuilder implements FunctionLikeDefi
         }
 
         foreach ($phpDoc->getThrowsTagValues() as $throwsTagValue) {
-            $definition->type->exceptions[] = $this->handleStatic( // @phpstan-ignore assign.propertyType
+            $definition->type->exceptions[] = $this->handleStatic(
                 PhpDocTypeHelper::toType($throwsTagValue->type),
                 $definition->type->templates,
             );

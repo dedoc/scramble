@@ -22,7 +22,7 @@ class ThrowHandler
 
         $exceptionType = $scope->getType($node->expr);
 
-        if (! $exceptionType instanceof ObjectType || ! $exceptionType->isInstanceOf(Throwable::class)) {
+        if (! $exceptionType->isInstanceOf(Throwable::class)) {
             return;
         }
 
