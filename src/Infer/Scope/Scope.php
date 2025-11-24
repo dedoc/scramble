@@ -230,7 +230,7 @@ class Scope
 
     // @todo: Move to some helper, Scope should be passed as a dependency.
     /**
-     * @param array<Node\Arg|Node\VariadicPlaceholder> $args
+     * @param  array<Node\Arg|Node\VariadicPlaceholder>  $args
      * @return array<string, Type>
      */
     public function getArgsTypes(array $args)
@@ -362,6 +362,7 @@ class Scope
 
     /**
      * @internal
+     *
      * @return Node\Expr\CallLike[]
      */
     public function getMethodCalls(): array
