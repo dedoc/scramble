@@ -33,7 +33,7 @@ class ArrayableToSchema extends TypeToSchemaExtension
         return $type instanceof ObjectType
             && $type->isInstanceOf(Arrayable::class)
             && ! $type->isInstanceOf(Collection::class) // handled in its own extension
-            && ((new \ReflectionClass($type->name))->isInstantiable());
+            && ((new \ReflectionClass($type->name))->isInstantiable()); // @phpstan-ignore argument.type
     }
 
     /**
