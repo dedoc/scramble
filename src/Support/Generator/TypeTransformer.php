@@ -29,7 +29,6 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
@@ -46,6 +45,10 @@ class TypeTransformer
     /** @var ExceptionToResponseExtension[] */
     private array $exceptionToResponseExtensions;
 
+    /**
+     * @param  class-string<TypeToSchemaExtension>[]  $typeToSchemaExtensionsClasses
+     * @param  class-string<ExceptionToResponseExtension>[]  $exceptionToResponseExtensionsClasses
+     */
     public function __construct(
         private Infer $infer,
         public readonly OpenApiContext $context,
@@ -147,7 +150,7 @@ class TypeTransformer
                     ? $this->transform(PhpDocTypeHelper::toType($varNode->type))
                     : $openApiType;
 
-                $commentDescription = trim($docNode->getAttribute('summary').' '.$docNode->getAttribute('description'));
+                $commentDescription = trim($docNode->getAttribute('summary').' '.$docNode->getAttribute('description')); // @phpstan-ignore binaryOp.invalid, binaryOp.invalid
                 $varNodeDescription = $varNode && $varNode->description ? trim($varNode->description) : '';
                 if ($commentDescription || $varNodeDescription) {
                     $openApiType->setDescription(implode('. ', array_filter([$varNodeDescription, $commentDescription])));
@@ -260,18 +263,20 @@ class TypeTransformer
         return $openApiType;
     }
 
-    private function handleUsingExtensions(Type $type)
+    private function handleUsingExtensions(Type $type): OpenApiType|Reference|null
     {
-        /** @var Collection $extensions */
-        $extensions = collect($this->typeToSchemaExtensions)
-            ->filter->shouldHandle($type)
-            ->values();
+        $extension = collect($this->typeToSchemaExtensions)
+            ->filter(fn ($ext) => method_exists($ext, 'shouldHandle') && $ext->shouldHandle($type))
+            ->values()
+            ->last();
 
-        $referenceExtension = $extensions->last();
+        if (! $extension) {
+            return null;
+        }
 
         /** @var Reference|null $reference */
-        $reference = $referenceExtension && method_exists($referenceExtension, 'reference')
-            ? $referenceExtension->reference($type)
+        $reference = method_exists($extension, 'reference')
+            ? $extension->reference($type)
             : null;
 
         if ($reference && $this->context->references->schemas->has($reference->fullName)) {
@@ -281,13 +286,10 @@ class TypeTransformer
         if ($reference) {
             $reference = $this->context->references->schemas->add($reference->fullName, $reference);
 
-            $this->getComponents()->addSchema($reference->fullName, Schema::fromType(new UnknownType('Reference is being analyzed.')));
+            $this->getComponents()->addSchema($reference->fullName, Schema::fromType(new UnknownType));
         }
 
-        $handledType = $extensions
-            ->reduce(function ($acc, $extension) use ($type) {
-                return $extension->toSchema($type, $acc) ?: $acc;
-            });
+        $handledType = $extension->toSchema($type);
 
         if ($handledType && $reference) {
             $this->getComponents()->addSchema($reference->fullName, Schema::fromType($handledType));
@@ -324,10 +326,10 @@ class TypeTransformer
                 );
         }
 
-        /** @var PhpDocNode $docNode */
         if ($docNode = $type->getAttribute('docNode')) {
-            $description = (string) Str::of($docNode->getAttribute('summary') ?: '')
-                ->append("\n\n".($docNode->getAttribute('description') ?: ''))
+            /** @var PhpDocNode $docNode */
+            $description = (string) Str::of($docNode->getAttribute('summary') ?: '') // @phpstan-ignore argument.type
+                ->append("\n\n".($docNode->getAttribute('description') ?: '')) // @phpstan-ignore binaryOp.invalid
                 ->append("\n\n".$response->description)
                 ->trim();
             $response->description($description);
@@ -353,49 +355,51 @@ class TypeTransformer
         return $response;
     }
 
-    private function handleResponseUsingExtensions(Type $type)
+    private function handleResponseUsingExtensions(Type $type): Response|Reference|null
     {
         if (! $type->isInstanceOf(\Throwable::class)) {
             foreach (array_reverse($this->typeToSchemaExtensions) as $extension) {
+                if (! method_exists($extension, 'shouldHandle')) {
+                    continue;
+                }
+
                 if (! $extension->shouldHandle($type)) {
                     continue;
                 }
 
-                if ($response = $extension->toResponse($type, null)) {
+                if ($response = $extension->toResponse($type)) {
                     return $response;
                 }
             }
         }
 
         // We want latter registered extensions to have a higher priority to allow custom extensions to override default ones.
-        $priorityExtensions = array_reverse($this->exceptionToResponseExtensions);
+        $extension = collect($this->exceptionToResponseExtensions)
+            ->filter(fn (ExceptionToResponseExtension $ext) => method_exists($ext, 'shouldHandle') && $ext->shouldHandle($type))
+            ->reverse()
+            ->first();
 
-        return array_reduce(
-            $priorityExtensions,
-            function ($acc, $extension) use ($type) {
-                if (! $extension->shouldHandle($type)) {
-                    return $acc;
-                }
+        if (! $extension) {
+            return null;
+        }
 
-                /** @var Reference|null $reference */
-                $reference = method_exists($extension, 'reference')
-                    ? $extension->reference($type)
-                    : null;
+        /** @var Reference|null $reference */
+        $reference = method_exists($extension, 'reference')
+            ? $extension->reference($type)
+            : null;
 
-                if ($reference && $this->getComponents()->has($reference)) {
-                    return $reference;
-                }
+        if ($reference && $this->getComponents()->has($reference)) {
+            return $reference;
+        }
 
-                if ($response = $extension->toResponse($type, $acc)) {
-                    if ($reference) {
-                        return $this->getComponents()->add($reference, $response);
-                    }
-
-                    return $response;
-                }
-
-                return $acc;
+        if ($response = $extension->toResponse($type)) {
+            if ($reference) {
+                return $this->getComponents()->add($reference, $response);
             }
-        );
+
+            return $response;
+        }
+
+        return null;
     }
 }
