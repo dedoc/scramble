@@ -46,8 +46,8 @@ class TypeTransformer
     private array $exceptionToResponseExtensions;
 
     /**
-     * @param class-string<TypeToSchemaExtension>[] $typeToSchemaExtensionsClasses
-     * @param class-string<ExceptionToResponseExtension>[] $exceptionToResponseExtensionsClasses
+     * @param  class-string<TypeToSchemaExtension>[]  $typeToSchemaExtensionsClasses
+     * @param  class-string<ExceptionToResponseExtension>[]  $exceptionToResponseExtensionsClasses
      */
     public function __construct(
         private Infer $infer,
@@ -328,7 +328,6 @@ class TypeTransformer
 
         if ($docNode = $type->getAttribute('docNode')) {
             /** @var PhpDocNode $docNode */
-
             $description = (string) Str::of($docNode->getAttribute('summary') ?: '') // @phpstan-ignore argument.type
                 ->append("\n\n".($docNode->getAttribute('description') ?: '')) // @phpstan-ignore binaryOp.invalid
                 ->append("\n\n".$response->description)
