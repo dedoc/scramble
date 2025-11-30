@@ -130,9 +130,9 @@ class PropertyReflector
             if ($inFunctionDecl && $text === '(') {
                 $inParamList = true;
                 $paramParenDepth = 1;
-            } elseif ($inParamList && !$inAttribute && $text === '(') {
+            } elseif ($inParamList && ! $inAttribute && $text === '(') {
                 $paramParenDepth++;
-            } elseif ($inParamList && !$inAttribute && $text === ')') {
+            } elseif ($inParamList && ! $inAttribute && $text === ')') {
                 $paramParenDepth--;
                 if ($paramParenDepth === 0) {
                     // end of parameter list

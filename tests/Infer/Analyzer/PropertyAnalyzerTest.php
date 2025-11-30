@@ -17,7 +17,5 @@ class PropertyWithoutTypeHint_PropertyAnalyzerTest
     public function __construct(
         #[SomeAttr(['a' => 42]['a'])]
         public $foo,
-    )
-    {
-    }
+    ) {}
 }
