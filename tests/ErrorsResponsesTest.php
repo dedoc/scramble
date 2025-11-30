@@ -1,10 +1,17 @@
 <?php
 
+use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\Reference;
+use Dedoc\Scramble\Support\Generator\Response;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
+use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\JsonSchema\JsonSchema;
 use Illuminate\Routing\Controller;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Gate;
@@ -127,7 +134,7 @@ it('adds http error response exception extending HTTP exception is thrown', func
     expect($openApiDocument['paths']['/test']['get']['responses'][409])->toHaveKey('content.application/json.schema.type', 'object');
 });
 
-it('adds http error response exception extending sympony HTTP exception is thrown', function () {
+it('adds http error response exception extending symfony HTTP exception is thrown', function () {
     $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'symfony_http_exception_response']));
 
     // AccessDeniedHttpException
@@ -208,6 +215,50 @@ class ErrorsResponsesTest_Controller extends Controller
      * @throws AccessDeniedHttpException|BadRequestHttpException|ConflictHttpException|GoneHttpException|LengthRequiredHttpException|LockedHttpException|MethodNotAllowedHttpException|NotAcceptableHttpException|PreconditionFailedHttpException|PreconditionRequiredHttpException|ServiceUnavailableHttpException|TooManyRequestsHttpException|UnauthorizedHttpException|UnprocessableEntityHttpException|UnsupportedMediaTypeHttpException
      */
     public function symfony_http_exception_response(Illuminate\Http\Request $request) {}
+}
+
+it('adds handling of custom exception with custom extensino', function () {
+    Scramble::registerExtension(CustomExceptionExtension_ErrorsResponsesTest::class);
+
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'custom_exception_response']));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][400])->toBe([
+        '$ref' => '#/components/responses/BusinessException',
+    ]);
+});
+
+class CustomExceptionExtension_ErrorsResponsesTest extends ExceptionToResponseExtension
+{
+    public function shouldHandle(Type $type): bool
+    {
+        return $type instanceof ObjectType
+            && $type->isInstanceOf(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+    }
+
+    public function toResponse(Type $type)
+    {
+        $responseBodyType = (new OpenApiTypes\ObjectType)
+            ->addProperty(
+                'code',
+                (new OpenApiTypes\IntegerType)
+                    ->setDescription('HTTP status code.')
+            )
+            ->setRequired([
+                'code',
+            ]);
+
+        return Response::make(400)
+            ->setDescription('Bad request')
+            ->setContent(
+                'application/json',
+                \Dedoc\Scramble\Support\Generator\Schema::fromType($responseBodyType),
+            );
+    }
+
+    public function reference(ObjectType $type): Reference
+    {
+        return new Reference('responses', Str::start($type->name, '\\'), $this->components);
+    }
 }
 
 class BusinessException extends \Symfony\Component\HttpKernel\Exception\HttpException

@@ -368,34 +368,32 @@ class TypeTransformer
         }
 
         // We want latter registered extensions to have a higher priority to allow custom extensions to override default ones.
-        $priorityExtensions = array_reverse($this->exceptionToResponseExtensions);
+        $extension = collect($this->exceptionToResponseExtensions)
+            ->filter(fn (ExceptionToResponseExtension $ext) => $ext->shouldHandle($type))
+            ->reverse()
+            ->first();
 
-        return array_reduce(
-            $priorityExtensions,
-            function ($acc, $extension) use ($type) {
-                if (! $extension->shouldHandle($type)) {
-                    return $acc;
-                }
+        if (! $extension) {
+            return null;
+        }
 
-                /** @var Reference|null $reference */
-                $reference = method_exists($extension, 'reference')
-                    ? $extension->reference($type)
-                    : null;
+        /** @var Reference|null $reference */
+        $reference = method_exists($extension, 'reference')
+            ? $extension->reference($type)
+            : null;
 
-                if ($reference && $this->getComponents()->has($reference)) {
-                    return $reference;
-                }
+        if ($reference && $this->getComponents()->has($reference)) {
+            return $reference;
+        }
 
-                if ($response = $extension->toResponse($type, $acc)) {
-                    if ($reference) {
-                        return $this->getComponents()->add($reference, $response);
-                    }
-
-                    return $response;
-                }
-
-                return $acc;
+        if ($response = $extension->toResponse($type)) {
+            if ($reference) {
+                return $this->getComponents()->add($reference, $response);
             }
-        );
+
+            return $response;
+        }
+
+        return null;
     }
 }
