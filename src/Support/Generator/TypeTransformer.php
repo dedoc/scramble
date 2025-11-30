@@ -263,7 +263,7 @@ class TypeTransformer
         return $openApiType;
     }
 
-    private function handleUsingExtensions(Type $type): \Dedoc\Scramble\Support\Generator\Types\Type|Reference|null
+    private function handleUsingExtensions(Type $type): OpenApiType|Reference|null
     {
         $extension = collect($this->typeToSchemaExtensions)
             ->filter(fn ($ext) => method_exists($ext, 'shouldHandle') && $ext->shouldHandle($type))
