@@ -15,6 +15,7 @@ class ObjectType extends AbstractType
 {
     public function __construct(
         public string $name,
+        public array $properties = [],
     ) {}
 
     public function isInstanceOf(string $className): bool
@@ -29,6 +30,13 @@ class ObjectType extends AbstractType
     public function isSame(Type $type)
     {
         return false;
+    }
+
+    public function setPropertyType(string $name, Type $type): self
+    {
+        $this->properties[$name] = $type;
+
+        return $this;
     }
 
     public function getPropertyType(string $propertyName, Scope $scope = new GlobalScope): Type
@@ -98,6 +106,14 @@ class ObjectType extends AbstractType
 
     public function toString(): string
     {
-        return $this->name;
+        $properties = collect($this->properties)
+            ->map(fn (Type $type, string $name) => "$name: ".$type->toString())
+            ->join(', ');
+
+        $properties = $this->properties
+            ? '{'.$properties.'}'
+            : '';
+
+        return $this->name.$properties;
     }
 }
