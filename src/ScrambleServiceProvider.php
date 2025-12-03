@@ -208,6 +208,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 $parameters['infer'] ?? $application->make(Infer::class),
                 $parameters['context'],
                 typeToSchemaExtensionsClasses: $parameters['typeToSchemaExtensions'] ?? array_merge([
+                    ArrayableToSchema::class,
                     EnumToSchema::class,
                     JsonResourceTypeToSchema::class,
                     CollectionToSchema::class,
@@ -222,7 +223,6 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ResourceResponseTypeToSchema::class,
                     PaginatedResourceResponseTypeToSchema::class,
                     VoidTypeToSchema::class,
-                    ArrayableToSchema::class,
                 ], $typesToSchemaExtensions),
                 exceptionToResponseExtensionsClasses: $parameters['exceptionToResponseExtensions'] ?? array_merge([
                     ValidationExceptionToResponseExtension::class,
