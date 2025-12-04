@@ -238,6 +238,99 @@ it('supports sometimes rule before required', function () {
         ]);
 });
 
+it('properly handles nested required rules for object by making object required', function () {
+    $rules = [
+        'foo.param1' => ['required', 'integer'],
+        'foo.param2' => ['string'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'required' => true,
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'param1' => ['type' => 'integer'],
+                    'param2' => ['type' => 'string'],
+                ],
+                'required' => ['param1'],
+            ],
+        ]);
+});
+
+it('properly handles nested required rules for array by not making array required', function () {
+    $rules = [
+        'items.*.param1' => ['required', 'integer'],
+        'items.*.param2' => ['string'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toBe([
+            "name" => "items",
+            "in" => "query",
+            "schema" => [
+                "type" => "array",
+                "items" => [
+                    "type" => "object",
+                    "properties" => [
+                        "param1" => [
+                            "type" => "integer",
+                        ],
+                        "param2" => [
+                            "type" => "string",
+                        ],
+                    ],
+                    "required" => [
+                        "param1",
+                    ],
+                ],
+            ],
+        ]);
+});
+
+it('properly handles nested required rules for array item object by not making array required but marking object required', function () {
+    $rules = [
+        'items.*.item.param1' => ['required', 'integer'],
+        'items.*.item.param2' => ['string'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+//        ->dd()
+        ->toBe([
+            'name' => 'items',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'item' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'param1' => ['type' => 'integer'],
+                                'param2' => ['type' => 'string'],
+                            ],
+                            'required' => ['param1'],
+                        ],
+                        'required' => ['item'],
+                    ],
+                ],
+            ],
+        ]);
+});
+
 it('supports multiple confirmed rule', function () {
     $rules = [
         'password' => ['required', 'min:8', 'confirmed'],
