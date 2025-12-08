@@ -17,6 +17,13 @@ class ObjectType extends Type
         parent::__construct('object');
     }
 
+    public function setProperties($properties)
+    {
+        $this->properties = $properties;
+
+        return $this;
+    }
+
     public function addProperty(string $name, $propertyType)
     {
         $this->properties[$name] = $propertyType;

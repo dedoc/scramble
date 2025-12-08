@@ -55,11 +55,16 @@ class RulesToParameters
     /** @return Parameter[] */
     public function handle(): array
     {
+        return $this->transformSchemaBagToParameters($this->toSchemaBag());
+    }
+
+    public function toSchemaBag()
+    {
         $schemaBag = $this->createSchemaBag();
 
         $this->applySchemaBagTransformingExtensions($schemaBag);
 
-        return $this->transformSchemaBagToParameters($schemaBag);
+        return $schemaBag;
     }
 
     private function createSchemaBag(): SchemaBag
