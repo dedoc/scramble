@@ -11,6 +11,9 @@ use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerg
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\PhpDocSchemaTransformer;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
+/**
+ * @internal
+ */
 class SchemaBagToParametersTransformer
 {
     public function __construct(
@@ -21,23 +24,6 @@ class SchemaBagToParametersTransformer
         private string $in = 'query',
     )
     {
-    }
-
-    public function mergeDotNotatedKeys(bool $mergeDotNotatedKeys = true): self
-    {
-        $this->mergeDotNotatedKeys = $mergeDotNotatedKeys;
-
-        return $this;
-    }
-
-    /**
-     * @param array<string, PhpDocNode> $rulesDocs
-     */
-    public function rulesDocs(array $rulesDocs = []): self
-    {
-        $this->rulesDocs = $rulesDocs;
-
-        return $this;
     }
 
     /** @return Parameter[] */

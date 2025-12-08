@@ -41,6 +41,20 @@ class SchemaBag
         return $this;
     }
 
+    public function first(): ?Type
+    {
+        return array_values($this->all())[0] ?? null;
+    }
+
+    public function firstOrFail(): Type
+    {
+        if (! $item = $this->first()) {
+            throw new OutOfBoundsException("Schema bag doesn't have any item exist");
+        }
+
+        return $item;
+    }
+
     public function remove(string $name): self
     {
         unset($this->items[$name]);
