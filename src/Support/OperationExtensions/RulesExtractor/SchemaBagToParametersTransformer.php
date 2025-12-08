@@ -21,9 +21,7 @@ class SchemaBagToParametersTransformer
         /** @var array<string, PhpDocNode> */
         private array $rulesDocs = [],
         private string $in = 'query',
-    )
-    {
-    }
+    ) {}
 
     /** @return Parameter[] */
     public function handle(SchemaBag $schemaBag): array

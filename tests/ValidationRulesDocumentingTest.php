@@ -274,22 +274,22 @@ it('properly handles nested required rules for array by not making array require
         ->toHaveCount(1)
         ->and($params[0])
         ->toBe([
-            "name" => "items",
-            "in" => "query",
-            "schema" => [
-                "type" => "array",
-                "items" => [
-                    "type" => "object",
-                    "properties" => [
-                        "param1" => [
-                            "type" => "integer",
+            'name' => 'items',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'param1' => [
+                            'type' => 'integer',
                         ],
-                        "param2" => [
-                            "type" => "string",
+                        'param2' => [
+                            'type' => 'string',
                         ],
                     ],
-                    "required" => [
-                        "param1",
+                    'required' => [
+                        'param1',
                     ],
                 ],
             ],
