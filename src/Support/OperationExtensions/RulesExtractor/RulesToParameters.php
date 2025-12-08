@@ -12,7 +12,6 @@ use Dedoc\Scramble\Support\RuleTransforming\NormalizedRule;
 use Dedoc\Scramble\Support\RuleTransforming\RuleSetToSchemaTransformer;
 use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
 use Dedoc\Scramble\Support\RuleTransforming\SchemaBag;
-use Dedoc\Scramble\Support\RuleTransforming\SchemaBagToParametersTransformer;
 use Illuminate\Support\Arr;
 use PhpParser\Node;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;

@@ -1,14 +1,13 @@
 <?php
 
-namespace Dedoc\Scramble\Support\RuleTransforming;
+namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
 use Dedoc\Scramble\Support\Generator\MissingValue;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiSchema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\PhpDocSchemaTransformer;
+use Dedoc\Scramble\Support\RuleTransforming\SchemaBag;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 /**
