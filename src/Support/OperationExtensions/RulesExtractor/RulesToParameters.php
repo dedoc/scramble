@@ -55,7 +55,7 @@ class RulesToParameters
         return $this->transformSchemaBagToParameters($this->toSchemaBag());
     }
 
-    public function toSchemaBag()
+    public function toSchemaBag(): SchemaBag
     {
         $schemaBag = $this->createSchemaBag();
 

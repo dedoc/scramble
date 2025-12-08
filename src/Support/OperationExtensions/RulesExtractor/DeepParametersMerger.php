@@ -82,7 +82,7 @@ class DeepParametersMerger
                     );
                 }
 
-                $objectIsRequiredDueToNestedRequiredProperties = $baseParam->schema->type instanceof ObjectType
+                $objectIsRequiredDueToNestedRequiredProperties = $baseParam->schema?->type instanceof ObjectType
                     && $params->some(fn (Parameter $p) => $p->required);
 
                 return $baseParam->required(
