@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\DeprecatedTagValueNode;
+use ReflectionMethod;
 
 /**
  * Extension to add deprecation notice to the operation description
@@ -17,23 +18,25 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\DeprecatedTagValueNode;
  */
 class DeprecationExtension extends OperationExtension
 {
-    public function handle(Operation $operation, RouteInfo $routeInfo)
+    public function handle(Operation $operation, RouteInfo $routeInfo): void
     {
-        // Skip if method is not deprecated
-        if (! $routeInfo->reflectionMethod() || $routeInfo->phpDoc()->getTagsByName('@not-deprecated')) {
+        if (! $routeInfo->reflectionAction() || $this->isExplicitlyMarkedNotDeprecated($routeInfo)) {
             return;
         }
 
-        $fqdn = $routeInfo->reflectionMethod()->getDeclaringClass()->getName();
-        $deprecatedClass = $this->getClassDeprecatedValues($fqdn);
+        $reflectionAction = $routeInfo->reflectionAction();
+
+        $deprecatedClassTags = $reflectionAction instanceof ReflectionMethod
+            ? $this->getClassDeprecatedTagValues($reflectionAction->getDeclaringClass()->getName())
+            : [];
         $deprecatedTags = $routeInfo->phpDoc()->getDeprecatedTagValues();
 
         // Skip if no deprecations found
-        if (! $deprecatedClass && ! $deprecatedTags) {
+        if (! $deprecatedClassTags && ! $deprecatedTags) {
             return;
         }
 
-        $description = Str::of($this->generateDescription($deprecatedClass));
+        $description = Str::of($this->generateDescription($deprecatedClassTags));
 
         if ($description->isNotEmpty()) {
             $description = $description->append("\n\n");
@@ -46,10 +49,16 @@ class DeprecationExtension extends OperationExtension
             ->deprecated(true);
     }
 
+    protected function isExplicitlyMarkedNotDeprecated(RouteInfo $routeInfo): bool
+    {
+        return $routeInfo->phpDoc()->getTagsByName('@notDeprecated')
+            || $routeInfo->phpDoc()->getTagsByName('@not-deprecated'); // inconsistent alias.
+    }
+
     /**
      * @return array<DeprecatedTagValueNode>
      */
-    protected function getClassDeprecatedValues(string $fqdn)
+    protected function getClassDeprecatedTagValues(string $fqdn): array
     {
         $reflector = ClassReflector::make($fqdn);
         $classPhpDocString = $reflector->getReflection()->getDocComment();
@@ -58,14 +67,14 @@ class DeprecationExtension extends OperationExtension
             return [];
         }
 
-        return PhpDoc::parse($classPhpDocString)->getDeprecatedTagValues();
+        return array_values(PhpDoc::parse($classPhpDocString)->getDeprecatedTagValues());
     }
 
     /**
-     * @return string
+     * @param  array<DeprecatedTagValueNode>  $deprecatedTagValues
      */
-    private function generateDescription(array $deprecation)
+    private function generateDescription(array $deprecatedTagValues): string
     {
-        return implode("\n", array_map(fn ($tag) => $tag->description, $deprecation));
+        return implode("\n", array_map(fn ($tag) => $tag->description, $deprecatedTagValues));
     }
 }
