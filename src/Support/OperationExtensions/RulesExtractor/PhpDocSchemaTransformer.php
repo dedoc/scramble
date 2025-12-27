@@ -8,6 +8,7 @@ use Dedoc\Scramble\Support\Generator\Types\Type as Schema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
 use Illuminate\Support\Str;
+use PHPStan\PhpDocParser\Ast\PhpDoc\DeprecatedTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 class PhpDocSchemaTransformer
@@ -40,6 +41,15 @@ class PhpDocSchemaTransformer
 
         if ($default = ExamplesExtractor::make($docNode, '@default')->extract(preferString: $type instanceof StringType)) {
             $type->default($default[0]);
+        }
+
+        $deprecated = array_values($docNode->getTagsByName('@deprecated'))[0]->value ?? null;
+        if ($deprecated instanceof DeprecatedTagValueNode) {
+            $type->deprecated(true);
+
+            if ($deprecated->description) {
+                $type->setDescription($type->description . $deprecated->description);
+            }
         }
 
         if ($format = array_values($docNode->getTagsByName('@format'))[0]->value->value ?? null) {

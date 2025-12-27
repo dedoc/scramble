@@ -776,3 +776,20 @@ class RequestBodyExtensionTest_UseHttpMethodsWithValidationRulesController
         ]);
     }
 }
+
+it('allows marking request fields as deprecated', function () {
+    $document = generateForRoute(RouteFacade::post('test', function (Request $request) {
+        $request->validate([
+            /** @deprecated Since 1.0.0 is deprecated. */
+            'foo' => ['integer'],
+        ]);
+    }));
+
+    $fooProperty = $document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties']['foo']; // woah...
+
+    expect($fooProperty)->toBe([
+        'type' => 'integer',
+        'description' => 'Since 1.0.0 is deprecated.',
+        'deprecated' => true,
+    ]);
+});
