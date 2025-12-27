@@ -48,7 +48,7 @@ class PhpDocSchemaTransformer
             $type->deprecated(true);
 
             if ($deprecated->description) {
-                $type->setDescription($type->description . $deprecated->description);
+                $type->setDescription($type->description.$deprecated->description);
             }
         }
 

@@ -71,7 +71,7 @@ class DeprecationExtension extends OperationExtension
     }
 
     /**
-     * @param array<DeprecatedTagValueNode> $deprecatedTagValues
+     * @param  array<DeprecatedTagValueNode>  $deprecatedTagValues
      */
     private function generateDescription(array $deprecatedTagValues): string
     {
