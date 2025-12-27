@@ -3292,18 +3292,6 @@ parameters:
 			path: src/Support/OperationBuilder.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\DeprecationExtension\:\:generateDescription\(\) has parameter \$deprecation with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/DeprecationExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\DeprecationExtension\:\:handle\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/DeprecationExtension.php
-
-		-
 			message: '#^Access to an undefined property Dedoc\\Scramble\\Support\\Type\\Type\:\:\$name\.$#'
 			identifier: property.notFound
 			count: 1
