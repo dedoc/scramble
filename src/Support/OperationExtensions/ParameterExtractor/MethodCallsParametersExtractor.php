@@ -30,7 +30,7 @@ class MethodCallsParametersExtractor implements ParameterExtractor
         $parameters = array_map(function (InferredParameter $p) use ($routeInfo) {
             $parameter = $p->toOpenApiParameter($this->openApiTransformer);
 
-            $parameter->in = in_array(mb_strtolower($routeInfo->route->methods()[0]), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
+            $parameter->in = in_array(mb_strtolower($routeInfo->method), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
                 ? 'query'
                 : 'body';
 

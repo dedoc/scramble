@@ -102,13 +102,7 @@ class RequestEssentialsExtension extends OperationExtension
             }
         }
 
-        $method = $methods[0];
-
-        if ($method === 'put' && in_array('patch', $methods) && $this->config->prefersPatchMethod) {
-            $method = 'patch';
-        }
-
-        return $method;
+        return $routeInfo->method;
     }
 
     /**

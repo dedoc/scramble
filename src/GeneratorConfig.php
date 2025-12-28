@@ -31,9 +31,9 @@ class GeneratorConfig
     public Closure|string|null $documentRoute = null;
 
     /**
-     * Indicates that Scramble should document `PUT|PATCH` routes using `PATCH` method and not PUT.
+     * @var Closure(Route): (string|string[])
      */
-    public bool $prefersPatchMethod = false;
+    public Closure $operationMethodsResolver;
 
     public function __construct(
         private array $config = [],
@@ -43,7 +43,10 @@ class GeneratorConfig
         public readonly DocumentTransformers $documentTransformers = new DocumentTransformers,
         public readonly RuleTransformers $ruleTransformers = new RuleTransformers,
         public readonly ServerVariables $serverVariables = new ServerVariables,
-    ) {}
+        ?Closure $operationMethodsResolver = null,
+    ) {
+        $this->operationMethodsResolver = $operationMethodsResolver ?: fn (Route $r) => $r->methods()[0];
+    }
 
     public function config(array $config)
     {
@@ -210,7 +213,19 @@ class GeneratorConfig
      */
     public function preferPatchMethod(): static
     {
-        $this->prefersPatchMethod = true;
+        return $this->resolveOperationMethodsUsing(function (Route $route): string {
+            $methods = array_map('strtolower', $route->methods());
+
+            return in_array('patch', $methods) && in_array('put', $methods) ? 'patch' : $methods[0];
+        });
+    }
+
+    /**
+     * @param Closure(Route): (string|string[]) $resolver
+     */
+    public function resolveOperationMethodsUsing(Closure $resolver): static
+    {
+        $this->operationMethodsResolver = $resolver;
 
         return $this;
     }

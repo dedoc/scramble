@@ -42,7 +42,7 @@ class RouteInfo
 
     public function __construct(
         public readonly Route $route,
-        private Infer $infer, // @phpstan-ignore property.onlyWritten
+        public readonly string $method,
     ) {
         /** @var Bag<array<string, InferredParameter>> $bag */
         $bag = new Bag;

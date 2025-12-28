@@ -21,7 +21,7 @@ class NodeRulesEvaluator implements RulesEvaluator
         private PrettyPrinter $printer,
         private FunctionLike $functionLikeNode,
         private ?Node\Expr $rulesNode,
-        private Route $route,
+        private string $method,
         private ?string $className,
     ) {}
 
@@ -152,7 +152,7 @@ class NodeRulesEvaluator implements RulesEvaluator
 
             extract($variables);
             $request = request();
-            $request->setMethod($this->route->methods()[0]);
+            $request->setMethod($this->method);
 
             try {
                 return eval("return $code;");

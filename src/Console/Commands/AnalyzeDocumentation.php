@@ -75,7 +75,7 @@ class AnalyzeDocumentation extends Command
             return '';
         }
 
-        $method = $route->methods()[0];
+        $method = implode('|', $route->methods());
         $action = $route->getAction('uses');
 
         return "$method.$action";
@@ -89,7 +89,7 @@ class AnalyzeDocumentation extends Command
         $firstException = $exceptions->first();
         $route = $firstException->getRoute();
 
-        $method = $route->methods()[0];
+        $method = implode('|', $route->methods());
         $errorsMessage = ($count = $exceptions->count()).' '.Str::plural('error', $count);
 
         $tocComponent = new TermsOfContentItem(

@@ -10,15 +10,15 @@ class FormRequestRulesEvaluator implements RulesEvaluator
 {
     public function __construct(
         private ClassReflector $classReflector,
-        private Route $route,
+        private string $method,
     ) {}
 
     public function handle(): array
     {
-        return $this->rules($this->classReflector->className, $this->route);
+        return $this->rules($this->classReflector->className, $this->method);
     }
 
-    protected function rules(string $requestClassName, Route $route)
+    protected function rules(string $requestClassName, string $method)
     {
         /** @var Request $request */
         $request = (new $requestClassName);
@@ -26,7 +26,7 @@ class FormRequestRulesEvaluator implements RulesEvaluator
         $rules = [];
 
         if (method_exists($request, 'setMethod')) {
-            $request->setMethod($route->methods()[0]);
+            $request->setMethod($method);
         }
 
         if (method_exists($request, 'rules')) {
