@@ -6,7 +6,8 @@
                 "type": "object",
                 "properties": {
                     "current_page": {
-                        "type": "integer"
+                        "type": "integer",
+                        "minimum": 1
                     },
                     "data": {
                         "type": "array",
@@ -24,7 +25,8 @@
                         "type": [
                             "integer",
                             "null"
-                        ]
+                        ],
+                        "minimum": 1
                     },
                     "next_page_url": {
                         "type": [
@@ -41,7 +43,8 @@
                     },
                     "per_page": {
                         "type": "integer",
-                        "description": "Number of items shown per page."
+                        "description": "Number of items shown per page.",
+                        "minimum": 0
                     },
                     "prev_page_url": {
                         "type": [
@@ -54,7 +57,8 @@
                             "integer",
                             "null"
                         ],
-                        "description": "Number of the last item in the slice."
+                        "description": "Number of the last item in the slice.",
+                        "minimum": 1
                     }
                 },
                 "required": [

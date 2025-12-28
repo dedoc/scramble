@@ -168,8 +168,11 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
         $info = $this->getModelInfo($event->getInstance());
 
-        /** @var Model $instance */
+        /** @var Model|null $instance */
         $instance = $info->get('instance');
+        if (! $instance) {
+            return null;
+        }
 
         $arrayableAttributesTypes = $info->get('attributes', collect())
             ->when($instance->getVisible(), fn ($c, $visible) => $c->only($visible))

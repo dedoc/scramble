@@ -70,7 +70,7 @@ class FunctionLikeHandler implements CreatesScope
         $localTemplates = [];
         $fnType->arguments = collect($node->getParams())
             ->mapWithKeys(function (Node\Param $param) use ($scope, $classDefinitionTemplatesTypes, &$localTemplates) {
-                if (! $param->var instanceof Node\Expr\Variable) {
+                if (! $param->var instanceof Node\Expr\Variable || ! is_string($param->var->name)) {
                     return [];
                 }
 
@@ -140,7 +140,7 @@ class FunctionLikeHandler implements CreatesScope
 
         $argumentsByKeys = collect($node->getParams())
             ->mapWithKeys(function (Node\Param $param) {
-                return $param->var instanceof Node\Expr\Variable ? [
+                return $param->var instanceof Node\Expr\Variable && is_string($param->var->name) ? [
                     $param->var->name => true,
                 ] : [];
             })
@@ -194,6 +194,7 @@ class FunctionLikeHandler implements CreatesScope
                 && $s->expr->var->var->name === 'this'
                 && $s->expr->var->name instanceof Node\Identifier
                 && $s->expr->expr instanceof Node\Expr\Variable
+                && is_string($s->expr->expr->name)
                 && ($argumentsByKeys[$s->expr->expr->name] ?? false),
         );
 

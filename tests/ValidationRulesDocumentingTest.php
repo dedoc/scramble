@@ -238,6 +238,98 @@ it('supports sometimes rule before required', function () {
         ]);
 });
 
+it('properly handles nested required rules for object by making object required', function () {
+    $rules = [
+        'foo.param1' => ['required', 'integer'],
+        'foo.param2' => ['string'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'required' => true,
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'param1' => ['type' => 'integer'],
+                    'param2' => ['type' => 'string'],
+                ],
+                'required' => ['param1'],
+            ],
+        ]);
+});
+
+it('properly handles nested required rules for array by not making array required', function () {
+    $rules = [
+        'items.*.param1' => ['required', 'integer'],
+        'items.*.param2' => ['string'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toBe([
+            'name' => 'items',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'param1' => [
+                            'type' => 'integer',
+                        ],
+                        'param2' => [
+                            'type' => 'string',
+                        ],
+                    ],
+                    'required' => [
+                        'param1',
+                    ],
+                ],
+            ],
+        ]);
+});
+
+it('properly handles nested required rules for array item object by not making array required but marking object required', function () {
+    $rules = [
+        'items.*.item.param1' => ['required', 'integer'],
+        'items.*.item.param2' => ['string'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toBe([
+            'name' => 'items',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'item' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'param1' => ['type' => 'integer'],
+                                'param2' => ['type' => 'string'],
+                            ],
+                            'required' => ['param1'],
+                        ],
+                        'required' => ['item'],
+                    ],
+                ],
+            ],
+        ]);
+})->todo('known issue, should be fixed');
+
 it('supports multiple confirmed rule', function () {
     $rules = [
         'password' => ['required', 'min:8', 'confirmed'],
@@ -428,6 +520,34 @@ it('supports uuid', function () {
 
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
+
+it('supports Rule::exists with uuid primary column', function () {
+    $rules = [
+        'foo' => ['required', Rule::exists('circles')],
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params[0]->schema->toArray())->toBe([
+        'type' => 'string',
+    ]);
+});
+
+it('supports regex rule', function (string $rule, string $expectedPattern) {
+    $rules = [
+        'foo' => ['nullable', 'string', $rule],
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params[0]->schema->toArray())->toBe([
+        'type' => ['string', 'null'],
+        'pattern' => $expectedPattern,
+    ]);
+})->with([
+    ['regex:/^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+\/=]+\z/', '^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+\/=]+$'],
+    ['regex:/^([0-9\s\-\+\(\)]*)$/', '^([0-9\s\-\+\(\)]*)$'],
+]);
 
 it('extract rules from object like rules heavy case', function () {
     $rules = [

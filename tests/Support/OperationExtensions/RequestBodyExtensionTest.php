@@ -708,3 +708,88 @@ class RequestBodyExtensionTest_ArraySpecificQueryParametersController
         ]);
     }
 }
+
+it('document request body with variables as validation rules', function () {
+    $document = generateForRoute(fn () => RouteFacade::get('test', RequestBodyExtensionTest_VariablesAsValidationRulesController::class));
+
+    expect($parameters = $document['paths']['/test']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($parameters[0])
+        ->toBe([
+            'name' => 'tags[]',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'integer',
+                ],
+            ],
+        ]);
+});
+
+class RequestBodyExtensionTest_VariablesAsValidationRulesController
+{
+    public function __invoke(Request $request)
+    {
+        $validationRules = ['integer'];
+
+        $request->validate([
+            'tags.*' => $validationRules,
+        ]);
+    }
+}
+
+it('document request body use the HTTP method', function (string $httpMethod, array $required) {
+    $document = generateForRoute(fn () => RouteFacade::match($httpMethod, 'test', RequestBodyExtensionTest_UseHttpMethodsWithValidationRulesController::class));
+    $result = [
+        'type' => 'object',
+        'properties' => [
+            'foo' => [
+                'type' => 'string',
+            ],
+            'bar' => [
+                'type' => 'string',
+            ],
+        ],
+    ];
+
+    if (! empty($required)) {
+        $result['required'] = $required;
+    }
+
+    expect($document['paths']['/test'][$httpMethod]['requestBody']['content']['application/json']['schema'])
+        ->toBe($result);
+})->with([
+    ['put', ['foo', 'bar']],
+    ['patch', []],
+]);
+
+class RequestBodyExtensionTest_UseHttpMethodsWithValidationRulesController
+{
+    public function __invoke(Request $request)
+    {
+        $presenceRule = $request->isMethod('PUT') ? 'required' : 'sometimes';
+
+        $request->validate([
+            'foo' => [$presenceRule, 'string'],
+            'bar' => [$presenceRule, 'string'],
+        ]);
+    }
+}
+
+it('allows marking request fields as deprecated', function () {
+    $document = generateForRoute(RouteFacade::post('test', function (Request $request) {
+        $request->validate([
+            /** @deprecated Since 1.0.0 is deprecated. */
+            'foo' => ['integer'],
+        ]);
+    }));
+
+    $fooProperty = $document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties']['foo']; // woah...
+
+    expect($fooProperty)->toBe([
+        'type' => 'integer',
+        'description' => 'Since 1.0.0 is deprecated.',
+        'deprecated' => true,
+    ]);
+});

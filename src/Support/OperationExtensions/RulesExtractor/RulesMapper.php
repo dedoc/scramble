@@ -11,18 +11,14 @@ use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\TypeHelper;
-use Dedoc\Scramble\Support\Type\Union;
-use Illuminate\Support\Str;
-use Illuminate\Support\Stringable;
+use Dedoc\Scramble\Support\RuleTransforming\RuleSetToSchemaTransformer;
+use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
 use Illuminate\Validation\ConditionalRules;
-use Illuminate\Validation\Rules\Enum;
 
 class RulesMapper
 {
     public function __construct(
-        private TypeTransformer $openApiTransformer,
+        private TypeTransformer $openApiTransformer, // @phpstan-ignore property.onlyWritten
         private RuleSetToSchemaTransformer $rulesToSchemaTransformer,
     ) {}
 
@@ -75,19 +71,6 @@ class RulesMapper
         }
 
         return new ArrayType;
-    }
-
-    public function exists(Type $type, $params)
-    {
-        if (! $type instanceof UnknownType) {
-            return $type;
-        }
-
-        if (Str::is(['id', '*_id'], $column = $params[1] ?? 'id')) {
-            return $this->int($type);
-        }
-
-        return $type;
     }
 
     public function email(Type $type)
@@ -174,50 +157,6 @@ class RulesMapper
         return $this->max($type, [$params[1]]);
     }
 
-    public function in(Type $type, $params)
-    {
-        return $type->enum(
-            collect($params)
-                ->mapInto(Stringable::class)
-                ->map(fn (Stringable $v) => (string) $v->trim('"')->replace('""', '"'))
-                ->values()
-                ->all()
-        );
-    }
-
-    public function enum(Type $_, Enum $rule)
-    {
-        $getProtectedValue = function ($obj, $name) {
-            $array = (array) $obj;
-            $prefix = chr(0).'*'.chr(0);
-
-            return $array[$prefix.$name];
-        };
-
-        $enumName = $getProtectedValue($rule, 'type');
-
-        $objectType = new ObjectType($enumName);
-
-        $except = method_exists(Enum::class, 'except') ? $getProtectedValue($rule, 'except') : [];
-        $only = method_exists(Enum::class, 'only') ? $getProtectedValue($rule, 'only') : [];
-
-        if ($except || $only) {
-            $cases = collect($enumName::cases())
-                ->reject(fn ($case) => in_array($case, $except))
-                ->filter(fn ($case) => ! $only || in_array($case, $only));
-
-            if (! isset($cases->first()?->value)) {
-                return new UnknownType("$enumName enum doesnt have values (only/except context)");
-            }
-
-            return $this->openApiTransformer->transform(Union::wrap(
-                $cases->map(fn ($c) => TypeHelper::createTypeFromValue($c->value))->all()
-            ));
-        }
-
-        return $this->openApiTransformer->transform($objectType);
-    }
-
     public function image(Type $type)
     {
         return $this->file($type);
@@ -259,7 +198,7 @@ class RulesMapper
         return $this->date($type, $params);
     }
 
-    public function conditionalRules(Type $type, ConditionalRules $rule): Type
+    public function conditionalRules(Type $type, ConditionalRules $rule, RuleTransformerContext $context): Type
     {
         $ifRules = $rule->rules();
         $elseRules = $rule->defaultRules();
@@ -273,7 +212,7 @@ class RulesMapper
         $newTypes = [];
         foreach ($rules as $conditionRules) {
             foreach ($types as $type) {
-                $newTypes[] = $newT = $this->rulesToSchemaTransformer->transform($conditionRules, clone $type);
+                $newTypes[] = $newT = $this->rulesToSchemaTransformer->transform($conditionRules, clone $type, $context);
                 if (! $conditionRules) {
                     $newT->setAttribute('isEmptyRules', true);
                 }

@@ -8,7 +8,6 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class JsonResourceHelper
@@ -31,7 +30,7 @@ class JsonResourceHelper
         );
 
         $modelType = new UnknownType("Cannot resolve [$modelClass] model type.");
-        if ($modelClass && is_a($modelClass, Model::class, true)) {
+        if ($modelClass) {
             $modelType = new ObjectType($modelClass);
         }
 

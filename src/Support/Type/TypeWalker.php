@@ -89,7 +89,7 @@ class TypeWalker
             }
         }
 
-        return $subject;
+        return TypeHelper::unpackIfArray($subject);
     }
 
     /**

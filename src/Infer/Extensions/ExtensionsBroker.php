@@ -188,7 +188,7 @@ class ExtensionsBroker
     }
 
     /**
-     * @return Type[]
+     * @return ObjectType[]
      */
     public function getMethodCallExceptions($event): array
     {

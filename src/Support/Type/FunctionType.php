@@ -13,7 +13,7 @@ class FunctionType extends AbstractType implements FunctionLikeType
     public array $templates = [];
 
     /**
-     * @var array<ObjectType|Generic>
+     * @var array<Type>
      */
     public array $exceptions;
 

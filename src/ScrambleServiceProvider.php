@@ -49,6 +49,7 @@ use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\VoidType;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ArrayableToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\BinaryFileResponseToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
@@ -56,7 +57,6 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
-use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\PaginatedResourceResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\PaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceCollectionTypeToSchema;
@@ -208,9 +208,9 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 $parameters['infer'] ?? $application->make(Infer::class),
                 $parameters['context'],
                 typeToSchemaExtensionsClasses: $parameters['typeToSchemaExtensions'] ?? array_merge([
+                    ArrayableToSchema::class,
                     EnumToSchema::class,
                     JsonResourceTypeToSchema::class,
-                    ModelToSchema::class,
                     CollectionToSchema::class,
                     EloquentCollectionToSchema::class,
                     ResourceCollectionTypeToSchema::class,

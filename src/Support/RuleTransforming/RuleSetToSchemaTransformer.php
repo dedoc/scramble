@@ -1,10 +1,13 @@
 <?php
 
-namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
+namespace Dedoc\Scramble\Support\RuleTransforming;
 
+use Dedoc\Scramble\Configuration\RuleTransformers;
+use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesMapper;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -36,66 +39,103 @@ class RuleSetToSchemaTransformer
 
     public function __construct(
         private TypeTransformer $openApiTransformer,
+        private RuleTransformers $config,
     ) {}
 
     /**
      * @param  RuleSet  $rules
      */
-    public function transform(mixed $rules, OpenApiType $initialType = new UnknownType): OpenApiType
-    {
-        $rules = $this->normalizeAndPrioritizeRules($rules);
+    public function transform(
+        mixed $rules,
+        OpenApiType $initialType = new UnknownType,
+        ?RuleTransformerContext $context = null,
+    ): OpenApiType {
+        $rules = self::normalizeAndPrioritizeRules($rules);
 
-        $result = $this->transformToSchema($rules, $initialType);
+        $schema = $this->transformToSchema($rules, $initialType, $context);
 
         $isRequired = $this->checkIfRequired($rules);
         if ($isRequired !== null) {
-            $result->setAttribute('required', $isRequired);
+            $schema->setAttribute('required', $isRequired);
         }
 
-        return $result;
+        return $schema;
     }
 
     /**
      * @param  Collection<int, Rule>  $rules
      */
-    protected function transformToSchema(Collection $rules, OpenApiType $initialType): OpenApiType
+    protected function transformToSchema(Collection $rules, OpenApiType $initialType, ?RuleTransformerContext $context): OpenApiType
     {
-        return $rules->reduce(function (OpenApiType $type, $rule) {
-            if (is_string($rule)) {
-                return $this->transformStringRuleToSchema($type, $rule);
+        $context ??= RuleTransformerContext::makeFromOpenApiContext($this->openApiTransformer->context, [
+            'field' => '',
+            'fieldRules' => $rules,
+        ]);
+
+        return $rules->reduce(function (OpenApiType $type, $rule) use ($context) {
+            if ($schema = $this->handledUsingExtension($rule, $type, $context)) {
+                return $schema;
             }
+
+            if (is_string($rule)) {
+                return $this->transformStringRuleToSchema($type, $rule, $context);
+            }
+
+            // if ($rule instanceof DocumentableRule) {
+            //    return $rule->toSchema($type, RuleMappingContext::class);
+            // }
 
             return method_exists($rule, 'docs')
                 ? $rule->docs($type, $this->openApiTransformer)
-                : $this->transformRuleValueToSchema($type, $rule);
+                : $this->transformRuleValueToSchema($type, $rule, $context);
         }, $initialType);
     }
 
-    protected function transformStringRuleToSchema(OpenApiType $type, string $rule): OpenApiType
+    protected function handledUsingExtension(string|object $rule, OpenApiType $type, RuleTransformerContext $context): ?OpenApiType
+    {
+        $normalizedRule = NormalizedRule::fromValue($rule);
+
+        $extensions = $this->config
+            ->instances(RuleTransformer::class, [
+                TypeTransformer::class => $this->openApiTransformer,
+                RulesMapper::class => new RulesMapper($this->openApiTransformer, $this),
+            ])
+            ->filter(fn (RuleTransformer $ruleTransformer) => $ruleTransformer->shouldHandle($normalizedRule))
+            ->values();
+
+        if ($extensions->isEmpty()) {
+            return null;
+        }
+
+        return $extensions->reduce(function (OpenApiType $type, RuleTransformer $transformer) use ($normalizedRule, $context) {
+            return $transformer->toSchema($type, $normalizedRule, $context);
+        }, $type);
+    }
+
+    protected function transformStringRuleToSchema(OpenApiType $type, string $rule, RuleTransformerContext $context): OpenApiType
     {
         $rulesHandler = new RulesMapper($this->openApiTransformer, $this);
 
-        $explodedRule = explode(':', $rule, 2);
+        $normalizedRule = NormalizedRule::fromValue($rule);
 
-        $ruleName = $explodedRule[0];
-        $params = isset($explodedRule[1]) ? explode(',', $explodedRule[1]) : [];
+        $ruleName = $normalizedRule->getRule();
 
         return method_exists($rulesHandler, $ruleName)
-            ? $rulesHandler->$ruleName($type, $params)
+            ? $rulesHandler->$ruleName($type, $normalizedRule->getParameters(), $context)
             : $type;
     }
 
     /**
      * @param  object  $rule
      */
-    protected function transformRuleValueToSchema(OpenApiType $type, $rule): OpenApiType
+    protected function transformRuleValueToSchema(OpenApiType $type, $rule, RuleTransformerContext $context): OpenApiType
     {
         $rulesHandler = new RulesMapper($this->openApiTransformer, $this);
 
         $methodName = Str::camel(class_basename(get_class($rule)));
 
         return method_exists($rulesHandler, $methodName)
-            ? $rulesHandler->$methodName($type, $rule)
+            ? $rulesHandler->$methodName($type, $rule, $context)
             : $type;
     }
 
@@ -119,7 +159,7 @@ class RuleSetToSchemaTransformer
      * @param  RuleSet  $rules
      * @return Collection<int, Rule>
      */
-    protected function normalizeAndPrioritizeRules(mixed $rules): Collection
+    public static function normalizeAndPrioritizeRules(mixed $rules): Collection
     {
         $normalizedRules = Arr::wrap(is_string($rules) ? explode('|', $rules) : $rules);
 
@@ -143,13 +183,13 @@ class RuleSetToSchemaTransformer
                     return $rule;
                 }
             })
-            ->sortByDesc($this->rulesSorter(...));
+            ->sortByDesc(self::rulesSorter(...));
     }
 
     /**
      * @param  Rule  $rule
      */
-    protected function rulesSorter($rule): int
+    protected static function rulesSorter($rule): int
     {
         if (! is_string($rule)) {
             return -2;

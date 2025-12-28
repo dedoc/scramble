@@ -325,6 +325,10 @@ class ClassDefinition implements ClassDefinitionContract
             return $this->classContexts;
         }
 
+        if (in_array($this->name, $ignoreClasses, true)) {
+            return collect();
+        }
+
         $reflector = ClassReflector::make($this->name);
 
         $docComment = rescue(fn () => $reflector->getReflection()->getDocComment(), report: false) ?: '';
