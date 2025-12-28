@@ -9,23 +9,18 @@ use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesMapper;
 use Dedoc\Scramble\Support\RuleTransforming\NormalizedRule;
 use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
-use Dedoc\Scramble\Support\Type\IntegerType;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Support\Stringable;
 use Illuminate\Validation\Concerns\ValidatesAttributes;
-use Illuminate\Validation\Rule;
 use Throwable;
 
 class ExistsRule implements RuleTransformer
 {
     public function __construct(
         private RulesMapper $rulesMapper,
-    )
-    {
-    }
+    ) {}
 
     public function shouldHandle(NormalizedRule $rule): bool
     {
@@ -100,6 +95,7 @@ class ExistsRule implements RuleTransformer
         if (str_contains($tableOrModel, '\\') && class_exists($tableOrModel) && is_a($tableOrModel, Model::class, true)) {
             /**
              * @see ValidatesAttributes::parseTable
+             *
              * @var Model $model
              */
             $model = new $tableOrModel;
