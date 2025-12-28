@@ -36,6 +36,8 @@ abstract class Type
 
     public bool $deprecated = false;
 
+    public ?string $pattern = null;
+
     public function __construct(string $type)
     {
         $this->type = $type;
@@ -109,6 +111,7 @@ abstract class Type
                 'contentEncoding' => $this->contentEncoding,
                 'description' => $this->description,
                 'deprecated' => $this->deprecated,
+                'pattern' => $this->pattern,
                 'enum' => count($this->enum) ? $this->enum : null,
             ]),
             $this->example instanceof MissingValue ? [] : ['example' => $this->example],
@@ -176,12 +179,18 @@ abstract class Type
         return $this;
     }
 
-    /**
-     * @return $this
-     */
+    /** @return $this */
     public function deprecated(bool $deprecated): self
     {
         $this->deprecated = $deprecated;
+
+        return $this;
+    }
+
+    /** @return $this */
+    public function pattern(?string $pattern): self
+    {
+        $this->pattern = $pattern;
 
         return $this;
     }

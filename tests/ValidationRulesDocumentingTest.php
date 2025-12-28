@@ -533,6 +533,22 @@ it('supports Rule::exists with uuid primary column', function () {
     ]);
 });
 
+it('supports regex rule', function (string $rule, string $expectedPattern) {
+    $rules = [
+        'foo' => ['nullable', 'string', $rule],
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params[0]->schema->toArray())->toBe([
+        'type' => ['string', 'null'],
+        'pattern' => $expectedPattern,
+    ]);
+})->with([
+    ['regex:/^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+\/=]+\z/', '^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+\/=]+$'],
+    ['regex:/^([0-9\s\-\+\(\)]*)$/', '^([0-9\s\-\+\(\)]*)$'],
+]);
+
 it('extract rules from object like rules heavy case', function () {
     $rules = [
         'channel' => 'required',
