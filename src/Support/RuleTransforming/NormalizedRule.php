@@ -28,12 +28,25 @@ class NormalizedRule
             $explodedRule = explode(':', $rule, 2);
 
             $ruleName = $explodedRule[0];
-            $params = isset($explodedRule[1]) ? explode(',', $explodedRule[1]) : [];
 
-            return new NormalizedRule($ruleName, $params);
+            return new NormalizedRule(
+                $ruleName,
+                isset($explodedRule[1]) ? static::parseParameters($ruleName, $explodedRule[1]) : [],
+            );
         }
 
         return new NormalizedRule($rule);
+    }
+
+    /** @return list<mixed> */
+    protected static function parseParameters(string $rule, string $parameters): array
+    {
+        return static::ruleIsRegex($rule) ? [$parameters] : str_getcsv($parameters, escape: '\\');
+    }
+
+    protected static function ruleIsRegex(string $rule): bool
+    {
+        return in_array(strtolower($rule), ['regex', 'not_regex', 'notregex'], true);
     }
 
     /**

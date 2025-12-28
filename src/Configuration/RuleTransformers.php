@@ -8,6 +8,7 @@ use Dedoc\Scramble\RuleTransformers\ConfirmedRule;
 use Dedoc\Scramble\RuleTransformers\EnumRule;
 use Dedoc\Scramble\RuleTransformers\ExistsRule;
 use Dedoc\Scramble\RuleTransformers\InRule;
+use Dedoc\Scramble\RuleTransformers\RegexRule;
 use Dedoc\Scramble\Support\ContainerUtils;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -84,6 +85,7 @@ class RuleTransformers
             InRule::class,
             ConfirmedRule::class,
             ExistsRule::class,
+            RegexRule::class,
         ];
 
         return array_values(array_unique([
