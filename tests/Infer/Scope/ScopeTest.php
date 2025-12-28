@@ -60,3 +60,13 @@ it('infers var var type', function ($code, $expectedTypeString) {
 })->with([
     ['$$a', 'unknown'],
 ]);
+
+it('infers array type with const fetch keys', function ($code, $expectedTypeString) {
+    expect(getStatementTypeForScopeTest($code)->toString())->toBe($expectedTypeString);
+})->with([
+    ['['.Foo_ScopeTest::class.'::FOO => 42]', 'array{foo: int(42)}'],
+]);
+class Foo_ScopeTest
+{
+    const FOO = 'foo';
+}

@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
+use Dedoc\Scramble\Infer\Handler\AssignHandler;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\BooleanNotTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
@@ -216,7 +217,9 @@ class Scope
         }
 
         /**
-         * When `dim` is empty, it means that the context is setting, not handling now.
+         * When `dim` is empty, it means that the context is setting – handling in AssignHandler.
+         *
+         * @see AssignHandler
          */
         if ($node instanceof Node\Expr\ArrayDimFetch && $node->dim) {
             return $this->setType($node, new OffsetAccessType(
