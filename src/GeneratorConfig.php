@@ -30,6 +30,11 @@ class GeneratorConfig
      */
     public Closure|string|null $documentRoute = null;
 
+    /**
+     * Indicates that Scramble should document `PUT|PATCH` routes using `PATCH` method and not PUT.
+     */
+    public bool $prefersPatchMethod = false;
+
     public function __construct(
         private array $config = [],
         private ?Closure $routeResolver = null,
@@ -196,6 +201,16 @@ class GeneratorConfig
         }
 
         $this->serverVariables->use($variables);
+
+        return $this;
+    }
+
+    /**
+     * Force Scramble to use `PATCH` for `PUT|PATCH` routes.
+     */
+    public function preferPatchMethod(): static
+    {
+        $this->prefersPatchMethod = true;
 
         return $this;
     }
