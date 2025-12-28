@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
 use Illuminate\Http\Request;
-use Illuminate\Routing\Route;
 use Illuminate\Support\Optional;
 use PhpParser\ConstExprEvaluator;
 use PhpParser\Node;
@@ -21,7 +20,7 @@ class NodeRulesEvaluator implements RulesEvaluator
         private PrettyPrinter $printer,
         private FunctionLike $functionLikeNode,
         private ?Node\Expr $rulesNode,
-        private Route $route,
+        private string $method,
         private ?string $className,
     ) {}
 
@@ -152,7 +151,7 @@ class NodeRulesEvaluator implements RulesEvaluator
 
             extract($variables);
             $request = request();
-            $request->setMethod($this->route->methods()[0]);
+            $request->setMethod(strtoupper($this->method));
 
             try {
                 return eval("return $code;");

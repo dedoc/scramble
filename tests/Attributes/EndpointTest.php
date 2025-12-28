@@ -46,6 +46,17 @@ it('attaches all endpoint attributes together', function () {
         ->toBe('Complete test with all attributes');
 });
 
+it('uses the method provided in endpoint', function () {
+    $openApiDocument = generateForRoute(Route::addRoute(
+        ['PUT', 'PATCH'],
+        'test',
+        #[Endpoint(method: 'PATCH')]
+        function () {}
+    ));
+
+    expect($openApiDocument['paths']['/test'])->toHaveKeys(['patch']);
+});
+
 class AController_EndpointTest
 {
     #[Endpoint(operationId: 'do_something_magic')]

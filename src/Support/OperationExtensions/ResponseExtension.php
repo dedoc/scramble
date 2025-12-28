@@ -21,6 +21,8 @@ use ReflectionAttribute;
 
 class ResponseExtension extends OperationExtension
 {
+    const HTTP_METHODS_WITHOUT_RESPONSE_BODY = ['head'];
+
     public function handle(Operation $operation, RouteInfo $routeInfo): void
     {
         $inferredResponses = $this->collectInferredResponses($routeInfo);
@@ -28,6 +30,10 @@ class ResponseExtension extends OperationExtension
         $responses = $this->applyResponsesAttributes($inferredResponses, $routeInfo);
 
         foreach ($responses as $response) {
+            if (in_array($routeInfo->method, static::HTTP_METHODS_WITHOUT_RESPONSE_BODY)) {
+                $response = $this->removeContentFromResponse($response);
+            }
+
             $operation->addResponse($response);
         }
     }
@@ -218,5 +224,16 @@ class ResponseExtension extends OperationExtension
         foreach ($mergedContentTypes as $type => $mergedContent) {
             $r->setContent($type, $mergedContent);
         }
+    }
+
+    private function removeContentFromResponse(Response|Reference $response): Response
+    {
+        if ($response instanceof Reference) {
+            $response = clone $response->resolve();
+        }
+
+        $response->content = [];
+
+        return $response;
     }
 }

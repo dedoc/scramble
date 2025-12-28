@@ -43,13 +43,13 @@ class ValidateCallParametersExtractor implements ParameterExtractor
 
         $parameterExtractionResults[] = new ParametersExtractionResult(
             parameters: $this->makeParameters(
-                rules: (new NodeRulesEvaluator($this->printer, $astNode, $validationRulesNode, $routeInfo->route, $routeInfo->className()))->handle(),
+                rules: (new NodeRulesEvaluator($this->printer, $astNode, $validationRulesNode, $routeInfo->method, $routeInfo->className()))->handle(),
                 typeTransformer: $this->openApiTransformer,
                 rulesDocsRetriever: new TypeBasedRulesDocumentationRetriever(
                     $routeInfo->getScope(),
                     $routeInfo->getScope()->getType($validationRulesNode),
                 ),
-                in: in_array(mb_strtolower($routeInfo->route->methods()[0]), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
+                in: in_array(mb_strtolower($routeInfo->method), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
                     ? 'query'
                     : 'body',
             ),

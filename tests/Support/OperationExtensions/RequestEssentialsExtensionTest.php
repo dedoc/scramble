@@ -1,8 +1,10 @@
 <?php
 
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Dedoc\Scramble\Tests\Files\Status;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 it('uses getRouteKeyName to determine model route key type', function () {
@@ -157,3 +159,15 @@ class EnumParameter_RequestEssentialsExtensionTest_Controller
 {
     public function foo(Status $status) {}
 }
+
+it('prefers patch if configured so', function () {
+    Scramble::configure()->preferPatchMethod();
+
+    $openApiDocument = generateForRoute(Route::addRoute(
+        ['PUT', 'PATCH'],
+        'test',
+        function () {}
+    ));
+
+    expect($openApiDocument['paths']['/test'])->toHaveKeys(['patch']);
+});

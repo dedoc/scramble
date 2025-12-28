@@ -23,6 +23,7 @@ use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
@@ -39,7 +40,6 @@ class Generator
 
     public function __construct(
         private OperationBuilder $operationBuilder,
-        private Infer $infer
     ) {}
 
     public function setThrowExceptions(bool $throwExceptions): static
@@ -58,24 +58,26 @@ class Generator
         $typeTransformer = $this->buildTypeTransformer($context);
 
         $this->getRoutes($config)
-            ->map(function (Route $route, int $index) use ($openApi, $config, $typeTransformer) {
+            ->flatMap(function (Route $route, int $index) use ($openApi, $config, $typeTransformer) {
                 try {
-                    $operation = $this->routeToOperation($openApi, $route, $config, $typeTransformer);
+                    $operations = $this->routeToOperations($openApi, $route, $config, $typeTransformer);
 
-                    if ($route->getAction('uses') instanceof Closure) {
-                        $operation->setAttribute('isClosure', true);
+                    foreach ($operations as $i => $operation) {
+                        if ($route->getAction('uses') instanceof Closure) {
+                            $operation->setAttribute('isClosure', true);
+                        }
+
+                        $operation->setAttribute('index', $index + $i);
                     }
 
-                    $operation->setAttribute('index', $index);
-
-                    return $operation;
+                    return $operations;
                 } catch (Throwable $e) {
                     if ($e instanceof RouteAware) {
                         $e->setRoute($route);
                     }
 
                     if (config('app.debug', false)) {
-                        $method = $route->methods()[0];
+                        $method = implode('|', $route->methods());
                         $action = $route->getAction('uses');
                         if ($action instanceof Closure) {
                             $action = '{closure}';
@@ -166,6 +168,9 @@ class Generator
         return $openApi;
     }
 
+    /**
+     * @return Collection<int, Route>
+     */
     private function getRoutes(GeneratorConfig $config): Collection
     {
         return collect(RouteFacade::getRoutes())
@@ -233,15 +238,23 @@ class Generator
         ]);
     }
 
-    private function routeToOperation(OpenApi $openApi, Route $route, GeneratorConfig $config, TypeTransformer $typeTransformer)
+    /** @return Operation[] */
+    private function routeToOperations(OpenApi $openApi, Route $route, GeneratorConfig $config, TypeTransformer $typeTransformer): array
     {
-        $routeInfo = new RouteInfo($route, $this->infer);
+        $methods = array_map('strtolower', Arr::wrap(($config->operationMethodsResolver)($route)));
 
-        $operation = $this->operationBuilder->build($routeInfo, $openApi, $config, $typeTransformer);
+        $operations = [];
+        foreach ($methods as $method) {
+            $routeInfo = new RouteInfo($route, $method);
 
-        $this->ensureSchemaTypes($route, $operation);
+            $operation = $this->operationBuilder->build($routeInfo, $openApi, $config, $typeTransformer);
 
-        return $operation;
+            $this->ensureSchemaTypes($route, $operation);
+
+            $operations[] = $operation;
+        }
+
+        return $operations;
     }
 
     private function ensureSchemaTypes(Route $route, Operation $operation): void

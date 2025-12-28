@@ -30,6 +30,11 @@ class GeneratorConfig
      */
     public Closure|string|null $documentRoute = null;
 
+    /**
+     * @var Closure(Route): (string|string[])
+     */
+    public Closure $operationMethodsResolver;
+
     public function __construct(
         private array $config = [],
         private ?Closure $routeResolver = null,
@@ -38,7 +43,10 @@ class GeneratorConfig
         public readonly DocumentTransformers $documentTransformers = new DocumentTransformers,
         public readonly RuleTransformers $ruleTransformers = new RuleTransformers,
         public readonly ServerVariables $serverVariables = new ServerVariables,
-    ) {}
+        ?Closure $operationMethodsResolver = null,
+    ) {
+        $this->operationMethodsResolver = $operationMethodsResolver ?: fn (Route $r) => $r->methods()[0];
+    }
 
     public function config(array $config)
     {
@@ -196,6 +204,28 @@ class GeneratorConfig
         }
 
         $this->serverVariables->use($variables);
+
+        return $this;
+    }
+
+    /**
+     * Force Scramble to use `PATCH` for `PUT|PATCH` routes.
+     */
+    public function preferPatchMethod(): static
+    {
+        return $this->resolveOperationMethodsUsing(function (Route $route): string {
+            $methods = array_map('strtolower', $route->methods());
+
+            return in_array('patch', $methods) && in_array('put', $methods) ? 'patch' : $methods[0];
+        });
+    }
+
+    /**
+     * @param  Closure(Route): (string|string[])  $resolver
+     */
+    public function resolveOperationMethodsUsing(Closure $resolver): static
+    {
+        $this->operationMethodsResolver = $resolver;
 
         return $this;
     }

@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
-use Illuminate\Routing\Route;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\NodeFinder;
@@ -14,7 +13,7 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
     public function __construct(
         private PrettyPrinter $printer,
         private ClassReflector $classReflector,
-        private Route $route,
+        private string $method,
     ) {}
 
     public function handle(): array
@@ -27,8 +26,8 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
         )?->expr ?? null;
 
         $evaluators = [
-            new FormRequestRulesEvaluator($this->classReflector, $this->route),
-            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->route, $this->classReflector->className),
+            new FormRequestRulesEvaluator($this->classReflector, $this->method),
+            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className),
         ];
 
         foreach ($evaluators as $evaluator) {

@@ -72,7 +72,7 @@ class RequestEssentialsExtension extends OperationExtension
         $uriWithoutOptionalParams = Str::replace('?}', '}', $routeInfo->route->uri);
 
         $operation
-            ->setMethod(strtolower($routeInfo->route->methods()[0]))
+            ->setMethod($this->getOperationMethod($routeInfo))
             ->setPath(Str::replace(
                 collect($pathAliases)->keys()->map(fn ($k) => '{'.$k.'}')->all(),
                 collect($pathAliases)->values()->map(fn ($v) => '{'.$v.'}')->all(),
@@ -88,6 +88,21 @@ class RequestEssentialsExtension extends OperationExtension
         $operation->setAttribute('operationId', $this->getOperationId($routeInfo));
 
         $this->setTitleAndDescriptionFromEndpointAttribute($operation, $routeInfo);
+    }
+
+    private function getOperationMethod(RouteInfo $routeInfo): string
+    {
+        $methods = array_map('strtolower', $routeInfo->route->methods());
+
+        if ($explicitMethod = $this->getEndpointAttributeInstance($routeInfo)?->method) {
+            $explicitMethod = strtolower($explicitMethod);
+
+            if (in_array($explicitMethod, $methods)) {
+                return $explicitMethod;
+            }
+        }
+
+        return $routeInfo->method;
     }
 
     /**
@@ -161,9 +176,7 @@ class RequestEssentialsExtension extends OperationExtension
             eloquent: (function () use ($routeInfo) {
                 // Manual operation ID setting.
                 // Check if Endpoint attribute is present with an `operationId` value
-                $operationId = ($routeInfo->reflectionAction()?->getAttributes(Endpoint::class)[0] ?? null)
-                    ?->newInstance()
-                    ?->operationId;
+                $operationId = $this->getEndpointAttributeInstance($routeInfo)?->operationId;
 
                 if ($operationId) {
                     return $operationId;
@@ -238,10 +251,7 @@ class RequestEssentialsExtension extends OperationExtension
 
     private function setTitleAndDescriptionFromEndpointAttribute(Operation $operation, RouteInfo $routeInfo): void
     {
-        $endpointAttribute = ($routeInfo->reflectionAction()?->getAttributes(Endpoint::class)[0] ?? null)
-            ?->newInstance();
-
-        if (! $endpointAttribute) {
+        if (! $endpointAttribute = $this->getEndpointAttributeInstance($routeInfo)) {
             return;
         }
 
@@ -252,5 +262,11 @@ class RequestEssentialsExtension extends OperationExtension
         if ($endpointAttribute->description) {
             $operation->description($endpointAttribute->description);
         }
+    }
+
+    private function getEndpointAttributeInstance(RouteInfo $routeInfo): ?Endpoint
+    {
+        return ($routeInfo->reflectionAction()?->getAttributes(Endpoint::class)[0] ?? null)
+            ?->newInstance();
     }
 }
