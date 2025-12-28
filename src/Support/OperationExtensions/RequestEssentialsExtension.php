@@ -86,6 +86,8 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         $operation->setAttribute('operationId', $this->getOperationId($routeInfo));
+
+        $this->setTitleAndDescriptionFromEndpointAttribute($operation, $routeInfo);
     }
 
     /**
@@ -231,6 +233,24 @@ class RequestEssentialsExtension extends OperationExtension
             }
 
             $this->openApiContext->groups->push($group);
+        }
+    }
+
+    private function setTitleAndDescriptionFromEndpointAttribute(Operation $operation, RouteInfo $routeInfo): void
+    {
+        $endpointAttribute = ($routeInfo->reflectionAction()?->getAttributes(Endpoint::class)[0] ?? null)
+            ?->newInstance();
+
+        if (!$endpointAttribute) {
+            return;
+        }
+
+        if ($endpointAttribute->title) {
+            $operation->summary($endpointAttribute->title);
+        }
+
+        if ($endpointAttribute->description) {
+            $operation->description($endpointAttribute->description);
         }
     }
 }

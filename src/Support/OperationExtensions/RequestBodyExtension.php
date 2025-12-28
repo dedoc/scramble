@@ -44,9 +44,14 @@ class RequestBodyExtension extends OperationExtension
             $description = $description->append('⚠️ Cannot generate request documentation: '.$exception->getMessage());
         }
 
-        $operation
-            ->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'))  // @phpstan-ignore argument.type
-            ->description($description);
+        // Only set summary and description from PHPDoc if they haven't been set by other extensions (e.g., Endpoint attribute)
+        if (empty($operation->summary)) {
+            $operation->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'));  // @phpstan-ignore argument.type
+        }
+        
+        if (empty($operation->description)) {
+            $operation->description($description);
+        }
 
         $allParams = $rulesResults->flatMap(fn ($p) => $p->parameters)->unique(fn ($p) => "$p->name.$p->in")->values()->all();
 
