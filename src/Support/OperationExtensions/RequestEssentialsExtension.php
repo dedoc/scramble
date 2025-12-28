@@ -241,7 +241,7 @@ class RequestEssentialsExtension extends OperationExtension
         $endpointAttribute = ($routeInfo->reflectionAction()?->getAttributes(Endpoint::class)[0] ?? null)
             ?->newInstance();
 
-        if (!$endpointAttribute) {
+        if (! $endpointAttribute) {
             return;
         }
 

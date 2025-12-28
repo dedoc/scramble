@@ -48,7 +48,7 @@ class RequestBodyExtension extends OperationExtension
         if (empty($operation->summary)) {
             $operation->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'));  // @phpstan-ignore argument.type
         }
-        
+
         if (empty($operation->description)) {
             $operation->description($description);
         }
