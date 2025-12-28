@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Route;
 
 class FormRequestRulesEvaluator implements RulesEvaluator
 {

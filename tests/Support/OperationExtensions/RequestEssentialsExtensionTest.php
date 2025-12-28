@@ -1,6 +1,5 @@
 <?php
 
-use Dedoc\Scramble\Attributes\Endpoint;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Dedoc\Scramble\Tests\Files\Status;

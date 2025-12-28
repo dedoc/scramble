@@ -221,7 +221,7 @@ class GeneratorConfig
     }
 
     /**
-     * @param Closure(Route): (string|string[]) $resolver
+     * @param  Closure(Route): (string|string[])  $resolver
      */
     public function resolveOperationMethodsUsing(Closure $resolver): static
     {
