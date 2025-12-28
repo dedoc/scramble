@@ -481,12 +481,6 @@ parameters:
 			path: src/Generator.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Generator\:\:getRoutes\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 1
-			path: src/Generator.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Generator\:\:makeOpenApi\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -499,20 +493,8 @@ parameters:
 			path: src/Generator.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Generator\:\:routeToOperation\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Generator.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Generator\:\:setUniqueOperationId\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Generator.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<\(int\|string\),mixed\>\:\:map\(\) expects callable\(mixed, int\|string\)\: mixed, Closure\(Illuminate\\Routing\\Route, int\)\: mixed given\.$#'
-			identifier: argument.type
 			count: 1
 			path: src/Generator.php
 
