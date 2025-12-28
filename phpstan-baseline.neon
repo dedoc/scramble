@@ -3676,18 +3676,6 @@ parameters:
 			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesMapper\:\:exists\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesMapper\:\:exists\(\) has parameter \$params with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/OperationExtensions/RulesExtractor/RulesMapper.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesMapper\:\:file\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1

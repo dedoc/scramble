@@ -13,7 +13,6 @@ use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\RuleTransforming\RuleSetToSchemaTransformer;
 use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ConditionalRules;
 
 class RulesMapper
@@ -72,19 +71,6 @@ class RulesMapper
         }
 
         return new ArrayType;
-    }
-
-    public function exists(Type $type, $params)
-    {
-        if (! $type instanceof UnknownType) {
-            return $type;
-        }
-
-        if (Str::is(['id', '*_id'], $column = $params[1] ?? 'id')) {
-            return $this->int($type);
-        }
-
-        return $type;
     }
 
     public function email(Type $type)

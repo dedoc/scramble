@@ -521,6 +521,18 @@ it('supports uuid', function () {
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
 
+it('supports Rule::exists with uuid primary column', function () {
+    $rules = [
+        'foo' => ['required', Rule::exists('circles')],
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params[0]->schema->toArray())->toBe([
+        'type' => 'string',
+    ]);
+});
+
 it('extract rules from object like rules heavy case', function () {
     $rules = [
         'channel' => 'required',

@@ -6,6 +6,7 @@ use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\RuleTransformers\ConfirmedRule;
 use Dedoc\Scramble\RuleTransformers\EnumRule;
+use Dedoc\Scramble\RuleTransformers\ExistsRule;
 use Dedoc\Scramble\RuleTransformers\InRule;
 use Dedoc\Scramble\Support\ContainerUtils;
 use Illuminate\Support\Arr;
@@ -82,6 +83,7 @@ class RuleTransformers
             EnumRule::class,
             InRule::class,
             ConfirmedRule::class,
+            ExistsRule::class,
         ];
 
         return array_values(array_unique([
