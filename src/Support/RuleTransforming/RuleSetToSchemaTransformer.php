@@ -96,7 +96,10 @@ class RuleSetToSchemaTransformer
         $normalizedRule = NormalizedRule::fromValue($rule);
 
         $extensions = $this->config
-            ->instances(RuleTransformer::class, [TypeTransformer::class => $this->openApiTransformer])
+            ->instances(RuleTransformer::class, [
+                TypeTransformer::class => $this->openApiTransformer,
+                RulesMapper::class => new RulesMapper($this->openApiTransformer, $this),
+            ])
             ->filter(fn (RuleTransformer $ruleTransformer) => $ruleTransformer->shouldHandle($normalizedRule))
             ->values();
 
