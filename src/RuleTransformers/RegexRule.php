@@ -12,9 +12,7 @@ class RegexRule implements RuleTransformer
 {
     public function __construct(
         private RulesMapper $rulesMapper,
-    )
-    {
-    }
+    ) {}
 
     public function shouldHandle(NormalizedRule $rule): bool
     {
@@ -60,7 +58,7 @@ class RegexRule implements RuleTransformer
     protected function isRegexConvertableToEcma262(string $pattern): bool
     {
         $unsupported = [
-            '(?<=' , '(?<!', // lookbehind
+            '(?<=', '(?<!', // lookbehind
             '(?(', // conditional
             '(*', // backtracking verbs
         ];
