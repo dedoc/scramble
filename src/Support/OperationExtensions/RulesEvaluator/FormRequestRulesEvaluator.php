@@ -25,7 +25,7 @@ class FormRequestRulesEvaluator implements RulesEvaluator
         $rules = [];
 
         if (method_exists($request, 'setMethod')) {
-            $request->setMethod($method);
+            $request->setMethod(strtoupper($method));
         }
 
         if (method_exists($request, 'rules')) {

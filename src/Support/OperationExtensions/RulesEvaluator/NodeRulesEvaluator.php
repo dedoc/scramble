@@ -151,7 +151,7 @@ class NodeRulesEvaluator implements RulesEvaluator
 
             extract($variables);
             $request = request();
-            $request->setMethod($this->method);
+            $request->setMethod(strtoupper($this->method));
 
             try {
                 return eval("return $code;");
