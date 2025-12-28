@@ -86,8 +86,7 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         $operation->setAttribute('operationId', $this->getOperationId($routeInfo));
-        
-        // Handle title and description from Endpoint attribute
+
         $this->setTitleAndDescriptionFromEndpointAttribute($operation, $routeInfo);
     }
 
@@ -238,7 +237,7 @@ class RequestEssentialsExtension extends OperationExtension
     }
 
     private function setTitleAndDescriptionFromEndpointAttribute(Operation $operation, RouteInfo $routeInfo): void
-    {        
+    {
         $endpointAttribute = ($routeInfo->reflectionAction()?->getAttributes(Endpoint::class)[0] ?? null)
             ?->newInstance();
 
