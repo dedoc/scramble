@@ -218,6 +218,7 @@ class Scope
 
         /**
          * When `dim` is empty, it means that the context is setting – handling in AssignHandler.
+         *
          * @see AssignHandler
          */
         if ($node instanceof Node\Expr\ArrayDimFetch && $node->dim) {
