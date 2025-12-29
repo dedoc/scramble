@@ -4,16 +4,11 @@ namespace Dedoc\Scramble\RuleTransformers;
 
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Support\Generator\Types\Type;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesMapper;
 use Dedoc\Scramble\Support\RuleTransforming\NormalizedRule;
 use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
 
 class RegexRule implements RuleTransformer
 {
-    public function __construct(
-        private RulesMapper $rulesMapper,
-    ) {}
-
     public function shouldHandle(NormalizedRule $rule): bool
     {
         return $rule->is('regex');
@@ -35,9 +30,7 @@ class RegexRule implements RuleTransformer
             return $previous;
         }
 
-        return $this->rulesMapper
-            ->string($previous)
-            ->pattern($normalizedRegex);
+        return $previous->pattern($normalizedRegex);
     }
 
     private function normalize(string $pattern): ?string
