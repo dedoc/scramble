@@ -12,8 +12,11 @@ use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Reflector\ClosureReflector;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
@@ -25,6 +28,8 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\Json\ResourceResponse;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
@@ -201,7 +206,7 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension, Function
 
             // Try to analyze the closure's AST to find $response->json($data, ...) calls
             if ($astNode = $reflector->getAstNode()) {
-                $dataType = $this->extractJsonDataFromClosure($astNode, $scope);
+                $dataType = $this->extractJsonDataFromClosure($astNode, $scope, $arguments, $closureDefinition);
                 if ($dataType) {
                     return $dataType;
                 }
@@ -212,7 +217,7 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension, Function
                 if ($returnType instanceof ObjectType && $returnType->isInstanceOf(JsonResponse::class)) {
                     // Try to find json() calls in the closure
                     if ($astNode = $reflector->getAstNode()) {
-                        return $this->extractJsonDataFromClosure($astNode, $scope);
+                        return $this->extractJsonDataFromClosure($astNode, $scope, $arguments, $closureDefinition);
                     }
                 }
             }
@@ -227,8 +232,12 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension, Function
     /**
      * Extract the data type from $response->json($data, ...) calls in the closure AST.
      */
-    private function extractJsonDataFromClosure(Node\FunctionLike $astNode, Scope $scope): ?Type
-    {
+    private function extractJsonDataFromClosure(
+        Node\FunctionLike $astNode,
+        Scope $scope,
+        ArgumentTypeBag $arguments,
+        \Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition $closureDefinition
+    ): ?Type {
         try {
             $nodeFinder = new NodeFinder;
 
@@ -250,6 +259,21 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension, Function
                         // Create a child scope for analyzing the closure
                         $closureScope = $scope->createChildScope(clone $scope->context);
 
+                        // Populate closure scope variables with argument types from call site
+                        // This allows us to infer types of parameters passed to the macro
+                        $paramNames = array_keys($closureDefinition->type->arguments ?? []);
+                        foreach ($paramNames as $index => $paramName) {
+                            $argType = $arguments->get($paramName, $index);
+                            if ($argType && ! ($argType instanceof UnknownType)) {
+                                // Set the variable type in the closure scope
+                                $closureScope->addVariableType(
+                                    $astNode->getStartLine() ?? 0,
+                                    $paramName,
+                                    $argType
+                                );
+                            }
+                        }
+
                         // Use the scope's getType method to infer the type
                         $dataType = $closureScope->getType($dataArg->value);
 
@@ -261,6 +285,14 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension, Function
                             }
 
                             if ($dataType && ! ($dataType instanceof UnknownType)) {
+                                // Recursively find and wrap JsonResources at any level
+                                $updatedType = $this->wrapJsonResourcesInType($dataType, $scope);
+                                
+                                // Only return updated type if JsonResources were found and wrapped
+                                if ($updatedType !== $dataType) {
+                                    return $updatedType;
+                                }
+
                                 return $dataType;
                             }
                         }
@@ -276,6 +308,116 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension, Function
         }
 
         return null;
+    }
+
+    /**
+     * Recursively wrap JsonResources in ResourceResponse at any level of the type structure.
+     */
+    private function wrapJsonResourcesInType(Type $type, Scope $scope): Type
+    {
+        // If the type is a JsonResource, wrap it in ResourceResponse
+        if ($this->isJsonResourceType($type, $scope)) {
+            return new Generic(ResourceResponse::class, [$type]);
+        }
+        
+        // Handle KeyedArrayType - recursively check all items
+        if ($type instanceof KeyedArrayType) {
+            $updatedItems = [];
+            $hasChanges = false;
+            
+            foreach ($type->items as $item) {
+                $originalValue = $item->value;
+                $updatedValue = $this->wrapJsonResourcesInType($originalValue, $scope);
+                
+                if ($updatedValue !== $originalValue) {
+                    $hasChanges = true;
+                }
+                
+                $updatedItems[] = new ArrayItemType_(
+                    $item->key,
+                    $updatedValue,
+                    $item->isOptional
+                );
+            }
+            
+            if ($hasChanges) {
+                return new KeyedArrayType($updatedItems, $type->isList);
+            }
+        }
+        
+        // Handle ArrayType - recursively check the value type
+        if ($type instanceof ArrayType && $type->value) {
+            $updatedValue = $this->wrapJsonResourcesInType($type->value, $scope);
+            if ($updatedValue !== $type->value) {
+                return new ArrayType($updatedValue);
+            }
+        }
+        
+        // For Generic types, recursively check template types
+        if ($type instanceof Generic && !empty($type->templateTypes)) {
+            $updatedTemplates = [];
+            $hasChanges = false;
+            
+            foreach ($type->templateTypes as $templateType) {
+                $updatedTemplate = $this->wrapJsonResourcesInType($templateType, $scope);
+                $updatedTemplates[] = $updatedTemplate;
+                
+                if ($updatedTemplate !== $templateType) {
+                    $hasChanges = true;
+                }
+            }
+            
+            if ($hasChanges) {
+                $updatedGeneric = new Generic($type->name, $updatedTemplates);
+                // Preserve attributes if any
+                foreach ($type->attributes() as $key => $value) {
+                    $updatedGeneric->setAttribute($key, $value);
+                }
+                return $updatedGeneric;
+            }
+        }
+        
+        // No changes needed
+        return $type;
+    }
+
+    /**
+     * Check if a type is a JsonResource.
+     */
+    private function isJsonResourceType(Type $type, Scope $scope): bool
+    {
+        if (! ($type instanceof ObjectType || $type instanceof Generic)) {
+            return false;
+        }
+        
+        $className = $type->name;
+        
+        // Ensure the class is analyzed in the index
+        $scope->index->getClass($className);
+        
+        // Try isInstanceOf first (works if class is analyzed)
+        if ($type->isInstanceOf(JsonResource::class)) {
+            return true;
+        }
+        
+        // Fallback: check class hierarchy directly
+        if (class_exists($className) && is_a($className, JsonResource::class, true)) {
+            return true;
+        }
+        
+        // Check parent hierarchy in index
+        if ($classDefinition = $scope->index->getClass($className)) {
+            $parentFqn = $classDefinition->parentFqn;
+            while ($parentFqn) {
+                if ($parentFqn === JsonResource::class) {
+                    return true;
+                }
+                $parentDef = $scope->index->getClass($parentFqn);
+                $parentFqn = $parentDef->parentFqn ?? null;
+            }
+        }
+        
+        return false;
     }
 
     public function getType(Expr $node, Scope $scope): ?Type
