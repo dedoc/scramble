@@ -54,8 +54,8 @@ class AddDocumentTags implements DocumentTransformer
 
         return $tags
             ->sort(function (Tag $a, Tag $b) {
-                $weightA = $a->getAttribute('weight') ?? INF;
-                $weightB = $b->getAttribute('weight') ?? INF;
+                $weightA = $a->getAttribute('weight') ?? PHP_INT_MAX;
+                $weightB = $b->getAttribute('weight') ?? PHP_INT_MAX;
 
                 return ($weightA <=> $weightB) ?: strcasecmp($a->name, $b->name);
             })
