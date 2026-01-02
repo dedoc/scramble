@@ -34,6 +34,8 @@ final class PropertyTypesFromPhpdocExtension implements PropertyTypeExtension
 
         $properties = $this->getProperties($type);
 
+        dump($properties);
+
         return $properties->get($event->name);
     }
 
