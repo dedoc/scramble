@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 
@@ -10,6 +11,8 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
     use IndexAware;
 
     private ?FunctionLikeDefinition $declarationDefinition = null;
+
+    private ?Scope $scope = null;
 
     public function setDeclarationDefinition(?FunctionLikeDefinition $declarationDefinition): self
     {
@@ -21,6 +24,18 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
     public function getDeclarationDefinition(): ?FunctionLikeDefinition
     {
         return $this->declarationDefinition;
+    }
+
+    public function setScope(Scope $scope): self
+    {
+        $this->scope = $scope;
+
+        return $this;
+    }
+
+    public function getScope(): ?Scope
+    {
+        return $this->scope;
     }
 
     public function getInferredReturnType(): Type

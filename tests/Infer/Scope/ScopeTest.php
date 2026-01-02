@@ -1,5 +1,7 @@
 <?php
 
+use Dedoc\Scramble\Infer\Scope\TypeEffect;
+
 function getStatementTypeForScopeTest(string $statement, array $extensions = [])
 {
     return analyzeFile('<?php', $extensions)->getExpressionType($statement);
@@ -70,3 +72,67 @@ class Foo_ScopeTest
 {
     const FOO = 'foo';
 }
+
+/**
+ * Imagine a function:
+ * function foo ($a) {
+ *     return match ($a) {
+ *         'foo' => 1,
+ *         'bar' => 42,
+ *         default => null,
+ *     }
+ * }
+ * The return type of the function is 1|42|null.
+ *
+ * The test here is testing the part of the functionality that allows to know that when
+ * return type is specifically 42, `$a` variable must have 'bar' type.
+ */
+it('allows inspecting known facts about variables based on returned type', function () {
+    $code = <<<'EOF'
+<?php
+function foo ($a) {
+     return match ($a) {
+         'foo' => 1,
+         'bar' => 42,
+         default => null,
+     };
+}
+EOF;
+
+    $scope = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope();
+
+    $barConditions = $scope->typeEffects
+        ->filter(fn (TypeEffect $re) => $re->type && $re->facts->count() === 1)
+        ->all();
+
+    expect($barConditions)->toHaveCount(2);
+});
+
+it('allows inspecting known facts about variables based on if', function () {
+    $code = <<<'EOF'
+<?php
+function foo ($a) {
+    if ($a === 'foo') {
+        return 1;
+    }
+
+    if ($a === 'bar') {
+        return 42;
+    }
+
+    return null;
+}
+EOF;
+
+    $scope = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope();
+
+    $barConditions = $scope->typeEffects
+        ->filter(fn (TypeEffect $re) => $re->type && $re->facts->count() === 1)
+        ->all();
+
+    expect($barConditions)->toHaveCount(2);
+});

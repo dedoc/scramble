@@ -32,6 +32,7 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
+use Illuminate\Support\Collection;
 use PhpParser\Node;
 
 class Scope
@@ -42,6 +43,8 @@ class Scope
      * @var array<string, array{line: int, type: Type}[]>
      */
     public array $variables = [];
+
+    public Collection $typeEffects;
 
     /**
      * @internal
@@ -56,7 +59,9 @@ class Scope
         public ScopeContext $context,
         public FileNameResolver $nameResolver,
         public ?Scope $parentScope = null,
-    ) {}
+    ) {
+        $this->typeEffects = collect();
+    }
 
     public function getType(Node $node): Type
     {

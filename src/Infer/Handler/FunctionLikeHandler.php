@@ -50,7 +50,11 @@ class FunctionLikeHandler implements CreatesScope
             definingClassName: $scope->context->classDefinition?->name,
             isStatic: $node instanceof Node\Stmt\ClassMethod ? $node->isStatic() : false,
         ));
-        $fnDefinition->setDeclarationDefinition($this->buildDeclarationDefinition($node, $scope));
+
+        $fnDefinition
+            ->setScope($scope)
+            ->setDeclarationDefinition($this->buildDeclarationDefinition($node, $scope));
+
         $fnDefinition->isFullyAnalyzed = true;
 
         if ($node instanceof Node\Expr\ArrowFunction || $node instanceof Node\Expr\Closure) {
