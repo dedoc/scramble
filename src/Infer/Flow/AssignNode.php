@@ -11,8 +11,7 @@ class AssignNode extends AbstractNode
         public Expr $value,
         array $predecessors = [],
         array $successors = [],
-    )
-    {
+    ) {
         parent::__construct($predecessors, $successors);
     }
 }

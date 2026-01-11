@@ -13,10 +13,7 @@ class Nodes
         $this->start = new StartNode;
     }
 
-    public function getExprNode(Expr $node): Node
-    {
-
-    }
+    public function getExprNode(Expr $node): Node {}
 
     public function push(Node $node): self
     {

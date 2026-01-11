@@ -54,9 +54,7 @@ class ReturnHandler
 
     private function attachMatchTerminationNode(Node\Expr\Match_ $expr, Scope $scope): void
     {
-        $matchHeadNode = new ConditionNode(
-
-        );
+        $matchHeadNode = new ConditionNode;
 
         $scope->getFlowNodes()->push($matchHeadNode);
     }

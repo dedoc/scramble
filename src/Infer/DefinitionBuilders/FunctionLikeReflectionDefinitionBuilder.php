@@ -30,7 +30,7 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
     private Collection $classTemplates;
 
     /**
-     * @param Collection<string, covariant Type>|null $classTemplates
+     * @param  Collection<string, covariant Type>|null  $classTemplates
      */
     public function __construct(
         public string $name,

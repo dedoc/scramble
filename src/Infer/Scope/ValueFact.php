@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Infer\Scope;
 
 use Dedoc\Scramble\Support\Type\Type;
-use Illuminate\Support\Collection;
 use PhpParser\Node\Expr\Variable;
 
 class ValueFact
@@ -12,7 +11,5 @@ class ValueFact
         public Variable $expr,
         public ?Type $equals = null,
         public ?Type $notEquals = null,
-    )
-    {
-    }
+    ) {}
 }

@@ -7,9 +7,7 @@ abstract class AbstractNode implements Node
     public function __construct(
         public array $predecessors = [],
         public array $successors = [],
-    )
-    {
-    }
+    ) {}
 
     public function predecessors(): array
     {

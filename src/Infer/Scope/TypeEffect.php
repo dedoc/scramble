@@ -10,7 +10,5 @@ class TypeEffect
     public function __construct(
         public Type $type,
         public Collection $facts,
-    )
-    {
-    }
+    ) {}
 }

@@ -11,8 +11,7 @@ class TerminateNode extends AbstractNode
         public ?Expr $value, // May be null when `return;`
         array $parentNodes = [],
         array $childNodes = [],
-    )
-    {
+    ) {
         parent::__construct($parentNodes, $childNodes);
     }
 }
