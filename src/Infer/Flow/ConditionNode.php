@@ -2,6 +2,4 @@
 
 namespace Dedoc\Scramble\Infer\Flow;
 
-class ConditionNode extends AbstractNode
-{
-}
+class ConditionNode extends AbstractNode {}

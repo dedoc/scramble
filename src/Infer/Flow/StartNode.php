@@ -2,6 +2,4 @@
 
 namespace Dedoc\Scramble\Infer\Flow;
 
-class StartNode extends AbstractNode
-{
-}
+class StartNode extends AbstractNode {}

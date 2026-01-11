@@ -12,9 +12,7 @@ class Edge
         public ?Node $to = null,
         public array $conditions = [],
         public bool $isNegated = false,
-    )
-    {
-    }
+    ) {}
 
     public function toDot(Nodes $nodes): string
     {
@@ -24,7 +22,7 @@ class Edge
 
         $phpParserExpressionPrinter = app(PrettyPrinter::class);
 
-        $dot = $this->from->toDotId($nodes) . ' -> ' . $this->to->toDotId($nodes);
+        $dot = $this->from->toDotId($nodes).' -> '.$this->to->toDotId($nodes);
 
         $label = null;
         if ($this->conditions || $this->isNegated) {

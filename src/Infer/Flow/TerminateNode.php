@@ -9,6 +9,5 @@ class TerminateNode extends AbstractNode
     public function __construct(
         public TerminationType $type,
         public ?Expr $value, // May be null when `return;`
-    ) {
-    }
+    ) {}
 }

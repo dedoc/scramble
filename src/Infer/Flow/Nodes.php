@@ -34,6 +34,7 @@ class Nodes
             $this->conditionEdge->to = $node;
             $edge = $this->edges[] = $this->conditionEdge;
             $this->conditionEdge = null;
+
             return $edge;
         }
 
@@ -64,7 +65,7 @@ class Nodes
 
     public function pushCondition(?Expr $condition = null): self
     {
-        $node = new ConditionNode();
+        $node = new ConditionNode;
 
         $this->pushNode($node);
 
@@ -81,7 +82,7 @@ class Nodes
     {
         $this->head = $this->conditionNodesStack[count($this->conditionNodesStack) - 1];
 
-        $this->conditionEdge = new Edge(from: $this->head, conditions: $condition ? [$condition] : [], isNegated: !$condition);
+        $this->conditionEdge = new Edge(from: $this->head, conditions: $condition ? [$condition] : [], isNegated: ! $condition);
 
         return $this;
     }
@@ -120,7 +121,7 @@ class Nodes
             return $this;
         }
 
-        $this->nodes[] = $mergeNode = new MergeNode();
+        $this->nodes[] = $mergeNode = new MergeNode;
 
         foreach ($heads as $head) {
             $this->edges[] = new Edge(from: $head, to: $mergeNode);
@@ -199,9 +200,9 @@ class Nodes
         return match ($n::class) {
             StartNode::class => 'S',
             TerminateNode::class => match ($n->type) {
-                    TerminationType::RETURN => 'Ret',
-                    TerminationType::THROW => 'Throw',
-                } . ($n->value ? ' '.$phpParserExpressionPrinter->prettyPrintExpr($n->value) : ' VOID'),
+                TerminationType::RETURN => 'Ret',
+                TerminationType::THROW => 'Throw',
+            }.($n->value ? ' '.$phpParserExpressionPrinter->prettyPrintExpr($n->value) : ' VOID'),
             UnknownNode::class => 'Unk',
             ConditionNode::class => 'if',
             MergeNode::class => 'M',
@@ -223,12 +224,13 @@ class Nodes
             ));
             $debug .= "\n";
         }
+
         return $debug;
     }
 
     public function toDot(bool $indent = false): string
     {
-        $dotGraph = "digraph Flow {".($indent ? "\n" : ' ');
+        $dotGraph = 'digraph Flow {'.($indent ? "\n" : ' ');
 
         $dotEdges = collect($this->edges)
             ->map(fn (Edge $e, $i) => $e->toDot($this))
@@ -242,6 +244,6 @@ class Nodes
             ->join(';'.($indent ? "\n" : ' '));
         $dotGraph .= $dotNodes.';'.($indent ? "\n" : ' ');
 
-        return $dotGraph."}";
+        return $dotGraph.'}';
     }
 }

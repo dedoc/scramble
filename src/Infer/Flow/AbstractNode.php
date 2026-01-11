@@ -14,9 +14,9 @@ abstract class AbstractNode implements Node
         return match ($this::class) {
             StartNode::class => 'S',
             TerminateNode::class => match ($this->type) {
-                    TerminationType::RETURN => 'Ret',
-                    TerminationType::THROW => 'Throw',
-                },
+                TerminationType::RETURN => 'Ret',
+                TerminationType::THROW => 'Throw',
+            },
             UnknownNode::class => 'Unk',
             MergeNode::class => 'M',
             ConditionNode::class => 'If',
@@ -29,7 +29,7 @@ abstract class AbstractNode implements Node
 
         $phpParserExpressionPrinter = app(PrettyPrinter::class);
 
-        $empty = new \stdClass();
+        $empty = new \stdClass;
 
         $label = match ($this::class) {
             TerminateNode::class => match ($this->type) {

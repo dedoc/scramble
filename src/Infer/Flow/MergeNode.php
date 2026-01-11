@@ -2,6 +2,4 @@
 
 namespace Dedoc\Scramble\Infer\Flow;
 
-class MergeNode extends AbstractNode
-{
-}
+class MergeNode extends AbstractNode {}
