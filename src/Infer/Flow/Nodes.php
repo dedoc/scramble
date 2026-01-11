@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Infer\Flow;
 
 use Closure;
 use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\Match_;
 use PhpParser\PrettyPrinter;
 
 class Nodes
@@ -15,13 +16,15 @@ class Nodes
 
     public ?Node $head;
 
+    private array $conditionNodesStack = [];
+
+    public ?Edge $conditionEdge = null;
+
     public function __construct()
     {
         $this->head = new StartNode;
         $this->nodes[] = $this->head;
     }
-
-    private array $conditionNodesStack = [];
 
     protected function pushNode(Node $node): ?Edge
     {
@@ -59,17 +62,17 @@ class Nodes
         return $this;
     }
 
-    public ?Edge $conditionEdge = null;
-
-    public function pushCondition(ConditionNode $node): self
+    public function pushCondition(?Expr $condition = null): self
     {
+        $node = new ConditionNode();
+
         $this->pushNode($node);
 
         $this->conditionNodesStack[] = $node;
 
         $this->head = $node;
 
-        $this->conditionEdge = new Edge(from: $node, conditions: [$node->parserNode->cond]);
+        $this->conditionEdge = new Edge(from: $node, conditions: $condition ? [$condition] : []);
 
         return $this;
     }
@@ -111,6 +114,12 @@ class Nodes
             ->values()
             ->all();
 
+        if (! $heads && $negatedEdge) {
+            $this->head = null;
+
+            return $this;
+        }
+
         $this->nodes[] = $mergeNode = new MergeNode();
 
         foreach ($heads as $head) {
@@ -127,6 +136,31 @@ class Nodes
         }
 
         $this->head = $mergeNode;
+
+        return $this;
+    }
+
+    public function pushTerminateMatch(Match_ $match): self
+    {
+        $this->pushCondition();
+
+        foreach ($match->arms as $arm) {
+            if ($arm->conds === null) { // default arm
+                $this->pushConditionBranch(); // negated / else
+
+                $this->pushTerminate(new TerminateNode(TerminationType::RETURN, $arm->body));
+
+                continue;
+            }
+
+            foreach ($arm->conds as $cond) {
+                $this->pushConditionBranch(new Expr\BinaryOp\Identical($match->cond, $cond));
+
+                $this->pushTerminate(new TerminateNode(TerminationType::RETURN, $arm->body));
+            }
+        }
+
+        $this->exitCondition();
 
         return $this;
     }

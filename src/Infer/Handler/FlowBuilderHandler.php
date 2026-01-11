@@ -27,12 +27,17 @@ class FlowBuilderHandler
         $flow = $scope->getFlowNodes();
 
         if ($node instanceof Node\Stmt\Return_) {
+            if ($node->expr instanceof Node\Expr\Match_) {
+                $flow->pushTerminateMatch($node->expr);
+                return;
+            }
+
             $flow->pushTerminate(new TerminateNode(TerminationType::RETURN, $node->expr));
             return;
         }
 
         if ($node instanceof Node\Stmt\If_) {
-            $flow->pushCondition(new ConditionNode($node)); // pushes node, makes "yes" branch head
+            $flow->pushCondition(condition: $node->cond); // pushes node, makes "yes" branch head
             return;
         }
 
