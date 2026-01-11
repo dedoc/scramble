@@ -1,5 +1,6 @@
 <?php
 
+use Dedoc\Scramble\Infer\Flow\TerminateNode;
 use Dedoc\Scramble\Infer\Scope\TypeEffect;
 
 function getStatementTypeForScopeTest(string $statement, array $extensions = [])
@@ -72,6 +73,209 @@ class Foo_ScopeTest
 {
     const FOO = 'foo';
 }
+
+it('builds simplest control flow graph', function () {
+    $code = <<<'EOF'
+<?php
+function foo () {
+    $a = 1;
+    return 42;
+}
+EOF;
+
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    $flow = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope()
+        ->getFlowNodes();
+
+    expect($nodes = $flow->nodes)->toHaveCount(3) // start -> expr -> terminate
+        ->and($nodes[2])->toBeInstanceOf(TerminateNode::class);
+});
+
+it('builds simplest control flow graph without connecting returns', function () {
+    $code = <<<'EOF'
+<?php
+function foo () {
+    return 1;
+    return 42;
+}
+EOF;
+
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    $flow = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope()
+        ->getFlowNodes();
+
+    expect($flow->toDot())->toBe('digraph Flow { S_0 -> Ret_1; S_0; Ret_1[label="Return 1"]; Ret_2[label="Return 42"]; }');
+
+    $reachableReturns = $flow->getReachableNodes(fn (\Dedoc\Scramble\Infer\Flow\Node $n) => $n instanceof TerminateNode);
+
+    expect($nodes = $flow->nodes)->toHaveCount(3) // start -> terminate terminate
+        ->and($reachableReturns)->toHaveCount(1); // return 1
+});
+
+it('builds simplest if flow graph with connecting merge node', function () {
+    $code = <<<'EOF'
+<?php
+function foo () {
+    if ($a === 0) {
+        $b = 1;
+    } elseif ($a === 42) {
+        $b = 18;
+    } else {
+        $b = 2;
+    }
+    return 0;
+}
+EOF;
+
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    $flow = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope()
+        ->getFlowNodes();
+
+    expect($flow->toDot())->toBe('digraph Flow { S_0 -> If_1; If_1 -> Unk_2 [label="$a === 0"]; If_1 -> Unk_3 [label="$a === 42"]; If_1 -> Unk_4 [label="!($a === 0 AND $a === 42)"]; Unk_4 -> M_5; Unk_3 -> M_5; Unk_2 -> M_5; M_5 -> Ret_6; S_0; If_1[label="If"]; Unk_2[label="$b = 1;"]; Unk_3[label="$b = 18;"]; Unk_4[label="$b = 2;"]; M_5; Ret_6[label="Return 0"]; }');
+});
+
+it('builds if flow graph with implicitly connecting merge node without else', function () {
+    $code = <<<'EOF'
+<?php
+function foo () {
+    if ($a === 0) {
+        return 1;
+    }
+    $b = 13;
+    return 0;
+}
+EOF;
+
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    $flow = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope()
+        ->getFlowNodes();
+
+    expect($flow->toDot())->dd()->toBe('digraph Flow { S_0 -> If_1; If_1 -> Ret_2 [label="$a === 0"]; If_1 -> M_3 [label="!($a === 0)"]; M_3 -> Unk_4; Unk_4 -> Ret_5; S_0; If_1[label="If"]; Ret_2[label="Return 1"]; M_3; Unk_4[label="$b = 13;"]; Ret_5[label="Return 0"]; }');
+});
+
+it('builds simplest if flow graph with connecting merge node and nested ifs', function () {
+    $code = <<<'EOF'
+<?php
+function foo () {
+    if ($a === 0) {
+        if ($d === 1) {
+            $m = 1;
+        } else {
+            $m = 2;
+        }
+    }
+}
+EOF;
+
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    $flow = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope()
+        ->getFlowNodes();
+
+    expect($flow->toDot())->toBe('digraph Flow { S_0 -> If_1; If_1 -> If_2 [label="$a === 0"]; If_2 -> Unk_3 [label="$d === 1"]; If_2 -> Unk_4 [label="!($d === 1)"]; Unk_4 -> M_5; Unk_3 -> M_5; M_5 -> M_6; S_0; If_1[label="If"]; If_2[label="If"]; Unk_3[label="$m = 1;"]; Unk_4[label="$m = 2;"]; M_5; M_6; }');
+});
+
+it('builds simplest control flow graph with branching', function () {
+    $code = <<<'EOF'
+<?php
+function foo () {
+    if ($a === 0) {
+        return 42;
+    } else {
+        return 1;
+    }
+    return 0;
+}
+EOF;
+
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    $flow = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope()
+        ->getFlowNodes();
+
+    expect($flow->toDot())->toBe('digraph Flow { S_0 -> If_1; If_1 -> Ret_2 [label="$a === 0"]; If_1 -> Ret_3 [label="!($a === 0)"]; M_4 -> Ret_5; S_0; If_1[label="If"]; Ret_2[label="Return 42"]; Ret_3[label="Return 1"]; M_4; Ret_5[label="Return 0"]; }');
+});
+
+
+it('ww', function () {
+    $code = <<<'EOF'
+<?php
+function foo () {
+    $calleeType = $this->resolveAndNormalizeCallee($scope, $type->callee);
+        $type->callee = $calleeType; // @todo stop mutating `$type` use `$calleeType` instead.
+        $arguments = new AutoResolvingArgumentTypeBag($scope, $type->arguments);
+
+        $classDefinition = $calleeType instanceof ObjectType
+            ? $this->index->getClass($calleeType->name)
+            : null;
+
+        if (! ($calleeType instanceof TemplateType) && $returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
+            instance: $calleeType,
+            name: $type->methodName,
+            scope: $scope,
+            arguments: $arguments,
+            methodDefiningClassName: $classDefinition
+                ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index)
+                : ($calleeType instanceof ObjectType ? $calleeType->name : null),
+        ))) {
+            return $this->finalizeStatic($returnType, $calleeType);
+        }
+
+        if (! $calleeType instanceof ObjectType) {
+            return new UnknownType;
+        }
+
+        if ($returnType = Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
+            instance: $calleeType,
+            name: $type->methodName,
+            scope: $scope,
+            arguments: $arguments,
+            methodDefiningClassName: $classDefinition ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index) : $calleeType->name,
+        ))) {
+            return $this->finalizeStatic($returnType, $calleeType);
+        }
+
+        if (! $classDefinition) {
+            return new UnknownType;
+        }
+
+        if (! $methodDefinition = $calleeType->getMethodDefinition($type->methodName, $scope)) {
+            return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeType->name]");
+        }
+
+        $resultingType = $this->getFunctionCallResult($methodDefinition, new AutoResolvingArgumentTypeBag($scope, $type->arguments), $calleeType);
+
+        if ($calleeType instanceof SelfType) {
+            return $resultingType;
+        }
+
+        // @todo resolve template type?
+        $resultingType = $resultingType instanceof TemplateType
+            ? ($resultingType->is ?: new UnknownType)
+            : $resultingType;
+
+        return $this->finalizeStatic($resultingType, $calleeType);
+}
+EOF;
+
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    $flow = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope()
+        ->getFlowNodes();
+
+    expect($flow->toDot())->dd()->toBe('digraph Flow { S_0 -> If_1; If_1 -> Ret_2 [label="$a === 0"]; If_1 -> Ret_3 [label="!($a === 0)"]; M_4 -> Ret_5; S_0; If_1[label="If"]; Ret_2[label="Return 42"]; Ret_3[label="Return 1"]; M_4; Ret_5[label="Return 0"]; }');
+});
 
 /**
  * Imagine a function:

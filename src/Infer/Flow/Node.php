@@ -4,9 +4,7 @@ namespace Dedoc\Scramble\Infer\Flow;
 
 interface Node
 {
-    /** @return Edge[] */
-    public function predecessors(): array;
+    public function toDotId(Nodes $nodes): string;
 
-    /** @return Edge[] */
-    public function successors(): array;
+    public function toDot(Nodes $nodes): ?string;
 }
