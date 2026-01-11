@@ -99,9 +99,12 @@ function foo ($a) {
 }
 EOF;
 
-    $scope = analyzeFile($code)
+    $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope();
+        ->getScope()
+        ->getFlowNodes();
+
+    dd($flow);
 
     $barConditions = $scope->typeEffects
         ->filter(fn (TypeEffect $re) => $re->type && $re->facts->count() === 1)

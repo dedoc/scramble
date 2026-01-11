@@ -6,6 +6,8 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
+use Dedoc\Scramble\Infer\Flow\Nodes;
+use Dedoc\Scramble\Infer\Flow\StartNode;
 use Dedoc\Scramble\Infer\Handler\AssignHandler;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\BooleanNotTypeGetter;
@@ -44,14 +46,14 @@ class Scope
      */
     public array $variables = [];
 
-    public Collection $typeEffects;
-
     /**
      * @internal
      *
      * @var Node\Expr\CallLike[]
      */
     public array $calls = [];
+
+    public Nodes $flowNodes;
 
     public function __construct(
         public Index $index,
@@ -60,7 +62,12 @@ class Scope
         public FileNameResolver $nameResolver,
         public ?Scope $parentScope = null,
     ) {
-        $this->typeEffects = collect();
+        $this->flowNodes = new Nodes;
+    }
+
+    public function getFlowNodes(): Nodes
+    {
+        return $this->flowNodes;
     }
 
     public function getType(Node $node): Type
