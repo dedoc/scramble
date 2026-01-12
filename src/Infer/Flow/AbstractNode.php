@@ -17,7 +17,7 @@ abstract class AbstractNode implements Node
                 TerminationType::RETURN => 'Ret',
                 TerminationType::THROW => 'Throw',
             },
-            UnknownNode::class => 'Unk',
+            StatementNode::class => 'Stmt',
             MergeNode::class => 'M',
             ConditionNode::class => 'If',
         }.'_'.$index;
@@ -37,7 +37,7 @@ abstract class AbstractNode implements Node
                 TerminationType::THROW => 'Throw',
             }.($this->value ? ' '.$phpParserExpressionPrinter->prettyPrintExpr($this->value) : ' VOID'),
             ConditionNode::class => 'If',
-            UnknownNode::class => $phpParserExpressionPrinter->prettyPrint([$this->parserNode]),
+            StatementNode::class => $phpParserExpressionPrinter->prettyPrint([$this->parserNode]),
             default => $empty,
         };
 

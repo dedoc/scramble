@@ -208,6 +208,33 @@ EOF;
     expect($flow->toDot())->toBe('digraph Flow { S_0 -> If_1; If_1 -> Ret_2 [label="$a === 0"]; If_1 -> Ret_3 [label="!($a === 0)"]; S_0; If_1[label="If"]; Ret_2[label="Return 42"]; Ret_3[label="Return 1"]; Ret_4[label="Return 0"]; }');
 });
 
+it('builds simplest control flow graph with branching and handling reachable nodes', function () {
+    $code = <<<'EOF'
+<?php
+function foo () {
+    if ($a === 0) {
+        return 42;
+    } else {
+        return 1;
+    }
+    $a = 1;
+    $b = 42;
+    return 0;
+}
+EOF;
+
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    $flow = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope()
+        ->getFlowNodes();
+
+    $returns = $flow
+        ->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->type === TerminationType::RETURN);
+
+    expect($returns)->toHaveCount(2);
+});
+
 it('builds simplest control flow graph with branching all returns', function () {
     $code = <<<'EOF'
 <?php
@@ -229,7 +256,7 @@ EOF;
     expect($flow->toDot())->toBe('digraph Flow { S_0 -> If_1; If_1 -> Ret_2 [label="$a === 0"]; If_1 -> Ret_3 [label="!($a === 0)"]; S_0; If_1[label="If"]; Ret_2[label="Return 42"]; Ret_3[label="Return 1"]; }');
 });
 
-it('builds control flow graph with match', function () {
+it('builds control flow graph with terminated match', function () {
     $code = <<<'EOF'
 <?php
 function foo () {
@@ -248,6 +275,28 @@ EOF;
         ->getFlowNodes();
 
     expect($flow->toDot())->toBe('digraph Flow { S_0 -> If_1; If_1 -> Ret_2 [label="$a === \'foo\'"]; If_1 -> Ret_3 [label="$a === \'bar\'"]; If_1 -> Ret_4 [label="!($a === \'foo\' AND $a === \'bar\')"]; S_0; If_1[label="If"]; Ret_2[label="Return 1"]; Ret_3[label="Return 42"]; Ret_4[label="Return \\null"]; }');
+});
+
+it('builds control flow graph with match assigned to var', function () {
+    $code = <<<'EOF'
+<?php
+function foo () {
+    $b = match ($a) {
+        'foo' => 1,
+        'bar' => 42,
+        default => null,
+    };
+    return $b;
+}
+EOF;
+
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    $flow = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope()
+        ->getFlowNodes();
+
+    expect($flow->toDot(0))->dd()->toBe('digraph Flow { S_0 -> If_1; If_1 -> Ret_2 [label="$a === \'foo\'"]; If_1 -> Ret_3 [label="$a === \'bar\'"]; If_1 -> Ret_4 [label="!($a === \'foo\' AND $a === \'bar\')"]; S_0; If_1[label="If"]; Ret_2[label="Return 1"]; Ret_3[label="Return 42"]; Ret_4[label="Return \\null"]; }');
 });
 
 /**
@@ -281,7 +330,10 @@ EOF;
 
     $flow = $scope->getFlowNodes();
 
-    $returns = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->type === TerminationType::RETURN);
+    $returns = $flow
+        ->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->type === TerminationType::RETURN);
+
+    dd($returns);
 
     $barConditions = $scope->typeEffects
         ->filter(fn (TypeEffect $re) => $re->type && $re->facts->count() === 1)

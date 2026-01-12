@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Infer\Flow;
 use Closure;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Match_;
+use PhpParser\Node\Expr\Variable;
 use PhpParser\PrettyPrinter;
 
 class Nodes
@@ -166,6 +167,31 @@ class Nodes
         return $this;
     }
 
+    public function pushAssignMatch(Variable $variable, Match_ $match): self
+    {
+        $this->pushCondition();
+
+        foreach ($match->arms as $arm) {
+            if ($arm->conds === null) { // default arm
+                $this->pushConditionBranch(); // negated / else
+
+                $this->push(new StatementNode(new Expr\Assign($variable, $arm->body)));
+
+                continue;
+            }
+
+            foreach ($arm->conds as $cond) {
+                $this->pushConditionBranch(new Expr\BinaryOp\Identical($match->cond, $cond));
+
+                $this->push(new StatementNode(new Expr\Assign($variable, $arm->body)));
+            }
+        }
+
+        $this->exitCondition();
+
+        return $this;
+    }
+
     public function predecessors(Node $node): array
     {
         return collect($this->edges)
@@ -187,45 +213,28 @@ class Nodes
     public function getReachableNodes(Closure $cb): array
     {
         return collect($this->nodes)
-            ->filter(fn (Node $n) => count($this->predecessors($n)) > 0)
             ->filter($cb)
+            ->filter(fn (Node $n) => $this->getRootNode($n) instanceof StartNode)
             ->values()
             ->all();
     }
 
-    private function printNode(Node $n): string
+    private function getRootNode(Node $node): Node
     {
-        $phpParserExpressionPrinter = app(PrettyPrinter::class);
+        $currentNode = $node;
 
-        return match ($n::class) {
-            StartNode::class => 'S',
-            TerminateNode::class => match ($n->type) {
-                TerminationType::RETURN => 'Ret',
-                TerminationType::THROW => 'Throw',
-            }.($n->value ? ' '.$phpParserExpressionPrinter->prettyPrintExpr($n->value) : ' VOID'),
-            UnknownNode::class => 'Unk',
-            ConditionNode::class => 'if',
-            MergeNode::class => 'M',
-        };
-    }
+        /** @var ?Edge $checkingEdge */
+        $checkingEdge = collect($this->edges)
+            ->first(fn (Edge $e) => $e->to === $node);
 
-    public function debug(): string
-    {
-        $debugPrintNode = fn (Node $n) => $this->printNode($n).'('.spl_object_id($n).')';
-        $debug = '';
-        foreach ($this->nodes as $node) {
-            $debug .= $debugPrintNode($node).($node instanceof TerminateNode ? '' : ': ');
-            $debug .= trim(implode(
-                ', ',
-                array_map(
-                    $debugPrintNode,
-                    $this->successors($node)
-                ),
-            ));
-            $debug .= "\n";
+        while ($checkingEdge) {
+            $currentNode = $checkingEdge->from;
+
+            $checkingEdge = collect($this->edges)
+                ->first(fn (Edge $e) => $e->to === $currentNode);
         }
 
-        return $debug;
+        return $currentNode;
     }
 
     public function toDot(bool $indent = false): string

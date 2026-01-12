@@ -4,7 +4,7 @@ namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Flow\TerminateNode;
 use Dedoc\Scramble\Infer\Flow\TerminationType;
-use Dedoc\Scramble\Infer\Flow\UnknownNode;
+use Dedoc\Scramble\Infer\Flow\StatementNode;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use PhpParser\Node;
 
@@ -23,6 +23,18 @@ class FlowBuilderHandler
         }
 
         $flow = $scope->getFlowNodes();
+
+        if(
+            $node instanceof Node\Stmt\Expression
+            && $node->expr instanceof Node\Expr\Assign
+            && $node->expr->var instanceof Node\Expr\Variable
+        ) {
+            if ($node->expr->expr instanceof Node\Expr\Match_) {
+                $flow->pushAssignMatch($node->expr->var, $node->expr->expr);
+
+                return;
+            }
+        }
 
         if ($node instanceof Node\Stmt\Return_) {
             if ($node->expr instanceof Node\Expr\Match_) {
@@ -54,7 +66,7 @@ class FlowBuilderHandler
             return;
         }
 
-        $flow->push(new UnknownNode($node)); // pushes node, make the node head
+        $flow->push(new StatementNode($node)); // pushes node, make the node head
     }
 
     public function leave(Node\Stmt $node, Scope $scope)
