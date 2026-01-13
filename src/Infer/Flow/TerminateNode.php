@@ -7,7 +7,7 @@ use PhpParser\Node\Expr;
 class TerminateNode extends AbstractNode
 {
     public function __construct(
-        public TerminationType $type,
+        public TerminationKind $kind,
         public ?Expr $value, // May be null when `return;`
     ) {}
 }

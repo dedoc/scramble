@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Flow;
 
-enum TerminationType
+enum TerminationKind
 {
     case RETURN;
     case THROW;

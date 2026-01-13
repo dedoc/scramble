@@ -3,9 +3,14 @@
 namespace Dedoc\Scramble\Infer\Flow;
 
 use Closure;
+use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Stmt\Expression;
 use PhpParser\PrettyPrinter;
 
 class Nodes
@@ -13,6 +18,7 @@ class Nodes
     /** @var Node[] */
     public array $nodes = [];
 
+    /** @var Edge[] */
     public array $edges = [];
 
     public ?Node $head;
@@ -150,7 +156,7 @@ class Nodes
             if ($arm->conds === null) { // default arm
                 $this->pushConditionBranch(); // negated / else
 
-                $this->pushTerminate(new TerminateNode(TerminationType::RETURN, $arm->body));
+                $this->pushTerminate(new TerminateNode(TerminationKind::RETURN, $arm->body));
 
                 continue;
             }
@@ -158,7 +164,7 @@ class Nodes
             foreach ($arm->conds as $cond) {
                 $this->pushConditionBranch(new Expr\BinaryOp\Identical($match->cond, $cond));
 
-                $this->pushTerminate(new TerminateNode(TerminationType::RETURN, $arm->body));
+                $this->pushTerminate(new TerminateNode(TerminationKind::RETURN, $arm->body));
             }
         }
 
@@ -175,7 +181,7 @@ class Nodes
             if ($arm->conds === null) { // default arm
                 $this->pushConditionBranch(); // negated / else
 
-                $this->push(new StatementNode(new Expr\Assign($variable, $arm->body)));
+                $this->push(new StatementNode(new Expression(new Expr\Assign($variable, $arm->body))));
 
                 continue;
             }
@@ -183,7 +189,7 @@ class Nodes
             foreach ($arm->conds as $cond) {
                 $this->pushConditionBranch(new Expr\BinaryOp\Identical($match->cond, $cond));
 
-                $this->push(new StatementNode(new Expr\Assign($variable, $arm->body)));
+                $this->push(new StatementNode(new Expression(new Expr\Assign($variable, $arm->body))));
             }
         }
 
@@ -235,6 +241,81 @@ class Nodes
         }
 
         return $currentNode;
+    }
+
+    /**
+     * @param Closure(Type $t): bool $cb
+     * @return list<Node>
+     */
+    public function findValueOriginsByExitType(Closure $cb): array
+    {
+        /** @var TerminateNode[] $returns */
+        $nodes = $this
+            ->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
+
+        $origins = [];
+        foreach ($nodes as $node) {
+            $nodeValueOrigins = $this->findValueOrigins($node);
+
+            foreach ($nodeValueOrigins as $nodeValueOrigin) {
+                $expression = $nodeValueOrigin instanceof TerminateNode
+                    ? $nodeValueOrigin->value
+                    : ($nodeValueOrigin instanceof StatementNode
+                        && $nodeValueOrigin->parserNode instanceof Expression
+                        && $nodeValueOrigin->parserNode->expr instanceof Expr\Assign ? $nodeValueOrigin->parserNode->expr->expr : null);
+
+                $type = $expression ? $this->getTypeAt($expression, $nodeValueOrigin) : new VoidType;
+
+                if ($cb($type)) {
+                    $origins[] = $nodeValueOrigin;
+                }
+            }
+        }
+
+        return $origins;
+    }
+
+    /** @return list<Node> */
+    protected function findValueOrigins(TerminateNode $node): array
+    {
+        if (! $node->value) {
+            return [$node];
+        }
+
+        if (! $node->value instanceof Variable || ! is_string($node->value->name)) {
+            return [$node];
+        }
+
+        $origins = [];
+        $stack = [];
+        do {
+            $edges = $this->incomingEdges($node);
+            foreach ($edges as $edge) {
+                $stack[] = $edge->to;
+            }
+            /** @var Node $n */
+            $n = array_pop($stack);
+            if (! $n->definesVariable($node->value->name)) {
+                continue;
+            }
+            $origins[] = $n;
+        } while ($stack);
+
+        return $origins;
+    }
+
+    /** @return list<Edge> */
+    private function incomingEdges(Node $node): array
+    {
+        return collect($this->edges)
+            ->filter(fn (Edge $e) => $e->to === $node)
+            ->values()
+            ->all();
+    }
+
+    public function getTypeAt(Expr $expr, Node $node): Type
+    {
+        return new UnknownType; /// !!!
     }
 
     public function toDot(bool $indent = false): string

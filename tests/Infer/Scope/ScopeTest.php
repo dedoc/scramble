@@ -2,8 +2,10 @@
 
 use Dedoc\Scramble\Infer\Flow\Node;
 use Dedoc\Scramble\Infer\Flow\TerminateNode;
-use Dedoc\Scramble\Infer\Flow\TerminationType;
+use Dedoc\Scramble\Infer\Flow\TerminationKind;
 use Dedoc\Scramble\Infer\Scope\TypeEffect;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
+use Dedoc\Scramble\Support\Type\Type;
 
 function getStatementTypeForScopeTest(string $statement, array $extensions = [])
 {
@@ -112,7 +114,7 @@ EOF;
 
     expect($flow->toDot())->toBe('digraph Flow { S_0 -> Ret_1; S_0; Ret_1[label="Return 1"]; Ret_2[label="Return 42"]; }');
 
-    $reachableReturns = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->type === TerminationType::RETURN);
+    $reachableReturns = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
 
     expect($nodes = $flow->nodes)->toHaveCount(3) // start -> terminate terminate
         ->and($reachableReturns)->toHaveCount(1); // return 1
@@ -230,7 +232,7 @@ EOF;
         ->getFlowNodes();
 
     $returns = $flow
-        ->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->type === TerminationType::RETURN);
+        ->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
 
     expect($returns)->toHaveCount(2);
 });
@@ -313,7 +315,7 @@ EOF;
  * The test here is testing the part of the functionality that allows to know that when
  * return type is specifically 42, `$a` variable must have 'bar' type.
  */
-it('allows inspecting known facts about variables based on returned type', function () {
+it('allows inspecting known things about variables based on returned type', function () {
     $code = <<<'EOF'
 <?php
 function foo ($a) {
@@ -328,10 +330,47 @@ EOF;
         ->getFunctionDefinition('foo')
         ->getScope();
 
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
     $flow = $scope->getFlowNodes();
 
-    $returns = $flow
-        ->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->type === TerminationType::RETURN);
+    $originNodes = $flow->findValueOriginsByExitType(fn (Type $t) => $t instanceof LiteralIntegerType && $t->value === 42, $scope);
+
+    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $originNodes[0]);
+
+    dd($type->toString());
+
+    $nodeWith42Expression = null;
+    $lookupNodes = $returns;
+
+    while ($lookupNodes) {
+        $lookupNode = array_pop($lookupNodes);
+        if ($lookupNode instanceof TerminateNode && $lookupNode->value instanceof \PhpParser\Node\Expr\Variable) { // array dim fetch and property fetch
+            // lookup predecessor nodes where the variable is defined
+            $variableDefinitionNodes = $flow
+                ->getNodesUsing(ofNode: $lookupNode, cb: function (NodeFinder $finder) use ($lookupNode) {
+                    $isAssignToLookup = fn (Node $n) => $n instanceof \Dedoc\Scramble\Infer\Flow\StatementNode
+                        && $n->parserNode instanceof \PhpParser\Node\Stmt\Expression
+                        && $n->parserNode->expr instanceof \PhpParser\Node\Expr\Assign
+                        && $n->parserNode->expr->var instanceof \PhpParser\Node\Expr\Variable
+                        && $n->parserNode->expr->var->name === $lookupNode->value->name;
+
+                    $finder
+                        ->predecessors()
+                        ->filter($isAssignToLookup)
+                        ->until($isAssignToLookup);
+                })
+                ->get();
+
+            $lookupNodes = array_unique(array_merge($lookupNodes, $variableDefinitionNodes), SORT_REGULAR);
+
+            continue;
+        }
+    }
+    foreach ($returns as $return) {
+        if ($return->value instanceof \PhpParser\Node\Expr\Variable) {
+            // lookup
+        }
+    }
 
     dd($returns);
 

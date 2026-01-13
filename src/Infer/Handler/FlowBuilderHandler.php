@@ -3,7 +3,7 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Flow\TerminateNode;
-use Dedoc\Scramble\Infer\Flow\TerminationType;
+use Dedoc\Scramble\Infer\Flow\TerminationKind;
 use Dedoc\Scramble\Infer\Flow\StatementNode;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use PhpParser\Node;
@@ -43,7 +43,7 @@ class FlowBuilderHandler
                 return;
             }
 
-            $flow->pushTerminate(new TerminateNode(TerminationType::RETURN, $node->expr));
+            $flow->pushTerminate(new TerminateNode(TerminationKind::RETURN, $node->expr));
 
             return;
         }
