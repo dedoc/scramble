@@ -319,11 +319,12 @@ it('allows inspecting known things about variables based on returned type', func
     $code = <<<'EOF'
 <?php
 function foo ($a) {
-     return match ($a) {
+     $b = match ($a) {
          'foo' => 1,
          'bar' => 42,
          default => null,
      };
+     return $b;
 }
 EOF;
     $scope = analyzeFile($code)
@@ -333,7 +334,9 @@ EOF;
     /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
     $flow = $scope->getFlowNodes();
 
-    $originNodes = $flow->findValueOriginsByExitType(fn (Type $t) => $t instanceof LiteralIntegerType && $t->value === 42, $scope);
+    $originNodes = $flow->findValueOriginsByExitType(fn (Type $t) => $t instanceof LiteralIntegerType && $t->value === 42);
+
+    dd($originNodes);
 
     $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $originNodes[0]);
 

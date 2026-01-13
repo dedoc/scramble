@@ -12,6 +12,7 @@ use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Stmt\Expression;
 use PhpParser\PrettyPrinter;
+use WeakMap;
 
 class Nodes
 {
@@ -264,11 +265,11 @@ class Nodes
                         && $nodeValueOrigin->parserNode instanceof Expression
                         && $nodeValueOrigin->parserNode->expr instanceof Expr\Assign ? $nodeValueOrigin->parserNode->expr->expr : null);
 
-                $type = $expression ? $this->getTypeAt($expression, $nodeValueOrigin) : new VoidType;
+//                $type = $expression ? $this->getTypeAt($expression, $nodeValueOrigin) : new VoidType;
 
-                if ($cb($type)) {
+//                if ($cb($type)) {
                     $origins[] = $nodeValueOrigin;
-                }
+//                }
             }
         }
 
@@ -287,19 +288,28 @@ class Nodes
         }
 
         $origins = [];
-        $stack = [];
-        do {
-            $edges = $this->incomingEdges($node);
-            foreach ($edges as $edge) {
-                $stack[] = $edge->to;
-            }
-            /** @var Node $n */
-            $n = array_pop($stack);
-            if (! $n->definesVariable($node->value->name)) {
+        $stack = [$node];
+        $visited = new WeakMap();
+        while ($stack) {
+            /** @var Node $current */
+            $current = array_pop($stack);
+
+            if (isset($visited[$current])) {
                 continue;
             }
-            $origins[] = $n;
-        } while ($stack);
+            $visited[$current] = true;
+
+            foreach ($this->incomingEdges($current) as $edge) {
+                $prev = $edge->from;
+
+                if ($prev->definesVariable($node->value->name)) {
+                    $origins[] = $prev;
+                    continue;
+                }
+
+                $stack[] = $prev;
+            }
+        }
 
         return $origins;
     }
