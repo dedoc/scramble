@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
+use Dedoc\Scramble\Infer\Flow\ExpressionTypeInferer;
 use Dedoc\Scramble\Infer\Flow\Nodes;
 use Dedoc\Scramble\Infer\Handler\AssignHandler;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
@@ -53,6 +54,8 @@ class Scope
 
     public Nodes $flowNodes;
 
+    private ExpressionTypeInferer $expressionTypeInferer;
+
     public function __construct(
         public Index $index,
         public NodeTypesResolver $nodeTypesResolver,
@@ -61,6 +64,7 @@ class Scope
         public ?Scope $parentScope = null,
     ) {
         $this->flowNodes = new Nodes;
+        $this->expressionTypeInferer = new ExpressionTypeInferer($this);
     }
 
     public function getFlowNodes(): Nodes
@@ -70,6 +74,25 @@ class Scope
 
     public function getType(Node $node): Type
     {
+//        $type = $this->nodeTypesResolver->getType($node);
+//
+//        if (! $type instanceof UnknownType) {
+//            return $type;
+//        }
+//
+//        if ($this->nodeTypesResolver->hasType($node)) { // For case when the unknown type was in node type resolver.
+//            return $type;
+//        }
+//
+//        if (! $node instanceof Node\Expr) {
+//            return new UnknownType;
+//        }
+
+//        return $this->expressionTypeInferer->infer(
+//            expr: $node,
+//            variableTypeGetter: fn (Node\Expr\Variable $n) => $this->getVariableType($n),
+//        );
+
         if ($node instanceof Node\Scalar) {
             return (new ScalarTypeGetter)($node);
         }

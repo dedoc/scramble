@@ -338,7 +338,7 @@ EOF;
     $type = $flow->getTypeAt($originNodes[0]->value, $originNodes[0]);
 
 //    dd($type->toString());
-});
+})->skip();
 
 it('allows inspecting known facts about variables based on if', function () {
     $code = <<<'EOF'

@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Infer\Flow;
 
+use Closure;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\BooleanNotTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
@@ -30,12 +32,12 @@ use PhpParser\Node as PhpParserNode;
 class ExpressionTypeInferer
 {
     public function __construct(
-        private Nodes $flow,
+        private Scope $scope,
     )
     {
     }
 
-    public function infer(Expr $expr, Node $node): Type
+    public function infer(Expr $expr, Closure $variableTypeGetter): Type
     {
         return match (true) {
             $expr instanceof PhpParserNode\Scalar => (new ScalarTypeGetter)($expr),
@@ -43,16 +45,17 @@ class ExpressionTypeInferer
             $expr instanceof PhpParserNode\Expr\ConstFetch => (new ConstFetchTypeGetter)($expr),
             $expr instanceof PhpParserNode\Expr\Throw_ => new VoidType,
             $expr instanceof PhpParserNode\Expr\Ternary => Union::wrap([
-                $this->infer($expr->if ?? $expr->cond, $node),
-                $this->infer($expr->else, $node),
+                $this->infer($expr->if ?? $expr->cond, $variableTypeGetter),
+                $this->infer($expr->else, $variableTypeGetter),
             ]),
             $expr instanceof PhpParserNode\Expr\BinaryOp\Coalesce => Union::wrap([
-                $this->infer($expr->left, $node),
-                $this->infer($expr->right, $node),
+                $this->infer($expr->left, $variableTypeGetter),
+                $this->infer($expr->right, $variableTypeGetter),
             ]),
-            $expr instanceof PhpParserNode\Expr\Match_ => Union::wrap(
-                array_map(fn (PhpParserNode\MatchArm $arm) => $this->infer($arm->body, $node), $expr->arms)
-            ),
+            $expr instanceof PhpParserNode\Expr\Match_ => Union::wrap(array_map(
+                fn (PhpParserNode\MatchArm $arm) => $this->infer($arm->body, $variableTypeGetter),
+                $expr->arms,
+            )),
             // @todo
             // $expr instanceof PhpParserNode\Expr\ClassConstFetch => (new ClassConstFetchTypeGetter)($expr, $scope),
             $expr instanceof PhpParserNode\Expr\BooleanNot => (new BooleanNotTypeGetter)($expr),
@@ -65,33 +68,33 @@ class ExpressionTypeInferer
                 || $expr instanceof PhpParserNode\Expr\BinaryOp\Smaller
                 || $expr instanceof PhpParserNode\Expr\BinaryOp\SmallerOrEqual
                 => new BooleanType,
-            $expr instanceof PhpParserNode\Expr\New_ => $this->createNewReferenceType($expr, $node),
-            $expr instanceof PhpParserNode\Expr\MethodCall => $this->createMethodCallReferenceType($expr, $node),
-            $expr instanceof PhpParserNode\Expr\StaticCall => $this->createStaticMethodCallReferenceType($expr, $node),
-            $expr instanceof PhpParserNode\Expr\PropertyFetch => $this->createPropertyFetchReferenceType($expr, $node),
-            $expr instanceof PhpParserNode\Expr\FuncCall => $this->createCallableCallReferenceType($expr, $node),
-            $expr instanceof PhpParserNode\Expr\ArrayDimFetch => $this->createOffsetAccessType($expr, $node),
-            $expr instanceof PhpParserNode\Expr\Array_ => $this->createArrayType($expr, $node),
+            $expr instanceof PhpParserNode\Expr\New_ => $this->createNewReferenceType($expr, $variableTypeGetter),
+            $expr instanceof PhpParserNode\Expr\MethodCall => $this->createMethodCallReferenceType($expr, $variableTypeGetter),
+            $expr instanceof PhpParserNode\Expr\StaticCall => $this->createStaticMethodCallReferenceType($expr, $variableTypeGetter),
+            $expr instanceof PhpParserNode\Expr\PropertyFetch => $this->createPropertyFetchReferenceType($expr, $variableTypeGetter),
+            $expr instanceof PhpParserNode\Expr\FuncCall => $this->createCallableCallReferenceType($expr, $variableTypeGetter),
+            $expr instanceof PhpParserNode\Expr\ArrayDimFetch => $this->createOffsetAccessType($expr, $variableTypeGetter),
+            $expr instanceof PhpParserNode\Expr\Array_ => $this->createArrayType($expr, $variableTypeGetter),
             default => new UnknownType,
         };
     }
 
-    private function createNewReferenceType(PhpParserNode\Expr\New_ $expr, Node $node): NewCallReferenceType
+    private function createNewReferenceType(PhpParserNode\Expr\New_ $expr, Closure $variableTypeGetter): NewCallReferenceType
     {
         if (! $expr->class instanceof PhpParserNode\Name) {
             return new NewCallReferenceType(
-                $this->infer($expr->class, $node),
-                $this->inferArgsTypes($expr->args, $node),
+                $this->infer($expr->class, $variableTypeGetter),
+                $this->inferArgsTypes($expr->args, $variableTypeGetter),
             );
         }
 
         return new NewCallReferenceType(
             $expr->class->toString(),
-            $this->inferArgsTypes($expr->args, $node),
+            $this->inferArgsTypes($expr->args, $variableTypeGetter),
         );
     }
 
-    private function createMethodCallReferenceType(PhpParserNode\Expr\MethodCall $expr, Node $node): Type
+    private function createMethodCallReferenceType(PhpParserNode\Expr\MethodCall $expr, Closure $variableTypeGetter): Type
     {
         // Only string method names support.
         if (! $expr->name instanceof PhpParserNode\Identifier) {
@@ -99,13 +102,13 @@ class ExpressionTypeInferer
         }
 
         return new MethodCallReferenceType(
-            $this->infer($expr->var, $node),
+            $this->infer($expr->var, $variableTypeGetter),
             $expr->name->name,
-            $this->inferArgsTypes($expr->args, $node),
+            $this->inferArgsTypes($expr->args, $variableTypeGetter),
         );
     }
 
-    private function createStaticMethodCallReferenceType(PhpParserNode\Expr\StaticCall $expr, Node $node): Type
+    private function createStaticMethodCallReferenceType(PhpParserNode\Expr\StaticCall $expr, Closure $variableTypeGetter): Type
     {
         // Only string method names support.
         if (! $expr->name instanceof PhpParserNode\Identifier) {
@@ -114,41 +117,41 @@ class ExpressionTypeInferer
 
         if (! $expr->class instanceof PhpParserNode\Name) {
             return new StaticMethodCallReferenceType(
-                $this->infer($expr->class, $node),
+                $this->infer($expr->class, $variableTypeGetter),
                 $expr->name->name,
-                $this->inferArgsTypes($expr->args, $node),
+                $this->inferArgsTypes($expr->args, $variableTypeGetter),
             );
         }
 
         return new StaticMethodCallReferenceType(
             $expr->class->toString(),
             $expr->name->name,
-            $this->inferArgsTypes($expr->args, $node),
+            $this->inferArgsTypes($expr->args, $variableTypeGetter),
         );
     }
 
-    private function createPropertyFetchReferenceType(PhpParserNode\Expr\PropertyFetch $expr, Node $node): Type
+    private function createPropertyFetchReferenceType(PhpParserNode\Expr\PropertyFetch $expr, Closure $variableTypeGetter): Type
     {
         // Only string prop names support.
         if (! $name = ($expr->name->name ?? null)) {
             return new UnknownType('Cannot infer type of property fetch: not supported yet.');
         }
 
-        return new PropertyFetchReferenceType($this->infer($expr->var, $node), $name);
+        return new PropertyFetchReferenceType($this->infer($expr->var, $variableTypeGetter), $name);
     }
 
-    private function createCallableCallReferenceType(PhpParserNode\Expr\FuncCall $expr, Node $node): Type
+    private function createCallableCallReferenceType(PhpParserNode\Expr\FuncCall $expr, Closure $variableTypeGetter): Type
     {
         if ($expr->name instanceof PhpParserNode\Name) {
             return new CallableCallReferenceType(
                 new CallableStringType($expr->name->toString()),
-                $this->inferArgsTypes($expr->args, $node),
+                $this->inferArgsTypes($expr->args, $variableTypeGetter),
             );
         }
 
         return new CallableCallReferenceType(
-            $this->infer($expr->name, $node),
-            $this->inferArgsTypes($expr->args, $node),
+            $this->infer($expr->name, $variableTypeGetter),
+            $this->inferArgsTypes($expr->args, $variableTypeGetter),
         );
     }
 
@@ -157,32 +160,32 @@ class ExpressionTypeInferer
      *
      * @see AssignHandler
      */
-    private function createOffsetAccessType(PhpParserNode\Expr\ArrayDimFetch $expr, Node $node): Type
+    private function createOffsetAccessType(PhpParserNode\Expr\ArrayDimFetch $expr, Closure $variableTypeGetter): Type
     {
         if (! $expr->dim) {
             return new UnknownType('ArrayDimFetch without dimension is handled in AssignHandler');
         }
 
         return new OffsetAccessType(
-            $this->infer($expr->var, $node),
-            $this->infer($expr->dim, $node),
+            $this->infer($expr->var, $variableTypeGetter),
+            $this->infer($expr->dim, $variableTypeGetter),
         );
     }
 
-    private function createArrayType(PhpParserNode\Expr\Array_ $expr, Node $node): Type
+    private function createArrayType(PhpParserNode\Expr\Array_ $expr, Closure $variableTypeGetter): Type
     {
         $arrayItems = collect($expr->items)
             ->filter()
-            ->map(fn (PhpParserNode\Expr\ArrayItem $arrayItem) => $this->inferArrayItem($arrayItem, $node))
+            ->map(fn (PhpParserNode\Expr\ArrayItem $arrayItem) => $this->inferArrayItem($arrayItem, $variableTypeGetter))
             ->all();
 
         return TypeHelper::unpackIfArray(new KeyedArrayType($arrayItems));
     }
 
-    private function inferArrayItem(PhpParserNode\Expr\ArrayItem $arrayItem, Node $node): ArrayItemType_
+    private function inferArrayItem(PhpParserNode\Expr\ArrayItem $arrayItem, Closure $variableTypeGetter): ArrayItemType_
     {
-        $keyType = $arrayItem->key ? $this->infer($arrayItem->key, $node) : null;
-        $valueType = $this->infer($arrayItem->value, $node);
+        $keyType = $arrayItem->key ? $this->infer($arrayItem->key, $variableTypeGetter) : null;
+        $valueType = $this->infer($arrayItem->value, $variableTypeGetter);
 
         // Try to evaluate the key to a constant value if possible
         $evaluatedKey = $this->evaluateKey($arrayItem->key);
@@ -238,12 +241,12 @@ class ExpressionTypeInferer
      * @param  array<PhpParserNode\Arg|PhpParserNode\VariadicPlaceholder>  $args
      * @return array<string, Type>
      */
-    private function inferArgsTypes(array $args, Node $node): array
+    private function inferArgsTypes(array $args, Closure $variableTypeGetter): array
     {
         return collect($args)
             ->filter(fn ($arg) => $arg instanceof PhpParserNode\Arg)
-            ->mapWithKeys(function (PhpParserNode\Arg $arg, $index) use ($node) {
-                $type = $this->infer($arg->value, $node);
+            ->mapWithKeys(function (PhpParserNode\Arg $arg, $index) use ($variableTypeGetter) {
+                $type = $this->infer($arg->value, $variableTypeGetter);
                 if ($parsedPhpDoc = $arg->getAttribute('parsedPhpDoc')) {
                     $type->setAttribute('docNode', $parsedPhpDoc);
                 }
