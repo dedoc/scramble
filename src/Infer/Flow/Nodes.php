@@ -6,12 +6,9 @@ use Closure;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node\Expr;
-use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Stmt\Expression;
-use PhpParser\PrettyPrinter;
 use WeakMap;
 
 class Nodes
@@ -149,56 +146,6 @@ class Nodes
         return $this;
     }
 
-    public function pushTerminateMatch(Match_ $match): self
-    {
-        $this->pushCondition();
-
-        foreach ($match->arms as $arm) {
-            if ($arm->conds === null) { // default arm
-                $this->pushConditionBranch(); // negated / else
-
-                $this->pushTerminate(new TerminateNode(TerminationKind::RETURN, $arm->body));
-
-                continue;
-            }
-
-            foreach ($arm->conds as $cond) {
-                $this->pushConditionBranch(new Expr\BinaryOp\Identical($match->cond, $cond));
-
-                $this->pushTerminate(new TerminateNode(TerminationKind::RETURN, $arm->body));
-            }
-        }
-
-        $this->exitCondition();
-
-        return $this;
-    }
-
-    public function pushAssignMatch(Variable $variable, Match_ $match): self
-    {
-        $this->pushCondition();
-
-        foreach ($match->arms as $arm) {
-            if ($arm->conds === null) { // default arm
-                $this->pushConditionBranch(); // negated / else
-
-                $this->push(new StatementNode(new Expression(new Expr\Assign($variable, $arm->body))));
-
-                continue;
-            }
-
-            foreach ($arm->conds as $cond) {
-                $this->pushConditionBranch(new Expr\BinaryOp\Identical($match->cond, $cond));
-
-                $this->push(new StatementNode(new Expression(new Expr\Assign($variable, $arm->body))));
-            }
-        }
-
-        $this->exitCondition();
-
-        return $this;
-    }
-
     public function predecessors(Node $node): array
     {
         return collect($this->edges)
@@ -325,7 +272,7 @@ class Nodes
 
     public function getTypeAt(Expr $expr, Node $node): Type
     {
-        return new UnknownType; /// !!!
+        return (new ExpressionTypeInferer($this))->infer($expr, $node);
     }
 
     public function toDot(bool $indent = false): string

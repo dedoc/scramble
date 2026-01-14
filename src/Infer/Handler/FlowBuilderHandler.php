@@ -2,11 +2,17 @@
 
 namespace Dedoc\Scramble\Infer\Handler;
 
+use Dedoc\Scramble\Infer\Flow\Nodes;
 use Dedoc\Scramble\Infer\Flow\TerminateNode;
 use Dedoc\Scramble\Infer\Flow\TerminationKind;
 use Dedoc\Scramble\Infer\Flow\StatementNode;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use PhpParser\Node;
+use PhpParser\Node\Expr\BinaryOp\Identical;
+use PhpParser\Node\Expr\Match_;
+use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Stmt\Expression;
+use PhpParser\Node\Expr;
 
 class FlowBuilderHandler
 {
@@ -30,7 +36,7 @@ class FlowBuilderHandler
             && $node->expr->var instanceof Node\Expr\Variable
         ) {
             if ($node->expr->expr instanceof Node\Expr\Match_) {
-                $flow->pushAssignMatch($node->expr->var, $node->expr->expr);
+                $this->pushAssignMatch($flow, $node->expr->var, $node->expr->expr);
 
                 return;
             }
@@ -38,7 +44,7 @@ class FlowBuilderHandler
 
         if ($node instanceof Node\Stmt\Return_) {
             if ($node->expr instanceof Node\Expr\Match_) {
-                $flow->pushTerminateMatch($node->expr);
+                $this->pushTerminateMatch($flow, $node->expr);
 
                 return;
             }
@@ -82,5 +88,51 @@ class FlowBuilderHandler
 
             return;
         }
+    }
+
+    private function pushTerminateMatch(Nodes $flow, Node\Expr\Match_ $match): void
+    {
+        $flow->pushCondition();
+
+        foreach ($match->arms as $arm) {
+            if ($arm->conds === null) { // default arm
+                $flow->pushConditionBranch(); // negated / else
+
+                $flow->pushTerminate(new TerminateNode(TerminationKind::RETURN, $arm->body));
+
+                continue;
+            }
+
+            foreach ($arm->conds as $cond) {
+                $flow->pushConditionBranch(new Expr\BinaryOp\Identical($match->cond, $cond));
+
+                $flow->pushTerminate(new TerminateNode(TerminationKind::RETURN, $arm->body));
+            }
+        }
+
+        $flow->exitCondition();
+    }
+
+    private function pushAssignMatch(Nodes $flow, Variable $variable, Match_ $match): void
+    {
+        $flow->pushCondition();
+
+        foreach ($match->arms as $arm) {
+            if ($arm->conds === null) { // default arm
+                $flow->pushConditionBranch(); // negated / else
+
+                $flow->push(new StatementNode(new Expression(new Expr\Assign($variable, $arm->body))));
+
+                continue;
+            }
+
+            foreach ($arm->conds as $cond) {
+                $flow->pushConditionBranch(new Expr\BinaryOp\Identical($match->cond, $cond));
+
+                $flow->push(new StatementNode(new Expression(new Expr\Assign($variable, $arm->body))));
+            }
+        }
+
+        $flow->exitCondition();
     }
 }
