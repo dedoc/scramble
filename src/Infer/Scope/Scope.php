@@ -4,8 +4,6 @@ namespace Dedoc\Scramble\Infer\Scope;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
-use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
-use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Dedoc\Scramble\Infer\Flow\ExpressionTypeInferer;
 use Dedoc\Scramble\Infer\Flow\Nodes;
 use Dedoc\Scramble\Infer\Handler\AssignHandler;
@@ -15,7 +13,6 @@ use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
-use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
@@ -88,6 +85,14 @@ class Scope
             return new UnknownType;
         }
 
+        if ($node instanceof Node\Expr\Variable && $node->name === 'this') {
+            return new SelfType($this->classDefinition()?->name ?: 'unknown');
+        }
+
+        if ($node instanceof Node\Expr\Variable) {
+            return $this->getVariableType($node);
+        }
+
 //        return $this->expressionTypeInferer->infer(
 //            expr: $node,
 //            variableTypeGetter: fn (Node\Expr\Variable $n) => $this->getVariableType($n),
@@ -148,14 +153,6 @@ class Scope
             return (new BooleanNotTypeGetter)($node);
         }
 
-        if ($node instanceof Node\Expr\Variable && $node->name === 'this') {
-            return new SelfType($this->classDefinition()?->name ?: 'unknown');
-        }
-
-        if ($node instanceof Node\Expr\Variable) {
-            return $this->getVariableType($node);
-        }
-
         if ($node instanceof Node\Expr\New_) {
             if (! $node->class instanceof Node\Name) {
                 return $this->setType(
@@ -177,19 +174,6 @@ class Scope
             }
 
             $calleeType = $this->getType($node->var);
-
-            $event = $calleeType instanceof ObjectType
-                ? new MethodCallEvent($calleeType, $node->name->name, $this, new UnresolvableArgumentTypeBag($this->getArgsTypes($node->args)), $calleeType->name)
-                : null;
-
-            $exceptions = $event ? app(ExtensionsBroker::class)->getMethodCallExceptions($event) : [];
-
-            if ($this->functionDefinition()) {
-                $this->functionDefinition()->type->exceptions = array_merge(
-                    $this->functionDefinition()->type->exceptions,
-                    $exceptions,
-                );
-            }
 
             return $this->setType($node, new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args)));
         }
@@ -313,7 +297,7 @@ class Scope
     }
 
     /** @return TemplateType[] */
-    public function getContextTemplates(): array
+    private function getContextTemplates(): array
     {
         return [
             ...($this->classDefinition()?->templateTypes ?: []),
