@@ -74,19 +74,19 @@ class Scope
 
     public function getType(Node $node): Type
     {
-//        $type = $this->nodeTypesResolver->getType($node);
-//
-//        if (! $type instanceof UnknownType) {
-//            return $type;
-//        }
-//
-//        if ($this->nodeTypesResolver->hasType($node)) { // For case when the unknown type was in node type resolver.
-//            return $type;
-//        }
-//
-//        if (! $node instanceof Node\Expr) {
-//            return new UnknownType;
-//        }
+        $type = $this->nodeTypesResolver->getType($node);
+
+        if (! $type instanceof UnknownType) {
+            return $type;
+        }
+
+        if ($this->nodeTypesResolver->hasType($node)) { // For case when the unknown type was in node type resolver.
+            return $type;
+        }
+
+        if (! $node instanceof Node\Expr) {
+            return new UnknownType;
+        }
 
 //        return $this->expressionTypeInferer->infer(
 //            expr: $node,
@@ -154,16 +154,6 @@ class Scope
 
         if ($node instanceof Node\Expr\Variable) {
             return $this->getVariableType($node);
-        }
-
-        $type = $this->nodeTypesResolver->getType($node);
-
-        if (! $type instanceof UnknownType) {
-            return $type;
-        }
-
-        if ($this->nodeTypesResolver->hasType($node)) { // For case when the unknown type was in node type resolver.
-            return $type;
         }
 
         if ($node instanceof Node\Expr\New_) {
