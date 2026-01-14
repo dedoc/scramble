@@ -14,28 +14,26 @@ use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\OffsetAccessType;
-use Dedoc\Scramble\Support\Type\TypeHelper;
-use PhpParser\ConstExprEvaluationException;
-use PhpParser\ConstExprEvaluator;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
-use PhpParser\Node\Expr;
+use PhpParser\ConstExprEvaluationException;
+use PhpParser\ConstExprEvaluator;
 use PhpParser\Node as PhpParserNode;
+use PhpParser\Node\Expr;
 
 class ExpressionTypeInferer
 {
     public function __construct(
         private Scope $scope,
-    )
-    {
-    }
+    ) {}
 
     public function infer(Expr $expr, Closure $variableTypeGetter): Type
     {
@@ -66,8 +64,7 @@ class ExpressionTypeInferer
                 || $expr instanceof PhpParserNode\Expr\BinaryOp\Greater
                 || $expr instanceof PhpParserNode\Expr\BinaryOp\GreaterOrEqual
                 || $expr instanceof PhpParserNode\Expr\BinaryOp\Smaller
-                || $expr instanceof PhpParserNode\Expr\BinaryOp\SmallerOrEqual
-                => new BooleanType,
+                || $expr instanceof PhpParserNode\Expr\BinaryOp\SmallerOrEqual => new BooleanType,
             $expr instanceof PhpParserNode\Expr\New_ => $this->createNewReferenceType($expr, $variableTypeGetter),
             $expr instanceof PhpParserNode\Expr\MethodCall => $this->createMethodCallReferenceType($expr, $variableTypeGetter),
             $expr instanceof PhpParserNode\Expr\StaticCall => $this->createStaticMethodCallReferenceType($expr, $variableTypeGetter),

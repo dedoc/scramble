@@ -3,9 +3,7 @@
 namespace Dedoc\Scramble\Infer\Flow;
 
 use Closure;
-use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Stmt\Expression;
@@ -192,7 +190,7 @@ class Nodes
     }
 
     /**
-     * @param Closure(Type $t): bool $cb
+     * @param  Closure(Type $t): bool  $cb
      * @return list<Node>
      */
     public function findValueOriginsByExitType(Closure $cb): array
@@ -212,11 +210,11 @@ class Nodes
                         && $nodeValueOrigin->parserNode instanceof Expression
                         && $nodeValueOrigin->parserNode->expr instanceof Expr\Assign ? $nodeValueOrigin->parserNode->expr->expr : null);
 
-//                $type = $expression ? $this->getTypeAt($expression, $nodeValueOrigin) : new VoidType;
+                //                $type = $expression ? $this->getTypeAt($expression, $nodeValueOrigin) : new VoidType;
 
-//                if ($cb($type)) {
-                    $origins[] = $nodeValueOrigin;
-//                }
+                //                if ($cb($type)) {
+                $origins[] = $nodeValueOrigin;
+                //                }
             }
         }
 
@@ -236,7 +234,7 @@ class Nodes
 
         $origins = [];
         $stack = [$node];
-        $visited = new WeakMap();
+        $visited = new WeakMap;
         while ($stack) {
             /** @var Node $current */
             $current = array_pop($stack);
@@ -251,6 +249,7 @@ class Nodes
 
                 if ($prev->definesVariable($node->value->name)) {
                     $origins[] = $prev;
+
                     continue;
                 }
 

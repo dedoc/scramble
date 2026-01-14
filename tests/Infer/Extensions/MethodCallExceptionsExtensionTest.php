@@ -85,7 +85,8 @@ class MethodCallExceptionsExtensionTest_NoHandleTest
 {
     public function foo()
     {
-        $service = new MethodCallExceptionsExtensionTest_OtherService();
+        $service = new MethodCallExceptionsExtensionTest_OtherService;
+
         return $service->doSomething();
     }
 }

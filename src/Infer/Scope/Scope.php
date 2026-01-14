@@ -18,7 +18,6 @@ use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
-use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\OffsetAccessType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
@@ -93,10 +92,10 @@ class Scope
             return $this->getVariableType($node);
         }
 
-//        return $this->expressionTypeInferer->infer(
-//            expr: $node,
-//            variableTypeGetter: fn (Node\Expr\Variable $n) => $this->getVariableType($n),
-//        );
+        //        return $this->expressionTypeInferer->infer(
+        //            expr: $node,
+        //            variableTypeGetter: fn (Node\Expr\Variable $n) => $this->getVariableType($n),
+        //        );
 
         if ($node instanceof Node\Scalar) {
             return (new ScalarTypeGetter)($node);

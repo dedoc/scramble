@@ -3,16 +3,15 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Flow\Nodes;
+use Dedoc\Scramble\Infer\Flow\StatementNode;
 use Dedoc\Scramble\Infer\Flow\TerminateNode;
 use Dedoc\Scramble\Infer\Flow\TerminationKind;
-use Dedoc\Scramble\Infer\Flow\StatementNode;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use PhpParser\Node;
-use PhpParser\Node\Expr\BinaryOp\Identical;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Stmt\Expression;
-use PhpParser\Node\Expr;
 
 class FlowBuilderHandler
 {
@@ -30,7 +29,7 @@ class FlowBuilderHandler
 
         $flow = $scope->getFlowNodes();
 
-        if(
+        if (
             $node instanceof Node\Stmt\Expression
             && $node->expr instanceof Node\Expr\Assign
             && $node->expr->var instanceof Node\Expr\Variable

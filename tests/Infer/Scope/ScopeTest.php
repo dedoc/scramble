@@ -334,10 +334,10 @@ EOF;
 
     $originNodes = $flow->findValueOriginsByExitType(fn (Type $t) => $t instanceof LiteralIntegerType && $t->value === 42);
 
-//    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $originNodes[0]);
+    //    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $originNodes[0]);
     $type = $flow->getTypeAt($originNodes[0]->value, $originNodes[0]);
 
-//    dd($type->toString());
+    //    dd($type->toString());
 })->skip();
 
 it('allows inspecting known facts about variables based on if', function () {
