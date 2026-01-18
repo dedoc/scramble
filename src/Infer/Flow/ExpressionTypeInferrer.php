@@ -33,6 +33,9 @@ use PhpParser\ConstExprEvaluator;
 use PhpParser\Node as PhpParserNode;
 use PhpParser\Node\Expr;
 
+/**
+ * @internal
+ */
 class ExpressionTypeInferrer
 {
     public function __construct(
@@ -40,9 +43,17 @@ class ExpressionTypeInferrer
         private NodeTypesResolver $nodeTypesResolver,
     ) {}
 
-    public function infer(\PhpParser\Node $expr, Closure $variableTypeGetter): Type
+    /**
+     * Ideally, `infer` should accept not Node but just expressions. @todo
+     * @param PhpParserNode $expr
+     */
+    public function infer(PhpParserNode $expr, Closure $variableTypeGetter): Type
     {
         $type = $this->doInfer($expr, $variableTypeGetter);
+
+        if ($type instanceof UnknownType) {
+            return $type;
+        }
 
         if (! $expr instanceof Expr\Variable) {
             $this->nodeTypesResolver->setType($expr, $type);
@@ -51,7 +62,7 @@ class ExpressionTypeInferrer
         return $type;
     }
 
-    public function doInfer(\PhpParser\Node $expr, Closure $variableTypeGetter): Type
+    public function doInfer(PhpParserNode $expr, Closure $variableTypeGetter): Type
     {
         if ($expr instanceof Expr\Variable && $expr->name === 'this') {
             return new SelfType($this->scope->classDefinition()?->name ?: 'unknown');
