@@ -62,6 +62,10 @@ class UnsetHandler
             )),
         );
 
+        dump([
+            $var->name => $varType->toString(),
+        ]);
+
         $scope->addVariableType(
             $node->getAttribute('startLine'), // @phpstan-ignore argument.type
             $var->name,

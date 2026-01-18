@@ -29,7 +29,7 @@ use PhpParser\ConstExprEvaluator;
 use PhpParser\Node as PhpParserNode;
 use PhpParser\Node\Expr;
 
-class ExpressionTypeInferer
+class VeryNewExpressionTypeInferrer
 {
     public function __construct(
         private Scope $scope,
