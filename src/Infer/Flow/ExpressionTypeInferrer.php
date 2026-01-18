@@ -45,7 +45,6 @@ class ExpressionTypeInferrer
 
     /**
      * Ideally, `infer` should accept not Node but just expressions. @todo
-     * @param PhpParserNode $expr
      */
     public function infer(PhpParserNode $expr, Closure $variableTypeGetter): Type
     {
@@ -210,7 +209,7 @@ class ExpressionTypeInferrer
         }
 
         if ($expr instanceof Expr\Array_) {
-//            return $this->buildArrayType($expr, $variableTypeGetter);
+            //            return $this->buildArrayType($expr, $variableTypeGetter);
         }
 
         return $type;

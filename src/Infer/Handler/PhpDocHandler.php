@@ -28,7 +28,6 @@ class PhpDocHandler
         }
 
         /** @var PhpDocNode $parsedPhpDoc */
-
         $parsedPhpDoc->setAttribute('sourceClass', $scope->classDefinition()?->name);
 
         $scope->getType($node)->setAttribute('docNode', $parsedPhpDoc);

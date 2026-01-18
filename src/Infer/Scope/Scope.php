@@ -53,9 +53,9 @@ class Scope
 
     public function getType(Node $node): Type
     {
-//        if (! $node instanceof Node\Expr) {
-//            return new UnknownType;
-//        }
+        //        if (! $node instanceof Node\Expr) {
+        //            return new UnknownType;
+        //        }
 
         return $this->expressionTypeInferrer->infer(
             expr: $node,

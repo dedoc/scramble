@@ -277,10 +277,7 @@ class Nodes
         );
     }
 
-    private function getVariableTypeAt(Expr\Variable $var, Node $node): Type
-    {
-
-    }
+    private function getVariableTypeAt(Expr\Variable $var, Node $node): Type {}
 
     public function toDot(bool $indent = false): string
     {
