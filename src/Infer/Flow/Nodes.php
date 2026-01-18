@@ -273,8 +273,13 @@ class Nodes
     {
         return $this->expressionTypeInferer->getType(
             expr: $expr,
-            variableTypeGetter: fn (Node\Expr\Variable $n) => $this->getVariableTypeAt($n, $node),
+            variableTypeGetter: fn (Expr\Variable $n) => $this->getVariableTypeAt($n, $node),
         );
+    }
+
+    private function getVariableTypeAt(Expr\Variable $var, Node $node): Type
+    {
+
     }
 
     public function toDot(bool $indent = false): string
