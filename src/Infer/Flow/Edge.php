@@ -17,7 +17,7 @@ class Edge
         public bool $isNegated = false,
     ) {}
 
-    public function getAssertedVariableType(Nodes $nodes, Node $node, string $varName): ?Type
+    public function getRefinedVariableType(Nodes $nodes, string $varName): ?Type
     {
         if (! $this->conditions) {
             return null;
@@ -29,19 +29,19 @@ class Edge
 
         /** @var Identical|null $identicalCheck */
         $identicalCheck = collect($this->conditions)
-            ->first(fn (Expr $n) => $n instanceof Identical && ($variableCheck = $this->identicalVariableCheck($n)) && $variableCheck[0] === $varName);
+            ->first(fn (Expr $n) => $n instanceof Identical && ($variableCheck = $this->matchVariableIdenticalCheck($n)) && $variableCheck[0] === $varName);
 
         if ($identicalCheck) {
-            return $nodes->getTypeAt($this->identicalVariableCheck($identicalCheck)[1], $node);
+            return $nodes->getTypeAt($this->matchVariableIdenticalCheck($identicalCheck)[1], $this->from);
         }
 
         return null;
     }
 
     /**
-     * @return array{0: string, 1: Expr}
+     * @return array{0: string, 1: Expr}|false
      */
-    private function identicalVariableCheck(Identical $node): array|false
+    private function matchVariableIdenticalCheck(Identical $node): array|false
     {
         [$var, $expr] = $node->left instanceof Expr\Variable
             ? [$node->left, $node->right]

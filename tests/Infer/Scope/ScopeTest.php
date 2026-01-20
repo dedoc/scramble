@@ -368,3 +368,56 @@ EOF;
 
     expect($type->toString())->toBe('string(bar)');
 });
+
+it('allows inspecting known facts about variables based on if with recursion guard', function () {
+    $code = <<<'EOF'
+<?php
+function foo($a) {
+    if ($a === $a) {
+        $a = $a;
+    }
+    return $a;
+}
+EOF;
+
+    $scope = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope();
+
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    $flow = $scope->getFlowNodes();
+
+    $returnNodes = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
+
+    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $returnNodes[0]);
+
+    expect($type->toString())->toBe('unknown');
+});
+
+it('allows inspecting known facts about variables based on if with recursion guard second', function () {
+    $code = <<<'EOF'
+<?php
+function foo($a) {
+    if ($a === 0) {
+        // no assignment
+    } else {
+        // no assignment
+    }
+
+    return $a;
+}
+EOF;
+
+    $scope = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope();
+
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    $flow = $scope->getFlowNodes();
+
+    $returnNodes = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
+
+    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $returnNodes[0]);
+
+    expect($type->toString())->toBe('unknown');
+});

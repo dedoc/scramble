@@ -275,17 +275,18 @@ class Nodes
     {
         return $this->expressionTypeInferrer->infer(
             expr: $expr,
-            variableTypeGetter: fn (Expr\Variable $n) => $this->getVariableTypeAt($n, $node),
+            variableTypeGetter: fn (Expr\Variable $n) => $this->resolveVariableTypeAt($n, $node),
         );
     }
 
-    private function getVariableTypeAt(Expr\Variable $var, Node $node): Type
+    private function resolveVariableTypeAt(Expr\Variable $var, Node $node): Type
     {
         $varName = $var->name;
         if (! is_string($varName)) {
             return new UnknownType();
         }
 
+        $types = [];
         $stack = [$node];
         $visited = new WeakMap;
         while ($stack) {
@@ -305,17 +306,22 @@ class Nodes
                     /** @var Expr\Assign $assignment */
                     $assignment = $prev->parserNode->expr;
 
-                    return $this->getTypeAt($assignment->expr, $prev);
+                    $types[] = $this->getTypeAt($assignment->expr, $prev);
+
+                    continue;
                 }
 
-                if ($type = $edge->getAssertedVariableType($this, $prev, $varName)) {
-                    return $type;
-                }
+                if ($type = $edge->getRefinedVariableType($this, $varName)) {
+                    $types[] = $type;
 
+                    continue;
+                }
 
                 $stack[] = $prev;
             }
         }
+
+        dd($types);
 
         return new UnknownType();
     }
