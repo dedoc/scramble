@@ -334,11 +334,10 @@ EOF;
 
     $originNodes = $flow->findValueOriginsByExitType(fn (Type $t) => $t instanceof LiteralIntegerType && $t->value === 42);
 
-    //    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $originNodes[0]);
-    $type = $flow->getTypeAt($originNodes[0]->value, $originNodes[0]);
+    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $originNodes[0]);
 
-    //    dd($type->toString());
-})->skip();
+    expect($type->toString())->toBe('string(bar)');
+});
 
 it('allows inspecting known facts about variables based on if', function () {
     $code = <<<'EOF'
@@ -360,9 +359,12 @@ EOF;
         ->getFunctionDefinition('foo')
         ->getScope();
 
-    $barConditions = $scope->typeEffects
-        ->filter(fn (TypeEffect $re) => $re->type && $re->facts->count() === 1)
-        ->all();
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    $flow = $scope->getFlowNodes();
 
-    expect($barConditions)->toHaveCount(2);
-})->skip();
+    $originNodes = $flow->findValueOriginsByExitType(fn (Type $t) => $t instanceof LiteralIntegerType && $t->value === 42);
+
+    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $originNodes[0]);
+
+    expect($type->toString())->toBe('string(bar)');
+});

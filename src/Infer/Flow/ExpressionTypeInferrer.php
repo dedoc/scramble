@@ -61,7 +61,7 @@ class ExpressionTypeInferrer
         return $type;
     }
 
-    public function doInfer(PhpParserNode $expr, Closure $variableTypeGetter): Type
+    private function doInfer(PhpParserNode $expr, Closure $variableTypeGetter): Type
     {
         if ($expr instanceof Expr\Variable && $expr->name === 'this') {
             return new SelfType($this->scope->classDefinition()?->name ?: 'unknown');

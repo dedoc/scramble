@@ -42,8 +42,8 @@ class Scope
         public FileNameResolver $nameResolver,
         public ?Scope $parentScope = null,
     ) {
-        $this->flowNodes = new Nodes;
         $this->expressionTypeInferrer = new ExpressionTypeInferrer($this, $this->nodeTypesResolver);
+        $this->flowNodes = new Nodes($this->expressionTypeInferrer);
     }
 
     public function getFlowNodes(): Nodes
@@ -53,9 +53,7 @@ class Scope
 
     public function getType(Node $node): Type
     {
-        //        if (! $node instanceof Node\Expr) {
-        //            return new UnknownType;
-        //        }
+        // @todo: ensure $node can be JUST an expression
 
         return $this->expressionTypeInferrer->infer(
             expr: $node,

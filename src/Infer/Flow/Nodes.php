@@ -4,6 +4,8 @@ namespace Dedoc\Scramble\Infer\Flow;
 
 use Closure;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Stmt\Expression;
@@ -23,7 +25,7 @@ class Nodes
 
     public ?Edge $conditionEdge = null;
 
-    public function __construct()
+    public function __construct(private ExpressionTypeInferrer $expressionTypeInferrer)
     {
         $this->head = new StartNode;
         $this->nodes[] = $this->head;
@@ -210,11 +212,11 @@ class Nodes
                         && $nodeValueOrigin->parserNode instanceof Expression
                         && $nodeValueOrigin->parserNode->expr instanceof Expr\Assign ? $nodeValueOrigin->parserNode->expr->expr : null);
 
-                //                $type = $expression ? $this->getTypeAt($expression, $nodeValueOrigin) : new VoidType;
+                $type = $expression ? $this->getTypeAt($expression, $nodeValueOrigin) : new VoidType;
 
-                //                if ($cb($type)) {
-                $origins[] = $nodeValueOrigin;
-                //                }
+                if ($cb($type)) {
+                    $origins[] = $nodeValueOrigin;
+                }
             }
         }
 
@@ -271,13 +273,52 @@ class Nodes
 
     public function getTypeAt(Expr $expr, Node $node): Type
     {
-        return $this->expressionTypeInferer->getType(
+        return $this->expressionTypeInferrer->infer(
             expr: $expr,
             variableTypeGetter: fn (Expr\Variable $n) => $this->getVariableTypeAt($n, $node),
         );
     }
 
-    private function getVariableTypeAt(Expr\Variable $var, Node $node): Type {}
+    private function getVariableTypeAt(Expr\Variable $var, Node $node): Type
+    {
+        $varName = $var->name;
+        if (! is_string($varName)) {
+            return new UnknownType();
+        }
+
+        $stack = [$node];
+        $visited = new WeakMap;
+        while ($stack) {
+            /** @var Node $current */
+            $current = array_pop($stack);
+
+            if (isset($visited[$current])) {
+                continue;
+            }
+            $visited[$current] = true;
+
+            foreach ($this->incomingEdges($current) as $edge) {
+                $prev = $edge->from;
+
+                if ($prev->definesVariable($varName)) {
+                    // return type of prev assign statement
+                    /** @var Expr\Assign $assignment */
+                    $assignment = $prev->parserNode->expr;
+
+                    return $this->getTypeAt($assignment->expr, $prev);
+                }
+
+                if ($type = $edge->getAssertedVariableType($this, $prev, $varName)) {
+                    return $type;
+                }
+
+
+                $stack[] = $prev;
+            }
+        }
+
+        return new UnknownType();
+    }
 
     public function toDot(bool $indent = false): string
     {
