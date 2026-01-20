@@ -283,7 +283,7 @@ class Nodes
     {
         $varName = $var->name;
         if (! is_string($varName)) {
-            return new UnknownType();
+            return new UnknownType;
         }
 
         $types = [];
@@ -323,7 +323,7 @@ class Nodes
 
         dd($types);
 
-        return new UnknownType();
+        return new UnknownType;
     }
 
     public function toDot(bool $indent = false): string

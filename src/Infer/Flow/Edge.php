@@ -4,9 +4,9 @@ namespace Dedoc\Scramble\Infer\Flow;
 
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Support\Str;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\BinaryOp\Identical;
 use PhpParser\PrettyPrinter;
-use PhpParser\Node\Expr;
 
 class Edge
 {
