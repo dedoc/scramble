@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Flow;
 
 use Illuminate\Support\Str;
+use PhpParser\Node as PhpParserNode;
 use PhpParser\PrettyPrinter;
 
 abstract class AbstractNode implements Node
@@ -20,6 +21,7 @@ abstract class AbstractNode implements Node
     {
         $index = array_search($this, $nodes->nodes, true);
 
+        // @phpstan-ignore match.unhandled
         return match ($this::class) {
             StartNode::class => 'S',
             TerminateNode::class => match ($this->kind) {
@@ -32,7 +34,7 @@ abstract class AbstractNode implements Node
         }.'_'.$index;
     }
 
-    public function toDot(Nodes $nodes): ?string
+    public function toDot(Nodes $nodes): string
     {
         $dot = $this->toDotId($nodes);
 
@@ -40,20 +42,27 @@ abstract class AbstractNode implements Node
 
         $empty = new \stdClass;
 
+        $parserNode = $this->getParserNode();
+
         $label = match ($this::class) {
             TerminateNode::class => match ($this->kind) {
                 TerminationKind::RETURN => 'Return',
                 TerminationKind::THROW => 'Throw',
-            }.($this->value ? ' '.$phpParserExpressionPrinter->prettyPrintExpr($this->value) : ' VOID'),
+            }.($parserNode ? ' '.$phpParserExpressionPrinter->prettyPrint([$parserNode]) : ' VOID'),
             ConditionNode::class => 'If',
-            StatementNode::class => $phpParserExpressionPrinter->prettyPrint([$this->parserNode]),
+            StatementNode::class => $parserNode ? $phpParserExpressionPrinter->prettyPrint([$parserNode]) : '',
             default => $empty,
         };
 
         if ($label !== $empty) {
-            $dot .= '[label="'.Str::replace('"', '\"', $label).'"]';
+            $dot .= '[label="'.Str::replace('"', '\"', $label).'"]'; // @phpstan-ignore binaryOp.invalid, argument.type, argument.templateType
         }
 
         return $dot;
+    }
+
+    public function getParserNode(): ?PhpParserNode
+    {
+        return null;
     }
 }

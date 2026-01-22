@@ -13,6 +13,7 @@ class Edge
     public function __construct(
         public Node $from,
         public ?Node $to = null,
+        /** @var Expr[] */
         public array $conditions = [],
         public bool $isNegated = false,
     ) {}
@@ -32,7 +33,11 @@ class Edge
             ->first(fn (Expr $n) => $n instanceof Identical && ($variableCheck = $this->matchVariableIdenticalCheck($n)) && $variableCheck[0] === $varName);
 
         if ($identicalCheck) {
-            return $nodes->getTypeAt($this->matchVariableIdenticalCheck($identicalCheck)[1], $this->from);
+            $identicalCheckExpression = $this->matchVariableIdenticalCheck($identicalCheck)[1] ?? null;
+
+            return $identicalCheckExpression
+                ? $nodes->getTypeAt($identicalCheckExpression, $this->from)
+                : null;
         }
 
         return null;

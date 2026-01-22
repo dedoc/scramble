@@ -208,60 +208,7 @@ class ExpressionTypeInferrer
             );
         }
 
-        if ($expr instanceof Expr\Array_) {
-            //            return $this->buildArrayType($expr, $variableTypeGetter);
-        }
-
         return $type;
-    }
-
-    private function buildArrayType(Expr\Array_ $expr, Closure $variableTypeGetter): Type
-    {
-        $arrayItems = collect($expr->items)
-            ->filter()
-            ->map(fn (PhpParserNode\ArrayItem $arrayItem) => $this->buildArrayItemType($arrayItem, $variableTypeGetter))
-            ->all();
-
-        return TypeHelper::unpackIfArray(new KeyedArrayType($arrayItems));
-    }
-
-    private function buildArrayItemType(PhpParserNode\ArrayItem $node, Closure $variableTypeGetter): ArrayItemType_
-    {
-        $keyType = $node->key ? $this->infer($node->key, $variableTypeGetter) : null;
-
-        return new ArrayItemType_(
-            $this->evaluateKeyNode($node->key, $this->scope), // @todo handle cases when key is something dynamic
-            $this->infer($node->value, $variableTypeGetter),
-            isOptional: false,
-            shouldUnpack: $node->unpack,
-            keyType: $keyType,
-        );
-    }
-
-    private function evaluateKeyNode(?Expr $key, Scope $scope): int|string|null
-    {
-        if (! $key) {
-            return null;
-        }
-
-        $evaluator = new ConstExprEvaluator(function (Expr $node) use ($scope) {
-            if ($node instanceof Expr\ClassConstFetch) {
-                return (new ConstFetchEvaluator([
-                    'self' => $scope->classDefinition()?->name,
-                    'static' => $scope->classDefinition()?->name,
-                ]))->evaluate($node);
-            }
-
-            return null;
-        });
-
-        try {
-            $result = $evaluator->evaluateSilently($key);
-
-            return is_string($result) || is_int($result) ? $result : null;
-        } catch (ConstExprEvaluationException) {
-            return null;
-        }
     }
 
     /**

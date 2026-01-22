@@ -38,7 +38,6 @@ class RequestBodyExtension extends OperationExtension
         try {
             $rulesResults = collect($this->extractParameters($operation, $routeInfo));
         } catch (Throwable $exception) {
-            throw $exception;
             if (Scramble::shouldThrowOnError()) {
                 throw $exception;
             }

@@ -22,9 +22,13 @@ class Nodes
 
     public ?Node $head;
 
+    /** @var Node[] */
     private array $conditionNodesStack = [];
 
     public ?Edge $conditionEdge = null;
+
+    /** @var array<string, true> */
+    protected array $resolvingVariables = [];
 
     public function __construct(private ExpressionTypeInferrer $expressionTypeInferrer)
     {
@@ -96,12 +100,15 @@ class Nodes
     public function exitCondition(): self
     {
         $conditionNode = array_pop($this->conditionNodesStack);
+        if (! $conditionNode) {
+            throw new \Exception('Should not happen');
+        }
 
         $conditionEdges = collect($this->edges)->filter(fn (Edge $e) => $e->from === $conditionNode);
-        [$negatedEdges, $otherEdges] = $conditionEdges->partition(fn (Edge $e) => $e->isNegated);
+        [$negatedEdges, $otherEdges] = $conditionEdges->partition(fn (Edge $e) => $e->isNegated)->all();
 
         if ($negatedEdge = $negatedEdges->first()) {
-            $negatedEdge->conditions = $otherEdges->map->conditions->flatten()->values()->all();
+            $negatedEdge->conditions = $otherEdges->map->conditions->flatten()->values()->all(); // @phpstan-ignore assign.propertyType
         }
 
         $leafNodes = [];
@@ -137,7 +144,7 @@ class Nodes
             $this->edges[] = new Edge(
                 from: $conditionNode,
                 to: $mergeNode,
-                conditions: $otherEdges->map->conditions->flatten()->values()->all(),
+                conditions: $otherEdges->map->conditions->flatten()->values()->all(), // @phpstan-ignore argument.type
                 isNegated: true,
             );
         }
@@ -147,24 +154,17 @@ class Nodes
         return $this;
     }
 
-    public function predecessors(Node $node): array
-    {
-        return collect($this->edges)
-            ->filter(fn (Edge $e) => $e->to === $node)
-            ->values()
-            ->map(fn (Edge $e) => $e->from)
-            ->all();
-    }
-
-    public function successors(Node $node): array
+    /** @return Node[] */
+    private function successors(Node $node): array
     {
         return collect($this->edges)
             ->filter(fn (Edge $e) => $e->from === $node)
             ->values()
-            ->map(fn (Edge $e) => $e->to)
+            ->map(fn (Edge $e): Node => $e->to) // @phpstan-ignore return.type
             ->all();
     }
 
+    /** @return Node[] */
     public function getReachableNodes(Closure $cb): array
     {
         return collect($this->nodes)
@@ -198,7 +198,7 @@ class Nodes
      */
     public function findValueOriginsByExitType(Closure $cb): array
     {
-        /** @var TerminateNode[] $returns */
+        /** @var TerminateNode[] $nodes */
         $nodes = $this
             ->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
 
@@ -263,7 +263,7 @@ class Nodes
         return $origins;
     }
 
-    /** @return list<Edge> */
+    /** @return Edge[] */
     private function incomingEdges(Node $node): array
     {
         return collect($this->edges)
@@ -297,8 +297,6 @@ class Nodes
         return $narrows[count($narrows) - 1];
     }
 
-    protected $resolvingVariables = [];
-
     private function resolveVariableTypeAt(Expr\Variable $var, Node $node): Type
     {
         $varName = $var->name;
@@ -321,7 +319,7 @@ class Nodes
 
                 // return type of prev assign statement
                 /** @var Expr\Assign $assignment */
-                $assignment = $node->parserNode->expr;
+                $assignment = $node->getParserNode()->expr;
 
                 return $this->getTypeAt($assignment->expr, $node);
             }
@@ -337,6 +335,7 @@ class Nodes
         }
     }
 
+    /** @return Type[] */
     private function resolveVariableNarrowsAtLocation(Expr\Variable $var, Node $node): array
     {
         $varName = $var->name;

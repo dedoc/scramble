@@ -11,12 +11,12 @@ use PhpParser\Node;
 
 class MethodCallHandler
 {
-    public function shouldHandle($node)
+    public function shouldHandle(Node $node): bool
     {
         return $node instanceof Node\Expr\MethodCall;
     }
 
-    public function leave(Node\Expr\MethodCall $node, Scope $scope)
+    public function leave(Node\Expr\MethodCall $node, Scope $scope): void
     {
         if (! $scope->isInFunction()) {
             return;

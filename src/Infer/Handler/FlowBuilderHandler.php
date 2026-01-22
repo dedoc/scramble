@@ -15,13 +15,13 @@ use PhpParser\Node\Stmt\Expression;
 
 class FlowBuilderHandler
 {
-    public function shouldHandle($node)
+    public function shouldHandle(Node $node): bool
     {
         return $node instanceof Node\Stmt
             && ! $node instanceof Node\Stmt\Function_;
     }
 
-    public function enter(Node\Stmt $node, Scope $scope)
+    public function enter(Node\Stmt $node, Scope $scope): void
     {
         if (! $scope->isInFunction()) {
             return;
@@ -74,7 +74,7 @@ class FlowBuilderHandler
         $flow->push(new StatementNode($node)); // pushes node, make the node head
     }
 
-    public function leave(Node\Stmt $node, Scope $scope)
+    public function leave(Node\Stmt $node, Scope $scope): void
     {
         if (! $scope->isInFunction()) {
             return;
@@ -84,8 +84,6 @@ class FlowBuilderHandler
 
         if ($node instanceof Node\Stmt\If_) {
             $flow->exitCondition(); // pushes node, makes "yes" branch head
-
-            return;
         }
     }
 

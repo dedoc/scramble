@@ -26,7 +26,7 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
         return $this->declarationDefinition;
     }
 
-    public function setScope(Scope $scope): self
+    public function setScope(?Scope $scope): self
     {
         $this->scope = $scope;
 
