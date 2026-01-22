@@ -309,7 +309,7 @@ class Nodes
             return new UnknownType;
         }
 
-        $key = $varName . '@' . spl_object_id($node);
+        $key = $varName.'@'.spl_object_id($node);
 
         $isAlreadyResolvingVariable = array_key_exists($key, $this->resolvingVariables);
 

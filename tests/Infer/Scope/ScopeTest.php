@@ -420,12 +420,12 @@ EOF;
     expect($type->toString())->toBe('int(42)');
 });
 
-//it('foo', function () {
+// it('foo', function () {
 //    $type = new \Dedoc\Scramble\Support\Type\StringType();
 //    $lType = new \Dedoc\Scramble\Support\Type\Literal\LiteralStringType('wow');
 //
 //    dd($lType->intersect($type)->toString());
-//});
+// });
 
 it('allows inspecting known facts about variables based on if with recursion guard second', function () {
     $code = <<<'EOF'
