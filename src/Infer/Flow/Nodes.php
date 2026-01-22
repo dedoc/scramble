@@ -4,6 +4,8 @@ namespace Dedoc\Scramble\Infer\Flow;
 
 use Closure;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeWidener;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node\Expr;
@@ -275,9 +277,27 @@ class Nodes
     {
         return $this->expressionTypeInferrer->infer(
             expr: $expr,
-            variableTypeGetter: fn (Expr\Variable $n) => $this->resolveVariableTypeAt($n, $node),
+            variableTypeGetter: fn (Expr\Variable $n) => $this->resolveNarrowedVariableTypeAtLocation($n, $node),
         );
     }
+
+    private function resolveNarrowedVariableTypeAtLocation(Expr\Variable $var, Node $node): Type
+    {
+        $varName = $var->name;
+        if (! is_string($varName)) {
+            return new UnknownType;
+        }
+
+        $definedTypeAtLocation = $this->resolveVariableTypeAt($var, $node);
+        $narrows = $this->resolveVariableNarrowsAtLocation($var, $node);
+
+        if (! $narrows) {
+            return $definedTypeAtLocation;
+        }
+
+        return $narrows[count($narrows) - 1];
+    }
+
 
     private function resolveVariableTypeAt(Expr\Variable $var, Node $node): Type
     {
@@ -286,44 +306,53 @@ class Nodes
             return new UnknownType;
         }
 
-        $types = [];
-        $stack = [$node];
-        $visited = new WeakMap;
-        while ($stack) {
-            /** @var Node $current */
-            $current = array_pop($stack);
-
-            if (isset($visited[$current])) {
-                continue;
-            }
-            $visited[$current] = true;
-
-            foreach ($this->incomingEdges($current) as $edge) {
-                $prev = $edge->from;
-
-                if ($prev->definesVariable($varName)) {
-                    // return type of prev assign statement
-                    /** @var Expr\Assign $assignment */
-                    $assignment = $prev->parserNode->expr;
-
-                    $types[] = $this->getTypeAt($assignment->expr, $prev);
-
-                    continue;
-                }
-
-                if ($type = $edge->getRefinedVariableType($this, $varName)) {
-                    $types[] = $type;
-
-                    continue;
-                }
-
-                $stack[] = $prev;
-            }
+        if ($node instanceof StartNode) {
+            // parameter type!
+            return new UnknownType;
         }
 
-        dd($types);
+        if ($node->definesVariable($varName)) {
+            // return type of prev assign statement
+            /** @var Expr\Assign $assignment */
+            $assignment = $node->parserNode->expr;
 
-        return new UnknownType;
+            return $this->getTypeAt($assignment->expr, $node);
+        }
+
+        $types = [];
+        foreach ($this->incomingEdges($node) as $incomingEdge) {
+            $types[] = $this->resolveVariableTypeAt($var, $incomingEdge->from);
+        }
+
+        return (new TypeWidener)->widen($types);
+    }
+
+    private function resolveVariableNarrowsAtLocation(Expr\Variable $var, Node $node): array
+    {
+        $varName = $var->name;
+        if (! is_string($varName)) {
+            return [];
+        }
+
+        if (
+            $node instanceof MergeNode
+            || $node instanceof StartNode
+            || $node->definesVariable($varName)
+        ) {
+            return [];
+        }
+
+        $types = [];
+
+        foreach ($this->incomingEdges($node) as $incomingEdge) {
+            if ($t = $incomingEdge->getRefinedVariableType($this, $varName)) {
+                $types[] = $t;
+            }
+
+            $types = array_merge($this->resolveVariableNarrowsAtLocation($var, $incomingEdge->from), $types);
+        }
+
+        return $types;
     }
 
     public function toDot(bool $indent = false): string

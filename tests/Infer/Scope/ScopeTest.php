@@ -392,7 +392,40 @@ EOF;
     $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $returnNodes[0]);
 
     expect($type->toString())->toBe('unknown');
+})->skip();
+
+it('allows inspecting known facts about variables based on if with else consideration guard', function () {
+    $code = <<<'EOF'
+<?php
+function foo() {
+    $a = 42;
+    if ($a === 0) {
+        $b = 1;
+    }
+    return $a;
+}
+EOF;
+
+    $scope = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getScope();
+
+    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    $flow = $scope->getFlowNodes();
+
+    $returnNodes = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
+
+    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $returnNodes[0]);
+
+    expect($type->toString())->toBe('int(42)');
 });
+
+//it('foo', function () {
+//    $type = new \Dedoc\Scramble\Support\Type\StringType();
+//    $lType = new \Dedoc\Scramble\Support\Type\Literal\LiteralStringType('wow');
+//
+//    dd($lType->intersect($type)->toString());
+//});
 
 it('allows inspecting known facts about variables based on if with recursion guard second', function () {
     $code = <<<'EOF'
