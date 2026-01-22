@@ -282,13 +282,8 @@ class Nodes
 
     private function resolveNarrowedVariableTypeAtLocation(Expr\Variable $var, Node $node): Type
     {
-        $varName = $var->name;
-        if (! is_string($varName)) {
-            return new UnknownType;
-        }
-
         $definedTypeAtLocation = $this->resolveVariableTypeAt($var, $node);
-        $narrows = $this->resolveVariableNarrowsAtLocation($var, $node);
+        $narrows = $this->resolveVariableIdenticalNarrowsAtLocation($var, $node);
 
         if (! $narrows) {
             return $definedTypeAtLocation;
@@ -305,38 +300,56 @@ class Nodes
         }
 
         if ($node instanceof StartNode) {
-            // parameter type!
+            // @todo parameter type!
             return new UnknownType;
+        }
+
+        if ($node->definesVariable($varName)) {
+            // When the variable in question is being resolved (for example, `$a = $a`), the following call will
+            // return `null`. In such cases we just want to keep looking up, so the execution doesn't stuck here.
+            $type = $this->resolveVariableTypeAtAssignmentNode($varName, $node);
+
+            if ($type) {
+                return $type;
+            }
+        }
+
+        $types = [];
+        foreach ($this->incomingEdges($node) as $incomingEdge) {
+            $types[] = $this->resolveVariableTypeAt($var, $incomingEdge->from);
+        }
+
+        return Union::wrap($types);
+    }
+
+    private function resolveVariableTypeAtAssignmentNode(string $varName, Node $node): ?Type
+    {
+        if (! $node->definesVariable($varName)) {
+            throw new \Exception('Should not happen');
         }
 
         $key = $varName.'@'.spl_object_id($node);
 
         $isAlreadyResolvingVariable = array_key_exists($key, $this->resolvingVariables);
 
+        if ($isAlreadyResolvingVariable) {
+            return null;
+        }
+
+        /** @var Expr\Assign $assignment */
+        $assignment = $node->getParserNode()->expr;
+
         try {
-            if ($node->definesVariable($varName) && ! $isAlreadyResolvingVariable) {
-                $this->resolvingVariables[$key] = true;
+            $this->resolvingVariables[$key] = true;
 
-                // return type of prev assign statement
-                /** @var Expr\Assign $assignment */
-                $assignment = $node->getParserNode()->expr;
-
-                return $this->getTypeAt($assignment->expr, $node);
-            }
-
-            $types = [];
-            foreach ($this->incomingEdges($node) as $incomingEdge) {
-                $types[] = $this->resolveVariableTypeAt($var, $incomingEdge->from);
-            }
-
-            return Union::wrap($types);
+            return $this->getTypeAt($assignment->expr, $node);
         } finally {
             unset($this->resolvingVariables[$key]);
         }
     }
 
     /** @return Type[] */
-    private function resolveVariableNarrowsAtLocation(Expr\Variable $var, Node $node): array
+    private function resolveVariableIdenticalNarrowsAtLocation(Expr\Variable $var, Node $node): array
     {
         $varName = $var->name;
         if (! is_string($varName)) {
@@ -358,7 +371,7 @@ class Nodes
                 $types[] = $t;
             }
 
-            $types = array_merge($this->resolveVariableNarrowsAtLocation($var, $incomingEdge->from), $types);
+            $types = array_merge($this->resolveVariableIdenticalNarrowsAtLocation($var, $incomingEdge->from), $types);
         }
 
         return $types;
