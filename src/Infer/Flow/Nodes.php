@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Infer\Flow;
 
 use Closure;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeWidener;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
@@ -298,6 +297,7 @@ class Nodes
         return $narrows[count($narrows) - 1];
     }
 
+    protected $resolvingVariables = [];
 
     private function resolveVariableTypeAt(Expr\Variable $var, Node $node): Type
     {
@@ -311,20 +311,30 @@ class Nodes
             return new UnknownType;
         }
 
-        if ($node->definesVariable($varName)) {
-            // return type of prev assign statement
-            /** @var Expr\Assign $assignment */
-            $assignment = $node->parserNode->expr;
+        $key = $varName . '@' . spl_object_id($node);
 
-            return $this->getTypeAt($assignment->expr, $node);
+        $isAlreadyResolvingVariable = array_key_exists($key, $this->resolvingVariables);
+
+        try {
+            if ($node->definesVariable($varName) && ! $isAlreadyResolvingVariable) {
+                $this->resolvingVariables[$key] = true;
+
+                // return type of prev assign statement
+                /** @var Expr\Assign $assignment */
+                $assignment = $node->parserNode->expr;
+
+                return $this->getTypeAt($assignment->expr, $node);
+            }
+
+            $types = [];
+            foreach ($this->incomingEdges($node) as $incomingEdge) {
+                $types[] = $this->resolveVariableTypeAt($var, $incomingEdge->from);
+            }
+
+            return Union::wrap($types);
+        } finally {
+            unset($this->resolvingVariables[$key]);
         }
-
-        $types = [];
-        foreach ($this->incomingEdges($node) as $incomingEdge) {
-            $types[] = $this->resolveVariableTypeAt($var, $incomingEdge->from);
-        }
-
-        return (new TypeWidener)->widen($types);
     }
 
     private function resolveVariableNarrowsAtLocation(Expr\Variable $var, Node $node): array

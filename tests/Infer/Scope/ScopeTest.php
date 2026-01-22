@@ -392,7 +392,7 @@ EOF;
     $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $returnNodes[0]);
 
     expect($type->toString())->toBe('unknown');
-})->skip();
+});
 
 it('allows inspecting known facts about variables based on if with else consideration guard', function () {
     $code = <<<'EOF'
