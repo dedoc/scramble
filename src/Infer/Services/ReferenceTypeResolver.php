@@ -38,6 +38,7 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
+use Dedoc\Scramble\Support\Type\NullType;
 
 class ReferenceTypeResolver
 {
@@ -154,6 +155,7 @@ class ReferenceTypeResolver
     private function resolveMethodCallReferenceType(Scope $scope, MethodCallReferenceType $type): Type
     {
         $calleeType = $this->resolveAndNormalizeCallee($scope, $type->callee);
+
         $type->callee = $calleeType; // @todo stop mutating `$type` use `$calleeType` instead.
         $arguments = new AutoResolvingArgumentTypeBag($scope, $type->arguments);
 
@@ -171,6 +173,35 @@ class ReferenceTypeResolver
                 : ($calleeType instanceof ObjectType ? $calleeType->name : null),
         ))) {
             return $this->finalizeStatic($returnType, $calleeType);
+        }
+
+        // Handle method calls on union types (e.g., Bar|null from nullsafe chains)
+        if ($calleeType instanceof Union) {
+            $unionInfo = $this->extractTypesFromUnion($calleeType);
+
+            if ($unionInfo === null) {
+                return new UnknownType('Cannot call method on union containing only null types');
+            }
+
+            $resultTypes = [];
+            foreach ($unionInfo['types'] as $memberType) {
+                $memberCallType = new MethodCallReferenceType($memberType, $type->methodName, $type->arguments);
+                $memberResult = $this->resolveMethodCallReferenceType($scope, $memberCallType);
+
+                if (! $memberResult instanceof UnknownType) {
+                    $resultTypes[] = $memberResult;
+                }
+            }
+
+            if (empty($resultTypes)) {
+                return new UnknownType("Method [$type->methodName] not found on any union member type");
+            }
+
+            if ($unionInfo['hasNull']) {
+                $resultTypes[] = new NullType;
+            }
+
+            return TypeHelper::mergeTypes(...$resultTypes);
         }
 
         if (! $calleeType instanceof ObjectType) {
@@ -378,6 +409,35 @@ class ReferenceTypeResolver
     {
         $objectType = $this->resolveAndNormalizeCallee($scope, $type->object);
 
+        // Handle property fetches on union types
+        if ($objectType instanceof Union) {
+            $unionInfo = $this->extractTypesFromUnion($objectType);
+
+            if ($unionInfo === null) {
+                return new UnknownType('Cannot fetch property on union containing only null types');
+            }
+
+            $resultTypes = [];
+            foreach ($unionInfo['types'] as $memberType) {
+                $memberFetchType = new PropertyFetchReferenceType($memberType, $type->propertyName);
+                $memberResult = $this->resolvePropertyFetchReferenceType($scope, $memberFetchType);
+
+                if (! $memberResult instanceof UnknownType) {
+                    $resultTypes[] = $memberResult;
+                }
+            }
+
+            if (empty($resultTypes)) {
+                return new UnknownType("Property [$type->propertyName] not found on any union member type");
+            }
+
+            if ($unionInfo['hasNull']) {
+                $resultTypes[] = new NullType;
+            }
+
+            return TypeHelper::mergeTypes(...$resultTypes);
+        }
+
         if (! $objectType instanceof ObjectType) {
             return new UnknownType;
         }
@@ -424,6 +484,31 @@ class ReferenceTypeResolver
         }
 
         return $resolved;
+    }
+
+    /**
+     * Extracts non-null types from a union for method/property resolution.
+     *
+     * @return array{types: Type[], hasNull: bool}|null
+     */
+    private function extractTypesFromUnion(Type $type): ?array
+    {
+        if (! $type instanceof Union) {
+            return null;
+        }
+
+        $hasNull = false;
+        $nonNullTypes = [];
+
+        foreach ($type->types as $t) {
+            if ($t instanceof NullType) {
+                $hasNull = true;
+            } else {
+                $nonNullTypes[] = $t;
+            }
+        }
+
+        return empty($nonNullTypes) ? null : ['types' => $nonNullTypes, 'hasNull' => $hasNull];
     }
 
     /**

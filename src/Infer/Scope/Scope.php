@@ -29,6 +29,7 @@ use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
@@ -147,13 +148,14 @@ class Scope
             );
         }
 
-        if ($node instanceof Node\Expr\MethodCall) {
+        if ($node instanceof Node\Expr\MethodCall || $node instanceof Node\Expr\NullsafeMethodCall) {
             // Only string method names support.
             if (! $node->name instanceof Node\Identifier) {
                 return $type;
             }
 
             $calleeType = $this->getType($node->var);
+            $isNullsafe = $node instanceof Node\Expr\NullsafeMethodCall;
 
             $event = $calleeType instanceof ObjectType
                 ? new MethodCallEvent($calleeType, $node->name->name, $this, new UnresolvableArgumentTypeBag($this->getArgsTypes($node->args)), $calleeType->name)
@@ -168,7 +170,9 @@ class Scope
                 );
             }
 
-            return $this->setType($node, new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args)));
+            $methodCallType = new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args));
+
+            return $this->setType($node, $isNullsafe ? Union::wrap($methodCallType, new NullType) : $methodCallType);
         }
 
         if ($node instanceof Node\Expr\StaticCall) {
@@ -190,16 +194,16 @@ class Scope
             );
         }
 
-        if ($node instanceof Node\Expr\PropertyFetch) {
+        if ($node instanceof Node\Expr\PropertyFetch || $node instanceof Node\Expr\NullsafePropertyFetch) {
             // Only string prop names support.
             if (! $name = ($node->name->name ?? null)) {
                 return new UnknownType('Cannot infer type of property fetch: not supported yet.');
             }
 
-            return $this->setType(
-                $node,
-                new PropertyFetchReferenceType($this->getType($node->var), $name),
-            );
+            $propertyType = new PropertyFetchReferenceType($this->getType($node->var), $name);
+            $isNullsafe = $node instanceof Node\Expr\NullsafePropertyFetch;
+
+            return $this->setType($node, $isNullsafe ? Union::wrap($propertyType, new NullType) : $propertyType);
         }
 
         if ($node instanceof Node\Expr\FuncCall) {

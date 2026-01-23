@@ -231,3 +231,168 @@ it('resolves only arguments with templates referenced in return type', function 
         ]),
     )->toString())->toBe('string(wow)');
 });
+
+/*
+ * Null-safe method and property calls
+ */
+it('resolves null-safe method call', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+
+class Foo {
+    public function getValue(): string {
+        return 'test';
+    }
+}
+
+class Test {
+    public function test(?Foo $foo) {
+        return $foo?->getValue();
+    }
+}
+EOD)->getClassDefinition('Test')
+        ->getMethodDefinition('test')
+        ->type->getReturnType();
+
+    expect($type->toString())->toBe('string(test)|null');
+});
+
+it('resolves chained null-safe method calls $a?->b()?->c()', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+
+class Bar {
+    public function getName(): string {
+        return 'bar';
+    }
+}
+
+class Foo {
+    public function getBar(): ?Bar {
+        return new Bar();
+    }
+}
+
+class Test {
+    public function test(?Foo $foo) {
+        return $foo?->getBar()?->getName();
+    }
+}
+EOD)->getClassDefinition('Test')
+        ->getMethodDefinition('test')
+        ->type->getReturnType();
+
+    expect($type->toString())->toBe('string(bar)|null');
+});
+
+it('resolves chained null-safe property then method $a?->b?->c()', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+
+class Bar {
+    public function getName(): string {
+        return 'bar';
+    }
+}
+
+class Foo {
+    public ?Bar $bar = null;
+}
+
+class Test {
+    public function test(?Foo $foo) {
+        return $foo?->bar?->getName();
+    }
+}
+EOD)->getClassDefinition('Test')
+        ->getMethodDefinition('test')
+        ->type->getReturnType();
+
+    expect($type->toString())->toBe('string(bar)|null');
+});
+
+it('resolves chained null-safe method then property $a?->b()?->c', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+
+class Bar {
+    public string $name = 'bar';
+}
+
+class Foo {
+    public function getBar(): ?Bar {
+        return new Bar();
+    }
+}
+
+class Test {
+    public function test(?Foo $foo) {
+        return $foo?->getBar()?->name;
+    }
+}
+EOD)->getClassDefinition('Test')
+        ->getMethodDefinition('test')
+        ->type->getReturnType();
+
+    expect($type->toString())->toBe('string|null');
+});
+
+it('resolves deeply chained null-safe calls', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+
+class Level3 {
+    public function getValue(): int {
+        return 42;
+    }
+}
+
+class Level2 {
+    public function getLevel3(): ?Level3 {
+        return new Level3();
+    }
+}
+
+class Level1 {
+    public ?Level2 $level2 = null;
+}
+
+class Test {
+    public function test(?Level1 $obj) {
+        return $obj?->level2?->getLevel3()?->getValue();
+    }
+}
+EOD)->getClassDefinition('Test')
+        ->getMethodDefinition('test')
+        ->type->getReturnType();
+
+    expect($type->toString())->toBe('int(42)|null');
+});
+
+it('resolves null-safe followed by regular method call', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+
+class Bar {
+    public function getName(): string {
+        return 'bar';
+    }
+}
+
+class Foo {
+    public function getBar(): Bar {
+        return new Bar();
+    }
+}
+
+class Test {
+    public function test(?Foo $foo) {
+        return $foo?->getBar()->getName();
+    }
+}
+EOD)->getClassDefinition('Test')
+        ->getMethodDefinition('test')
+        ->type->getReturnType();
+
+    expect($type->toString())->toBe('string(bar)|null');
+});
