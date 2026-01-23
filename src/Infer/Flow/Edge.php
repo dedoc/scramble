@@ -130,7 +130,7 @@ class Edge
                     key: $pathItem,
                     value: $narrowedIncompleteArray ?? $nodes->getTypeAt($expr, $this->from),
                     isOptional: false,
-                )
+                ),
             ]);
 
             $narrowedIncompleteArray->setAttribute('isIncomplete', true);

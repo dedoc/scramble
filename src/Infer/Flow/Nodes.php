@@ -286,7 +286,7 @@ class Nodes
         $narrowedType = $this->narrowType($definedTypeAtLocation, $var, $node);
 
         // @todo checking for `isIncomplete` is incredibly important: we don't want to report that some variables has some type based ONLY on narrowing.
-        if ($narrowedType/* && ! $narrowedType->getAttribute('isIncomplete')*/) {
+        if ($narrowedType/* && ! $narrowedType->getAttribute('isIncomplete') */) {
             return $narrowedType;
         }
 
