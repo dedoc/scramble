@@ -47,7 +47,7 @@ class Edge
     private function getRefinedVariableTypeFromIdentical(Identical $condition, Nodes $nodes, string $varName): ?Type
     {
         [$expressionBeingNarrowed, $expr] = $this->normalizeEqualityExpression($condition);
-        if (! $expressionBeingNarrowed) {
+        if (! $expressionBeingNarrowed || ! $expr) {
             return null;
         }
 
@@ -55,13 +55,16 @@ class Edge
             return $this->narrowByVariableEquality($expressionBeingNarrowed, $expr, $nodes, $varName);
         }
 
-        if ($expressionBeingNarrowed instanceof Expr\ArrayDimFetch) {
+        if ($expressionBeingNarrowed instanceof Expr\ArrayDimFetch) { // @phpstan-ignore instanceof.alwaysTrue
             return $this->narrowByArrayDimFetchEquality($expressionBeingNarrowed, $expr, $nodes, $varName);
         }
 
-        return null;
+        return null; // @phpstan-ignore deadCode.unreachable
     }
 
+    /**
+     * @return array{0: Expr\Variable|Expr\ArrayDimFetch, 1: Expr}|array{0: null, 1: null}
+     */
     private function normalizeEqualityExpression(Identical $node): array
     {
         [$narrowable, $expr] = $this->isNarrowableExpression($node->left)
@@ -75,6 +78,9 @@ class Edge
         return [$narrowable, $expr];
     }
 
+    /**
+     * @phpstan-assert-if-true Expr\Variable|Expr\ArrayDimFetch $expr
+     */
     private function isNarrowableExpression(Expr $expr): bool
     {
         if ($expr instanceof Expr\Variable) {
