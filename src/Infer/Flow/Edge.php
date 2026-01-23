@@ -60,19 +60,6 @@ class Edge
         }
 
         return null;
-
-        $variableCheck = $this->matchVariableIdenticalCheck($condition);
-
-        if (! $variableCheck) {
-            return null;
-        }
-
-        [$varNameBeingChecked, $expr] = $variableCheck;
-        if ($varNameBeingChecked !== $varName) {
-            return null;
-        }
-
-        return $nodes->getTypeAt($expr, $this->from);
     }
 
     private function normalizeEqualityExpression(Identical $node): array
@@ -177,26 +164,6 @@ class Edge
         }
 
         return [$expr, array_reverse($dims)];
-    }
-
-    /**
-     * @return array{0: string, 1: Expr}|false
-     */
-    private function matchVariableIdenticalCheck(Identical $node): array|false
-    {
-        [$var, $expr] = $node->left instanceof Expr\Variable
-            ? [$node->left, $node->right]
-            : [$node->right, $node->left];
-
-        if (! $var instanceof Expr\Variable) {
-            return false;
-        }
-
-        if (! is_string($var->name)) {
-            return false;
-        }
-
-        return [$var->name, $expr];
     }
 
     public function toDot(Nodes $nodes): string
