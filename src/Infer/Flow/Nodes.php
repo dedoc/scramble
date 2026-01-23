@@ -283,13 +283,14 @@ class Nodes
     private function resolveNarrowedVariableTypeAtLocation(Expr\Variable $var, Node $node): Type
     {
         $definedTypeAtLocation = $this->resolveVariableTypeAt($var, $node);
-        $narrows = $this->resolveVariableIdenticalNarrowsAtLocation($var, $node);
+        $narrowedType = $this->narrowType($definedTypeAtLocation, $var, $node);
 
-        if (! $narrows) {
-            return $definedTypeAtLocation;
+        // @todo checking for `isIncomplete` is incredibly important: we don't want to report that some variables has some type based ONLY on narrowing.
+        if ($narrowedType/* && ! $narrowedType->getAttribute('isIncomplete')*/) {
+            return $narrowedType;
         }
 
-        return $narrows[count($narrows) - 1];
+        return $definedTypeAtLocation;
     }
 
     private function resolveVariableTypeAt(Expr\Variable $var, Node $node): Type
@@ -348,33 +349,27 @@ class Nodes
         }
     }
 
-    /** @return Type[] */
-    private function resolveVariableIdenticalNarrowsAtLocation(Expr\Variable $var, Node $node): array
+    private function narrowType(Type $type, Expr\Variable $var, Node $node): ?Type
     {
         $varName = $var->name;
         if (! is_string($varName)) {
-            return [];
+            return null;
         }
 
-        if (
-            $node instanceof MergeNode
-            || $node instanceof StartNode
-            || $node->definesVariable($varName)
-        ) {
-            return [];
+        if ($node instanceof MergeNode || $node instanceof StartNode || $node->definesVariable($varName)) {
+            return null;
         }
 
-        $types = [];
-
-        foreach ($this->incomingEdges($node) as $incomingEdge) {
-            if ($t = $incomingEdge->getRefinedVariableType($this, $varName)) {
-                $types[] = $t;
-            }
-
-            $types = array_merge($this->resolveVariableIdenticalNarrowsAtLocation($var, $incomingEdge->from), $types);
+        $incomingEdge = $this->incomingEdges($node)[0] ?? null;
+        if (! $incomingEdge) {
+            return null;
         }
 
-        return $types;
+        if ($t = $incomingEdge->getRefinedVariableType($this, $varName)) {
+            return $t;
+        }
+
+        return $this->narrowType($type, $var, $incomingEdge->from);
     }
 
     public function toDot(bool $indent = false): string

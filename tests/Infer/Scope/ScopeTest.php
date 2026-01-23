@@ -476,8 +476,10 @@ EOF;
 
     $returnNodes = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
 
-    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $returnNodes[0]);
-    dd($type->toString());
+    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\ArrayDimFetch(
+        new \PhpParser\Node\Expr\Variable('a'),
+        new \PhpParser\Node\Scalar\String_('foo')
+    ), $returnNodes[0]);
 
-    expect($type->toString())->toBe('unknown');
+    expect($type->toString())->toBe('array{foo: int(42)}[string(foo)]');
 });
