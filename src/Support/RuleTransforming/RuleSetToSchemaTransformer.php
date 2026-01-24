@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\RuleTransforming;
 
+use Illuminate\Validation\Rules\Enum;
 use Dedoc\Scramble\Configuration\RuleTransformers;
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
@@ -35,6 +36,7 @@ class RuleSetToSchemaTransformer
         RequiredIf::class,
         ExcludeIf::class,
         ProhibitedIf::class,
+        Enum::class,
     ];
 
     public function __construct(
