@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\RuleTransforming;
 
-use Illuminate\Validation\Rules\Enum;
 use Dedoc\Scramble\Configuration\RuleTransformers;
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
@@ -12,6 +11,7 @@ use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesMapper;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Rules\ExcludeIf;
 use Illuminate\Validation\Rules\ProhibitedIf;
 use Illuminate\Validation\Rules\RequiredIf;
