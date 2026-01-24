@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
+use Dedoc\Scramble\Infer\Flow\Nodes;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -26,16 +27,28 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
         return $this->declarationDefinition;
     }
 
-    public function setScope(?Scope $scope): self
+    public function setScope(Scope $scope): self
     {
         $this->scope = $scope;
 
         return $this;
     }
 
-    public function getScope(): ?Scope
+    public function getScope(): Scope
     {
+        if (! $this->scope) {
+            /**
+             * @see \Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder
+             */
+            throw new \LogicException('Scope must be set before accessing it on FunctionLikeAstDefinition');
+        }
+
         return $this->scope;
+    }
+
+    public function getFlowContainer(): Nodes
+    {
+        return $this->getScope()->getFlowNodes();
     }
 
     public function getInferredReturnType(): Type
