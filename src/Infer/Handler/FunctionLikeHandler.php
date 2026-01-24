@@ -95,7 +95,7 @@ class FunctionLikeHandler implements CreatesScope
 
                 return [$param->var->name => $type];
             })
-            ->toArray();
+            ->all();
 
         $fnType->templates = $localTemplates;
 
