@@ -19,6 +19,7 @@ use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
@@ -38,7 +39,6 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
-use Dedoc\Scramble\Support\Type\NullType;
 
 class ReferenceTypeResolver
 {
