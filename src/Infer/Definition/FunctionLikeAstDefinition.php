@@ -3,8 +3,8 @@
 namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\Flow\Nodes;
-use Dedoc\Scramble\Infer\FlowBuilder;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Visitors\FlowBuilder;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node\FunctionLike;
@@ -12,8 +12,6 @@ use PhpParser\NodeTraverser;
 
 class FunctionLikeAstDefinition extends FunctionLikeDefinition
 {
-    use IndexAware;
-
     private ?FunctionLikeDefinition $declarationDefinition = null;
 
     private ?Scope $scope = null;
@@ -85,11 +83,6 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
         $traverser->traverse([$this->getNode()]);
 
         return $this->flowContainer = $flowBuilder->flowNodes;
-    }
-
-    public function getFlowContainer_old(): Nodes
-    {
-        return $this->getScope()->getFlowNodes();
     }
 
     public function getInferredReturnType(): Type
