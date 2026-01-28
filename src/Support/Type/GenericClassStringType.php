@@ -4,10 +4,11 @@ namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Support\Type\Contracts\Generic;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
+use function Pest\Laravel\instance;
 
 class GenericClassStringType extends AbstractType implements Generic, LiteralString
 {
-    public function __construct(public ObjectType|TemplateType $type) {}
+    public function __construct(public Type $type) {}
 
     public function isSame(Type $type)
     {
@@ -31,6 +32,6 @@ class GenericClassStringType extends AbstractType implements Generic, LiteralStr
 
     public function getValue(): string
     {
-        return $this->type->name;
+        return $this->type instanceof ObjectType ? $this->type->name : '';
     }
 }

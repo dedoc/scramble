@@ -62,7 +62,7 @@ class ExpressionTypeInferrer
             return $type;
         }
 
-        $type = match (true) {
+        $nonCacheableType = match (true) {
             $expr instanceof PhpParserNode\Scalar => (new ScalarTypeGetter)($expr),
             $expr instanceof Expr\Cast => (new CastTypeGetter)($expr),
             $expr instanceof Expr\ConstFetch => (new ConstFetchTypeGetter)($expr),
@@ -81,14 +81,22 @@ class ExpressionTypeInferrer
             )),
             $expr instanceof Expr\ClassConstFetch => (new ClassConstFetchTypeGetter)($expr, $this->scope),
             $expr instanceof Expr\BinaryOp\Equal
-                || $expr instanceof Expr\BinaryOp\Identical
-                || $expr instanceof Expr\BinaryOp\NotEqual
-                || $expr instanceof Expr\BinaryOp\NotIdentical
-                || $expr instanceof Expr\BinaryOp\Greater
-                || $expr instanceof Expr\BinaryOp\GreaterOrEqual
-                || $expr instanceof Expr\BinaryOp\Smaller
-                || $expr instanceof Expr\BinaryOp\SmallerOrEqual => new BooleanType,
+            || $expr instanceof Expr\BinaryOp\Identical
+            || $expr instanceof Expr\BinaryOp\NotEqual
+            || $expr instanceof Expr\BinaryOp\NotIdentical
+            || $expr instanceof Expr\BinaryOp\Greater
+            || $expr instanceof Expr\BinaryOp\GreaterOrEqual
+            || $expr instanceof Expr\BinaryOp\Smaller
+            || $expr instanceof Expr\BinaryOp\SmallerOrEqual => new BooleanType,
             $expr instanceof Expr\BooleanNot => (new BooleanNotTypeGetter)($expr),
+            default => null,
+        };
+
+        if ($nonCacheableType) {
+            return $nonCacheableType;
+        }
+
+        $type = match (true) {
             $expr instanceof Expr\New_ => $this->inferNewCall($expr, $variableTypeGetter),
             $expr instanceof Expr\MethodCall => $this->inferMethodCall($expr, $variableTypeGetter),
             $expr instanceof Expr\StaticCall => $this->inferStaticCall($expr, $variableTypeGetter),
