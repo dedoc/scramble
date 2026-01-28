@@ -147,11 +147,11 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
          * But when the expression is in place, we skip analysis:
          *     $this->{$var}()
          */
+        $this->applyExceptionsFromMethodCall($methodDefinition, $fnScope, $methodCall);
+
         if (! $methodCall->name instanceof Identifier) {
             return;
         }
-
-        $this->applyExceptionsFromMethodCall($methodDefinition, $fnScope, $methodCall);
 
         // 2. get called method definition and if not yet analyzed, analyze shallowly (PHPDoc, type hints)
 

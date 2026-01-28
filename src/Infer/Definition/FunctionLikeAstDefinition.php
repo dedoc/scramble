@@ -41,11 +41,11 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
 
     public function getAstNode(): FunctionLike
     {
-        if (! $this->scope) {
+        if (! $this->astNode) {
             /**
              * @see \Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder
              */
-            throw new \LogicException('Node must be set before accessing it on FunctionLikeAstDefinition');
+            throw new \LogicException('AST node must be set before accessing it on FunctionLikeAstDefinition');
         }
 
         return $this->astNode;

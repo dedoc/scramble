@@ -48,7 +48,7 @@ class FlowBuilder extends NodeVisitorAbstract
             if ($node->expr->expr instanceof Node\Expr\Match_) {
                 $this->pushAssignMatch($flow, $node->expr->var, $node->expr->expr);
 
-                return;
+                return null;
             }
         }
 
@@ -56,33 +56,35 @@ class FlowBuilder extends NodeVisitorAbstract
             if ($node->expr instanceof Node\Expr\Match_) {
                 $this->pushTerminateMatch($flow, $node->expr);
 
-                return;
+                return null;
             }
 
             $flow->pushTerminate(new TerminateNode(TerminationKind::RETURN, $node->expr));
 
-            return;
+            return null;
         }
 
         if ($node instanceof Node\Stmt\If_) {
             $flow->pushCondition(condition: $node->cond); // pushes node, makes "yes" branch head
 
-            return;
+            return null;
         }
 
         if ($node instanceof Node\Stmt\ElseIf_) {
             $flow->pushConditionBranch(condition: $node->cond); // goes back to condition node, pushes the new branch
 
-            return;
+            return null;
         }
 
         if ($node instanceof Node\Stmt\Else_) {
             $flow->pushConditionBranch(); // goes back to condition node, pushes the new branch
 
-            return;
+            return null;
         }
 
         $flow->push(new StatementNode($node)); // pushes node, make the node head
+
+        return null;
     }
 
     public function leaveNode(Node $node)
