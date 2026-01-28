@@ -79,7 +79,9 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             throw new LogicException('Definition must be an instance of FunctionLikeAstDefinition');
         }
 
-        $definition->setScope($scope);
+        $definition
+            ->setNode($this->functionLike)
+            ->setScope($scope);
 
         if ($this->functionLike instanceof ClassMethod) {
             $definition->selfOutTypeBuilder = new SelfOutTypeBuilder($scope, $this->functionLike);

@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Infer;
 
+use Dedoc\Scramble\Infer\Flow\ExpressionTypeInferrer;
 use Dedoc\Scramble\Infer\Flow\Nodes;
 use Dedoc\Scramble\Infer\Flow\StatementNode;
 use Dedoc\Scramble\Infer\Flow\TerminateNode;
@@ -16,8 +17,13 @@ use PhpParser\NodeVisitorAbstract;
 
 class FlowBuilder extends NodeVisitorAbstract
 {
+    public Nodes $flowNodes;
+
     public function __construct(private Scope $scope)
     {
+        $this->flowNodes = new Nodes(
+            new ExpressionTypeInferrer($this->scope, $this->scope->nodeTypesResolver),
+        );
     }
 
     public function shouldHandle(Node $node): bool
@@ -32,7 +38,7 @@ class FlowBuilder extends NodeVisitorAbstract
             return null;
         }
 
-        $flow = $this->scope->getFlowNodes();
+        $flow = $this->flowNodes;
 
         if (
             $node instanceof Node\Stmt\Expression
@@ -85,7 +91,7 @@ class FlowBuilder extends NodeVisitorAbstract
             return null;
         }
 
-        $flow = $this->scope->getFlowNodes();
+        $flow = $this->flowNodes;
 
         if ($node instanceof Node\Stmt\If_) {
             $flow->exitCondition(); // pushes node, makes "yes" branch head

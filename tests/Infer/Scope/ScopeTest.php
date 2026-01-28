@@ -89,8 +89,7 @@ EOF;
     /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope()
-        ->getFlowNodes();
+        ->getFlowContainer();
 
     expect($nodes = $flow->nodes)->toHaveCount(3) // start -> expr -> terminate
         ->and($nodes[2])->toBeInstanceOf(TerminateNode::class);
@@ -108,8 +107,7 @@ EOF;
     /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope()
-        ->getFlowNodes();
+        ->getFlowContainer();
 
     expect($flow->toDot())->toBe('digraph Flow { S_0 -> Ret_1; S_0; Ret_1[label="Return 1"]; Ret_2[label="Return 42"]; }');
 
@@ -137,8 +135,7 @@ EOF;
     /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope()
-        ->getFlowNodes();
+        ->getFlowContainer();
 
     expect($flow->toDot())->toBe('digraph Flow { S_0 -> If_1; If_1 -> Stmt_2 [label="$a === 0"]; If_1 -> Stmt_3 [label="$a === 42"]; If_1 -> Stmt_4 [label="!($a === 0 AND $a === 42)"]; Stmt_4 -> M_5; Stmt_3 -> M_5; Stmt_2 -> M_5; M_5 -> Ret_6; S_0; If_1[label="If"]; Stmt_2[label="$b = 1;"]; Stmt_3[label="$b = 18;"]; Stmt_4[label="$b = 2;"]; M_5; Ret_6[label="Return 0"]; }');
 });
@@ -158,8 +155,7 @@ EOF;
     /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope()
-        ->getFlowNodes();
+        ->getFlowContainer();
 
     expect($flow->toDot())->toBe('digraph Flow { S_0 -> If_1; If_1 -> Ret_2 [label="$a === 0"]; If_1 -> M_3 [label="!($a === 0)"]; M_3 -> Stmt_4; Stmt_4 -> Ret_5; S_0; If_1[label="If"]; Ret_2[label="Return 1"]; M_3; Stmt_4[label="$b = 13;"]; Ret_5[label="Return 0"]; }');
 });
@@ -181,8 +177,7 @@ EOF;
     /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope()
-        ->getFlowNodes();
+        ->getFlowContainer();
 
     expect($flow->toDot())->toBe('digraph Flow { S_0 -> If_1; If_1 -> If_2 [label="$a === 0"]; If_2 -> Stmt_3 [label="$d === 1"]; If_2 -> Stmt_4 [label="!($d === 1)"]; Stmt_4 -> M_5; Stmt_3 -> M_5; M_5 -> M_6; If_1 -> M_6 [label="!($a === 0)"]; S_0; If_1[label="If"]; If_2[label="If"]; Stmt_3[label="$m = 1;"]; Stmt_4[label="$m = 2;"]; M_5; M_6; }');
 });
@@ -203,8 +198,7 @@ EOF;
     /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope()
-        ->getFlowNodes();
+        ->getFlowContainer();
 
     expect($flow->toDot())->toBe('digraph Flow { S_0 -> If_1; If_1 -> Ret_2 [label="$a === 0"]; If_1 -> Ret_3 [label="!($a === 0)"]; S_0; If_1[label="If"]; Ret_2[label="Return 42"]; Ret_3[label="Return 1"]; Ret_4[label="Return 0"]; }');
 });
@@ -227,8 +221,7 @@ EOF;
     /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope()
-        ->getFlowNodes();
+        ->getFlowContainer();
 
     $returns = $flow
         ->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
@@ -251,8 +244,7 @@ EOF;
     /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope()
-        ->getFlowNodes();
+        ->getFlowContainer();
 
     expect($flow->toDot())->toBe('digraph Flow { S_0 -> If_1; If_1 -> Ret_2 [label="$a === 0"]; If_1 -> Ret_3 [label="!($a === 0)"]; S_0; If_1[label="If"]; Ret_2[label="Return 42"]; Ret_3[label="Return 1"]; }');
 });
@@ -272,8 +264,7 @@ EOF;
     /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope()
-        ->getFlowNodes();
+        ->getFlowContainer();
 
     expect($flow->toDot())->toBe('digraph Flow { S_0 -> If_1; If_1 -> Ret_2 [label="$a === \'foo\'"]; If_1 -> Ret_3 [label="$a === \'bar\'"]; If_1 -> Ret_4 [label="!($a === \'foo\' AND $a === \'bar\')"]; S_0; If_1[label="If"]; Ret_2[label="Return 1"]; Ret_3[label="Return 42"]; Ret_4[label="Return \\null"]; }');
 });
@@ -294,8 +285,7 @@ EOF;
     /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope()
-        ->getFlowNodes();
+        ->getFlowContainer();
 
     expect($flow->toDot())->toBe('digraph Flow { S_0 -> If_1; If_1 -> Stmt_2 [label="$a === \'foo\'"]; If_1 -> Stmt_3 [label="$a === \'bar\'"]; If_1 -> Stmt_4 [label="!($a === \'foo\' AND $a === \'bar\')"]; Stmt_4 -> M_5; Stmt_3 -> M_5; Stmt_2 -> M_5; M_5 -> Ret_6; S_0; If_1[label="If"]; Stmt_2[label="$b = 1;"]; Stmt_3[label="$b = 42;"]; Stmt_4[label="$b = \null;"]; M_5; Ret_6[label="Return $b"]; }');
 });
@@ -325,12 +315,10 @@ function foo ($a) {
      };
 }
 EOF;
-    $scope = analyzeFile($code)
-        ->getFunctionDefinition('foo')
-        ->getScope();
-
     /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
-    $flow = $scope->getFlowNodes();
+    $flow = analyzeFile($code)
+        ->getFunctionDefinition('foo')
+        ->getFlowContainer();
 
     $originNodes = $flow->findValueOriginsByExitType(fn (Type $t) => $t instanceof LiteralIntegerType && $t->value === 42);
 
@@ -355,12 +343,9 @@ function foo ($a) {
 }
 EOF;
 
-    $scope = analyzeFile($code)
+    $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope();
-
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
-    $flow = $scope->getFlowNodes();
+        ->getFlowContainer();
 
     $originNodes = $flow->findValueOriginsByExitType(fn (Type $t) => $t instanceof LiteralIntegerType && $t->value === 42);
 
@@ -380,12 +365,9 @@ function foo($a) {
 }
 EOF;
 
-    $scope = analyzeFile($code)
+    $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope();
-
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
-    $flow = $scope->getFlowNodes();
+        ->getFlowContainer();
 
     $returnNodes = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
 
@@ -406,12 +388,9 @@ function foo() {
 }
 EOF;
 
-    $scope = analyzeFile($code)
+    $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope();
-
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
-    $flow = $scope->getFlowNodes();
+        ->getFlowContainer();
 
     $returnNodes = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
 
@@ -419,13 +398,6 @@ EOF;
 
     expect($type->toString())->toBe('int(42)');
 });
-
-// it('foo', function () {
-//    $type = new \Dedoc\Scramble\Support\Type\StringType();
-//    $lType = new \Dedoc\Scramble\Support\Type\Literal\LiteralStringType('wow');
-//
-//    dd($lType->intersect($type)->toString());
-// });
 
 it('allows inspecting known facts about variables based on if with recursion guard second', function () {
     $code = <<<'EOF'
@@ -441,12 +413,9 @@ function foo($a) {
 }
 EOF;
 
-    $scope = analyzeFile($code)
+    $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope();
-
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
-    $flow = $scope->getFlowNodes();
+        ->getFlowContainer();
 
     $returnNodes = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
 
@@ -467,12 +436,9 @@ function foo($a) {
 }
 EOF;
 
-    $scope = analyzeFile($code)
+    $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
-        ->getScope();
-
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
-    $flow = $scope->getFlowNodes();
+        ->getFlowContainer();
 
     $returnNodes = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
 

@@ -12,7 +12,6 @@ use Dedoc\Scramble\Infer\Handler\ClassHandler;
 use Dedoc\Scramble\Infer\Handler\CreatesScope;
 use Dedoc\Scramble\Infer\Handler\ExceptionInferringExtensions;
 use Dedoc\Scramble\Infer\Handler\ExpressionTypeInferringExtensions;
-use Dedoc\Scramble\Infer\Handler\FlowBuilderHandler;
 use Dedoc\Scramble\Infer\Handler\FunctionLikeHandler;
 use Dedoc\Scramble\Infer\Handler\MethodCallHandler;
 use Dedoc\Scramble\Infer\Handler\PhpDocHandler;
@@ -56,7 +55,6 @@ class TypeInferer extends NodeVisitorAbstract
             new ReturnHandler,
             new ThrowHandler,
             new MethodCallHandler,
-//            new FlowBuilderHandler,
             new ExpressionTypeInferringExtensions(array_values(array_filter(
                 $extensions,
                 fn ($ext) => $ext instanceof ExpressionTypeInferExtension,
