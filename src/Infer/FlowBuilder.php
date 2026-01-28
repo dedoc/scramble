@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Infer\Visitors;
+namespace Dedoc\Scramble\Infer;
 
 use Dedoc\Scramble\Infer\Flow\ExpressionTypeInferrer;
 use Dedoc\Scramble\Infer\Flow\Nodes;

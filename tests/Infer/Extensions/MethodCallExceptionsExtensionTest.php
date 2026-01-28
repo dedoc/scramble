@@ -33,7 +33,7 @@ it('infers exceptions from method call using method call exceptions extension', 
 
     $fnType = analyzeClass(MethodCallExceptionsExtensionTest_Service::class)
         ->getClassDefinition(MethodCallExceptionsExtensionTest_Service::class)
-        ->getMethodDefinition('foo')
+        ->getMethodDefinition('foo', withSideEffects: true)
         ->type;
 
     expect($fnType->exceptions)->toHaveCount(2)

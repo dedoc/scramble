@@ -7,7 +7,9 @@ use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinitionBuilder;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeAstDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
+use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Dedoc\Scramble\Infer\Handler\IndexBuildingHandler;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
@@ -149,6 +151,8 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             return;
         }
 
+        $this->applyExceptionsFromMethodCall($methodDefinition, $fnScope, $methodCall);
+
         // 2. get called method definition and if not yet analyzed, analyze shallowly (PHPDoc, type hints)
 
         // get shallow method definition (get shallow callee type, get the shallow definition)
@@ -177,6 +181,38 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             scope: $fnScope,
             arguments: new UnresolvableArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
         ));
+    }
+
+    private function applyExceptionsFromMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, MethodCall|NullsafeMethodCall $methodCall): void
+    {
+        if (! $methodCall->name instanceof Identifier) {
+            return;
+        }
+
+        $calleeType = $fnScope->getType($methodCall->var);
+
+        if (! $calleeType instanceof ObjectType) {
+            return;
+        }
+
+        $event = new MethodCallEvent(
+            $calleeType,
+            $methodCall->name->name,
+            $fnScope,
+            new UnresolvableArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
+            $calleeType->name
+        );
+
+        $exceptions = app(ExtensionsBroker::class)->getMethodCallExceptions($event);
+
+        if (empty($exceptions)) {
+            return;
+        }
+
+        $methodDefinition->type->exceptions = array_merge(
+            $methodDefinition->type->exceptions,
+            $exceptions,
+        );
     }
 
     private function analyzeStaticMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, StaticCall $methodCall): void
