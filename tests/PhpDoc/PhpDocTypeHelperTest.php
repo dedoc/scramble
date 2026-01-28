@@ -28,6 +28,14 @@ it('parses tuple', function (string $phpDocType, string $expectedTypeString) {
     ['/** @var array{float, float} */', 'list{float, float}'],
 ]);
 
+it('parses class-string', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    ['/** @var class-string<mixed> */', 'class-string<mixed>'],
+]);
+
 it('parses list', function (string $phpDocType, string $expectedTypeString) {
     expect(
         getPhpTypeFromDoc_Copy($phpDocType)->toString()

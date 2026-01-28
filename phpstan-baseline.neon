@@ -1117,12 +1117,6 @@ parameters:
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
 		-
-			message: '#^Parameter \#3 \$type of method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:addVariableType\(\) expects Dedoc\\Scramble\\Support\\Type\\Type, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
 			message: '#^Possibly invalid array key type PhpParser\\Node\\Expr\|string\.$#'
 			identifier: offsetAccess.invalidOffset
 			count: 3

@@ -13,4 +13,10 @@ class StringType extends AbstractType
     {
         return 'string';
     }
+
+    public function accepts(Type $otherType): bool
+    {
+        return parent::accepts($otherType)
+            || $otherType instanceof GenericClassStringType;
+    }
 }

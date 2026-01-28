@@ -7,7 +7,9 @@ use Dedoc\Scramble\Infer\Contracts\FunctionLikeDefinitionBuilder;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeAstDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
+use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
+use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Dedoc\Scramble\Infer\Handler\IndexBuildingHandler;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
@@ -69,13 +71,21 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
 
         $scope = $inferrer->getFunctionLikeScope($this->functionLike);
 
-        $definition = $scope?->context->functionDefinition;
+        if (! $scope) {
+            throw new LogicException('Scope must be available when building FunctionLikeAstDefinition');
+        }
+
+        $definition = $scope->context->functionDefinition;
 
         if (! $definition instanceof FunctionLikeAstDefinition) {
             throw new LogicException('Definition must be an instance of FunctionLikeAstDefinition');
         }
 
-        if ($this->functionLike instanceof ClassMethod && $scope) {
+        $definition
+            ->setAstNode($this->functionLike)
+            ->setScope($scope);
+
+        if ($this->functionLike instanceof ClassMethod) {
             $definition->selfOutTypeBuilder = new SelfOutTypeBuilder($scope, $this->functionLike);
         }
 
@@ -137,6 +147,8 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
          * But when the expression is in place, we skip analysis:
          *     $this->{$var}()
          */
+        $this->applyExceptionsFromMethodCall($methodDefinition, $fnScope, $methodCall);
+
         if (! $methodCall->name instanceof Identifier) {
             return;
         }
@@ -169,6 +181,38 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             scope: $fnScope,
             arguments: new UnresolvableArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
         ));
+    }
+
+    private function applyExceptionsFromMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, MethodCall|NullsafeMethodCall $methodCall): void
+    {
+        if (! $methodCall->name instanceof Identifier) {
+            return;
+        }
+
+        $calleeType = $fnScope->getType($methodCall->var);
+
+        if (! $calleeType instanceof ObjectType) {
+            return;
+        }
+
+        $event = new MethodCallEvent(
+            $calleeType,
+            $methodCall->name->name,
+            $fnScope,
+            new UnresolvableArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
+            $calleeType->name
+        );
+
+        $exceptions = app(ExtensionsBroker::class)->getMethodCallExceptions($event);
+
+        if (empty($exceptions)) {
+            return;
+        }
+
+        $methodDefinition->type->exceptions = array_merge(
+            $methodDefinition->type->exceptions,
+            $exceptions,
+        );
     }
 
     private function analyzeStaticMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, StaticCall $methodCall): void
