@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Support\Type\Contracts\Generic;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
-use function Pest\Laravel\instance;
 
 class GenericClassStringType extends AbstractType implements Generic, LiteralString
 {
