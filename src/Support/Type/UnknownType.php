@@ -13,6 +13,11 @@ class UnknownType extends AbstractType
         return false;
     }
 
+    public function intersect(Type $otherType): Type
+    {
+        return $otherType;
+    }
+
     public function toString(): string
     {
         return 'unknown';
