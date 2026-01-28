@@ -82,7 +82,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         }
 
         $definition
-            ->setNode($this->functionLike)
+            ->setAstNode($this->functionLike)
             ->setScope($scope);
 
         if ($this->functionLike instanceof ClassMethod) {

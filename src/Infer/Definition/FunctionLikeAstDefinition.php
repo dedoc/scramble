@@ -16,7 +16,7 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
 
     private ?Scope $scope = null;
 
-    private ?FunctionLike $node = null;
+    private ?FunctionLike $astNode = null;
 
     private ?Nodes $flowContainer = null;
 
@@ -32,14 +32,14 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
         return $this->declarationDefinition;
     }
 
-    public function setNode(FunctionLike $node): self
+    public function setAstNode(FunctionLike $astNode): self
     {
-        $this->node = $node;
+        $this->astNode = $astNode;
 
         return $this;
     }
 
-    public function getNode(): FunctionLike
+    public function getAstNode(): FunctionLike
     {
         if (! $this->scope) {
             /**
@@ -48,7 +48,7 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
             throw new \LogicException('Node must be set before accessing it on FunctionLikeAstDefinition');
         }
 
-        return $this->node;
+        return $this->astNode;
     }
 
     public function setScope(Scope $scope): self
@@ -80,7 +80,7 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
 
         $traverser->addVisitor($flowBuilder = new FlowBuilder($this->getScope()));
 
-        $traverser->traverse([$this->getNode()]);
+        $traverser->traverse([$this->getAstNode()]);
 
         return $this->flowContainer = $flowBuilder->flowNodes;
     }

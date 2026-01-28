@@ -52,7 +52,7 @@ class FunctionLikeHandler implements CreatesScope
         ));
 
         $fnDefinition
-            ->setNode($node)
+            ->setAstNode($node)
             ->setScope($scope)
             ->setDeclarationDefinition($this->buildDeclarationDefinition($node, $scope));
 
