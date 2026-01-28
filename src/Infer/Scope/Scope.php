@@ -43,7 +43,7 @@ class Scope
         public ?Scope $parentScope = null,
     ) {
         $this->expressionTypeInferrer = new ExpressionTypeInferrer($this, $this->nodeTypesResolver);
-        $this->flowNodes = new Nodes($this->expressionTypeInferrer);
+//        $this->flowNodes = new Nodes($this->expressionTypeInferrer);
     }
 
     public function getFlowNodes(): Nodes

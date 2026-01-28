@@ -44,21 +44,6 @@ class ExpressionTypeInferrer
      */
     public function infer(PhpParserNode $expr, Closure $variableTypeGetter): Type
     {
-        $type = $this->doInfer($expr, $variableTypeGetter);
-
-        if ($type instanceof UnknownType) {
-            return $type;
-        }
-
-        if (! $expr instanceof Expr\Variable) {
-            $this->nodeTypesResolver->setType($expr, $type);
-        }
-
-        return $type;
-    }
-
-    private function doInfer(PhpParserNode $expr, Closure $variableTypeGetter): Type
-    {
         if ($expr instanceof Expr\Variable && $expr->name === 'this') {
             return new SelfType($this->scope->classDefinition()?->name ?: 'unknown');
         }
@@ -77,134 +62,136 @@ class ExpressionTypeInferrer
             return $type;
         }
 
-        if ($expr instanceof PhpParserNode\Scalar) {
-            return (new ScalarTypeGetter)($expr);
-        }
-
-        if ($expr instanceof Expr\Cast) {
-            return (new CastTypeGetter)($expr);
-        }
-
-        if ($expr instanceof Expr\ConstFetch) {
-            return (new ConstFetchTypeGetter)($expr);
-        }
-
-        if ($expr instanceof Expr\Throw_) {
-            return new VoidType;
-        }
-
-        if ($expr instanceof Expr\Ternary) {
-            return Union::wrap([
+        $type = match (true) {
+            $expr instanceof PhpParserNode\Scalar => (new ScalarTypeGetter)($expr),
+            $expr instanceof Expr\Cast => (new CastTypeGetter)($expr),
+            $expr instanceof Expr\ConstFetch => (new ConstFetchTypeGetter)($expr),
+            $expr instanceof Expr\Throw_ => new VoidType,
+            $expr instanceof Expr\Ternary => Union::wrap([
                 $this->infer($expr->if ?? $expr->cond, $variableTypeGetter),
                 $this->infer($expr->else, $variableTypeGetter),
-            ]);
-        }
-
-        if ($expr instanceof Expr\BinaryOp\Coalesce) {
-            return Union::wrap([
+            ]),
+            $expr instanceof Expr\BinaryOp\Coalesce => Union::wrap([
                 $this->infer($expr->left, $variableTypeGetter),
                 $this->infer($expr->right, $variableTypeGetter),
-            ]);
-        }
-
-        if ($expr instanceof Expr\Match_) {
-            return Union::wrap(array_map(
+            ]),
+            $expr instanceof Expr\Match_ => Union::wrap(array_map(
                 fn (PhpParserNode\MatchArm $arm) => $this->infer($arm->body, $variableTypeGetter),
                 $expr->arms,
-            ));
-        }
-
-        if ($expr instanceof Expr\ClassConstFetch) {
-            return (new ClassConstFetchTypeGetter)($expr, $this->scope);
-        }
-
-        if (
+            )),
+            $expr instanceof Expr\ClassConstFetch => (new ClassConstFetchTypeGetter)($expr, $this->scope),
             $expr instanceof Expr\BinaryOp\Equal
-            || $expr instanceof Expr\BinaryOp\Identical
-            || $expr instanceof Expr\BinaryOp\NotEqual
-            || $expr instanceof Expr\BinaryOp\NotIdentical
-            || $expr instanceof Expr\BinaryOp\Greater
-            || $expr instanceof Expr\BinaryOp\GreaterOrEqual
-            || $expr instanceof Expr\BinaryOp\Smaller
-            || $expr instanceof Expr\BinaryOp\SmallerOrEqual
-        ) {
-            return new BooleanType;
+                || $expr instanceof Expr\BinaryOp\Identical
+                || $expr instanceof Expr\BinaryOp\NotEqual
+                || $expr instanceof Expr\BinaryOp\NotIdentical
+                || $expr instanceof Expr\BinaryOp\Greater
+                || $expr instanceof Expr\BinaryOp\GreaterOrEqual
+                || $expr instanceof Expr\BinaryOp\Smaller
+                || $expr instanceof Expr\BinaryOp\SmallerOrEqual => new BooleanType,
+            $expr instanceof Expr\BooleanNot => (new BooleanNotTypeGetter)($expr),
+            $expr instanceof Expr\New_ => $this->inferNewCall($expr, $variableTypeGetter),
+            $expr instanceof Expr\MethodCall => $this->inferMethodCall($expr, $variableTypeGetter),
+            $expr instanceof Expr\StaticCall => $this->inferStaticCall($expr, $variableTypeGetter),
+            $expr instanceof Expr\FuncCall => $this->inferFuncCall($expr, $variableTypeGetter),
+            $expr instanceof Expr\PropertyFetch => $this->inferPropertyFetch($expr, $variableTypeGetter),
+            /**
+             * When `dim` is empty, it means that the context is setting – handling in AssignHandler.
+             *
+             * @see AssignHandler
+             */
+            $expr instanceof Expr\ArrayDimFetch && $expr->dim => new OffsetAccessType(
+                $this->infer($expr->var, $variableTypeGetter),
+                $this->infer($expr->dim, $variableTypeGetter),
+            ),
+            default => $type,
+        };
+
+        if (! $type instanceof UnknownType) {
+            $this->nodeTypesResolver->setType($expr, $type);
         }
 
-        if ($expr instanceof Expr\BooleanNot) {
-            return (new BooleanNotTypeGetter)($expr);
+        return $type;
+    }
+
+    private function inferNewCall(Expr\New_ $expr, Closure $variableTypeGetter): Type
+    {
+        if (! $expr->class instanceof PhpParserNode\Name) {
+            return new NewCallReferenceType(
+                $this->infer($expr->class, $variableTypeGetter),
+                $this->inferArgsTypes($expr->args, $variableTypeGetter),
+            );
         }
 
-        if ($expr instanceof Expr\New_) {
-            if (! $expr->class instanceof PhpParserNode\Name) {
-                return new NewCallReferenceType($this->infer($expr->class, $variableTypeGetter), $this->inferArgsTypes($expr->args, $variableTypeGetter));
-            }
+        return new NewCallReferenceType(
+            $expr->class->toString(),
+            $this->inferArgsTypes($expr->args, $variableTypeGetter),
+        );
+    }
 
-            return new NewCallReferenceType($expr->class->toString(), $this->inferArgsTypes($expr->args, $variableTypeGetter));
+    private function inferMethodCall(Expr\MethodCall $expr, Closure $variableTypeGetter): Type
+    {
+        // Only string method names support.
+        if (! $expr->name instanceof PhpParserNode\Identifier) {
+            return new UnknownType;
         }
 
-        if ($expr instanceof Expr\MethodCall) {
-            // Only string method names support.
-            if (! $expr->name instanceof PhpParserNode\Identifier) {
-                return new UnknownType;
-            }
+        $calleeType = $this->infer($expr->var, $variableTypeGetter);
 
-            $calleeType = $this->infer($expr->var, $variableTypeGetter);
+        return new MethodCallReferenceType(
+            $calleeType,
+            $expr->name->name,
+            $this->inferArgsTypes($expr->args, $variableTypeGetter),
+        );
+    }
 
-            return new MethodCallReferenceType($calleeType, $expr->name->name, $this->inferArgsTypes($expr->args, $variableTypeGetter));
+    private function inferStaticCall(Expr\StaticCall $expr, Closure $variableTypeGetter): Type
+    {
+        // Only string method names support.
+        if (! $expr->name instanceof PhpParserNode\Identifier) {
+            return new UnknownType;
         }
 
-        if ($expr instanceof Expr\StaticCall) {
-            // Only string method names support.
-            if (! $expr->name instanceof PhpParserNode\Identifier) {
-                return new UnknownType;
-            }
-
-            if (! $expr->class instanceof PhpParserNode\Name) {
-                return new StaticMethodCallReferenceType(
-                    $this->infer($expr->class, $variableTypeGetter),
-                    $expr->name->name,
-                    $this->inferArgsTypes($expr->args, $variableTypeGetter),
-                );
-            }
-
+        if (! $expr->class instanceof PhpParserNode\Name) {
             return new StaticMethodCallReferenceType(
-                $expr->class->toString(),
+                $this->infer($expr->class, $variableTypeGetter),
                 $expr->name->name,
                 $this->inferArgsTypes($expr->args, $variableTypeGetter),
             );
         }
 
-        if ($expr instanceof Expr\PropertyFetch) {
-            // Only string prop names support.
-            if (! $name = ($expr->name->name ?? null)) {
-                return new UnknownType('Cannot infer type of property fetch: not supported yet.');
-            }
+        return new StaticMethodCallReferenceType(
+            $expr->class->toString(),
+            $expr->name->name,
+            $this->inferArgsTypes($expr->args, $variableTypeGetter),
+        );
+    }
 
-            return new PropertyFetchReferenceType($this->infer($expr->var, $variableTypeGetter), $name);
-        }
-
-        if ($expr instanceof Expr\FuncCall) {
-            if ($expr->name instanceof PhpParserNode\Name) {
-                return new CallableCallReferenceType(new CallableStringType($expr->name->toString()), $this->inferArgsTypes($expr->args, $variableTypeGetter));
-            }
-
-            return new CallableCallReferenceType($this->infer($expr->name, $variableTypeGetter), $this->inferArgsTypes($expr->args, $variableTypeGetter));
-        }
-
-        /**
-         * When `dim` is empty, it means that the context is setting – handling in AssignHandler.
-         *
-         * @see AssignHandler
-         */
-        if ($expr instanceof Expr\ArrayDimFetch && $expr->dim) {
-            return new OffsetAccessType(
-                $this->infer($expr->var, $variableTypeGetter),
-                $this->infer($expr->dim, $variableTypeGetter),
+    private function inferFuncCall(Expr\FuncCall $expr, Closure $variableTypeGetter): Type
+    {
+        if ($expr->name instanceof PhpParserNode\Name) {
+            return new CallableCallReferenceType(
+                new CallableStringType($expr->name->toString()),
+                $this->inferArgsTypes($expr->args, $variableTypeGetter),
             );
         }
 
-        return $type;
+        return new CallableCallReferenceType(
+            $this->infer($expr->name, $variableTypeGetter),
+            $this->inferArgsTypes($expr->args, $variableTypeGetter),
+        );
+    }
+
+    private function inferPropertyFetch(Expr\PropertyFetch $expr, Closure $variableTypeGetter): Type
+    {
+        // Only string prop names support.
+        if (! $name = ($expr->name->name ?? null)) {
+            return new UnknownType('Cannot infer type of property fetch: not supported yet.');
+        }
+
+        return new PropertyFetchReferenceType(
+            $this->infer($expr->var, $variableTypeGetter),
+            $name,
+        );
     }
 
     /**

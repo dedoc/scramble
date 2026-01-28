@@ -56,7 +56,7 @@ class TypeInferer extends NodeVisitorAbstract
             new ReturnHandler,
             new ThrowHandler,
             new MethodCallHandler,
-            new FlowBuilderHandler,
+//            new FlowBuilderHandler,
             new ExpressionTypeInferringExtensions(array_values(array_filter(
                 $extensions,
                 fn ($ext) => $ext instanceof ExpressionTypeInferExtension,
