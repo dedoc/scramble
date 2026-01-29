@@ -136,10 +136,10 @@ class Generator
         $defaultSortValue = fn (Operation $o) => $o->tags[0] ?? null;
 
         return [
-            fn (Operation $a, Operation $b) => $a->getAttribute('groupWeight', INF) <=> $b->getAttribute('groupWeight', INF),
-            fn (Operation $a, Operation $b) => $a->getAttribute('weight', INF) <=> $b->getAttribute('weight', INF), // @todo manual endpoint sorting
+            fn (Operation $a, Operation $b) => $a->getAttribute('groupWeight', PHP_INT_MAX) <=> $b->getAttribute('groupWeight', PHP_INT_MAX),
+            fn (Operation $a, Operation $b) => $a->getAttribute('weight', PHP_INT_MAX) <=> $b->getAttribute('weight', PHP_INT_MAX), // @todo manual endpoint sorting
             fn (Operation $a, Operation $b) => $defaultSortValue($a) <=> $defaultSortValue($b),
-            fn (Operation $a, Operation $b) => $a->getAttribute('index', INF) <=> $b->getAttribute('index', INF),
+            fn (Operation $a, Operation $b) => $a->getAttribute('index', PHP_INT_MAX) <=> $b->getAttribute('index', PHP_INT_MAX),
         ];
     }
 
