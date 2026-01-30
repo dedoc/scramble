@@ -118,6 +118,7 @@ it('can fetch properties from vendor Role model', function () {
                 new PropertyFetchReferenceType($object, $name)
             );
 
+        // TODO: Fails due to role model having invalid PHPDoc, `?\Illuminate\Support\Carbon` should be `\Illuminate\Support\Carbon|null`
         expect(Str::replace('Dedoc\\Scramble\\Tests\\Files\\', '', $propertyType->toString()))
             ->toBe($type);
     }
