@@ -15,6 +15,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route as RouteFacade;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -30,6 +31,7 @@ use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
@@ -214,6 +216,15 @@ class ErrorsResponsesTest_Controller extends Controller
      * @throws AccessDeniedHttpException|BadRequestHttpException|ConflictHttpException|GoneHttpException|LengthRequiredHttpException|LockedHttpException|MethodNotAllowedHttpException|NotAcceptableHttpException|PreconditionFailedHttpException|PreconditionRequiredHttpException|ServiceUnavailableHttpException|TooManyRequestsHttpException|UnauthorizedHttpException|UnprocessableEntityHttpException|UnsupportedMediaTypeHttpException
      */
     public function symfony_http_exception_response(Illuminate\Http\Request $request) {}
+
+    /**
+     * Summary of myHandler
+     * @throws NotFoundHttpException
+     */
+    public function not_found_http_exception_in_phpdoc(Illuminate\Http\Request $request): bool
+    {
+        return true;
+    }
 }
 
 it('adds handling of custom exception with custom extensino', function () {
@@ -224,6 +235,17 @@ it('adds handling of custom exception with custom extensino', function () {
     expect($openApiDocument['paths']['/test']['get']['responses'][400])->toBe([
         '$ref' => '#/components/responses/BusinessException',
     ]);
+});
+
+it('adds NotFoundHttpException response when documented in phpdoc', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'not_found_http_exception_in_phpdoc']));
+
+    expect($responses = $openApiDocument['paths']['/test']['get']['responses'])
+        ->toHaveKeys([200, 404])
+        ->and($responses[404])
+        ->toBe([
+            '$ref' => '#/components/responses/NotFoundHttpException',
+        ]);
 });
 
 class CustomExceptionExtension_ErrorsResponsesTest extends ExceptionToResponseExtension

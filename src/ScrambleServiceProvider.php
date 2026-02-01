@@ -228,8 +228,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ValidationExceptionToResponseExtension::class,
                     AuthorizationExceptionToResponseExtension::class,
                     AuthenticationExceptionToResponseExtension::class,
-                    NotFoundExceptionToResponseExtension::class,
                     HttpExceptionToResponseExtension::class,
+                    NotFoundExceptionToResponseExtension::class,
                 ], $exceptionToResponseExtensions),
             );
         });
