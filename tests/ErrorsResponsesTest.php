@@ -24,6 +24,7 @@ use Symfony\Component\HttpKernel\Exception\LengthRequiredHttpException;
 use Symfony\Component\HttpKernel\Exception\LockedHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotAcceptableHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
 use Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
@@ -31,7 +32,6 @@ use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
@@ -219,6 +219,7 @@ class ErrorsResponsesTest_Controller extends Controller
 
     /**
      * Summary of myHandler
+     *
      * @throws NotFoundHttpException
      */
     public function not_found_http_exception_in_phpdoc(Illuminate\Http\Request $request): bool
