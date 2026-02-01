@@ -236,3 +236,4 @@ EOD)->getClassDefinition('Foo');
     expect($type->methods['returnSomeCall']->type->toString())
         ->toBe('(): SomeClass');
 });
+
