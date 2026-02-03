@@ -31,7 +31,7 @@ class OffsetSetType extends AbstractType implements LateResolvingType
         }
 
         if ($this->type instanceof ArrayType) {
-            return $this->type; // ??
+//            return $this->type; // ??
         }
 
         $path = $this->normalizePath($this->offset);
@@ -70,9 +70,9 @@ class OffsetSetType extends AbstractType implements LateResolvingType
     /**
      * @param  array<int, int|string|null>  $path
      */
-    private function applyPath(KeyedArrayType $target, array $path, Type $value): KeyedArrayType
+    private function applyPath(ArrayType|KeyedArrayType $target, array $path, Type $value): ArrayType|KeyedArrayType
     {
-        $modifyingType = $target;
+        $modifyingType = &$target;
 
         foreach ($path as $i => $pathItem) {
             $isLast = $i === array_key_last($path);
@@ -117,8 +117,25 @@ class OffsetSetType extends AbstractType implements LateResolvingType
         return $newModifyingType;
     }
 
-    private function applyLeafAssignment(KeyedArrayType $modifyingType, string|int|null $pathItem, Type $value): KeyedArrayType
+    private function applyLeafAssignment(ArrayType|KeyedArrayType &$modifyingType, string|int|null $pathItem, Type $value): ArrayType|KeyedArrayType
     {
+        if ($pathItem === null) {
+            if ($modifyingType instanceof KeyedArrayType && count($modifyingType->items) === 0) {
+                $modifyingType = new ArrayType(value: $value);
+
+                return $modifyingType;
+            }
+
+            if ($modifyingType instanceof ArrayType) {
+                $modifyingType->value = Union::wrap([$modifyingType->value, $value]);
+
+                return $modifyingType;
+            }
+
+            // in case of empty array dim assignment, falling through to proceed and create a tuple
+        }
+
+
         $targetItems = $modifyingType->items;
 
         $targetItem = $pathItem !== null ? Arr::first(

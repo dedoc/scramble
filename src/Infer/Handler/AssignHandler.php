@@ -66,7 +66,6 @@ class AssignHandler
                 $path,
             )),
             $scope->getType($node->expr),
-            isInLoopAssignment: $scope->isInLoop(),
         );
 
         $scope->addVariableType(
