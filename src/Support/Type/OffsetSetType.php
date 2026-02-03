@@ -31,7 +31,7 @@ class OffsetSetType extends AbstractType implements LateResolvingType
         }
 
         if ($this->type instanceof ArrayType) {
-//            return $this->type; // ??
+            //            return $this->type; // ??
         }
 
         $path = $this->normalizePath($this->offset);
@@ -134,7 +134,6 @@ class OffsetSetType extends AbstractType implements LateResolvingType
 
             // in case of empty array dim assignment, falling through to proceed and create a tuple
         }
-
 
         $targetItems = $modifyingType->items;
 
