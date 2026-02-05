@@ -19,5 +19,11 @@ class Group
          * by the name (with `SORT_LOCALE_STRING` sorting flag).
          */
         public readonly int $weight = PHP_INT_MAX,
+
+        /**
+         * The parent group name. Used to organize tags into hierarchical groups
+         * via the x-tagGroups OpenAPI extension.
+         */
+        public readonly ?string $parent = null,
     ) {}
 }

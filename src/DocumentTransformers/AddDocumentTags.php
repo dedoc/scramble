@@ -35,6 +35,7 @@ class AddDocumentTags implements DocumentTransformer
 
             $description = $arguments['description'] ?? $arguments[1] ?? null;
             $weight = $arguments['weight'] ?? $arguments[2] ?? null;
+            $parent = $arguments['parent'] ?? $arguments[3] ?? null;
 
             /** @var Tag $tag */
             $tag = $acc->get($name, new Tag($name));
@@ -45,6 +46,10 @@ class AddDocumentTags implements DocumentTransformer
 
             if ($weight !== null && $tag->getAttribute('weight') === null) {
                 $tag->setAttribute('weight', $weight);
+            }
+
+            if ($parent !== null && $tag->getAttribute('parent') === null) {
+                $tag->setAttribute('parent', $parent);
             }
 
             $acc->offsetSet($name, $tag);
