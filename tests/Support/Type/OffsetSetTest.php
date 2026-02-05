@@ -17,7 +17,7 @@ it('handles array set type', function () {
     expect($a)->toHaveType('array{foo: int(42)}');
 });
 
-it('tests', function () {
+it('infers empty array as keyed array type', function () {
     $a = [];
 
     expect($a)->toHaveType('list{}');
