@@ -77,10 +77,10 @@ class OffsetSetType extends AbstractType implements LateResolvingType
         $pathItem = array_shift($path);
 
         if ($pathItem === null && $target instanceof KeyedArrayType && count($target->items) === 0) {
-            $target = (new ArrayType())->mergeAttributes($target->attributes());
+            $target = (new ArrayType)->mergeAttributes($target->attributes());
 
             if ($path) {
-                $target->value = new KeyedArrayType();
+                $target->value = new KeyedArrayType;
 
                 $this->applyPath($target->value, $path, $value);
             } else {
