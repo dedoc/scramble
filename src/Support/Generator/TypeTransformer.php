@@ -30,6 +30,7 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Str;
+use PHPStan\PhpDocParser\Ast\PhpDoc\DeprecatedTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 use function DeepCopy\deep_copy;
@@ -166,6 +167,16 @@ class TypeTransformer
 
                 if ($format = array_values($docNode->getTagsByName('@format'))[0]->value->value ?? null) {
                     $openApiType->format($format);
+                }
+
+                $deprecated = array_values($docNode->getTagsByName('@deprecated'))[0]->value ?? null;
+                if ($deprecated instanceof DeprecatedTagValueNode) {
+                    $openApiType->deprecated(true);
+
+                    if ($deprecated->description) {
+                        $existingDesc = $openApiType->description ? $openApiType->description.' ' : '';
+                        $openApiType->setDescription($existingDesc.$deprecated->description);
+                    }
                 }
             }
         } elseif ($type instanceof Union) {
