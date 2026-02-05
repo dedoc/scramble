@@ -30,16 +30,11 @@ class OffsetSetType extends AbstractType implements LateResolvingType
             return new UnknownType;
         }
 
-        if ($this->type instanceof ArrayType) {
-//                        return $this->type; // ??
-        }
-
         $path = $this->normalizePath($this->offset);
         if (! $path) {
             return new UnknownType;
         }
 
-//        return $this->applyPath_OLD($this->type->clone(), $path, $this->value);
         $result = $this->type->clone();
 
         return $this->applyPath($result, $path, $this->value);
@@ -70,7 +65,10 @@ class OffsetSetType extends AbstractType implements LateResolvingType
         return 'OffsetSet<'.$this->type->toString().', '.$this->offset->toString().', '.$this->value->toString().'>';
     }
 
-    public function applyPath(ArrayType|KeyedArrayType &$target, array $path, Type $value): ArrayType|KeyedArrayType
+    /**
+     * @param  list<int|string|null>  $path
+     */
+    private function applyPath(ArrayType|KeyedArrayType &$target, array $path, Type $value): ArrayType|KeyedArrayType
     {
         if (count($path) === 0) {
             return $target;
@@ -79,7 +77,7 @@ class OffsetSetType extends AbstractType implements LateResolvingType
         $pathItem = array_shift($path);
 
         if ($pathItem === null && $target instanceof KeyedArrayType && count($target->items) === 0) {
-            $target = new ArrayType();
+            $target = (new ArrayType())->mergeAttributes($target->attributes());
 
             if ($path) {
                 $target->value = new KeyedArrayType();
@@ -119,11 +117,11 @@ class OffsetSetType extends AbstractType implements LateResolvingType
             if ($path) {
                 $targetItem = new ArrayItemType_(
                     key: $pathItem,
-                    value: $newModifyingType = new KeyedArrayType,
+                    value: new KeyedArrayType,
                 );
                 $target->items[] = $targetItem;
 
-                $this->applyPath($newModifyingType, $path, $value);
+                $this->applyPath($targetItem->value, $path, $value); // @phpstan-ignore argument.type
             } else {
                 $target->items[] = new ArrayItemType_(key: $pathItem, value: $value);
             }
@@ -132,86 +130,6 @@ class OffsetSetType extends AbstractType implements LateResolvingType
         $target->isList = KeyedArrayType::checkIsList($target->items);
 
         return $target;
-
-
-        if ($pathItem === null) {
-//            if ($target instanceof KeyedArrayType && count($target->items) === 0) {
-//
-//            }
-        } elseif (is_string($pathItem) || is_int($pathItem)) {
-            dd($pathItem);
-        }
-
-        return $target;
-    }
-
-    /**
-     * @param  non-empty-list<int, int|string|null>  $path
-     */
-    private function applyPath_OLD(ArrayType|KeyedArrayType $target, array $path, Type $value): ArrayType|KeyedArrayType
-    {
-        $modifyingType = $target;
-
-        foreach (array_slice($path, 0, count($path) - 1) as $pathItem) {
-            $modifyingType = $this->applyIntermediateStep($modifyingType, $pathItem);
-
-            if ($modifyingType === null) {
-                return $target;
-            }
-        }
-
-        $this->applyLeafAssignment($modifyingType, $path[count($path) - 1], $value);
-
-        return $target;
-    }
-
-    private function applyIntermediateStep(KeyedArrayType $modifyingType, string|int|null $pathItem): ?KeyedArrayType
-    {
-        $targetItems = $modifyingType->items;
-
-        $targetItem = Arr::first(
-            $targetItems,
-            fn (ArrayItemType_ $t) => $t->key === $pathItem,
-        );
-
-        if ($targetItem) {
-            if (! $targetItem->value instanceof KeyedArrayType && ! $targetItem->value instanceof ArrayType) {
-                return null;
-            }
-            $newModifyingType = $targetItem->value;
-        } else {
-            $targetItem = new ArrayItemType_(
-                key: $pathItem,
-                value: $newModifyingType = new KeyedArrayType,
-            );
-            $targetItems[] = $targetItem;
-        }
-
-        $modifyingType->items = $targetItems;
-        $modifyingType->isList = KeyedArrayType::checkIsList($targetItems);
-
-        return $newModifyingType;
-    }
-
-    private function applyLeafAssignment(ArrayType|KeyedArrayType $modifyingType, string|int|null $pathItem, Type $value): ArrayType|KeyedArrayType
-    {
-        $targetItems = $modifyingType->items;
-
-        $targetItem = $pathItem !== null ? Arr::first(
-            $targetItems,
-            fn (ArrayItemType_ $t) => $t->key === $pathItem,
-        ) : null;
-
-        if ($targetItem) {
-            $targetItem->value = $value;
-        } else {
-            $targetItems[] = $targetItem = new ArrayItemType_(key: $pathItem, value: $value);
-        }
-
-        $modifyingType->items = $targetItems;
-        $modifyingType->isList = KeyedArrayType::checkIsList($targetItems);
-
-        return $modifyingType;
     }
 
     /**
