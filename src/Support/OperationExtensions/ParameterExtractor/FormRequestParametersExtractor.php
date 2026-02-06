@@ -55,8 +55,8 @@ class FormRequestParametersExtractor implements ParameterExtractor
         $ignoredClasses = Arr::wrap($ignoredClasses);
 
         foreach ($ignoredClasses as $ignoredClass) {
-            if (! in_array($ignoredClass, static::$ignoredInstancesOf, true)) {
-                static::$ignoredInstancesOf[] = $ignoredClass;
+            if (! in_array($ignoredClass, self::$ignoredInstancesOf, true)) {
+                self::$ignoredInstancesOf[] = $ignoredClass;
             }
         }
     }
@@ -98,7 +98,7 @@ class FormRequestParametersExtractor implements ParameterExtractor
 
     private function isIgnored(string $className): bool
     {
-        foreach (static::$ignoredInstancesOf as $ignoredClass) {
+        foreach (self::$ignoredInstancesOf as $ignoredClass) {
             if (is_a($className, $ignoredClass, true)) {
                 return true;
             }

@@ -3352,12 +3352,6 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
 
 		-
-			message: '#^Class Spatie\\LaravelData\\Contracts\\BaseData not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
-
-		-
 			message: '#^Variable \$requestParam in PHPDoc tag @var does not exist\.$#'
 			identifier: varTag.variableNotFound
 			count: 1
