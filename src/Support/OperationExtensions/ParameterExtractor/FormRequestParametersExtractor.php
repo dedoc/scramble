@@ -12,15 +12,20 @@ use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\SchemaClassDocReflector;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Illuminate\Support\Arr;
 use PhpParser\PrettyPrinter;
 use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionParameter;
-use Spatie\LaravelData\Contracts\BaseData;
 
 class FormRequestParametersExtractor implements ParameterExtractor
 {
     use GeneratesParametersFromRules;
+
+    /**
+     * @var class-string<mixed>[]
+     */
+    private static array $ignoredInstancesOf = [];
 
     public function __construct(
         private PrettyPrinter $printer,
@@ -33,13 +38,27 @@ class FormRequestParametersExtractor implements ParameterExtractor
             return $parameterExtractionResults;
         }
 
-        if (is_a($requestClassName, BaseData::class, true)) {
+        if ($this->isIgnored($requestClassName)) {
             return $parameterExtractionResults;
         }
 
         $parameterExtractionResults[] = $this->extractFormRequestParameters($requestClassName, $routeInfo);
 
         return $parameterExtractionResults;
+    }
+
+    /**
+     * @param  class-string<mixed>|class-string<mixed>[]  $ignoredClasses
+     */
+    public static function ignoreInstanceOf(string|array $ignoredClasses): void
+    {
+        $ignoredClasses = Arr::wrap($ignoredClasses);
+
+        foreach ($ignoredClasses as $ignoredClass) {
+            if (! in_array($ignoredClass, self::$ignoredInstancesOf, true)) {
+                self::$ignoredInstancesOf[] = $ignoredClass;
+            }
+        }
     }
 
     private function getFormRequestClassName(RouteInfo $routeInfo): ?string
@@ -75,6 +94,17 @@ class FormRequestParametersExtractor implements ParameterExtractor
         $className = $reflectionParameter->getType()->getName();
 
         return method_exists($className, 'rules');
+    }
+
+    private function isIgnored(string $className): bool
+    {
+        foreach (self::$ignoredInstancesOf as $ignoredClass) {
+            if (is_a($className, $ignoredClass, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function extractFormRequestParameters(string $requestClassName, RouteInfo $routeInfo): ParametersExtractionResult
