@@ -48,7 +48,7 @@ class FormRequestParametersExtractor implements ParameterExtractor
     }
 
     /**
-     * @param class-string<mixed>|class-string<mixed>[] $ignoredClasses
+     * @param  class-string<mixed>|class-string<mixed>[]  $ignoredClasses
      */
     public static function ignoreInstanceOf(string|array $ignoredClasses): void
     {
