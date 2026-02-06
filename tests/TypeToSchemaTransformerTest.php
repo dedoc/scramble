@@ -355,6 +355,27 @@ it('supports @format tag in api resource', function () {
     ]);
 });
 
+it('supports @deprecated tag in api resource', function () {
+    $transformer = new TypeTransformer(app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(ApiResourceTest_ResourceWithDeprecated::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithDeprecated',
+    ]);
+
+    expect($this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithDeprecated::class)->toArray()['properties']['old_field'])->toBe([
+        'type' => 'integer',
+        'deprecated' => true,
+    ]);
+
+    expect($this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithDeprecated::class)->toArray()['properties']['old_field_with_description'])->toBe([
+        'type' => 'string',
+        'description' => 'Use new_field instead.',
+        'deprecated' => true,
+    ]);
+});
+
 it('supports simple comments descriptions in api resource', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
 
@@ -623,6 +644,26 @@ class ApiResourceTest_ResourceWithFormat extends JsonResource
              * @format date-time
              */
             'now' => now(),
+        ];
+    }
+}
+
+/**
+ * @property SamplePostModel $resource
+ */
+class ApiResourceTest_ResourceWithDeprecated extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            /**
+             * @deprecated
+             */
+            'old_field' => $this->id,
+            /**
+             * @deprecated Use new_field instead.
+             */
+            'old_field_with_description' => $this->title,
         ];
     }
 }
