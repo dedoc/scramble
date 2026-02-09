@@ -71,6 +71,21 @@ it('transforms simple types', function ($type, $openApiArrayed) {
     ]],
 ]);
 
+it('transforms nullable unions', function ($type, $openApiArrayed) {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect(json_encode($transformer->transform($type)->toArray()))->toBe(json_encode($openApiArrayed));
+})->with([
+    [Union::wrap([
+        new LiteralStringType('idle'),
+        new LiteralStringType('charging'),
+        new LiteralStringType('discharging'),
+        new NullType,
+    ]), ['type' => ['string', 'null'], 'enum' => ['idle', 'charging', 'discharging']]],
+]);
+
 it('gets json resource type', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);

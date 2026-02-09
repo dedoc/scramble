@@ -186,17 +186,24 @@ class TypeTransformer
                     ->all();
 
                 $items = array_map($this->transform(...), $otherTypes->values()->toArray()); // @phpstan-ignore argument.type
+                $literalSchemas = [];
 
                 if ($stringLiterals->count()) {
-                    $items[] = (new StringType)->enum(
+                    $items[] = $literalSchemas[] = (new StringType)->enum(
                         $stringLiterals->map->value->unique()->values()->toArray() // @phpstan-ignore property.notFound
                     );
                 }
 
                 if ($integerLiterals->count()) {
-                    $items[] = (new IntegerType)->enum(
+                    $items[] = $literalSchemas[] = (new IntegerType)->enum(
                         $integerLiterals->map->value->unique()->values()->toArray() // @phpstan-ignore property.notFound
                     );
+                }
+
+                // In case $otherTypes consist just of null and there is string or integer literals, make type nullable
+                $otherTypesIsNullable = count($otherTypes) === 1 && collect($otherTypes)->contains(fn ($t) => $t instanceof \Dedoc\Scramble\Support\Type\NullType);
+                if ($otherTypesIsNullable && ($stringLiterals->count() || $integerLiterals->count())) {
+                    $items = array_map(fn ($s) => $s->nullable(true), $literalSchemas);
                 }
 
                 // Removing duplicated schemas before making a resulting AnyOf type.
