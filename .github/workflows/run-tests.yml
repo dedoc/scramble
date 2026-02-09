@@ -55,7 +55,8 @@ jobs:
       - name: Lock Pest for PHP 8.1
         if: matrix.php == '8.1'
         run: |
-          composer require --dev pestphp/pest:2.34.0 pestphp/pest-plugin-laravel:2.3.0 phpunit/phpunit:10.5.63 --no-update
+          composer remove --dev phpunit/phpunit
+          composer require --dev pestphp/pest:2.34.0 pestphp/pest-plugin-laravel:2.3.0 --no-update
 
       - name: Install dependencies
         run: |
