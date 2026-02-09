@@ -54,7 +54,7 @@ jobs:
       - name: Lock Pest for PHP 8.1
         if: matrix.php == '8.1'
         run: |
-          composer remove --dev phpunit/phpunit
+          composer remove --dev phpunit/phpunit --no-update
           composer require --dev pestphp/pest:2.34.0 phpunit/phpunit:10.5.10 --no-update
 
       - name: Install dependencies
