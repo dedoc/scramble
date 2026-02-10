@@ -122,7 +122,7 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
 
             'whenAggregated' => count($event->arguments) <= 3
                 ? Union::wrap([
-                    match ($event->getArg('aggregate', 2)?->value ?? '') {
+                    match ($event->getArg('aggregate', 2)?->value ?? '') { // @phpstan-ignore property.notFound
                         'count' => new IntegerType,
                         'avg', 'sum' => new FloatType,
                         default => new StringType,

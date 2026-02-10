@@ -1,0 +1,8 @@
+openapi: 3.1.0
+info:
+    title: Laravel
+    version: 0.0.1
+servers:
+    - { url: 'http://localhost/api' }
+paths:
+    /test: { get: { operationId: fooTestFour.index, tags: [Foo_TestFour], responses: { 200: { description: 'Simple comment.', content: { application/json: { schema: { type: object, properties: { foo: { type: string, enum: [bar] } }, required: [foo] } } } }, 201: { description: "Advanced comment.\n\nWith more description.", content: { application/json: { schema: { type: object, properties: { foo: { type: string } }, required: [foo] } } } } } } }

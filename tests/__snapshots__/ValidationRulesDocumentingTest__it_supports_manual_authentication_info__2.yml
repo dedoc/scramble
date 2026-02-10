@@ -1,0 +1,12 @@
+openapi: 3.1.0
+info:
+    title: Laravel
+    version: 0.0.1
+servers:
+    - { url: 'http://localhost/api' }
+security:
+    - { apiKey: {  } }
+paths:
+    /test: { get: { operationId: controllerWithoutSecurity.index, tags: [WithoutSecurity], responses: { 200: { description: '' } }, security: {  } } }
+components:
+    securitySchemes: { apiKey: { type: apiKey, in: query, name: api_token } }

@@ -1,0 +1,12 @@
+-
+    name: from_form_request
+    in: query
+    description: 'Wow, this is a comment!'
+    schema: { type: integer }
+-
+    name: foo
+    in: query
+    required: true
+    description: 'A foo prop.'
+    schema: { type: string }
+    example: wow

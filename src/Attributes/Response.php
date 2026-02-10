@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response as OpenApiResponse;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
 use Illuminate\Support\Str;
@@ -103,12 +104,14 @@ class Response
             ? clone ($schema instanceof Reference ? $schema->resolve()->type : $schema->type)
             : new StringType;
 
+        /** @var Type $schemaType */
+
         if ($responseAttribute->format) {
             $schemaType->format($responseAttribute->format);
         }
 
         if ($responseAttribute->examples) {
-            $schemaType->examples($responseAttribute->examples);
+            $schemaType->examples($responseAttribute->examples); // @phpstan-ignore argument.type
         }
 
         return Schema::fromType($schemaType);

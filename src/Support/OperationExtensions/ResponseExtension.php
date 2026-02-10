@@ -232,6 +232,8 @@ class ResponseExtension extends OperationExtension
             $response = clone $response->resolve();
         }
 
+        /** @var Response $response */
+
         $response->content = [];
 
         return $response;

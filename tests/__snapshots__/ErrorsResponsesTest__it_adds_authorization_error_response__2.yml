@@ -1,0 +1,10 @@
+openapi: 3.1.0
+info:
+    title: Laravel
+    version: 0.0.1
+servers:
+    - { url: 'http://localhost/api' }
+paths:
+    /test: { get: { operationId: errorsResponsesTest.addsAuthorizationErrorResponse, tags: [ErrorsResponsesTest_], responses: { 200: { description: '' }, 403: { $ref: '#/components/responses/AuthorizationException' } } } }
+components:
+    responses: { AuthorizationException: { description: 'Authorization error', content: { application/json: { schema: { type: object, properties: { message: { type: string, description: 'Error overview.' } }, required: [message] } } } } }

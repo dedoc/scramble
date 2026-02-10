@@ -20,10 +20,12 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
     {
         $rulesMethodNode = $this->classReflector->getMethod('rules')->getAstNode();
 
-        $returnNode = (new NodeFinder)->findFirst(
+        /** @var Return_ $returnNodeStatement */
+        $returnNodeStatement = (new NodeFinder)->findFirst(
             $rulesMethodNode ? [$rulesMethodNode] : [],
             fn ($node) => $node instanceof Return_ && $node->expr instanceof Array_
-        )?->expr ?? null;
+        );
+        $returnNode = $returnNodeStatement?->expr ?? null;
 
         $evaluators = [
             new FormRequestRulesEvaluator($this->classReflector, $this->method),

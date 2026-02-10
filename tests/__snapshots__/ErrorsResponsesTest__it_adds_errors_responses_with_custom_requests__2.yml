@@ -1,0 +1,10 @@
+openapi: 3.1.0
+info:
+    title: Laravel
+    version: 0.0.1
+servers:
+    - { url: 'http://localhost/api' }
+paths:
+    /test: { get: { operationId: errorsResponsesTest.addsErrorsWithCustomRequest, tags: [ErrorsResponsesTest_], parameters: [{ name: foo, in: query, required: true, schema: { type: string } }], responses: { 200: { description: '' }, 422: { $ref: '#/components/responses/ValidationException' }, 403: { $ref: '#/components/responses/AuthorizationException' } } } }
+components:
+    responses: { ValidationException: { description: 'Validation error', content: { application/json: { schema: { type: object, properties: { message: { type: string, description: 'Errors overview.' }, errors: { type: object, description: 'A detailed description of each field that failed validation.', additionalProperties: { type: array, items: { type: string } } } }, required: [message, errors] } } } }, AuthorizationException: { description: 'Authorization error', content: { application/json: { schema: { type: object, properties: { message: { type: string, description: 'Error overview.' } }, required: [message] } } } } }

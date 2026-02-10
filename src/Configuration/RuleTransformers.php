@@ -29,7 +29,7 @@ class RuleTransformers
      */
     public function append(array|string $transformers): self
     {
-        $this->appends = array_values(array_merge(
+        $this->appends = array_values(array_merge( // @phpstan-ignore arrayValues.list
             $this->appends,
             Arr::wrap($transformers)
         ));
@@ -42,7 +42,7 @@ class RuleTransformers
      */
     public function prepend(array|string $transformers): self
     {
-        $this->prepends = array_values(array_merge(
+        $this->prepends = array_values(array_merge( // @phpstan-ignore arrayValues.list
             $this->prepends,
             Arr::wrap($transformers)
         ));

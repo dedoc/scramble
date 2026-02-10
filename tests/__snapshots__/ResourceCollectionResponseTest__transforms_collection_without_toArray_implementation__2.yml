@@ -1,0 +1,5 @@
+response:
+    description: '`UserCollection_Four`'
+    content: { application/json: { schema: { type: object, properties: { data: { $ref: '#/components/schemas/UserCollection_Four' } }, required: [data] } } }
+components:
+    schemas: { UserCollection_Four: { type: array, items: { $ref: '#/components/schemas/UserResource' }, title: UserCollection_Four }, UserResource: { type: object, properties: { id: { type: integer, enum: [1] } }, required: [id], title: UserResource } }

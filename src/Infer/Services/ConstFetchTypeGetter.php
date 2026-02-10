@@ -19,7 +19,7 @@ class ConstFetchTypeGetter
         }
 
         try {
-            $constantReflection = new \ReflectionClassConstant($className, $constName);
+            $constantReflection = new \ReflectionClassConstant($className, $constName); // @phpstan-ignore argument.type
             $constantValue = $constantReflection->getValue();
 
             if ($constantReflection->isEnumCase()) {

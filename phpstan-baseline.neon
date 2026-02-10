@@ -271,13 +271,13 @@ parameters:
 			path: src/Console/Commands/AnalyzeDocumentation.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Console\\Commands\\AnalyzeDocumentation\:\:groupExceptions\(\) should return Illuminate\\Support\\Collection\<string, Illuminate\\Support\\Collection\<int, Throwable\>\> but returns Illuminate\\Support\\Collection\<string, Illuminate\\Support\\Collection\<int, mixed\>\>\.$#'
+			message: '#^Method Dedoc\\Scramble\\Console\\Commands\\AnalyzeDocumentation\:\:groupExceptions\(\) should return Illuminate\\Support\\Collection\<string, Illuminate\\Support\\Collection\<int, Throwable\>\> but returns Illuminate\\Support\\Collection\<\(int\|string\), Illuminate\\Support\\Collection\<int, mixed\>\>\.$#'
 			identifier: return.type
 			count: 1
 			path: src/Console/Commands/AnalyzeDocumentation.php
 
 		-
-			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|string\|null given\.$#'
+			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|float\|int\|string\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Console/Commands/AnalyzeDocumentation.php
@@ -325,7 +325,7 @@ parameters:
 			path: src/Console/Commands/Components/TermsOfContentItem.php
 
 		-
-			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|string\|null given\.$#'
+			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|float\|int\|string\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Console/Commands/ExportDocumentation.php
@@ -337,7 +337,7 @@ parameters:
 			path: src/Console/Commands/ExportDocumentation.php
 
 		-
-			message: '#^Part \$api \(array\|bool\|string\|null\) of encapsed string cannot be cast to string\.$#'
+			message: '#^Part \$api \(array\|bool\|float\|int\|string\|null\) of encapsed string cannot be cast to string\.$#'
 			identifier: encapsedStringPart.nonString
 			count: 1
 			path: src/Console/Commands/ExportDocumentation.php
@@ -759,12 +759,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\DefinitionBuilders\\LazyClassReflectionDefinitionBuilder\:\:__construct\(\) has parameter \$reflection with generic class ReflectionClass but does not specify its types\: T$#'
 			identifier: missingType.generics
-			count: 1
-			path: src/Infer/DefinitionBuilders/LazyClassReflectionDefinitionBuilder.php
-
-		-
-			message: '#^Parameter \#1 \$reflectionType of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:createTypeFromReflectionType\(\) expects ReflectionType, ReflectionType\|null given\.$#'
-			identifier: argument.type
 			count: 1
 			path: src/Infer/DefinitionBuilders/LazyClassReflectionDefinitionBuilder.php
 
@@ -3382,12 +3376,6 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
 
 		-
-			message: '#^Parameter \#1 \$reflectionType of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:createTypeFromReflectionType\(\) expects ReflectionType, ReflectionType\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
-
-		-
 			message: '#^Parameter \#1 \$string of static method Illuminate\\Support\\Str\:\:of\(\) expects string, string\|null given\.$#'
 			identifier: argument.type
 			count: 1
@@ -3899,6 +3887,12 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$filename of class SplFileObject constructor expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/ResponseExtractor/ModelInfo.php
+
+		-
+			message: '#^Parameter \#1 \$items of method Illuminate\\Support\\Collection\<string,string\>\:\:merge\(\) expects Illuminate\\Contracts\\Support\\Arrayable\<non\-falsy\-string, mixed\>\|iterable\<non\-falsy\-string, mixed\>, array given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Support/ResponseExtractor/ModelInfo.php
