@@ -82,6 +82,13 @@ class RouteInfo
         return $this->phpDoc = $this->actionNode()->getAttribute('parsedPhpDoc') ?: new PhpDocNode([]); // @phpstan-ignore return.type
     }
 
+    public function setPhpDoc(PhpDocNode $node): self
+    {
+        $this->phpDoc = $node;
+
+        return $this;
+    }
+
     /**
      * @deprecated use `actionNode` instead
      */
