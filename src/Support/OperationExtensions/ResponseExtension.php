@@ -233,7 +233,6 @@ class ResponseExtension extends OperationExtension
         }
 
         /** @var Response $response */
-
         $response->content = [];
 
         return $response;

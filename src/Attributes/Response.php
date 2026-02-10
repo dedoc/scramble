@@ -105,7 +105,6 @@ class Response
             : new StringType;
 
         /** @var Type $schemaType */
-
         if ($responseAttribute->format) {
             $schemaType->format($responseAttribute->format);
         }
