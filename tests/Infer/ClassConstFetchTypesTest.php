@@ -1,6 +1,5 @@
 <?php
 
-use Dedoc\Scramble\Support\Type\EnumCaseType;
 use Dedoc\Scramble\Support\Type\ClassConstantType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 

@@ -245,7 +245,7 @@ it('gets class constants with string value type and "const" syntax', function ()
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [ClassConstantToSchema::class]);
     $extension = new ClassConstantToSchema($infer, $transformer, $this->context->openApi->components);
 
-    $classConstantReflection = new ReflectionClassConstant(ApiResourceTest_ResourceWithClassConstants::class, "CONST_1");
+    $classConstantReflection = new ReflectionClassConstant(ApiResourceTest_ResourceWithClassConstants::class, 'CONST_1');
     $type = new ClassConstantType($classConstantReflection);
 
     expect($extension->toSchema($type)->toArray())
@@ -259,7 +259,7 @@ it('gets class constants with numeric value type and "const" syntax', function (
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [ClassConstantToSchema::class]);
     $extension = new ClassConstantToSchema($infer, $transformer, $this->context->openApi->components);
 
-    $classConstantReflection = new ReflectionClassConstant(ApiResourceTest_ResourceWithClassConstants::class, "CONST_2");
+    $classConstantReflection = new ReflectionClassConstant(ApiResourceTest_ResourceWithClassConstants::class, 'CONST_2');
     $type = new ClassConstantType($classConstantReflection);
 
     expect($extension->toSchema($type)->toArray())
@@ -800,7 +800,9 @@ enum InvalidEnumValues: string
     case ONE = '1';
 }
 
-class ApiResourceTest_ResourceWithClassConstants {
-    public const CONST_1 = "const_1";
+class ApiResourceTest_ResourceWithClassConstants
+{
+    public const CONST_1 = 'const_1';
+
     public const CONST_2 = 1.0;
 }
