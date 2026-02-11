@@ -8,6 +8,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
+use Dedoc\Scramble\Support\Type\ClassConstantType;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
@@ -18,6 +19,7 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ClassConstantToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
@@ -236,6 +238,34 @@ it('gets enum with values type and description without cases', function () {
         ->toBe([
             'type' => 'string',
             'enum' => ['draft', 'published', 'archived'],
+        ]);
+});
+
+it('gets class constants with string value type and "const" syntax', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [ClassConstantToSchema::class]);
+    $extension = new ClassConstantToSchema($infer, $transformer, $this->context->openApi->components);
+
+    $classConstantReflection = new ReflectionClassConstant(ApiResourceTest_ResourceWithClassConstants::class, "CONST_1");
+    $type = new ClassConstantType($classConstantReflection);
+
+    expect($extension->toSchema($type)->toArray())
+        ->toBe([
+            'type' => 'string',
+            'const' => 'const_1',
+        ]);
+});
+
+it('gets class constants with numeric value type and "const" syntax', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [ClassConstantToSchema::class]);
+    $extension = new ClassConstantToSchema($infer, $transformer, $this->context->openApi->components);
+
+    $classConstantReflection = new ReflectionClassConstant(ApiResourceTest_ResourceWithClassConstants::class, "CONST_2");
+    $type = new ClassConstantType($classConstantReflection);
+
+    expect($extension->toSchema($type)->toArray())
+        ->toBe([
+            'type' => 'number',
+            'const' => 1.0,
         ]);
 });
 
@@ -768,4 +798,9 @@ enum InvalidEnumValues: string
     case PLUS = '+';
     case MINUS = '-';
     case ONE = '1';
+}
+
+class ApiResourceTest_ResourceWithClassConstants {
+    public const CONST_1 = "const_1";
+    public const CONST_2 = 1.0;
 }
