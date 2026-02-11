@@ -51,6 +51,7 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\VoidType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ArrayableToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\BinaryFileResponseToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ClassConstantToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
@@ -210,6 +211,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 typeToSchemaExtensionsClasses: $parameters['typeToSchemaExtensions'] ?? array_merge([
                     ArrayableToSchema::class,
                     EnumToSchema::class,
+                    ClassConstantToSchema::class,
                     JsonResourceTypeToSchema::class,
                     CollectionToSchema::class,
                     EloquentCollectionToSchema::class,
