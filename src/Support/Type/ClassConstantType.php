@@ -1,8 +1,7 @@
 <?php
+
 namespace Dedoc\Scramble\Support\Type;
 
-use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Type;
 use ReflectionClassConstant;
 
 class ClassConstantType extends ObjectType

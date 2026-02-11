@@ -1,10 +1,11 @@
 <?php
+
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
-use Dedoc\Scramble\Support\Generator\Types as OpenApiType;
-use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\ClassConstantType;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
+use Dedoc\Scramble\Support\Generator\Types as OpenApiType;
+use Dedoc\Scramble\Support\Type\ClassConstantType;
+use Dedoc\Scramble\Support\Type\Type;
 
 class ClassConstantToSchema extends TypeToSchemaExtension
 {
@@ -14,13 +15,13 @@ class ClassConstantToSchema extends TypeToSchemaExtension
     }
 
     /**
-     * @param ClassConstantType $type
+     * @param  ClassConstantType  $type
      */
     public function toSchema(Type $type): OpenApiType\Type
     {
         try {
             $constantValue = $type->constantReflection->getValue();
-            $openApiType   = $this->getTypeForConstantValue($constantValue);
+            $openApiType = $this->getTypeForConstantValue($constantValue);
             $openApiType->constant($constantValue);
         } catch (\ReflectionException $e) {
             $openApiType = new OpenApiType\UnknownType;

@@ -26,7 +26,7 @@ class ConstFetchTypeGetter
             if ($constantReflection->isEnumCase()) {
                 return new EnumCaseType($className, $constName);
             }
-      
+
             $classConstantsAsConst = config('scramble.class_constants_as_const');
             if ($classConstantsAsConst) {
                 return new ClassConstantType($constantReflection);

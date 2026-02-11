@@ -114,6 +114,7 @@ return [
     /**
      * Determines how Scramble stores the class constants value.
      * If true, class constants will be represented as "const", otherwise as "enum" with a single value.
+     *
      * @see https://swagger.io/specification/#model-with-annotated-enumeration
      */
     'class_constants_as_const' => false,

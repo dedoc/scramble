@@ -31,7 +31,7 @@ abstract class Type
     public $examples = [];
 
     public array $enum = [];
-    
+
     /** @var scalar|null */
     public $constant = null;
 
@@ -116,8 +116,8 @@ abstract class Type
                 'deprecated' => $this->deprecated,
                 'pattern' => $this->pattern,
                 'enum' => count($this->enum) ? $this->enum : null,
-                'const' => !is_null($this->constant) ? $this->constant : null,
-            ], fn($val) => !is_null($val)),
+                'const' => ! is_null($this->constant) ? $this->constant : null,
+            ], fn ($val) => ! is_null($val)),
             $this->example instanceof MissingValue ? [] : ['example' => $this->example],
             $this->default instanceof MissingValue ? [] : ['default' => $this->default],
             count(
@@ -151,7 +151,7 @@ abstract class Type
     }
 
     /**
-     * @param scalar $constant
+     * @param  scalar  $constant
      * @return $this
      */
     public function constant($constant): self
