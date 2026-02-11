@@ -27,9 +27,8 @@ class ConstFetchTypeGetter
                 return new EnumCaseType($className, $constName);
             }
       
-            // TODO aggiungere parametro in config
-            $flag = true;
-            if ($flag) {
+            $classConstantsAsConst = config('scramble.class_constants_as_const');
+            if ($classConstantsAsConst) {
                 return new ClassConstantType($constantReflection);
             }
 
