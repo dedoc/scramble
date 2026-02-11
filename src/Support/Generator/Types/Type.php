@@ -117,7 +117,7 @@ abstract class Type
                 'pattern' => $this->pattern,
                 'enum' => count($this->enum) ? $this->enum : null,
                 'const' => ! is_null($this->constant) ? $this->constant : null,
-            ], fn ($val) => ! is_null($val)),
+            ]),
             $this->example instanceof MissingValue ? [] : ['example' => $this->example],
             $this->default instanceof MissingValue ? [] : ['default' => $this->default],
             count(
