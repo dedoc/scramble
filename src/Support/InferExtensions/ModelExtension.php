@@ -149,7 +149,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
     }
 
     /**
-     * @param Collection<int, string> $castAsParameters
+     * @param  Collection<int, string>  $castAsParameters
      */
     private function addDateFormatForCast(ObjectType $type, Collection $castAsParameters): ObjectType
     {
