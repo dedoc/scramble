@@ -832,6 +832,19 @@ class ProhibitedIf_ValidationRulesDocumentingTest
     }
 }
 
+it('supports evaluation of strings concatenated with class names', function () {
+    $openApiDocument = generateForRoute(RouteFacade::put('test', function (Request $request) {
+        $request->validate([
+            'email' => 'required|string|lowercase|email|unique:' . \Dedoc\Scramble\Tests\Files\SampleUserModel::class,
+        ]);
+    }));
+
+    expect($openApiDocument['paths']['/test']['put']['requestBody']['content']['application/json']['schema']['properties']['email'])->toBe([
+        'type' => 'string',
+        'format' => 'email',
+    ]);
+});
+
 it('extracts rules from request->validate call', function () {
     RouteFacade::get('api/test', [ValidationRulesDocumenting_Test::class, 'index']);
 
