@@ -142,10 +142,27 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
                 new IntegerType, // @todo array-key
                 new TemplateType($castAsParameters->first()),
             ]),
-            'date', 'datetime', 'custom_datetime' => new ObjectType(Carbon::class),
-            'immutable_date', 'immutable_datetime', 'immutable_custom_datetime' => new ObjectType(CarbonImmutable::class),
+            'date', 'datetime', 'custom_datetime' => $this->addDateFormatForCast(new ObjectType(Carbon::class), $castAsParameters),
+            'immutable_date', 'immutable_datetime', 'immutable_custom_datetime' => $this->addDateFormatForCast(new ObjectType(CarbonImmutable::class), $castAsParameters),
             default => null,
         };
+    }
+
+    /**
+     * @param Collection<int, string> $castAsParameters
+     */
+    private function addDateFormatForCast(ObjectType $type, Collection $castAsParameters): ObjectType
+    {
+        $format = match ($castAsParameters->first()) {
+            'Y-m-d' => 'date',
+            default => null,
+        };
+
+        if ($format) {
+            $type->setAttribute('format', $format);
+        }
+
+        return $type;
     }
 
     private function getRelationType(array $relation)
@@ -183,7 +200,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
                 (new TypeWalker)->replace($propertyType, function (Type $t) {
                     return ($t->isInstanceOf(Carbon::class) || $t->isInstanceOf(CarbonImmutable::class))
-                        ? tap(new StringType, fn ($t) => $t->setAttribute('format', 'date-time'))
+                        ? tap(new StringType, fn ($type) => $type->setAttribute('format', $t->getAttribute('format') ?? 'date-time'))
                         : null;
                 });
 
