@@ -59,7 +59,7 @@ class ReferenceTypeResolver
         );
 
         // Type finalization: removing duplicates from union, unpacking array items (inside `replace`), calling resolving extensions.
-        return $this->finalizeType($resolvedType->setOriginal($originalType), $originalType)->widen();
+        return $this->finalizeType($resolvedType, $originalType)->widen();
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type
