@@ -231,3 +231,40 @@ it('resolves only arguments with templates referenced in return type', function 
         ]),
     )->toString())->toBe('string(wow)');
 });
+
+it('resolves spread in union type', function () {
+    $def = analyzeFile(<<<'EOD'
+<?php
+class JsonResourceExtensionTest_SpreadInMatch
+{
+    public function toArray(Request $request)
+    {
+        return match (mt_rand(0, 1)) {
+            0 => [
+                ...$this->typeA(),
+                'type' => 'a',
+            ],
+            1 => [
+                ...$this->typeB(),
+                'type' => 'b',
+            ],
+        };
+    }
+
+    private function typeA(): array
+    {
+        return ['id' => 1, 'name' => 'Type A'];
+    }
+
+    private function typeB(): array
+    {
+        return ['id' => 2, 'name' => 'Type B'];
+    }
+}
+EOD)->getClassDefinition('JsonResourceExtensionTest_SpreadInMatch');
+
+    expect($def->getMethod('toArray')->getReturnType()->toString())
+        ->toBe('array{id: int(1), name: string(Type A), type: string(a)}|array{id: int(2), name: string(Type B), type: string(b)}');
+});
+
+

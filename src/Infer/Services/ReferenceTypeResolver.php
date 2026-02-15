@@ -32,10 +32,8 @@ use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeTraverser;
 use Dedoc\Scramble\Support\Type\TypeWalker;
-use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
 
@@ -61,12 +59,7 @@ class ReferenceTypeResolver
         );
 
         // Type finalization: removing duplicates from union, unpacking array items (inside `replace`), calling resolving extensions.
-        $finalizedResolvedType = (new TypeWalker)->replace(
-            $resolvedType,
-            fn (Type $t) => $t instanceof Union ? TypeHelper::mergeTypes(...$t->types) : null,
-        );
-
-        return $this->resolveLateTypes($finalizedResolvedType->setOriginal($originalType), $originalType)->widen();
+        return $this->finalizeType($resolvedType->setOriginal($originalType), $originalType)->widen();
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type
@@ -121,11 +114,13 @@ class ReferenceTypeResolver
         return $type->resolve();
     }
 
-    private function resolveLateTypes(Type $type, Type $originalType): Type
+    private function finalizeType(Type $type, Type $originalType): Type
     {
         $attributes = $type->attributes();
 
         $traverser = new TypeTraverser([
+            new UnionNormalizingTypeVisitor,
+            new KeyedArrayUnpackingTypeVisitor,
             new LateTypeResolvingTypeVisitor,
         ]);
 
