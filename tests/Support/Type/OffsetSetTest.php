@@ -153,7 +153,7 @@ it('preserves array key description when setting the offset from offset get', fu
                 'bar' => [
                     'type' => 'integer',
                     'description' => 'Foo description.',
-                    'enum' => [42],
+                    'const' => 42,
                 ],
             ],
             'required' => ['bar'],
@@ -186,7 +186,7 @@ it('preserves array key description when setting the key from offset get', funct
                 'bar' => [
                     'type' => 'integer',
                     'description' => 'Foo description.',
-                    'enum' => [42],
+                    'const' => 42,
                 ],
             ],
             'required' => ['bar'],

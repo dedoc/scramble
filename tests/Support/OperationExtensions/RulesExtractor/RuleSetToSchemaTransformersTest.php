@@ -49,7 +49,7 @@ describe(EnumRule::class, function () {
         expect($schema->toArray())
             ->toBe([
                 'type' => 'string',
-                'enum' => ['foo'],
+                'const' => 'foo',
             ]);
     })->skip(! method_exists(Enum::class, 'only'));
 
@@ -65,7 +65,7 @@ describe(EnumRule::class, function () {
         expect($schema->toArray())
             ->toBe([
                 'type' => 'string',
-                'enum' => ['bar'],
+                'const' => 'bar',
             ]);
     })->skip(! method_exists(Enum::class, 'except'));
 });

@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Support\Type\ClassConstantType;
 use Dedoc\Scramble\Support\Type\EnumCaseType;
 use Dedoc\Scramble\Support\Type\GenericClassStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -27,12 +26,8 @@ class ConstFetchTypeGetter
                 return new EnumCaseType($className, $constName);
             }
 
-            $classConstantsAsConst = config('scramble.class_constants_as_const');
-            if ($classConstantsAsConst) {
-                return new ClassConstantType($constantReflection);
-            }
-
             $type = TypeHelper::createTypeFromValue($constantValue);
+
             if ($type) {
                 return $type;
             }

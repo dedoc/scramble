@@ -55,7 +55,7 @@ it('combines responses with different content types', function () {
                 'schema' => [
                     'type' => 'object',
                     'properties' => [
-                        'foo' => ['type' => 'string', 'enum' => ['bar']],
+                        'foo' => ['type' => 'string', 'const' => 'bar'],
                     ],
                     'required' => ['foo'],
                 ],

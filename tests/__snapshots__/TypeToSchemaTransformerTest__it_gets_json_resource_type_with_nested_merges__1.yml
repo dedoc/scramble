@@ -1,9 +1,9 @@
 type: object
 properties:
-    foo: { type: integer, enum: [1] }
-    wait: { type: object, properties: { one: { type: integer, enum: [1] }, bar: { type: string, enum: [foo] }, kek: { type: object, properties: { bar: { type: string, enum: [foo] } }, required: [bar] } }, required: [one, bar, kek] }
-    hey: { type: string, enum: [ho] }
-    bar: { type: string, enum: [foo] }
+    foo: { type: integer, const: 1 }
+    wait: { type: object, properties: { one: { type: integer, const: 1 }, bar: { type: string, const: foo }, kek: { type: object, properties: { bar: { type: string, const: foo } }, required: [bar] } }, required: [one, bar, kek] }
+    hey: { type: string, const: ho }
+    bar: { type: string, const: foo }
 required:
     - foo
     - wait
