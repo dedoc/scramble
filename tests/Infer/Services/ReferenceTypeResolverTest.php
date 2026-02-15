@@ -266,5 +266,3 @@ EOD)->getClassDefinition('JsonResourceExtensionTest_SpreadInMatch');
     expect($def->getMethod('toArray')->getReturnType()->toString())
         ->toBe('array{id: int(1), name: string(Type A), type: string(a)}|array{id: int(2), name: string(Type B), type: string(b)}');
 });
-
-
