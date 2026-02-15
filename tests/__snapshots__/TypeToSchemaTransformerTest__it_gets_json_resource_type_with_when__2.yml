@@ -1,6 +1,6 @@
 type: object
 properties:
-    foo: { type: integer, enum: [1] }
-    bar: { type: [string, 'null'], enum: [b] }
+    foo: { type: integer, const: 1 }
+    bar: { type: [string, 'null'], const: b }
 required:
     - bar
