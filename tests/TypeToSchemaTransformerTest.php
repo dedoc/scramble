@@ -309,6 +309,25 @@ it('gets nullable type reference', function () {
     ]);
 });
 
+it('infers date column when casted to date', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [\Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema::class]);
+
+    $transformer->transform(new ObjectType(SamplePostWithDateApprovedAtModel::class));
+
+    expect($this->context->openApi->components->getSchema(SamplePostWithDateApprovedAtModel::class)->toArray()['properties']['approved_at'])->toBe([
+        'type' => ['string', 'null'],
+        'format' => 'date',
+    ]);
+});
+class SamplePostWithDateApprovedAtModel extends \Illuminate\Database\Eloquent\Model
+{
+    protected $table = 'posts';
+
+    protected $casts = [
+        'approved_at' => 'datetime:Y-m-d',
+    ];
+}
+
 it('infers date column directly referenced in json as date-time', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
 
