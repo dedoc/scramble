@@ -119,8 +119,8 @@ class ReferenceTypeResolver
         $attributes = $type->attributes();
 
         $traverser = new TypeTraverser([
-            new UnionNormalizingTypeVisitor,
             new KeyedArrayUnpackingTypeVisitor,
+            new UnionNormalizingTypeVisitor,
             new LateTypeResolvingTypeVisitor,
         ]);
 

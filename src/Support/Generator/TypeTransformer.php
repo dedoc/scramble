@@ -226,11 +226,11 @@ class TypeTransformer
                 $openApiType = count($uniqueItems) === 1 ? $uniqueItems[0] : (new AnyOf)->setItems($uniqueItems);
             }
         } elseif ($type instanceof LiteralStringType) {
-            $openApiType = (new StringType)->constant($type->value);
+            $openApiType = (new StringType)->const($type->value);
         } elseif ($type instanceof LiteralIntegerType) {
-            $openApiType = (new IntegerType)->constant($type->value);
+            $openApiType = (new IntegerType)->const($type->value);
         } elseif ($type instanceof LiteralFloatType) {
-            $openApiType = (new NumberType)->constant($type->value);
+            $openApiType = (new NumberType)->const($type->value);
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\StringType) {
             $openApiType = new StringType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\FloatType) {

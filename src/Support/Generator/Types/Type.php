@@ -33,7 +33,7 @@ abstract class Type
     public array $enum = [];
 
     /** @var scalar|null */
-    public $constant = null;
+    public $const = null;
 
     public bool $nullable = false;
 
@@ -94,7 +94,6 @@ abstract class Type
     public function addProperties(Type $fromType): self
     {
         $this->attributes = $fromType->attributes;
-
         $this->format = $fromType->format;
         $this->description = $fromType->description;
         $this->contentMediaType = $fromType->contentMediaType;
@@ -103,6 +102,7 @@ abstract class Type
         $this->default = $fromType->default;
         $this->examples = $fromType->examples;
         $this->enum = $fromType->enum;
+        $this->const = $fromType->const;
         $this->nullable = $fromType->nullable;
         $this->deprecated = $fromType->deprecated;
         $this->pattern = $fromType->pattern;
@@ -122,7 +122,7 @@ abstract class Type
                 'deprecated' => $this->deprecated,
                 'pattern' => $this->pattern,
                 'enum' => count($this->enum) ? $this->enum : null,
-                'const' => ! is_null($this->constant) ? $this->constant : null,
+                'const' => ! is_null($this->const) ? $this->const : null,
             ]),
             $this->example instanceof MissingValue ? [] : ['example' => $this->example],
             $this->default instanceof MissingValue ? [] : ['default' => $this->default],
@@ -157,12 +157,12 @@ abstract class Type
     }
 
     /**
-     * @param  scalar  $constant
+     * @param  scalar  $const
      * @return $this
      */
-    public function constant($constant): self
+    public function const($const): self
     {
-        $this->constant = $constant;
+        $this->const = $const;
 
         return $this;
     }
