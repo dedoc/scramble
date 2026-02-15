@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Tests;
 
 use Attribute;
 use Dedoc\Scramble\DocumentTransformers\AddDocumentTags;
+use Dedoc\Scramble\DocumentTransformers\AddTagGroups;
 use Dedoc\Scramble\DocumentTransformers\CleanupUnusedResponseReferencesTransformer;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\ScrambleServiceProvider;
@@ -106,7 +107,7 @@ class GeneratorConfigTest extends TestCase
         $defaultConfig = Scramble::getConfigurationsInstance()->get('default');
         $v2Config = Scramble::getConfigurationsInstance()->get('v2');
 
-        $this->assertEquals(['common', 'only-default', AddDocumentTags::class, CleanupUnusedResponseReferencesTransformer::class], $defaultConfig->documentTransformers->all());
+        $this->assertEquals(['common', 'only-default', AddDocumentTags::class, AddTagGroups::class, CleanupUnusedResponseReferencesTransformer::class], $defaultConfig->documentTransformers->all());
         $this->assertEquals(['common', 'only-v2'], $v2Config->documentTransformers->all());
     }
 }

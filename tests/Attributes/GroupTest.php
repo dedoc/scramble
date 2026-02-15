@@ -142,3 +142,106 @@ class GroupTest_C4_Controller
 {
     public function __invoke() {}
 }
+
+it('generates x-tagGroups for tags with parent parameter', function () {
+    RouteFacade::get('api/users', GroupTest_Users_Controller::class);
+    RouteFacade::get('api/profiles', GroupTest_Profiles_Controller::class);
+
+    Scramble::routes(fn (Route $r) => in_array($r->uri, ['api/users', 'api/profiles']));
+
+    $openApiDoc = app()->make(Generator::class)();
+
+    expect($openApiDoc)
+        ->toHaveKey('x-tagGroups')
+        ->and($openApiDoc['x-tagGroups'])->toBe([[
+            'name' => 'User Management',
+            'tags' => ['users', 'profiles'],
+        ]]);
+});
+#[Group(name: 'users', parent: 'User Management', weight: 1)]
+class GroupTest_Users_Controller
+{
+    public function __invoke() {}
+}
+#[Group(name: 'profiles', parent: 'User Management', weight: 2)]
+class GroupTest_Profiles_Controller
+{
+    public function __invoke() {}
+}
+
+it('generates multiple x-tagGroups with correct ordering', function () {
+    RouteFacade::get('api/products', GroupTest_Products_Controller::class);
+    RouteFacade::get('api/users2', GroupTest_Users2_Controller::class);
+    RouteFacade::get('api/profiles2', GroupTest_Profiles2_Controller::class);
+
+    Scramble::routes(fn (Route $r) => in_array($r->uri, ['api/products', 'api/users2', 'api/profiles2']));
+
+    $openApiDoc = app()->make(Generator::class)();
+
+    expect($openApiDoc['x-tagGroups'])->toBe([
+        [
+            'name' => 'Products',
+            'tags' => ['products'],
+        ],
+        [
+            'name' => 'User Management',
+            'tags' => ['users2', 'profiles2'],
+        ],
+    ]);
+});
+#[Group(name: 'products', parent: 'Products', weight: 0)]
+class GroupTest_Products_Controller
+{
+    public function __invoke() {}
+}
+#[Group(name: 'users2', parent: 'User Management', weight: 1)]
+class GroupTest_Users2_Controller
+{
+    public function __invoke() {}
+}
+#[Group(name: 'profiles2', parent: 'User Management', weight: 2)]
+class GroupTest_Profiles2_Controller
+{
+    public function __invoke() {}
+}
+
+it('does not add x-tagGroups when no tags have parent', function () {
+    RouteFacade::get('api/simple', GroupTest_Simple_Controller::class);
+
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/simple');
+
+    $openApiDoc = app()->make(Generator::class)();
+
+    expect($openApiDoc)->not->toHaveKey('x-tagGroups');
+});
+#[Group(name: 'simple')]
+class GroupTest_Simple_Controller
+{
+    public function __invoke() {}
+}
+
+it('includes ungrouped tags in tags array but not in x-tagGroups', function () {
+    RouteFacade::get('api/grouped', GroupTest_Grouped_Controller::class);
+    RouteFacade::get('api/ungrouped', GroupTest_Ungrouped_Controller::class);
+
+    Scramble::routes(fn (Route $r) => in_array($r->uri, ['api/grouped', 'api/ungrouped']));
+
+    $openApiDoc = app()->make(Generator::class)();
+
+    expect($openApiDoc['tags'])->toHaveCount(2)
+        ->and(array_column($openApiDoc['tags'], 'name'))->toBe(['grouped', 'ungrouped'])
+        ->and($openApiDoc['x-tagGroups'])->toBe([[
+            'name' => 'My Group',
+            'tags' => ['grouped'],
+        ]]);
+});
+#[Group(name: 'grouped', parent: 'My Group')]
+class GroupTest_Grouped_Controller
+{
+    public function __invoke() {}
+}
+#[Group(name: 'ungrouped')]
+class GroupTest_Ungrouped_Controller
+{
+    public function __invoke() {}
+}
