@@ -782,6 +782,7 @@ it('allows marking request fields as deprecated', function () {
         $request->validate([
             /**
              * Woah
+             *
              * @deprecated Since 1.0.0 is deprecated.
              */
             'foo' => ['integer'],
