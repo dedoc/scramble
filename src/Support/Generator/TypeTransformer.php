@@ -132,6 +132,8 @@ class TypeTransformer
         } elseif ($type instanceof ArrayItemType_) {
             $openApiType = $this->transform($type->value);
 
+            // @todo use PhpDocSchemaTransformer
+
             /** @var PhpDocNode|null $valueDocNode */
             $valueDocNode = $type->value->getAttribute('docNode');
             /** @var PhpDocNode|null $arrayItemDocNode */
@@ -165,18 +167,20 @@ class TypeTransformer
                     $openApiType->default($default[0]);
                 }
 
-                if ($format = array_values($docNode->getTagsByName('@format'))[0]->value->value ?? null) {
-                    $openApiType->format($format);
-                }
-
                 $deprecated = array_values($docNode->getTagsByName('@deprecated'))[0]->value ?? null;
                 if ($deprecated instanceof DeprecatedTagValueNode) {
                     $openApiType->deprecated(true);
 
                     if ($deprecated->description) {
-                        $existingDesc = $openApiType->description ? $openApiType->description.' ' : '';
-                        $openApiType->setDescription($existingDesc.$deprecated->description);
+                        $openApiType->setDescription(implode(' ', array_filter([
+                            $openApiType->description,
+                            $deprecated->description,
+                        ])));
                     }
+                }
+
+                if ($format = array_values($docNode->getTagsByName('@format'))[0]->value->value ?? null) {
+                    $openApiType->format($format);
                 }
             }
         } elseif ($type instanceof Union) {

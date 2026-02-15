@@ -92,11 +92,17 @@ abstract class Type
     {
         $this->attributes = $fromType->attributes;
 
-        $this->nullable = $fromType->nullable;
-        $this->enum = $fromType->enum;
+        $this->format = $fromType->format;
         $this->description = $fromType->description;
+        $this->contentMediaType = $fromType->contentMediaType;
+        $this->contentEncoding = $fromType->contentEncoding;
         $this->example = $fromType->example;
         $this->default = $fromType->default;
+        $this->examples = $fromType->examples;
+        $this->enum = $fromType->enum;
+        $this->nullable = $fromType->nullable;
+        $this->deprecated = $fromType->deprecated;
+        $this->pattern = $fromType->pattern;
 
         return $this;
     }

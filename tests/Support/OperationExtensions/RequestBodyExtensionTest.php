@@ -780,7 +780,10 @@ class RequestBodyExtensionTest_UseHttpMethodsWithValidationRulesController
 it('allows marking request fields as deprecated', function () {
     $document = generateForRoute(RouteFacade::post('test', function (Request $request) {
         $request->validate([
-            /** @deprecated Since 1.0.0 is deprecated. */
+            /**
+             * Woah
+             * @deprecated Since 1.0.0 is deprecated.
+             */
             'foo' => ['integer'],
         ]);
     }));
@@ -789,7 +792,26 @@ it('allows marking request fields as deprecated', function () {
 
     expect($fooProperty)->toBe([
         'type' => 'integer',
+        'description' => 'Woah Since 1.0.0 is deprecated.',
+        'deprecated' => true,
+    ]);
+});
+
+it('allows marking request array fields as deprecated', function () {
+    $document = generateForRoute(RouteFacade::post('test', function (Request $request) {
+        $request->validate([
+            /** @deprecated Since 1.0.0 is deprecated. */
+            'foo' => 'sometimes',
+            'foo.*' => ['integer'],
+        ]);
+    }));
+
+    $fooProperty = $document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties']['foo']; // woah...
+
+    expect($fooProperty)->toBe([
+        'type' => 'array',
         'description' => 'Since 1.0.0 is deprecated.',
         'deprecated' => true,
+        'items' => ['type' => 'integer'],
     ]);
 });
