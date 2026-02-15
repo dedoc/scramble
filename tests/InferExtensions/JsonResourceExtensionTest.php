@@ -50,7 +50,7 @@ it('supports whenHas', function () {
             ],
             'value' => [
                 'type' => 'integer',
-                'enum' => [42],
+                'const' => 42,
             ],
             'default' => [
                 'anyOf' => [

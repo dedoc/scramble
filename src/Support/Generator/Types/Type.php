@@ -32,6 +32,9 @@ abstract class Type
 
     public array $enum = [];
 
+    /** @var scalar|null */
+    public $constant = null;
+
     public bool $nullable = false;
 
     public bool $deprecated = false;
@@ -119,6 +122,7 @@ abstract class Type
                 'deprecated' => $this->deprecated,
                 'pattern' => $this->pattern,
                 'enum' => count($this->enum) ? $this->enum : null,
+                'const' => ! is_null($this->constant) ? $this->constant : null,
             ]),
             $this->example instanceof MissingValue ? [] : ['example' => $this->example],
             $this->default instanceof MissingValue ? [] : ['default' => $this->default],
@@ -148,6 +152,17 @@ abstract class Type
     public function enum(array $enum): self
     {
         $this->enum = $enum;
+
+        return $this;
+    }
+
+    /**
+     * @param  scalar  $constant
+     * @return $this
+     */
+    public function constant($constant): self
+    {
+        $this->constant = $constant;
 
         return $this;
     }

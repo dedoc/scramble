@@ -29,7 +29,7 @@ it('transforms json inferred type to response', function () {
             'application/json' => [
                 'schema' => [
                     'type' => 'object',
-                    'properties' => ['foo' => ['type' => 'string', 'enum' => ['bar']]],
+                    'properties' => ['foo' => ['type' => 'string', 'const' => 'bar']],
                     'required' => ['foo'],
                 ],
             ],

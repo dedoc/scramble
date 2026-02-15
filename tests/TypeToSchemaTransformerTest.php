@@ -38,8 +38,8 @@ it('transforms simple types', function ($type, $openApiArrayed) {
 })->with([
     [new IntegerType, ['type' => 'integer']],
     [new StringType, ['type' => 'string']],
-    [new LiteralStringType('wow'), ['type' => 'string', 'enum' => ['wow']]],
-    [new LiteralFloatType(157.50), ['type' => 'number', 'enum' => [157.5]]],
+    [new LiteralStringType('wow'), ['type' => 'string', 'const' => 'wow']],
+    [new LiteralFloatType(157.50), ['type' => 'number', 'const' => 157.5]],
     [new BooleanType, ['type' => 'boolean']],
     [new MixedType, (object) []],
     [new ArrayType(value: new StringType), ['type' => 'array', 'items' => ['type' => 'string']]],

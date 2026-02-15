@@ -12,7 +12,7 @@ it('extracts response from `@response` tag', function () {
     expect($openApiDocument['paths']['/test']['get']['responses'][200]['content']['application/json']['schema'])
         ->toHaveKey('type', 'object')
         ->toHaveKey('properties.foo.type', 'string')
-        ->toHaveKey('properties.foo.enum', ['bar']);
+        ->toHaveKey('properties.foo.const', 'bar');
 });
 class Foo_ResponseExtensionTest_Controller
 {
@@ -55,7 +55,7 @@ it('combines responses with different content types', function () {
                 'schema' => [
                     'type' => 'object',
                     'properties' => [
-                        'foo' => ['type' => 'string', 'enum' => ['bar']],
+                        'foo' => ['type' => 'string', 'const' => 'bar'],
                     ],
                     'required' => ['foo'],
                 ],
