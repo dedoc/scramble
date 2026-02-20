@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\User;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;

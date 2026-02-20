@@ -12,7 +12,7 @@ class RulesEvaluationException extends Exception
     public array $exceptions = [];
 
     /**
-     * @param array<string, Throwable> $exceptions
+     * @param  array<string, Throwable>  $exceptions
      */
     public static function fromExceptions(array $exceptions): self
     {
@@ -44,7 +44,7 @@ class RulesEvaluationException extends Exception
 
             $context = self::extractFileLocation($e);
 
-            $lines[] = "  [$name] {$e->getMessage()}" . ($context ? " {$context}" : '');
+            $lines[] = "  [$name] {$e->getMessage()}".($context ? " {$context}" : '');
         }
 
         return implode("\n", $lines);
