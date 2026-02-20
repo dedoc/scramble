@@ -2,8 +2,10 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
+use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Illuminate\Http\Request;
+use Throwable;
 
 class FormRequestRulesEvaluator implements RulesEvaluator
 {
@@ -14,7 +16,11 @@ class FormRequestRulesEvaluator implements RulesEvaluator
 
     public function handle(): array
     {
-        return $this->rules($this->classReflector->className, $this->method);
+        try {
+            return $this->rules($this->classReflector->className, $this->method);
+        } catch (Throwable $e) {
+            throw RulesEvaluationException::fromExceptions([self::class => $e]);
+        }
     }
 
     protected function rules(string $requestClassName, string $method)

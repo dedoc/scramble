@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
@@ -816,3 +817,28 @@ it('allows marking request array fields as deprecated', function () {
         'items' => ['type' => 'integer'],
     ]);
 });
+
+it('gracefully handles not evaluable validation rules', function () {
+    Scramble::throwOnError(false);
+
+    $document = generateForRoute(RouteFacade::post('test', function (CreateUser_RequestBodyExtensionTest $request) {
+        // ...
+    }));
+
+    expect($document['paths']['/test']['post']['description'])
+        ->toContain('Cannot generate request documentation: Cannot evaluate validation rules');
+});
+
+class CreateUser_RequestBodyExtensionTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'external_id' => [
+                ...$this->nonExistingMethod(),
+                Rule::unique(\Dedoc\Scramble\Tests\Files\SamplePostModel::class)
+                    ->where('company_id', $this->nonExistingMethod()->company_id),
+            ],
+        ];
+    }
+}
