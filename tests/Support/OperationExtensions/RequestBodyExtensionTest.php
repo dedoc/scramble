@@ -827,7 +827,6 @@ it('gracefully handles not evaluable validation rules', function () {
     expect($document['paths']['/test']['post']['description'])
         ->toContain('Cannot generate request documentation: Cannot evaluate validation rules');
 });
-
 class CreateUser_RequestBodyExtensionTest extends FormRequest
 {
     public function rules(): array
@@ -839,5 +838,40 @@ class CreateUser_RequestBodyExtensionTest extends FormRequest
                     ->where('company_id', $this->nonExistingMethod()->company_id),
             ],
         ];
+    }
+}
+
+it('gracefully handles unpacked method call in form request', function () {
+    $document = generateForRoute(RouteFacade::post('test', function (CreateUserUnpack_RequestBodyExtensionTest $request) {
+        // ...
+    }));
+
+    expect($document['components']['schemas']['CreateUserUnpack_RequestBodyExtensionTest'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                'external_id' => [
+                    'type' => 'string',
+                ]
+            ],
+            'title' => 'CreateUserUnpack_RequestBodyExtensionTest',
+        ]);
+});
+class CreateUserUnpack_RequestBodyExtensionTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'external_id' => [
+                ...$this->someRules(),
+                Rule::unique(\Dedoc\Scramble\Tests\Files\SamplePostModel::class)
+                    ->where('company_id', $this->user()->company_id),
+            ],
+        ];
+    }
+
+    protected function someRules()
+    {
+        return ['numeric'];
     }
 }
