@@ -852,7 +852,7 @@ it('gracefully handles unpacked method call in form request', function () {
             'properties' => [
                 'external_id' => [
                     'type' => 'string',
-                ]
+                ],
             ],
             'title' => 'CreateUserUnpack_RequestBodyExtensionTest',
         ]);
