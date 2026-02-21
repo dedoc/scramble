@@ -35,8 +35,6 @@ class ScrambleTest extends TestCase
     {
         $routes = $this->getScrambleRoutes();
 
-        dump(array_map(fn (\Illuminate\Routing\Route $r) => [$r->uri, $r->getName()], $routes));
-
         $this->assertCount(2, $routes);
 
         $this->assertRoutesAreCacheable($routes);
