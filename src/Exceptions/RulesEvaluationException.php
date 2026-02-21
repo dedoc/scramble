@@ -34,7 +34,7 @@ class RulesEvaluationException extends Exception
     }
 
     /**
-     * @param array<string, Throwable> $exceptions
+     * @param  array<string, Throwable>  $exceptions
      */
     private static function buildMessage(array $exceptions): string
     {

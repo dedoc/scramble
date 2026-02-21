@@ -7,8 +7,9 @@ use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 interface RulesEvaluator
 {
     /**
-     * @throws RulesEvaluationException
      * @return array<string, RuleSet>
+     *
+     * @throws RulesEvaluationException
      */
     public function handle(): array;
 }
