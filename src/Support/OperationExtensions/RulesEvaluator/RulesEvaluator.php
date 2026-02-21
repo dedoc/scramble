@@ -6,6 +6,9 @@ use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 
 interface RulesEvaluator
 {
-    /** @throws RulesEvaluationException */
+    /**
+     * @throws RulesEvaluationException
+     * @return array<string, RuleSet>
+     */
     public function handle(): array;
 }

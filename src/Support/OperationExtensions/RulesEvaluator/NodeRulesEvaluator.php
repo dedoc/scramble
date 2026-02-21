@@ -49,6 +49,9 @@ class NodeRulesEvaluator implements RulesEvaluator
         }
     }
 
+    /**
+     * @return array<string, RuleSet>
+     */
     private function rules(): array
     {
         $vars = $this->evaluateDefinedVars();
@@ -67,7 +70,7 @@ class NodeRulesEvaluator implements RulesEvaluator
             }
         }
 
-        return $rules;
+        return $rules; // @phpstan-ignore return.type
     }
 
     /**

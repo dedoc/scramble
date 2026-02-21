@@ -3502,12 +3502,6 @@ parameters:
 			path: src/Support/OperationExtensions/RequestEssentialsExtension.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\ComposedFormRequestRulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/ComposedFormRequestRulesEvaluator.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>expr" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -3516,12 +3510,6 @@ parameters:
 		-
 			message: '#^Call to function method_exists\(\) with Illuminate\\Http\\Request and ''setMethod'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/FormRequestRulesEvaluator.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\FormRequestRulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/OperationExtensions/RulesEvaluator/FormRequestRulesEvaluator.php
 
@@ -3550,28 +3538,10 @@ parameters:
 			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\NodeRulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\NodeRulesEvaluator\:\:handle\(\) should return array but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
-
-		-
 			message: '#^Possibly invalid array key type PhpParser\\Node\\Expr\|string\.$#'
 			identifier: array.invalidKey
 			count: 2
 			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\RulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/RulesEvaluator.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesMapper\:\:array\(\) has no return type specified\.$#'
