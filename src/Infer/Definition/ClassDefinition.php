@@ -256,7 +256,7 @@ class ClassDefinition implements ClassDefinitionContract
             $name,
             $methodReflection,
             collect($this->templateTypes)->keyBy->name
-                ->merge($this->getMethodContextTemplates($methodReflection)), // @phpstan-ignore argument.type
+                ->merge($this->getMethodContextTemplates($methodReflection)),
         ))->build();
 
         return $this->methods[$name] = $definition;

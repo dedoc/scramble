@@ -780,7 +780,11 @@ class RequestBodyExtensionTest_UseHttpMethodsWithValidationRulesController
 it('allows marking request fields as deprecated', function () {
     $document = generateForRoute(RouteFacade::post('test', function (Request $request) {
         $request->validate([
-            /** @deprecated Since 1.0.0 is deprecated. */
+            /**
+             * Woah
+             *
+             * @deprecated Since 1.0.0 is deprecated.
+             */
             'foo' => ['integer'],
         ]);
     }));
@@ -789,7 +793,85 @@ it('allows marking request fields as deprecated', function () {
 
     expect($fooProperty)->toBe([
         'type' => 'integer',
-        'description' => 'Since 1.0.0 is deprecated.',
+        'description' => 'Woah Since 1.0.0 is deprecated.',
         'deprecated' => true,
     ]);
 });
+
+it('allows marking request array fields as deprecated', function () {
+    $document = generateForRoute(RouteFacade::post('test', function (Request $request) {
+        $request->validate([
+            /** @deprecated Since 1.0.0 is deprecated. */
+            'foo' => 'sometimes',
+            'foo.*' => ['integer'],
+        ]);
+    }));
+
+    $fooProperty = $document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties']['foo']; // woah...
+
+    expect($fooProperty)->toBe([
+        'type' => 'array',
+        'description' => 'Since 1.0.0 is deprecated.',
+        'deprecated' => true,
+        'items' => ['type' => 'integer'],
+    ]);
+});
+
+it('gracefully handles not evaluable validation rules', function () {
+    Scramble::throwOnError(false);
+
+    $document = generateForRoute(RouteFacade::post('test', function (CreateUser_RequestBodyExtensionTest $request) {
+        // ...
+    }));
+
+    expect($document['paths']['/test']['post']['description'])
+        ->toContain('Cannot generate request documentation: Cannot evaluate validation rules');
+});
+class CreateUser_RequestBodyExtensionTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'external_id' => [
+                ...$this->nonExistingMethod(),
+                Rule::unique(\Dedoc\Scramble\Tests\Files\SamplePostModel::class)
+                    ->where('company_id', $this->nonExistingMethod()->company_id),
+            ],
+        ];
+    }
+}
+
+it('gracefully handles unpacked method call in form request', function () {
+    $document = generateForRoute(RouteFacade::post('test', function (CreateUserUnpack_RequestBodyExtensionTest $request) {
+        // ...
+    }));
+
+    expect($document['components']['schemas']['CreateUserUnpack_RequestBodyExtensionTest'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                'external_id' => [
+                    'type' => 'string',
+                ],
+            ],
+            'title' => 'CreateUserUnpack_RequestBodyExtensionTest',
+        ]);
+});
+class CreateUserUnpack_RequestBodyExtensionTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'external_id' => [
+                ...$this->someRules(),
+                Rule::unique(\Dedoc\Scramble\Tests\Files\SamplePostModel::class)
+                    ->where('company_id', $this->user()->company_id),
+            ],
+        ];
+    }
+
+    protected function someRules()
+    {
+        return ['numeric'];
+    }
+}

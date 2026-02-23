@@ -30,6 +30,7 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Str;
+use PHPStan\PhpDocParser\Ast\PhpDoc\DeprecatedTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 use function DeepCopy\deep_copy;
@@ -131,6 +132,8 @@ class TypeTransformer
         } elseif ($type instanceof ArrayItemType_) {
             $openApiType = $this->transform($type->value);
 
+            // @todo use PhpDocSchemaTransformer
+
             /** @var PhpDocNode|null $valueDocNode */
             $valueDocNode = $type->value->getAttribute('docNode');
             /** @var PhpDocNode|null $arrayItemDocNode */
@@ -164,6 +167,18 @@ class TypeTransformer
                     $openApiType->default($default[0]);
                 }
 
+                $deprecated = array_values($docNode->getTagsByName('@deprecated'))[0]->value ?? null;
+                if ($deprecated instanceof DeprecatedTagValueNode) {
+                    $openApiType->deprecated(true);
+
+                    if ($deprecated->description) {
+                        $openApiType->setDescription(implode(' ', array_filter([
+                            $openApiType->description,
+                            $deprecated->description,
+                        ])));
+                    }
+                }
+
                 if ($format = array_values($docNode->getTagsByName('@format'))[0]->value->value ?? null) {
                     $openApiType->format($format);
                 }
@@ -186,17 +201,24 @@ class TypeTransformer
                     ->all();
 
                 $items = array_map($this->transform(...), $otherTypes->values()->toArray()); // @phpstan-ignore argument.type
+                $literalSchemas = [];
 
                 if ($stringLiterals->count()) {
-                    $items[] = (new StringType)->enum(
+                    $items[] = $literalSchemas[] = (new StringType)->enum(
                         $stringLiterals->map->value->unique()->values()->toArray() // @phpstan-ignore property.notFound
                     );
                 }
 
                 if ($integerLiterals->count()) {
-                    $items[] = (new IntegerType)->enum(
+                    $items[] = $literalSchemas[] = (new IntegerType)->enum(
                         $integerLiterals->map->value->unique()->values()->toArray() // @phpstan-ignore property.notFound
                     );
+                }
+
+                // In case $otherTypes consist just of null and there is string or integer literals, make type nullable
+                $otherTypesIsNullable = count($otherTypes) === 1 && collect($otherTypes)->contains(fn ($t) => $t instanceof \Dedoc\Scramble\Support\Type\NullType);
+                if ($otherTypesIsNullable && ($stringLiterals->count() || $integerLiterals->count())) {
+                    $items = array_map(fn ($s) => $s->nullable(true), $literalSchemas);
                 }
 
                 // Removing duplicated schemas before making a resulting AnyOf type.
@@ -204,11 +226,11 @@ class TypeTransformer
                 $openApiType = count($uniqueItems) === 1 ? $uniqueItems[0] : (new AnyOf)->setItems($uniqueItems);
             }
         } elseif ($type instanceof LiteralStringType) {
-            $openApiType = (new StringType)->enum([$type->value]);
+            $openApiType = (new StringType)->const($type->value);
         } elseif ($type instanceof LiteralIntegerType) {
-            $openApiType = (new IntegerType)->enum([$type->value]);
+            $openApiType = (new IntegerType)->const($type->value);
         } elseif ($type instanceof LiteralFloatType) {
-            $openApiType = (new NumberType)->enum([$type->value]);
+            $openApiType = (new NumberType)->const($type->value);
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\StringType) {
             $openApiType = new StringType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\FloatType) {

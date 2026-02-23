@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
+use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Stmt\Return_;
@@ -18,26 +19,31 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
 
     public function handle(): array
     {
-        $rulesMethodNode = $this->classReflector->getMethod('rules')->getAstNode();
+        $rulesMethod = $this->classReflector->getMethod('rules');
+        $rulesMethodNode = $rulesMethod->getAstNode();
 
-        $returnNode = (new NodeFinder)->findFirst(
+        /** @var Return_ $returnNodeStatement */
+        $returnNodeStatement = (new NodeFinder)->findFirst(
             $rulesMethodNode ? [$rulesMethodNode] : [],
             fn ($node) => $node instanceof Return_ && $node->expr instanceof Array_
-        )?->expr ?? null;
+        );
+        $returnNode = $returnNodeStatement?->expr ?? null;
 
         $evaluators = [
             new FormRequestRulesEvaluator($this->classReflector, $this->method),
-            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className),
+            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className, $rulesMethod->getFunctionLikeDefinition()->getScope()),
         ];
+
+        $exceptions = [];
 
         foreach ($evaluators as $evaluator) {
             try {
                 return $evaluator->handle();
             } catch (\Throwable $e) {
-                // @todo communicate error
+                $exceptions[$evaluator::class] = $e;
             }
         }
 
-        return [];
+        throw RulesEvaluationException::fromExceptions($exceptions);
     }
 }

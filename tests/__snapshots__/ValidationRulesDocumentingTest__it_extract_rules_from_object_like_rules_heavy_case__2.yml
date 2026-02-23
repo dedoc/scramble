@@ -1,0 +1,9 @@
+-
+    name: channel
+    in: query
+    required: true
+    schema: { type: object, properties: { publisher: { type: [array, 'null'], items: { type: string } } } }
+-
+    name: channels
+    in: query
+    schema: { type: object, properties: { channel_url: { type: string, format: uri }, agency: { type: [object, 'null'], properties: { id: { type: [integer, 'null'] }, name: { type: [string, 'null'] } } }, publisher: { type: object, properties: { id: { type: [integer, 'null'] }, name: { type: [string, 'null'] } } } } }

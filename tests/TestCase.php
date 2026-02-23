@@ -34,7 +34,7 @@ class TestCase extends Orchestra
 
         return array_values(array_filter(
             $routes,
-            fn ($r) => ! $r->named('storage.local'),
+            fn ($r) => ! $r->named('storage.*'),
         ));
     }
 

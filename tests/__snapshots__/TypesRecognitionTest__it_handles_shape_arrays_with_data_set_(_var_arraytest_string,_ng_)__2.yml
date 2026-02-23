@@ -1,0 +1,6 @@
+type: object
+properties:
+    test: { type: string }
+    wow: { type: string }
+required:
+    - test

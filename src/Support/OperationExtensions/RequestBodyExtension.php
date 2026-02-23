@@ -175,7 +175,7 @@ class RequestBodyExtension extends OperationExtension
      */
     protected function prepareQueryParams(array $params): array
     {
-        return config('scramble.flatten_deep_query_parameters', true)
+        return $this->config->get('flatten_deep_query_parameters', true)
             ? $this->convertDotNamedParamsToFlatQueryParams($params)
             : $this->convertDotNamedParamsToComplexStructures($params);
     }

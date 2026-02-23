@@ -49,20 +49,38 @@ class TypeTraverser
     private function enterType(Type $type): Type|int|null
     {
         $result = null;
+        $resultType = $type;
         foreach ($this->visitors as $visitor) {
-            $result = $visitor->enter($result instanceof Type ? $result : $type);
+            $enterResult = $visitor->enter($resultType);
+
+            if ($enterResult === TypeVisitor::DONT_TRAVERSE_CURRENT_AND_CHILDREN) {
+                return $enterResult;
+            }
+
+            if ($enterResult instanceof Type) {
+                $resultType = $enterResult;
+            }
+
+            $result = $enterResult;
         }
 
-        return $result;
+        return $resultType === $type ? $result : $resultType;
     }
 
     private function leaveType(Type $type): Type|int|null
     {
         $result = null;
+        $resultType = $type;
         foreach ($this->visitors as $visitor) {
-            $result = $visitor->leave($result instanceof Type ? $result : $type);
+            $leaveResult = $visitor->leave($resultType);
+
+            if ($leaveResult instanceof Type) {
+                $resultType = $leaveResult;
+            }
+
+            $result = $leaveResult;
         }
 
-        return $result;
+        return $resultType === $type ? $result : $resultType;
     }
 }

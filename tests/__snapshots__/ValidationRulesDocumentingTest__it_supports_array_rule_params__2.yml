@@ -1,0 +1,5 @@
+-
+    name: destination
+    in: query
+    required: true
+    schema: { type: object, properties: { lat: { type: string }, lon: { type: string } }, required: [lat, lon] }

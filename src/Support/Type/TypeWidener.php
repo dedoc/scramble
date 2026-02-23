@@ -88,6 +88,11 @@ class TypeWidener
             return new StringType;
         }
 
+        // list{}|array<T> -> array<T>
+        if ($a instanceof KeyedArrayType && count($a->items) === 0 && $b instanceof ArrayType) {
+            return $b;
+        }
+
         if (
             $a instanceof Generic
             && $b instanceof Generic

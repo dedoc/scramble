@@ -271,13 +271,13 @@ parameters:
 			path: src/Console/Commands/AnalyzeDocumentation.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Console\\Commands\\AnalyzeDocumentation\:\:groupExceptions\(\) should return Illuminate\\Support\\Collection\<string, Illuminate\\Support\\Collection\<int, Throwable\>\> but returns Illuminate\\Support\\Collection\<string, Illuminate\\Support\\Collection\<int, mixed\>\>\.$#'
+			message: '#^Method Dedoc\\Scramble\\Console\\Commands\\AnalyzeDocumentation\:\:groupExceptions\(\) should return Illuminate\\Support\\Collection\<string, Illuminate\\Support\\Collection\<int, Throwable\>\> but returns Illuminate\\Support\\Collection\<\(int\|string\), Illuminate\\Support\\Collection\<int, mixed\>\>\.$#'
 			identifier: return.type
 			count: 1
 			path: src/Console/Commands/AnalyzeDocumentation.php
 
 		-
-			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|string\|null given\.$#'
+			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|float\|int\|string\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Console/Commands/AnalyzeDocumentation.php
@@ -325,7 +325,7 @@ parameters:
 			path: src/Console/Commands/Components/TermsOfContentItem.php
 
 		-
-			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|string\|null given\.$#'
+			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|float\|int\|string\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Console/Commands/ExportDocumentation.php
@@ -337,7 +337,7 @@ parameters:
 			path: src/Console/Commands/ExportDocumentation.php
 
 		-
-			message: '#^Part \$api \(array\|bool\|string\|null\) of encapsed string cannot be cast to string\.$#'
+			message: '#^Part \$api \(array\|bool\|float\|int\|string\|null\) of encapsed string cannot be cast to string\.$#'
 			identifier: encapsedStringPart.nonString
 			count: 1
 			path: src/Console/Commands/ExportDocumentation.php
@@ -759,12 +759,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\DefinitionBuilders\\LazyClassReflectionDefinitionBuilder\:\:__construct\(\) has parameter \$reflection with generic class ReflectionClass but does not specify its types\: T$#'
 			identifier: missingType.generics
-			count: 1
-			path: src/Infer/DefinitionBuilders/LazyClassReflectionDefinitionBuilder.php
-
-		-
-			message: '#^Parameter \#1 \$reflectionType of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:createTypeFromReflectionType\(\) expects ReflectionType, ReflectionType\|null given\.$#'
-			identifier: argument.type
 			count: 1
 			path: src/Infer/DefinitionBuilders/LazyClassReflectionDefinitionBuilder.php
 
@@ -3352,12 +3346,6 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
 
 		-
-			message: '#^Class Spatie\\LaravelData\\Contracts\\BaseData not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
-
-		-
 			message: '#^Variable \$requestParam in PHPDoc tag @var does not exist\.$#'
 			identifier: varTag.variableNotFound
 			count: 1
@@ -3383,12 +3371,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$array of static method Illuminate\\Support\\Arr\:\:hasAny\(\) expects array\|ArrayAccess, array\<string, class\-string\>\|false given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
-
-		-
-			message: '#^Parameter \#1 \$reflectionType of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:createTypeFromReflectionType\(\) expects ReflectionType, ReflectionType\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
@@ -3520,12 +3502,6 @@ parameters:
 			path: src/Support/OperationExtensions/RequestEssentialsExtension.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\ComposedFormRequestRulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/ComposedFormRequestRulesEvaluator.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>expr" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -3534,12 +3510,6 @@ parameters:
 		-
 			message: '#^Call to function method_exists\(\) with Illuminate\\Http\\Request and ''setMethod'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/FormRequestRulesEvaluator.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\FormRequestRulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/OperationExtensions/RulesEvaluator/FormRequestRulesEvaluator.php
 
@@ -3568,28 +3538,10 @@ parameters:
 			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\NodeRulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\NodeRulesEvaluator\:\:handle\(\) should return array but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
-
-		-
 			message: '#^Possibly invalid array key type PhpParser\\Node\\Expr\|string\.$#'
 			identifier: array.invalidKey
 			count: 2
 			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\RulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/RulesEvaluator.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesMapper\:\:array\(\) has no return type specified\.$#'
@@ -3905,6 +3857,12 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$filename of class SplFileObject constructor expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/ResponseExtractor/ModelInfo.php
+
+		-
+			message: '#^Parameter \#1 \$items of method Illuminate\\Support\\Collection\<string,string\>\:\:merge\(\) expects Illuminate\\Contracts\\Support\\Arrayable\<non\-falsy\-string, mixed\>\|iterable\<non\-falsy\-string, mixed\>, array given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Support/ResponseExtractor/ModelInfo.php

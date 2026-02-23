@@ -33,7 +33,9 @@ class ScrambleTest extends TestCase
     /** @test */
     public function caches_routes_when_closure_resolver_set()
     {
-        $this->assertCount(2, $routes = $this->getScrambleRoutes());
+        $routes = $this->getScrambleRoutes();
+
+        $this->assertCount(2, $routes);
 
         $this->assertRoutesAreCacheable($routes);
     }

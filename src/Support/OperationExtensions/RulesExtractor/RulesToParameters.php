@@ -121,6 +121,9 @@ class RulesToParameters
         ))->handle($schemaBag);
     }
 
+    /**
+     * @param  RuleSet  $rules
+     */
     private function makeRuleTransformerContext(string $name, mixed $rules): RuleTransformerContext
     {
         return RuleTransformerContext::makeFromOpenApiContext($this->openApiTransformer->context, [

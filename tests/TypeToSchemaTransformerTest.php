@@ -38,8 +38,8 @@ it('transforms simple types', function ($type, $openApiArrayed) {
 })->with([
     [new IntegerType, ['type' => 'integer']],
     [new StringType, ['type' => 'string']],
-    [new LiteralStringType('wow'), ['type' => 'string', 'enum' => ['wow']]],
-    [new LiteralFloatType(157.50), ['type' => 'number', 'enum' => [157.5]]],
+    [new LiteralStringType('wow'), ['type' => 'string', 'const' => 'wow']],
+    [new LiteralFloatType(157.50), ['type' => 'number', 'const' => 157.5]],
     [new BooleanType, ['type' => 'boolean']],
     [new MixedType, (object) []],
     [new ArrayType(value: new StringType), ['type' => 'array', 'items' => ['type' => 'string']]],
@@ -69,6 +69,21 @@ it('transforms simple types', function ($type, $openApiArrayed) {
         'maxItems' => 3,
         'additionalItems' => false,
     ]],
+]);
+
+it('transforms nullable unions', function ($type, $openApiArrayed) {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect(json_encode($transformer->transform($type)->toArray()))->toBe(json_encode($openApiArrayed));
+})->with([
+    [Union::wrap([
+        new LiteralStringType('idle'),
+        new LiteralStringType('charging'),
+        new LiteralStringType('discharging'),
+        new NullType,
+    ]), ['type' => ['string', 'null'], 'enum' => ['idle', 'charging', 'discharging']]],
 ]);
 
 it('gets json resource type', function () {
@@ -294,6 +309,25 @@ it('gets nullable type reference', function () {
     ]);
 });
 
+it('infers date column when casted to date', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [\Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema::class]);
+
+    $transformer->transform(new ObjectType(SamplePostWithDateApprovedAtModel::class));
+
+    expect($this->context->openApi->components->getSchema(SamplePostWithDateApprovedAtModel::class)->toArray()['properties']['approved_at'])->toBe([
+        'type' => ['string', 'null'],
+        'format' => 'date',
+    ]);
+});
+class SamplePostWithDateApprovedAtModel extends \Illuminate\Database\Eloquent\Model
+{
+    protected $table = 'posts';
+
+    protected $casts = [
+        'approved_at' => 'datetime:Y-m-d',
+    ];
+}
+
 it('infers date column directly referenced in json as date-time', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
 
@@ -352,6 +386,27 @@ it('supports @format tag in api resource', function () {
     expect($this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithFormat::class)->toArray()['properties']['now'])->toBe([
         'type' => 'string',
         'format' => 'date-time',
+    ]);
+});
+
+it('supports @deprecated tag in api resource', function () {
+    $transformer = new TypeTransformer(app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(ApiResourceTest_ResourceWithDeprecated::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithDeprecated',
+    ]);
+
+    expect($this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithDeprecated::class)->toArray()['properties']['old_field'])->toBe([
+        'type' => 'integer',
+        'deprecated' => true,
+    ]);
+
+    expect($this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithDeprecated::class)->toArray()['properties']['old_field_with_description'])->toBe([
+        'type' => 'string',
+        'description' => 'Use new_field instead.',
+        'deprecated' => true,
     ]);
 });
 
@@ -623,6 +678,26 @@ class ApiResourceTest_ResourceWithFormat extends JsonResource
              * @format date-time
              */
             'now' => now(),
+        ];
+    }
+}
+
+/**
+ * @property SamplePostModel $resource
+ */
+class ApiResourceTest_ResourceWithDeprecated extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            /**
+             * @deprecated
+             */
+            'old_field' => $this->id,
+            /**
+             * @deprecated Use new_field instead.
+             */
+            'old_field_with_description' => $this->title,
         ];
     }
 }

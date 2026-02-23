@@ -62,3 +62,11 @@ it('parses integers', function (string $phpDocType, string $expectedTypeString) 
     ['/** @var int<max, 10> */', 'int'],
     ['/** @var int<10, min> */', 'int'],
 ]);
+
+it('parses unions', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    ["/** @var 'idle'|'charging'|'discharging'|null */", 'string(idle)|string(charging)|string(discharging)|null'],
+]);

@@ -31,7 +31,7 @@ it('transforms arrayable to schema', function () {
             'properties' => [
                 'id' => [
                     'type' => 'integer',
-                    'enum' => [42],
+                    'const' => 42,
                 ],
             ],
             'required' => ['id'],
