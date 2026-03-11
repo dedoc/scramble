@@ -11,6 +11,8 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Route;
@@ -141,7 +143,7 @@ it('handles withResponse for json api resource', function () {
  */
 class JsonResourceTypeToSchemaTest_WithResponseSample extends JsonResource
 {
-    public function withResponse(Request $request, \Illuminate\Http\JsonResponse $response)
+    public function withResponse(Request $request, JsonResponse $response)
     {
         $response->setStatusCode(429);
     }
@@ -201,7 +203,7 @@ it('gets the underlying model when mixin is inline', function () {
 /** @mixin JsonResourceTypeToSchemaTest_User */
 class JsonResourceTypeToSchemaTest_WithIntegerInline extends JsonResource {}
 
-class JsonResourceTypeToSchemaTest_User extends \Illuminate\Database\Eloquent\Model
+class JsonResourceTypeToSchemaTest_User extends Model
 {
     protected $table = 'users';
 

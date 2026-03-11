@@ -2,6 +2,7 @@
 
 use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
+use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
@@ -15,7 +16,7 @@ function RoutesFilteringTest_generateForRoutes($callback)
 
     Scramble::routes(fn (Route $r) => in_array($r->uri, $routesUris));
 
-    return app()->make(\Dedoc\Scramble\Generator::class)();
+    return app()->make(Generator::class)();
 }
 
 it('filters routes with ExcludeRouteFromDocs attribute', function () {

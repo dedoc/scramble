@@ -21,7 +21,7 @@ class UnsetHandler
     public function leave(Node\Stmt\Unset_ $node, Scope $scope): void
     {
         foreach ($node->vars as $var) {
-            if ($var instanceof Node\Expr\ArrayDimFetch) {
+            if ($var instanceof Expr\ArrayDimFetch) {
                 if (! $var->dim) {
                     continue;
                 }
@@ -31,13 +31,13 @@ class UnsetHandler
         }
     }
 
-    private function handleArrayKeyUnsetting(Node\Stmt\Unset_ $node, Node\Expr\ArrayDimFetch $targetNode, Scope $scope): void
+    private function handleArrayKeyUnsetting(Node\Stmt\Unset_ $node, Expr\ArrayDimFetch $targetNode, Scope $scope): void
     {
         /** @var (Expr)[] $path */
         $path = [$targetNode->dim];
         $var = $targetNode->var;
 
-        while ($var instanceof Node\Expr\ArrayDimFetch) {
+        while ($var instanceof Expr\ArrayDimFetch) {
             if (! $var->dim) {
                 return;
             }
@@ -46,7 +46,7 @@ class UnsetHandler
             $var = $var->var;
         }
 
-        if (! $var instanceof Node\Expr\Variable) {
+        if (! $var instanceof Expr\Variable) {
             return;
         }
 

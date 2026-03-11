@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Scope\ScopeContext;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Tests\Infer\stubs\Child;
@@ -14,6 +15,8 @@ use Dedoc\Scramble\Tests\Infer\stubs\ChildPromotion;
 use Dedoc\Scramble\Tests\Infer\stubs\DeepChild;
 use Dedoc\Scramble\Tests\Infer\stubs\Foo;
 use Dedoc\Scramble\Tests\Infer\stubs\FooWithDefaultProperties;
+use PhpParser\ErrorHandler\Throwing;
+use PhpParser\NameContext;
 
 beforeEach(function () {
     $this->index = app(Index::class);
@@ -315,7 +318,7 @@ it('resolves pending returns lazily', function () {
 
     $barDef = $classDefinition->getMethodDefinition('bar');
     $barReturnType = $this->resolver->resolve(
-        new Scope($this->index, new NodeTypesResolver, new ScopeContext($classDefinition), new \Dedoc\Scramble\Infer\Services\FileNameResolver(new \PhpParser\NameContext(new \PhpParser\ErrorHandler\Throwing))),
+        new Scope($this->index, new NodeTypesResolver, new ScopeContext($classDefinition), new FileNameResolver(new NameContext(new Throwing))),
         $barDef->type->getReturnType(),
     );
 

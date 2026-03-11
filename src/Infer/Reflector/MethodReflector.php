@@ -82,7 +82,7 @@ class MethodReflector
             $node = (new NodeFinder)
                 ->findFirst(
                     $this->parser->parseContent($partialClass)->getStatements(),
-                    fn (Node $node) => $node instanceof Node\Stmt\ClassMethod && $node->name->name === $this->name,
+                    fn (Node $node) => $node instanceof ClassMethod && $node->name->name === $this->name,
                 );
 
             if (! $path = $this->getReflection()->getFileName()) {

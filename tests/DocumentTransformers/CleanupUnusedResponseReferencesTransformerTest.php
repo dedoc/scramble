@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Tests\DocumentTransformers;
 
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Illuminate\Support\Facades\Route;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 test('doesnt cause failure of response serialization when reference is removed (#911)', function () {
     $openApiDocument = generateForRoute(fn () => Route::get('test/{user}', CleanupUnusedResponseReferencesTransformerTest_ControllerA::class));
@@ -13,7 +14,7 @@ test('doesnt cause failure of response serialization when reference is removed (
 class CleanupUnusedResponseReferencesTransformerTest_ControllerA
 {
     /**
-     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     * @throws NotFoundHttpException
      */
     public function __invoke(SampleUserModel $user) {}
 }

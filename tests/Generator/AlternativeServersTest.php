@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 it('adds an alternative server to operation when no matching server found', function () {
@@ -59,7 +60,7 @@ it('alternative server is moved to paths when all path operations have it', func
     expect($openApiDocument['paths']['/test']['servers'] ?? [])->toHaveCount(1);
 });
 
-class AlternativeServers_Test extends \Illuminate\Routing\Controller
+class AlternativeServers_Test extends Controller
 {
     public function a() {}
 }

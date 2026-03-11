@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Tests\Generator\Request;
 
+use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\RouteInfo;
@@ -17,7 +18,7 @@ it('documents operation id based on controller base name if no route name and no
     expect($openApiDocument['paths']['/test']['get'])
         ->toHaveKey('operationId', 'automaticOperationIdDocumentationTest.a');
 });
-class AutomaticOperationIdDocumentationTestController extends \Illuminate\Routing\Controller
+class AutomaticOperationIdDocumentationTestController extends Controller
 {
     public function a(): Illuminate\Http\Resources\Json\JsonResource
     {
@@ -37,7 +38,7 @@ it('documents operation id based on route name if not set manually', function ()
     expect($openApiDocument['paths']['/test']['get'])
         ->toHaveKey('operationId', 'namedOperationIdA');
 });
-class NamedOperationIdDocumentationTestController extends \Illuminate\Routing\Controller
+class NamedOperationIdDocumentationTestController extends Controller
 {
     public function a(): Illuminate\Http\Resources\Json\JsonResource
     {
@@ -55,12 +56,12 @@ it('ensures operation id is unique if not set manually', function () {
         RouteFacade::get('api/test/b', [UniqueOperationIdDocumentationTestController::class, 'b']);
     });
     Scramble::routes(fn (Route $r) => str_contains($r->uri, 'test/'));
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = app()->make(Generator::class)();
 
     expect($openApiDocument['paths']['/test/a']['get']['operationId'])
         ->not->toBe($openApiDocument['paths']['/test/b']['get']['operationId']);
 });
-class UniqueOperationIdDocumentationTestController extends \Illuminate\Routing\Controller
+class UniqueOperationIdDocumentationTestController extends Controller
 {
     public function a()
     {
@@ -81,7 +82,7 @@ it('documents operation id based phpdoc param', function () {
     expect($openApiDocument['paths']['/test']['get'])
         ->toHaveKey('operationId', 'manualOperationId');
 });
-class ManualOperationIdDocumentationTestController extends \Illuminate\Routing\Controller
+class ManualOperationIdDocumentationTestController extends Controller
 {
     /**
      * @operationId manualOperationId
