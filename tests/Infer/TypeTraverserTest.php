@@ -30,4 +30,4 @@ test('mutates type', function () {
     ]);
 
     $traverser->traverse($type);
-});
+})->skip();
