@@ -2,6 +2,7 @@
 
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\RouteInfo;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
@@ -20,7 +21,7 @@ it('documents tags based resolveTagsUsing', function () {
         ->toHaveKey('tags', ['testTag']);
 });
 
-class ResolveTagDocumentationTestController extends \Illuminate\Routing\Controller
+class ResolveTagDocumentationTestController extends Controller
 {
     /**
      * @tags testTag

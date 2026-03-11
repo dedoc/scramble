@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\InferExtensions;
 
+use App\User;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -35,7 +36,7 @@ class RequestExtension implements MethodReturnTypeExtension
             return $model;
         }
 
-        if (class_exists($model = \App\User::class)) {
+        if (class_exists($model = User::class)) {
             return $model;
         }
 

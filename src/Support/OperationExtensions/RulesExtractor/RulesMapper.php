@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
 use Dedoc\Scramble\Support\Generator\Types\NumberType;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
@@ -60,7 +61,7 @@ class RulesMapper
     public function array(Type $_, $params)
     {
         if (count($params)) {
-            $object = (new \Dedoc\Scramble\Support\Generator\Types\ObjectType)
+            $object = (new ObjectType)
                 ->setRequired($params);
 
             foreach ($params as $param) {

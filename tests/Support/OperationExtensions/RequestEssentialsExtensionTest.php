@@ -3,6 +3,7 @@
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Dedoc\Scramble\Tests\Files\Status;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
@@ -16,7 +17,7 @@ it('uses getRouteKeyName to determine model route key type', function () {
         ->toHaveKey('schema.type', 'string')
         ->toHaveKey('description', 'The model name');
 });
-class ModelWithCustomRouteKeyName extends \Illuminate\Database\Eloquent\Model
+class ModelWithCustomRouteKeyName extends Model
 {
     protected $table = 'users';
 
@@ -39,7 +40,7 @@ it('correctly handles not request class with rules method', function () {
         ->toHaveKey('schema.type', 'integer')
         ->toHaveKey('description', 'The model ID');
 });
-class ModelWithRulesMethod extends \Illuminate\Database\Eloquent\Model
+class ModelWithRulesMethod extends Model
 {
     protected $table = 'users';
 
@@ -75,7 +76,7 @@ it('uses explicit binding to infer more info about path params using Route::bind
         ->toHaveKey('schema.type', 'integer')
         ->toHaveKey('description', 'The model bound ID');
 });
-class RequestEssentialsExtensionTest_SimpleModel extends \Illuminate\Database\Eloquent\Model
+class RequestEssentialsExtensionTest_SimpleModel extends Model
 {
     protected $table = 'users';
 }

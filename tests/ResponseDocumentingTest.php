@@ -1,14 +1,18 @@
 <?php
 
+use Dedoc\Scramble\Generator;
+use Dedoc\Scramble\Scramble;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Route;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
 
 test('response()->noContent() call support', function () {
-    \Illuminate\Support\Facades\Route::get('api/test', [Foo_Test::class, 'index']);
+    Illuminate\Support\Facades\Route::get('api/test', [Foo_Test::class, 'index']);
 
-    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
+    $openApiDocument = app()->make(Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -21,10 +25,10 @@ class Foo_Test
 }
 
 test('response()->json() call support with phpdoc help', function () {
-    \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestTwo::class, 'index']);
+    Illuminate\Support\Facades\Route::get('api/test', [Foo_TestTwo::class, 'index']);
 
-    \Dedoc\Scramble\Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
+    $openApiDocument = app()->make(Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -40,7 +44,7 @@ class Foo_TestTwo
 }
 
 test('multiple responses support', function () {
-    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestThree::class, 'index']));
+    $openApiDocument = generateForRoute(fn () => Illuminate\Support\Facades\Route::get('api/test', [Foo_TestThree::class, 'index']));
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -50,7 +54,7 @@ class Foo_TestThree
     {
         try {
             something_some();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return response()->json([
                 /** @var array{msg: string, code: int} */
                 'error' => $var,
@@ -65,7 +69,7 @@ class Foo_TestThree
 }
 
 test('manually annotated responses support', function () {
-    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestFour::class, 'index']));
+    $openApiDocument = generateForRoute(fn () => Illuminate\Support\Facades\Route::get('api/test', [Foo_TestFour::class, 'index']));
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -92,7 +96,7 @@ class Foo_TestFour
 }
 
 test('manually annotated responses resources support', function () {
-    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestFive::class, 'index']));
+    $openApiDocument = generateForRoute(fn () => Illuminate\Support\Facades\Route::get('api/test', [Foo_TestFive::class, 'index']));
 
     expect($openApiDocument['paths']['/test']['get']['responses'][200]['content']['application/json']['schema'])
         ->toBe([
@@ -113,11 +117,11 @@ class Foo_TestFive
         return response()->json(['foo' => 'bar']);
     }
 }
-class Foo_TestFiveResource extends \Illuminate\Http\Resources\Json\JsonResource
+class Foo_TestFiveResource extends JsonResource
 {
     public static $wrap = 'data';
 
-    public function toArray(\Illuminate\Http\Request $request)
+    public function toArray(Request $request)
     {
         return [
             'foo' => $this->id,
@@ -126,7 +130,7 @@ class Foo_TestFiveResource extends \Illuminate\Http\Resources\Json\JsonResource
 }
 
 test('automated response status code inference when using ->response->setStatusCode method', function () {
-    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestSix::class, 'single']));
+    $openApiDocument = generateForRoute(fn () => Illuminate\Support\Facades\Route::get('api/test', [Foo_TestSix::class, 'single']));
 
     expect($openApiDocument['paths']['/test']['get']['responses'][201]['content']['application/json']['schema'])
         ->toBe([
@@ -141,7 +145,7 @@ test('automated response status code inference when using ->response->setStatusC
 });
 
 test('automated response status code inference when using collection ->response->setStatusCode method', function () {
-    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestSix::class, 'collection']));
+    $openApiDocument = generateForRoute(fn () => Illuminate\Support\Facades\Route::get('api/test', [Foo_TestSix::class, 'collection']));
 
     expect($openApiDocument['paths']['/test']['get']['responses'][201]['content']['application/json']['schema'])
         ->toBe([
@@ -171,7 +175,7 @@ class Foo_TestSix
 }
 
 test('does not wrap resources when resource is wrapped', function () {
-    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestSeven::class, 'index']));
+    $openApiDocument = generateForRoute(fn () => Illuminate\Support\Facades\Route::get('api/test', [Foo_TestSeven::class, 'index']));
 
     expect($openApiDocument['paths']['/test']['get']['responses'][200]['content']['application/json']['schema'])
         ->toBe(['$ref' => '#/components/schemas/Foo_TestSevenResource']);
@@ -189,11 +193,11 @@ test('does not wrap resources when resource is wrapped', function () {
             'title' => 'Foo_TestSevenResource',
         ]);
 });
-class Foo_TestSevenResource extends \Illuminate\Http\Resources\Json\JsonResource
+class Foo_TestSevenResource extends JsonResource
 {
     public static $wrap = 'data';
 
-    public function toArray(\Illuminate\Http\Request $request)
+    public function toArray(Request $request)
     {
         return [
             'data' => [
@@ -211,7 +215,7 @@ class Foo_TestSeven
 }
 
 test('does not wrap resources when resource is passed to json response explicitly', function () {
-    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', Foo_TestEight::class));
+    $openApiDocument = generateForRoute(fn () => Illuminate\Support\Facades\Route::get('api/test', Foo_TestEight::class));
 
     expect($openApiDocument['paths']['/test']['get']['responses'][200]['content']['application/json']['schema'])
         ->toBe(['$ref' => '#/components/schemas/Foo_TestEightResource']);
@@ -224,11 +228,11 @@ test('does not wrap resources when resource is passed to json response explicitl
         ]);
 });
 
-class Foo_TestEightResource extends \Illuminate\Http\Resources\Json\JsonResource
+class Foo_TestEightResource extends JsonResource
 {
     public static $wrap = 'data';
 
-    public function toArray(\Illuminate\Http\Request $request)
+    public function toArray(Request $request)
     {
         return [
             'foo' => $this->id,

@@ -1,10 +1,14 @@
 <?php
 
 use Dedoc\Scramble\Infer\Flow\Node;
+use Dedoc\Scramble\Infer\Flow\Nodes;
 use Dedoc\Scramble\Infer\Flow\TerminateNode;
 use Dedoc\Scramble\Infer\Flow\TerminationKind;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Type;
+use PhpParser\Node\Expr\ArrayDimFetch;
+use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Scalar\String_;
 
 function getStatementTypeForScopeTest(string $statement, array $extensions = [])
 {
@@ -86,7 +90,7 @@ function foo () {
 }
 EOF;
 
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    /** @var Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
         ->getFlowContainer();
@@ -104,7 +108,7 @@ function foo () {
 }
 EOF;
 
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    /** @var Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
         ->getFlowContainer();
@@ -132,7 +136,7 @@ function foo () {
 }
 EOF;
 
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    /** @var Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
         ->getFlowContainer();
@@ -152,7 +156,7 @@ function foo () {
 }
 EOF;
 
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    /** @var Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
         ->getFlowContainer();
@@ -174,7 +178,7 @@ function foo () {
 }
 EOF;
 
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    /** @var Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
         ->getFlowContainer();
@@ -195,7 +199,7 @@ function foo () {
 }
 EOF;
 
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    /** @var Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
         ->getFlowContainer();
@@ -218,7 +222,7 @@ function foo () {
 }
 EOF;
 
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    /** @var Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
         ->getFlowContainer();
@@ -241,7 +245,7 @@ function foo () {
 }
 EOF;
 
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    /** @var Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
         ->getFlowContainer();
@@ -261,7 +265,7 @@ function foo () {
 }
 EOF;
 
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    /** @var Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
         ->getFlowContainer();
@@ -282,7 +286,7 @@ function foo () {
 }
 EOF;
 
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    /** @var Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
         ->getFlowContainer();
@@ -315,14 +319,14 @@ function foo ($a) {
      };
 }
 EOF;
-    /** @var \Dedoc\Scramble\Infer\Flow\Nodes $flow */
+    /** @var Nodes $flow */
     $flow = analyzeFile($code)
         ->getFunctionDefinition('foo')
         ->getFlowContainer();
 
     $originNodes = $flow->findValueOriginsByExitType(fn (Type $t) => $t instanceof LiteralIntegerType && $t->value === 42);
 
-    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $originNodes[0]);
+    $type = $flow->getTypeAt(new Variable('a'), $originNodes[0]);
 
     expect($type->toString())->toBe('string(bar)');
 });
@@ -349,7 +353,7 @@ EOF;
 
     $originNodes = $flow->findValueOriginsByExitType(fn (Type $t) => $t instanceof LiteralIntegerType && $t->value === 42);
 
-    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $originNodes[0]);
+    $type = $flow->getTypeAt(new Variable('a'), $originNodes[0]);
 
     expect($type->toString())->toBe('string(bar)');
 });
@@ -371,7 +375,7 @@ EOF;
 
     $returnNodes = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
 
-    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $returnNodes[0]);
+    $type = $flow->getTypeAt(new Variable('a'), $returnNodes[0]);
 
     expect($type->toString())->toBe('unknown');
 });
@@ -394,7 +398,7 @@ EOF;
 
     $returnNodes = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
 
-    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $returnNodes[0]);
+    $type = $flow->getTypeAt(new Variable('a'), $returnNodes[0]);
 
     expect($type->toString())->toBe('int(42)');
 });
@@ -419,7 +423,7 @@ EOF;
 
     $returnNodes = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
 
-    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\Variable('a'), $returnNodes[0]);
+    $type = $flow->getTypeAt(new Variable('a'), $returnNodes[0]);
 
     expect($type->toString())->toBe('unknown');
 });
@@ -442,9 +446,9 @@ EOF;
 
     $returnNodes = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
 
-    $type = $flow->getTypeAt(new \PhpParser\Node\Expr\ArrayDimFetch(
-        new \PhpParser\Node\Expr\Variable('a'),
-        new \PhpParser\Node\Scalar\String_('foo')
+    $type = $flow->getTypeAt(new ArrayDimFetch(
+        new Variable('a'),
+        new String_('foo')
     ), $returnNodes[0]);
 
     expect($type->toString())->toBe('array{foo: int(42)}[string(foo)]');

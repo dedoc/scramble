@@ -15,6 +15,8 @@ use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar;
+use Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo;
 
 beforeEach(function () {
     $this->index = app(Index::class);
@@ -33,7 +35,7 @@ beforeEach(function () {
  */
 it('infers new calls on parent class', function (string $method, string $expectedType) {
     $methodDef = $this->classAnalyzer
-        ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo::class)
+        ->analyze(Foo::class)
         ->getMethodDefinition($method);
     expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
 })->with([
@@ -43,7 +45,7 @@ it('infers new calls on parent class', function (string $method, string $expecte
 
 it('infers new calls on child class', function (string $method, string $expectedType) {
     $methodDef = $this->classAnalyzer
-        ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class)
+        ->analyze(Bar::class)
         ->getMethodDefinition($method);
     expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
 })->with([
@@ -57,7 +59,7 @@ it('infers new calls on child class', function (string $method, string $expected
  */
 it('infers static method calls on parent class', function (string $method, string $expectedType) {
     $methodDef = $this->classAnalyzer
-        ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo::class)
+        ->analyze(Foo::class)
         ->getMethodDefinition($method);
     expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
 })->with([
@@ -67,7 +69,7 @@ it('infers static method calls on parent class', function (string $method, strin
 
 it('infers static method calls on child class', function (string $method, string $expectedType) {
     $methodDef = $this->classAnalyzer
-        ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class)
+        ->analyze(Bar::class)
         ->getMethodDefinition($method);
     expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
 })->with([
@@ -78,7 +80,7 @@ it('infers static method calls on child class', function (string $method, string
 
 it('infers static class fetch on parent', function (string $method, string $expectedType) {
     $methodDef = $this->classAnalyzer
-        ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo::class)
+        ->analyze(Foo::class)
         ->getMethodDefinition($method);
     expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
 })->with([
@@ -87,7 +89,7 @@ it('infers static class fetch on parent', function (string $method, string $expe
 
 it('infers static class fetch on child', function (string $method, string $expectedType) {
     $methodDef = $this->classAnalyzer
-        ->analyze(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class)
+        ->analyze(Bar::class)
         ->getMethodDefinition($method);
     expect($methodDef->type->getReturnType()->toString())->toBe($expectedType);
 })->with([
@@ -111,7 +113,7 @@ class CallRef_ReferenceTypeResolverTest
 
     public static function foo()
     {
-        return \Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::staticClassFetch();
+        return Bar::staticClassFetch();
     }
 }
 

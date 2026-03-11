@@ -8,6 +8,7 @@ use Dedoc\Scramble\Scramble;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Collection;
 
 beforeEach(function () {
@@ -38,16 +39,16 @@ it('infers json resource creation', function ($expression, $expectedType) {
         ManualConstructCallWithData_JsonResourceInferenceTest::class.'<int(23)>',
     ],
 ]);
-class Bar_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\JsonResource {}
+class Bar_JsonResourceInferenceTest extends JsonResource {}
 class Foo_JsonResourceInferenceTest extends Bar_JsonResourceInferenceTest {}
-class ManualConstructCall_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\JsonResource
+class ManualConstructCall_JsonResourceInferenceTest extends JsonResource
 {
     public function __construct($resource)
     {
         parent::__construct($resource);
     }
 }
-class ManualConstructCallWithData_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\JsonResource
+class ManualConstructCallWithData_JsonResourceInferenceTest extends JsonResource
 {
     public function __construct($resource)
     {
@@ -91,8 +92,8 @@ it('infers resource collection creation', function ($expression, $expectedType) 
         FooCollection_JsonResourceInferenceTest::class.'<list{}, array<mixed>, '.Foo_JsonResourceInferenceTest::class.'>',
     ],
 ]);
-class NoCollectedResourcCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\ResourceCollection {}
-class FooCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\ResourceCollection
+class NoCollectedResourcCollection_JsonResourceInferenceTest extends ResourceCollection {}
+class FooCollection_JsonResourceInferenceTest extends ResourceCollection
 {
     public $collects = Foo_JsonResourceInferenceTest::class;
 }
@@ -123,7 +124,7 @@ it('gives me understanding', function () {
 
     expect($md->type->getReturnType()->toString())->toBe('array<TCollects>');
 });
-class ParentToArrayCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\ResourceCollection
+class ParentToArrayCollection_JsonResourceInferenceTest extends ResourceCollection
 {
     public $collects = Foo_JsonResourceInferenceTest::class;
 
@@ -132,7 +133,7 @@ class ParentToArrayCollection_JsonResourceInferenceTest extends \Illuminate\Http
         return parent::toArray($request);
     }
 }
-class CallToCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\ResourceCollection
+class CallToCollection_JsonResourceInferenceTest extends ResourceCollection
 {
     public $collects = Foo_JsonResourceInferenceTest::class;
 
@@ -163,14 +164,14 @@ it('infers anonymous collection creation', function ($expression, $expectedType)
         AnonymousResourceCollection::class.'<list{}, array<mixed>, '.FooAnonCollectionTap_JsonResourceInferenceTest::class.'>',
     ],
 ]);
-class FooAnonCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\JsonResource
+class FooAnonCollection_JsonResourceInferenceTest extends JsonResource
 {
     public static function collection($resource)
     {
         return new AnonymousResourceCollection($resource, static::class);
     }
 }
-class FooAnonCollectionTap_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\JsonResource
+class FooAnonCollectionTap_JsonResourceInferenceTest extends JsonResource
 {
     public static function collection($resource)
     {
@@ -195,7 +196,7 @@ it('falls back to parent resource collection toArray if cannot infer overwritten
         'array<'.Foo_JsonResourceInferenceTest::class.'<unknown>>',
     ],
 ]);
-class OverwrittenUnknownCollection_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+class OverwrittenUnknownCollection_JsonResourceInferenceTest extends AnonymousResourceCollection
 {
     public function toArray($request)
     {
@@ -248,4 +249,4 @@ it('handles that second weird case', function () {
             AnonymousResourceCollection::class.'<TResource1, array<mixed>, '.Jar_JsonResourceInferenceTest::class.'>'
         );
 });
-class Jar_JsonResourceInferenceTest extends \Illuminate\Http\Resources\Json\JsonResource {}
+class Jar_JsonResourceInferenceTest extends JsonResource {}

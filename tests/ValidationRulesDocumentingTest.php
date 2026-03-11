@@ -1,14 +1,19 @@
 <?php
 
+use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\ApiKeySecurityScheme;
+use Dedoc\Scramble\Support\Generator\Types\ArrayType;
+use Dedoc\Scramble\Support\Generator\Types\NumberType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
+use Dedoc\Scramble\Tests\Files\SampleUserModel;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Route;
@@ -631,7 +636,7 @@ it('converts min rule into "minimum" for numeric fields', function () {
     expect($params = collect($params)->all())
         ->toHaveCount(1)
         ->and($params[0]->schema->type)
-        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\NumberType::class)
+        ->toBeInstanceOf(NumberType::class)
         ->toHaveKey('minimum', 8);
 });
 
@@ -645,7 +650,7 @@ it('converts max rule into "maximum" for numeric fields', function () {
     expect($params = collect($params)->all())
         ->toHaveCount(1)
         ->and($params[0]->schema->type)
-        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\NumberType::class)
+        ->toBeInstanceOf(NumberType::class)
         ->toHaveKey('maximum', 8);
 });
 
@@ -659,7 +664,7 @@ it('converts min rule into "minLength" for string fields', function () {
     expect($params = collect($params)->all())
         ->toHaveCount(1)
         ->and($params[0]->schema->type)
-        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toBeInstanceOf(StringType::class)
         ->toHaveKey('minLength', 8);
 });
 
@@ -673,7 +678,7 @@ it('converts max rule into "maxLength" for string fields', function () {
     expect($params = collect($params)->all())
         ->toHaveCount(1)
         ->and($params[0]->schema->type)
-        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toBeInstanceOf(StringType::class)
         ->toHaveKey('maxLength', 8);
 });
 
@@ -687,7 +692,7 @@ it('converts min rule into "minItems" for array fields', function () {
     expect($params = collect($params)->all())
         ->toHaveCount(1)
         ->and($params[0]->schema->type)
-        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\ArrayType::class)
+        ->toBeInstanceOf(ArrayType::class)
         ->toHaveKey('minItems', 8);
 });
 
@@ -701,7 +706,7 @@ it('converts max rule into "maxItems" for array fields', function () {
     expect($params = collect($params)->all())
         ->toHaveCount(1)
         ->and($params[0]->schema->type)
-        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\ArrayType::class)
+        ->toBeInstanceOf(ArrayType::class)
         ->toHaveKey('maxItems', 8);
 });
 
@@ -715,7 +720,7 @@ it('documents nullable uri rule', function () {
     expect($params = collect($params)->all())
         ->toHaveCount(1)
         ->and($params[0]->schema->type)
-        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toBeInstanceOf(StringType::class)
         ->toHaveProperty('format', 'uri')
         ->toHaveProperty('nullable', true);
 });
@@ -769,7 +774,7 @@ it('documents date rule', function () {
     expect($params = collect($params)->all())
         ->toHaveCount(1)
         ->and($params[0]->schema->type)
-        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toBeInstanceOf(StringType::class)
         ->toHaveProperty('format', 'date-time');
 });
 
@@ -783,7 +788,7 @@ it('documents date rule with Y-m-d format', function () {
     expect($params = collect($params)->all())
         ->toHaveCount(1)
         ->and($params[0]->schema->type)
-        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toBeInstanceOf(StringType::class)
         ->toHaveProperty('format', 'date');
 });
 
@@ -799,13 +804,13 @@ it('documents date_format rule with format', function () {
     expect($params = collect($params)->all())
         ->toHaveCount(3)
         ->and($params[0]->schema->type)
-        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toBeInstanceOf(StringType::class)
         ->toHaveProperty('format', 'date')
         ->and($params[1]->schema->type)
-        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toBeInstanceOf(StringType::class)
         ->toHaveProperty('format', 'date-time')
         ->and($params[2]->schema->type)
-        ->toBeInstanceOf(\Dedoc\Scramble\Support\Generator\Types\StringType::class)
+        ->toBeInstanceOf(StringType::class)
         ->toHaveProperty('format', '');
 });
 
@@ -835,7 +840,7 @@ class ProhibitedIf_ValidationRulesDocumentingTest
 it('supports evaluation of strings concatenated with class names', function () {
     $openApiDocument = generateForRoute(RouteFacade::put('test', function (Request $request) {
         $request->validate([
-            'email' => 'required|string|lowercase|email|unique:'.\Dedoc\Scramble\Tests\Files\SampleUserModel::class,
+            'email' => 'required|string|lowercase|email|unique:'.SampleUserModel::class,
         ]);
     }));
 
@@ -849,7 +854,7 @@ it('extracts rules from request->validate call', function () {
     RouteFacade::get('api/test', [ValidationRulesDocumenting_Test::class, 'index']);
 
     Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = app()->make(Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -858,7 +863,7 @@ it('extracts rules docs', function () {
     RouteFacade::get('api/test', [ValidationRulesWithDocs_Test::class, 'index']);
 
     Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = app()->make(Generator::class)();
 
     assertMatchesSnapshot($openApiDocument['paths']['/test']['get']['parameters']);
 });
@@ -867,7 +872,7 @@ it('extracts rules docs from form request', function () {
     RouteFacade::get('api/test', [ValidationRulesWithDocsAndFormRequest_Test::class, 'index']);
 
     Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = app()->make(Generator::class)();
 
     assertMatchesSnapshot($openApiDocument['paths']['/test']['get']['parameters']);
 });
@@ -901,7 +906,7 @@ it('supports validation rules and form request at the same time', function () {
     RouteFacade::get('api/test', [ValidationRulesAndFormRequestAtTheSameTime_Test::class, 'index']);
 
     Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = app()->make(Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -1029,7 +1034,7 @@ class FormRequestsValidationRulesWithConstsDocs_Test
     }
 }
 
-class ValidationRulesAndFormRequestAtTheSameTime_TestFormRequest extends \Illuminate\Foundation\Http\FormRequest
+class ValidationRulesAndFormRequestAtTheSameTime_TestFormRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -1044,7 +1049,7 @@ class ValidationRulesAndFormRequestAtTheSameTime_TestFormRequest extends \Illumi
     }
 }
 
-class FormRequestWithDocs_TestFormRequest extends \Illuminate\Foundation\Http\FormRequest
+class FormRequestWithDocs_TestFormRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -1076,7 +1081,7 @@ it('supports manual authentication info', function () {
             ApiKeySecurityScheme::apiKey('query', 'api_token')
         );
     });
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = app()->make(Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -1215,7 +1220,7 @@ it('extracts rules when the action is used by few routes', function () {
     ];
 
     Scramble::routes(fn (Route $r) => in_array($r, $routes, strict: true));
-    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $openApiDocument = app()->make(Generator::class)();
 
     $expectedParameters = [[
         'name' => 'foo',

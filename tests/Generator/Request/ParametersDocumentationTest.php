@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Concerns\HasVersion4Uuids;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
@@ -33,7 +34,7 @@ if (trait_exists(HasUuids::class)) {
         }
     }
 
-    class DocumentsModelKeysUuidParametersAsUuids_Model extends \Illuminate\Database\Eloquent\Model
+    class DocumentsModelKeysUuidParametersAsUuids_Model extends Model
     {
         use HasUuids;
     }
@@ -67,7 +68,7 @@ if (trait_exists(HasVersion4Uuids::class)) {
         }
     }
 
-    class DocumentsModelKeysUuidV4ParametersAsUuids_Model extends \Illuminate\Database\Eloquent\Model
+    class DocumentsModelKeysUuidV4ParametersAsUuids_Model extends Model
     {
         use HasVersion4Uuids;
     }

@@ -1,5 +1,6 @@
 <?php
 
+use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder;
 use Dedoc\Scramble\Infer\Scope\Index;
@@ -17,8 +18,16 @@ use Dedoc\Scramble\Tests\TestCase;
 use Dedoc\Scramble\Tests\Utils\AnalysisResult;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Arr;
+use Laravel\SerializableClosure\Support\ReflectionClosure;
+use Pest\Concerns\Testable;
 use PhpParser\ErrorHandler\Throwing;
 use PhpParser\NameContext;
+use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Name;
+use PhpParser\Node\Stmt\ClassLike;
+use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 
@@ -42,20 +51,20 @@ function getTestSourceCode()
 
     $db = debug_backtrace();
 
-    $entry = \Illuminate\Support\Arr::first(
+    $entry = Arr::first(
         $db,
         fn ($item) => in_array(
-            \Pest\Concerns\Testable::class,
+            Testable::class,
             class_uses_recursive($item['object'] ?? (object) []),
         ),
     );
 
-    /** @var \Pest\Concerns\Testable $object */
+    /** @var Testable $object */
     $object = $entry['object'];
 
     $reflection = new ReflectionFunction($getPrivateProperty($object, '__test'));
 
-    $actualReflection = new \Laravel\SerializableClosure\Support\ReflectionClosure($reflection->getClosureUsedVariables()['closure']);
+    $actualReflection = new ReflectionClosure($reflection->getClosureUsedVariables()['closure']);
 
     $source = $actualReflection->getCode();
 
@@ -86,8 +95,8 @@ expect()->extend('toHaveType', function (string|callable $expectedType) {
         $fileAst = FileParser::getInstance()->parseContent($code)->getStatements(),
     );
 
-    /** @var \PhpParser\Node\Expr\FuncCall $node */
-    $node = (new \PhpParser\NodeFinder)->findFirst($fileAst, fn ($n) => $n instanceof \PhpParser\Node\Expr\FuncCall && $n->name instanceof \PhpParser\Node\Name && $n->name->toString() === 'expect');
+    /** @var FuncCall $node */
+    $node = (new NodeFinder)->findFirst($fileAst, fn ($n) => $n instanceof FuncCall && $n->name instanceof Name && $n->name->toString() === 'expect');
 
     $actualType = ReferenceTypeResolver::getInstance()->resolve(
         $scope,
@@ -139,10 +148,10 @@ function analyzeFile(
     );
 
     $classLikeNames = array_map(
-        fn (\PhpParser\Node\Stmt\ClassLike $cl) => $cl->name?->name,
-        (new \PhpParser\NodeFinder)->find(
+        fn (ClassLike $cl) => $cl->name?->name,
+        (new NodeFinder)->find(
             $fileAst,
-            fn ($n) => $n instanceof \PhpParser\Node\Stmt\ClassLike,
+            fn ($n) => $n instanceof ClassLike,
         ),
     );
 
@@ -151,9 +160,9 @@ function analyzeFile(
             continue;
         }
         foreach ($classDefinition->methods as $name => $methodDefinition) {
-            $node = (new \PhpParser\NodeFinder)->findFirst(
+            $node = (new NodeFinder)->findFirst(
                 $fileAst,
-                fn ($n) => $n instanceof \PhpParser\Node\Stmt\ClassMethod && $n->name->name === $name,
+                fn ($n) => $n instanceof ClassMethod && $n->name->name === $name,
             );
 
             if (! $node) {
@@ -236,5 +245,5 @@ function generateForRoute($param)
         ->useConfig(config('scramble'))
         ->routes(fn (Route $r) => $r->uri === $route->uri);
 
-    return app()->make(\Dedoc\Scramble\Generator::class)($config);
+    return app()->make(Generator::class)($config);
 }

@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 it('documents abort helper with 404 status as referenced error response', function () {
@@ -51,7 +52,7 @@ it('documents abort_unless helper', function () {
         ->toHaveKey('content.application/json.schema.properties.message.example', 'Something is wrong.');
 });
 
-class AbortHelpersResponseDocumentation_Test extends \Illuminate\Routing\Controller
+class AbortHelpersResponseDocumentation_Test extends Controller
 {
     public function abort_404()
     {

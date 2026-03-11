@@ -281,8 +281,8 @@ it('handles custom resolvable PhpDoc types', function () {
 
     $type = app(ReferenceTypeResolver::class)->resolve(
         new GlobalScope,
-        new Type\Generic('Pick', [
-            new Type\Generic('Pick', [
+        new Generic('Pick', [
+            new Generic('Pick', [
                 new Type\KeyedArrayType([
                     new Type\ArrayItemType_('a', new Type\IntegerType),
                     new Type\ArrayItemType_('b', new Type\StringType),
@@ -313,7 +313,7 @@ class Pick_ReferenceResolutionTest implements TypeResolverExtension
         // $context->resolver
         // $context->index
 
-        if (! $type instanceof Type\Generic) {
+        if (! $type instanceof Generic) {
             return null;
         }
 

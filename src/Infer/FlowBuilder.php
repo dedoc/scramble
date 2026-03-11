@@ -41,11 +41,11 @@ class FlowBuilder extends NodeVisitorAbstract
         $flow = $this->flowNodes;
 
         if (
-            $node instanceof Node\Stmt\Expression
-            && $node->expr instanceof Node\Expr\Assign
-            && $node->expr->var instanceof Node\Expr\Variable
+            $node instanceof Expression
+            && $node->expr instanceof Expr\Assign
+            && $node->expr->var instanceof Variable
         ) {
-            if ($node->expr->expr instanceof Node\Expr\Match_) {
+            if ($node->expr->expr instanceof Match_) {
                 $this->pushAssignMatch($flow, $node->expr->var, $node->expr->expr);
 
                 return null;
@@ -53,7 +53,7 @@ class FlowBuilder extends NodeVisitorAbstract
         }
 
         if ($node instanceof Node\Stmt\Return_) {
-            if ($node->expr instanceof Node\Expr\Match_) {
+            if ($node->expr instanceof Match_) {
                 $this->pushTerminateMatch($flow, $node->expr);
 
                 return null;
@@ -102,7 +102,7 @@ class FlowBuilder extends NodeVisitorAbstract
         return null;
     }
 
-    private function pushTerminateMatch(Nodes $flow, Node\Expr\Match_ $match): void
+    private function pushTerminateMatch(Nodes $flow, Match_ $match): void
     {
         $flow->pushCondition();
 
