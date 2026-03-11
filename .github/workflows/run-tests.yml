@@ -16,10 +16,10 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest]
-        php: [8.1, 8.2]
-        laravel: ['10.*', '11.*', '12.*']
-        phpdoc-parser: ['1.*', '2.*']
-        stability: [prefer-lowest, prefer-stable]
+        php: ['8.2', '8.5']
+        laravel: ['10.*', '12.*', '13.*']
+        phpdoc-parser: ['2.*']
+        stability: [prefer-stable]
         include:
           - laravel: 10.*
             testbench: 8.*
@@ -27,17 +27,24 @@ jobs:
             testbench: 9.9
           - laravel: 12.*
             testbench: 10.*
+          - laravel: 13.*
+            testbench: 11.*
+          - php: 8.2
+            laravel: 10.*
+            phpdoc-parser: 1.*
+            stability: prefer-lowest
+            testbench: 8.*
         exclude:
-          - laravel: 11.*
-            php: 8.1
-          - laravel: 12.*
-            php: 8.1
+          - laravel: 10.*
+            php: '8.5'
+          - laravel: 13.*
+            php: '8.2'
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - PHPDoc-Parser${{ matrix.phpdoc-parser }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -50,13 +57,6 @@ jobs:
         run: |
           echo "::add-matcher::${{ runner.tool_cache }}/php.json"
           echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
-
-      - name: Lock Pest for PHP 8.1
-        if: matrix.php == '8.1'
-        run: |
-          composer config audit.block-insecure false
-          composer remove --dev phpunit/phpunit --no-update
-          composer require --dev pestphp/pest:2.34.0 phpunit/phpunit:10.5.10 --no-update
 
       - name: Install dependencies
         run: |
