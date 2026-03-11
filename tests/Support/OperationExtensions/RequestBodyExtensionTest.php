@@ -403,6 +403,28 @@ class RequestBodyExtensionTest__ignores_rules_param_with_annotation
     }
 }
 
+it('ignores param in rules with @hidden annotation', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::post('api/test', [RequestBodyExtensionTest__ignores_rules_param_with_hidden::class, 'index']);
+    });
+
+    expect($openApiDocument['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'] ?? [])
+        ->not->toHaveKey('secret')
+        ->and($openApiDocument['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'] ?? [])
+        ->toHaveKey('visible');
+});
+class RequestBodyExtensionTest__ignores_rules_param_with_hidden
+{
+    public function index(Request $request)
+    {
+        $request->validate([
+            'visible' => 'string',
+            /** @hidden */
+            'secret' => 'string',
+        ]);
+    }
+}
+
 it('makes reusable request body from marked validation rules', function () {
     $document = generateForRoute(function () {
         return RouteFacade::post('test', Validation_ReusableSchemaNamesTest_Controller::class);

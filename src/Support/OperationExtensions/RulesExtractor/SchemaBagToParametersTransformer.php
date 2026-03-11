@@ -51,7 +51,8 @@ class SchemaBagToParametersTransformer
     {
         $rulesDocs = $this->rulesDocs[$name] ?? null;
 
-        return (bool) ($rulesDocs?->getTagsByName('@ignoreParam') ?? []);
+        return (bool) ($rulesDocs?->getTagsByName('@ignoreParam') ?? [])
+            || (bool) ($rulesDocs?->getTagsByName('@hidden') ?? []);
     }
 
     protected function makeParameterFromSchema(OpenApiSchema $schema, string $name): Parameter
