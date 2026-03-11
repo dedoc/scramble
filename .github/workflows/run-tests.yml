@@ -10,12 +10,11 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest]
         php: ['8.2', '8.5']
         laravel: ['10.*', '12.*', '13.*']
         phpdoc-parser: ['2.*']
@@ -23,8 +22,6 @@ jobs:
         include:
           - laravel: 10.*
             testbench: 8.*
-          - laravel: 11.*
-            testbench: 9.9
           - laravel: 12.*
             testbench: 10.*
           - laravel: 13.*
