@@ -173,7 +173,7 @@ class PropertyReflector
     /**
      * @todo: Think if this method can actually return `null` or it should fail.
      */
-    public function getAstNode(): ?Property
+    public function getAstNode(): ?Node\Stmt\Property
     {
         if ($this->properyNode) {
             return $this->properyNode;

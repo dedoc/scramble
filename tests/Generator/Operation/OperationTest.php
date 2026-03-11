@@ -1,9 +1,7 @@
 <?php
 
-use Dedoc\Scramble\Support\Generator\Operation;
-
 it('deprecated key is properly set', function () {
-    $operation = new Operation('get');
+    $operation = new \Dedoc\Scramble\Support\Generator\Operation('get');
     $operation->deprecated(true);
 
     $array = $operation->toArray();
@@ -14,7 +12,7 @@ it('deprecated key is properly set', function () {
 });
 
 it('default deprecated key is false', function () {
-    $operation = new Operation('get');
+    $operation = new \Dedoc\Scramble\Support\Generator\Operation('get');
 
     $array = $operation->toArray();
 
@@ -23,7 +21,7 @@ it('default deprecated key is false', function () {
 });
 
 it('set extension property', function () {
-    $operation = new Operation('get');
+    $operation = new \Dedoc\Scramble\Support\Generator\Operation('get');
     $operation->setExtensionProperty('custom-key', 'custom-value');
 
     $array = $operation->toArray();

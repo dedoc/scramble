@@ -1,33 +1,25 @@
 <?php
 
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
-use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
-use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Auth\Middleware\Authorize;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Foundation\Validation\ValidatesRequests;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route as RouteFacade;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\GoneHttpException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\LengthRequiredHttpException;
 use Symfony\Component\HttpKernel\Exception\LockedHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -47,7 +39,7 @@ it('adds validation error response', function () {
     RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_validation_error_response']);
 
     Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(Generator::class)();
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -56,7 +48,7 @@ it('adds validation error response with facade made validators', function () {
     RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_validation_error_response_with_facade_made_validators']);
 
     Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(Generator::class)();
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -65,7 +57,7 @@ it('adds errors responses with custom requests', function () {
     RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_errors_with_custom_request']);
 
     Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(Generator::class)();
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -132,7 +124,7 @@ it('adds validation error response when documented in phpdoc', function () {
     RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'phpdoc_exception_response']);
 
     Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
-    $openApiDocument = app()->make(Generator::class)();
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
     assertMatchesSnapshot($openApiDocument);
 });
@@ -181,14 +173,14 @@ class ErrorsResponsesTest_Controller extends Controller
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
-    public function adds_validation_error_response(Request $request)
+    public function adds_validation_error_response(Illuminate\Http\Request $request)
     {
         $request->validate(['foo' => 'required']);
     }
 
-    public function adds_validation_error_response_with_facade_made_validators(Request $request)
+    public function adds_validation_error_response_with_facade_made_validators(Illuminate\Http\Request $request)
     {
-        Validator::make($request->all(), ['foo' => 'required'])
+        \Illuminate\Support\Facades\Validator::make($request->all(), ['foo' => 'required'])
             ->validate();
     }
 
@@ -196,7 +188,7 @@ class ErrorsResponsesTest_Controller extends Controller
 
     public function doesnt_add_errors_with_custom_request_when_errors_producing_methods_not_defined(ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods $request) {}
 
-    public function adds_authorization_error_response(Request $request)
+    public function adds_authorization_error_response(Illuminate\Http\Request $request)
     {
         $this->authorize('read');
     }
@@ -206,16 +198,16 @@ class ErrorsResponsesTest_Controller extends Controller
         Gate::authorize('read');
     }
 
-    public function adds_authentication_error_response(Request $request) {}
+    public function adds_authentication_error_response(Illuminate\Http\Request $request) {}
 
-    public function adds_not_found_error_response(Request $request, UserModel_ErrorsResponsesTest $user) {}
+    public function adds_not_found_error_response(Illuminate\Http\Request $request, UserModel_ErrorsResponsesTest $user) {}
 
     /**
-     * @throws ValidationException
+     * @throws \Illuminate\Validation\ValidationException
      */
-    public function phpdoc_exception_response(Request $request) {}
+    public function phpdoc_exception_response(Illuminate\Http\Request $request) {}
 
-    public function custom_exception_response(Request $request)
+    public function custom_exception_response(Illuminate\Http\Request $request)
     {
         throw new BusinessException('The business error');
     }
@@ -223,14 +215,14 @@ class ErrorsResponsesTest_Controller extends Controller
     /**
      * @throws AccessDeniedHttpException|BadRequestHttpException|ConflictHttpException|GoneHttpException|LengthRequiredHttpException|LockedHttpException|MethodNotAllowedHttpException|NotAcceptableHttpException|PreconditionFailedHttpException|PreconditionRequiredHttpException|ServiceUnavailableHttpException|TooManyRequestsHttpException|UnauthorizedHttpException|UnprocessableEntityHttpException|UnsupportedMediaTypeHttpException
      */
-    public function symfony_http_exception_response(Request $request) {}
+    public function symfony_http_exception_response(Illuminate\Http\Request $request) {}
 
     /**
      * Summary of myHandler
      *
      * @throws NotFoundHttpException
      */
-    public function not_found_http_exception_in_phpdoc(Request $request): bool
+    public function not_found_http_exception_in_phpdoc(Illuminate\Http\Request $request): bool
     {
         return true;
     }
@@ -262,7 +254,7 @@ class CustomExceptionExtension_ErrorsResponsesTest extends ExceptionToResponseEx
     public function shouldHandle(Type $type): bool
     {
         return $type instanceof ObjectType
-            && $type->isInstanceOf(HttpException::class);
+            && $type->isInstanceOf(\Symfony\Component\HttpKernel\Exception\HttpException::class);
     }
 
     public function toResponse(Type $type)
@@ -281,7 +273,7 @@ class CustomExceptionExtension_ErrorsResponsesTest extends ExceptionToResponseEx
             ->setDescription('Bad request')
             ->setContent(
                 'application/json',
-                Schema::fromType($responseBodyType),
+                \Dedoc\Scramble\Support\Generator\Schema::fromType($responseBodyType),
             );
     }
 
@@ -291,17 +283,17 @@ class CustomExceptionExtension_ErrorsResponsesTest extends ExceptionToResponseEx
     }
 }
 
-class BusinessException extends HttpException
+class BusinessException extends \Symfony\Component\HttpKernel\Exception\HttpException
 {
-    public function __construct(string $message = '', ?Throwable $previous = null, array $headers = [], int $code = 0)
+    public function __construct(string $message = '', ?\Throwable $previous = null, array $headers = [], int $code = 0)
     {
         parent::__construct(409, $message, $previous, $headers, $code);
     }
 }
 
-class UserModel_ErrorsResponsesTest extends Model {}
+class UserModel_ErrorsResponsesTest extends \Illuminate\Database\Eloquent\Model {}
 
-class ErrorsResponsesTest_Controller_CustomRequest extends FormRequest
+class ErrorsResponsesTest_Controller_CustomRequest extends \Illuminate\Foundation\Http\FormRequest
 {
     public function authorize()
     {
@@ -314,4 +306,4 @@ class ErrorsResponsesTest_Controller_CustomRequest extends FormRequest
     }
 }
 
-class ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods extends FormRequest {}
+class ErrorsResponsesTest_Controller_CustomRequestWithoutErrorCreatingMethods extends \Illuminate\Foundation\Http\FormRequest {}

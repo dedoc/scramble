@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
-use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder;
 use Dedoc\Scramble\Infer\Flow\Nodes;
 use Dedoc\Scramble\Infer\FlowBuilder;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -44,7 +43,7 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
     {
         if (! $this->astNode) {
             /**
-             * @see FunctionLikeAstDefinitionBuilder
+             * @see \Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder
              */
             throw new \LogicException('AST node must be set before accessing it on FunctionLikeAstDefinition');
         }
@@ -63,7 +62,7 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
     {
         if (! $this->scope) {
             /**
-             * @see FunctionLikeAstDefinitionBuilder
+             * @see \Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder
              */
             throw new \LogicException('Scope must be set before accessing it on FunctionLikeAstDefinition');
         }

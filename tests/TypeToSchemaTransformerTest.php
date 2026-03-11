@@ -20,9 +20,7 @@ use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
-use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
@@ -312,7 +310,7 @@ it('gets nullable type reference', function () {
 });
 
 it('infers date column when casted to date', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [ModelToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [\Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema::class]);
 
     $transformer->transform(new ObjectType(SamplePostWithDateApprovedAtModel::class));
 
@@ -321,7 +319,7 @@ it('infers date column when casted to date', function () {
         'format' => 'date',
     ]);
 });
-class SamplePostWithDateApprovedAtModel extends Model
+class SamplePostWithDateApprovedAtModel extends \Illuminate\Database\Eloquent\Model
 {
     protected $table = 'posts';
 
@@ -410,6 +408,20 @@ it('supports @deprecated tag in api resource', function () {
         'description' => 'Use new_field instead.',
         'deprecated' => true,
     ]);
+});
+
+it('excludes properties with @hidden annotation from api resource schema', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(ApiResourceTest_ResourceWithHidden::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithHidden',
+    ]);
+
+    $properties = $this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithHidden::class)->toArray()['properties'];
+    expect($properties)->toHaveKey('visible')
+        ->and($properties)->not->toHaveKey('secret');
 });
 
 it('supports simple comments descriptions in api resource', function () {
@@ -700,6 +712,23 @@ class ApiResourceTest_ResourceWithDeprecated extends JsonResource
              * @deprecated Use new_field instead.
              */
             'old_field_with_description' => $this->title,
+        ];
+    }
+}
+
+/**
+ * @property SamplePostModel $resource
+ */
+class ApiResourceTest_ResourceWithHidden extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'visible' => $this->id,
+            /**
+             * @hidden
+             */
+            'secret' => $this->title,
         ];
     }
 }

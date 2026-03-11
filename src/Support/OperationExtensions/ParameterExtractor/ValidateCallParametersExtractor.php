@@ -10,7 +10,6 @@ use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtracti
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\SchemaClassDocReflector;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use PhpParser\Node;
 use PhpParser\Node\FunctionLike;
 use PhpParser\NodeFinder;
@@ -96,7 +95,7 @@ class ValidateCallParametersExtractor implements ParameterExtractor
                 $methodNode,
                 fn (Node $node) => $node instanceof Node\Expr\StaticCall
                     && count($node->args) >= 2
-                    && $node->class instanceof Node\Name && is_a($node->class->toString(), Validator::class, true)
+                    && $node->class instanceof Node\Name && is_a($node->class->toString(), \Illuminate\Support\Facades\Validator::class, true)
                     && $node->name instanceof Node\Identifier && $node->name->name === 'make'
                     && $node->args[0]->value instanceof Node\Expr\MethodCall && is_a($this->getPossibleParamType($methodNode, $node->args[0]->value->var), Request::class, true)
             );

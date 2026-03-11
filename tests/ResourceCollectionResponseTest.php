@@ -10,9 +10,6 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceCollectionTypeToSchema;
-use Dedoc\Scramble\Tests\Files\SampleUserModel;
-use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
@@ -37,7 +34,7 @@ test('transforms collection with toArray only', function () {
 
     assertMatchesSnapshot($extension->toSchema($type)->toArray());
 });
-class UserCollection_One extends ResourceCollection
+class UserCollection_One extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
     public $collects = UserResource::class;
 
@@ -65,7 +62,7 @@ test('transforms collection with toArray and with', function () {
 
     assertMatchesSnapshot($extension->toSchema($type)->toArray());
 });
-class UserCollection_Two extends ResourceCollection
+class UserCollection_Two extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
     public $collects = UserResource::class;
 
@@ -96,7 +93,7 @@ test('transforms collection without proper toArray implementation', function () 
         'components' => $this->components->toArray(),
     ]);
 });
-class UserCollection_Three extends ResourceCollection
+class UserCollection_Three extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
     public $collects = UserResource::class;
 
@@ -114,7 +111,7 @@ test('transforms collection without toArray implementation', function () {
         'components' => $this->components->toArray(),
     ]);
 });
-class UserCollection_Four extends ResourceCollection
+class UserCollection_Four extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
     public $collects = UserResource::class;
 }
@@ -159,11 +156,11 @@ class AnnotationResourceCollectionResponseTest_Controller
 }
 
 test('transforms collection with paginationInformation implementation', function () {
-    $type = getStatementType('new '.UserCollection_Five::class.'('.SampleUserModel::class.'::paginate())');
+    $type = getStatementType('new '.UserCollection_Five::class.'('.\Dedoc\Scramble\Tests\Files\SampleUserModel::class.'::paginate())');
 
     assertMatchesSnapshot($this->transformer->toResponse($type)->toArray());
 });
-class UserCollection_Five extends ResourceCollection
+class UserCollection_Five extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
     public $collects = UserResource::class;
 
@@ -176,11 +173,11 @@ class UserCollection_Five extends ResourceCollection
 }
 
 test('transforms collection with fully custom paginationInformation', function () {
-    $type = getStatementType('new '.UserCollection_Six::class.'('.SampleUserModel::class.'::paginate())');
+    $type = getStatementType('new '.UserCollection_Six::class.'('.\Dedoc\Scramble\Tests\Files\SampleUserModel::class.'::paginate())');
 
     assertMatchesSnapshot($this->transformer->toResponse($type)->toArray());
 });
-class UserCollection_Six extends ResourceCollection
+class UserCollection_Six extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
     public $collects = UserResource::class;
 
@@ -208,11 +205,11 @@ class UserCollection_Six extends ResourceCollection
 }
 
 test('transforms collection with paginationInformation and fetching from paginated array', function () {
-    $type = getStatementType('new '.UserCollection_Seven::class.'('.SampleUserModel::class.'::paginate())');
+    $type = getStatementType('new '.UserCollection_Seven::class.'('.\Dedoc\Scramble\Tests\Files\SampleUserModel::class.'::paginate())');
 
     assertMatchesSnapshot($this->transformer->toResponse($type)->toArray());
 });
-class UserCollection_Seven extends ResourceCollection
+class UserCollection_Seven extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
     public $collects = UserResource::class;
 
@@ -226,11 +223,11 @@ class UserCollection_Seven extends ResourceCollection
 }
 
 test('transforms collection with paginationInformation and unset', function () {
-    $type = getStatementType('new '.UserCollection_Eight::class.'('.SampleUserModel::class.'::paginate())');
+    $type = getStatementType('new '.UserCollection_Eight::class.'('.\Dedoc\Scramble\Tests\Files\SampleUserModel::class.'::paginate())');
 
     assertMatchesSnapshot($this->transformer->toResponse($type)->toArray());
 });
-class UserCollection_Eight extends ResourceCollection
+class UserCollection_Eight extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
     public $collects = UserResource::class;
 
@@ -243,7 +240,7 @@ class UserCollection_Eight extends ResourceCollection
     }
 }
 
-class UserResource extends JsonResource
+class UserResource extends \Illuminate\Http\Resources\Json\JsonResource
 {
     public function toArray($request)
     {

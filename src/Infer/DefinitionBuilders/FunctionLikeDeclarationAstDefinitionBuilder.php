@@ -28,7 +28,7 @@ class FunctionLikeDeclarationAstDefinitionBuilder implements FunctionLikeDefinit
             $this->buildType(),
             argumentsDefaults: $this->getArgumentDefaults(),
             definingClassName: $this->classDefinition?->name,
-            isStatic: $this->node instanceof ClassMethod ? $this->node->isStatic() : false,
+            isStatic: $this->node instanceof Node\Stmt\ClassMethod ? $this->node->isStatic() : false,
         );
     }
 

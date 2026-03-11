@@ -4,9 +4,6 @@ namespace Dedoc\Scramble\Infer\Flow;
 
 use Illuminate\Support\Str;
 use PhpParser\Node as PhpParserNode;
-use PhpParser\Node\Expr\Assign;
-use PhpParser\Node\Expr\Variable;
-use PhpParser\Node\Stmt\Expression;
 use PhpParser\PrettyPrinter;
 
 abstract class AbstractNode implements Node
@@ -14,9 +11,9 @@ abstract class AbstractNode implements Node
     public function definesVariable(string $varName): bool
     {
         return $this instanceof StatementNode
-            && $this->parserNode instanceof Expression
-            && $this->parserNode->expr instanceof Assign
-            && $this->parserNode->expr->var instanceof Variable
+            && $this->parserNode instanceof \PhpParser\Node\Stmt\Expression
+            && $this->parserNode->expr instanceof \PhpParser\Node\Expr\Assign
+            && $this->parserNode->expr->var instanceof \PhpParser\Node\Expr\Variable
             && $this->parserNode->expr->var->name === $varName;
     }
 

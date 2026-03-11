@@ -214,7 +214,8 @@ class RequestParametersBuilder implements IndexBuilder
         /** @var PhpDocNode|null $phpDoc */
         $phpDoc = $node->getAttribute('parsedPhpDoc');
 
-        return (bool) $phpDoc?->getTagsByName('@ignoreParam');
+        return (bool) $phpDoc?->getTagsByName('@ignoreParam')
+            || (bool) $phpDoc?->getTagsByName('@hidden');
     }
 
     private function getParameterDefaultFromPhpDoc(NodeAbstract $node): mixed

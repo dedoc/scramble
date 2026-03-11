@@ -13,14 +13,13 @@ use PHPStan\PhpDocParser\Lexer\Lexer;
 use PHPStan\PhpDocParser\Parser\ConstExprParser;
 use PHPStan\PhpDocParser\Parser\TokenIterator;
 use PHPStan\PhpDocParser\Parser\TypeParser;
-use PHPStan\PhpDocParser\ParserConfig;
 
 class PhpDoc
 {
     public static function getTokenizerAndParser()
     {
-        if (class_exists(ParserConfig::class)) {
-            $config = new ParserConfig(usedAttributes: ['lines' => true, 'indexes' => true]);
+        if (class_exists(\PHPStan\PhpDocParser\ParserConfig::class)) {
+            $config = new \PHPStan\PhpDocParser\ParserConfig(usedAttributes: ['lines' => true, 'indexes' => true]);
             $lexer = new Lexer($config);
             $constExprParser = new ConstExprParser($config);
             $typeParser = new TypeParser($config, $constExprParser);

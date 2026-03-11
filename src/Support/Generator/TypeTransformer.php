@@ -23,10 +23,6 @@ use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Dedoc\Scramble\Support\Type\FloatType;
-use Dedoc\Scramble\Support\Type\IntegerRangeType;
-use Dedoc\Scramble\Support\Type\IntersectionType;
-use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -87,28 +83,30 @@ class TypeTransformer
         }
 
         if (
-            $type instanceof KeyedArrayType
+            $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
             && $type->isList
         ) {
+            $visibleItems = collect($type->items)->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))->values()->all();
             /** @see https://stackoverflow.com/questions/57464633/how-to-define-a-json-array-with-concrete-item-definition-for-every-index-i-e-a */
             $openApiType = (new ArrayType)
-                ->setMin(count($type->items))
-                ->setMax(count($type->items))
+                ->setMin(count($visibleItems))
+                ->setMax(count($visibleItems))
                 ->setPrefixItems(
                     array_map(
                         fn ($item) => $this->transform($item->value),
-                        $type->items
+                        $visibleItems
                     )
                 )
                 ->setAdditionalItems(false);
         } elseif (
-            $type instanceof KeyedArrayType
+            $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
             && ! $type->isList
         ) {
             $openApiType = new ObjectType;
             $requiredKeys = [];
 
             $props = collect($type->items)
+                ->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))
                 ->mapWithKeys(function (ArrayItemType_ $item) use (&$requiredKeys) {
                     if (! $item->isOptional) {
                         $requiredKeys[] = $item->key;
@@ -237,9 +235,9 @@ class TypeTransformer
             $openApiType = (new NumberType)->const($type->value);
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\StringType) {
             $openApiType = new StringType;
-        } elseif ($type instanceof FloatType) {
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\FloatType) {
             $openApiType = new NumberType;
-        } elseif ($type instanceof IntegerRangeType) {
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntegerRangeType) {
             $openApiType = new IntegerType;
 
             if ($type->min !== null) {
@@ -263,7 +261,7 @@ class TypeTransformer
             } else {
                 $openApiType = new ObjectType;
             }
-        } elseif ($type instanceof IntersectionType) {
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntersectionType) {
             $openApiType = (new AllOf)->setItems(array_map(
                 fn ($t) => $this->transform($t),
                 $type->types,
@@ -427,5 +425,21 @@ class TypeTransformer
         }
 
         return null;
+    }
+
+    private function isHiddenArrayItem(ArrayItemType_ $item): bool
+    {
+        /** @var PhpDocNode|null $arrayItemDocNode */
+        $arrayItemDocNode = $item->getAttribute('docNode');
+        /** @var PhpDocNode|null $valueDocNode */
+        $valueDocNode = $item->value->getAttribute('docNode');
+
+        foreach ([$arrayItemDocNode, $valueDocNode] as $docNode) {
+            if ($docNode && count($docNode->getTagsByName('@hidden')) > 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -17,7 +17,6 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceResponse;
@@ -85,7 +84,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
     protected function normalizeType(ObjectType $type): Generic
     {
-        return $type instanceof Generic ? $type : new Generic($type->name, [new UnknownType]);
+        return $type instanceof Generic ? $type : new Generic($type->name, [new \Dedoc\Scramble\Support\Type\UnknownType]);
     }
 
     protected function getResponseType(ObjectType $type): Type
