@@ -3,10 +3,8 @@
 namespace Dedoc\Scramble\Support\ResponseExtractor;
 
 use BackedEnum;
-use Illuminate\Console\GeneratorCommand;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionMethod;
@@ -66,8 +64,8 @@ class ModelInfo
     /**
      * Get the column attributes for the given model.
      *
-     * @param  Model  $model
-     * @return Collection
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @return \Illuminate\Support\Collection
      */
     protected function getAttributes($model)
     {
@@ -117,9 +115,9 @@ class ModelInfo
     /**
      * Get the virtual (non-column) attributes for the given model.
      *
-     * @param  Model  $model
+     * @param  \Illuminate\Database\Eloquent\Model  $model
      * @param  array[]  $columns
-     * @return Collection
+     * @return \Illuminate\Support\Collection
      */
     protected function getVirtualAttributes($model, $columns)
     {
@@ -162,8 +160,8 @@ class ModelInfo
     /**
      * Get the relations from the given model.
      *
-     * @param  Model  $model
-     * @return Collection
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @return \Illuminate\Support\Collection
      */
     protected function getRelations($model)
     {
@@ -226,7 +224,7 @@ class ModelInfo
      * Get the cast type for the given column.
      *
      * @param  string  $column
-     * @param  Model  $model
+     * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return string|null
      */
     protected function getCastType($column, $model)
@@ -245,8 +243,8 @@ class ModelInfo
     /**
      * Get the model casts, including any date casts.
      *
-     * @param  Model  $model
-     * @return Collection
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @return \Illuminate\Support\Collection
      */
     protected function getCastsWithDates($model)
     {
@@ -261,7 +259,7 @@ class ModelInfo
      * Determine if the given attribute is hidden.
      *
      * @param  string  $attribute
-     * @param  Model  $model
+     * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return bool
      */
     protected function attributeIsHidden($attribute, $model)
@@ -282,7 +280,7 @@ class ModelInfo
      *
      * @return string
      *
-     * @see GeneratorCommand
+     * @see \Illuminate\Console\GeneratorCommand
      */
     protected function qualifyModel(string $model)
     {

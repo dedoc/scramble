@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 it('documents a response even when return type is taken from an annotation', function () {
@@ -14,9 +12,9 @@ it('documents a response even when return type is taken from an annotation', fun
         ->toHaveKey('content.application/json.schema.properties.id.type', 'integer');
 });
 
-class ManualResponseDocumentation_Test extends Controller
+class ManualResponseDocumentation_Test extends \Illuminate\Routing\Controller
 {
-    public function a(): JsonResource
+    public function a(): Illuminate\Http\Resources\Json\JsonResource
     {
         /**
          * Wow.
@@ -36,7 +34,7 @@ it('doesnt use comments from service classes', function () {
         ->toHaveKey('description', '');
 });
 
-class ServiceResponseDocumentation_Test extends Controller
+class ServiceResponseDocumentation_Test extends \Illuminate\Routing\Controller
 {
     public function __invoke()
     {

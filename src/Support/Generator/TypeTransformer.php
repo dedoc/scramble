@@ -23,10 +23,6 @@ use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Dedoc\Scramble\Support\Type\FloatType;
-use Dedoc\Scramble\Support\Type\IntegerRangeType;
-use Dedoc\Scramble\Support\Type\IntersectionType;
-use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -87,7 +83,7 @@ class TypeTransformer
         }
 
         if (
-            $type instanceof KeyedArrayType
+            $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
             && $type->isList
         ) {
             $visibleItems = collect($type->items)->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))->values()->all();
@@ -103,7 +99,7 @@ class TypeTransformer
                 )
                 ->setAdditionalItems(false);
         } elseif (
-            $type instanceof KeyedArrayType
+            $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
             && ! $type->isList
         ) {
             $openApiType = new ObjectType;
@@ -239,9 +235,9 @@ class TypeTransformer
             $openApiType = (new NumberType)->const($type->value);
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\StringType) {
             $openApiType = new StringType;
-        } elseif ($type instanceof FloatType) {
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\FloatType) {
             $openApiType = new NumberType;
-        } elseif ($type instanceof IntegerRangeType) {
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntegerRangeType) {
             $openApiType = new IntegerType;
 
             if ($type->min !== null) {
@@ -265,7 +261,7 @@ class TypeTransformer
             } else {
                 $openApiType = new ObjectType;
             }
-        } elseif ($type instanceof IntersectionType) {
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntersectionType) {
             $openApiType = (new AllOf)->setItems(array_map(
                 fn ($t) => $this->transform($t),
                 $type->types,

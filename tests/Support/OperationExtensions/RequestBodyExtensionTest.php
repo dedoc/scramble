@@ -1,8 +1,6 @@
 <?php
 
-use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
-use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
@@ -19,7 +17,7 @@ it('doesnt add body when empty', function () {
 });
 class RequestBodyExtensionTest__doesnt_use_body_when_empty
 {
-    public function store(Request $request) {}
+    public function store(Illuminate\Http\Request $request) {}
 }
 
 it('uses application/json media type as a default request media type', function () {
@@ -33,7 +31,7 @@ it('uses application/json media type as a default request media type', function 
 });
 class RequestBodyExtensionTest__uses_application_json_as_default
 {
-    public function index(Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         $request->validate(['foo' => 'string']);
     }
@@ -58,7 +56,7 @@ it('generates request body only for certain http methods', function (string $met
 ]);
 class RequestBodyExtensionTest__generates_request_body_only_for_certain_http_methods
 {
-    public function index(Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         $request->validate(['foo' => 'string']);
     }
@@ -78,7 +76,7 @@ class RequestBodyExtensionTest__allows_manual_request_media_type
     /**
      * @requestMediaType application/xml
      */
-    public function index(Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         $request->validate(['foo' => 'string']);
     }
@@ -95,7 +93,7 @@ it('automatically infers multipart/form-data as request media type when some of 
 });
 class RequestBodyExtensionTest__automaticall_infers_form_data
 {
-    public function index(Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         $request->validate(['foo' => 'file']);
     }
@@ -127,7 +125,7 @@ it('adds array body', function () {
 });
 class RequestBodyExtensionTest__array_body
 {
-    public function __invoke(Request $request)
+    public function __invoke(Illuminate\Http\Request $request)
     {
         $request->validate([
             '*.foo' => ['required', 'string'],
@@ -147,7 +145,7 @@ it('automatically infers multipart/form-data as request media type when some of 
 });
 class RequestBodyExtensionTest__automaticall_infers_form_data_from_deeper
 {
-    public function index(Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         $request->validate([
             'foo.*' => 'file',
@@ -187,7 +185,7 @@ it('extracts parameters, their defaults, and descriptions from calling request p
 });
 class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_scalar_types
 {
-    public function index(Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         // How many things are there.
         $param = $request->integer('count', 10);
@@ -225,7 +223,7 @@ it('extracts parameters, their defaults, and descriptions from calling request p
 });
 class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_enum
 {
-    public function index(Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         $request->enum('status', RequestBodyExtensionTest__Status_Params_Extraction::class);
     }
@@ -255,7 +253,7 @@ it('doesnt create a schema for enum if it was overridden in rules', function () 
 });
 class RequestBodyExtensionTest__doesnt_create_the_enum_schema
 {
-    public function index(Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         $request->validate([
             'status' => Rule::in(['clubs']),
@@ -283,7 +281,7 @@ it('extracts parameters, their defaults, and descriptions from calling request p
 });
 class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with_query
 {
-    public function index(Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         $request->query('in_query', 'foo');
     }
@@ -299,7 +297,7 @@ it('ignores parameter with @ignoreParam doc', function () {
 });
 class RequestBodyExtensionTest__ignores_parameter_with_ignore_param_doc
 {
-    public function index(Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         /** @ignoreParam */
         $request->integer('foo', 10);
@@ -316,7 +314,7 @@ it('uses and overrides default param value when it is provided manually in doc',
 });
 class RequestBodyExtensionTest__uses_and_overrides_default_param_value_when_it_is_provided_manually_in_doc
 {
-    public function index(Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         /** @default 15 */
         $request->integer('foo', 10);
@@ -342,7 +340,7 @@ it('allows explicitly specifying parameter placement in query manually in doc', 
 });
 class RequestBodyExtensionTest__allows_explicitly_specifying_parameter_placement_in_query_manually_in_doc
 {
-    public function index(Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         /** @query */
         $request->integer('foo', 10);
@@ -372,7 +370,7 @@ it('allows specifying query position and default for params inferred from valida
 });
 class RequestBodyExtensionTest__allows_specifying_query_position_and_default_for_params_inferred_from_validation_rules_using_validate_method
 {
-    public function index(Request $request)
+    public function index(Illuminate\Http\Request $request)
     {
         $request->validate([
             /** @default 10 */
@@ -394,7 +392,7 @@ it('ignores param in rules with annotation', function () {
 });
 class RequestBodyExtensionTest__ignores_rules_param_with_annotation
 {
-    public function index(Request $request, string $id)
+    public function index(Illuminate\Http\Request $request, string $id)
     {
         $request->validate([
             /** @ignoreParam */
@@ -563,7 +561,7 @@ it('allows to use validation on form request', function () {
 
     Scramble::routes(fn (Route $r) => in_array($r->uri, $routes));
 
-    $document = app()->make(Generator::class)();
+    $document = app()->make(\Dedoc\Scramble\Generator::class)();
 
     expect($document)->toMatchSnapshot();
 });
@@ -858,7 +856,7 @@ class CreateUser_RequestBodyExtensionTest extends FormRequest
         return [
             'external_id' => [
                 ...$this->nonExistingMethod(),
-                Rule::unique(SamplePostModel::class)
+                Rule::unique(\Dedoc\Scramble\Tests\Files\SamplePostModel::class)
                     ->where('company_id', $this->nonExistingMethod()->company_id),
             ],
         ];
@@ -888,7 +886,7 @@ class CreateUserUnpack_RequestBodyExtensionTest extends FormRequest
         return [
             'external_id' => [
                 ...$this->someRules(),
-                Rule::unique(SamplePostModel::class)
+                Rule::unique(\Dedoc\Scramble\Tests\Files\SamplePostModel::class)
                     ->where('company_id', $this->user()->company_id),
             ],
         ];

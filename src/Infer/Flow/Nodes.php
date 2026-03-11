@@ -276,11 +276,11 @@ class Nodes
     {
         return $this->expressionTypeInferrer->infer(
             expr: $expr,
-            variableTypeGetter: fn (Variable $n) => $this->resolveNarrowedVariableTypeAtLocation($n, $node),
+            variableTypeGetter: fn (Expr\Variable $n) => $this->resolveNarrowedVariableTypeAtLocation($n, $node),
         );
     }
 
-    private function resolveNarrowedVariableTypeAtLocation(Variable $var, Node $node): Type
+    private function resolveNarrowedVariableTypeAtLocation(Expr\Variable $var, Node $node): Type
     {
         $definedTypeAtLocation = $this->resolveVariableTypeAt($var, $node);
         $narrowedType = $this->narrowType($definedTypeAtLocation, $var, $node);
@@ -293,7 +293,7 @@ class Nodes
         return $definedTypeAtLocation;
     }
 
-    private function resolveVariableTypeAt(Variable $var, Node $node): Type
+    private function resolveVariableTypeAt(Expr\Variable $var, Node $node): Type
     {
         $varName = $var->name;
         if (! is_string($varName)) {
@@ -349,7 +349,7 @@ class Nodes
         }
     }
 
-    private function narrowType(Type $type, Variable $var, Node $node): ?Type
+    private function narrowType(Type $type, Expr\Variable $var, Node $node): ?Type
     {
         $varName = $var->name;
         if (! is_string($varName)) {

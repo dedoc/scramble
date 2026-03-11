@@ -20,9 +20,7 @@ use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
-use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 use function Spatie\Snapshots\assertMatchesSnapshot;
@@ -312,7 +310,7 @@ it('gets nullable type reference', function () {
 });
 
 it('infers date column when casted to date', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [ModelToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [\Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema::class]);
 
     $transformer->transform(new ObjectType(SamplePostWithDateApprovedAtModel::class));
 
@@ -321,7 +319,7 @@ it('infers date column when casted to date', function () {
         'format' => 'date',
     ]);
 });
-class SamplePostWithDateApprovedAtModel extends Model
+class SamplePostWithDateApprovedAtModel extends \Illuminate\Database\Eloquent\Model
 {
     protected $table = 'posts';
 

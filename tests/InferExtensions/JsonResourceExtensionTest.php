@@ -5,7 +5,6 @@ use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\OpenApi;
-use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
@@ -23,7 +22,7 @@ beforeEach(function () {
 });
 
 /**
- * @return array{0: Type, 1: Components}
+ * @return array{0: \Dedoc\Scramble\Support\Generator\Types\Type, 1: Components}
  */
 function JsonResourceExtensionTest_analyze(Infer $infer, OpenApiContext $context, string $class)
 {

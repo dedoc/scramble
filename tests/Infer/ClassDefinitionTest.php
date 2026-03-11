@@ -8,7 +8,6 @@ use Dedoc\Scramble\Infer\Extensions\AfterClassDefinitionCreatedExtension;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Scramble;
-use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Type\GenericClassStringType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -71,7 +70,7 @@ it('infers from constructor argument type', function () {
 
     $this->classAnalyzer->analyze(Bar_ClassDefinitionTest::class);
 
-    expect(getStatementType('new '.Bar_ClassDefinitionTest::class.'(prop: '.Schema::class.'::class)')->toString())
+    expect(getStatementType('new '.Bar_ClassDefinitionTest::class.'(prop: '.\Dedoc\Scramble\Support\Generator\Schema::class.'::class)')->toString())
         ->toBe('Bar_ClassDefinitionTest<Dedoc\Scramble\Support\Generator\Schema>');
 });
 class Bar_ClassDefinitionTest

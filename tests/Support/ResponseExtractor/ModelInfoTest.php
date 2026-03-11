@@ -1,7 +1,6 @@
 <?php
 
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
-use Illuminate\Database\Eloquent\Model;
 
 it('handles model without updated_at column', function () {
     $modelInfo = new ModelInfo(UserModelWithoutUpdatedAt::class);
@@ -9,7 +8,7 @@ it('handles model without updated_at column', function () {
     $modelInfo->handle();
 })->expectNotToPerformAssertions();
 
-class UserModelWithoutUpdatedAt extends Model
+class UserModelWithoutUpdatedAt extends \Illuminate\Database\Eloquent\Model
 {
     protected $table = 'users';
 

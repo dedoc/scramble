@@ -17,8 +17,8 @@ it('infers exceptions from method call using method call exceptions extension', 
         {
             if ($event->name === 'doSomething') {
                 return [
-                    new ObjectType(RuntimeException::class),
-                    new ObjectType(InvalidArgumentException::class),
+                    new ObjectType(\RuntimeException::class),
+                    new ObjectType(\InvalidArgumentException::class),
                 ];
             }
 
@@ -37,8 +37,8 @@ it('infers exceptions from method call using method call exceptions extension', 
         ->type;
 
     expect($fnType->exceptions)->toHaveCount(2)
-        ->and($fnType->exceptions[0]->name)->toBe(RuntimeException::class)
-        ->and($fnType->exceptions[1]->name)->toBe(InvalidArgumentException::class);
+        ->and($fnType->exceptions[0]->name)->toBe(\RuntimeException::class)
+        ->and($fnType->exceptions[1]->name)->toBe(\InvalidArgumentException::class);
 });
 
 it('does not add exceptions when extension should not handle the type', function () {
@@ -51,7 +51,7 @@ it('does not add exceptions when extension should not handle the type', function
 
         public function getMethodCallExceptions(MethodCallEvent $event): array
         {
-            return [new ObjectType(Exception::class)];
+            return [new ObjectType(\Exception::class)];
         }
     };
 

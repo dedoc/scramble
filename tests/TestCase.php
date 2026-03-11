@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Tests;
 
 use Closure;
-use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\ScrambleServiceProvider;
@@ -74,6 +73,6 @@ class TestCase extends Orchestra
 
         Scramble::routes(fn (Route $r) => $r->uri === $route->uri);
 
-        return app()->make(Generator::class)();
+        return app()->make(\Dedoc\Scramble\Generator::class)();
     }
 }

@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
@@ -96,7 +95,7 @@ class UnionTypeHint_ResponseExtensionTest_Controller
 }
 class Resource_ResponseExtensionTest extends JsonResource
 {
-    public function toArray(Request $request)
+    public function toArray(\Illuminate\Http\Request $request)
     {
         return ['id' => 42];
     }

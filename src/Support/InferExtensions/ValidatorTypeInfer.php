@@ -18,7 +18,7 @@ class ValidatorTypeInfer implements ExpressionTypeInferExtension
     {
         // Validator::make
         if (
-            $node instanceof Expr\StaticCall
+            $node instanceof Node\Expr\StaticCall
             && ($node->class instanceof Node\Name && is_a($node->class->toString(), ValidatorFacade::class, true))
         ) {
             return new Generic(Validator::class, [
