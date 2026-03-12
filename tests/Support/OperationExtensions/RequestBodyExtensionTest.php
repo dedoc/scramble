@@ -666,6 +666,97 @@ it('documents deep query parameters without flattening', function () {
             ],
         ]);
 });
+
+it('documents request body with literal period in parameter name using escaped dot', function () {
+    $document = generateForRoute(fn () => RouteFacade::post('test', RequestBodyExtensionTest_EscapedDotRequestBodyController::class));
+
+    expect($document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'])
+        ->toHaveKey('user.name')
+        ->and($document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties']['user.name'])
+        ->toBe(['type' => 'string']);
+});
+class RequestBodyExtensionTest_EscapedDotRequestBodyController
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate(['user\.name' => 'string']);
+    }
+}
+
+it('documents query parameters with literal period in parameter name using escaped dot', function () {
+    $document = generateForRoute(fn () => RouteFacade::get('test', RequestBodyExtensionTest_EscapedDotQueryController::class));
+
+    expect($parameters = $document['paths']['/test']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($parameters[0]['name'])
+        ->toBe('filter.accountable')
+        ->and($parameters[0]['schema']['type'])
+        ->toBe('integer');
+});
+class RequestBodyExtensionTest_EscapedDotQueryController
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate(['filter\.accountable' => 'integer']);
+    }
+}
+
+it('distinguishes nested dot notation from literal period in same request', function () {
+    $document = generateForRoute(fn () => RouteFacade::post('test', RequestBodyExtensionTest_MixedDotNotationController::class));
+
+    $properties = $document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'];
+
+    expect($properties)->toHaveKey('user')
+        ->and($properties['user']['properties']['name'] ?? null)->toBe(['type' => 'string']);
+
+    expect($properties)->toHaveKey('user.email')
+        ->and($properties['user.email'])->toBe(['type' => 'string']);
+});
+class RequestBodyExtensionTest_MixedDotNotationController
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            'user.name' => 'string',
+            'user\.email' => 'string',
+        ]);
+    }
+}
+
+it('unescapes literal period in parameters from request retrieving methods', function () {
+    $document = generateForRoute(fn () => RouteFacade::post('test', RequestBodyExtensionTest_EscapedDotFromRetrievingMethodsController::class));
+
+    expect($document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'])
+        ->toHaveKey('user.name')
+        ->and($document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties']['user.name'])
+        ->toMatchArray(['type' => 'string']);
+});
+
+it('unescapes literal period in query parameters from request retrieving methods', function () {
+    $document = generateForRoute(fn () => RouteFacade::get('test', RequestBodyExtensionTest_EscapedDotQueryFromRetrievingMethodsController::class));
+
+    expect($parameters = $document['paths']['/test']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($parameters[0]['name'])
+        ->toBe('filter.accountable')
+        ->and($parameters[0]['schema']['type'])
+        ->toBe('string');
+});
+class RequestBodyExtensionTest_EscapedDotFromRetrievingMethodsController
+{
+    public function __invoke(Request $request)
+    {
+        $request->string('user\.name', 'default');
+    }
+}
+class RequestBodyExtensionTest_EscapedDotQueryFromRetrievingMethodsController
+{
+    public function __invoke(Request $request)
+    {
+        $request->query('filter\.accountable', 'foo');
+    }
+}
+
 class RequestBodyExtensionTest_DeepQueryParametersWithContainerController
 {
     public function __invoke(Request $request)
