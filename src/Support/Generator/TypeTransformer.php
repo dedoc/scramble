@@ -220,7 +220,16 @@ class TypeTransformer
                 // In case $otherTypes consist just of null and there is string or integer literals, make type nullable
                 $otherTypesIsNullable = count($otherTypes) === 1 && collect($otherTypes)->contains(fn ($t) => $t instanceof \Dedoc\Scramble\Support\Type\NullType);
                 if ($otherTypesIsNullable && ($stringLiterals->count() || $integerLiterals->count())) {
-                    $items = array_map(fn ($s) => $s->nullable(true), $literalSchemas);
+                    $items = array_map(function ($s) {
+                        $s->nullable(true);
+                        // Per JSON Schema type and enum are independent constraints.
+                        // When type allows null, enum must also include null or it will reject valid null values.
+                        if (count($s->enum) > 0) {
+                            $s->enum(array_merge($s->enum, [null]));
+                        }
+
+                        return $s;
+                    }, $literalSchemas);
                 }
 
                 // Removing duplicated schemas before making a resulting AnyOf type.
