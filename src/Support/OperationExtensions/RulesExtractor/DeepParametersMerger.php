@@ -9,10 +9,11 @@ use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 class DeepParametersMerger
 {
+    const DOT_REGEX = '/(?<!\\\\)\./';
+
     /**
      * @param  Collection<int, Parameter>  $parameters
      */
@@ -47,10 +48,10 @@ class DeepParametersMerger
          * @var Collection<string, Parameter> $parameters
          */
         [$nested, $parameters] = $maybeDeepParameters
-            ->sortBy(fn ($_, $key) => count(explode('.', $key)))
-            ->partition(fn ($_, $key) => Str::contains($key, '.'));
+            ->sortBy(fn ($_, $key) => count(self::splitOnUnescapedDots($key)))
+            ->partition(fn ($_, $key) => (bool) preg_match(self::DOT_REGEX, $key));
 
-        $nestedParentsKeys = $nested->keys()->map(fn ($key) => explode('.', $key)[0]);
+        $nestedParentsKeys = $nested->keys()->map(fn ($key) => self::splitOnUnescapedDots($key)[0]);
 
         /**
          * @var Collection<string, Parameter> $nestedParents
@@ -62,7 +63,7 @@ class DeepParametersMerger
         $nested = $nested->merge($nestedParents);
 
         $nested = $nested
-            ->groupBy(fn ($_, $key) => explode('.', $key)[0])
+            ->groupBy(fn ($_, $key) => self::splitOnUnescapedDots($key)[0])
             ->map(function (Collection $params, $groupName) {
                 $params = $params->keyBy('name');
 
@@ -99,17 +100,18 @@ class DeepParametersMerger
     {
         $typeToSet = $this->extractTypeFromParameter($parameter);
 
+        $parts = self::splitOnUnescapedDots($key);
         $containingType = $this->getOrCreateDeepTypeContainer(
             $base,
-            explode('.', $key)[0] === '*'
-                ? explode('.', $key)
-                : collect(explode('.', $key))
+            $parts[0] === '*'
+                ? $parts
+                : collect($parts)
                     ->splice(1)
                     ->values()
                     ->all(),
         );
 
-        $settingKey = collect(explode('.', $key))->last();
+        $settingKey = collect($parts)->last();
 
         if (! is_string($settingKey)) {
             return;
@@ -145,6 +147,16 @@ class DeepParametersMerger
                 ->map(fn ($prop) => $prop instanceof UnknownType ? $typeToSet : $prop)
                 ->all();
         }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function splitOnUnescapedDots(string $key): array
+    {
+        $parts = preg_split(self::DOT_REGEX, $key);
+
+        return $parts !== false ? $parts : [$key];
     }
 
     /**

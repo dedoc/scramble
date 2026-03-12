@@ -71,7 +71,7 @@ class QueryParametersConverter
         $parameter = clone $originalParameter;
 
         $parameter->name = Str::of($parameter->name)
-            ->explode('.')
+            ->split(DeepParametersMerger::DOT_REGEX)
             ->map(fn ($str, $i) => $i === 0 ? $str : ($str === '*' ? '[]' : "[$str]"))
             ->join('');
 

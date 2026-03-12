@@ -53,7 +53,11 @@ class RequestBodyExtension extends OperationExtension
             $operation->description($description);
         }
 
-        $allParams = $rulesResults->flatMap(fn ($p) => $p->parameters)->unique(fn ($p) => "$p->name.$p->in")->values()->all();
+        $allParams = $rulesResults
+            ->flatMap(fn ($p) => $p->parameters)
+            ->unique(fn ($p) => "$p->name.$p->in")
+            ->values()
+            ->all();
 
         if (empty($allParams)) {
             return;
@@ -126,7 +130,7 @@ class RequestBodyExtension extends OperationExtension
     protected function makeSchemaFromResults(ParametersExtractionResult $result): Type
     {
         $requestBodySchema = Schema::createFromParameters(
-            $parameters = $this->convertDotNamedParamsToComplexStructures($result->parameters)
+            $parameters = $this->unescapeEscapedDotNamedParameters($this->convertDotNamedParamsToComplexStructures($result->parameters))
         );
 
         if (count($parameters) === 1 && $parameters[0]->name === '*' && $parameters[0]->schema) {
@@ -175,9 +179,11 @@ class RequestBodyExtension extends OperationExtension
      */
     protected function prepareQueryParams(array $params): array
     {
-        return $this->config->get('flatten_deep_query_parameters', true)
-            ? $this->convertDotNamedParamsToFlatQueryParams($params)
-            : $this->convertDotNamedParamsToComplexStructures($params);
+        return $this->unescapeEscapedDotNamedParameters(
+            $this->config->get('flatten_deep_query_parameters', true)
+                ? $this->convertDotNamedParamsToFlatQueryParams($params)
+                : $this->convertDotNamedParamsToComplexStructures($params)
+        );
     }
 
     /**
@@ -196,6 +202,15 @@ class RequestBodyExtension extends OperationExtension
     protected function convertDotNamedParamsToFlatQueryParams(array $params): array
     {
         return (new QueryParametersConverter(collect($params)))->handle();
+    }
+
+    /**
+     * @param  Parameter[]  $params
+     * @return Parameter[]
+     */
+    protected function unescapeEscapedDotNamedParameters(array $params): array
+    {
+        return array_map(fn ($p) => tap($p, fn (Parameter $p) => $p->setName(Str::replace('\\.', '.', $p->name))), $params);
     }
 
     /**
