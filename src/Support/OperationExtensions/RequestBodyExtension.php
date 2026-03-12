@@ -210,7 +210,7 @@ class RequestBodyExtension extends OperationExtension
      */
     protected function unescapeEscapedDotNamedParameters(array $params): array
     {
-         return array_map(fn ($p) => tap($p, fn (Parameter $p) => $p->setName(Str::replace('\\.', '.', $p->name))), $params);
+        return array_map(fn ($p) => tap($p, fn (Parameter $p) => $p->setName(Str::replace('\\.', '.', $p->name))), $params);
     }
 
     /**
