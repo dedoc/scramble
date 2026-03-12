@@ -397,12 +397,6 @@ parameters:
 			path: src/Exceptions/InvalidSchema.php
 
 		-
-			message: '#^Parameter \#2 \$line of class Dedoc\\Scramble\\Console\\Commands\\Components\\Code constructor expects int, int\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Exceptions/InvalidSchema.php
-
-		-
 			message: '#^Part \$action \(mixed\) of encapsed string cannot be cast to string\.$#'
 			identifier: encapsedStringPart.nonString
 			count: 1
