@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Contracts\Database\Query\Builder as BaseBuilder;
@@ -42,7 +43,17 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
             return null;
         }
 
-        return $this->getPaginatorType($event->name);
+        return $this->getPaginatorType(
+            $this->normalizeCalleeQueryBuilder($event->callee),
+            $event->name,
+        );
+    }
+
+    private function normalizeCalleeQueryBuilder(string $model): Generic
+    {
+        return new Generic(\Illuminate\Database\Eloquent\Builder::class, [
+            new ObjectType($model),
+        ]);
     }
 
     public function getMethodReturnType(AnyMethodCallEvent $event): ?Type
@@ -59,12 +70,15 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
             return null;
         }
 
-        return $this->getPaginatorType($event->name);
+        return $this->getPaginatorType($event->getInstance(), $event->name);
     }
 
-    private function getPaginatorType(string $name): Generic
+    private function getPaginatorType(Type $callee, string $name): Generic
     {
-        $valueType = new UnknownType;
+        $valueType = (new TypeWalker)->first(
+            $callee,
+            fn (Type $type) => $type->isInstanceOf(Model::class),
+        ) ?: new UnknownType;
 
         return match ($name) {
             'paginate', 'fastPaginate' => new Generic(LengthAwarePaginator::class, [new IntegerType, $valueType]),
