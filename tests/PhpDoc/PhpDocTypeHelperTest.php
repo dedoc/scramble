@@ -63,6 +63,25 @@ it('parses integers', function (string $phpDocType, string $expectedTypeString) 
     ['/** @var int<10, min> */', 'int'],
 ]);
 
+it('parses strings', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    ['/** @var string */', 'string'],
+    ['/** @var non-empty-string */', 'string'],
+    ['/** @var callable-string */', 'string'],
+    ['/** @var numeric-string */', 'string'],
+    ['/** @var non-falsy-string */', 'string'],
+    ['/** @var truthy-string */', 'string'],
+    ['/** @var literal-string */', 'string'],
+    ['/** @var lowercase-string */', 'string'],
+    ['/** @var uppercase-string */', 'string'],
+    ['/** @var non-empty-lowercase-string */', 'string'],
+    ['/** @var non-empty-uppercase-string */', 'string'],
+    ['/** @var non-empty-literal-string */', 'string'],
+]);
+
 it('parses unions', function (string $phpDocType, string $expectedTypeString) {
     expect(
         getPhpTypeFromDoc_Copy($phpDocType)->toString()
