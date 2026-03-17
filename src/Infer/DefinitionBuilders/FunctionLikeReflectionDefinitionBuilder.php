@@ -121,19 +121,20 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
             );
         }
 
-        foreach ($phpDoc->getSelfOutTypeTagValues() as $selfOutTypeTagValue) {
-            $selfOutType = $this->handleStatic(
-                PhpDocTypeHelper::toType($selfOutTypeTagValue->type),
-                $definition->type->templates,
-            );
+        if (method_exists($phpDoc, 'getSelfOutTypeTagValues')) {
+            foreach ($phpDoc->getSelfOutTypeTagValues() as $selfOutTypeTagValue) {
+                $selfOutType = $this->handleStatic(
+                    PhpDocTypeHelper::toType($selfOutTypeTagValue->type),
+                    $definition->type->templates,
+                );
 
-            if (! $selfOutType instanceof Generic) {
-                continue;
+                if (! $selfOutType instanceof Generic) {
+                    continue;
+                }
+
+                $definition->selfOutType = $this->handleSelfOutType($selfOutType);
             }
-
-            $definition->selfOutType = $this->handleSelfOutType($selfOutType);
         }
-
     }
 
     /**
