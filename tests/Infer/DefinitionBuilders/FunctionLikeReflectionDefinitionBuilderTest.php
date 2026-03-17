@@ -29,6 +29,7 @@ class PhpstanThisOut_FunctionLikeReflectionDefinitionBuilderTest
 {
     /**
      * @return $this
+     *
      * @phpstan-this-out static<int>
      */
     public function updateSelfOut(): self
