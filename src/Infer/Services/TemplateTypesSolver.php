@@ -150,15 +150,29 @@ class TemplateTypesSolver
         foreach ($argument->arguments as $name => $arg) {
             $i++;
 
-            if (! $arg instanceof TemplateType || $arg->is instanceof ObjectType) {
+            if (! $arg instanceof TemplateType) {
                 continue;
             }
 
-            $argShouldBeReplaced = ! $arg->is || $arg->is instanceof ArrayType;
+            /** @var ?Type $inferredTypeForReplacement */
+            $inferredTypeForReplacement = $correspondingParameterType->arguments[$i] ?? null;
+            if (! $inferredTypeForReplacement) {
+                continue;
+            }
 
-            $param = $argShouldBeReplaced
-                ? $correspondingParameterType->arguments[$i] ?? null
-                : $arg->is;
+            // Allow replacing object/array-typed params when the call-site context provides a compatible,
+            // more specific type (e.g. Collection<ConcreteFoo>), instead of always keeping the user's type.
+            $inferredConcreteTypeForReplacement = $inferredTypeForReplacement instanceof TemplateType && array_key_exists($inferredTypeForReplacement->name, $templates)
+                ? $templates[$inferredTypeForReplacement->name]
+                : null;
+
+            $argShouldBeReplaced = ! $arg->is
+                || $arg->is instanceof ArrayType
+                || $arg->is instanceof ObjectType && (
+                    $inferredConcreteTypeForReplacement?->accepts($arg->is) || $inferredTypeForReplacement->accepts($arg->is)
+                );
+
+            $param = $argShouldBeReplaced ? $inferredTypeForReplacement : $arg->is;
 
             if (! $param) {
                 continue;

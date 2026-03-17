@@ -304,7 +304,34 @@ it('handles collection map call with undefined type', function () {
     expect($type->toString())->toBe('Illuminate\Support\Collection<int, int(42)>');
 });
 
-it('handles collection map call with primitive type', function () {
+it('handles collection map call with array type', function () {
+    $type = getStatementType('(new '.Collection::class.'([["a" => 42]]))->map(fn (array $v) => $v["a"])');
+
+    expect($type->toString())->toBe('Illuminate\Support\Collection<int, int(42)>');
+});
+
+class ConcreteFoo_IndexTest
+{
+    public function __construct(public int $foo) {}
+}
+
+it('handles collection map call with untyped object type', function () {
+    $type = getStatementType(<<<'PHP'
+(new Illuminate\Support\Collection([new Dedoc\Scramble\Tests\Infer\Scope\ConcreteFoo_IndexTest(11)]))->map(fn ($obj) => $obj->foo)
+PHP);
+
+    expect($type->toString())->toBe('Illuminate\Support\Collection<int, int(11)>');
+});
+
+it('handles collection map call with typed object type', function () {
+    $type = getStatementType(<<<'PHP'
+(new Illuminate\Support\Collection([new Dedoc\Scramble\Tests\Infer\Scope\ConcreteFoo_IndexTest(11)]))->map(fn (Dedoc\Scramble\Tests\Infer\Scope\ConcreteFoo_IndexTest $obj) => $obj->foo)
+PHP);
+
+    expect($type->toString())->toBe('Illuminate\Support\Collection<int, int(11)>');
+});
+
+it('handles collection map call with primitive type', function () { // primitive type here is taking over, despite we know the $v is array{a: 42} in this case
     $type = getStatementType('(new '.Collection::class.'([["a" => 42]]))->map(fn (int $v) => $v)');
 
     expect($type->toString())->toBe('Illuminate\Support\Collection<int, int>');

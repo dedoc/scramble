@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -119,6 +120,21 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
                 $definition->type->templates,
             );
         }
+
+        if (method_exists($phpDoc, 'getSelfOutTypeTagValues')) {
+            foreach ($phpDoc->getSelfOutTypeTagValues() as $selfOutTypeTagValue) {
+                $selfOutType = $this->handleStatic(
+                    PhpDocTypeHelper::toType($selfOutTypeTagValue->type),
+                    $definition->type->templates,
+                );
+
+                if (! $selfOutType instanceof Generic) {
+                    continue;
+                }
+
+                $definition->selfOutType = $this->handleSelfOutType($selfOutType);
+            }
+        }
     }
 
     /**
@@ -145,5 +161,10 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
 
             return $t;
         });
+    }
+
+    private function handleSelfOutType(Generic $type): Generic
+    {
+        return new Generic('self', $type->templateTypes);
     }
 }
