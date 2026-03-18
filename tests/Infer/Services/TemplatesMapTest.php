@@ -1,7 +1,7 @@
 <?php
 
-use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Infer\Services\TemplatesMap;
+use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;

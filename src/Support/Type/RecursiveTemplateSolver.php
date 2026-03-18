@@ -68,7 +68,8 @@ class RecursiveTemplateSolver
     private function walk(Type $type, Closure $cb): void
     {
         $typeTraverser = new TypeTraverser([
-            new class ($cb) extends AbstractTypeVisitor {
+            new class($cb) extends AbstractTypeVisitor
+            {
                 public function __construct(private Closure $cb) {}
 
                 public function enter(Type $type): ?Type
