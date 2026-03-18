@@ -32,6 +32,6 @@ class ArrayItemType_ extends AbstractType
 
     public function toString(): string
     {
-        return '';
+        return '<ArrayItemType_>{'.$this->key.': '.$this->value->toString().'}';
     }
 }
