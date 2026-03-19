@@ -105,6 +105,13 @@ class ReferenceTypeResolver
         });
     }
 
+    private function finalizeSelf(Type $type, Type $concreteSelfType): Type
+    {
+        return (new TypeWalker)->map($type, function (Type $t) use ($concreteSelfType) {
+            return $t instanceof SelfType ? $concreteSelfType : $t;
+        });
+    }
+
     private function resolveLateTypeEarly(LateResolvingType $type): Type
     {
         if (! $type->isResolvable()) {
@@ -472,8 +479,8 @@ class ReferenceTypeResolver
     ): Type {
         $returnType = $callee->getReturnType();
 
-        if ($isSelf = $returnType instanceof SelfType && $calledOnType) {
-            $returnType = $calledOnType;
+        if ($calledOnType) {
+            $returnType = $this->finalizeSelf($returnType, $calledOnType);
         }
 
         $classDefinition = $calledOnType instanceof ObjectType ? $this->index->getClass($calledOnType->name) : null;
