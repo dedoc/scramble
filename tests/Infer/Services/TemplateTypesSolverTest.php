@@ -30,6 +30,25 @@ it('adds context type to callable arguments if needed for primitive parameters (
  */
 function foo_TemplateTypesSolverTest($p) {}
 
+it('adds context type to callable arguments if needed for union nullable parameters (fooNullable_TemplateTypesSolverTest)', function (string $expression, string $expectedType) {
+    $argumentType = (new TemplateTypesSolver)->addContextTypesToTypelessParametersOfCallableArgument(
+        argument: getStatementType($expression),
+        nameOrPosition: 0,
+        definition: (new FunctionLikeReflectionDefinitionBuilder('fooNullable_TemplateTypesSolverTest', new \ReflectionFunction('Dedoc\Scramble\Tests\Infer\Services\fooNullable_TemplateTypesSolverTest')))->build(),
+        templates: [],
+    );
+
+    expect($argumentType->toString())->toBe($expectedType);
+})->with([
+    ['fn ($arg) => $arg', '(string): string'],
+    ['fn (int $arg) => $arg', '(int): int'],
+    ['fn (int $arg) => 42', '(int): int(42)'],
+]);
+/**
+ * @param  null|(callable(string): string)  $p
+ */
+function fooNullable_TemplateTypesSolverTest($p) {}
+
 it('accepts this parameter', function () {
     Scramble::infer()
         ->configure()

@@ -17,11 +17,6 @@ use Illuminate\Database\Eloquent\Builder;
  * Typed `when` was added in 9.x, so no need to skip test.
  */
 it('supports when', function () {
-    //    $exprType = getStatementType(<<<'PHP'
-    // (Dedoc\Scramble\Tests\Files\SamplePostModel::query())->when(fn () => true, fn ($q) => $q)
-    // PHP);
-    //    dd($exprType->getOriginal()?->toString());
-
     $builderType = new Generic(Builder::class, [
         new ObjectType(SamplePostModel::class),
     ]);
@@ -44,8 +39,4 @@ it('supports when', function () {
         );
 
     expect($typeAfterWhen->toString())->toBe(Builder::class.'<'.SamplePostModel::class.'>');
-}); // ->skip();
-
-// describe('query builder annotations (introduced in todo)', function () {
-//
-// })->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
+});

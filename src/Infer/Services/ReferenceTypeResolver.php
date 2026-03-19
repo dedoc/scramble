@@ -493,6 +493,10 @@ class ReferenceTypeResolver
 
         $returnType = $callee->getReturnType();
 
+        /*
+         * This part finalizes `self` (or $this) in return and in argument types, by replacing it
+         * on `$calledOnType` type.
+         */
         if ($calledOnType) {
             $returnType = $this->finalizeSelf($returnType, $calledOnType);
 

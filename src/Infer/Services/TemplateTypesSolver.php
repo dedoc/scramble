@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\Type\RecursiveTemplateSolver;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 
 class TemplateTypesSolver
@@ -138,7 +139,15 @@ class TemplateTypesSolver
             ? ($definition->type->arguments[$nameOrPosition] ?? null)
             : (array_values($definition->type->arguments)[$nameOrPosition] ?? null);
 
-        // @todo: this will not work when parameter annotated as union
+        // @todo
+        // This is an entire area for improvement:
+        // 1) what if multiple callables are there,
+        // 2) parameter structure MAY be complex! It is not really specific to function - it may be keyed array,
+        // etc - we still may need to contextualize things
+        // if parameter typed is union, we pick just the first function (this is far from accurate in case it is union of multiple functions (1)!)
+        $correspondingParameterType = collect($correspondingParameterType instanceof Union ? $correspondingParameterType->types : [$correspondingParameterType])
+            ->first(fn ($t) => $t instanceof FunctionType);
+
         if (! $correspondingParameterType instanceof FunctionType) {
             return $argument;
         }
