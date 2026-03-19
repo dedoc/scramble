@@ -26,9 +26,9 @@ it('adds context type to callable arguments if needed for primitive parameters (
     ['fn (int $arg) => 42', '(int): int(42)'],
 ]);
 /**
- * @param callable(string): string $p
+ * @param  callable(string): string  $p
  */
-function foo_TemplateTypesSolverTest ($p) {}
+function foo_TemplateTypesSolverTest($p) {}
 
 it('accepts this parameter', function () {
     Scramble::infer()
@@ -61,7 +61,8 @@ class Foo_TemplateTypesSolverTest
 
     /**
      * @template TData
-     * @param callable($this): TData $cb
+     *
+     * @param  callable($this): TData  $cb
      * @return TData
      */
     public function callCallback($cb) {}

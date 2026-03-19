@@ -6,7 +6,6 @@ use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
@@ -18,10 +17,10 @@ use Illuminate\Database\Eloquent\Builder;
  * Typed `when` was added in 9.x, so no need to skip test.
  */
 it('supports when', function () {
-//    $exprType = getStatementType(<<<'PHP'
-//(Dedoc\Scramble\Tests\Files\SamplePostModel::query())->when(fn () => true, fn ($q) => $q)
-//PHP);
-//    dd($exprType->getOriginal()?->toString());
+    //    $exprType = getStatementType(<<<'PHP'
+    // (Dedoc\Scramble\Tests\Files\SamplePostModel::query())->when(fn () => true, fn ($q) => $q)
+    // PHP);
+    //    dd($exprType->getOriginal()?->toString());
 
     $builderType = new Generic(Builder::class, [
         new ObjectType(SamplePostModel::class),
@@ -38,14 +37,15 @@ it('supports when', function () {
                         'a' => $t,
                     ], $t);
                     $fnType->templates = [$t];
+
                     return $fnType;
                 })(),
             ])),
         );
 
     expect($typeAfterWhen->toString())->toBe(Builder::class.'<'.SamplePostModel::class.'>');
-});//->skip();
+}); // ->skip();
 
-//describe('query builder annotations (introduced in todo)', function () {
+// describe('query builder annotations (introduced in todo)', function () {
 //
-//})->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
+// })->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
