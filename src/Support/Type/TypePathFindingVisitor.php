@@ -94,7 +94,10 @@ class TypePathFindingVisitor implements TypeVisitor
                                 )
                             ),
                             new TypePathItem(
-                                key: $index,
+                                key: $item instanceof ArrayItemType_
+                                    ? ($item->key ?? $index)
+                                    : $index,
+                                kind: $item instanceof ArrayItemType_ ? TypePathItem::KIND_ARRAY_ITEM : TypePathItem::KIND_DEFAULT,
                             ),
                         ]
                     );

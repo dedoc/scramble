@@ -28,3 +28,15 @@ it('finds in array', function () {
 
     expect($path?->getFrom($type)->toString())->toBe('int(42)');
 });
+
+it('finds in keyed array with unordered keys', function () {
+    $type = getStatementType("['a' => 'foo', 'b' => 42]");
+    $lookupType = getStatementType("['b' => 42, 'w' => false, 'a' => 'foo']");
+
+    $path = TypePath::findFirst(
+        $type,
+        fn ($t) => $t instanceof LiteralIntegerType,
+    );
+
+    expect($path?->getFrom($lookupType)->toString())->toBe('int(42)');
+});
