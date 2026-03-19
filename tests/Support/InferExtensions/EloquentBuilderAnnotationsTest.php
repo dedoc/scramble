@@ -44,7 +44,7 @@ it('supports when', function () {
         );
 
     expect($typeAfterWhen->toString())->toBe(Builder::class.'<'.SamplePostModel::class.'>');
-})->skip();
+});//->skip();
 
 //describe('query builder annotations (introduced in todo)', function () {
 //
