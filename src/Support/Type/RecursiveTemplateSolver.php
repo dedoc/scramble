@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+use Closure;
+
 class RecursiveTemplateSolver
 {
     public function solve(Type $parameter, Type $argument, TemplateType $template): ?Type
@@ -29,22 +31,30 @@ class RecursiveTemplateSolver
         }
 
         $solutions = [];
-        (new TypeWalker)->walk($parameter, function ($t) use (&$solutions, $parameter, $argument, $template): void {
+
+        $this->walk($parameter, function ($t) use (&$solutions, $parameter, $argument, $template): void {
+            // Current path of type $t in $parameter
             $path = TypePath::findFirst(
                 $parameter,
                 fn ($pt) => $pt === $t,
             );
 
+            // There will be some path, but just in case
             if (! $path) {
                 return;
             }
 
+            // Given our current location in $parameter type, get the corresponding
+            // type in the same location in $argument
             $argumentT = $path->getFrom($argument);
 
+            // In case there is nothing in the same location in $argument
             if (! $argumentT instanceof Type) {
                 return;
             }
 
+            // In case we are at the root of both types, we don't need to solve anything
+            // because it would be an invisible recursive call below.
             if ($parameter === $t && $argumentT === $argument) {
                 return;
             }
@@ -53,6 +63,25 @@ class RecursiveTemplateSolver
         });
 
         return $this->makeUnion($solutions);
+    }
+
+    private function walk(Type $type, Closure $cb): void
+    {
+        $typeTraverser = new TypeTraverser([
+            new class($cb) extends AbstractTypeVisitor
+            {
+                public function __construct(private Closure $cb) {}
+
+                public function enter(Type $type): ?Type
+                {
+                    ($this->cb)($type);
+
+                    return $type;
+                }
+            },
+        ]);
+
+        $typeTraverser->traverse($type);
     }
 
     private function normalizeIterable(Type $argument): Type
