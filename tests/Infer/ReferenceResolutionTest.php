@@ -65,6 +65,20 @@ it('evaluates self type', function () {
     expect($type->toString())->toBe('Foo');
 });
 
+it('evaluates self type when self is deep', function () {
+    $type = analyzeFile(<<<'PHP'
+<?php
+class Foo {
+    public function foo() {
+        return ['a' => $this];
+    }
+}
+PHP)
+        ->getExpressionType('(new Foo)->foo()');
+
+    expect($type->toString())->toBe('array{a: Foo}');
+});
+
 it('understands method calls type', function () {
     $type = analyzeFile(__DIR__.'/files/class_with_self_chain_calls_method.php')
         ->getExpressionType('(new Foo)->foo()->foo()->one()');

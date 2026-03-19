@@ -105,6 +105,13 @@ class ReferenceTypeResolver
         });
     }
 
+    private function finalizeSelf(Type $type, Type $concreteSelfType): Type
+    {
+        return (new TypeWalker)->map($type, function (Type $t) use ($concreteSelfType) {
+            return $t instanceof SelfType ? $concreteSelfType : $t;
+        });
+    }
+
     private function resolveLateTypeEarly(LateResolvingType $type): Type
     {
         if (! $type->isResolvable()) {
@@ -470,12 +477,6 @@ class ReferenceTypeResolver
         /* When this is a handling for method call */
         ObjectType|SelfType|null $calledOnType = null,
     ): Type {
-        $returnType = $callee->getReturnType();
-
-        if ($isSelf = $returnType instanceof SelfType && $calledOnType) {
-            $returnType = $calledOnType;
-        }
-
         $classDefinition = $calledOnType instanceof ObjectType ? $this->index->getClass($calledOnType->name) : null;
 
         $classContextTemplates = $calledOnType && $classDefinition
@@ -489,6 +490,18 @@ class ReferenceTypeResolver
                 $callee,
                 $classContextTemplates,
             ));
+
+        $returnType = $callee->getReturnType();
+
+        /*
+         * This part finalizes `self` (or $this) in return and in argument types, by replacing it
+         * on `$calledOnType` type.
+         */
+        if ($calledOnType) {
+            $returnType = $this->finalizeSelf($returnType, $calledOnType);
+
+            $arguments = $arguments->map(fn ($argType) => $this->finalizeSelf($argType, $calledOnType));
+        }
 
         $templatesMap = (new TemplateTypesSolver)
             ->getFunctionContextTemplates($callee, $arguments)
@@ -506,6 +519,9 @@ class ReferenceTypeResolver
                 $templatesMap,
             );
         }
+
+        // void (unresolved) template types that are still present in the type, as this is probably an error
+        // @todo maybe better way to handle? just replacing to unknown (even taking is into account breaks a LOT, these templates will probably make sense later)
 
         return $returnType;
     }
