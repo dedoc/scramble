@@ -65,13 +65,16 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
             throw new LogicException('ResourceResponse data is expected to be an object');
         }
 
+        $schema = $this->openApiTransformer->transform($resource);
+        $additional = $this->getMergedAdditionalSchema($resource);
+
         return $this
             ->makeResponse($resource)
             ->setDescription($this->getDescription($resource))
             ->setContent('application/json', Schema::fromType($this->wrap(
                 $this->wrapper($resource),
-                $this->openApiTransformer->transform($resource),
-                $this->getMergedAdditionalSchema($resource),
+                $schema,
+                $additional,
             )));
     }
 

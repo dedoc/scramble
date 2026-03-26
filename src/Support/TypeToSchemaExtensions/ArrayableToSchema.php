@@ -53,11 +53,13 @@ class ArrayableToSchema extends TypeToSchemaExtension
      */
     public function toResponse(Type $type): ?Response
     {
+        $schema = $this->openApiTransformer->transform($type);
+
         return Response::make(200)
             ->setDescription('`'.$this->openApiContext->references->schemas->uniqueName($type->name).'`')
             ->setContent(
                 'application/json',
-                Schema::fromType($this->openApiTransformer->transform($type)),
+                Schema::fromType($schema),
             );
     }
 

@@ -58,8 +58,10 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
             return null;
         }
 
+        $schema = $this->openApiTransformer->transform($type);
+
         return Response::make(200)
             ->setDescription('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectedType->name).'`')
-            ->setContent('application/json', Schema::fromType($this->openApiTransformer->transform($type)));
+            ->setContent('application/json', Schema::fromType($schema));
     }
 }

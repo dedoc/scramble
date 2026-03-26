@@ -306,6 +306,26 @@ class JsonResourceTypeToSchemaTest_CustomSchemaTest
         return new JsonResourceTypeToSchemaTest_WithCustomName;
     }
 }
+
+it('uses SchemaName attribute value in response description', function () {
+    $openApiDocument = generateForRoute(function () {
+        return Route::get('api/test', [JsonResourceTypeToSchemaTest_CustomSchemaNameController::class, 'index']);
+    });
+
+    $response = $openApiDocument['paths']['/test']['get']['responses'][200];
+
+    expect($response['description'])
+        ->toBe('`CustomName`')
+        ->and($response['content']['application/json']['schema']['properties']['data']['$ref'] ?? null)
+        ->toBe('#/components/schemas/CustomName');
+});
+class JsonResourceTypeToSchemaTest_CustomSchemaNameController
+{
+    public function index()
+    {
+        return new JsonResourceTypeToSchemaTest_WithCustomName;
+    }
+}
 #[SchemaName('CustomName')]
 class JsonResourceTypeToSchemaTest_WithCustomName extends JsonResource
 {
