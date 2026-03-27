@@ -68,6 +68,60 @@ describe(EnumRule::class, function () {
                 'const' => 'bar',
             ]);
     })->skip(! method_exists(Enum::class, 'except'));
+
+    test('enum rule with array type places enum on items', function () {
+        $rules = ['array', Rule::enum(Enum_RuleSetToSchemaTransformerTest::class)];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'array',
+                'items' => [
+                    '$ref' => '#/components/schemas/Enum_RuleSetToSchemaTransformerTest',
+                ],
+            ]);
+    });
+
+    test('enum rule with only and array type places enum on items', function () {
+        $rules = [
+            'array',
+            Rule::enum(Enum_RuleSetToSchemaTransformerTest::class)->only([
+                Enum_RuleSetToSchemaTransformerTest::FOO,
+            ]),
+        ];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'array',
+                'items' => [
+                    'type' => 'string',
+                    'const' => 'foo',
+                ],
+            ]);
+    })->skip(! method_exists(Enum::class, 'only'));
+
+    test('enum rule with except and array type places enum on items', function () {
+        $rules = [
+            'array',
+            Rule::enum(Enum_RuleSetToSchemaTransformerTest::class)->except([
+                Enum_RuleSetToSchemaTransformerTest::FOO,
+            ]),
+        ];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'array',
+                'items' => [
+                    'type' => 'string',
+                    'const' => 'bar',
+                ],
+            ]);
+    })->skip(! method_exists(Enum::class, 'except'));
 });
 
 describe(InRule::class, function () {
