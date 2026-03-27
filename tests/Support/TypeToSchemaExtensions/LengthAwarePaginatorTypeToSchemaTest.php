@@ -1,5 +1,6 @@
 <?php
 
+use Dedoc\Scramble\Attributes\SchemaName;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
@@ -35,6 +36,33 @@ it('correctly documents when annotated', function () {
 });
 
 class LengthAwarePaginatorTypeToSchemaTest_Resource extends JsonResource
+{
+    public function toArray(Request $request)
+    {
+        return ['id' => 1];
+    }
+}
+
+it('uses SchemaName attribute value in response description', function () {
+    $type = new Generic(LengthAwarePaginator::class, [
+        new ObjectType(LengthAwarePaginatorTypeToSchemaTest_ResourceWithSchemaName::class),
+    ]);
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
+        JsonResourceTypeToSchema::class,
+        LengthAwarePaginatorTypeToSchema::class,
+    ]);
+    $extension = new LengthAwarePaginatorTypeToSchema($infer, $transformer, $this->components, $this->context);
+
+    $response = $extension->toResponse($type)->toArray();
+
+    expect($response['description'])
+        ->toBe('Paginated set of `LengthAwarePaginatorSchemaName`')
+        ->and($response['content']['application/json']['schema']['properties']['data']['items']['$ref'] ?? null)
+        ->toBe('#/components/schemas/LengthAwarePaginatorSchemaName');
+});
+#[SchemaName('LengthAwarePaginatorSchemaName')]
+class LengthAwarePaginatorTypeToSchemaTest_ResourceWithSchemaName extends JsonResource
 {
     public function toArray(Request $request)
     {
