@@ -82,6 +82,21 @@ describe(InRule::class, function () {
                 'enum' => ['a', 'b'],
             ]);
     });
+
+    test('in rule with array type places enum on items', function () {
+        $rules = ['array', Rule::in(['a', 'b', 'c'])];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'array',
+                'items' => [
+                    'type' => 'string',
+                    'enum' => ['a', 'b', 'c'],
+                ],
+            ]);
+    });
 });
 
 enum Enum_RuleSetToSchemaTransformerTest: string
