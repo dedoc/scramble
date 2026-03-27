@@ -132,11 +132,10 @@ class ReferenceTypeResolver
                 return $calledOnType;
             }
 
-            if ($t->name === 'unknown') {
-                return new UnknownType;
-            }
-
-            return new ObjectType($t->name);
+            /*
+             * This is a lexical `$this` and must not be overwritten by the receiver.
+             */
+            return $t;
         });
     }
 
