@@ -47,17 +47,15 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
     public function toResponse(Type $type): Response
     {
         $resourceType = $this->getResourceType($type);
-        $collectionSchema = $this->getCollectionSchema($type);
-        $additional = $this->getMergedAdditionalSchema($type);
 
         return $this
             ->makeResponse($resourceType)
-            ->setDescription($this->getPaginatedDescription($type))
             ->setContent('application/json', Schema::fromType($this->wrap(
                 $this->wrapper($this->getCollectingClassType($type)),
-                $collectionSchema,
-                $additional,
-            )));
+                $this->getCollectionSchema($type),
+                $this->getMergedAdditionalSchema($type),
+            )))
+            ->setDescription($this->getPaginatedDescription($type));
     }
 
     private function getCollectionSchema(Generic $type): OpenApiType
