@@ -113,26 +113,17 @@ class ReferenceTypeResolver
     }
 
     /**
-     * Like {@see finalizeSelf}, but lexical `$this` from {@see \Dedoc\Scramble\Infer\Flow\ExpressionTypeInferrer}
-     * uses {@link SelfType} with a concrete class name: those remain {@link SelfType}. {@link SelfType} with an
-     * empty name comes from PhpDoc {@code $this} ({@see \Dedoc\Scramble\PhpDoc\PhpDocTypeHelper}) and
-     * binds to `$calledOnType`.
+     * Replaces `SelfType` to `$calledOnType` only if it is coming from PHPDoc annotation (empty name). For now this
+     * happens only when argument type is augmented by {@see TemplateTypesSolver::addContextTypesToTypelessParametersOfCallableArgument}.
      */
     private function finalizeSelfForCallableArguments(Type $type, Type $calledOnType): Type
     {
         return (new TypeWalker)->map($type, function (Type $t) use ($calledOnType) {
-            if (! $t instanceof SelfType) {
+            if (! $t instanceof SelfType || $t->name !== '') {
                 return $t;
             }
 
-            if ($t->name === '') {
-                return $calledOnType;
-            }
-
-            /*
-             * This is a lexical `$this` and must not be overwritten by the receiver.
-             */
-            return $t;
+            return $calledOnType;
         });
     }
 
