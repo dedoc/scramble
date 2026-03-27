@@ -34,21 +34,10 @@ it('supports this in map', function () {
             ])),
         );
 
-    expect($typeAfterMap->toString())->toBe(Collection::class.'<int, '.SamplePostModel::class.'>');
+    expect($typeAfterMap->toString())->toBe(Collection::class.'<int, self>');
 });
 
-/*
- * Regression subject: lexical `$this` is lowered to `ObjectType(Bar::class)` in
- * `ReferenceTypeResolver::finalizeSelfForCallableArguments`, so template
- * arguments (here `int(42)` on `Bar`) are lost when the value flows through
- * `Collection::map`’s `@template TMapValue` resolution. The closure case above
- * (`array{a: $this}`) still preserves `Bar<int(42)>` because it does not
- * cross that path.
- *
- * Target value type for the collection: `Bar<int(42)>` (match lexical `self`).
- * Today: plain `Bar`. Key type may widen to `int|string` from the framework stub.
- */
-it('lexical this through collection map loses generic template args on self', function () {
+it('lexical this through collection map doesnt lose generic template args on self', function () {
     $type = analyzeFile(<<<'PHP'
 <?php
 use Illuminate\Support\Collection;

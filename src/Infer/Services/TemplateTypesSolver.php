@@ -163,7 +163,7 @@ class TemplateTypesSolver
                 continue;
             }
 
-            /** @var ?Type $inferredTypeForReplacement */
+            /** @var Type|null $inferredTypeForReplacement */
             $inferredTypeForReplacement = $correspondingParameterType->arguments[$i] ?? null;
             if (! $inferredTypeForReplacement) {
                 continue;

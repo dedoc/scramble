@@ -72,7 +72,7 @@ class RecursiveTemplateSolver
             {
                 public function __construct(private Closure $cb) {}
 
-                public function enter(Type $type): ?Type
+                public function enter(Type $type): Type
                 {
                     ($this->cb)($type);
 

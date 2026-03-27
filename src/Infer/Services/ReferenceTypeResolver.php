@@ -114,12 +114,9 @@ class ReferenceTypeResolver
 
     /**
      * Like {@see finalizeSelf}, but lexical `$this` from {@see \Dedoc\Scramble\Infer\Flow\ExpressionTypeInferrer}
-     * uses {@link SelfType} with a concrete class name: those become {@link ObjectType} so they are not overwritten
-     * by the outer receiver.
-     *
-     * {@link SelfType} with an empty name comes from PhpDoc {@code $this} ({@see \Dedoc\Scramble\PhpDoc\PhpDocTypeHelper})
-     * and binds to `$calledOnType`. {@link SelfType} with name {@code unknown} means expression `$this` without an
-     * enclosing class in scope — that must not be conflated with PhpDoc or rebound to the call receiver.
+     * uses {@link SelfType} with a concrete class name: those remain {@link SelfType}. {@link SelfType} with an
+     * empty name comes from PhpDoc {@code $this} ({@see \Dedoc\Scramble\PhpDoc\PhpDocTypeHelper}) and
+     * binds to `$calledOnType`.
      */
     private function finalizeSelfForCallableArguments(Type $type, Type $calledOnType): Type
     {
