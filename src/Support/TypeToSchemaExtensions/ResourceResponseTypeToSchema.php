@@ -67,12 +67,12 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 
         return $this
             ->makeResponse($resource)
-            ->setDescription($this->getDescription($resource))
             ->setContent('application/json', Schema::fromType($this->wrap(
                 $this->wrapper($resource),
                 $this->openApiTransformer->transform($resource),
                 $this->getMergedAdditionalSchema($resource),
-            )));
+            )))
+            ->setDescription($this->getDescription($resource));
     }
 
     protected function getDescription(ObjectType $resourceType): string

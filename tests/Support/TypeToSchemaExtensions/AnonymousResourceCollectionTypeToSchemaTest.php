@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Tests\Support\TypeToSchemaExtensions;
 
+use Dedoc\Scramble\Attributes\SchemaName;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\OpenApi;
@@ -89,5 +90,31 @@ class ManualResponse_AnonymousResourceCollectionTypeToSchemaTestController
     public function __invoke()
     {
         return UserResource_AnonymousResourceCollectionTypeToSchemaTest::collection(User_AnonymousResourceCollectionTypeToSchemaTest::all())->response();
+    }
+}
+
+it('uses SchemaName attribute value in paginated response description', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('test', PaginatedSchemaName_AnonymousResourceCollectionTypeToSchemaTestController::class));
+
+    $response = $openApiDocument['paths']['/test']['get']['responses'][200];
+
+    expect($response['description'])
+        ->toBe('Paginated set of `CustomUser`');
+});
+
+#[SchemaName('CustomUser')]
+class CustomUserResource_AnonymousResourceCollectionTypeToSchemaTest extends JsonResource
+{
+    public function toArray(Request $request)
+    {
+        return ['id' => $this->id];
+    }
+}
+
+class PaginatedSchemaName_AnonymousResourceCollectionTypeToSchemaTestController
+{
+    public function __invoke()
+    {
+        return CustomUserResource_AnonymousResourceCollectionTypeToSchemaTest::collection(User_AnonymousResourceCollectionTypeToSchemaTest::paginate());
     }
 }
