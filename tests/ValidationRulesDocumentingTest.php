@@ -75,6 +75,52 @@ it('supports present rule on array', function () {
         ]);
 });
 
+it('sets minItems 1 when required rule is used on array', function () {
+    $rules = [
+        'items' => 'required|array',
+        'items.*' => ['string'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'name' => 'items',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => ['type' => 'string'],
+                'minItems' => 1,
+            ],
+            'required' => true,
+        ]);
+});
+
+it('does not override explicit minItems when required rule is used on array', function () {
+    $rules = [
+        'items' => 'required|array|min:3',
+        'items.*' => ['string'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'name' => 'items',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => ['type' => 'string'],
+                'minItems' => 3,
+            ],
+            'required' => true,
+        ]);
+});
+
 it('supports present rule in array', function () {
     $rules = [
         'user.password' => ['present'],
