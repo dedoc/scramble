@@ -107,6 +107,10 @@ class RulesMapper
     {
         $type->setAttribute('required', true);
 
+        if ($type instanceof ArrayType && $type->minItems === null) {
+            $type->setMin(1);
+        }
+
         return $type;
     }
 
