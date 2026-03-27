@@ -155,7 +155,9 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
     {
         $definition = $this->infer->analyzeClass($resourceType->name);
 
-        $responseType = new Generic(JsonResponse::class, [new UnknownType, new LiteralIntegerType(200), new KeyedArrayType]);
+        $statusCode = $this->inferStatusCode($resourceType);
+
+        $responseType = new Generic(JsonResponse::class, [new UnknownType, new LiteralIntegerType($statusCode), new KeyedArrayType]);
 
         $methodQuery = MethodQuery::make($this->infer)
             ->withArgumentType([null, 1], $responseType)
@@ -170,6 +172,17 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
             });
 
         return $responseType;
+    }
+
+    private function inferStatusCode(ObjectType $resourceType): int
+    {
+        if ($resourceType instanceof Generic && ($resourceType->templateTypes[0] ?? null) instanceof ObjectType) {
+            if ($resourceType->templateTypes[0]->getAttribute('wasRecentlyCreated')) {
+                return 201;
+            }
+        }
+
+        return 200;
     }
 
     protected function wrap(?string $wrapKey, OpenApiType $data, ?OpenApiType $additional): OpenApiType

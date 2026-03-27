@@ -334,3 +334,66 @@ class JsonResourceTypeToSchemaTest_WithCustomName extends JsonResource
         return ['foo' => 'bar'];
     }
 }
+
+it('infers 201 status code when returning resource wrapping a newly created model', function () {
+    $openApiDocument = generateForRoute(function () {
+        return Route::post('api/test', [JsonResourceTypeToSchemaTest_CreatedModelController::class, 'store']);
+    });
+
+    $responses = $openApiDocument['paths']['/test']['post']['responses'];
+
+    expect($responses)
+        ->toHaveKey('201')
+        ->not->toHaveKey('200');
+});
+class JsonResourceTypeToSchemaTest_CreatedModelController
+{
+    public function store()
+    {
+        $user = JsonResourceTypeToSchemaTest_User::create([]);
+
+        return new JsonResourceTypeToSchemaTest_Sample($user);
+    }
+}
+
+it('infers 200 status code when returning resource wrapping an existing model', function () {
+    $openApiDocument = generateForRoute(function () {
+        return Route::get('api/test', [JsonResourceTypeToSchemaTest_ExistingModelController::class, 'show']);
+    });
+
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses)
+        ->toHaveKey('200')
+        ->not->toHaveKey('201');
+});
+class JsonResourceTypeToSchemaTest_ExistingModelController
+{
+    public function show()
+    {
+        $user = JsonResourceTypeToSchemaTest_User::first();
+
+        return new JsonResourceTypeToSchemaTest_Sample($user);
+    }
+}
+
+it('infers 201 status code when using static make with created model', function () {
+    $openApiDocument = generateForRoute(function () {
+        return Route::post('api/test', [JsonResourceTypeToSchemaTest_CreatedModelMakeController::class, 'store']);
+    });
+
+    $responses = $openApiDocument['paths']['/test']['post']['responses'];
+
+    expect($responses)
+        ->toHaveKey('201')
+        ->not->toHaveKey('200');
+});
+class JsonResourceTypeToSchemaTest_CreatedModelMakeController
+{
+    public function store()
+    {
+        return JsonResourceTypeToSchemaTest_Sample::make(
+            JsonResourceTypeToSchemaTest_User::create([]),
+        );
+    }
+}

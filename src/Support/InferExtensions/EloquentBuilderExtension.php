@@ -20,6 +20,10 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
 
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
+        if ($this->isModelCreationMethod($event->getName())) {
+            return $this->handleModelCreation($event);
+        }
+
         if ($event->getDefinition()->hasMethodDefinition($event->getName())) {
             return null;
         }
@@ -102,6 +106,23 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
         }
 
         return new Generic($type->name, []);
+    }
+
+    private function isModelCreationMethod(string $name): bool
+    {
+        return in_array($name, ['create', 'forceCreate', 'forceCreateQuietly'], true);
+    }
+
+    private function handleModelCreation(MethodCallEvent $event): ?Type
+    {
+        if (! $modelType = $this->getModelType($event->getInstance())) {
+            return null;
+        }
+
+        $modelType = clone $modelType;
+        $modelType->setAttribute('wasRecentlyCreated', true);
+
+        return $modelType;
     }
 
     private function getScopeMethodName(string $scope): string
