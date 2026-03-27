@@ -115,7 +115,11 @@ class ReferenceTypeResolver
     /**
      * Like {@see finalizeSelf}, but lexical `$this` from {@see \Dedoc\Scramble\Infer\Flow\ExpressionTypeInferrer}
      * uses {@link SelfType} with a concrete class name: those become {@link ObjectType} so they are not overwritten
-     * by the outer receiver. PhpDoc placeholders use {@link SelfType} with an empty name and bind to `$calledOnType`.
+     * by the outer receiver.
+     *
+     * {@link SelfType} with an empty name comes from PhpDoc {@code $this} ({@see \Dedoc\Scramble\PhpDoc\PhpDocTypeHelper})
+     * and binds to `$calledOnType`. {@link SelfType} with name {@code unknown} means expression `$this` without an
+     * enclosing class in scope — that must not be conflated with PhpDoc or rebound to the call receiver.
      */
     private function finalizeSelfForCallableArguments(Type $type, Type $calledOnType): Type
     {
@@ -124,11 +128,15 @@ class ReferenceTypeResolver
                 return $t;
             }
 
-            if ($t->name !== '' && $t->name !== 'unknown') {
-                return new ObjectType($t->name);
+            if ($t->name === '') {
+                return $calledOnType;
             }
 
-            return $calledOnType;
+            if ($t->name === 'unknown') {
+                return new UnknownType;
+            }
+
+            return new ObjectType($t->name);
         });
     }
 
