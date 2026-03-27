@@ -79,6 +79,32 @@ PHP)
     expect($type->toString())->toBe('array{a: Foo}');
 });
 
+it('evaluates self type in closures', function () {
+    $type = analyzeFile(<<<'PHP'
+<?php
+class Bar {
+    public int $prop;
+    public function __construct(int $p) {
+        $this->prop = $p;
+    }
+
+    public function bar() {
+        return (function () {
+            return ['a' => $this];
+        })();
+    }
+}
+class Foo {
+    public function foo() {
+        return (new Bar(42))->bar();
+    }
+}
+PHP)
+        ->getExpressionType('(new Foo)->foo()');
+
+    expect($type->toString())->toBe('array{a: Bar<int(42)>}');
+});
+
 it('understands method calls type', function () {
     $type = analyzeFile(__DIR__.'/files/class_with_self_chain_calls_method.php')
         ->getExpressionType('(new Foo)->foo()->foo()->one()');

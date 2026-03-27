@@ -112,6 +112,30 @@ class ReferenceTypeResolver
         });
     }
 
+    /**
+     * Like {@see finalizeSelf}, but lexical `$this` from {@see \Dedoc\Scramble\Infer\Flow\ExpressionTypeInferrer}
+     * uses {@link SelfType} with a concrete class name: those remain {@link SelfType}. {@link SelfType} with an
+     * empty name comes from PhpDoc {@code $this} ({@see \Dedoc\Scramble\PhpDoc\PhpDocTypeHelper}) and
+     * binds to `$calledOnType`.
+     */
+    private function finalizeSelfForCallableArguments(Type $type, Type $calledOnType): Type
+    {
+        return (new TypeWalker)->map($type, function (Type $t) use ($calledOnType) {
+            if (! $t instanceof SelfType) {
+                return $t;
+            }
+
+            if ($t->name === '') {
+                return $calledOnType;
+            }
+
+            /*
+             * This is a lexical `$this` and must not be overwritten by the receiver.
+             */
+            return $t;
+        });
+    }
+
     private function resolveLateTypeEarly(LateResolvingType $type): Type
     {
         if (! $type->isResolvable()) {
@@ -494,13 +518,14 @@ class ReferenceTypeResolver
         $returnType = $callee->getReturnType();
 
         /*
-         * This part finalizes `self` (or $this) in return and in argument types, by replacing it
-         * on `$calledOnType` type.
+         * Return type: PhpDoc `self` / `$this` placeholders bind to the method receiver (`$calledOnType`).
+         * Arguments: same for PhpDoc placeholders (`SelfType` with empty name); expression-inferred `$this`
+         * already uses `SelfType` with the lexical class name and must not be overwritten by the receiver.
          */
         if ($calledOnType) {
             $returnType = $this->finalizeSelf($returnType, $calledOnType);
 
-            $arguments = $arguments->map(fn ($argType) => $this->finalizeSelf($argType, $calledOnType));
+            $arguments = $arguments->map(fn ($argType) => $this->finalizeSelfForCallableArguments($argType, $calledOnType));
         }
 
         $templatesMap = (new TemplateTypesSolver)
