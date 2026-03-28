@@ -34,11 +34,12 @@ class EnumToSchema extends TypeToSchemaExtension
     {
         $name = $type->name;
 
-        if (! isset($name::cases()[0]->value)) { // only backed enums support
-            return new UnknownType;
+        $values = [];
+        if (!isset($name::cases()[0]->value)) {
+            $values = array_map(fn ($s) => $s->name, $name::cases());
+        } else {
+            $values = array_map(fn ($s) => $s->value, $name::cases());
         }
-
-        $values = array_map(fn ($s) => $s->value, $name::cases());
 
         $schemaType = is_string($values[0]) ? new StringType : new IntegerType;
         $schemaType->enum($values);
