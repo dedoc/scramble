@@ -11,8 +11,7 @@ class DiagnosticsCollector
         public Collection $diagnostics = new Collection,
         public bool $throwOnError = false,
         public ?Route $route = null,
-    ) {
-    }
+    ) {}
 
     public function report(Diagnostic $diagnostic): void
     {

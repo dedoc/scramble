@@ -14,8 +14,7 @@ class GenericDiagnostic implements Diagnostic
         public DiagnosticSeverity $severity,
         private ?Throwable $originException = null,
         private ?Route $route = null,
-    ) {
-    }
+    ) {}
 
     public function message(): string
     {

@@ -6,7 +6,6 @@ use Dedoc\Scramble\Console\Commands\Components\Code;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Exception;
 use Illuminate\Console\OutputStyle;
-use Illuminate\Routing\Route;
 
 class InvalidSchema extends Exception implements ConsoleRenderable, RouteAware
 {

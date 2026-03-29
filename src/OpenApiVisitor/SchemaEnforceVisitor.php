@@ -20,7 +20,7 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
     protected static array $handledReferences = [];
 
     public function __construct(
-        private Route                $route,
+        private Route $route,
         private DiagnosticsCollector $diagnostics,
     ) {}
 

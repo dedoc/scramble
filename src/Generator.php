@@ -314,7 +314,7 @@ class Generator
     }
 
     /**
-     * @param Collection<int, Operation> $operations
+     * @param  Collection<int, Operation>  $operations
      */
     private function setUniqueOperationId(Collection $operations): void
     {
