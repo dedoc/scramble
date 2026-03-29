@@ -7,6 +7,7 @@ use Symfony\Component\Console\Helper\Helper;
 class StyledConsoleTextWrapper
 {
     private const BREAK_CHARS = [' ', '-', '\\', '/', '.', ','];
+
     private const PARTS_PATTERN = '/(https?:\/\/[^\s<>]+|<[^>]+>)/u';
 
     /**
@@ -36,6 +37,7 @@ class StyledConsoleTextWrapper
             if ($this->isTag($part)) {
                 $line .= $part;
                 $this->updateOpenTags($openTags, $part);
+
                 continue;
             }
 
@@ -46,6 +48,7 @@ class StyledConsoleTextWrapper
 
                 $line .= $part;
                 $lineWidth += Helper::width($part);
+
                 continue;
             }
 
@@ -57,6 +60,7 @@ class StyledConsoleTextWrapper
                 [$chunk, $part] = $this->takeChunk($part, $maxWidth - $lineWidth, $lineWidth > 0);
                 if ($chunk === '') {
                     $this->pushLine($lines, $line, $lineWidth, $openTags);
+
                     continue;
                 }
 
@@ -162,6 +166,7 @@ class StyledConsoleTextWrapper
         }
 
         $char = mb_substr($text, $index, 1);
+
         return in_array($char, self::BREAK_CHARS, true);
     }
 
@@ -196,5 +201,4 @@ class StyledConsoleTextWrapper
 
         $openTags[] = $tag;
     }
-
 }
