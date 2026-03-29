@@ -6,8 +6,10 @@ use Exception;
 use Illuminate\Support\Arr;
 use Throwable;
 
-class RulesEvaluationException extends Exception
+class RulesEvaluationException extends Exception implements RouteAware
 {
+    use RouteAwareTrait;
+
     /** @var array<string, Throwable> */
     public array $exceptions = [];
 
