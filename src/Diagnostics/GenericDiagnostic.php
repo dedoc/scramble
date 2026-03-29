@@ -2,7 +2,9 @@
 
 namespace Dedoc\Scramble\Diagnostics;
 
+use Dedoc\Scramble\Diagnostics\ValidationRules\Vr003AllEvaluatorsFailedDiagnostic;
 use Dedoc\Scramble\Exceptions\RouteAware;
+use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Exception;
 use Illuminate\Routing\Route;
 use Throwable;
@@ -74,8 +76,12 @@ class GenericDiagnostic implements Diagnostic
         return new self($this->message, $severity, $this->originException, $this->route, $this->category, $this->context);
     }
 
-    public static function fromException(Throwable $exception): self
+    public static function fromException(Throwable $exception): Diagnostic
     {
+        if ($exception instanceof RulesEvaluationException) {
+            return Vr003AllEvaluatorsFailedDiagnostic::fromRulesEvaluationException($exception);
+        }
+
         return new self(
             $exception->getMessage(),
             DiagnosticSeverity::Error,

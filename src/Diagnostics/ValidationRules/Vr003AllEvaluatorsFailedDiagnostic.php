@@ -24,19 +24,9 @@ final class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
         parent::__construct($message, $severity, null, $route, $category, $context);
     }
 
-    /**
-     * @param  array<string, Throwable>  $exceptions
-     */
-    public static function fromEvaluatorFailures(array $exceptions): self
+    public static function fromRulesEvaluationException(RulesEvaluationException $exception): self
     {
-        $exception = RulesEvaluationException::fromExceptions($exceptions);
-
         return new self($exception->exceptions, $exception->getMessage(), DiagnosticSeverity::Error);
-    }
-
-    protected static function defaultContext(): ?string
-    {
-        return 'ComposedRulesEvaluator';
     }
 
     public function code(): string
@@ -56,13 +46,7 @@ final class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
 
     public function toException(): Throwable
     {
-        $exception = RulesEvaluationException::fromExceptions($this->exceptions);
-
-        if ($this->route) {
-            $exception->setRoute($this->route);
-        }
-
-        return $exception;
+        return $this->originException;
     }
 
     protected function newInstance(

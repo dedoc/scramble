@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\ValidationRules\Vr002NodeRulesEvaluationDiagnostic;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -35,7 +36,9 @@ class NodeRulesEvaluator implements RulesEvaluator
         private ?string $className,
         private Scope $scope,
         private DiagnosticsCollector $diagnostics,
-    ) {}
+    ) {
+        $this->diagnostics = $diagnostics->forContext('NodeRulesEvaluator');
+    }
 
     public function handle(): array
     {
@@ -48,7 +51,7 @@ class NodeRulesEvaluator implements RulesEvaluator
         } catch (Throwable $e) {
             throw RulesEvaluationException::fromExceptions([
                 self::class => $this->lastEvaluationException ?? $e,
-            ]);
+            ])->forDiagnostics($this->diagnostics);
         }
     }
 

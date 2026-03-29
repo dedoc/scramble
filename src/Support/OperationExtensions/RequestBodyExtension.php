@@ -47,11 +47,10 @@ class RequestBodyExtension implements OperationTransformer
         try {
             $rulesResults = collect($this->extractParameters($operation, $routeInfo));
         } catch (Throwable $exception) {
-            if (! $exception instanceof RulesEvaluationException) {
-                $this->diagnostics
-                    ->forCategory('Request body')
-                    ->forContext('RequestBodyExtension')
-                    ->report(GenericDiagnostic::fromException($exception));
+            if (property_exists($exception, 'diagnostics') && $exception->diagnostics) {
+                $exception->diagnostics->report(GenericDiagnostic::fromException($exception));
+            } else {
+                $this->diagnostics->report(GenericDiagnostic::fromException($exception));
             }
 
             $description = $description->append('⚠️ Cannot generate request documentation: '.$exception->getMessage());

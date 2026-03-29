@@ -15,7 +15,9 @@ class FormRequestRulesEvaluator implements RulesEvaluator
         private ClassReflector $classReflector,
         private string $method,
         private DiagnosticsCollector $diagnostics,
-    ) {}
+    ) {
+        $this->diagnostics = $diagnostics->forContext('FormRequestRulesEvaluator');
+    }
 
     public function handle(): array
     {
@@ -24,7 +26,7 @@ class FormRequestRulesEvaluator implements RulesEvaluator
         } catch (Throwable $e) {
             $this->diagnostics->report(Vr001FormRequestRulesDiagnostic::fromThrowable($e));
 
-            throw RulesEvaluationException::fromExceptions([self::class => $e]);
+            throw RulesEvaluationException::fromExceptions([self::class => $e])->forDiagnostics($this->diagnostics);
         }
     }
 

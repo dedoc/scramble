@@ -18,7 +18,9 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
         private ClassReflector $classReflector,
         private string $method,
         private DiagnosticsCollector $diagnostics,
-    ) {}
+    ) {
+        $this->diagnostics = $diagnostics->forContext('ComposedFormRequestRulesEvaluator');
+    }
 
     public function handle(): array
     {
@@ -41,35 +43,12 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
 
         foreach ($evaluators as $evaluator) {
             try {
-                $result = $evaluator->handle();
-
-                /*
-                 * If a prior evaluator threw, do not return a later evaluator's result — even when Node
-                 * returns a non-empty array from partial evaluation. Otherwise we skip VR003 entirely.
-                 * Node still runs so its warnings (e.g. VR002) are recorded.
-                 */
-                if ($exceptions !== []) {
-                    break;
-                }
-
-                return $result;
+                return $evaluator->handle();
             } catch (\Throwable $e) {
                 $exceptions[$evaluator::class] = $e;
             }
         }
 
-        if ($exceptions === []) {
-            return [];
-        }
-
-        $this->diagnostics->reportQuietly(
-            Vr003AllEvaluatorsFailedDiagnostic::fromEvaluatorFailures($exceptions)
-        );
-
-        if ($this->diagnostics->throwOnError) {
-            throw RulesEvaluationException::fromExceptions($exceptions);
-        }
-
-        return [];
+        throw RulesEvaluationException::fromExceptions($exceptions)->forDiagnostics($this->diagnostics);
     }
 }
