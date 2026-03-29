@@ -81,6 +81,11 @@ final class Vr002NodeRulesEvaluationDiagnostic implements CodedDiagnostic
         return new self($this->message, $this->originException, $this->severity, $route, $this->category, $this->context);
     }
 
+    public function withMessage(string|callable $message): self
+    {
+        return new self(is_callable($message) ? $message($this->message) : $message, $this->originException, $this->severity, $this->route, $this->category, $this->context);
+    }
+
     public function withSeverity(DiagnosticSeverity $severity): self
     {
         return new self($this->message, $this->originException, $severity, $this->route, $this->category, $this->context);

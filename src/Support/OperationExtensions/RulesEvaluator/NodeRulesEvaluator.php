@@ -113,7 +113,7 @@ class NodeRulesEvaluator implements RulesEvaluator
                     ];
                 } catch (Throwable $e) {
                     $this->diagnostics->report(
-                        Vr002NodeRulesEvaluationDiagnostic::fromThrowable($e)
+                        Vr002NodeRulesEvaluationDiagnostic::fromThrowable($e)->withMessage(fn ($originalMessage) => "Failed to evaluate parameter \${$param->var->name} ($originalMessage)")
                     );
 
                     return [
@@ -205,7 +205,7 @@ class NodeRulesEvaluator implements RulesEvaluator
                 return eval("return $code;");
             } catch (Throwable $e) {
                 $this->diagnostics->report(
-                    Vr002NodeRulesEvaluationDiagnostic::fromThrowable($e)
+                    Vr002NodeRulesEvaluationDiagnostic::fromThrowable($e)->withMessage(fn ($originalMessage) => "Failed to evaluate expression `$code` ($originalMessage)")
                 );
 
                 $this->lastEvaluationException = $e;
