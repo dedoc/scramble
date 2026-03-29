@@ -33,8 +33,8 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
         $returnNode = $returnNodeStatement?->expr ?? null;
 
         $evaluators = [
-            new FormRequestRulesEvaluator($this->classReflector, $this->method, $this->diagnostics->forContext('FormRequestRulesEvaluator')),
-            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className, $rulesMethod->getFunctionLikeDefinition()->getScope(), $this->diagnostics->forContext('NodeRulesEvaluator')),
+            new FormRequestRulesEvaluator($this->classReflector, $this->method, $this->diagnostics),
+            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className, $rulesMethod->getFunctionLikeDefinition()->getScope(), $this->diagnostics),
         ];
 
         $exceptions = [];
@@ -62,7 +62,7 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
             return [];
         }
 
-        $this->diagnostics->forContext('ComposedRulesEvaluator')->reportQuietly(
+        $this->diagnostics->reportQuietly(
             Vr003AllEvaluatorsFailedDiagnostic::fromEvaluatorFailures($exceptions)
         );
 

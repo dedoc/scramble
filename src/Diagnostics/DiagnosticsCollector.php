@@ -21,12 +21,7 @@ class DiagnosticsCollector
 
     public function report(Diagnostic $diagnostic): void
     {
-        $diagnostic = $diagnostic
-            ->withRoute($this->route)
-            ->withCategory($this->category)
-            ->withContext($this->context);
-
-        $this->diagnostics->push($diagnostic);
+        $this->reportQuietly($diagnostic);
 
         if ($this->throwOnError && $diagnostic->severity() === DiagnosticSeverity::Error) {
             throw $diagnostic->toException();
@@ -35,10 +30,13 @@ class DiagnosticsCollector
 
     public function reportQuietly(Diagnostic $diagnostic): void
     {
+        $category = $this->category ?? $diagnostic->category();
+        $context = $this->context ?? $diagnostic->context();
+
         $diagnostic = $diagnostic
             ->withRoute($this->route)
-            ->withCategory($this->category)
-            ->withContext($this->context);
+            ->withCategory($category)
+            ->withContext($context);
 
         $this->diagnostics->push($diagnostic);
     }

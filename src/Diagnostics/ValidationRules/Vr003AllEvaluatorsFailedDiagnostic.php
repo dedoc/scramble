@@ -2,25 +2,27 @@
 
 namespace Dedoc\Scramble\Diagnostics\ValidationRules;
 
-use Dedoc\Scramble\Diagnostics\CodedDiagnostic;
+use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Illuminate\Routing\Route;
 use Throwable;
 
-final class Vr003AllEvaluatorsFailedDiagnostic implements CodedDiagnostic
+final class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
 {
     /**
      * @param  array<string, Throwable>  $exceptions
      */
     public function __construct(
         private array $exceptions,
-        private string $message,
-        private DiagnosticSeverity $severity = DiagnosticSeverity::Error,
-        private ?Route $route = null,
-        private ?string $category = null,
-        private ?string $context = null,
-    ) {}
+        string $message,
+        DiagnosticSeverity $severity = DiagnosticSeverity::Error,
+        ?Route $route = null,
+        ?string $category = null,
+        ?string $context = null,
+    ) {
+        parent::__construct($message, $severity, null, $route, $category, $context);
+    }
 
     /**
      * @param  array<string, Throwable>  $exceptions
@@ -32,19 +34,14 @@ final class Vr003AllEvaluatorsFailedDiagnostic implements CodedDiagnostic
         return new self($exception->exceptions, $exception->getMessage(), DiagnosticSeverity::Error);
     }
 
+    protected static function defaultContext(): ?string
+    {
+        return 'ComposedRulesEvaluator';
+    }
+
     public function code(): string
     {
         return 'VR003';
-    }
-
-    public function message(): string
-    {
-        return $this->message;
-    }
-
-    public function severity(): DiagnosticSeverity
-    {
-        return $this->severity;
     }
 
     public function tip(): string
@@ -55,21 +52,6 @@ final class Vr003AllEvaluatorsFailedDiagnostic implements CodedDiagnostic
     public function documentationUrl(): string
     {
         return 'https://scramble.dedoc.co/errors#vr003';
-    }
-
-    public function route(): ?Route
-    {
-        return $this->route;
-    }
-
-    public function category(): ?string
-    {
-        return $this->category;
-    }
-
-    public function context(): ?string
-    {
-        return $this->context;
     }
 
     public function toException(): Throwable
@@ -83,23 +65,14 @@ final class Vr003AllEvaluatorsFailedDiagnostic implements CodedDiagnostic
         return $exception;
     }
 
-    public function withRoute(?Route $route): self
-    {
-        return new self($this->exceptions, $this->message, $this->severity, $route, $this->category, $this->context);
-    }
-
-    public function withSeverity(DiagnosticSeverity $severity): self
-    {
-        return new self($this->exceptions, $this->message, $severity, $this->route, $this->category, $this->context);
-    }
-
-    public function withCategory(?string $category): self
-    {
-        return new self($this->exceptions, $this->message, $this->severity, $this->route, $category, $this->context);
-    }
-
-    public function withContext(?string $context): self
-    {
-        return new self($this->exceptions, $this->message, $this->severity, $this->route, $this->category, $context);
+    protected function newInstance(
+        string $message,
+        DiagnosticSeverity $severity,
+        ?Throwable $originException,
+        ?Route $route,
+        ?string $category,
+        ?string $context,
+    ): static {
+        return new self($this->exceptions, $message, $severity, $route, $category, $context);
     }
 }

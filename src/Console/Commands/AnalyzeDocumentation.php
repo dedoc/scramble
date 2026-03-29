@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Console\Commands;
 
+use Dedoc\Scramble\Console\Commands\Components\Block;
 use Dedoc\Scramble\Console\Commands\Components\TermsOfContentItem;
 use Dedoc\Scramble\Diagnostics\CodedDiagnostic;
 use Dedoc\Scramble\Diagnostics\Diagnostic;
@@ -182,29 +183,34 @@ class AnalyzeDocumentation extends Command
 
     private function renderDiagnosticEntry(Diagnostic $d): void
     {
-        $pad = '    ';
+        $pad = 4;
 
         if ($d instanceof CodedDiagnostic) {
             $message = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $d->message());
             $lines = explode("\n", $message);
-            $first = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $lines[0] ?? '');
+            $first = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $lines[0]);
             $continuationLines = array_slice($lines, 1);
-            $this->line("{$pad}<options=bold>[{$d->code()}] {$first}</>");
+
+            (new Block(
+                "<options=bold>[{$d->code()}] {$first}</>",
+                $pad,
+            ))->render($this->output);
 
             foreach ($continuationLines as $line) {
-                $this->line($pad.$line);
+                (new Block($line, $pad))->render($this->output);
             }
 
             if ($d->tip() !== '') {
-                $this->line("{$pad}Tip: {$d->tip()}");
+                (new Block("Tip: {$d->tip()}", $pad))->render($this->output);
             }
-            $this->line("{$pad}Docs: {$d->documentationUrl()}");
+
+            (new Block("Docs: {$d->documentationUrl()}", $pad))->render($this->output);
 
             return;
         }
 
         $msg = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $d->message());
-        $this->line("{$pad}{$msg}");
+        (new Block($msg, $pad))->render($this->output);
 
         $exception = $d->toException();
         if ($exception instanceof ConsoleRenderable) {

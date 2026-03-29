@@ -45,7 +45,7 @@ class ValidateCallParametersExtractor implements ParameterExtractor
 
         $parameterExtractionResults[] = new ParametersExtractionResult(
             parameters: $this->makeParameters(
-                rules: (new NodeRulesEvaluator($this->printer, $astNode, $validationRulesNode, $routeInfo->method, $routeInfo->className(), $routeInfo->getScope(), $this->diagnostics->forContext('NodeRulesEvaluator')))->handle(),
+                rules: (new NodeRulesEvaluator($this->printer, $astNode, $validationRulesNode, $routeInfo->method, $routeInfo->className(), $routeInfo->getScope(), $this->diagnostics))->handle(),
                 typeTransformer: $this->openApiTransformer,
                 rulesDocsRetriever: new TypeBasedRulesDocumentationRetriever(
                     $routeInfo->getScope(),
