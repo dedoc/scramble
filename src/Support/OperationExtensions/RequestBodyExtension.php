@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 use Dedoc\Scramble\Contracts\OperationTransformer;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
-use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Support\ContainerUtils;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
