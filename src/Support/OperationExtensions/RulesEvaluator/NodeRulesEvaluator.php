@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+use Dedoc\Scramble\Diagnostics\ValidationRules\Vr002NodeRulesEvaluationDiagnostic;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
@@ -32,7 +34,10 @@ class NodeRulesEvaluator implements RulesEvaluator
         private string $method,
         private ?string $className,
         private Scope $scope,
-    ) {}
+        private DiagnosticsCollector $diagnostics,
+    ) {
+        $this->diagnostics = $diagnostics->forContext('NodeRulesEvaluator');
+    }
 
     public function handle(): array
     {
@@ -45,7 +50,7 @@ class NodeRulesEvaluator implements RulesEvaluator
         } catch (Throwable $e) {
             throw RulesEvaluationException::fromExceptions([
                 self::class => $this->lastEvaluationException ?? $e,
-            ]);
+            ])->forDiagnostics($this->diagnostics);
         }
     }
 
@@ -109,7 +114,10 @@ class NodeRulesEvaluator implements RulesEvaluator
                         $param->var->name => $value,
                     ];
                 } catch (Throwable $e) {
-                    // @todo communicate warning
+                    $this->diagnostics->report(
+                        Vr002NodeRulesEvaluationDiagnostic::fromThrowable($e)->withMessage(fn ($originalMessage) => "Failed to evaluate parameter \${$param->var->name} ($originalMessage)")
+                    );
+
                     return [
                         $param->var->name => new Optional(null),
                     ];
@@ -198,6 +206,10 @@ class NodeRulesEvaluator implements RulesEvaluator
             try {
                 return eval("return $code;");
             } catch (Throwable $e) {
+                $this->diagnostics->report(
+                    Vr002NodeRulesEvaluationDiagnostic::fromThrowable($e)->withMessage(fn ($originalMessage) => "Failed to evaluate expression `$code` ($originalMessage)")
+                );
+
                 $this->lastEvaluationException = $e;
             }
 

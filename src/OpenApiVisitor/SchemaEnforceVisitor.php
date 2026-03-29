@@ -3,6 +3,8 @@
 namespace Dedoc\Scramble\OpenApiVisitor;
 
 use Dedoc\Scramble\AbstractOpenApiVisitor;
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
 use Dedoc\Scramble\Exceptions\InvalidSchema;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\OpenApiTraverser;
@@ -19,8 +21,7 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
 
     public function __construct(
         private Route $route,
-        private bool $throwExceptions = true,
-        protected array &$exceptions = [],
+        private DiagnosticsCollector $diagnostics,
     ) {}
 
     public function popReferences()
@@ -28,7 +29,7 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
         return tap($this->operationReferences, fn () => $this->operationReferences = []);
     }
 
-    public function enter($object, array $path = [])
+    public function enter($object, array $path = []): void
     {
         if ($object instanceof Reference) {
             if (array_key_exists($object->fullName, static::$handledReferences)) {
@@ -43,7 +44,7 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
         }
     }
 
-    protected function validateSchema($object, $path)
+    protected function validateSchema($object, $path): void
     {
         $exceptions = [];
         try {
@@ -54,17 +55,15 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
         } catch (InvalidSchema $e) {
             $e->setRoute($this->route);
 
-            if ($this->throwExceptions) {
-                throw $e;
-            }
-
-            $this->exceptions[] = $e;
+            $this->diagnostics->report(GenericDiagnostic::fromException($e));
         }
+
         foreach ($exceptions as $exception) {
             if ($exception instanceof RouteAware) {
                 $exception->setRoute($this->route);
             }
+
+            $this->diagnostics->reportQuietly(GenericDiagnostic::fromException($exception));
         }
-        $this->exceptions = array_merge($this->exceptions, $exceptions);
     }
 }

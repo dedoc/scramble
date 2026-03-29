@@ -2,14 +2,19 @@
 
 namespace Dedoc\Scramble\Exceptions;
 
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Exception;
 use Illuminate\Support\Arr;
 use Throwable;
 
-class RulesEvaluationException extends Exception
+class RulesEvaluationException extends Exception implements RouteAware
 {
+    use RouteAwareTrait;
+
     /** @var array<string, Throwable> */
     public array $exceptions = [];
+
+    public ?DiagnosticsCollector $diagnostics = null;
 
     /**
      * @param  array<string, Throwable>  $exceptions
@@ -31,6 +36,13 @@ class RulesEvaluationException extends Exception
         $exception->exceptions = $exceptions;
 
         return $exception;
+    }
+
+    public function forDiagnostics(DiagnosticsCollector $diagnostics): self
+    {
+        $this->diagnostics = $diagnostics;
+
+        return $this;
     }
 
     /**

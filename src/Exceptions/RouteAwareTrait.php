@@ -27,4 +27,12 @@ trait RouteAwareTrait
     {
         return $this->route;
     }
+
+    public function getRouteAwareMessage(Route $route, string $msg): string
+    {
+        $method = $route->methods()[0];
+        $action = $route->getAction('uses');
+
+        return "'$method $route->uri' ($action): ".$msg;
+    }
 }
