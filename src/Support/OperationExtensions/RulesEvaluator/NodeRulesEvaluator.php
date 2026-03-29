@@ -3,8 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
-use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
-use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
+use Dedoc\Scramble\Diagnostics\ValidationRules\Vr002NodeRulesEvaluationDiagnostic;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
@@ -113,7 +112,10 @@ class NodeRulesEvaluator implements RulesEvaluator
                         $param->var->name => $value,
                     ];
                 } catch (Throwable $e) {
-                    // @todo communicate warning
+                    $this->diagnostics->report(
+                        Vr002NodeRulesEvaluationDiagnostic::fromThrowable($e)
+                    );
+
                     return [
                         $param->var->name => new Optional(null),
                     ];
@@ -203,7 +205,7 @@ class NodeRulesEvaluator implements RulesEvaluator
                 return eval("return $code;");
             } catch (Throwable $e) {
                 $this->diagnostics->report(
-                    GenericDiagnostic::fromException($e)->withSeverity(DiagnosticSeverity::Warning)
+                    Vr002NodeRulesEvaluationDiagnostic::fromThrowable($e)
                 );
 
                 $this->lastEvaluationException = $e;

@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 use Dedoc\Scramble\Contracts\OperationTransformer;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
+use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\GeneratorConfig;
@@ -51,7 +52,12 @@ class RequestBodyExtension implements OperationTransformer
         try {
             $rulesResults = collect($this->extractParameters($operation, $routeInfo));
         } catch (Throwable $exception) {
-            $this->diagnostics->report(GenericDiagnostic::fromException($exception));
+            if (! $exception instanceof RulesEvaluationException) {
+                $this->diagnostics
+                    ->forCategory('Request body')
+                    ->forContext('RequestBodyExtension')
+                    ->report(GenericDiagnostic::fromException($exception));
+            }
 
             $description = $description->append('⚠️ Cannot generate request documentation: '.$exception->getMessage());
         }
@@ -265,12 +271,14 @@ class RequestBodyExtension implements OperationTransformer
     private function extractParameters(Operation $operation, RouteInfo $routeInfo): array
     {
         $result = [];
+        $diagnostics = $this->diagnostics->forCategory('Validation rules evaluation');
+
         foreach ($this->config->parametersExtractors->all() as $extractorClass) {
             /** @var ParameterExtractor $extractor */
             $extractor = ContainerUtils::makeContextable($extractorClass, [
                 TypeTransformer::class => $this->openApiTransformer,
                 Operation::class => $operation,
-                DiagnosticsCollector::class => $this->diagnostics,
+                DiagnosticsCollector::class => $diagnostics,
             ]);
 
             $result = $extractor->handle($routeInfo, $result);

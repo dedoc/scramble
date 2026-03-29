@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+use Dedoc\Scramble\Diagnostics\ValidationRules\Vr003AllEvaluatorsFailedDiagnostic;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use PhpParser\Node\Expr\Array_;
@@ -32,20 +33,43 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
         $returnNode = $returnNodeStatement?->expr ?? null;
 
         $evaluators = [
-            new FormRequestRulesEvaluator($this->classReflector, $this->method),
-            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className, $rulesMethod->getFunctionLikeDefinition()->getScope(), $this->diagnostics),
+            new FormRequestRulesEvaluator($this->classReflector, $this->method, $this->diagnostics->forContext('FormRequestRulesEvaluator')),
+            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className, $rulesMethod->getFunctionLikeDefinition()->getScope(), $this->diagnostics->forContext('NodeRulesEvaluator')),
         ];
 
         $exceptions = [];
 
         foreach ($evaluators as $evaluator) {
             try {
-                return $evaluator->handle();
+                $result = $evaluator->handle();
+
+                /*
+                 * If a prior evaluator threw, do not return a later evaluator's result — even when Node
+                 * returns a non-empty array from partial evaluation. Otherwise we skip VR003 entirely.
+                 * Node still runs so its warnings (e.g. VR002) are recorded.
+                 */
+                if ($exceptions !== []) {
+                    break;
+                }
+
+                return $result;
             } catch (\Throwable $e) {
                 $exceptions[$evaluator::class] = $e;
             }
         }
 
-        throw RulesEvaluationException::fromExceptions($exceptions);
+        if ($exceptions === []) {
+            return [];
+        }
+
+        $this->diagnostics->forContext('ComposedRulesEvaluator')->reportQuietly(
+            Vr003AllEvaluatorsFailedDiagnostic::fromEvaluatorFailures($exceptions)
+        );
+
+        if ($this->diagnostics->throwOnError) {
+            throw RulesEvaluationException::fromExceptions($exceptions);
+        }
+
+        return [];
     }
 }

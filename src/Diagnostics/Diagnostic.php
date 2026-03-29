@@ -16,4 +16,14 @@ interface Diagnostic
     public function withRoute(?Route $route): self;
 
     public function withSeverity(DiagnosticSeverity $severity): self;
+
+    public function withCategory(?string $category): self;
+
+    public function withContext(?string $context): self;
+
+    public function route(): ?Route;
+
+    public function category(): ?string;
+
+    public function context(): ?string;
 }

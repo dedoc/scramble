@@ -281,7 +281,7 @@ class Generator
      */
     private function createSchemaEnforceTraverser(Route $route, OpenApiContext $context): array
     {
-        $traverser = new OpenApiTraverser([$visitor = new SchemaEnforceVisitor($route, $context->diagnostics)]);
+        $traverser = new OpenApiTraverser([$visitor = new SchemaEnforceVisitor($route, $context->diagnostics->forRoute($route)->forCategory('Schema validation')->forContext('SchemaEnforceVisitor'))]);
 
         return [$traverser, $visitor];
     }
