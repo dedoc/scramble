@@ -6,7 +6,6 @@ use Dedoc\Scramble\Console\Commands\Components\Code;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Exception;
 use Illuminate\Console\OutputStyle;
-use Illuminate\Routing\Route;
 
 class InvalidSchema extends Exception implements ConsoleRenderable, RouteAware
 {
@@ -40,14 +39,6 @@ class InvalidSchema extends Exception implements ConsoleRenderable, RouteAware
         $exception->jsonPointer = $path;
 
         return $exception;
-    }
-
-    public function getRouteAwareMessage(Route $route, string $msg): string
-    {
-        $method = $route->methods()[0];
-        $action = $route->getAction('uses');
-
-        return "'$method $route->uri' ($action): ".$msg;
     }
 
     public function renderInConsole(OutputStyle $outputStyle): void
