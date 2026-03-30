@@ -157,6 +157,19 @@ it('supports confirmed rule', function () {
         ->toMatchArray(['name' => 'password_confirmation']);
 });
 
+it('supports confirmed rule with custom confirmation field', function () {
+    $rules = [
+        'password' => ['required', 'min:8', 'confirmed:password_repeat'],
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(2)
+        ->and($params[1])
+        ->toMatchArray(['name' => 'password_repeat']);
+});
+
 it('supports Rule::when', function () {
     $rules = [
         'password' => [Rule::when(0, ['boolean'])],
@@ -257,6 +270,28 @@ it('supports confirmed rule in array', function () {
                     'password_confirmation' => ['type' => 'string', 'minLength' => 8],
                 ],
                 'required' => ['password', 'password_confirmation'],
+            ],
+        ]);
+});
+
+it('supports confirmed rule in array with custom field', function () {
+    $rules = [
+        'user.password' => ['required', 'min:8', 'confirmed:user.password_repeat'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'password' => ['type' => 'string', 'minLength' => 8],
+                    'password_repeat' => ['type' => 'string', 'minLength' => 8],
+                ],
+                'required' => ['password', 'password_repeat'],
             ],
         ]);
 });
