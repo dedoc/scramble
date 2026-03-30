@@ -951,6 +951,15 @@ it('supports validation rules and form request at the same time', function () {
 
     assertMatchesSnapshot($openApiDocument);
 });
+
+it('supports accepted rule', function () {
+    RouteFacade::get('api/test', [ValidationAcceptedRulesDocumenting_Test::class, 'index']);
+
+    Scramble::routes(fn (Route $r) => $r->uri === 'api/test');
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    assertMatchesSnapshot($openApiDocument);
+});
 class ValidationRulesDocumenting_Test
 {
     /**
@@ -992,6 +1001,16 @@ class ValidationRulesAndFormRequestAtTheSameTime_Test
     {
         $request->validate([
             'from_validate_call' => ['required', 'string'],
+        ]);
+    }
+}
+
+class ValidationAcceptedRulesDocumenting_Test
+{
+    public function index(Request $request)
+    {
+        $request->validate([
+            'content' => ['required', 'accepted'],
         ]);
     }
 }

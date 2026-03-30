@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Tests\Support\OperationExtensions\RulesExtractor;
 
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\RuleTransformers\AcceptedRule;
 use Dedoc\Scramble\RuleTransformers\EnumRule;
 use Dedoc\Scramble\RuleTransformers\InRule;
 use Dedoc\Scramble\Support\Generator\OpenApi;
@@ -96,6 +97,19 @@ describe(InRule::class, function () {
                     'enum' => ['a', 'b', 'c'],
                 ],
             ]);
+    });
+});
+
+describe(AcceptedRule::class, function () {
+    test('accepted rule', function () {
+        $rules = ['accepted'];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())->toBe([
+            'type' => 'string',
+            'enum' => ['yes', 'on', '1', 'true'],
+        ]);
     });
 });
 
