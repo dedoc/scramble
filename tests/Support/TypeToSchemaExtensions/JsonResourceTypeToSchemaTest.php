@@ -11,8 +11,10 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
+use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 use Illuminate\Support\Facades\Route;
 
 beforeEach(function () {
@@ -333,4 +335,27 @@ class JsonResourceTypeToSchemaTest_WithCustomName extends JsonResource
     {
         return ['foo' => 'bar'];
     }
+}
+
+it('documents correct schema when json api resource is used', function () {
+    $openApiDocument = generateForRoute(Route::get('api/test', function () {
+        return new JsonResourceTypeToSchemaTest_JsonApi;
+    }));
+    dd($openApiDocument);
+    $responses = $openApiDocument['paths']['/test']['get']['responses'];
+
+    expect($responses)
+        ->toHaveKey('200')
+        ->and($responses['200']['content']['application/json']['schema']['properties']['data']['$ref'] ?? null)
+        ->toBe('#/components/schemas/CustomName');
+});
+/**
+ * @property-read SampleUserModel $resource
+ */
+class JsonResourceTypeToSchemaTest_JsonApi extends JsonApiResource
+{
+    public $attributes = [
+        'name',
+        'email',
+    ];
 }
