@@ -3,10 +3,11 @@
 namespace Dedoc\Scramble\Tests\Reflection;
 
 use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
+use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
-use Illuminate\Support\Str;
 
 test('returns attributes type from property', function () {
     $resource = ReflectionJsonApiResource::createForClass(ReflectionJsonApiResourceTestProperty_JsonApi::class);
@@ -66,6 +67,56 @@ class ReflectionJsonApiResourceTestToAttributesAndProperty_JsonApi extends JsonA
     {
         return [
             'is_gmail' => fn () => mt_rand(0, 1) === 0,
+        ];
+    }
+}
+
+test('returns relationships type from property without guessed class', function () {
+    $resource = ReflectionJsonApiResource::createForClass(ReflectionJsonApiResourceTestProperty_RelationshipsJsonApi::class);
+
+    expect($resource->getRelationshipsType()->toString())->toBe('array{user: Illuminate\Http\Resources\JsonApi\JsonApiResource}');
+});
+/**
+ * @property-read SamplePostModel $resource
+ */
+class ReflectionJsonApiResourceTestProperty_RelationshipsJsonApi extends JsonApiResource
+{
+    public $relationships = [
+        'user',
+    ];
+}
+
+test('returns relationships type from property with concrete class', function () {
+    $resource = ReflectionJsonApiResource::createForClass(ReflectionJsonApiResourceTestProperty_RelationshipsConcreteJsonApi::class);
+
+    expect($resource->getRelationshipsType()->toString())->toBe('array{user: '.ReflectionJsonApiResourceTestProperty_JsonApi::class.'}');
+});
+/**
+ * @property-read SamplePostModel $resource
+ */
+class ReflectionJsonApiResourceTestProperty_RelationshipsConcreteJsonApi extends JsonApiResource
+{
+    public $relationships = [
+        'user' => ReflectionJsonApiResourceTestProperty_JsonApi::class,
+    ];
+}
+
+test('returns relationships type from toRelationships method', function () {
+    $resource = ReflectionJsonApiResource::createForClass(ReflectionJsonApiResourceTestProperty_ToRelationshipsJsonApi::class);
+
+    expect($resource->getRelationshipsType()->toString())->toBe('array{user: '.ReflectionJsonApiResourceTestProperty_JsonApi::class.', parentPosts: '.AnonymousResourceCollection::class.'<list{}, array<mixed>, '.ReflectionJsonApiResourceTestProperty_RelationshipsConcreteJsonApi::class.'>, parent: '.JsonApiResource::class.'}');
+});
+/**
+ * @property-read SamplePostModel $resource
+ */
+class ReflectionJsonApiResourceTestProperty_ToRelationshipsJsonApi extends JsonApiResource
+{
+    public function toRelationships(Request $request)
+    {
+        return [
+            'user' => ReflectionJsonApiResourceTestProperty_JsonApi::class,
+            'parentPosts' => fn () => ReflectionJsonApiResourceTestProperty_RelationshipsConcreteJsonApi::collection([]),
+            'parent'
         ];
     }
 }

@@ -14,6 +14,9 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\FlattensMergeValues;
+use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection as JsonApiAnonymousResourceCollection;
+use Illuminate\Http\Resources\JsonApi\Concerns\ResolvesJsonApiElements;
+use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Throwable;
@@ -22,7 +25,9 @@ class ReflectionJsonApiResource
 {
     use FlattensMergeValues;
 
-    private function __construct(public readonly string $name, public readonly ClassDefinition $definition) {}
+    private function __construct(public readonly string $name, public readonly ClassDefinition $definition)
+    {
+    }
 
     public static function createForClass(string $class): self
     {
@@ -31,155 +36,148 @@ class ReflectionJsonApiResource
 
     public function getAttributesType(): ?InferType\KeyedArrayType
     {
+        $propertiesAttributesType = $this->getPropertyDefaultType('attributes');
+        $propertiesAttributesType = $propertiesAttributesType instanceof KeyedArrayType ? $propertiesAttributesType : null;
+
         $toAttributesReturnType = $this->getMethodReturnType('toAttributes');
-        if ($toAttributesReturnType instanceof InferType\KeyedArrayType) {
-            return $toAttributesReturnType;
+        $toAttributesReturnType = $toAttributesReturnType instanceof KeyedArrayType ? $toAttributesReturnType : null;
+
+        if (
+            ! $propertiesAttributesType instanceof InferType\KeyedArrayType
+            && ! $toAttributesReturnType instanceof InferType\KeyedArrayType
+        ) {
+            return null;
         }
 
-        $propertiesAttributesType = $this->normalizeAttributesPropertyDefault(
-            $this->definition->getPropertyDefinition('attributes')?->defaultType,
-        );
-        if ($propertiesAttributesType instanceof InferType\KeyedArrayType) {
-            return $propertiesAttributesType;
-        }
-
-        return null;
+        return $this->normalizeAttributesType($toAttributesReturnType ?: $propertiesAttributesType);
     }
 
-//    public function getRelationshipsType(): ?KeyedArrayType
-//    {
-//        $propertiesRelationshipsType = $this->normalizeRelationshipsPropertyDefault(
-//            $this->definition->getPropertyDefinition('relationships')?->defaultType,
-//        );
-//        $toRelationshipsReturnType = $this->getMethodReturnType('toRelationships');
-//
-//        if (
-//            ! $propertiesRelationshipsType instanceof InferType\KeyedArrayType
-//            && ! $toRelationshipsReturnType instanceof InferType\KeyedArrayType
-//        ) {
-//            return null;
-//        }
-//
-//        $arr = new InferType\KeyedArrayType(isList: false);
-//
-//        $arr->items = collect($toRelationshipsReturnType instanceof InferType\KeyedArrayType ? $toRelationshipsReturnType->items : [])
-//            ->merge($propertiesRelationshipsType instanceof InferType\KeyedArrayType ? $propertiesRelationshipsType->items : [])
-//            ->map(function (InferType\ArrayItemType_ $t) {
-//                $t->isOptional = true;
-//                $t->value = new InferType\KeyedArrayType([
-//                    new InferType\ArrayItemType_(
-//                        key: 'data',
-//                        value: $t->value instanceof InferType\FunctionType ? $t->value->returnType : $t->value,
-//                    ),
-//                ]);
-//
-//                return $t;
-//            })
-//            ->all();
-//
-//        return $arr;
-//    }
-//
+    public function getRelationshipsType(): ?KeyedArrayType
+    {
+        $propertiesRelationshipsType = $this->getPropertyDefaultType('relationships');
+        $propertiesRelationshipsType = $propertiesRelationshipsType instanceof KeyedArrayType ? $propertiesRelationshipsType : null;
+
+        $toRelationshipsReturnType = $this->getMethodReturnType('toRelationships');
+        $toRelationshipsReturnType = $toRelationshipsReturnType instanceof KeyedArrayType ? $toRelationshipsReturnType : null;
+
+        if (
+            ! $propertiesRelationshipsType instanceof InferType\KeyedArrayType
+            && ! $toRelationshipsReturnType instanceof InferType\KeyedArrayType
+        ) {
+            return null;
+        }
+
+        return $this->normalizeRelationshipsType($toRelationshipsReturnType ?: $propertiesRelationshipsType);
+    }
+
 //    public function getLinksType(): ?KeyedArrayType
 //    {
 //        $linksType = $this->getMethodReturnType('toLinks');
 //
 //        return $linksType instanceof KeyedArrayType ? $linksType : null;
 //    }
-//
-//    private function normalizeRelationshipsPropertyDefault(?Type $defaultType): ?InferType\KeyedArrayType
-//    {
-//        if (! $defaultType instanceof InferType\KeyedArrayType) {
-//            return null;
-//        }
-//
-//        $modelType = $this->getModelTypeOfResource();
-//
-//        $arrayType = clone $defaultType;
-//        $arrayType->items = collect($arrayType->items)
-//            ->map(function (InferType\ArrayItemType_ $t) use ($modelType) {
-//                $newType = clone $t;
-//
-//                if ((is_int($newType->key) || $newType->key === null) && $this->isClassName($newType->value)) {
-//                    $className = $this->getClassName($newType->value);
-//
-//                    if (! $guessedClass = $this->guessResourceClass($className)) {
-//                        return null;
-//                    }
-//
-//                    $relationshipType = $modelType?->getPropertyType($className) ?? new InferType\UnknownType;
-//                    $relationshipIsMany = $relationshipType->isInstanceOf(Collection::class);
-//
-//                    $newType->key = $className;
-//                    $newType->value = $relationshipIsMany
-//                        ? new InferType\Generic(JsonApiResourceCollection::class, [new InferType\UnknownType, new InferType\UnknownType, new ObjectType($guessedClass)])
-//                        : new ObjectType($guessedClass);
-//
-//                    return $newType;
-//                }
-//
-//                if (! $this->isClassName($t->value)) {
-//                    return null;
-//                }
-//
-//                $relationshipType = ($newType->key ? $modelType?->getPropertyType((string) $newType->key) : null) ?? new InferType\UnknownType;
-//                $relationshipIsMany = $relationshipType->isInstanceOf(Collection::class);
-//
-//                $newType->value = $relationshipIsMany
-//                    ? new InferType\Generic(JsonApiResourceCollection::class, [new InferType\UnknownType, new InferType\UnknownType, new ObjectType($this->getClassName($t->value))])
-//                    : new ObjectType($this->getClassName($t->value));
-//
-//                return $newType;
-//            })
-//            ->filter()
-//            ->values()
-//            ->all();
-//
-//        return $arrayType;
-//    }
-//
-//    /**
-//     * @see https://github.com/timacdonald/json-api/blob/main/src/Concerns/Relationships.php#L191
-//     */
-//    private function guessResourceClass(string $relationship): ?string
-//    {
-//        $relationship = Str::of($relationship);
-//
-//        foreach ([
-//            "App\\Http\\Resources\\{$relationship->singular()->studly()}Resource",
-//            "App\\Http\\Resources\\{$relationship->studly()}Resource",
-//        ] as $class) {
-//            if (class_exists($class)) {
-//                return $class;
-//            }
-//        }
-//
-//        return null;
-//    }
 
-    private function normalizeAttributesPropertyDefault(?Type $defaultType): ?KeyedArrayType
+    private function normalizeRelationshipsType(?Type $type): ?InferType\KeyedArrayType
     {
-        if (! $defaultType instanceof InferType\KeyedArrayType) {
+        if (! $type instanceof InferType\KeyedArrayType) {
             return null;
         }
 
         $modelType = $this->getModelTypeOfResource();
 
-        $arrayType = clone $defaultType;
+        $arrayType = clone $type;
         $arrayType->items = collect($arrayType->items)
-            ->filter(fn (InferType\ArrayItemType_ $t) => $t->value instanceof InferType\Literal\LiteralStringType)
             ->map(function (InferType\ArrayItemType_ $t) use ($modelType) {
-                /** @var InferType\Literal\LiteralStringType $value */
-                $value = $t->value;
+                $newType = clone $t;
+                $newType->value = $newType->value instanceof InferType\FunctionType
+                    ? $newType->value->getReturnType()
+                    : $newType->value;
 
+                if ((is_int($newType->key) || $newType->key === null) && $this->isLiteralString($newType->value)) {
+                    $className = $this->getLiteralStringValue($newType->value);
+
+                    if (! $guessedClass = $this->guessResourceClass($className)) {
+                        /**
+                         * @see ResolvesJsonApiElements::compileResourceRelationshipUsingResolver() Line 256
+                         */
+                        $guessedClass = JsonApiResource::class;
+                    }
+
+                    $relationshipType = $modelType?->getPropertyType($className) ?? new InferType\UnknownType;
+                    $relationshipIsMany = $relationshipType->isInstanceOf(Collection::class);
+
+                    $newType->key = $className;
+                    $newType->value = $relationshipIsMany
+                        ? new InferType\Generic(JsonApiAnonymousResourceCollection::class, [new InferType\UnknownType, new InferType\UnknownType, new ObjectType($guessedClass)])
+                        : new ObjectType($guessedClass);
+
+                    return $newType;
+                }
+
+                if ($this->isLiteralString($t->value)) {
+                    $relationshipType = ($newType->key ? $modelType?->getPropertyType((string) $newType->key) : null) ?? new InferType\UnknownType;
+                    $relationshipIsMany = $relationshipType->isInstanceOf(Collection::class);
+
+                    $newType->value = $relationshipIsMany
+                        ? new InferType\Generic(JsonApiAnonymousResourceCollection::class, [new InferType\UnknownType, new InferType\UnknownType, new ObjectType($this->getLiteralStringValue($t->value))])
+                        : new ObjectType($this->getLiteralStringValue($t->value));
+
+                    return $newType;
+                }
+
+                return $newType;
+            })
+            ->filter()
+            ->values()
+            ->all();
+        $arrayType->isList = KeyedArrayType::checkIsList($arrayType->items);
+        return $arrayType;
+    }
+
+    /**
+     * @todo
+     * This is temporary implementation, under the hood model's toResource is called.
+     */
+    private function guessResourceClass(string $relationship): ?string
+    {
+        $relationship = Str::of($relationship);
+
+        foreach ([
+            "App\\Http\\Resources\\{$relationship->singular()->studly()}Resource",
+            "App\\Http\\Resources\\{$relationship->studly()}Resource",
+        ] as $class) {
+            if (class_exists($class)) {
+                return $class;
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeAttributesType(?Type $type): ?KeyedArrayType
+    {
+        if (! $type instanceof InferType\KeyedArrayType) {
+            return null;
+        }
+
+        $modelType = $this->getModelTypeOfResource();
+
+        $arrayType = clone $type;
+        $arrayType->items = collect($arrayType->items)
+            ->map(function (InferType\ArrayItemType_ $t) use ($modelType) {
                 $newType = clone $t;
 
-                $newType->key = $value->value;
-                $newType->value = $modelType?->getPropertyType($value->value) ?? new InferType\StringType;
+                if (($t->key === null || is_int($t->key)) && $this->isLiteralString($t->value)) {
+                    $newType->key = $propertyName = $this->getLiteralStringValue($t->value);
+                    $newType->value = $modelType?->getPropertyType($propertyName) ?? new InferType\StringType;
+
+                    return $newType;
+                }
 
                 return $newType;
             })
             ->all();
+        $arrayType->isList = KeyedArrayType::checkIsList($arrayType->items);
 
         return $arrayType;
     }
@@ -201,6 +199,11 @@ class ReflectionJsonApiResource
         return null;
     }
 
+    private function getPropertyDefaultType(string $name): ?Type
+    {
+        return $this->definition->getPropertyDefinition($name)?->defaultType;
+    }
+
     private function getMethodReturnType(string $method): ?Type
     {
         if (! $this->definition->hasMethodDefinition($method)) {
@@ -213,16 +216,16 @@ class ReflectionJsonApiResource
         );
     }
 
-//    /**
-//     * @phpstan-assert-if-true InferType\Contracts\LiteralString $value
-//     */
-//    private function isClassName(Type $value): bool
-//    {
-//        return $value instanceof InferType\Contracts\LiteralString;
-//    }
-//
-//    private function getClassName(InferType\Contracts\LiteralString $value): string
-//    {
-//        return $value->getValue();
-//    }
+    /**
+     * @phpstan-assert-if-true InferType\Contracts\LiteralString $value
+     */
+    private function isLiteralString(Type $value): bool
+    {
+        return $value instanceof InferType\Contracts\LiteralString;
+    }
+
+    private function getLiteralStringValue(InferType\Contracts\LiteralString $value): string
+    {
+        return $value->getValue();
+    }
 }
