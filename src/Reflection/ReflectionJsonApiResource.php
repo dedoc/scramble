@@ -12,7 +12,6 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\FlattensMergeValues;
 use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection as JsonApiAnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\Concerns\ResolvesJsonApiElements;
@@ -70,12 +69,19 @@ class ReflectionJsonApiResource
         return $this->normalizeRelationshipsType($toRelationshipsReturnType ?: $propertiesRelationshipsType);
     }
 
-//    public function getLinksType(): ?KeyedArrayType
-//    {
-//        $linksType = $this->getMethodReturnType('toLinks');
-//
-//        return $linksType instanceof KeyedArrayType ? $linksType : null;
-//    }
+    public function getLinksType(): ?KeyedArrayType
+    {
+        $linksType = $this->getMethodReturnType('toLinks');
+
+        return $linksType instanceof KeyedArrayType ? $linksType : null;
+    }
+
+    public function getMetaType(): ?KeyedArrayType
+    {
+        $metaType = $this->getMethodReturnType('toMeta');
+
+        return $metaType instanceof KeyedArrayType ? $metaType : null;
+    }
 
     private function normalizeRelationshipsType(?Type $type): ?InferType\KeyedArrayType
     {

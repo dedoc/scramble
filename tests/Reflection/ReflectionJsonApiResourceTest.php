@@ -120,3 +120,39 @@ class ReflectionJsonApiResourceTestProperty_ToRelationshipsJsonApi extends JsonA
         ];
     }
 }
+
+test('returns to links type from resource', function () {
+    $resource = ReflectionJsonApiResource::createForClass(ReflectionJsonApiResourceTest_ToLinksJsonApi::class);
+
+    expect($resource->getLinksType()->toString())->toBe('array{self: string}');
+});
+/**
+ * @property-read SampleUserModel $resource
+ */
+class ReflectionJsonApiResourceTest_ToLinksJsonApi extends JsonApiResource
+{
+    public function toLinks(Request $request): array
+    {
+        return [
+            'self' => route('api.posts.show', $this->resource),
+        ];
+    }
+}
+
+test('returns to meta type from resource', function () {
+    $resource = ReflectionJsonApiResource::createForClass(ReflectionJsonApiResourceTest_ToMetaJsonApi::class);
+
+    expect($resource->getMetaType()->toString())->toBe('array{readable_created_at: unknown}');
+});
+/**
+ * @property-read SampleUserModel $resource
+ */
+class ReflectionJsonApiResourceTest_ToMetaJsonApi extends JsonApiResource
+{
+    public function toMeta(Request $request): array
+    {
+        return [
+            'readable_created_at' => $this->created_at->diffForHumans(),
+        ];
+    }
+}
