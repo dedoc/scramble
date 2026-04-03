@@ -2,9 +2,11 @@
 
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
+use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
+use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -48,6 +50,8 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
 
         $this->attachAttributes($schema, $reflection);
         $this->attachRelationships($schema, $reflection);
+        $this->attachLinks($schema, $reflection);
+        $this->attachMeta($schema, $reflection);
 
         return $schema;
     }
@@ -116,6 +120,28 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
         $schema->addProperty('relationships', $this->openApiTransformer->transform($relationships));
     }
 
+    private function attachLinks(OpenApiType\ObjectType $schema, ReflectionJsonApiResource $reflection): void
+    {
+        if (! $links = $reflection->getLinksType()) {
+            return;
+        }
+
+        $schema
+            ->addProperty('links', $this->openApiTransformer->transform($links))
+            ->addRequired(['links']);
+    }
+
+    private function attachMeta(OpenApiType\ObjectType $schema, ReflectionJsonApiResource $reflection): void
+    {
+        if (! $meta = $reflection->getMetaType()) {
+            return;
+        }
+
+        $schema
+            ->addProperty('meta', $this->openApiTransformer->transform($meta))
+            ->addRequired(['meta']);
+    }
+
     private function buildRelationshipIdentifierType(Generic $relationshipType): KeyedArrayType
     {
         $reflection = ReflectionJsonApiResource::createForClass($relationshipType->name);
@@ -148,5 +174,10 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
         }
 
         return new Generic($type->name, [new UnknownType]);
+    }
+
+    public function reference(ObjectType $type)
+    {
+        return ClassBasedReference::create('schemas', $type->name, $this->components);
     }
 }
