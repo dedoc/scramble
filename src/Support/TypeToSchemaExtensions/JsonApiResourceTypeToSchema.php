@@ -12,7 +12,6 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
-use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiType;
@@ -91,25 +90,40 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
         foreach ($relationships->items as $index => $item) {
             $item = clone $item;
             $item->isOptional = true;
-            $item->value = $item->value->isInstanceOf(AnonymousResourceCollection::class)
-                ? new KeyedArrayType([
+
+            if ($item->value->isInstanceOf(AnonymousResourceCollection::class)) {
+                $item->value = new KeyedArrayType([
                     new ArrayItemType_('data', new ArrayType(
-                        new KeyedArrayType([
-                            new ArrayItemType_('id', new StringType()),
-                            new ArrayItemType_('type', new StringType()),
-                        ])
+                        $this->buildRelationshipIdentifierType($this->normalizeType(
+                            $item->value->templateTypes[2 /* TResource */] // @todo error here
+                        ))
                     ))
-                ])
-                : new KeyedArrayType([
-                    new ArrayItemType_('data', new KeyedArrayType([
-                        new ArrayItemType_('id', new StringType()),
-                        new ArrayItemType_('type', new StringType()),
-                    ]))
                 ]);
+            } elseif ($item->value->isInstanceOf(JsonApiResource::class)) {
+                $item->value = new KeyedArrayType([
+                    new ArrayItemType_(
+                        'data',
+                        $this->buildRelationshipIdentifierType($this->normalizeType($item->value))
+                    )
+                ]);
+            } else {
+                // @todo diagnostics
+            }
+
             $relationships->items[$index] = $item;
         }
 
         $schema->addProperty('relationships', $this->openApiTransformer->transform($relationships));
+    }
+
+    private function buildRelationshipIdentifierType(Generic $relationshipType): KeyedArrayType
+    {
+        $reflection = ReflectionJsonApiResource::createForClass($relationshipType->name);
+
+        return new KeyedArrayType([
+            new ArrayItemType_('id', $reflection->getIdType($relationshipType)),
+            new ArrayItemType_('type', $reflection->getTypeType($relationshipType)),
+        ]);
     }
 
     private function isAttributeRequired(string $name): bool
