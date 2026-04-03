@@ -9,10 +9,13 @@ use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
 use Dedoc\Scramble\Support\Type as InferType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\FlattensMergeValues;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection as JsonApiAnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\Concerns\ResolvesJsonApiElements;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
@@ -83,13 +86,66 @@ class ReflectionJsonApiResource
         return $metaType instanceof KeyedArrayType ? $metaType : null;
     }
 
+    public function getIdType(InferType\Generic $type): InferType\Type
+    {
+        if (! $modelType = $this->getModelTypeFromInstanceOrDeclaration($type)) {
+            return new InferType\StringType;
+        }
+
+
+        return tap(new InferType\StringType, function ($t) use ($modelType) {
+            $isUuid = ReflectionModel::createForClass($modelType->name)->isKeyUuid();
+
+            if ($isUuid) {
+                $t->setAttribute('format', 'uuid');
+            }
+        });
+    }
+
+    /**
+     * @see ResolvesJsonApiElements::resolveResourceType
+     */
+    public function getTypeType(InferType\Generic $type): InferType\Type
+    {
+        $toTypeReturn = $this->getMethodReturnType('toType');
+        if ($toTypeReturn instanceof InferType\Contracts\LiteralString) {
+            return new LiteralStringType($toTypeReturn->getValue());
+        }
+
+        if ($this->name !== JsonApiResource::class) {
+            $value = Str::of($this->name)->classBasename()->beforeLast('Resource')->snake()->pluralStudly()->toString();
+
+            return new LiteralStringType($value);
+        }
+
+        if ($modelType = $this->getModelTypeFromInstanceOrDeclaration($type)) {
+            $morphAlias = Relation::getMorphAlias($modelType->name);
+            $base = $morphAlias !== $modelType->name ? $morphAlias : class_basename($modelType->name);
+            $value = Str::of($base)->snake()->pluralStudly()->toString();
+
+            return new LiteralStringType($value);
+        }
+
+        return new InferType\StringType;
+    }
+
+    private function getModelTypeFromInstanceOrDeclaration(InferType\Generic $type): ?ObjectType
+    {
+        $instanceModel = $type->templateTypes[0] ?? new InferType\UnknownType;
+        if ($instanceModel->isInstanceOf(Model::class)) {
+            return $instanceModel;
+        }
+
+        return $this->getModelType();
+    }
+
     private function normalizeRelationshipsType(?Type $type): ?InferType\KeyedArrayType
     {
         if (! $type instanceof InferType\KeyedArrayType) {
             return null;
         }
 
-        $modelType = $this->getModelTypeOfResource();
+        $modelType = $this->getModelType();
 
         $arrayType = clone $type;
         $arrayType->items = collect($arrayType->items)
@@ -99,7 +155,7 @@ class ReflectionJsonApiResource
                     ? $newType->value->getReturnType()
                     : $newType->value;
 
-                if ((is_int($newType->key) || $newType->key === null) && $this->isLiteralString($newType->value)) {
+                if ($newType->isNumericKey() && $this->isLiteralString($newType->value)) {
                     $className = $this->getLiteralStringValue($newType->value);
 
                     if (! $guessedClass = $this->guessResourceClass($className)) {
@@ -166,14 +222,14 @@ class ReflectionJsonApiResource
             return null;
         }
 
-        $modelType = $this->getModelTypeOfResource();
+        $modelType = $this->getModelType();
 
         $arrayType = clone $type;
         $arrayType->items = collect($arrayType->items)
             ->map(function (InferType\ArrayItemType_ $t) use ($modelType) {
                 $newType = clone $t;
 
-                if (($t->key === null || is_int($t->key)) && $this->isLiteralString($t->value)) {
+                if ($t->isNumericKey() && $this->isLiteralString($t->value)) {
                     $newType->key = $propertyName = $this->getLiteralStringValue($t->value);
                     $newType->value = $modelType?->getPropertyType($propertyName) ?? new InferType\StringType;
 
@@ -188,7 +244,7 @@ class ReflectionJsonApiResource
         return $arrayType;
     }
 
-    private function getModelTypeOfResource(): ?ObjectType
+    private function getModelType(): ?ObjectType
     {
         try {
             $type = JsonResourceHelper::modelType($this->definition);

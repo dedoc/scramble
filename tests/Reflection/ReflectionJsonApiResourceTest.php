@@ -123,7 +123,6 @@ class ReflectionJsonApiResourceTestProperty_ToRelationshipsJsonApi extends JsonA
 
 test('returns to links type from resource', function () {
     $resource = ReflectionJsonApiResource::createForClass(ReflectionJsonApiResourceTest_ToLinksJsonApi::class);
-
     expect($resource->getLinksType()->toString())->toBe('array{self: string}');
 });
 /**
