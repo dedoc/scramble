@@ -336,26 +336,3 @@ class JsonResourceTypeToSchemaTest_WithCustomName extends JsonResource
         return ['foo' => 'bar'];
     }
 }
-
-it('documents correct schema when json api resource is used', function () {
-    $openApiDocument = generateForRoute(Route::get('api/test', function () {
-        return new JsonResourceTypeToSchemaTest_JsonApi;
-    }));
-    dd($openApiDocument);
-    $responses = $openApiDocument['paths']['/test']['get']['responses'];
-
-    expect($responses)
-        ->toHaveKey('200')
-        ->and($responses['200']['content']['application/json']['schema']['properties']['data']['$ref'] ?? null)
-        ->toBe('#/components/schemas/CustomName');
-});
-/**
- * @property-read SampleUserModel $resource
- */
-class JsonResourceTypeToSchemaTest_JsonApi extends JsonApiResource
-{
-    public $attributes = [
-        'name',
-        'email',
-    ];
-}

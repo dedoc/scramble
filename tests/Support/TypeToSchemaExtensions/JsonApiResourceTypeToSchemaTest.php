@@ -22,8 +22,40 @@ beforeEach(function () {
 test('to schema', function () {
     $type = getStatementType(JsonApiResourceTypeToSchemaTest_Resource::class.'::make()');
 
-    $schema = $this->transformer->transform($type);
-    dd($schema->toArray());
+    $this->transformer->transform($type);
+
+    expect($this->transformer->getComponents()->getSchema('JsonApiResourceTypeToSchemaTest_Resource')->toArray())->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => [
+                'type' => 'string',
+            ],
+            'type' => [
+                'type' => 'string',
+                'const' => 'json_api_resource_type_to_schema_test_',
+            ],
+            'attributes' => [
+                'type' => 'object',
+                'properties' => [
+                    'name' => [
+                        'type' => 'string',
+                    ],
+                    'email' => [
+                        'type' => 'string',
+                    ],
+                    'created_at' => [
+                        'type' => ['string', 'null'],
+                        'format' => 'date-time',
+                    ],
+                ],
+            ],
+        ],
+        'required' => [
+            'id',
+            'type',
+            'attributes',
+        ],
+    ]);
 });
 /**
  * @property-read SampleUserModel $resource

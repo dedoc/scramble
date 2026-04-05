@@ -133,7 +133,7 @@ class ReflectionJsonApiResource
     {
         $instanceModel = $type->templateTypes[0] ?? new InferType\UnknownType;
         if ($instanceModel->isInstanceOf(Model::class)) {
-            return $instanceModel;
+            return $instanceModel instanceof InferType\TemplateType ? $instanceModel->is : $instanceModel;
         }
 
         return $this->getModelType();

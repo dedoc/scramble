@@ -2,27 +2,28 @@
 
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
-use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
+use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiType;
-use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
 {
-    public function shouldHandle(Type $type)
+    public function shouldHandle(Type $type): bool
     {
         return $type instanceof ObjectType
             && $type->isInstanceOf(JsonApiResource::class);
@@ -99,7 +100,7 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
                 $item->value = new KeyedArrayType([
                     new ArrayItemType_('data', new ArrayType(
                         $this->buildRelationshipIdentifierType($this->normalizeType(
-                            $item->value->templateTypes[2 /* TResource */] // @todo error here
+                            $item->value->templateTypes[2 /* TResource */] // @todo possible error here
                         ))
                     ))
                 ]);
@@ -111,10 +112,16 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
                     )
                 ]);
             } else {
-                // @todo diagnostics
+                unset($relationships->items[$index]);
+                continue;
             }
 
             $relationships->items[$index] = $item;
+        }
+        $relationships->items = array_values($relationships->items);
+
+        if (! $relationships->items) {
+            return;
         }
 
         $schema->addProperty('relationships', $this->openApiTransformer->transform($relationships));
@@ -155,6 +162,18 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
     private function isAttributeRequired(string $name): bool
     {
         return false;
+    }
+
+    /**
+     * @see JsonApiResourceMethodReturnTypeExtension::getMethodReturnType()
+     */
+    protected function getResponseType(ObjectType $type): Type
+    {
+        return ReferenceTypeResolver::getInstance()
+            ->resolve(
+                new GlobalScope,
+                new MethodCallReferenceType($type, 'toResponse', [])
+            );
     }
 
     protected function normalizeType(ObjectType $type): Generic
