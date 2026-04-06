@@ -4,21 +4,17 @@ namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
 use Dedoc\Scramble\Support\Type as InferType;
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
-use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
+use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection as JsonApiAnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 /**
- * @see JsonApiResourceCollection
+ * @see JsonApiAnonymousResourceCollection
  * @see JsonApiResource
  *
- * @mixin JsonApiResourceResponseToSchemaExtension|JsonApiPaginatedResourceResponseToSchemaExtension
+ * @mixin JsonApiResourceResponseToSchemaExtension|JsonApiAnonymousCollectionTypeToSchema
  */
 trait HandlesJsonApiResourceResponse
 {
@@ -48,8 +44,7 @@ trait HandlesJsonApiResourceResponse
         $withDefiningClassName = $resourceDefinition?->getMethod('with')?->definingClassName;
 
         return $withDefiningClassName !== JsonApiResource::class
-            //&& $withDefiningClassName !== JsonApiResourceCollection::class
-            ;
+            && $withDefiningClassName !== JsonApiAnonymousResourceCollection::class;
     }
 
     protected function getIncludedResources(ObjectType $resource): ?InferType\ArrayType
@@ -60,7 +55,7 @@ trait HandlesJsonApiResourceResponse
 
         $included = [];
         foreach ($relationships->items as $item) {
-            if ($item->value->isInstanceOf(AnonymousResourceCollection::class)) {
+            if ($item->value->isInstanceOf(JsonApiAnonymousResourceCollection::class)) {
                 $included[] = ResourceCollectionTypeManager::make($item->value)->getCollectedType();
             } elseif ($item->value->isInstanceOf(JsonApiResource::class)) {
                 $included[] = $item->value;
@@ -76,7 +71,7 @@ trait HandlesJsonApiResourceResponse
 
     public function getResourceType(InferType\ObjectType $type): ?ObjectType
     {
-        if ($type->isInstanceOf(JsonApiResourceCollection::class)) {
+        if ($type->isInstanceOf(JsonApiAnonymousResourceCollection::class)) {
             $collectedType = ResourceCollectionTypeManager::make($type)->getCollectedType();
 
             return $collectedType instanceof Generic ? $collectedType : null;

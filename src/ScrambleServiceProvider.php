@@ -34,6 +34,7 @@ use Dedoc\Scramble\Support\InferExtensions\AfterJsonResourceDefinitionCreatedExt
 use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\EloquentBuilderExtension;
+use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceCollectionMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResponseMethodReturnTypeExtension;
@@ -57,6 +58,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonApiAnonymousCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonApiResourceResponseToSchemaExtension;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonApiResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
@@ -147,6 +149,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                 $inferExtensionsClasses = array_merge($inferExtensionsClasses, [
                     JsonApiResourceMethodReturnTypeExtension::class,
+                    JsonApiResourceCollectionMethodReturnTypeExtension::class,
                     AfterJsonApiResourceDefinitionCreatedExtension::class,
                     ResponseMethodReturnTypeExtension::class,
                     JsonResourceExtension::class,
@@ -229,6 +232,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     StreamedResponseToSchema::class,
                     ResourceResponseTypeToSchema::class,
                     PaginatedResourceResponseTypeToSchema::class,
+                    JsonApiAnonymousCollectionTypeToSchema::class,
                     JsonApiResourceResponseToSchemaExtension::class,
                     VoidTypeToSchema::class,
                 ], $typesToSchemaExtensions),
