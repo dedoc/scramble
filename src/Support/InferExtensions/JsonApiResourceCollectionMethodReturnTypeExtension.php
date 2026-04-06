@@ -11,8 +11,8 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\ResourceResponse;
 use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection as JsonApiAnonymousResourceCollection;
 
 class JsonApiResourceCollectionMethodReturnTypeExtension implements MethodReturnTypeExtension
@@ -26,7 +26,7 @@ class JsonApiResourceCollectionMethodReturnTypeExtension implements MethodReturn
     {
         return match ($event->getName()) {
             'response', 'toResponse' => new Generic(JsonResponse::class, [
-                new Generic(ResourceResponse::class, [$event->getInstance()]),
+                ResourceCollectionTypeManager::make($event->getInstance())->getResponseType(),
                 new UnknownType,
                 new KeyedArrayType([
                     new ArrayItemType_('Content-type', new LiteralStringType('application/vnd.api+json')),
