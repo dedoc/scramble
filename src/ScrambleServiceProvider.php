@@ -59,6 +59,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonApiAnonymousCollectionTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonApiPaginatedResourceResponseToSchemaExtension;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonApiResourceResponseToSchemaExtension;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonApiResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
@@ -234,6 +235,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     PaginatedResourceResponseTypeToSchema::class,
                     JsonApiAnonymousCollectionTypeToSchema::class,
                     JsonApiResourceResponseToSchemaExtension::class,
+                    JsonApiPaginatedResourceResponseToSchemaExtension::class,
                     VoidTypeToSchema::class,
                 ], $typesToSchemaExtensions),
                 exceptionToResponseExtensionsClasses: $parameters['exceptionToResponseExtensions'] ?? array_merge([

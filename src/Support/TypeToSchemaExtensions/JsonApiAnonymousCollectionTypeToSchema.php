@@ -2,11 +2,11 @@
 
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
-use Dedoc\Scramble\Infer\Scope\GlobalScope;
-use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type as InferType;
 use Dedoc\Scramble\Support\Type\Type;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection as JsonApiAnonymousResourceCollection;
 
 /**
@@ -14,8 +14,6 @@ use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection as JsonApiAnon
  */
 class JsonApiAnonymousCollectionTypeToSchema extends ResourceCollectionTypeToSchema
 {
-    use HandlesJsonApiResourceResponse;
-
     public function shouldHandle(Type $type): bool
     {
         return $type instanceof ObjectType && $type->isInstanceOf(JsonApiAnonymousResourceCollection::class);
@@ -23,10 +21,12 @@ class JsonApiAnonymousCollectionTypeToSchema extends ResourceCollectionTypeToSch
 
     protected function getResponseType(ObjectType $type): Type
     {
-        return ReferenceTypeResolver::getInstance()
-            ->resolve(
-                new GlobalScope,
-                new MethodCallReferenceType($type, 'toResponse', [])
-            );
+        return new Generic(JsonResponse::class, [
+            parent::getResponseType($type),
+            new InferType\UnknownType,
+            new InferType\KeyedArrayType([
+                new InferType\ArrayItemType_('Content-type', new InferType\Literal\LiteralStringType('application/vnd.api+json')),
+            ]),
+        ]);
     }
 }
