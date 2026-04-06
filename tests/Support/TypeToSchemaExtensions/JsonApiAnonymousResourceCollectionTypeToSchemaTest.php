@@ -17,7 +17,6 @@ test('json api collection response has correct content type', function () {
     expect($response['content'])->not->toHaveKey('application/json');
 });
 
-
 test('json api collection response includes included key when resource has relationships', function () {
     $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [JsonApiCollectionWithRelationships_Controller::class, 'index']));
 

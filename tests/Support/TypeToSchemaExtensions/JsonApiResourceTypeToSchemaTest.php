@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Tests\Support\TypeToSchemaExtensions;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
-use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;

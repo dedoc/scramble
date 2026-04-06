@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
+use Dedoc\Scramble\Support\Generator\Types as OpenApiType;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
@@ -17,7 +18,6 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Dedoc\Scramble\Support\Generator\Types as OpenApiType;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
@@ -30,7 +30,7 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
     }
 
     /**
-     * @param ObjectType $type
+     * @param  ObjectType  $type
      */
     public function toSchema(Type $type)
     {
@@ -38,7 +38,7 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
 
         $reflection = ReflectionJsonApiResource::createForClass($type->name);
 
-        $schema = (new OpenApiType\ObjectType())
+        $schema = (new OpenApiType\ObjectType)
             ->addProperty(
                 'id',
                 $this->openApiTransformer->transform($reflection->getIdType($type)),
@@ -102,17 +102,18 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
                         $this->buildRelationshipIdentifierType($this->normalizeType(
                             $item->value->templateTypes[2 /* TResource */] // @todo possible error here
                         ))
-                    ))
+                    )),
                 ]);
             } elseif ($item->value->isInstanceOf(JsonApiResource::class)) {
                 $item->value = new KeyedArrayType([
                     new ArrayItemType_(
                         'data',
                         $this->buildRelationshipIdentifierType($this->normalizeType($item->value))
-                    )
+                    ),
                 ]);
             } else {
                 unset($relationships->items[$index]);
+
                 continue;
             }
 

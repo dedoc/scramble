@@ -116,7 +116,7 @@ class ReflectionJsonApiResourceTestProperty_ToRelationshipsJsonApi extends JsonA
         return [
             'user' => ReflectionJsonApiResourceTestProperty_JsonApi::class,
             'parentPosts' => fn () => ReflectionJsonApiResourceTestProperty_RelationshipsConcreteJsonApi::collection([]),
-            'parent'
+            'parent',
         ];
     }
 }

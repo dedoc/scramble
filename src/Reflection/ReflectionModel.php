@@ -10,9 +10,7 @@ use Illuminate\Support\Arr;
 
 class ReflectionModel
 {
-    private function __construct(public readonly string $name, public readonly ClassDefinition $definition)
-    {
-    }
+    private function __construct(public readonly string $name, public readonly ClassDefinition $definition) {}
 
     public static function createForClass(string $class): self
     {
