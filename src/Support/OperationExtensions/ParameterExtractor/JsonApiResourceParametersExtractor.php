@@ -19,9 +19,13 @@ use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 class JsonApiResourceParametersExtractor implements ParameterExtractor
 {
+    private bool $prefersTypedParameters = false;
+
     public function __construct(
         private TypeTransformer $openApiTransformer,
-    ) {}
+    ) {
+        $this->prefersTypedParameters = config('scramble.parameters.prefer_typed', false);
+    }
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
     {
@@ -58,10 +62,28 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
             return null;
         }
 
-        $possibleIncludesDescription = implode(', ', array_map(fn ($include) => '`'.$include.'`', $includes));
+        return $this->makeQueryArrayParameter(
+            'include',
+            $includes,
+            fn ($itemsDescriptions) => 'Available includes are '.implode(', ', $itemsDescriptions).'. You can include multiple options by separating them with a comma.'
+        );
+    }
 
-        return Parameter::make('include', 'query')
-            ->description('Available includes are '.$possibleIncludesDescription.'. You can include multiple options by separating them with a comma.')
+    private function makeQueryArrayParameter(string $name, array $values, callable $untypedDescription): Parameter
+    {
+        if ($this->prefersTypedParameters) {
+            return Parameter::make($name, 'query')
+                ->setExplode(false)
+                ->setStyle('form')
+                ->setSchema(Schema::fromType(new ArrayType(
+                    (new StringType)->enum($values)
+                )));
+        }
+
+        $possibleValuesDescriptions = array_map(fn ($value) => '`'.$value.'`', $values);
+
+        return Parameter::make($name, 'query')
+            ->description($untypedDescription($possibleValuesDescriptions))
             ->setSchema(Schema::fromType(new StringType));
     }
 
@@ -91,9 +113,11 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
 
         $possibleFieldsDescription = implode(', ', array_map(fn ($field) => '`'.$field.'`', $fields));
 
-        return Parameter::make('fields['.$type.']', 'query')
-            ->description('Available fields are '.$possibleFieldsDescription.'. You can include multiple options by separating them with a comma.')
-            ->setSchema(Schema::fromType(new StringType));
+        return $this->makeQueryArrayParameter(
+            'fields['.$type.']',
+            $fields,
+            fn ($itemsDescriptions) => 'Available fields are '.implode(', ', $itemsDescriptions).'. You can include multiple options by separating them with a comma.'
+        );
     }
 
     /**
