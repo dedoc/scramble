@@ -2,20 +2,15 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
-use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\RouteInfo;
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -51,7 +46,7 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
 
         return [
             ...$parameterExtractionResults,
-            new ParametersExtractionResult($parameters/*, ignoreDeepQueryParametersFlatenning: true*/)
+            new ParametersExtractionResult($parameters),
         ];
     }
 
@@ -62,14 +57,6 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
         if (! $includes) {
             return null;
         }
-
-        // "prefer typed" mode on
-        // ignoreDeepQueryParametersFlatenning: true for ParametersExtractionResult
-        // Parameter::make('include', 'query')
-        //     ->setExplode(false)
-        //     ->setSchema(Schema::fromType(
-        //         (new ArrayType)->setItems((new StringType)->enum($includes)),
-        //     )),
 
         $possibleIncludesDescription = implode(', ', array_map(fn ($include) => '`'.$include.'`', $includes));
 
@@ -101,8 +88,6 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
         if (! $type = $this->getType($reflectionJsonApi)) {
             return null;
         }
-
-        // @todo "prefer typed" mode on
 
         $possibleFieldsDescription = implode(', ', array_map(fn ($field) => '`'.$field.'`', $fields));
 
