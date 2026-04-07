@@ -118,7 +118,7 @@ class ReflectionJsonApiResource
             return new LiteralStringType($value);
         }
 
-        if ($modelType = $this->getModelTypeFromInstanceOrDeclaration($type)) {
+        if ($modelType = $this->getModelTypeFromInstanceOrDeclaration($type)) { // @todo use $resource here instead!!!
             $morphAlias = Relation::getMorphAlias($modelType->name);
             $base = $morphAlias !== $modelType->name ? $morphAlias : class_basename($modelType->name);
             $value = Str::of($base)->snake()->pluralStudly()->toString();
