@@ -3,9 +3,8 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
 use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
+use Dedoc\Scramble\Support\Factories\JsonApiQueryParameterFactory;
 use Dedoc\Scramble\Support\Generator\Parameter;
-use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\RouteInfo;
@@ -19,12 +18,10 @@ use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 class JsonApiResourceParametersExtractor implements ParameterExtractor
 {
-    private bool $prefersTypedParameters = false;
-
     public function __construct(
         private TypeTransformer $openApiTransformer,
+        private JsonApiQueryParameterFactory $queryParameterFactory,
     ) {
-        $this->prefersTypedParameters = config('scramble.parameters.prefer_typed', false);
     }
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
@@ -62,29 +59,10 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
             return null;
         }
 
-        return $this->makeQueryArrayParameter(
-            'include',
-            $includes,
-            fn ($itemsDescriptions) => 'Available includes are '.implode(', ', $itemsDescriptions).'. You can include multiple options by separating them with a comma.'
+        return $this->queryParameterFactory->createEnumArray(
+            name: 'include',
+            values: $includes,
         );
-    }
-
-    private function makeQueryArrayParameter(string $name, array $values, callable $untypedDescription): Parameter
-    {
-        if ($this->prefersTypedParameters) {
-            return Parameter::make($name, 'query')
-                ->setExplode(false)
-                ->setStyle('form')
-                ->setSchema(Schema::fromType(new ArrayType(
-                    (new StringType)->enum($values)
-                )));
-        }
-
-        $possibleValuesDescriptions = array_map(fn ($value) => '`'.$value.'`', $values);
-
-        return Parameter::make($name, 'query')
-            ->description($untypedDescription($possibleValuesDescriptions))
-            ->setSchema(Schema::fromType(new StringType));
     }
 
     /**
@@ -111,12 +89,9 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
             return null;
         }
 
-        $possibleFieldsDescription = implode(', ', array_map(fn ($field) => '`'.$field.'`', $fields));
-
-        return $this->makeQueryArrayParameter(
-            'fields['.$type.']',
-            $fields,
-            fn ($itemsDescriptions) => 'Available fields are '.implode(', ', $itemsDescriptions).'. You can include multiple options by separating them with a comma.'
+        return $this->queryParameterFactory->createEnumArray(
+            name: 'fields['.$type.']',
+            values: $fields,
         );
     }
 

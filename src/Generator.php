@@ -53,6 +53,8 @@ class Generator
     {
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
+        $this->configureServices
+
         $openApi = $this->makeOpenApi($config);
         $context = new OpenApiContext($openApi, $config);
         $typeTransformer = $this->buildTypeTransformer($context);
