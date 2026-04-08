@@ -26,10 +26,14 @@ class JsonApiQueryParameterFactory
                 ->setSchema(Schema::fromType(new StringType));
         }
 
-        return Parameter::make($name, 'query')
-            ->setExplode(false)
-            ->setSchema(Schema::fromType(
-                (new ArrayType)->setItems((new StringType)->enum($values)),
-            ));
+        return tap(
+            Parameter::make($name, 'query')
+                ->setExplode(false)
+                ->setSchema(Schema::fromType(
+                    (new ArrayType)->setItems((new StringType)->enum($values)),
+                )),
+            /** Setting `isFlat` prevents QueryParametersConverter to append `[]` to parameter {@see QueryParametersConverter::shouldAdaptParameterForQuery} */
+            fn (Parameter $p) => $p->setAttribute('isFlat', true),
+        );
     }
 }

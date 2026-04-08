@@ -80,9 +80,7 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
             $item->isOptional = ! $this->isAttributeRequired($item->key);
         }
 
-        $schema
-            ->addProperty('attributes', $this->openApiTransformer->transform($attributes))
-            ->addRequired(['attributes']);
+        $schema->addProperty('attributes', $this->openApiTransformer->transform($attributes));
     }
 
     private function attachRelationships(OpenApiType\ObjectType $schema, ReflectionJsonApiResource $reflection): void
