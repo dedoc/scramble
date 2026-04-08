@@ -21,8 +21,7 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
     public function __construct(
         private TypeTransformer $openApiTransformer,
         private JsonApiQueryParameterFactory $queryParameterFactory,
-    ) {
-    }
+    ) {}
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
     {
@@ -160,6 +159,7 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
                 $includeType = $item->value;
             } else {
                 unset($relationships->items[$index]);
+
                 continue;
             }
             $includeType = $includeType instanceof TemplateType ? $includeType->is : $includeType;

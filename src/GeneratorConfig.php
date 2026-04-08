@@ -235,8 +235,7 @@ class GeneratorConfig
 
     public function jsonApi(
         JsonApiArraySerialization $arraySerialization = JsonApiArraySerialization::Comma,
-    ): static
-    {
+    ): static {
         $this->jsonApi = new JsonApiConfig(
             arraySerialization: $arraySerialization,
         );

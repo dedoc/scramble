@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Tests\Support\OperationExtensions\ParameterExtractor;
 
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
-use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 use Illuminate\Support\Facades\Route as RouteFacade;
 

@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection as JsonApiAnonymousResourceCollection;
-use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 class JsonApiPaginatedResourceResponseToSchemaExtension extends PaginatedResourceResponseTypeToSchema
 {

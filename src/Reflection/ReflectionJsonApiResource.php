@@ -27,9 +27,7 @@ class ReflectionJsonApiResource
 {
     use FlattensMergeValues;
 
-    private function __construct(public readonly string $name, public readonly ClassDefinition $definition)
-    {
-    }
+    private function __construct(public readonly string $name, public readonly ClassDefinition $definition) {}
 
     public static function createForClass(string $class): self
     {
@@ -91,7 +89,6 @@ class ReflectionJsonApiResource
         if (! $modelType = $this->getModelTypeFromInstanceOrDeclaration($type)) {
             return new InferType\StringType;
         }
-
 
         return tap(new InferType\StringType, function ($t) use ($modelType) {
             $isUuid = ReflectionModel::createForClass($modelType->name)->isKeyUuid();
@@ -193,6 +190,7 @@ class ReflectionJsonApiResource
             ->values()
             ->all();
         $arrayType->isList = KeyedArrayType::checkIsList($arrayType->items);
+
         return $arrayType;
     }
 

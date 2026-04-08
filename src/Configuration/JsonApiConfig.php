@@ -8,7 +8,5 @@ class JsonApiConfig
 {
     public function __construct(
         public readonly JsonApiArraySerialization $arraySerialization = JsonApiArraySerialization::Comma,
-    )
-    {
-    }
+    ) {}
 }

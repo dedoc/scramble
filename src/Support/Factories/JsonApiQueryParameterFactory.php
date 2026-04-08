@@ -12,9 +12,7 @@ class JsonApiQueryParameterFactory
 {
     public function __construct(
         private JsonApiArraySerialization $arraySerialization,
-    )
-    {
-    }
+    ) {}
 
     public function createEnumArray(string $name, array $values)
     {
