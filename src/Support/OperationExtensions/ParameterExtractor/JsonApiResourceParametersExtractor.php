@@ -2,13 +2,9 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
-use Dedoc\Scramble\Infer;
-use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
-use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Factories\JsonApiQueryParameterFactory;
 use Dedoc\Scramble\Support\Generator\Parameter;
-use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralString;

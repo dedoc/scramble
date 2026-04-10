@@ -23,8 +23,8 @@ test('extracts includes parameter', function () {
                 'enum' => [
                     'user',
                     'parent',
-                ]
-            ]
+                ],
+            ],
         ],
         'explode' => false,
     ]);
@@ -46,8 +46,8 @@ test('extracts fields parameter', function () {
                 'type' => 'string',
                 'enum' => [
                     'email',
-                ]
-            ]
+                ],
+            ],
         ],
         'explode' => false,
     ]);

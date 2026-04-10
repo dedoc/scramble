@@ -72,7 +72,6 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\StreamedResponseToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\VoidTypeToSchema;
 use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 use Illuminate\Routing\Router;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter;

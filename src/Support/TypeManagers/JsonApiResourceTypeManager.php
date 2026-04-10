@@ -11,7 +11,6 @@ use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\UnknownType;
 
 class JsonApiResourceTypeManager
 {
@@ -42,8 +41,7 @@ class JsonApiResourceTypeManager
         Type $includesPreviouslyLoadedRelationships = new LiteralBooleanType(false),
         Type $loadedRelationshipsMap = new MixedType,
         Type $loadedRelationshipIdentifiers = new KeyedArrayType,
-    ): Generic
-    {
+    ): Generic {
         return new Generic($name, [
             /* TResource */ $resource,
             /* TAdditional */ $additional,

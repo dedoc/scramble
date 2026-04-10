@@ -32,12 +32,12 @@ class AfterJsonApiResourceDefinitionCreatedExtension implements AfterClassDefini
 
         $definition->templateTypes = [
             ...$definition->templateTypes,
-            new TemplateType('TJsonApiLinks', is: new ArrayType, default: new KeyedArrayType()),
-            new TemplateType('TJsonApiMeta', is: new ArrayType, default: new KeyedArrayType()),
+            new TemplateType('TJsonApiLinks', is: new ArrayType, default: new KeyedArrayType),
+            new TemplateType('TJsonApiMeta', is: new ArrayType, default: new KeyedArrayType),
             new TemplateType('TUsesRequestQueryString', is: new BooleanType, default: new LiteralBooleanType(true)),
             new TemplateType('TIncludesPreviouslyLoadedRelationships', is: new BooleanType, default: new LiteralBooleanType(false)),
             new TemplateType('TLoadedRelationshipsMap', is: new UnknownType),
-            new TemplateType('TLoadedRelationshipIdentifiers', is: new ArrayType, default: new KeyedArrayType()),
+            new TemplateType('TLoadedRelationshipIdentifiers', is: new ArrayType, default: new KeyedArrayType),
         ];
 
         $definition->methods['newCollection'] = $this->buildNewCollectionMethodDefinition();
