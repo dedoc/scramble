@@ -61,3 +61,20 @@ class SamplePostResource_JsonApiResourceParametersExtractorTest extends JsonApiR
 
     public $relationships = ['user', 'parent'];
 }
+
+/*
+ * Based on method name, `ignoreFieldsAndIncludesInQueryString`, this should also ignore includes. But as of now (Laravel 13.3),
+ * `include` parameter is still available. Scramble reflects that.
+ */
+test('ignores fields parameter and preserves includes parameter when ignoreFieldsAndIncludesInQueryString is called', function () {
+    $openApiDocument = generateForRoute(RouteFacade::get('/api/test', function () {
+        return SamplePostResource_JsonApiResourceParametersExtractorTest::make()->ignoreFieldsAndIncludesInQueryString();
+    }));
+
+    $parameters = collect($openApiDocument['paths']['/test']['get']['parameters']);
+
+    expect($parameters->firstWhere('name', 'include'))
+        ->not->toBe(null)
+        ->and($parameters->firstWhere('name', 'fields[sample_post_resource__json_apis]'))
+        ->toBe(null);
+});
