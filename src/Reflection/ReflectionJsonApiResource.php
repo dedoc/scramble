@@ -23,6 +23,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Throwable;
 
+/**
+ * @see JsonApiResource
+ */
 class ReflectionJsonApiResource
 {
     use FlattensMergeValues;

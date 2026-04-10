@@ -16,10 +16,17 @@ test('extracts includes parameter', function () {
     expect($parameters->firstWhere('name', 'include'))->toBe([
         'name' => 'include',
         'in' => 'query',
-        'description' => 'Available includes are `user`, `parent`. You can include multiple options by separating them with a comma.',
         'schema' => [
-            'type' => 'string',
+            'type' => 'array',
+            'items' => [
+                'type' => 'string',
+                'enum' => [
+                    'user',
+                    'parent',
+                ]
+            ]
         ],
+        'explode' => false,
     ]);
 });
 
@@ -33,10 +40,16 @@ test('extracts fields parameter', function () {
     expect($parameters->firstWhere('name', 'fields[sample_post_resource__json_apis]'))->toBe([
         'name' => 'fields[sample_post_resource__json_apis]',
         'in' => 'query',
-        'description' => 'Available fields are `email`. You can include multiple options by separating them with a comma.',
         'schema' => [
-            'type' => 'string',
+            'type' => 'array',
+            'items' => [
+                'type' => 'string',
+                'enum' => [
+                    'email',
+                ]
+            ]
         ],
+        'explode' => false,
     ]);
 });
 /**

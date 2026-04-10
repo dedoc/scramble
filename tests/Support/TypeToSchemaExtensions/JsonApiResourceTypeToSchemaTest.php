@@ -52,7 +52,6 @@ test('to schema', function () {
         'required' => [
             'id',
             'type',
-            'attributes',
         ],
     ]);
 });

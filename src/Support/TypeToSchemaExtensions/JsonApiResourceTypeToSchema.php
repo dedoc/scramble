@@ -15,9 +15,8 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
-use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\TypeManagers\JsonApiResourceTypeManager;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
@@ -34,7 +33,7 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
      */
     public function toSchema(Type $type)
     {
-        $type = $this->normalizeType($type);
+        $type = app(JsonApiResourceTypeManager::class)->normalizeType($type);
 
         $reflection = ReflectionJsonApiResource::createForClass($type->name);
 
@@ -173,25 +172,6 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
                 new GlobalScope,
                 new MethodCallReferenceType($type, 'toResponse', [])
             );
-    }
-
-    protected function normalizeType(ObjectType $type): Generic
-    {
-        if ($type instanceof Generic) {
-            return $type;
-        }
-
-        $inferredCreationType = ReferenceTypeResolver::getInstance()
-            ->resolve(
-                new GlobalScope,
-                new NewCallReferenceType($type->name, []),
-            );
-
-        if ($inferredCreationType instanceof Generic) {
-            return $inferredCreationType;
-        }
-
-        return new Generic($type->name, [new UnknownType]);
     }
 
     public function reference(ObjectType $type)

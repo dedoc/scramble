@@ -2,7 +2,10 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
+use Dedoc\Scramble\Infer;
+use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Factories\JsonApiQueryParameterFactory;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -10,17 +13,19 @@ use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtracti
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\TypeManagers\JsonApiResourceTypeManager;
 use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 class JsonApiResourceParametersExtractor implements ParameterExtractor
 {
     public function __construct(
-        private TypeTransformer $openApiTransformer,
         private JsonApiQueryParameterFactory $queryParameterFactory,
+        private JsonApiResourceTypeManager $jsonApiResourceTypeManager,
     ) {}
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
@@ -37,7 +42,7 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
 
         $parameters = array_values(array_filter([
             $this->getIncludeParameter($reflectionJsonApi),
-            ...$this->getAllIncludedSparseFieldsParameters($reflectionJsonApi),
+            ...$this->getAllIncludedSparseFieldsParameters($reflectionJsonApi, $resourceType),
         ]));
 
         if (! $parameters) {
@@ -67,8 +72,12 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
     /**
      * @return list<Parameter|null>
      */
-    private function getAllIncludedSparseFieldsParameters(ReflectionJsonApiResource $reflectionJsonApi): array
+    private function getAllIncludedSparseFieldsParameters(ReflectionJsonApiResource $reflectionJsonApi, Generic $resourceType): array
     {
+        if ($this->shouldIgnoreFieldsAndIncludesInQueryString($resourceType)) {
+            return [];
+        }
+
         return [
             $this->getSparseFieldsParameter($reflectionJsonApi),
             ...array_map(
@@ -76,6 +85,13 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
                 $this->getAvailableIncludeResourcesNames($reflectionJsonApi)
             ),
         ];
+    }
+
+    private function shouldIgnoreFieldsAndIncludesInQueryString(Generic $resourceType): bool
+    {
+        $usesQueryString = $this->jsonApiResourceTypeManager->getPropertyType($resourceType, 'usesRequestQueryString');
+
+        return $usesQueryString instanceof LiteralBooleanType && $usesQueryString->value === false;
     }
 
     private function getSparseFieldsParameter(ReflectionJsonApiResource $reflectionJsonApi): ?Parameter
@@ -113,10 +129,13 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
             }
 
             $type = $type->templateTypes[2 /* TCollects */];
+            if ($type instanceof TemplateType) {
+                $type = $type->is;
+            }
         }
 
-        if ($type->isInstanceOf(JsonApiResource::class)) {
-            return $type;
+        if ($type instanceof ObjectType && $type->isInstanceOf(JsonApiResource::class)) {
+            return $this->jsonApiResourceTypeManager->normalizeType($type);
         }
 
         return null;

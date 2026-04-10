@@ -20,7 +20,7 @@ class JsonApiQueryParameterFactory
             $possibleOptionsDescriptions = array_map(fn ($value) => '`'.$value.'`', $values);
 
             return Parameter::make($name, 'query')
-                ->description('Available options are '.implode(', ', $possibleOptionsDescriptions).'. You can include multiple options by separating them with a comma.')
+                ->description('Available values are '.implode(', ', $possibleOptionsDescriptions).'. You can include multiple values by separating them with a comma.')
                 ->setSchema(Schema::fromType(new StringType));
         }
 
