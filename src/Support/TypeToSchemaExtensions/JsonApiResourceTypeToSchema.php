@@ -18,8 +18,6 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeManagers\JsonApiResourceTypeManager;
-use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
@@ -70,15 +68,9 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
         foreach ($attributes->items as $item) {
             if ($item->value instanceof FunctionType) {
                 $item->value = $item->value->getReturnType();
-                $item->isOptional = true;
-
-                continue;
             }
 
-            if (! is_string($item->key)) {
-                continue;
-            }
-            $item->isOptional = ! $this->isAttributeRequired($item->key);
+            $item->isOptional = true;
         }
 
         $schema->addProperty('attributes', $this->openApiTransformer->transform($attributes));
@@ -86,47 +78,26 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
 
     private function attachRelationships(OpenApiType\ObjectType $schema, ReflectionJsonApiResource $reflection): void
     {
-        if (! $relationships = $reflection->getRelationshipsType()) {
+        $relationshipItems = $reflection->getRelationshipItems();
+
+        if (! $relationshipItems) {
             return;
         }
 
-        $relationships = clone $relationships;
-        foreach ($relationships->items as $index => $item) {
-            $item = clone $item;
-            $item->isOptional = true;
+        $items = array_map(function ($relationship) {
+            $identifierType = $this->buildRelationshipIdentifierType($this->normalizeType($relationship->resourceType));
 
-            if (
-                $item->value instanceof ObjectType
-                && $item->value->isInstanceOf(AnonymousResourceCollection::class)
-                && (($collectedType = ResourceCollectionTypeManager::make($item->value)->getCollectedType()) instanceof ObjectType)
-            ) {
-                $item->value = new KeyedArrayType([
-                    new ArrayItemType_('data', new ArrayType(
-                        $this->buildRelationshipIdentifierType($this->normalizeType($collectedType))
-                    )),
-                ]);
-            } elseif ($item->value instanceof ObjectType && $item->value->isInstanceOf(JsonApiResource::class)) {
-                $item->value = new KeyedArrayType([
-                    new ArrayItemType_(
-                        'data',
-                        $this->buildRelationshipIdentifierType($this->normalizeType($item->value))
-                    ),
-                ]);
-            } else {
-                unset($relationships->items[$index]);
+            $value = $relationship->isCollection
+                ? new KeyedArrayType([new ArrayItemType_('data', new ArrayType($identifierType))])
+                : new KeyedArrayType([new ArrayItemType_('data', $identifierType)]);
 
-                continue;
-            }
+            return tap(
+                new ArrayItemType_($relationship->name, $value, isOptional: true),
+                fn (ArrayItemType_ $t) => $t->setAttribute('docNode', $relationship->phpDoc),
+            );
+        }, $relationshipItems);
 
-            $relationships->items[$index] = $item;
-        }
-        $relationships->items = array_values($relationships->items);
-
-        if (! $relationships->items) {
-            return;
-        }
-
-        $schema->addProperty('relationships', $this->openApiTransformer->transform($relationships));
+        $schema->addProperty('relationships', $this->openApiTransformer->transform(new KeyedArrayType($items)));
     }
 
     private function attachLinks(OpenApiType\ObjectType $schema, ReflectionJsonApiResource $reflection): void
@@ -159,11 +130,6 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
             new ArrayItemType_('id', $reflection->getIdType($relationshipType)),
             new ArrayItemType_('type', $reflection->getTypeType($relationshipType)),
         ]);
-    }
-
-    private function isAttributeRequired(string $name): bool
-    {
-        return false;
     }
 
     /**

@@ -74,63 +74,73 @@ class ReflectionJsonApiResource
         return $this->normalizeRelationshipsType($toRelationshipsReturnType ?: $propertiesRelationshipsType);
     }
 
-    public function getNestedRelationshipsType(int $maxRelationshipDepth, string $prefix = ''): ?KeyedArrayType
+    /**
+     * @return JsonApiRelationship[]
+     */
+    public function getRelationshipItems(): array
+    {
+        $type = $this->getRelationshipsType();
+
+        if (! $type) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            fn ($item) => $this->decodeRelationshipItem($item),
+            $type->items,
+        )));
+    }
+
+    /**
+     * Returns a flat list of all relationships at every nesting level, with dotted names.
+     *
+     * @return JsonApiRelationship[]
+     */
+    public function getNestedRelationshipsType(int $maxRelationshipDepth, string $prefix = ''): array
     {
         if (! $maxRelationshipDepth) {
-            return null;
+            return [];
         }
 
-        $relationships = $this->getRelationshipsType();
-        if (! $relationships) {
-            return null;
-        }
+        $result = [];
+        foreach ($this->getRelationshipItems() as $relationship) {
+            $fullName = implode('.', array_filter([$prefix, $relationship->name]));
 
-        $originalItems = array_map(fn ($item) => clone $item, $relationships->items);
-        $newItems = [];
-        foreach ($originalItems as $item) {
-            if (! is_string($item->key)) {
-                // @todo report
-                continue;
-            }
-            $includedType = null;
+            $result[] = new JsonApiRelationship($fullName, $relationship->resourceType, $relationship->isCollection);
 
-            if ($item->value instanceof ObjectType && $item->value->isInstanceOf(JsonApiAnonymousResourceCollection::class)) {
-                $includedType = ResourceCollectionTypeManager::make($item->value)->getCollectedType();
-            } elseif ($item->value->isInstanceOf(JsonApiResource::class)) {
-                $includedType = $item->value;
-            }
-
-            if ($includedType instanceof InferType\TemplateType) {
-                $includedType = $includedType->is;
-            }
-
-            if (! $includedType instanceof ObjectType || ! $includedType->isInstanceOf(JsonApiResource::class)) {
-                // @todo report
-                continue;
-            }
-
-            $includedRelationships = ReflectionJsonApiResource::createForClass($includedType->name)->getNestedRelationshipsType(
-                $maxRelationshipDepth - 1,
-                implode('.', array_filter([$prefix, $item->key])),
+            $result = array_merge(
+                $result,
+                ReflectionJsonApiResource::createForClass($relationship->resourceType->name)->getNestedRelationshipsType(
+                    $maxRelationshipDepth - 1,
+                    $fullName,
+                ),
             );
-            if (! $includedRelationships) {
-                continue;
-            }
-
-            $newItems = array_merge($newItems, $includedRelationships->items);
         }
-
-        foreach ($originalItems as $item) {
-            if (! is_string($item->key)) {
-                continue;
-            }
-            $item->key = implode('.', array_filter([$prefix, $item->key]));
-        }
-
-        $result = clone $relationships;
-        $result->items = array_merge($originalItems, $newItems);
 
         return $result;
+    }
+
+    private function decodeRelationshipItem(InferType\ArrayItemType_ $item): ?JsonApiRelationship
+    {
+        if (! is_string($item->key) || ! $item->value instanceof ObjectType) {
+            return null;
+        }
+
+        if ($item->value->isInstanceOf(JsonApiAnonymousResourceCollection::class)) {
+            $resourceType = ResourceCollectionTypeManager::make($item->value)->getCollectedType();
+            $isCollection = true;
+        } elseif ($item->value->isInstanceOf(JsonApiResource::class)) {
+            $resourceType = $item->value;
+            $isCollection = false;
+        } else {
+            return null;
+        }
+
+        if (! $resourceType instanceof ObjectType || ! $resourceType->isInstanceOf(JsonApiResource::class)) {
+            return null;
+        }
+
+        return new JsonApiRelationship($item->key, $resourceType, $isCollection, $item->getAttribute('docNode')); // @phpstan-ignore argument.type
     }
 
     public function getLinksType(): ?KeyedArrayType

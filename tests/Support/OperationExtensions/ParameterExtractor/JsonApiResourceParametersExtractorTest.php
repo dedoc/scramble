@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Tests\Support\OperationExtensions\ParameterExtractor;
 
-use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Tests\Files\SampleCircleModel;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;

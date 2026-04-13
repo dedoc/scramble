@@ -64,24 +64,15 @@ trait HandlesJsonApiResourceResponse
 
     protected function getIncludedResources(ObjectType $resource): ?InferType\ArrayType
     {
-        if (! $relationships = ReflectionJsonApiResource::createForClass($resource->name)->getNestedRelationshipsType(
+        $relationships = ReflectionJsonApiResource::createForClass($resource->name)->getNestedRelationshipsType(
             $this->openApiContext->config->jsonApi->maxRelationshipDepth(),
-        )) {
+        );
+
+        if (! $relationships) {
             return null;
         }
 
-        $included = [];
-        foreach ($relationships->items as $item) {
-            if ($item->value instanceof ObjectType && $item->value->isInstanceOf(JsonApiAnonymousResourceCollection::class)) {
-                $included[] = ResourceCollectionTypeManager::make($item->value)->getCollectedType();
-            } elseif ($item->value->isInstanceOf(JsonApiResource::class)) {
-                $included[] = $item->value;
-            }
-        }
-
-        if (! $included) {
-            return null;
-        }
+        $included = array_map(fn ($r) => $r->resourceType, $relationships);
 
         return new InferType\ArrayType(InferType\Union::wrap($included));
     }

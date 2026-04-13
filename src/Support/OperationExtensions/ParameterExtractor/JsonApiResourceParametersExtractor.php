@@ -15,9 +15,9 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeManagers\JsonApiResourceTypeManager;
-use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
+
 
 class JsonApiResourceParametersExtractor implements ParameterExtractor
 {
@@ -145,19 +145,10 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
      */
     private function getAvailableRelations(ReflectionJsonApiResource $reflectionJsonApi): array
     {
-        if (! $relationshipsType = $reflectionJsonApi->getNestedRelationshipsType($this->config->jsonApi->maxRelationshipDepth())) {
-            return [];
-        }
-
-        $includes = [];
-        foreach ($relationshipsType->items as $item) {
-            if ($item->isNumericKey()) {
-                continue;
-            }
-            $includes[] = $item->key;
-        }
-
-        return $includes;
+        return array_map(
+            fn ($r) => $r->name,
+            $reflectionJsonApi->getNestedRelationshipsType($this->config->jsonApi->maxRelationshipDepth()),
+        );
     }
 
     /**
@@ -165,30 +156,10 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
      */
     private function getAvailableIncludeResourcesNames(ReflectionJsonApiResource $reflectionJsonApi): array
     {
-        if (! $relationships = $reflectionJsonApi->getNestedRelationshipsType($this->config->jsonApi->maxRelationshipDepth())) {
-            return [];
-        }
-
-        $includesNames = [];
-        foreach ($relationships->items as $index => $item) {
-            if ($item->value instanceof ObjectType && $item->value->isInstanceOf(\Illuminate\Http\Resources\Json\AnonymousResourceCollection::class)) {
-                $includeType = ResourceCollectionTypeManager::make($item->value)->getCollectedType();
-            } elseif ($item->value->isInstanceOf(JsonApiResource::class)) {
-                $includeType = $item->value;
-            } else {
-                unset($relationships->items[$index]);
-
-                continue;
-            }
-            $includeType = $includeType instanceof TemplateType ? $includeType->is : $includeType;
-            if (! $includeType?->isInstanceOf(JsonApiResource::class)) {
-                continue;
-            }
-            /** @var ObjectType $includeType  */
-            $includesNames[] = $includeType->name;
-        }
-
-        return $includesNames;
+        return array_values(array_unique(array_map(
+            fn ($r) => $r->resourceType->name,
+            $reflectionJsonApi->getNestedRelationshipsType($this->config->jsonApi->maxRelationshipDepth()),
+        )));
     }
 
     /**
