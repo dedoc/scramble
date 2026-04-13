@@ -19,4 +19,9 @@ class SampleUserModel extends Model
             'roles' => AsEnumCollection::of(Role::class),
         ];
     }
+
+    public function circles()
+    {
+        return $this->hasMany(SampleCircleModel::class);
+    }
 }

@@ -29,10 +29,13 @@ use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\IndexBuilders\PaginatorsCandidatesBuilder;
 use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\AfterAnonymousResourceCollectionDefinitionCreatedExtension;
+use Dedoc\Scramble\Support\InferExtensions\AfterJsonApiResourceDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterJsonResourceDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\EloquentBuilderExtension;
+use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceCollectionMethodReturnTypeExtension;
+use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
@@ -55,6 +58,10 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonApiAnonymousCollectionTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonApiPaginatedResourceResponseToSchemaExtension;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonApiResourceResponseToSchemaExtension;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonApiResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\LengthAwarePaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\PaginatedResourceResponseTypeToSchema;
@@ -142,6 +149,9 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 ));
 
                 $inferExtensionsClasses = array_merge($inferExtensionsClasses, [
+                    JsonApiResourceMethodReturnTypeExtension::class,
+                    JsonApiResourceCollectionMethodReturnTypeExtension::class,
+                    AfterJsonApiResourceDefinitionCreatedExtension::class,
                     ResponseMethodReturnTypeExtension::class,
                     JsonResourceExtension::class,
                     ResourceResponseMethodReturnTypeExtension::class,
@@ -211,6 +221,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ArrayableToSchema::class,
                     EnumToSchema::class,
                     JsonResourceTypeToSchema::class,
+                    JsonApiResourceTypeToSchema::class,
                     CollectionToSchema::class,
                     EloquentCollectionToSchema::class,
                     ResourceCollectionTypeToSchema::class,
@@ -222,6 +233,9 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     StreamedResponseToSchema::class,
                     ResourceResponseTypeToSchema::class,
                     PaginatedResourceResponseTypeToSchema::class,
+                    JsonApiAnonymousCollectionTypeToSchema::class,
+                    JsonApiResourceResponseToSchemaExtension::class,
+                    JsonApiPaginatedResourceResponseToSchemaExtension::class,
                     VoidTypeToSchema::class,
                 ], $typesToSchemaExtensions),
                 exceptionToResponseExtensionsClasses: $parameters['exceptionToResponseExtensions'] ?? array_merge([

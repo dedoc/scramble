@@ -4,12 +4,14 @@ namespace Dedoc\Scramble;
 
 use Closure;
 use Dedoc\Scramble\Configuration\DocumentTransformers;
+use Dedoc\Scramble\Configuration\JsonApiConfig;
 use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Dedoc\Scramble\Configuration\RuleTransformers;
 use Dedoc\Scramble\Configuration\ServerVariables;
 use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
 use Dedoc\Scramble\Contracts\RuleTransformer;
+use Dedoc\Scramble\Enums\JsonApiArraySerialization;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
@@ -44,6 +46,7 @@ class GeneratorConfig
         public readonly RuleTransformers $ruleTransformers = new RuleTransformers,
         public readonly ServerVariables $serverVariables = new ServerVariables,
         ?Closure $operationMethodsResolver = null,
+        public JsonApiConfig $jsonApi = new JsonApiConfig,
     ) {
         $this->operationMethodsResolver = $operationMethodsResolver ?: fn (Route $r) => $r->methods()[0];
     }
@@ -226,6 +229,18 @@ class GeneratorConfig
     public function resolveOperationMethodsUsing(Closure $resolver): static
     {
         $this->operationMethodsResolver = $resolver;
+
+        return $this;
+    }
+
+    public function jsonApi(
+        JsonApiArraySerialization $arraySerialization = JsonApiArraySerialization::Comma,
+        ?int $maxRelationshipDepth = null,
+    ): static {
+        $this->jsonApi = new JsonApiConfig(
+            arraySerialization: $arraySerialization,
+            maxRelationshipDepth: $maxRelationshipDepth,
+        );
 
         return $this;
     }

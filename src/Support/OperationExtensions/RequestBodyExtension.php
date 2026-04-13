@@ -3,8 +3,10 @@
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
+use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\ContainerUtils;
+use Dedoc\Scramble\Support\Factories\JsonApiQueryParameterFactory;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
@@ -256,8 +258,12 @@ class RequestBodyExtension extends OperationExtension
         foreach ($this->config->parametersExtractors->all() as $extractorClass) {
             /** @var ParameterExtractor $extractor */
             $extractor = ContainerUtils::makeContextable($extractorClass, [
+                GeneratorConfig::class => $this->config,
                 TypeTransformer::class => $this->openApiTransformer,
                 Operation::class => $operation,
+                JsonApiQueryParameterFactory::class => new JsonApiQueryParameterFactory(
+                    arraySerialization: $this->config->jsonApi->arraySerialization,
+                ),
             ]);
 
             $result = $extractor->handle($routeInfo, $result);
