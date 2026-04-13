@@ -94,7 +94,7 @@ class ReflectionJsonApiResource
             }
             $includedType = null;
 
-            if ($item->value->isInstanceOf(JsonApiAnonymousResourceCollection::class)) {
+            if ($item->value instanceof ObjectType && $item->value->isInstanceOf(JsonApiAnonymousResourceCollection::class)) {
                 $includedType = ResourceCollectionTypeManager::make($item->value)->getCollectedType();
             } elseif ($item->value->isInstanceOf(JsonApiResource::class)) {
                 $includedType = $item->value;
@@ -178,8 +178,9 @@ class ReflectionJsonApiResource
             return new LiteralStringType($value);
         }
 
-        if ($modelType = $this->getModelTypeFromInstanceOrDeclaration($type)) { // @todo use $resource here instead!!!
-            $morphAlias = Relation::getMorphAlias($modelType->name);
+        if ($modelType = $this->getModelTypeFromInstanceOrDeclaration($type)) {
+            /** @var string $morphAlias */
+            $morphAlias = Relation::getMorphAlias($modelType->name); // @phpstan-ignore argument.type
             $base = $morphAlias !== $modelType->name ? $morphAlias : class_basename($modelType->name);
             $value = Str::of($base)->snake()->pluralStudly()->toString();
 
@@ -193,7 +194,8 @@ class ReflectionJsonApiResource
     {
         $instanceModel = $type->templateTypes[0] ?? new InferType\UnknownType;
         if ($instanceModel->isInstanceOf(Model::class)) {
-            return $instanceModel instanceof InferType\TemplateType ? $instanceModel->is : $instanceModel;
+            $instanceModel = $instanceModel instanceof InferType\TemplateType ? $instanceModel->is : $instanceModel;
+            return $instanceModel instanceof InferType\ObjectType ? $instanceModel : null;
         }
 
         return $this->getModelType();

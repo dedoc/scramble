@@ -2,14 +2,12 @@
 
 namespace Dedoc\Scramble\Support\Generator\Types;
 
-use Dedoc\Scramble\Support\Generator\Schema;
-
 class ArrayType extends Type
 {
-    /** @var Type|Schema */
+    /** @var Type */
     public $items;
 
-    /** @var Type|Schema */
+    /** @var Type[] */
     public $prefixItems = [];
 
     public $minItems = null;

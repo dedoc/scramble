@@ -2674,12 +2674,6 @@ parameters:
 			path: src/Support/Generator/ServerVariable.php
 
 		-
-			message: '#^Call to an undefined method Dedoc\\Scramble\\Support\\Generator\\Schema\|Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:getAttribute\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/Support/Generator/Types/ArrayType.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\ArrayType\:\:setAdditionalItems\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -2746,18 +2740,6 @@ parameters:
 			path: src/Support/Generator/Types/ArrayType.php
 
 		-
-			message: '#^Parameter \#1 \$value of function count expects array\|Countable, Dedoc\\Scramble\\Support\\Generator\\Schema\|Dedoc\\Scramble\\Support\\Generator\\Types\\Type given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/Generator/Types/ArrayType.php
-
-		-
-			message: '#^Parameter \#2 \$array of function array_map expects array, Dedoc\\Scramble\\Support\\Generator\\Schema\|Dedoc\\Scramble\\Support\\Generator\\Types\\Type given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/Generator/Types/ArrayType.php
-
-		-
 			message: '#^Property Dedoc\\Scramble\\Support\\Generator\\Types\\ArrayType\:\:\$additionalItems has no type specified\.$#'
 			identifier: missingType.property
 			count: 1
@@ -2772,18 +2754,6 @@ parameters:
 		-
 			message: '#^Property Dedoc\\Scramble\\Support\\Generator\\Types\\ArrayType\:\:\$minItems has no type specified\.$#'
 			identifier: missingType.property
-			count: 1
-			path: src/Support/Generator/Types/ArrayType.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Support\\Generator\\Types\\ArrayType\:\:\$prefixItems \(Dedoc\\Scramble\\Support\\Generator\\Schema\|Dedoc\\Scramble\\Support\\Generator\\Types\\Type\) does not accept default value of type array\.$#'
-			identifier: property.defaultValue
-			count: 1
-			path: src/Support/Generator/Types/ArrayType.php
-
-		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
 			count: 1
 			path: src/Support/Generator/Types/ArrayType.php
 

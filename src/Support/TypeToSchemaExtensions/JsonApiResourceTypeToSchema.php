@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
+use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiType;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
@@ -32,7 +33,7 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
     /**
      * @param  ObjectType  $type
      */
-    public function toSchema(Type $type)
+    public function toSchema(Type $type): OpenApiType\ObjectType
     {
         $type = app(JsonApiResourceTypeManager::class)->normalizeType($type);
 
@@ -94,15 +95,17 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
             $item = clone $item;
             $item->isOptional = true;
 
-            if ($item->value->isInstanceOf(AnonymousResourceCollection::class)) {
+            if (
+                $item->value instanceof ObjectType
+                && $item->value->isInstanceOf(AnonymousResourceCollection::class)
+                && (($collectedType = ResourceCollectionTypeManager::make($item->value)->getCollectedType()) instanceof ObjectType)
+            ) {
                 $item->value = new KeyedArrayType([
                     new ArrayItemType_('data', new ArrayType(
-                        $this->buildRelationshipIdentifierType($this->normalizeType(
-                            ResourceCollectionTypeManager::make($item->value)->getCollectedType()
-                        ))
+                        $this->buildRelationshipIdentifierType($this->normalizeType($collectedType))
                     )),
                 ]);
-            } elseif ($item->value->isInstanceOf(JsonApiResource::class)) {
+            } elseif ($item->value instanceof ObjectType && $item->value->isInstanceOf(JsonApiResource::class)) {
                 $item->value = new KeyedArrayType([
                     new ArrayItemType_(
                         'data',
@@ -175,7 +178,7 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
             );
     }
 
-    public function reference(ObjectType $type)
+    public function reference(ObjectType $type): ?Reference
     {
         return ClassBasedReference::create('schemas', $type->name, $this->components);
     }

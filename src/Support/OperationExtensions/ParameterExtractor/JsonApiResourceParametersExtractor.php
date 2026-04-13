@@ -112,7 +112,7 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
     /**
      * @todo Union
      */
-    private function getResourceType(Type $type): ?ObjectType
+    private function getResourceType(Type $type): ?Generic
     {
         if ($type instanceof TemplateType) {
             $type = $type->is;
@@ -161,7 +161,7 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
     }
 
     /**
-     * @return string[]
+     * @return list<string>
      */
     private function getAvailableIncludeResourcesNames(ReflectionJsonApiResource $reflectionJsonApi): array
     {
@@ -171,7 +171,7 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
 
         $includesNames = [];
         foreach ($relationships->items as $index => $item) {
-            if ($item->value->isInstanceOf(\Illuminate\Http\Resources\Json\AnonymousResourceCollection::class)) {
+            if ($item->value instanceof ObjectType && $item->value->isInstanceOf(\Illuminate\Http\Resources\Json\AnonymousResourceCollection::class)) {
                 $includeType = ResourceCollectionTypeManager::make($item->value)->getCollectedType();
             } elseif ($item->value->isInstanceOf(JsonApiResource::class)) {
                 $includeType = $item->value;
@@ -181,9 +181,10 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
                 continue;
             }
             $includeType = $includeType instanceof TemplateType ? $includeType->is : $includeType;
-            if (! $includeType->isInstanceOf(JsonApiResource::class)) {
+            if (! $includeType?->isInstanceOf(JsonApiResource::class)) {
                 continue;
             }
+            /** @var ObjectType $includeType  */
             $includesNames[] = $includeType->name;
         }
 

@@ -14,7 +14,10 @@ class JsonApiQueryParameterFactory
         private JsonApiArraySerialization $arraySerialization,
     ) {}
 
-    public function createEnumArray(string $name, array $values)
+    /**
+     * @param (string|int)[] $values
+     */
+    public function createEnumArray(string $name, array $values): Parameter
     {
         if ($this->arraySerialization === JsonApiArraySerialization::String) {
             $possibleOptionsDescriptions = array_map(fn ($value) => '`'.$value.'`', $values);

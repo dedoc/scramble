@@ -16,7 +16,7 @@ class JsonApiConfig
     public function maxRelationshipDepth(): int
     {
         if ($this->maxRelationshipDepth === null) {
-            return JsonApiResource::$maxRelationshipDepth;
+            return JsonApiResource::$maxRelationshipDepth; // @phpstan-ignore return.type
         }
 
         return max(0, min($this->maxRelationshipDepth, JsonApiResource::$maxRelationshipDepth));

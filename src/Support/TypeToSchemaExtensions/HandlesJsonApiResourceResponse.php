@@ -72,7 +72,7 @@ trait HandlesJsonApiResourceResponse
 
         $included = [];
         foreach ($relationships->items as $item) {
-            if ($item->value->isInstanceOf(JsonApiAnonymousResourceCollection::class)) {
+            if ($item->value instanceof ObjectType && $item->value->isInstanceOf(JsonApiAnonymousResourceCollection::class)) {
                 $included[] = ResourceCollectionTypeManager::make($item->value)->getCollectedType();
             } elseif ($item->value->isInstanceOf(JsonApiResource::class)) {
                 $included[] = $item->value;

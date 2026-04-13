@@ -18,6 +18,9 @@ trait ManagesProperties
         return $type->templateTypes[$indexOfPropertyTemplateTypeInGeneric] ?? null;
     }
 
+    /**
+     * @param Type[] $propertiesTypes
+     */
     public function setPropertiesTypes(Generic $type, array $propertiesTypes): Generic
     {
         foreach ($propertiesTypes as $propertyName => $propertyType) {
