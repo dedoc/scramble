@@ -6,6 +6,7 @@ use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
 use Dedoc\Scramble\Support\Type as InferType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection as JsonApiAnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
@@ -25,13 +26,30 @@ trait HandlesJsonApiResourceResponse
             return null;
         }
 
-        if (! $includedResources = $this->getIncludedResources($collectedResource)) {
+        $items = [];
+
+        if ($includedResources = $this->getIncludedResources($collectedResource)) {
+            $items[] = new InferType\ArrayItemType_('included', $includedResources, isOptional: true);
+        }
+
+        if ($jsonApiObject = $this->getJsonApiObject()) {
+            $items[] = new InferType\ArrayItemType_('jsonapi', $jsonApiObject);
+        }
+
+        return $items ? new InferType\KeyedArrayType($items) : null;
+    }
+
+    protected function getJsonApiObject(): ?InferType\KeyedArrayType
+    {
+        $information = JsonApiResource::$jsonApiInformation;
+
+        if (! $information) {
             return null;
         }
 
-        return new InferType\KeyedArrayType([
-            new InferType\ArrayItemType_('included', $includedResources, isOptional: true),
-        ]);
+        $type = TypeHelper::createTypeFromValue($information);
+
+        return $type instanceof InferType\KeyedArrayType ? $type : null;
     }
 
     protected function isUserDefinedWithMethod(ObjectType $resource): bool

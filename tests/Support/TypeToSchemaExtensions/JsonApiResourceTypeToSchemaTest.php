@@ -69,6 +69,35 @@ class JsonApiResourceTypeToSchemaTest_Resource extends JsonApiResource
     ];
 }
 
+test('to response with jsonapi object when jsonApiInformation is set', function () {
+    JsonApiResource::configure(
+        version: '1.1',
+    );
+
+    $type = getStatementType(JsonApiResourceTypeToSchemaTest_ResourceWithJsonApiInfo::class.'::make()');
+
+    $response = $this->transformer->toResponse($type);
+
+    expect($response->toArray()['content']['application/vnd.api+json']['schema']['properties']['jsonapi'])->toBe([
+        'type' => 'object',
+        'properties' => [
+            'version' => [
+                'type' => 'string',
+                'const' => '1.1',
+            ],
+        ],
+        'required' => ['version'],
+    ]);
+})->after(fn () => JsonApiResourceTypeToSchemaTest_ResourceWithJsonApiInfo::$jsonApiInformation = []);
+
+test('to response without jsonapi object when jsonApiInformation is empty', function () {
+    $type = getStatementType(JsonApiResourceTypeToSchemaTest_Resource::class.'::make()');
+
+    $response = $this->transformer->toResponse($type);
+
+    expect($response->toArray()['content']['application/vnd.api+json']['schema']['properties'])->not->toHaveKey('jsonapi');
+});
+
 test('to response with deep includes', function () {
     $type = getStatementType(JsonApiResourceTypeToSchemaTest_PostResource::class.'::make()');
 
@@ -121,5 +150,14 @@ class JsonApiResourceTypeToSchemaTest_CircleResource extends JsonApiResource
 {
     public $attributes = [
         'some_int',
+    ];
+}
+/**
+ * @property-read SampleUserModel $resource
+ */
+class JsonApiResourceTypeToSchemaTest_ResourceWithJsonApiInfo extends JsonApiResource
+{
+    public $attributes = [
+        'name',
     ];
 }
