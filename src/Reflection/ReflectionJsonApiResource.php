@@ -96,7 +96,7 @@ class ReflectionJsonApiResource
      *
      * @return JsonApiRelationship[]
      */
-    public function getNestedRelationshipsType(int $maxRelationshipDepth, string $prefix = ''): array
+    public function getNestedRelationshipItems(int $maxRelationshipDepth, string $prefix = ''): array
     {
         if (! $maxRelationshipDepth) {
             return [];
@@ -110,7 +110,7 @@ class ReflectionJsonApiResource
 
             $result = array_merge(
                 $result,
-                ReflectionJsonApiResource::createForClass($relationship->resourceType->name)->getNestedRelationshipsType(
+                ReflectionJsonApiResource::createForClass($relationship->resourceType->name)->getNestedRelationshipItems(
                     $maxRelationshipDepth - 1,
                     $fullName,
                 ),

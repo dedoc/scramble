@@ -64,7 +64,7 @@ trait HandlesJsonApiResourceResponse
 
     protected function getIncludedResources(ObjectType $resource): ?InferType\ArrayType
     {
-        $relationships = ReflectionJsonApiResource::createForClass($resource->name)->getNestedRelationshipsType(
+        $relationships = ReflectionJsonApiResource::createForClass($resource->name)->getNestedRelationshipItems(
             $this->openApiContext->config->jsonApi->maxRelationshipDepth(),
         );
 

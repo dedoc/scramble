@@ -146,7 +146,7 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
     {
         return array_map(
             fn ($r) => $r->name,
-            $reflectionJsonApi->getNestedRelationshipsType($this->config->jsonApi->maxRelationshipDepth()),
+            $reflectionJsonApi->getNestedRelationshipItems($this->config->jsonApi->maxRelationshipDepth()),
         );
     }
 
@@ -157,7 +157,7 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
     {
         return array_values(array_unique(array_map(
             fn ($r) => $r->resourceType->name,
-            $reflectionJsonApi->getNestedRelationshipsType($this->config->jsonApi->maxRelationshipDepth()),
+            $reflectionJsonApi->getNestedRelationshipItems($this->config->jsonApi->maxRelationshipDepth()),
         )));
     }
 
