@@ -235,9 +235,11 @@ class GeneratorConfig
 
     public function jsonApi(
         JsonApiArraySerialization $arraySerialization = JsonApiArraySerialization::Comma,
+        ?int $maxRelationshipDepth = null,
     ): static {
         $this->jsonApi = new JsonApiConfig(
             arraySerialization: $arraySerialization,
+            maxRelationshipDepth: $maxRelationshipDepth,
         );
 
         return $this;

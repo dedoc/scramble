@@ -17,6 +17,7 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeManagers\JsonApiResourceTypeManager;
+use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
@@ -97,7 +98,7 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
                 $item->value = new KeyedArrayType([
                     new ArrayItemType_('data', new ArrayType(
                         $this->buildRelationshipIdentifierType($this->normalizeType(
-                            $item->value->templateTypes[2 /* TResource */] // @todo possible error here
+                            ResourceCollectionTypeManager::make($item->value)->getCollectedType()
                         ))
                     )),
                 ]);

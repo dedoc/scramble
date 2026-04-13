@@ -7,7 +7,10 @@ use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Tests\Files\SampleCircleModel;
+use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 beforeEach(function () {
@@ -64,5 +67,60 @@ class JsonApiResourceTypeToSchemaTest_Resource extends JsonApiResource
         'name',
         'email',
         'created_at',
+    ];
+}
+
+test('to response with deep includes', function () {
+    $type = getStatementType(JsonApiResourceTypeToSchemaTest_PostResource::class.'::make()');
+
+    $response = $this->transformer->toResponse($type);
+
+    expect($response->toArray()['content']['application/vnd.api+json']['schema']['properties']['included'])->toBe([
+        'type' => 'array',
+        'items' => [
+            'anyOf' => [
+                [
+                    '$ref' => '#/components/schemas/JsonApiResourceTypeToSchemaTest_UserResource',
+                ],
+                [
+                    '$ref' => '#/components/schemas/JsonApiResourceTypeToSchemaTest_CircleResource',
+                ],
+            ],
+        ],
+    ]);
+});
+/**
+ * @property-read SamplePostModel $resource
+ */
+class JsonApiResourceTypeToSchemaTest_PostResource extends JsonApiResource
+{
+    public $attributes = [
+        'created_at',
+    ];
+
+    public $relationships = [
+        'user' => JsonApiResourceTypeToSchemaTest_UserResource::class,
+    ];
+}
+/**
+ * @property-read SampleUserModel $resource
+ */
+class JsonApiResourceTypeToSchemaTest_UserResource extends JsonApiResource
+{
+    public $attributes = [
+        'name',
+    ];
+
+    public $relationships = [
+        'circles' => JsonApiResourceTypeToSchemaTest_CircleResource::class,
+    ];
+}
+/**
+ * @property-read SampleCircleModel $resource
+ */
+class JsonApiResourceTypeToSchemaTest_CircleResource extends JsonApiResource
+{
+    public $attributes = [
+        'some_int',
     ];
 }

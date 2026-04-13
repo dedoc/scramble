@@ -11,10 +11,7 @@ use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection as JsonApiAnon
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 /**
- * @see JsonApiAnonymousResourceCollection
- * @see JsonApiResource
- *
- * @mixin JsonApiResourceResponseToSchemaExtension|JsonApiAnonymousCollectionTypeToSchema
+ * @mixin JsonApiResourceResponseToSchemaExtension|JsonApiPaginatedResourceResponseToSchemaExtension
  */
 trait HandlesJsonApiResourceResponse
 {
@@ -49,7 +46,9 @@ trait HandlesJsonApiResourceResponse
 
     protected function getIncludedResources(ObjectType $resource): ?InferType\ArrayType
     {
-        if (! $relationships = ReflectionJsonApiResource::createForClass($resource->name)->getRelationshipsType()) {
+        if (! $relationships = ReflectionJsonApiResource::createForClass($resource->name)->getNestedRelationshipsType(
+            $this->openApiContext->config->jsonApi->maxRelationshipDepth(),
+        )) {
             return null;
         }
 

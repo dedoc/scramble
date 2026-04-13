@@ -16,6 +16,7 @@ class CreateCirclesTable extends Migration
         Schema::create('circles', function (Blueprint $table) {
             $table->uuid('id');
             $table->integer('some_int');
+            $table->integer('user_id');
             $table->string('name');
             $table->timestamps();
         });

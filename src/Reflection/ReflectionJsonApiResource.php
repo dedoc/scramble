@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\FlattensMergeValues;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -71,6 +72,65 @@ class ReflectionJsonApiResource
         }
 
         return $this->normalizeRelationshipsType($toRelationshipsReturnType ?: $propertiesRelationshipsType);
+    }
+
+    public function getNestedRelationshipsType(int $maxRelationshipDepth, string $prefix = ''): ?KeyedArrayType
+    {
+        if (! $maxRelationshipDepth) {
+            return null;
+        }
+
+        $relationships = $this->getRelationshipsType();
+        if (! $relationships) {
+            return null;
+        }
+
+        $originalItems = array_map(fn ($item) => clone $item, $relationships->items);
+        $newItems = [];
+        foreach ($originalItems as $item) {
+            if (! is_string($item->key)) {
+                // @todo report
+                continue;
+            }
+            $includedType = null;
+
+            if ($item->value->isInstanceOf(JsonApiAnonymousResourceCollection::class)) {
+                $includedType = ResourceCollectionTypeManager::make($item->value)->getCollectedType();
+            } elseif ($item->value->isInstanceOf(JsonApiResource::class)) {
+                $includedType = $item->value;
+            }
+
+            if ($includedType instanceof InferType\TemplateType) {
+                $includedType = $includedType->is;
+            }
+
+            if (! $includedType instanceof ObjectType || ! $includedType->isInstanceOf(JsonApiResource::class)) {
+                // @todo report
+                continue;
+            }
+
+            $includedRelationships = ReflectionJsonApiResource::createForClass($includedType->name)->getNestedRelationshipsType(
+                $maxRelationshipDepth - 1,
+                implode('.', array_filter([$prefix, $item->key])),
+            );
+            if (! $includedRelationships) {
+                continue;
+            }
+
+            $newItems = array_merge($newItems, $includedRelationships->items);
+        }
+
+        foreach ($originalItems as $item) {
+            if (! is_string($item->key)) {
+                continue;
+            }
+            $item->key = implode('.', array_filter([$prefix, $item->key]));
+        }
+
+        $result = clone $relationships;
+        $result->items = array_merge($originalItems, $newItems);
+
+        return $result;
     }
 
     public function getLinksType(): ?KeyedArrayType
