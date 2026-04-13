@@ -18,7 +18,6 @@ use Dedoc\Scramble\Support\TypeManagers\JsonApiResourceTypeManager;
 use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
-
 class JsonApiResourceParametersExtractor implements ParameterExtractor
 {
     public function __construct(

@@ -19,7 +19,7 @@ trait ManagesProperties
     }
 
     /**
-     * @param Type[] $propertiesTypes
+     * @param  Type[]  $propertiesTypes
      */
     public function setPropertiesTypes(Generic $type, array $propertiesTypes): Generic
     {

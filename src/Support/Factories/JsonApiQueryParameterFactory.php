@@ -15,7 +15,7 @@ class JsonApiQueryParameterFactory
     ) {}
 
     /**
-     * @param (string|int)[] $values
+     * @param  (string|int)[]  $values
      */
     public function createEnumArray(string $name, array $values): Parameter
     {
