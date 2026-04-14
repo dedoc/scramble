@@ -167,10 +167,12 @@ it('toResource resolves resource type by guessing class name', function () {
             )
         );
 
+    ModelExtensionTest_GuessingModel::all()->toResourceCollection();
+
     expect($type->toString())->toBe(ModelExtensionTest_AttributeResource::class.'<'.ModelExtensionTest_GuessingModel::class.'>');
 })->skip(fn () => ! method_exists(Model::class, 'toResource'));
 
-class ModelExtensionTest_GuessingModel extends Model
+class ModelExtensionTest_GuessingModel extends SampleUserModel
 {
     public static function guessResourceName(): array
     {

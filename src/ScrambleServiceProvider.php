@@ -38,6 +38,7 @@ use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceCollectionMethodReturn
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResponseMethodReturnTypeExtension;
+use Dedoc\Scramble\Support\InferExtensions\CollectionExtension;
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\InferExtensions\PaginateMethodsReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
@@ -157,6 +158,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ResourceResponseMethodReturnTypeExtension::class,
                     JsonResponseMethodReturnTypeExtension::class,
                     ModelExtension::class,
+                    CollectionExtension::class,
                     EloquentBuilderExtension::class,
                     RequestExtension::class,
                     AfterJsonResourceDefinitionCreatedExtension::class,
