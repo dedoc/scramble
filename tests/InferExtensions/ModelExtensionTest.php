@@ -9,7 +9,9 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
+use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
@@ -134,3 +136,58 @@ it('supports getOriginal', function () {
 
     expect($originalType->toString())->toBe('int');
 });
+
+it('toResource resolves resource type from UseResource attribute', function () {
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType(
+                new ObjectType(ModelExtensionTest_AttributeModel::class),
+                'toResource',
+                []
+            )
+        );
+
+    expect($type->toString())->toBe(ModelExtensionTest_AttributeResource::class.'<'.ModelExtensionTest_AttributeModel::class.'>');
+})->skip(fn () => ! class_exists(UseResource::class));
+
+#[UseResource(ModelExtensionTest_AttributeResource::class)]
+class ModelExtensionTest_AttributeModel extends Model {}
+
+class ModelExtensionTest_AttributeResource extends \Illuminate\Http\Resources\Json\JsonResource {}
+
+it('toResource resolves resource type by guessing class name', function () {
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType(
+                new ObjectType(ModelExtensionTest_GuessingModel::class),
+                'toResource',
+                []
+            )
+        );
+
+    expect($type->toString())->toBe(ModelExtensionTest_AttributeResource::class.'<'.ModelExtensionTest_GuessingModel::class.'>');
+})->skip(fn () => ! method_exists(Model::class, 'toResource'));
+
+class ModelExtensionTest_GuessingModel extends Model
+{
+    public static function guessResourceName(): array
+    {
+        return [ModelExtensionTest_AttributeResource::class];
+    }
+}
+
+it('toResource returns instance of explicitly passed resource class', function () {
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType(
+                new ObjectType(SampleUserModel::class),
+                'toResource',
+                [new LiteralStringType(ModelExtensionTest_AttributeResource::class)]
+            )
+        );
+
+    expect($type->toString())->toBe(ModelExtensionTest_AttributeResource::class.'<'.SampleUserModel::class.'>');
+})->skip(fn () => ! method_exists(Model::class, 'toResource'));
