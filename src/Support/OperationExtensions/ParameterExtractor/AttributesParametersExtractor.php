@@ -17,6 +17,7 @@ use Dedoc\Scramble\Support\RouteInfo;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use ReflectionAttribute;
 use ReflectionClass;
+
 use function DeepCopy\deep_copy;
 
 class AttributesParametersExtractor implements ParameterExtractor
