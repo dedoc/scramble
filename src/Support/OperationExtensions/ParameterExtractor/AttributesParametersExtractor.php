@@ -18,6 +18,8 @@ use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use ReflectionAttribute;
 use ReflectionClass;
 
+use function DeepCopy\deep_copy;
+
 class AttributesParametersExtractor implements ParameterExtractor
 {
     public function __construct(
@@ -36,8 +38,17 @@ class AttributesParametersExtractor implements ParameterExtractor
             ->all();
 
         $extractedAttributes = collect($parameters)->map(fn ($p) => "$p->name.$p->in")->all();
-
         foreach ($parameterExtractionResults as $automaticallyExtractedParameters) {
+            $this->addParametersFromClassAttributes($automaticallyExtractedParameters);
+
+            // Named results map to a reusable component schema. Stripping fields from them would corrupt
+            // that shared schema for every other operation that references the same FormRequest.
+            // Action-level attributes are appended as a separate schemaless result instead,
+            // so RequestBodyExtension composes them as an allOf overlay on top of the intact $ref.
+            if ($automaticallyExtractedParameters->schemaName) {
+                continue;
+            }
+
             $automaticallyExtractedParameters->parameters = collect($automaticallyExtractedParameters->parameters)
                 ->filter(fn (Parameter $p) => ! in_array("$p->name.$p->in", $extractedAttributes))
                 ->values()
@@ -45,6 +56,30 @@ class AttributesParametersExtractor implements ParameterExtractor
         }
 
         return [...$parameterExtractionResults, new ParametersExtractionResult($parameters)];
+    }
+
+    private function addParametersFromClassAttributes(ParametersExtractionResult $parameterExtractionResult): void
+    {
+        if (! $parameterExtractionResult->sourceClass || ! class_exists($parameterExtractionResult->sourceClass)) {
+            return;
+        }
+
+        $reflection = new ReflectionClass($parameterExtractionResult->sourceClass);
+
+        $attrs = collect($reflection->getAttributes(ParameterAttribute::class, ReflectionAttribute::IS_INSTANCEOF))
+            ->values()
+            ->map(fn (ReflectionAttribute $ra) => $this->createParameter([$parameterExtractionResult], $ra->newInstance(), $ra->getArguments()))
+            ->keyBy(fn (Parameter $p) => "$p->name.$p->in")
+            ->all();
+
+        if (empty($attrs)) {
+            return;
+        }
+
+        $parameterExtractionResult->parameters = collect($parameterExtractionResult->parameters)
+            ->map(fn (Parameter $p) => $attrs["$p->name.$p->in"] ?? $p)
+            ->values()
+            ->all();
     }
 
     /**
@@ -62,7 +97,7 @@ class AttributesParametersExtractor implements ParameterExtractor
             return $attributeParameter;
         }
 
-        $parameter = clone $inferredParameter;
+        $parameter = deep_copy($inferredParameter);
 
         $namedAttributes = $this->createNamedAttributes($attribute::class, $attributeArguments);
 
