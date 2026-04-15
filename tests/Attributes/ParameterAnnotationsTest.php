@@ -8,6 +8,8 @@ use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\Parameter;
 use Dedoc\Scramble\Attributes\PathParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
+use Dedoc\Scramble\Attributes\SchemaName;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
@@ -213,3 +215,93 @@ it('supports subclass annotations on closure routes', function () {
             ],
         ]);
 });
+
+it('reads BodyParameter attribute from FormRequest class', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->post('api/test', BodyParameterOnFormRequestController_ParameterAnnotationsTest::class));
+
+    expect($openApi['components']['schemas']['BodyParameterOnFormRequestFormRequest_ParameterAnnotationsTest']['properties']['name'])
+        ->toBe([
+            'type' => 'string',
+            'description' => 'The company name',
+        ]);
+});
+#[BodyParameter('name', 'The company name')]
+class BodyParameterOnFormRequestFormRequest_ParameterAnnotationsTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return ['name' => ['required', 'string']];
+    }
+}
+class BodyParameterOnFormRequestController_ParameterAnnotationsTest
+{
+    public function __invoke(BodyParameterOnFormRequestFormRequest_ParameterAnnotationsTest $request) {}
+}
+
+it('reads QueryParameter attribute from FormRequest class for GET requests', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->get('api/test', QueryParameterOnFormRequestController_ParameterAnnotationsTest::class));
+
+    $parameterNames = collect($openApi['paths']['/test']['get']['parameters'])->pluck('name')->all();
+
+    expect($parameterNames)->toContain('search');
+});
+#[QueryParameter('search', description: 'Search term')]
+class QueryParameterOnFormRequestFormRequest_ParameterAnnotationsTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return ['search' => ['nullable', 'string']];
+    }
+}
+class QueryParameterOnFormRequestController_ParameterAnnotationsTest
+{
+    public function __invoke(QueryParameterOnFormRequestFormRequest_ParameterAnnotationsTest $request) {}
+}
+
+it('uses SchemaName attribute on FormRequest as component schema name', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->post('api/test', SchemaNameOnFormRequestController_ParameterAnnotationsTest::class));
+
+    expect($openApi)->toHaveKey('components.schemas.MyCompanyRequest')
+        ->and($openApi['paths']['/test']['post']['requestBody']['content']['application/json']['schema'])
+        ->toBe(['$ref' => '#/components/schemas/MyCompanyRequest']);
+});
+#[SchemaName('MyCompanyRequest')]
+class SchemaNameOnFormRequestFormRequest_ParameterAnnotationsTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return ['name' => ['required', 'string']];
+    }
+}
+class SchemaNameOnFormRequestController_ParameterAnnotationsTest
+{
+    public function __invoke(SchemaNameOnFormRequestFormRequest_ParameterAnnotationsTest $request) {}
+}
+
+it('controller-level Parameter attribute overlays FormRequest schema without stripping its fields', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->post('api/test', OverrideFormRequestParamController_ParameterAnnotationsTest::class));
+
+    $schema = $openApi['paths']['/test']['post']['requestBody']['content']['application/json']['schema'];
+
+    expect($formRequestProperties = $openApi['components']['schemas']['OverrideFormRequestParamFormRequest_ParameterAnnotationsTest']['properties'])
+        ->toHaveKeys(['name', 'email'])
+        ->and($formRequestProperties['name']['description'])
+        ->toBe('From FormRequest');
+
+    expect($schema['allOf'])->toHaveCount(2)
+        ->and($schema['allOf'][0])->toBe(['$ref' => '#/components/schemas/OverrideFormRequestParamFormRequest_ParameterAnnotationsTest'])
+        ->and($schema['allOf'][1]['properties']['name']['description'])->toBe('From Controller');
+});
+#[BodyParameter('name', 'From FormRequest')]
+class OverrideFormRequestParamFormRequest_ParameterAnnotationsTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return ['name' => ['required', 'string'], 'email' => ['required', 'email']];
+    }
+}
+class OverrideFormRequestParamController_ParameterAnnotationsTest
+{
+    #[BodyParameter('name', 'From Controller')]
+    public function __invoke(OverrideFormRequestParamFormRequest_ParameterAnnotationsTest $request) {}
+}
