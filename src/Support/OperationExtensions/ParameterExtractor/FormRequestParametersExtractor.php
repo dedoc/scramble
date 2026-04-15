@@ -23,8 +23,8 @@ use ReflectionParameter;
 
 class FormRequestParametersExtractor implements ParameterExtractor
 {
-    use GeneratesParametersFromRules;
     use CreatesParametersFromAttributes;
+    use GeneratesParametersFromRules;
 
     /**
      * @var class-string<mixed>[]
