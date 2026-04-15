@@ -289,7 +289,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             /** @var array<string> $candidates */
             $candidates = $event->getInstance()->name::guessResourceName();
             foreach ($candidates as $candidate) {
-                if (is_string($candidate) && class_exists($candidate)) {
+                if (is_string($candidate) && class_exists($candidate)) { // @phpstan-ignore function.alreadyNarrowedType
                     return $this->makeResource($candidate, $event->getInstance());
                 }
             }

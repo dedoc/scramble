@@ -4108,18 +4108,6 @@ parameters:
 			path: src/Support/Type/TypeHelper.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:getArg\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/TypeHelper.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:getArgType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/TypeHelper.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:mergeTypes\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1

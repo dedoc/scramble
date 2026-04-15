@@ -80,7 +80,7 @@ class CollectionExtension implements MethodReturnTypeExtension
             }
 
             foreach ($candidates as $candidate) {
-                if (is_string($candidate) && class_exists($candidate)) {
+                if (is_string($candidate) && class_exists($candidate)) { // @phpstan-ignore function.alreadyNarrowedType
                     return $this->makeResourceCollection($candidate, $event->getInstance());
                 }
             }
