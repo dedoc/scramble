@@ -988,3 +988,30 @@ class CreateUserUnpack_RequestBodyExtensionTest extends FormRequest
         return ['numeric'];
     }
 }
+
+it('does not crash when first-class callable syntax is used on a request method', function () {
+    $document = generateForRoute(function () {
+        return RouteFacade::put('test/{model}', [FirstClassCallable_RequestBodyExtensionTest_Controller::class, 'update']);
+    });
+
+    expect($document['paths']['/test/{model}']['put'])
+        ->toHaveKey('requestBody')
+        ->and($document['paths']['/test/{model}']['put']['requestBody']['content']['application/json']['schema'])
+        ->toHaveKey('$ref');
+});
+class FirstClassCallable_RequestBodyExtensionTest_Controller
+{
+    public function update(FirstClassCallable_RequestBodyExtensionTest_Request $request): \Illuminate\Http\Response
+    {
+        array_map($request->input(...), ['foo', 'bar']);
+
+        return response()->noContent();
+    }
+}
+class FirstClassCallable_RequestBodyExtensionTest_Request extends FormRequest
+{
+    public function rules(): array
+    {
+        return ['name' => 'string'];
+    }
+}

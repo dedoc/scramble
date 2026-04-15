@@ -55,7 +55,7 @@ abstract class AbstractNode implements Node
         };
 
         if ($label !== $empty) {
-            $dot .= '[label="'.Str::replace('"', '\"', $label).'"]'; // @phpstan-ignore binaryOp.invalid, argument.type, argument.templateType
+            $dot .= '[label="'.Str::replace('"', '\"', $label).'"]'; // @phpstan-ignore argument.type
         }
 
         return $dot;

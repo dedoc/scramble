@@ -97,14 +97,15 @@ class TypeHelper
     /**
      * @param  (Node\Arg|Node\VariadicPlaceholder)[]  $args
      * @param  array{0: string, 1: int}  $parameterNameIndex
+     * @return ($default is null ? Type|null : Type)
      */
-    public static function getArgType(Scope $scope, array $args, array $parameterNameIndex, ?Type $default = null)
+    public static function getArgType(Scope $scope, array $args, array $parameterNameIndex, ?Type $default = null): ?Type
     {
         $default = $default ?: new UnknownType("Cannot get a type of the arg #{$parameterNameIndex[1]}($parameterNameIndex[0])");
 
         $matchingArg = static::getArg($args, $parameterNameIndex);
 
-        return $matchingArg ? $scope->getType($matchingArg->value) : $default;
+        return $matchingArg instanceof Node\Arg ? $scope->getType($matchingArg->value) : $default;
     }
 
     public static function unpackIfArray($type)
@@ -138,7 +139,7 @@ class TypeHelper
      * @param  (Node\Arg|Node\VariadicPlaceholder)[]  $args
      * @param  array{0: string, 1: int}  $parameterNameIndex
      */
-    private static function getArg(array $args, array $parameterNameIndex)
+    private static function getArg(array $args, array $parameterNameIndex): Node\Arg|Node\VariadicPlaceholder|null
     {
         [$name, $index] = $parameterNameIndex;
 
