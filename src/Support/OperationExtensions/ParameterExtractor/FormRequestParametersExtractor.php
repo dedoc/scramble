@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
+use Dedoc\Scramble\Attributes\Parameter as ParameterAttribute;
+use Dedoc\Scramble\Attributes\SchemaName;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
@@ -14,6 +16,7 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Illuminate\Support\Arr;
 use PhpParser\PrettyPrinter;
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionParameter;
@@ -21,6 +24,7 @@ use ReflectionParameter;
 class FormRequestParametersExtractor implements ParameterExtractor
 {
     use GeneratesParametersFromRules;
+    use CreatesParametersFromAttributes;
 
     /**
      * @var class-string<mixed>[]
@@ -110,25 +114,51 @@ class FormRequestParametersExtractor implements ParameterExtractor
     public function extractFormRequestParameters(string $requestClassName, RouteInfo $routeInfo): ParametersExtractionResult
     {
         $classReflector = Infer\Reflector\ClassReflector::make($requestClassName);
+        $reflection = $classReflector->getReflection();
 
-        $phpDocReflector = SchemaClassDocReflector::createFromDocString($classReflector->getReflection()->getDocComment() ?: '');
+        $phpDocReflector = SchemaClassDocReflector::createFromDocString($reflection->getDocComment() ?: '');
+
+        $schemaNameAttr = ($reflection->getAttributes(SchemaName::class)[0] ?? null)?->newInstance();
 
         $schemaName = ($phpDocReflector->getTagValue('@ignoreSchema')->value ?? null) !== null
             ? null
-            : $phpDocReflector->getSchemaName($requestClassName);
+            : ($schemaNameAttr
+                ? ($schemaNameAttr->input ?? $schemaNameAttr->name)
+                : $phpDocReflector->getSchemaName($requestClassName));
+
+        $inferredParameters = $this->makeParameters(
+            rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->method))->handle(),
+            typeTransformer: $this->openApiTransformer,
+            rulesDocsRetriever: new TypeBasedRulesDocumentationRetriever(
+                $routeInfo->getScope(),
+                new MethodCallReferenceType(new ObjectType($requestClassName), 'rules', []),
+            ),
+            in: in_array(mb_strtolower($routeInfo->method), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
+                ? 'query'
+                : 'body',
+        );
+
+        $classAttributes = $reflection->getAttributes(ParameterAttribute::class, ReflectionAttribute::IS_INSTANCEOF);
+
+        if ($classAttributes) {
+            $inferredResult = new ParametersExtractionResult($inferredParameters);
+
+            $attributeParameters = collect($classAttributes)
+                ->map(fn (ReflectionAttribute $ra) => $this->createParameter([$inferredResult], $ra->newInstance(), $ra->getArguments()))
+                ->all();
+
+            $attributeKeys = collect($attributeParameters)->map(fn ($p) => "$p->name.$p->in")->all();
+
+            $inferredParameters = collect($inferredParameters)
+                ->filter(fn ($p) => ! in_array("$p->name.$p->in", $attributeKeys))
+                ->values()
+                ->all();
+
+            $inferredParameters = [...$inferredParameters, ...$attributeParameters];
+        }
 
         return new ParametersExtractionResult(
-            parameters: $this->makeParameters(
-                rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->method))->handle(),
-                typeTransformer: $this->openApiTransformer,
-                rulesDocsRetriever: new TypeBasedRulesDocumentationRetriever(
-                    $routeInfo->getScope(),
-                    new MethodCallReferenceType(new ObjectType($requestClassName), 'rules', []),
-                ),
-                in: in_array(mb_strtolower($routeInfo->method), RequestBodyExtension::HTTP_METHODS_WITHOUT_REQUEST_BODY)
-                    ? 'query'
-                    : 'body',
-            ),
+            parameters: $inferredParameters,
             schemaName: $schemaName,
             description: $phpDocReflector->getDescription(),
         );
