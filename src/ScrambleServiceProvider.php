@@ -33,6 +33,7 @@ use Dedoc\Scramble\Support\InferExtensions\AfterJsonApiResourceDefinitionCreated
 use Dedoc\Scramble\Support\InferExtensions\AfterJsonResourceDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
+use Dedoc\Scramble\Support\InferExtensions\CollectionExtension;
 use Dedoc\Scramble\Support\InferExtensions\EloquentBuilderExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceCollectionMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceMethodReturnTypeExtension;
@@ -157,6 +158,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ResourceResponseMethodReturnTypeExtension::class,
                     JsonResponseMethodReturnTypeExtension::class,
                     ModelExtension::class,
+                    CollectionExtension::class,
                     EloquentBuilderExtension::class,
                     RequestExtension::class,
                     AfterJsonResourceDefinitionCreatedExtension::class,

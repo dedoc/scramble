@@ -11,12 +11,14 @@ use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\AbstractType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
+use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
 use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
@@ -25,16 +27,19 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use ReflectionClass;
 use Throwable;
 
 class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension, StaticMethodReturnTypeExtension
@@ -239,8 +244,83 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         return match ($event->getName()) {
             'toArray' => $this->getToArrayMethodReturnType($event),
             'getOriginal' => $this->getGetOriginalMethodReturnType($event),
+            'resolveResourceFromAttribute' => $this->getResolveResourceFromAttributeMethodReturnType($event),
+            'guessResource' => $this->getGuessResourceMethodReturnType($event),
+            'toResource' => $this->getToResourceMethodReturnType($event),
             default => $this->maybeProxyMethodCallToBuilder($event),
         };
+    }
+
+    protected function getToResourceMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        $resourceClassArg = $event->getArg('resourceClass', 0);
+
+        if ($resourceClassArg instanceof LiteralString) {
+            return $this->makeResource($resourceClassArg->getValue(), $event->getInstance());
+        }
+
+        return $this->getGuessResourceMethodReturnType($event);
+    }
+
+    protected function makeResource(string $resourceClass, ObjectType $model): ?ObjectType
+    {
+        $resource = ReferenceTypeResolver::getInstance()
+            ->resolve(
+                new GlobalScope,
+                new StaticMethodCallReferenceType($resourceClass, 'make', [$model])
+            );
+
+        if (! $resource instanceof ObjectType) {
+            return null;
+        }
+
+        return $resource;
+    }
+
+    protected function getGuessResourceMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        $resourceClass = $this->resolveResourceFromAttribute($event->getInstance()->name);
+
+        if (is_string($resourceClass) && class_exists($resourceClass)) {
+            return $this->makeResource($resourceClass, $event->getInstance());
+        }
+
+        try {
+            /** @var array<string> $candidates */
+            $candidates = $event->getInstance()->name::guessResourceName();
+            foreach ($candidates as $candidate) {
+                if (is_string($candidate) && class_exists($candidate)) {
+                    return $this->makeResource($candidate, $event->getInstance());
+                }
+            }
+        } catch (\Throwable) {
+        }
+
+        return null;
+    }
+
+    protected function getResolveResourceFromAttributeMethodReturnType(MethodCallEvent $event): Type
+    {
+        $result = $this->resolveResourceFromAttribute($event->getInstance()->name);
+
+        return $result ? new LiteralStringType($result) : new NullType;
+    }
+
+    protected function resolveResourceFromAttribute(string $modelClassName): ?string
+    {
+        if (! class_exists(UseResource::class)) {
+            return null;
+        }
+
+        if (! class_exists($modelClassName)) {
+            return null;
+        }
+
+        $attributes = (new ReflectionClass($modelClassName))->getAttributes(UseResource::class);
+
+        return $attributes !== []
+            ? $attributes[0]->newInstance()->class
+            : null;
     }
 
     public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
