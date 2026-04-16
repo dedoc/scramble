@@ -49,7 +49,10 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
 
         return [
             ...$parameterExtractionResults,
-            new ParametersExtractionResult($parameters),
+            new ParametersExtractionResult(
+                $parameters,
+                sourceClass: $resourceType->name,
+            ),
         ];
     }
 

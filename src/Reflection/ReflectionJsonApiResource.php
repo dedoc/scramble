@@ -270,24 +270,17 @@ class ReflectionJsonApiResource
         return $arrayType;
     }
 
-    /**
-     * @todo
-     * This is temporary implementation, under the hood model's toResource is called.
-     */
-    private function guessResourceClass(string $relationship): ?string
+    private function guessResourceClass(string $modelClass): ?string
     {
-        $relationship = Str::of($relationship);
+        $modelType = new ObjectType($modelClass);
 
-        foreach ([
-            "App\\Http\\Resources\\{$relationship->singular()->studly()}Resource",
-            "App\\Http\\Resources\\{$relationship->studly()}Resource",
-        ] as $class) {
-            if (class_exists($class)) {
-                return $class;
-            }
-        }
+        $resourceType = ReferenceTypeResolver::getInstance()
+            ->resolve(
+                new GlobalScope,
+                new MethodCallReferenceType($modelType, 'toResource', []),
+            );
 
-        return null;
+        return $resourceType instanceof ObjectType ? $resourceType->name : null;
     }
 
     private function normalizeAttributesType(?Type $type): ?KeyedArrayType
