@@ -14,19 +14,21 @@ use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Attributes\UseResourceCollection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Traits\TransformsToResourceCollection;
 use ReflectionClass;
 use Throwable;
 
-class CollectionExtension implements MethodReturnTypeExtension
+class TransformsToResourceCollectionExtension implements MethodReturnTypeExtension
 {
     public function shouldHandle(ObjectType|string $type): bool
     {
-        if (is_string($type)) {
-            return is_a($type, Collection::class, true);
+        $type = is_string($type) ? $type : $type->name;
+
+        if (! class_exists($type) || ! method_exists($type, 'toResourceCollection')) {
+            return false;
         }
 
-        return $type->isInstanceOf(Collection::class);
+        return in_array(TransformsToResourceCollection::class, class_uses_recursive($type));
     }
 
     public function getMethodReturnType(MethodCallEvent $event): ?Type

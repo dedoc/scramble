@@ -13,6 +13,9 @@ use Illuminate\Database\Eloquent\Attributes\UseResourceCollection;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 
 uses(RefreshDatabase::class);
 beforeEach(function () {
@@ -135,3 +138,66 @@ class CollectionExtensionTest_GuessingWithResourceOnlyModel extends SampleUserMo
         return [CollectionExtensionTest_Resource::class];
     }
 }
+
+it('toResourceCollection returns AnonymousResourceCollection when called on paginate result', function () {
+    $paginatorType = new Generic(LengthAwarePaginator::class, [
+        new IntegerType,
+        new ObjectType(SampleUserModel::class),
+    ]);
+
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType(
+                $paginatorType,
+                'toResourceCollection',
+                [new LiteralStringType(CollectionExtensionTest_Resource::class)]
+            )
+        );
+
+    expect($type->toString())->toBe(
+        AnonymousResourceCollection::class.'<'.LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>, array<mixed>, '.CollectionExtensionTest_Resource::class.'>'
+    );
+})->skip($skip);
+
+it('toResourceCollection returns AnonymousResourceCollection when called on cursorPaginate result', function () {
+    $paginatorType = new Generic(CursorPaginator::class, [
+        new IntegerType,
+        new ObjectType(SampleUserModel::class),
+    ]);
+
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType(
+                $paginatorType,
+                'toResourceCollection',
+                [new LiteralStringType(CollectionExtensionTest_Resource::class)]
+            )
+        );
+
+    expect($type->toString())->toBe(
+        AnonymousResourceCollection::class.'<'.CursorPaginator::class.'<int, '.SampleUserModel::class.'>, array<mixed>, '.CollectionExtensionTest_Resource::class.'>'
+    );
+})->skip($skip);
+
+it('toResourceCollection returns AnonymousResourceCollection when called on simplePaginate result', function () {
+    $paginatorType = new Generic(Paginator::class, [
+        new IntegerType,
+        new ObjectType(SampleUserModel::class),
+    ]);
+
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType(
+                $paginatorType,
+                'toResourceCollection',
+                [new LiteralStringType(CollectionExtensionTest_Resource::class)]
+            )
+        );
+
+    expect($type->toString())->toBe(
+        AnonymousResourceCollection::class.'<'.Paginator::class.'<int, '.SampleUserModel::class.'>, array<mixed>, '.CollectionExtensionTest_Resource::class.'>'
+    );
+})->skip($skip);
