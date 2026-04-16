@@ -145,7 +145,7 @@ class Generator
 
     private function makeOpenApi(GeneratorConfig $config)
     {
-        $openApi = OpenApi::make('3.1.0')
+        $openApi = OpenApi::make('3.2.0')
             ->setComponents(new Components)
             ->setInfo(
                 InfoObject::make($config->get('ui.title', $default = config('app.name')) ?: $default)
