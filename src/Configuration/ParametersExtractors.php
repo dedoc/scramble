@@ -70,12 +70,12 @@ class ParametersExtractors
             PathParametersExtractor::class,
             FormRequestParametersExtractor::class,
             ValidateCallParametersExtractor::class,
+            JsonApiResourceParametersExtractor::class,
         ];
 
         $defaultAppends = [
             MethodCallsParametersExtractor::class,
             AttributesParametersExtractor::class,
-            JsonApiResourceParametersExtractor::class,
         ];
 
         return array_values(array_unique([
