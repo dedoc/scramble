@@ -32,6 +32,30 @@ test('extracts includes parameter', function () {
     ]);
 });
 
+test('extracts includes parameter when resource transformed to response', function () {
+    $openApiDocument = generateForRoute(RouteFacade::get('/api/test', function () {
+        return SamplePostResource_JsonApiResourceParametersExtractorTest::make()->response()->setStatusCode(202);
+    }));
+
+    $parameters = collect($openApiDocument['paths']['/test']['get']['parameters']);
+
+    expect($parameters->firstWhere('name', 'include'))->toBe([
+        'name' => 'include',
+        'in' => 'query',
+        'schema' => [
+            'type' => 'array',
+            'items' => [
+                'type' => 'string',
+                'enum' => [
+                    'user',
+                    'parent',
+                ],
+            ],
+        ],
+        'explode' => false,
+    ]);
+});
+
 test('extracts fields parameter', function () {
     $openApiDocument = generateForRoute(RouteFacade::get('/api/test', function () {
         return SamplePostResource_JsonApiResourceParametersExtractorTest::make();

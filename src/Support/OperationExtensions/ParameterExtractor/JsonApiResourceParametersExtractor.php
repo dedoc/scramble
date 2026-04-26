@@ -14,6 +14,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\TypeManagers\JsonApiResourceTypeManager;
 use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
@@ -120,26 +121,16 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
             $type = $type->is;
         }
 
-        if (! $type instanceof ObjectType) {
+        $resourceType = (new TypeWalker())->first(
+            $type,
+            fn ($t) => $t instanceof ObjectType && $t->isInstanceOf(JsonApiResource::class),
+        );
+
+        if (! $resourceType) {
             return null;
         }
 
-        if ($type instanceof Generic && $type->isInstanceOf(AnonymousResourceCollection::class)) {
-            if (count($type->templateTypes) < 3) {
-                return null;
-            }
-
-            $type = $type->templateTypes[2 /* TCollects */];
-            if ($type instanceof TemplateType) {
-                $type = $type->is;
-            }
-        }
-
-        if ($type instanceof ObjectType && $type->isInstanceOf(JsonApiResource::class)) {
-            return $this->jsonApiResourceTypeManager->normalizeType($type);
-        }
-
-        return null;
+        return $this->jsonApiResourceTypeManager->normalizeType($resourceType);
     }
 
     /**
