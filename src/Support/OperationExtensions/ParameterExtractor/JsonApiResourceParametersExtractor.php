@@ -16,7 +16,6 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\TypeManagers\JsonApiResourceTypeManager;
-use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 class JsonApiResourceParametersExtractor implements ParameterExtractor
@@ -125,7 +124,7 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
         }
 
         /** @var ObjectType|null $resourceType */
-        $resourceType = (new TypeWalker())->first(
+        $resourceType = (new TypeWalker)->first(
             $type,
             fn ($t) => $t instanceof ObjectType && $t->isInstanceOf(JsonApiResource::class),
         );
