@@ -54,8 +54,8 @@ abstract class AbstractNode implements Node
             default => $empty,
         };
 
-        if ($label !== $empty) {
-            $dot .= '[label="'.Str::replace('"', '\"', $label).'"]'; // @phpstan-ignore argument.type
+        if ($label !== $empty && is_string($label)) {
+            $dot .= '[label="'.Str::replace('"', '\"', $label).'"]';
         }
 
         return $dot;

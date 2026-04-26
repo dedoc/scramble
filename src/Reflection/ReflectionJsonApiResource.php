@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
+use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\Type as InferType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -17,6 +18,7 @@ use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\FlattensMergeValues;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection as JsonApiAnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\Concerns\ResolvesJsonApiElements;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
@@ -229,19 +231,14 @@ class ReflectionJsonApiResource
                     : $newType->value;
 
                 if ($newType->isNumericKey() && $this->isLiteralString($newType->value)) {
-                    $className = $this->getLiteralStringValue($newType->value);
+                    $relationshipName = $this->getLiteralStringValue($newType->value);
 
-                    if (! $guessedClass = $this->guessResourceClass($className)) {
-                        /**
-                         * @see ResolvesJsonApiElements::compileResourceRelationshipUsingResolver() Line 256
-                         */
-                        $guessedClass = JsonApiResource::class;
-                    }
-
-                    $relationshipType = $modelType?->getPropertyType($className) ?? new InferType\UnknownType;
+                    $relationshipType = $modelType?->getPropertyType($relationshipName) ?? new InferType\UnknownType;
                     $relationshipIsMany = $relationshipType->isInstanceOf(Collection::class);
 
-                    $newType->key = $className;
+                    $guessedClass = $this->guessResourceClassFromRelationship($relationshipType);
+
+                    $newType->key = $relationshipName;
                     $newType->value = $relationshipIsMany
                         ? new InferType\Generic(JsonApiAnonymousResourceCollection::class, [new InferType\UnknownType, new InferType\UnknownType, new ObjectType($guessedClass)])
                         : new ObjectType($guessedClass);
@@ -271,23 +268,44 @@ class ReflectionJsonApiResource
     }
 
     /**
-     * @todo
-     * This is temporary implementation, under the hood model's toResource is called.
+     * Attempts to find the related model's resource class name from a relationship type.
+     * In case resource name cannot be found, falls back to {@see JsonApiResource::class} {@see ResolvesJsonApiElements::compileResourceRelationshipUsingResolver() Line 256}
      */
-    private function guessResourceClass(string $relationship): ?string
+    private function guessResourceClassFromRelationship(Type $relationshipType): string
     {
-        $relationship = Str::of($relationship);
-
-        foreach ([
-            "App\\Http\\Resources\\{$relationship->singular()->studly()}Resource",
-            "App\\Http\\Resources\\{$relationship->studly()}Resource",
-        ] as $class) {
-            if (class_exists($class)) {
-                return $class;
-            }
+        $relatedModel = (new InferType\TypeWalker)->first($relationshipType, fn (Type $t) => $t->isInstanceOf(Model::class));
+        if ($relatedModel instanceof InferType\TemplateType) {
+            $relatedModel = $relatedModel->is;
+        }
+        if (! $relatedModel instanceof ObjectType) {
+            return JsonApiResource::class;
         }
 
-        return null;
+        $guessedRelatedResource = $this->guessResourceClass($relatedModel->name);
+        /**
+         * If $guessedRelatedResource is JsonResource::class, it means that the type of `toResponse` was
+         * inferred from Model's `toResponse` definition (not via {@see ModelExtension}). In runtime this
+         * is causing the failure, but `JsonApiResource` wraps this call in `rescue`, and in case
+         * of exception, returns `JsonApiResource` {@see ResolvesJsonApiElements::compileResourceRelationshipUsingResolver() Line 256}
+         */
+        if (! $guessedRelatedResource || $guessedRelatedResource === JsonResource::class) {
+            return JsonApiResource::class;
+        }
+
+        return $guessedRelatedResource;
+    }
+
+    private function guessResourceClass(string $modelClass): ?string
+    {
+        $modelType = new ObjectType($modelClass);
+
+        $resourceType = ReferenceTypeResolver::getInstance()
+            ->resolve(
+                new GlobalScope,
+                new MethodCallReferenceType($modelType, 'toResource', []),
+            );
+
+        return $resourceType instanceof ObjectType ? $resourceType->name : null;
     }
 
     private function normalizeAttributesType(?Type $type): ?KeyedArrayType

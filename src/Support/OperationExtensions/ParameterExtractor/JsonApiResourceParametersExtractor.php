@@ -14,8 +14,8 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\TypeManagers\JsonApiResourceTypeManager;
-use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 class JsonApiResourceParametersExtractor implements ParameterExtractor
@@ -49,7 +49,10 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
 
         return [
             ...$parameterExtractionResults,
-            new ParametersExtractionResult($parameters),
+            new ParametersExtractionResult(
+                $parameters,
+                sourceClass: $resourceType->name,
+            ),
         ];
     }
 
@@ -116,27 +119,21 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
         if ($type instanceof TemplateType) {
             $type = $type->is;
         }
-
-        if (! $type instanceof ObjectType) {
+        if (! $type) {
             return null;
         }
 
-        if ($type instanceof Generic && $type->isInstanceOf(AnonymousResourceCollection::class)) {
-            if (count($type->templateTypes) < 3) {
-                return null;
-            }
+        /** @var ObjectType|null $resourceType */
+        $resourceType = (new TypeWalker)->first(
+            $type,
+            fn ($t) => $t instanceof ObjectType && $t->isInstanceOf(JsonApiResource::class),
+        );
 
-            $type = $type->templateTypes[2 /* TCollects */];
-            if ($type instanceof TemplateType) {
-                $type = $type->is;
-            }
+        if (! $resourceType) {
+            return null;
         }
 
-        if ($type instanceof ObjectType && $type->isInstanceOf(JsonApiResource::class)) {
-            return $this->jsonApiResourceTypeManager->normalizeType($type);
-        }
-
-        return null;
+        return $this->jsonApiResourceTypeManager->normalizeType($resourceType);
     }
 
     /**

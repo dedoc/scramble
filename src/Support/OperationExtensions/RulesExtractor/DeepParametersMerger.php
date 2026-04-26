@@ -142,7 +142,7 @@ class DeepParametersMerger
                 ->addRequired($parameter->required ? [$settingKey] : []);
         }
 
-        if ($isSettingArrayItems && $containingType instanceof ObjectType) { // @phpstan-ignore instanceof.alwaysTrue
+        if ($isSettingArrayItems && $containingType instanceof ObjectType) {
             $containingType->properties = collect($containingType->properties)
                 ->map(fn ($prop) => $prop instanceof UnknownType ? $typeToSet : $prop)
                 ->all();
