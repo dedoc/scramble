@@ -41,6 +41,7 @@ use Dedoc\Scramble\Support\InferExtensions\JsonResponseMethodReturnTypeExtension
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\InferExtensions\PaginateMethodsReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
+use Dedoc\Scramble\Support\InferExtensions\PropertyTypesFromPhpDoc\PropertyTypesFromPhpdocExtension;
 use Dedoc\Scramble\Support\InferExtensions\RequestExtension;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceResponseMethodReturnTypeExtension;
@@ -157,6 +158,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     JsonResourceExtension::class,
                     ResourceResponseMethodReturnTypeExtension::class,
                     JsonResponseMethodReturnTypeExtension::class,
+                    PropertyTypesFromPhpdocExtension::class,
                     ModelExtension::class,
                     TransformsToResourceCollectionExtension::class,
                     EloquentBuilderExtension::class,
