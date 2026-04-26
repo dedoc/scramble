@@ -16,8 +16,10 @@ class ConfirmedRule implements AllRulesSchemasTransformer
 
     public function transformAll(SchemaBag $schemaBag, NormalizedRule $rule, RuleTransformerContext $context): void
     {
+        $confirmationField = $rule->parameters[0] ?? "{$context->field}_confirmation";
+
         $schemaBag->set(
-            "{$context->field}_confirmation",
+            $confirmationField,
             clone $schemaBag->getOrFail($context->field),
         );
     }
