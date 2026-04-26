@@ -120,7 +120,11 @@ class JsonApiResourceParametersExtractor implements ParameterExtractor
         if ($type instanceof TemplateType) {
             $type = $type->is;
         }
+        if (! $type) {
+            return null;
+        }
 
+        /** @var ObjectType|null $resourceType */
         $resourceType = (new TypeWalker())->first(
             $type,
             fn ($t) => $t instanceof ObjectType && $t->isInstanceOf(JsonApiResource::class),
