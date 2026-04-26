@@ -270,8 +270,6 @@ class ReflectionJsonApiResource
     /**
      * Attempts to find the related model's resource class name from a relationship type.
      * In case resource name cannot be found, falls back to {@see JsonApiResource::class} {@see ResolvesJsonApiElements::compileResourceRelationshipUsingResolver() Line 256}
-     * @param Type $relationshipType
-     * @return string
      */
     private function guessResourceClassFromRelationship(Type $relationshipType): string
     {
