@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
 /**
  * @internal
+ *
  * @template T of object
  */
 class PublicProxy
@@ -12,7 +13,7 @@ class PublicProxy
     private object $target;
 
     /**
-     * @param T $target
+     * @param  T  $target
      */
     public function __construct(object $target)
     {
@@ -20,9 +21,7 @@ class PublicProxy
     }
 
     /**
-     * @param string $name
-     * @param array<int, mixed> $arguments
-     * @return mixed
+     * @param  array<int, mixed>  $arguments
      */
     public function __call(string $name, array $arguments): mixed
     {
@@ -32,9 +31,6 @@ class PublicProxy
         return $method->invokeArgs($this->target, $arguments);
     }
 
-    /**
-     * @return mixed
-     */
     public function __get(string $name): mixed
     {
         $prop = new \ReflectionProperty($this->target, $name);
@@ -44,7 +40,7 @@ class PublicProxy
     }
 
     /**
-     * @param mixed $value
+     * @param  mixed  $value
      */
     public function __set(string $name, $value): void
     {

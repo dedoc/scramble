@@ -243,7 +243,7 @@ class NodeRulesEvaluator implements RulesEvaluator
             $instance = app($this->className);
         } catch (\Throwable) {
             try {
-                $instance = new $this->className();
+                $instance = new $this->className;
             } catch (\Throwable) {
                 // @todo communicate warning
             }
