@@ -964,7 +964,7 @@ it('gracefully handles unpacked method call in form request', function () {
             'type' => 'object',
             'properties' => [
                 'external_id' => [
-                    'type' => 'string',
+                    'type' => 'number',
                 ],
             ],
             'title' => 'CreateUserUnpack_RequestBodyExtensionTest',

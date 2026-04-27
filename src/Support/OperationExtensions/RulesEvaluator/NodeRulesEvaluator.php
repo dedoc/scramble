@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Http\Request;
 use Illuminate\Support\Optional;
+use Illuminate\Support\Str;
 use PhpParser\ConstExprEvaluator;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Assign;
@@ -189,14 +190,12 @@ class NodeRulesEvaluator implements RulesEvaluator
                 return $evaluatedConstFetch;
             }
 
-            $code = $this->printer->prettyPrint([$expr]);
-
-            extract($variables);
-            $request = request();
-            $request->setMethod(strtoupper($this->method));
-
             try {
-                return eval("return $code;");
+                return $this->evaluateWithScopedVariables($this->printer->prettyPrint([$expr]), [
+                    ...$variables,
+                    'request' => tap(request(), fn ($r) => $r->setMethod(strtoupper($this->method))),
+                    'this' => $this->tryCreatingCurrentClassInstance(),
+                ]);
             } catch (Throwable $e) {
                 $this->lastEvaluationException = $e;
             }
@@ -212,6 +211,49 @@ class NodeRulesEvaluator implements RulesEvaluator
                 ? []
                 : null;
         }))->evaluateDirectly($expression);
+    }
+
+    private function evaluateWithScopedVariables(string $code, array $variables): mixed
+    {
+        $runner = static function ($__scramble_code, $__scramble_vars) {
+            $varsMap = [];
+
+            foreach ($__scramble_vars as $varName => $variable) {
+                $varsMap['$'.$varName] = '$'.($newName = $varName.'__');
+                ${$newName} = $variable;
+            }
+
+            $__scramble_code = Str::replace(array_keys($varsMap), array_values($varsMap), $__scramble_code);
+
+            return eval("return $__scramble_code;");
+        };
+
+        return $runner($code, $variables);
+    }
+
+    private function tryCreatingCurrentClassInstance(): mixed
+    {
+        if (! $this->className) {
+            return null;
+        }
+
+        $instance = null;
+
+        try {
+            $instance = app($this->className);
+        } catch (\Throwable) {
+            try {
+                $instance = new $this->className;
+            } catch (\Throwable) {
+                // @todo communicate warning
+            }
+        }
+
+        if (! $instance) {
+            return null;
+        }
+
+        return new PublicProxy($instance);
     }
 
     private function getType(Node\Expr $expr): Type
