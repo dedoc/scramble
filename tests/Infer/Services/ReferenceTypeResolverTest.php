@@ -12,9 +12,11 @@ use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\Union;
 
 beforeEach(function () {
     $this->index = app(Index::class);
@@ -51,6 +53,39 @@ it('infers new calls on child class', function (string $method, string $expected
     ['newStaticCall', 'Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar<string(foo)>'],
     ['newParentCall', 'Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo'],
 ]);
+
+/*
+ * Method calls
+ */
+it('support method calls on unions', function () {
+    $union = Union::wrap([
+        new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class),
+        new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo::class),
+    ]);
+
+    $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new MethodCallReferenceType(
+        $union,
+        'someMethod',
+        []
+    ));
+
+    expect($result->toString())->toBe('string(bar)|string(foo)');
+});
+
+it('support method calls on unions with null', function () {
+    $union = Union::wrap([
+        new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class),
+        new \Dedoc\Scramble\Support\Type\NullType(),
+    ]);
+
+    $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new MethodCallReferenceType(
+        $union,
+        'someMethod',
+        []
+    ));
+
+    expect($result->toString())->toBe('string(bar)');
+});
 
 /*
  * Static method calls (should work the same for both static and non-static methods)

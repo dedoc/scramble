@@ -22,8 +22,8 @@ class TypeHelper
             ->flatMap(fn ($type) => $type instanceof Union ? $type->types : [$type])
             ->unique(fn (Type $type) => $type->toString())
             ->pipe(function (Collection $c) {
-                if ($c->count() > 1 && $c->contains(fn ($t) => $t instanceof VoidType)) {
-                    return $c->reject(fn ($t) => $t instanceof VoidType);
+                if ($c->count() > 1 && $c->contains(fn ($t) => $t instanceof VoidType || $t instanceof NeverType)) {
+                    return $c->reject(fn ($t) => $t instanceof VoidType || $t instanceof NeverType);
                 }
 
                 return $c;

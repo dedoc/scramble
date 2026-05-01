@@ -141,7 +141,7 @@ class ReflectionJsonApiResourceTest_ToLinksJsonApi extends JsonApiResource
 test('returns to meta type from resource', function () {
     $resource = ReflectionJsonApiResource::createForClass(ReflectionJsonApiResourceTest_ToMetaJsonApi::class);
 
-    expect($resource->getMetaType()->toString())->toBe('array{readable_created_at: unknown}');
+    expect($resource->getMetaType()->toString())->toBe('array{readable_created_at: string}');
 });
 /**
  * @property-read SampleUserModel $resource
