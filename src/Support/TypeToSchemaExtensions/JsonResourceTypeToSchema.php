@@ -54,9 +54,6 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             new MethodCallReferenceType($type, 'toArray', arguments: []),
         );
 
-        // @todo: why unpacking is here? ReferenceTypeResolver@resolve should've returned unpacked type
-        $array = TypeHelper::unpackIfArray($array);
-
         // The case when `toArray` is not defined.
         if ($array instanceof ArrayType) {
             return $this->openApiTransformer->transform($array);

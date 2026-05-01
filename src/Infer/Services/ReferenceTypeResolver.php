@@ -198,7 +198,11 @@ class ReferenceTypeResolver
             if ($calleeType instanceof MixedType) {
                 return new UnknownType;
             }
-            if (! $calleeType instanceof ObjectType && ! $calleeType instanceof UnknownType) {
+            if (
+                ! $calleeType instanceof ObjectType
+                && ! $calleeType instanceof UnknownType
+                && ! $calleeType instanceof TemplateType
+            ) {
                 return new NeverType;
             }
             if (! $calleeType instanceof ObjectType) {
@@ -418,7 +422,11 @@ class ReferenceTypeResolver
             if ($objectType instanceof MixedType) {
                 return new UnknownType;
             }
-            if (! $objectType instanceof ObjectType && ! $objectType instanceof UnknownType) {
+            if (
+                ! $objectType instanceof ObjectType
+                && ! $objectType instanceof UnknownType
+                && ! $objectType instanceof TemplateType
+            ) {
                 return new NeverType;
             }
             if (! $objectType instanceof ObjectType) {

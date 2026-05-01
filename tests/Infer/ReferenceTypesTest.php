@@ -101,7 +101,7 @@ it('resolves a cyclic reference introduced by template property fetch', function
 class Foo {
     public function foo ()
     {
-        return fn($q) => $q->prop;
+        return fn ($q) => $q->prop;
     }
 }
 EOD)->getClassDefinition('Foo');
