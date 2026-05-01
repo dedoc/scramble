@@ -78,7 +78,10 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
 
         $traverser = new NodeTraverser;
 
-        $traverser->addVisitor($flowBuilder = new FlowBuilder($this->getScope()));
+        $traverser->addVisitor($flowBuilder = new FlowBuilder(
+            $this->type->arguments, // parameters
+            $this->getScope(),
+        ));
 
         $traverser->traverse([$this->getAstNode()]);
 

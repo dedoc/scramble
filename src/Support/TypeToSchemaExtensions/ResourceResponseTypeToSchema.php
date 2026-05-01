@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Analyzer\MethodQuery;
+use Dedoc\Scramble\Infer\Flow\Nodes as FlowNode;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
@@ -23,12 +24,14 @@ use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceResponse;
 use LogicException;
+use PhpParser\Node\Expr\Variable;
 
 class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 {
@@ -156,6 +159,34 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
         $definition = $this->infer->analyzeClass($resourceType->name);
 
         $responseType = new Generic(JsonResponse::class, [new UnknownType, new LiteralIntegerType(200), new KeyedArrayType]);
+
+        /** @var Infer\Definition\FunctionLikeAstDefinition $methodDefinition */
+        $methodDefinition = $definition->getMethod('withResponse');
+
+        $flow = $methodDefinition->getFlowContainer();
+
+        // @todo determine response parameter name
+        $responseParameterName = 'response';
+
+        $responseFinalType = Union::wrap(array_map(
+            function (FlowNode $n) use ($flow, $responseType, $responseParameterName) {
+                return $flow
+                    ->withParameters([$responseParameterName => $responseType])
+                    ->getTypeAt(new Variable($responseParameterName), $n);
+            },
+            $flow->getReachableNodes(fn (FlowNode $n) => $n instanceof Infer\Flow\StartNode), // @todo EndNode
+        ));
+
+        dd($flow->withParameters([
+            'response' => $responseType,
+        ])->getTypeAt(
+            new Variable('response'),
+            $flow->nodes[2],
+        ));
+
+        dd($flow->toDot());
+
+
 
         $methodQuery = MethodQuery::make($this->infer)
             ->withArgumentType([null, 1], $responseType)

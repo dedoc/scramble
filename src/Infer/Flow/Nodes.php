@@ -30,7 +30,10 @@ class Nodes
     /** @var array<string, true> */
     protected array $resolvingVariables = [];
 
-    public function __construct(private ExpressionTypeInferrer $expressionTypeInferrer)
+    /**
+     * @param array<string, Type> $parameters
+     */
+    public function __construct(private array $parameters, private ExpressionTypeInferrer $expressionTypeInferrer)
     {
         $this->head = new StartNode;
         $this->nodes[] = $this->head;
@@ -301,7 +304,10 @@ class Nodes
         }
 
         if ($node instanceof StartNode) {
-            // @todo parameter type!
+            if (array_key_exists($varName, $this->parameters)) {
+                return $this->parameters[$varName];
+            }
+
             return new UnknownType;
         }
 

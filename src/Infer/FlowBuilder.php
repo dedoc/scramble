@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Flow\StatementNode;
 use Dedoc\Scramble\Infer\Flow\TerminateNode;
 use Dedoc\Scramble\Infer\Flow\TerminationKind;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\Type;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Match_;
@@ -19,9 +20,13 @@ class FlowBuilder extends NodeVisitorAbstract
 {
     public Nodes $flowNodes;
 
-    public function __construct(private Scope $scope)
+    /**
+     * @param array<string, Type> $parameters
+     */
+    public function __construct(private array $parameters, private Scope $scope)
     {
         $this->flowNodes = new Nodes(
+            $this->parameters,
             new ExpressionTypeInferrer($this->scope, $this->scope->nodeTypesResolver),
         );
     }
