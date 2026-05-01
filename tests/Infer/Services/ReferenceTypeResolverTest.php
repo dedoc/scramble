@@ -75,7 +75,7 @@ it('support method calls on unions', function () {
 it('support method calls on unions with null', function () {
     $union = Union::wrap([
         new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class),
-        new \Dedoc\Scramble\Support\Type\NullType(),
+        new \Dedoc\Scramble\Support\Type\NullType,
     ]);
 
     $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new MethodCallReferenceType(

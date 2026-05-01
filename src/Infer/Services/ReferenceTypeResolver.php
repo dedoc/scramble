@@ -21,7 +21,6 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\NeverType;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
@@ -185,14 +184,14 @@ class ReferenceTypeResolver
                 : null;
 
             if (! ($calleeType instanceof TemplateType) && $returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
-                    instance: $calleeType,
-                    name: $type->methodName,
-                    scope: $scope,
-                    arguments: $arguments,
-                    methodDefiningClassName: $classDefinition
-                        ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index)
-                        : ($calleeType instanceof ObjectType ? $calleeType->name : null),
-                ))) {
+                instance: $calleeType,
+                name: $type->methodName,
+                scope: $scope,
+                arguments: $arguments,
+                methodDefiningClassName: $classDefinition
+                    ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index)
+                    : ($calleeType instanceof ObjectType ? $calleeType->name : null),
+            ))) {
                 return $this->finalizeStatic($returnType, $calleeType);
             }
 

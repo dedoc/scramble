@@ -26,7 +26,6 @@ use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node as PhpParserNode;
 use PhpParser\Node\Expr;
 
