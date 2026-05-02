@@ -94,6 +94,12 @@ class FlowBuilder extends NodeVisitorAbstract
 
     public function leaveNode(Node $node)
     {
+        if ($node instanceof Node\FunctionLike) {
+            $this->ensureTerminated();
+
+            return null;
+        }
+
         if (! $this->shouldHandle($node)) {
             return null;
         }
@@ -105,6 +111,18 @@ class FlowBuilder extends NodeVisitorAbstract
         }
 
         return null;
+    }
+
+    private function ensureTerminated(): void
+    {
+        if ($this->flowNodes->head === null) {
+            return;
+        }
+
+        $this->flowNodes->pushTerminate(new TerminateNode(
+            kind: TerminationKind::RETURN,
+            value: null,
+        ));
     }
 
     private function pushTerminateMatch(Nodes $flow, Node\Expr\Match_ $match): void

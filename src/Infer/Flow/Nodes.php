@@ -31,12 +31,24 @@ class Nodes
     protected array $resolvingVariables = [];
 
     /**
-     * @param array<string, Type> $parameters
+     * @param array<string, Type> $entryBindings
      */
-    public function __construct(private array $parameters, private ExpressionTypeInferrer $expressionTypeInferrer)
+    public function __construct(private array $entryBindings, private ExpressionTypeInferrer $expressionTypeInferrer)
     {
         $this->head = new StartNode;
         $this->nodes[] = $this->head;
+    }
+
+    /**
+     * @param array<string, Type> $entryBindings
+     */
+    public function withEntryBindings(array $entryBindings): self
+    {
+        $clone = clone $this;
+
+        $clone->entryBindings = $entryBindings;
+
+        return $clone;
     }
 
     protected function pushNode(Node $node): ?Edge
@@ -304,8 +316,8 @@ class Nodes
         }
 
         if ($node instanceof StartNode) {
-            if (array_key_exists($varName, $this->parameters)) {
-                return $this->parameters[$varName];
+            if (array_key_exists($varName, $this->entryBindings)) {
+                return $this->entryBindings[$varName];
             }
 
             return new UnknownType;

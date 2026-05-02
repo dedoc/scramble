@@ -143,8 +143,7 @@ class JsonResourceTypeToSchemaTest_WithResponseSample extends JsonResource
 {
     public function withResponse(Request $request, \Illuminate\Http\JsonResponse $response)
     {
-//        $response->setStatusCode(429);
-        return 1;
+        $response->setStatusCode(429);
     }
 }
 

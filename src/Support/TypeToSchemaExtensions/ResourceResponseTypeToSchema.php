@@ -5,7 +5,8 @@ namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Analyzer\MethodQuery;
-use Dedoc\Scramble\Infer\Flow\Nodes as FlowNode;
+use Dedoc\Scramble\Infer\Flow\Node as FlowNode;
+use Dedoc\Scramble\Infer\Flow\TerminationKind;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
@@ -168,22 +169,16 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
         // @todo determine response parameter name
         $responseParameterName = 'response';
 
-        $responseFinalType = Union::wrap(array_map(
+        $responseFinalType = Union::wrap(...array_map(
             function (FlowNode $n) use ($flow, $responseType, $responseParameterName) {
                 return $flow
-                    ->withParameters([$responseParameterName => $responseType])
+                    ->withEntryBindings([$responseParameterName => $responseType])
                     ->getTypeAt(new Variable($responseParameterName), $n);
             },
-            $flow->getReachableNodes(fn (FlowNode $n) => $n instanceof Infer\Flow\StartNode), // @todo EndNode
+            $flow->getReachableNodes(fn (FlowNode $n) => $n instanceof Infer\Flow\TerminateNode && $n->kind === TerminationKind::RETURN),
         ));
 
-        dd($flow->withParameters([
-            'response' => $responseType,
-        ])->getTypeAt(
-            new Variable('response'),
-            $flow->nodes[2],
-        ));
-
+        dump($responseFinalType->toString());
         dd($flow->toDot());
 
 
