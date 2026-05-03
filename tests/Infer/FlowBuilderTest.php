@@ -21,7 +21,7 @@ EOF;
         ->getFlowContainer();
 
     expect($nodes = $flow->nodes)->toHaveCount(3) // start -> expr -> terminate
-    ->and($nodes[2])->toBeInstanceOf(TerminateNode::class);
+        ->and($nodes[2])->toBeInstanceOf(TerminateNode::class);
 });
 
 it('builds simplest control flow graph without connecting returns', function () {
@@ -43,7 +43,7 @@ EOF;
     $reachableReturns = $flow->getReachableNodes(fn (Node $n) => $n instanceof TerminateNode && $n->kind === TerminationKind::RETURN);
 
     expect($nodes = $flow->nodes)->toHaveCount(3) // start -> terminate terminate
-    ->and($reachableReturns)->toHaveCount(1); // return 1
+        ->and($reachableReturns)->toHaveCount(1); // return 1
 });
 
 it('builds simplest control flow graph without explicit return', function () {
@@ -60,9 +60,9 @@ EOF;
         ->getFlowContainer();
 
     expect($nodes = $flow->nodes)->toHaveCount(3) // start -> expr -> terminate
-    ->and($nodes[2])->toBeInstanceOf(TerminateNode::class)
-    ->and($nodes[2]->kind)->toBe(TerminationKind::RETURN)
-    ->and($nodes[2]->value)->toBe(null);
+        ->and($nodes[2])->toBeInstanceOf(TerminateNode::class)
+        ->and($nodes[2]->kind)->toBe(TerminationKind::RETURN)
+        ->and($nodes[2]->value)->toBe(null);
 });
 
 it('builds simplest if flow graph with connecting merge node', function () {

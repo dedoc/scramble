@@ -21,7 +21,7 @@ class FlowBuilder extends NodeVisitorAbstract
     public Nodes $flowNodes;
 
     /**
-     * @param array<string, Type> $parameters
+     * @param  array<string, Type>  $parameters
      */
     public function __construct(private array $parameters, private Scope $scope)
     {

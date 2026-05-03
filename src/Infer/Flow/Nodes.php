@@ -3,8 +3,8 @@
 namespace Dedoc\Scramble\Infer\Flow;
 
 use Closure;
-use Dedoc\Scramble\Support\Type\Reference\PotentialMethodMutatingCallType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\PotentialMethodMutatingCallType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -34,7 +34,7 @@ class Nodes
     protected array $resolvingVariables = [];
 
     /**
-     * @param array<string, Type> $entryBindings
+     * @param  array<string, Type>  $entryBindings
      */
     public function __construct(private array $entryBindings, private ExpressionTypeInferrer $expressionTypeInferrer)
     {
@@ -43,7 +43,7 @@ class Nodes
     }
 
     /**
-     * @param array<string, Type> $entryBindings
+     * @param  array<string, Type>  $entryBindings
      */
     public function withEntryBindings(array $entryBindings): self
     {
