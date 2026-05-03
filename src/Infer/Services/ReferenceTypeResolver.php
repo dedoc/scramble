@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Services;
 
 use Dedoc\Scramble\Infer\AutoResolvingArgumentTypeBag;
+use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Contracts\ArgumentTypeBag;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
@@ -14,7 +15,6 @@ use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
-use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -23,6 +23,7 @@ use Dedoc\Scramble\Support\Type\NeverType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\PotentialMethodMutatingCallType;
 use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
@@ -73,7 +74,7 @@ class ReferenceTypeResolver
             CallableCallReferenceType::class => $this->resolveCallableCallReferenceType($scope, $t),
             NewCallReferenceType::class => $this->resolveNewCallReferenceType($scope, $t),
             PropertyFetchReferenceType::class => $this->resolvePropertyFetchReferenceType($scope, $t),
-            LateResolvingType::class => $this->resolveLateTypeEarly($t),
+            PotentialMethodMutatingCallType::class => $this->resolvePotentialMethodMutatingCallType($scope, $t),
             default => null,
         };
 
@@ -129,15 +130,6 @@ class ReferenceTypeResolver
         });
     }
 
-    private function resolveLateTypeEarly(LateResolvingType $type): Type
-    {
-        if (! $type->isResolvable()) {
-            return $type;
-        }
-
-        return $type->resolve();
-    }
-
     private function finalizeType(Type $type, Type $originalType): Type
     {
         $attributes = $type->attributes();
@@ -179,7 +171,7 @@ class ReferenceTypeResolver
             ? $calleeType->types
             : [$calleeType];
 
-        return Union::wrap(array_map(function (Type $calleeType) use ($scope, $type, $arguments) {
+        return Union::wrap(...array_map(function (Type $calleeType) use ($scope, $type, $arguments) {
             $classDefinition = $calleeType instanceof ObjectType
                 ? $this->index->getClass($calleeType->name)
                 : null;
@@ -309,7 +301,7 @@ class ReferenceTypeResolver
             ? $callee->types
             : [$callee];
 
-        return Union::wrap(array_map(function (Type $callee) use ($scope, $type, $arguments) {
+        return Union::wrap(...array_map(function (Type $callee) use ($scope, $type, $arguments) {
             if ($callee instanceof CallableStringType) {
                 $returnType = Context::getInstance()->extensionsBroker->getFunctionReturnType(new FunctionCallEvent(
                     name: $callee->name,
@@ -410,6 +402,58 @@ class ReferenceTypeResolver
         );
 
         return new Generic($classDefinition->name, $resultingTemplatesMap);
+    }
+
+    private function resolvePotentialMethodMutatingCallType(Scope $scope, PotentialMethodMutatingCallType $type): Type
+    {
+        $callee = $this->resolveAndNormalizeCallee($scope, $type->callee);
+        $arguments = new AutoResolvingArgumentTypeBag($scope, $type->arguments);
+
+        $calleeAllTypes = $callee instanceof Union
+            ? $callee->types
+            : [$callee];
+
+        return Union::wrap(...array_map(function (Type $callee) use ($scope, $type, $arguments) {
+            if (! $callee instanceof Generic) {
+                return $callee;
+            }
+
+            if (! $calleeDefinition = $this->index->getClass($callee->name)) {
+                return $callee;
+            }
+
+            if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
+                return $callee;
+            }
+
+            $selfOutType = $methodDefinition->getSelfOutType();
+            if (! $selfOutType instanceof Generic) {
+                return $callee;
+            }
+
+            $classContextTemplates = (new TemplateTypesSolver)->getClassContextTemplates($callee, $calleeDefinition);
+
+            $arguments = $arguments->map(fn (Type $t, string|int $key) => (new TemplateTypesSolver)->addContextTypesToTypelessParametersOfCallableArgument(
+                $t,
+                $key,
+                $methodDefinition,
+                $classContextTemplates,
+            ));
+
+            $arguments = $arguments->map(fn (Type $argType) => $this->finalizeSelfForCallableArguments($argType, $callee));
+
+            $templatesMap = (new TemplateTypesSolver)
+                ->getFunctionContextTemplates($methodDefinition, $arguments)
+                ->prepend($classContextTemplates);
+
+            $newTemplateTypes = $this->applySelfOutType(
+                [...$callee->templateTypes],
+                $selfOutType,
+                $templatesMap,
+            );
+
+            return new Generic($callee->name, $newTemplateTypes);
+        }, $calleeAllTypes));
     }
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type): Type

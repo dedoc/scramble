@@ -39,6 +39,11 @@ class ExpressionTypeInferrer
         private NodeTypesResolver $nodeTypesResolver,
     ) {}
 
+    public function resetCache(): self
+    {
+        return new self($this->scope, new NodeTypesResolver);
+    }
+
     /**
      * Ideally, `infer` should accept not Node but just expressions. @todo
      */

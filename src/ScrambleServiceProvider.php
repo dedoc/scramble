@@ -32,6 +32,7 @@ use Dedoc\Scramble\Support\InferExtensions\AfterAnonymousResourceCollectionDefin
 use Dedoc\Scramble\Support\InferExtensions\AfterJsonApiResourceDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterJsonResourceDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCreatedExtension;
+use Dedoc\Scramble\Support\InferExtensions\AfterResponseDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\EloquentBuilderExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceCollectionMethodReturnTypeExtension;
@@ -153,7 +154,6 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     JsonApiResourceMethodReturnTypeExtension::class,
                     JsonApiResourceCollectionMethodReturnTypeExtension::class,
                     AfterJsonApiResourceDefinitionCreatedExtension::class,
-                    ResponseMethodReturnTypeExtension::class,
                     JsonResourceExtension::class,
                     ResourceResponseMethodReturnTypeExtension::class,
                     JsonResponseMethodReturnTypeExtension::class,
@@ -164,6 +164,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     AfterJsonResourceDefinitionCreatedExtension::class,
                     AfterResourceCollectionDefinitionCreatedExtension::class,
                     AfterAnonymousResourceCollectionDefinitionCreatedExtension::class,
+                    AfterResponseDefinitionCreatedExtension::class,
                 ]);
 
                 return array_merge(

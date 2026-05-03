@@ -3,12 +3,15 @@
 namespace Dedoc\Scramble\Infer\Flow;
 
 use Closure;
+use Dedoc\Scramble\Support\Type\Reference\PotentialMethodMutatingCallType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Identifier;
 use PhpParser\Node\Stmt\Expression;
 use WeakMap;
 
@@ -47,6 +50,7 @@ class Nodes
         $clone = clone $this;
 
         $clone->entryBindings = $entryBindings;
+        $clone->expressionTypeInferrer = $this->expressionTypeInferrer->resetCache();
 
         return $clone;
     }
@@ -387,7 +391,49 @@ class Nodes
             return $t;
         }
 
-        return $this->narrowType($type, $var, $incomingEdge->from);
+        $fromNode = $incomingEdge->from;
+
+        if ($narrowed = $this->narrowVariableTypeFromSelfOutCall($var, $fromNode)) {
+            return $narrowed;
+        }
+
+        return $this->narrowType($type, $var, $fromNode);
+    }
+
+    private function narrowVariableTypeFromSelfOutCall(Expr\Variable $var, Node $node): ?PotentialMethodMutatingCallType
+    {
+        if (! $node instanceof StatementNode) {
+            return null;
+        }
+
+        $parserNode = $node->parserNode;
+        if (! $parserNode instanceof Expression) {
+            return null;
+        }
+
+        $expr = $parserNode->expr;
+        if (! $expr instanceof Expr\MethodCall) {
+            return null;
+        }
+
+        if (! $expr->var instanceof Expr\Variable || $expr->var->name !== $var->name) {
+            return null;
+        }
+
+        if (! $expr->name instanceof Identifier) {
+            return null;
+        }
+
+        $type = $this->getTypeAt($expr, $node);
+        if (! $type instanceof MethodCallReferenceType) {
+            return null;
+        }
+
+        return new PotentialMethodMutatingCallType(
+            $type->callee,
+            $type->methodName,
+            $type->arguments,
+        );
     }
 
     public function toDot(bool $indent = false): string
