@@ -169,7 +169,7 @@ class ReferenceTypeResolver
             ? $calleeType->types
             : [$calleeType];
 
-        return Union::wrap(...array_map(function (Type $calleeType) use ($scope, $type, $arguments) {
+        return Union::wrap(array_map(function (Type $calleeType) use ($scope, $type, $arguments) {
             $classDefinition = $calleeType instanceof ObjectType
                 ? $this->index->getClass($calleeType->name)
                 : null;
@@ -299,7 +299,7 @@ class ReferenceTypeResolver
             ? $callee->types
             : [$callee];
 
-        return Union::wrap(...array_map(function (Type $callee) use ($scope, $type, $arguments) {
+        return Union::wrap(array_map(function (Type $callee) use ($scope, $type, $arguments) {
             if ($callee instanceof CallableStringType) {
                 $returnType = Context::getInstance()->extensionsBroker->getFunctionReturnType(new FunctionCallEvent(
                     name: $callee->name,
@@ -411,7 +411,7 @@ class ReferenceTypeResolver
             ? $callee->types
             : [$callee];
 
-        return Union::wrap(...array_map(function (Type $callee) use ($scope, $type, $arguments) {
+        return Union::wrap(array_map(function (Type $callee) use ($scope, $type, $arguments) {
             if (! $callee instanceof Generic) {
                 return $callee;
             }
