@@ -214,7 +214,7 @@ class NodeRulesEvaluator implements RulesEvaluator
     }
 
     /**
-     * @param array<string, mixed> $variables
+     * @param  array<string, mixed>  $variables
      */
     private function evaluateWithScopedVariables(string $code, array $variables): mixed
     {
