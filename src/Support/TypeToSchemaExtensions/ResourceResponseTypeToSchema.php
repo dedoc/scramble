@@ -163,7 +163,7 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
         }
 
         $responseParameterName = array_keys($methodDefinition->type->arguments)[1] ?? null;
-        if (! $responseParameterName) {
+        if (! is_string($responseParameterName)) {
             return $responseType;
         }
 

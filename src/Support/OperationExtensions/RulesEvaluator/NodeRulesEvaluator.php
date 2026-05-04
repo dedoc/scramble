@@ -213,6 +213,9 @@ class NodeRulesEvaluator implements RulesEvaluator
         }))->evaluateDirectly($expression);
     }
 
+    /**
+     * @param array<string, mixed> $variables
+     */
     private function evaluateWithScopedVariables(string $code, array $variables): mixed
     {
         $runner = static function ($__scramble_code, $__scramble_vars) {
@@ -223,7 +226,8 @@ class NodeRulesEvaluator implements RulesEvaluator
                 ${$newName} = $variable;
             }
 
-            $__scramble_code = Str::replace(array_keys($varsMap), array_values($varsMap), $__scramble_code);
+            /** @var string $__scramble_code */
+            $__scramble_code = Str::replace(array_keys($varsMap), array_values($varsMap), $__scramble_code); // @phpstan-ignore argument.templateType
 
             return eval("return $__scramble_code;");
         };

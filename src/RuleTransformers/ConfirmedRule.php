@@ -16,7 +16,8 @@ class ConfirmedRule implements AllRulesSchemasTransformer
 
     public function transformAll(SchemaBag $schemaBag, NormalizedRule $rule, RuleTransformerContext $context): void
     {
-        $confirmationField = $rule->parameters[0] ?? "{$context->field}_confirmation";
+        $explicitConfirmationName = $rule->parameters[0] ?? null;
+        $confirmationField = is_string($explicitConfirmationName) ? $explicitConfirmationName : "{$context->field}_confirmation";
 
         $schemaBag->set(
             $confirmationField,

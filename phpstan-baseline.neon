@@ -649,30 +649,6 @@ parameters:
 			path: src/Infer/Analyzer/MethodAnalyzer.php
 
 		-
-			message: '#^If condition is always true\.$#'
-			identifier: if.alwaysTrue
-			count: 1
-			path: src/Infer/Analyzer/MethodQuery.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\MethodQuery\:\:getTypes\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Analyzer/MethodQuery.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Infer\\Analyzer\\MethodQuery\:\:\$types type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Analyzer/MethodQuery.php
-
-		-
-			message: '#^Unsafe usage of new static\(\)\.$#'
-			identifier: new.static
-			count: 1
-			path: src/Infer/Analyzer/MethodQuery.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Context\:\:configure\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -4310,12 +4286,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: src/Support/TypeToSchemaExtensions/PaginatorTypeToSchema.php
-
-		-
-			message: '#^Parameter \#1 \$scope of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:resolve\(\) expects Dedoc\\Scramble\\Infer\\Scope\\Scope, Dedoc\\Scramble\\Infer\\Scope\\Scope\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResponseTypeToSchema\:\:shouldHandle\(\) has no return type specified\.$#'
