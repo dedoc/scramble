@@ -14,8 +14,11 @@ use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Support\Type\BooleanType;
+use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\NeverType;
@@ -300,6 +303,17 @@ class ReferenceTypeResolver
             : [$callee];
 
         return Union::wrap(array_map(function (Type $callee) use ($scope, $type, $arguments) {
+            /*
+             * String can be callable, and object with `__invoke` can be callable as well.
+             */
+            if (
+                $callee instanceof IntegerType
+                || $callee instanceof FloatType
+                || $callee instanceof BooleanType
+            ) {
+                return new NeverType;
+            }
+
             if ($callee instanceof CallableStringType) {
                 $returnType = Context::getInstance()->extensionsBroker->getFunctionReturnType(new FunctionCallEvent(
                     name: $callee->name,
