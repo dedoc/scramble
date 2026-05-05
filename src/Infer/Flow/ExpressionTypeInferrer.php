@@ -14,6 +14,7 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Support\Type\CoalesceType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\NeverType;
 use Dedoc\Scramble\Support\Type\OffsetAccessType;
@@ -76,10 +77,10 @@ class ExpressionTypeInferrer
                 $this->infer($expr->if ?? $expr->cond, $variableTypeGetter),
                 $this->infer($expr->else, $variableTypeGetter),
             ]),
-            $expr instanceof Expr\BinaryOp\Coalesce => Union::wrap([
+            $expr instanceof Expr\BinaryOp\Coalesce => new CoalesceType(
                 $this->infer($expr->left, $variableTypeGetter),
                 $this->infer($expr->right, $variableTypeGetter),
-            ]),
+            ),
             $expr instanceof Expr\Match_ => Union::wrap(array_map(
                 fn (PhpParserNode\MatchArm $arm) => $this->infer($arm->body, $variableTypeGetter),
                 $expr->arms,

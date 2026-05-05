@@ -63,7 +63,7 @@ class ReferenceTypeResolver
         );
 
         // Type finalization: removing duplicates from union, unpacking array items (inside `replace`), calling resolving extensions.
-        return $this->finalizeType($resolvedType, $originalType)->widen();
+        return $this->finalizeType($resolvedType, $originalType);
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type
@@ -137,8 +137,8 @@ class ReferenceTypeResolver
 
         $traverser = new TypeTraverser([
             new KeyedArrayUnpackingTypeVisitor,
-            new UnionNormalizingTypeVisitor,
             new LateTypeResolvingTypeVisitor,
+            new UnionNormalizingTypeVisitor,
         ]);
 
         return $traverser

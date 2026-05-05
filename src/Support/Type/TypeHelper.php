@@ -33,6 +33,37 @@ class TypeHelper
         return Union::wrap($types);
     }
 
+    public static function withoutNull(Type $type): Type
+    {
+        if ($type instanceof NullType) {
+            return new NeverType;
+        }
+
+        if (! $type instanceof Union) {
+            return $type;
+        }
+
+        $types = collect($type->types)
+            ->map(fn (Type $t) => static::withoutNull($t))
+            ->reject(fn (Type $t) => $t instanceof NeverType)
+            ->all();
+
+        return count($types) ? static::mergeTypes(...$types) : new NeverType;
+    }
+
+    public static function canContainNull(Type $type): bool
+    {
+        if ($type instanceof NullType || $type instanceof UnknownType || $type instanceof MixedType) {
+            return true;
+        }
+
+        if ($type instanceof Union) {
+            return collect($type->types)->contains(fn (Type $t) => static::canContainNull($t));
+        }
+
+        return false;
+    }
+
     public static function createTypeFromTypeNode(Node $typeNode)
     {
         if ($typeNode instanceof Node\NullableType) {
