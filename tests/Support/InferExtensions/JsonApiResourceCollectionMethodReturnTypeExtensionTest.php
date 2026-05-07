@@ -11,6 +11,12 @@ use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 
+if (! class_exists(JsonApiResource::class)) {
+    test('JSON:API resources are available')->skip('JSON:API resources are not available in this Laravel version.');
+
+    return;
+}
+
 class JsonApiResource_JsonApiResourceCollectionMethodReturnTypeExtensionTest extends JsonApiResource
 {
     public $attributes = ['name', 'email'];

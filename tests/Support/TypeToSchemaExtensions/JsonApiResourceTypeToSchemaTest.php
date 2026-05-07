@@ -12,6 +12,12 @@ use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
+if (! class_exists(JsonApiResource::class)) {
+    test('JSON:API resources are available')->skip('JSON:API resources are not available in this Laravel version.');
+
+    return;
+}
+
 beforeEach(function () {
     $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
     $this->infer = app(Infer::class);

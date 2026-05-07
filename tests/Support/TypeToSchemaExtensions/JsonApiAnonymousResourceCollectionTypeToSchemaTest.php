@@ -7,6 +7,12 @@ use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
+if (! class_exists(JsonApiResource::class)) {
+    test('JSON:API resources are available')->skip('JSON:API resources are not available in this Laravel version.');
+
+    return;
+}
+
 test('json api collection response has correct content type', function () {
     $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [JsonApiCollectionResponse_Controller::class, 'index']));
 

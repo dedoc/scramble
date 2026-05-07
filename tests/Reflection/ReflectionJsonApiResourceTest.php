@@ -9,6 +9,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
+if (! class_exists(JsonApiResource::class)) {
+    test('JSON:API resources are available')->skip('JSON:API resources are not available in this Laravel version.');
+
+    return;
+}
+
 test('returns attributes type from property', function () {
     $resource = ReflectionJsonApiResource::createForClass(ReflectionJsonApiResourceTestProperty_JsonApi::class);
 

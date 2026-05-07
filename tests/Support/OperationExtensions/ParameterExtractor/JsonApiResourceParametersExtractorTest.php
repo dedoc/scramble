@@ -8,6 +8,12 @@ use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
+if (! class_exists(JsonApiResource::class)) {
+    test('JSON:API resources are available')->skip('JSON:API resources are not available in this Laravel version.');
+
+    return;
+}
+
 test('extracts includes parameter', function () {
     $openApiDocument = generateForRoute(RouteFacade::get('/api/test', function () {
         return SamplePostResource_JsonApiResourceParametersExtractorTest::make();
