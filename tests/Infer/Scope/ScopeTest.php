@@ -31,11 +31,24 @@ it('infers expressions from a null coalescing operator', function ($code, $expec
     expect(getStatementTypeForScopeTest($code)->toString())->toBe($expectedTypeString);
 })->with([
     ['unknown() ?? 1', 'unknown|int(1)'],
-    ['(int) unknown() ?? "w"', 'int|string(w)'],
+    ['(int) unknown() ?? "w"', 'int'],
     ['1 ?? 1', 'int(1)'],
     ['unknown() ?? unknown()', 'unknown'],
-    ['unknown() ?? true ?? 1', 'unknown|boolean(true)|int(1)'],
+    ['unknown() ?? true ?? 1', 'unknown|boolean(true)'],
     ['unknown() ?? unknown() ?? unknown()', 'unknown'],
+]);
+
+it('removes null from the left side of a null coalescing operator', function ($code, $expectedTypeString) {
+    expect(analyzeFile(<<<'PHP'
+<?php
+function nullableString(): ?string {}
+function nullableInt(): ?int {}
+function alwaysNull(): null {}
+PHP)->getExpressionType($code)->toString())->toBe($expectedTypeString);
+})->with([
+    ['nullableString() ?? ""', 'string'],
+    ['nullableInt() ?? 0', 'int'],
+    ['alwaysNull() ?? "x"', 'string(x)'],
 ]);
 
 it('infers match node type', function ($code, $expectedTypeString) {

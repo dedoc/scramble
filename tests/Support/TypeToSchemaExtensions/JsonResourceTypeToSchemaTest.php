@@ -41,6 +41,36 @@ it('supports call to method', function () {
     ]);
 });
 
+it('removes null from nullable resource properties using null coalescing operator', function () {
+    $type = new Generic(JsonResourceTypeToSchemaTest_WithNullableName::class, [new UnknownType]);
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
+        JsonResourceTypeToSchema::class,
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
+
+    expect($extension->toSchema($type)->toArray())->toBe([
+        'type' => 'object',
+        'properties' => [
+            'name' => ['type' => 'string'],
+        ],
+        'required' => ['name'],
+    ]);
+});
+
+/**
+ * @property JsonResourceTypeToSchemaTest_User $resource
+ */
+class JsonResourceTypeToSchemaTest_WithNullableName extends JsonResource
+{
+    public function toArray(Request $request)
+    {
+        return [
+            'name' => (mt_rand() ? $this->name : null) ?? '',
+        ];
+    }
+}
+
 it('supports parent toArray class', function (string $className, array $expectedSchemaArray) {
     $type = new Generic($className, [new UnknownType]);
 
