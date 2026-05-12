@@ -51,6 +51,8 @@ class Generator
 
     public function __invoke(?GeneratorConfig $config = null)
     {
+        $start = microtime(true);
+
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
         $openApi = $this->makeOpenApi($config);
@@ -128,6 +130,10 @@ class Generator
             throw new InvalidArgumentException('(callable(OpenApi, OpenApiContext): void)|DocumentTransformer type for document transformer expected, received '.$openApiTransformer::class);
         }
 
+        info('stats', [
+            'peak' => round(memory_get_peak_usage()/1024/1024, 2).'mb',
+            'time' => round((microtime(true) - $start) * 1000).'ms'
+        ]);
         return $openApi->toArray();
     }
 

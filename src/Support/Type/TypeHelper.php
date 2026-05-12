@@ -18,6 +18,56 @@ class TypeHelper
 {
     public static function mergeTypes(...$types)
     {
+        $flattenedTypes = [];
+
+        foreach ($types as $type) {
+            $nestedTypes = $type instanceof Union
+                ? $type->types
+                : [$type];
+
+            foreach ($nestedTypes as $nestedType) {
+                $alreadyAdded = false;
+
+                foreach ($flattenedTypes as $existingType) {
+                    if ($nestedType->isSame($existingType)) {
+                        $alreadyAdded = true;
+
+                        break;
+                    }
+                }
+
+                if (! $alreadyAdded) {
+                    $flattenedTypes[] = $nestedType;
+                }
+            }
+        }
+
+        $hasVoidOrNever = false;
+
+        foreach ($flattenedTypes as $type) {
+            if ($type instanceof VoidType || $type instanceof NeverType) {
+                $hasVoidOrNever = true;
+
+                break;
+            }
+        }
+
+        if ($hasVoidOrNever && count($flattenedTypes) > 1) {
+            $filtered = [];
+
+            foreach ($flattenedTypes as $type) {
+                if ($type instanceof VoidType || $type instanceof NeverType) {
+                    continue;
+                }
+
+                $filtered[] = $type;
+            }
+
+            $flattenedTypes = $filtered;
+        }
+
+        return Union::wrap($flattenedTypes);
+
         $types = collect($types)
             ->flatMap(fn ($type) => $type instanceof Union ? $type->types : [$type])
             ->unique(fn (Type $type) => $type->toString())

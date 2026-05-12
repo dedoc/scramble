@@ -40,6 +40,8 @@ use function DeepCopy\deep_copy;
  */
 class TypeTransformer
 {
+    private static $cache = [];
+
     /** @var TypeToSchemaExtension[] */
     private array $typeToSchemaExtensions;
 
@@ -76,6 +78,12 @@ class TypeTransformer
 
     public function transform(Type $type): OpenApiType
     {
+        $key = $type->toString();
+
+        if (isset(static::$cache[$key])) {
+            return static::$cache[$key];
+        }
+
         $openApiType = new UnknownType;
 
         if ($type instanceof TemplateType && $type->is) {
@@ -293,7 +301,7 @@ class TypeTransformer
             $openApiType->setAttribute('line', $type->getAttribute('line'));
         }
 
-        return $openApiType;
+        return static::$cache[$key] = $openApiType;
     }
 
     private function handleUsingExtensions(Type $type): OpenApiType|Reference|null

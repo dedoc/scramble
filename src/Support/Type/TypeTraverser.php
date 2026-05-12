@@ -4,15 +4,25 @@ namespace Dedoc\Scramble\Support\Type;
 
 class TypeTraverser
 {
+    private \WeakMap $traversedTypes;
+
     /**
      * @param  TypeVisitor[]  $visitors
      */
     public function __construct(
         private array $visitors = [],
-    ) {}
+    ) {
+        $this->traversedTypes = new \WeakMap();
+    }
 
     public function traverse(Type $type): Type
     {
+        if (isset($this->traversedTypes[$type])) {
+            return $type;
+        }
+
+        $this->traversedTypes[$type] = true;
+
         $enterResult = $this->enterType($type);
 
         if ($enterResult === TypeVisitor::DONT_TRAVERSE_CURRENT_AND_CHILDREN) {
