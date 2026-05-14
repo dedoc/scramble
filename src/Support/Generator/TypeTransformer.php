@@ -40,7 +40,8 @@ use function DeepCopy\deep_copy;
  */
 class TypeTransformer
 {
-    private static $cache = [];
+    /** @var array<string, OpenApiType> */
+    private array $cache = [];
 
     /** @var TypeToSchemaExtension[] */
     private array $typeToSchemaExtensions;
@@ -78,17 +79,63 @@ class TypeTransformer
 
     public function transform(Type $type): OpenApiType
     {
-        $key = $type->toString();
-
-        if (isset(static::$cache[$key])) {
-            return static::$cache[$key];
-        }
-
-        $openApiType = new UnknownType;
-
         if ($type instanceof TemplateType && $type->is) {
             $type = $type->is;
         }
+
+        $openApiType = $this->shouldCache($type)
+            ? $this->transformCached($type)
+            : $this->transformUncached($type);
+
+        return $this->applyTypeAttributes($openApiType, $type);
+    }
+
+    private function getCacheKey(Type $type): string
+    {
+        if ($type instanceof TemplateType && $type->is) {
+            $type = $type->is;
+        }
+
+        return $type::class.'|'.$type->toString();
+    }
+
+    private function shouldCache(Type $type): bool
+    {
+        $attributesHandledAfterCache = array_flip(['docNode', 'format', 'file', 'line']);
+
+        return ! array_diff_key($type->attributes(), $attributesHandledAfterCache)
+            && ! $type instanceof ArrayItemType_
+            && ! $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
+            && ! $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
+            && ! $type instanceof Union
+            && ! $type instanceof \Dedoc\Scramble\Support\Type\IntersectionType;
+    }
+
+    private function transformCached(Type $type): OpenApiType
+    {
+        if ($type instanceof TemplateType && $type->is) {
+            $type = $type->is;
+        }
+
+        $key = $this->getCacheKey($type);
+
+        if (isset($this->cache[$key])) {
+            return $this->cache[$key]->clone();
+        }
+
+        $openApiType = $this->transformUncached($type);
+        $this->cache[$key] = $openApiType->clone();
+
+        return $openApiType;
+    }
+
+    private function transformUncached(Type $type): OpenApiType
+    {
+        if ($type instanceof TemplateType && $type->is) {
+            $type = $type->is;
+        }
+
+        $openApiType = new UnknownType;
 
         if (
             $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
@@ -140,9 +187,7 @@ class TypeTransformer
                     ->additionalProperties($this->transform($type->value));
             }
         } elseif ($type instanceof ArrayItemType_) {
-            $openApiType = $this->transform($type->value);
-
-            // @todo use PhpDocSchemaTransformer
+            $typeValue = clone $type->value;
 
             /** @var PhpDocNode|null $valueDocNode */
             $valueDocNode = $type->value->getAttribute('docNode');
@@ -156,7 +201,17 @@ class TypeTransformer
                 ]);
                 PhpDoc::addSummaryAttributes($docNode);
 
-                /** @var PhpDocNode $docNode */
+                $typeValue->setAttribute('docNode', $docNode);
+            }
+
+            $openApiType = $this->transform($typeValue);
+
+            // @todo use PhpDocSchemaTransformer
+
+            /** @var PhpDocNode|null $valueDocNode */
+            $docNode = $typeValue->getAttribute('docNode');
+
+            if ($docNode) {
                 $varNode = array_values($docNode->getVarTagValues())[0] ?? null;
 
                 $openApiType = $varNode
@@ -289,6 +344,11 @@ class TypeTransformer
             $openApiType = $typeHandledByExtension;
         }
 
+        return $openApiType;
+    }
+
+    private function applyTypeAttributes(OpenApiType $openApiType, Type $type): OpenApiType
+    {
         if ($type->hasAttribute('format')) {
             $openApiType->format($type->getAttribute('format'));
         }
@@ -301,7 +361,7 @@ class TypeTransformer
             $openApiType->setAttribute('line', $type->getAttribute('line'));
         }
 
-        return static::$cache[$key] = $openApiType;
+        return $openApiType;
     }
 
     private function handleUsingExtensions(Type $type): OpenApiType|Reference|null

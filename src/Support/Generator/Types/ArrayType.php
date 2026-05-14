@@ -26,6 +26,18 @@ class ArrayType extends Type
         $this->items = $defaultMissingType;
     }
 
+    public function clone(): static
+    {
+        $clone = parent::clone();
+        $clone->items = $clone->items->clone();
+        $clone->prefixItems = array_map(
+            fn (Type $item) => $item->clone(),
+            $clone->prefixItems,
+        );
+
+        return $clone;
+    }
+
     public function setMin($min)
     {
         $this->minItems = $min;

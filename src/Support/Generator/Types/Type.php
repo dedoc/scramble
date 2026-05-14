@@ -48,6 +48,11 @@ abstract class Type
         $this->default = new MissingValue;
     }
 
+    public function clone(): static
+    {
+        return clone $this;
+    }
+
     /**
      * @return $this
      */
