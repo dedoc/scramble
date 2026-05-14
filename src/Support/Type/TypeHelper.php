@@ -67,20 +67,6 @@ class TypeHelper
         }
 
         return Union::wrap($flattenedTypes);
-
-        $types = collect($types)
-            ->flatMap(fn ($type) => $type instanceof Union ? $type->types : [$type])
-            ->unique(fn (Type $type) => $type->toString())
-            ->pipe(function (Collection $c) {
-                if ($c->count() > 1 && $c->contains(fn ($t) => $t instanceof VoidType || $t instanceof NeverType)) {
-                    return $c->reject(fn ($t) => $t instanceof VoidType || $t instanceof NeverType);
-                }
-
-                return $c;
-            })
-            ->all();
-
-        return Union::wrap($types);
     }
 
     public static function withoutNull(Type $type): Type
