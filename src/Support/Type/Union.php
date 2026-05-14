@@ -74,7 +74,6 @@ class Union extends AbstractType
     {
         $types = Arr::wrap(...$types);
 
-
         $uniqueTypes = [];
 
         foreach (array_values($types) as $type) {
@@ -95,10 +94,10 @@ class Union extends AbstractType
 
         $types = array_values($uniqueTypes);
 
-//        $types = collect(array_values($types))
-//            ->unique(fn (Type $t) => $t->toString())
-//            ->values()
-//            ->all();
+        //        $types = collect(array_values($types))
+        //            ->unique(fn (Type $t) => $t->toString())
+        //            ->values()
+        //            ->all();
 
         if (! count($types)) {
             return new VoidType;

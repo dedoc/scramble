@@ -12,7 +12,7 @@ class TypeTraverser
     public function __construct(
         private array $visitors = [],
     ) {
-        $this->traversedTypes = new \WeakMap();
+        $this->traversedTypes = new \WeakMap;
     }
 
     public function traverse(Type $type): Type

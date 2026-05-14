@@ -131,9 +131,10 @@ class Generator
         }
 
         info('stats', [
-            'peak' => round(memory_get_peak_usage()/1024/1024, 2).'mb',
-            'time' => round((microtime(true) - $start) * 1000).'ms'
+            'peak' => round(memory_get_peak_usage() / 1024 / 1024, 2).'mb',
+            'time' => round((microtime(true) - $start) * 1000).'ms',
         ]);
+
         return $openApi->toArray();
     }
 
