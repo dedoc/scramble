@@ -622,7 +622,7 @@ class ReferenceTypeResolver
 
         $localCache = [];
         $returnType = (new TypeWalker)->map($returnType, function (Type $t) use ($templatesMap, &$localCache) {
-            return $t instanceof TemplateType ? $templatesMap->get($t->name, $t) : $t;
+            return $t instanceof TemplateType ? ($localCache[$t->name] ??= $templatesMap->get($t->name, $t)) : $t;
         });
 
         if ($returnType instanceof Generic && ($selfOutType = $callee->getSelfOutType())) {
