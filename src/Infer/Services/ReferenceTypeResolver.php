@@ -43,8 +43,6 @@ use Dedoc\Scramble\Support\Type\VoidType;
 
 class ReferenceTypeResolver
 {
-    private static array $cache = [];
-
     public function __construct(
         private Index $index,
     ) {}
@@ -56,12 +54,6 @@ class ReferenceTypeResolver
 
     public function resolve(Scope $scope, Type $type): Type
     {
-//        $key = $type->toString();
-
-//        if (isset(static::$cache[$key])) {
-//            return static::$cache[$key];
-//        }
-
         $originalType = $type;
 
         $resolvedType = RecursionGuard::run(
@@ -71,7 +63,7 @@ class ReferenceTypeResolver
         );
 
         // Type finalization: removing duplicates from union, unpacking array items (inside `replace`), calling resolving extensions.
-        return /*static::$cache[$key] = */$this->finalizeType($resolvedType, $originalType);
+        return $this->finalizeType($resolvedType, $originalType);
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type
@@ -95,7 +87,7 @@ class ReferenceTypeResolver
             return new UnknownType('self reference');
         }
 
-        return $this->resolve($scope, $resolved);
+        return $resolved;
     }
 
     private function finalizeStatic(Type $type, Type $staticType): Type
