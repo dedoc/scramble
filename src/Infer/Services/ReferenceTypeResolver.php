@@ -620,10 +620,10 @@ class ReferenceTypeResolver
             ->getFunctionContextTemplates($callee, $arguments)
             ->prepend($classContextTemplates);
 
-        $returnType = (new TypeWalker)->map(
-            $returnType,
-            fn (Type $t) => $t instanceof TemplateType ? $templatesMap->get($t->name, $t) : $t,
-        );
+        $localCache = [];
+        $returnType = (new TypeWalker)->map($returnType, function (Type $t) use ($templatesMap, &$localCache) {
+            return $t instanceof TemplateType ? $templatesMap->get($t->name, $t) : $t;
+        });
 
         if ($returnType instanceof Generic && ($selfOutType = $callee->getSelfOutType())) {
             $returnType->templateTypes = $this->applySelfOutType(
