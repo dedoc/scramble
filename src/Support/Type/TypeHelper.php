@@ -7,7 +7,6 @@ use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
-use Illuminate\Support\Collection;
 use PhpParser\Node;
 use PhpParser\PrettyPrinter\Standard;
 use ReflectionNamedType;
