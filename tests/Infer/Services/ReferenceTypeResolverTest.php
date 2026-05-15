@@ -254,6 +254,11 @@ it('allows overriding types accepted by another type', function () {
 
     $def = new FunctionLikeDefinition($functionType);
 
+    FunctionLikeAstDefinitionBuilder::resolveFunctionParameterDefaults(
+        new GlobalScope,
+        $def,
+    );
+
     FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences(
         new GlobalScope,
         $def,
