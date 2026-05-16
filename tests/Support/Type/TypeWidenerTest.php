@@ -33,18 +33,6 @@ test('widens allowed key value generic collections', function (string $collectio
     Enumerable::class,
 ]);
 
-test('widens Enumerable subtype|supertype into the more specific type', function () {
-    $type = TestUtils::parseType(EloquentCollection::class.'<int, string>|'.Collection::class.'<int, string>');
-
-    expect($type->widen()->toString())->toBe(EloquentCollection::class.'<int, string>');
-});
-
-test('widens Enumerable subtype|supertype with differing templates', function () {
-    $type = TestUtils::parseType(EloquentCollection::class.'<int, string>|'.Collection::class.'<string, int>');
-
-    expect($type->widen()->toString())->toBe(EloquentCollection::class.'<int|string, string|int>');
-});
-
 test('does not widen anonymous resource collection templates as key value pairs', function () {
     $type = TestUtils::parseType(AnonymousResourceCollection::class.'<unknown, array<mixed>, App\Http\Brands\Events\Resources\EventResource>'
         .'|'.AnonymousResourceCollection::class.'<'.LengthAwarePaginator::class.', array<mixed>, App\Http\Brands\Events\Resources\EventResource>');

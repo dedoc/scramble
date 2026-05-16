@@ -293,6 +293,12 @@ it('handles eloquent collection map call without union proliferation', function 
     expect($type->toString())->toBe('Illuminate\Database\Eloquent\Collection<int|string, int(1)>');
 });
 
+it('handles eloquent collection mapWithKeys call without union proliferation', function () {
+    $type = getStatementType('(new '.EloquentCollection::class.'())->mapWithKeys(fn () => ["foo" => 1])');
+
+    expect($type->toString())->toBe('Illuminate\Database\Eloquent\Collection<string(foo), int(1)>');
+});
+
 it('handles collection empty construct call', function () {
     $type = getStatementType('(new '.Collection::class.'([]))');
 
