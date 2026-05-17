@@ -276,6 +276,71 @@ class JsonResourceTypeToSchemaTest_WithDefault extends JsonResource
     }
 }
 
+it('keeps collection union properties required while flattening nested missing values', function () {
+    $type = new Generic(JsonResourceTypeToSchemaTest_WithCollectionUnionMissingValue::class, [new UnknownType]);
+
+    $extension = new JsonResourceTypeToSchema($this->infer, $this->transformer, $this->context->openApi->components, $this->context);
+
+    expect($extension->toSchema($type)->toArray())->toEqual([
+        'type' => 'object',
+        'properties' => [
+            'planned_matches' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'event' => [
+                            'type' => 'array',
+                            'items' => (object) [],
+                        ],
+                    ],
+                ],
+            ],
+            'eloquent_planned_matches' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'event' => [
+                            'type' => 'array',
+                            'items' => (object) [],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        'required' => ['planned_matches', 'eloquent_planned_matches'],
+    ]);
+});
+class JsonResourceTypeToSchemaTest_WithCollectionUnionMissingValue extends JsonResource
+{
+    public function toArray(Request $request)
+    {
+        return [
+            'planned_matches' => unknown()
+                ? $this->supportPlannedMatches()
+                : $this->eloquentPlannedMatches(),
+            'eloquent_planned_matches' => $this->eloquentPlannedMatches(),
+        ];
+    }
+
+    /**
+     * @scramble-return \Illuminate\Support\Collection<int, array{event: array<mixed>|\Illuminate\Http\Resources\MissingValue}>
+     */
+    private function supportPlannedMatches()
+    {
+        return new \Illuminate\Support\Collection;
+    }
+
+    /**
+     * @scramble-return \Illuminate\Database\Eloquent\Collection<int, array{event: array<mixed>|\Illuminate\Http\Resources\MissingValue}>
+     */
+    private function eloquentPlannedMatches()
+    {
+        return new \Illuminate\Database\Eloquent\Collection;
+    }
+}
+
 it('handles additional data with custom status code', function () {
     $openApiDocument = generateForRoute(function () {
         return Route::get('api/test', [JsonResourceTypeToSchemaTest_AdditionalController::class, 'index']);
