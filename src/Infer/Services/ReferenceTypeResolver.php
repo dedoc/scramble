@@ -87,7 +87,7 @@ class ReferenceTypeResolver
             return new UnknownType('self reference');
         }
 
-        return $resolved;
+        return $resolved->clone();
     }
 
     private function finalizeStatic(Type $type, Type $staticType): Type
