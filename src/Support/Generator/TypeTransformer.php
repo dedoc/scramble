@@ -120,13 +120,55 @@ class TypeTransformer
         $key = $this->getCacheKey($type);
 
         if (isset($this->cache[$key])) {
-            return $this->cache[$key]->clone();
+            $openApiType = $this->cache[$key]->clone();
+            $this->registerReferences($openApiType);
+
+            return $openApiType;
         }
 
         $openApiType = $this->transformUncached($type);
         $this->cache[$key] = $openApiType->clone();
 
         return $openApiType;
+    }
+
+    private function registerReferences(OpenApiType $type): void
+    {
+        if ($type instanceof Reference) {
+            $this->context->references->schemas->add($type->fullName, $type);
+
+            return;
+        }
+
+        if ($type instanceof ArrayType) {
+            $this->registerReferences($type->items);
+
+            foreach ($type->prefixItems as $item) {
+                $this->registerReferences($item);
+            }
+
+            return;
+        }
+
+        if ($type instanceof ObjectType) {
+            foreach ($type->properties as $property) {
+                if ($property) {
+                    $this->registerReferences($property);
+                }
+            }
+
+            if ($type->additionalProperties) {
+                $this->registerReferences($type->additionalProperties);
+            }
+
+            return;
+        }
+
+        if ($type instanceof AnyOf || $type instanceof AllOf) {
+            foreach ($type->items as $item) {
+                $this->registerReferences($item);
+            }
+        }
     }
 
     private function transformUncached(Type $type): OpenApiType
