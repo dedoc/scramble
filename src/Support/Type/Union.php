@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+
 use Illuminate\Support\Arr;
 
 class Union extends AbstractType
@@ -92,15 +93,15 @@ class Union extends AbstractType
             }
         }
 
-        if (! count($types)) {
+        if (! count($uniqueTypes)) {
             return new VoidType;
         }
 
-        if (count($types) === 1) {
-            return $types[0];
+        if (count($uniqueTypes) === 1) {
+            return $uniqueTypes[0];
         }
 
-        return new self($types);
+        return new self($uniqueTypes);
     }
 
     public function toString(): string
