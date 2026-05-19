@@ -614,7 +614,7 @@ class ReferenceTypeResolver
 
         $returnType = (new TypeWalker)->map(
             $returnType,
-            fn (Type $t) => $t instanceof TemplateType ? $templatesMap->get($t->name, $t) : $t
+            fn (Type $t) => $t instanceof TemplateType ? $templatesMap->get($t->name, $t) : $t,
         );
 
         if ($returnType instanceof Generic && ($selfOutType = $callee->getSelfOutType())) {
