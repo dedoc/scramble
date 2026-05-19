@@ -7,7 +7,6 @@ use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
-use Illuminate\Support\Collection;
 use PhpParser\Node;
 use PhpParser\PrettyPrinter\Standard;
 use ReflectionNamedType;
@@ -18,19 +17,55 @@ class TypeHelper
 {
     public static function mergeTypes(...$types)
     {
-        $types = collect($types)
-            ->flatMap(fn ($type) => $type instanceof Union ? $type->types : [$type])
-            ->unique(fn (Type $type) => $type->toString())
-            ->pipe(function (Collection $c) {
-                if ($c->count() > 1 && $c->contains(fn ($t) => $t instanceof VoidType || $t instanceof NeverType)) {
-                    return $c->reject(fn ($t) => $t instanceof VoidType || $t instanceof NeverType);
+        $flattenedTypes = [];
+
+        foreach ($types as $type) {
+            $nestedTypes = $type instanceof Union
+                ? $type->types
+                : [$type];
+
+            foreach ($nestedTypes as $nestedType) {
+                $alreadyAdded = false;
+
+                foreach ($flattenedTypes as $existingType) {
+                    if ($nestedType->isSame($existingType)) {
+                        $alreadyAdded = true;
+
+                        break;
+                    }
                 }
 
-                return $c;
-            })
-            ->all();
+                if (! $alreadyAdded) {
+                    $flattenedTypes[] = $nestedType;
+                }
+            }
+        }
 
-        return Union::wrap($types);
+        $hasVoidOrNever = false;
+
+        foreach ($flattenedTypes as $type) {
+            if ($type instanceof VoidType || $type instanceof NeverType) {
+                $hasVoidOrNever = true;
+
+                break;
+            }
+        }
+
+        if ($hasVoidOrNever && count($flattenedTypes) > 1) {
+            $filtered = [];
+
+            foreach ($flattenedTypes as $type) {
+                if ($type instanceof VoidType || $type instanceof NeverType) {
+                    continue;
+                }
+
+                $filtered[] = $type;
+            }
+
+            $flattenedTypes = $filtered;
+        }
+
+        return Union::wrap($flattenedTypes);
     }
 
     public static function withoutNull(Type $type): Type

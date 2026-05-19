@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\Type\Literal;
 
 use Dedoc\Scramble\Support\Type\Contracts\LiteralType;
 use Dedoc\Scramble\Support\Type\FloatType;
+use Dedoc\Scramble\Support\Type\Type;
 
 class LiteralFloatType extends FloatType implements LiteralType
 {
@@ -17,6 +18,11 @@ class LiteralFloatType extends FloatType implements LiteralType
     public function getValue(): float
     {
         return $this->value;
+    }
+
+    public function isSame(Type $type)
+    {
+        return $type instanceof static && $type->value === $this->value;
     }
 
     public function toString(): string

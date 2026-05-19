@@ -295,6 +295,8 @@ class ClassDefinition implements ClassDefinitionContract
                 ),
             );
 
+            FunctionLikeAstDefinitionBuilder::resolveFunctionParameterDefaults($methodScope, $this->methods[$name]);
+
             FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences($methodScope, $this->methods[$name]);
 
             FunctionLikeAstDefinitionBuilder::resolveFunctionExceptions($methodScope, $this->methods[$name]);

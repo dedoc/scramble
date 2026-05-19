@@ -87,7 +87,7 @@ class ReferenceTypeResolver
             return new UnknownType('self reference');
         }
 
-        return $this->resolve($scope, $resolved);
+        return $resolved;
     }
 
     private function finalizeStatic(Type $type, Type $staticType): Type

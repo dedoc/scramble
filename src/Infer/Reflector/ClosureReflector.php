@@ -158,6 +158,7 @@ class ClosureReflector
             throw new \LogicException('Cannot get scope of closure');
         }
 
+        Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder::resolveFunctionParameterDefaults($scope, $closureDefinition);
         Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences($scope, $closureDefinition);
         Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder::resolveFunctionExceptions($scope, $closureDefinition);
 
