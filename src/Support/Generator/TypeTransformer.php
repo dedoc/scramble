@@ -250,7 +250,7 @@ class TypeTransformer
 
             // @todo use PhpDocSchemaTransformer
 
-            /** @var PhpDocNode|null $valueDocNode */
+            /** @var PhpDocNode|null $docNode */
             $docNode = $typeValue->getAttribute('docNode');
 
             if ($docNode) {

@@ -92,8 +92,6 @@ class Union extends AbstractType
             }
         }
 
-        $types = array_values($uniqueTypes);
-
         if (! count($types)) {
             return new VoidType;
         }

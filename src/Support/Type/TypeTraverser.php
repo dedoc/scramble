@@ -2,9 +2,12 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+use WeakMap;
+
 class TypeTraverser
 {
-    private \WeakMap $traversedTypes;
+    /** @var WeakMap<Type, true> */
+    private WeakMap $traversedTypes;
 
     /**
      * @param  TypeVisitor[]  $visitors
@@ -12,7 +15,7 @@ class TypeTraverser
     public function __construct(
         private array $visitors = [],
     ) {
-        $this->traversedTypes = new \WeakMap;
+        $this->traversedTypes = new WeakMap;
     }
 
     public function traverse(Type $type): Type
