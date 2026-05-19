@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
-
 use Illuminate\Support\Arr;
 
 class Union extends AbstractType
