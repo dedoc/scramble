@@ -6,26 +6,26 @@ use Dedoc\Scramble\Infer\AutoResolvingArgumentTypeBag;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\SchemaClassDocReflector;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
-use Illuminate\Database\DatabaseManager;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Facade;
 
 class FacadeStaticMethodReturnTypeExtension implements StaticMethodReturnTypeExtension
 {
-    public const FACADE_ROOT_OBJECTS = [
-        DB::class => DatabaseManager::class,
-    ];
+    /** @var array<string, string|null> */
+    private static array $rootClassCache = [];
 
     public function shouldHandle(string $name): bool
     {
-        return array_key_exists($name, self::FACADE_ROOT_OBJECTS);
+        return is_a($name, Facade::class, true)
+            && $this->getRootClass($name) !== null;
     }
 
     public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
     {
-        $rootClass = self::FACADE_ROOT_OBJECTS[$event->getCallee()] ?? null;
+        $rootClass = $this->getRootClass($event->getCallee());
 
         if (! $rootClass) {
             return null;
@@ -41,5 +41,26 @@ class FacadeStaticMethodReturnTypeExtension implements StaticMethodReturnTypeExt
                     : $event->arguments->all(),
             ),
         );
+    }
+
+    private function getRootClass(string $facadeClass): ?string
+    {
+        if (array_key_exists($facadeClass, self::$rootClassCache)) {
+            return self::$rootClassCache[$facadeClass];
+        }
+
+        return self::$rootClassCache[$facadeClass] = $this->getFreshRootClass($facadeClass);
+    }
+
+    private function getFreshRootClass(string $facadeClass): ?string
+    {
+        $seeTag = SchemaClassDocReflector::createFromClassName($facadeClass)->getTagValue('@see');
+        $rootClass = ltrim(explode("\n", $seeTag?->value ?? '')[0], '\\');
+
+        if (! $rootClass) {
+            return null;
+        }
+
+        return class_exists($rootClass) ? $rootClass : null;
     }
 }
