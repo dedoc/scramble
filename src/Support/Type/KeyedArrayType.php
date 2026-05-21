@@ -84,6 +84,20 @@ class KeyedArrayType extends AbstractType
             return $default;
         }
 
+        if ($this->isList && is_int($offsetValue)) {
+            $position = 0;
+            foreach ($this->items as $item) {
+                if ($item->isNumericKey()) {
+                    if ($position === $offsetValue) {
+                        return $item->value->mergeAttributes($item->attributes());
+                    }
+                    $position++;
+                }
+            }
+
+            return $default;
+        }
+
         foreach ($this->items as $item) {
             if ($item->key === $offsetValue) {
                 return $item->value->mergeAttributes($item->attributes());
