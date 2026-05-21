@@ -35,6 +35,7 @@ use Dedoc\Scramble\Support\InferExtensions\AfterJsonResourceDefinitionCreatedExt
 use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResponseDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
+use Dedoc\Scramble\Support\InferExtensions\FacadeStaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TranslationReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\EloquentBuilderExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceCollectionMethodReturnTypeExtension;
@@ -175,6 +176,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                         new AbortHelpersExceptionInfer,
 
                         new PaginateMethodsReturnTypeExtension,
+                        new FacadeStaticMethodReturnTypeExtension,
 
                         new ValidatorTypeInfer,
                         new ResourceCollectionTypeInfer,
