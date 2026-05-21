@@ -35,6 +35,7 @@ use Dedoc\Scramble\Support\InferExtensions\AfterJsonResourceDefinitionCreatedExt
 use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResponseDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
+use Dedoc\Scramble\Support\InferExtensions\TranslationReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\EloquentBuilderExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceCollectionMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceMethodReturnTypeExtension;
@@ -180,6 +181,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                         new ResponseFactoryTypeInfer,
 
                         new ArrayMergeReturnTypeExtension,
+                        new TranslationReturnTypeExtension,
 
                         /* Keep this extension last, so the trace info is preserved. */
                         new TypeTraceInfer,
