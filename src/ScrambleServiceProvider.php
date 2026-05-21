@@ -35,9 +35,8 @@ use Dedoc\Scramble\Support\InferExtensions\AfterJsonResourceDefinitionCreatedExt
 use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResponseDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
-use Dedoc\Scramble\Support\InferExtensions\FacadeStaticMethodReturnTypeExtension;
-use Dedoc\Scramble\Support\InferExtensions\TranslationReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\EloquentBuilderExtension;
+use Dedoc\Scramble\Support\InferExtensions\FacadeStaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceCollectionMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
@@ -51,6 +50,7 @@ use Dedoc\Scramble\Support\InferExtensions\ResourceResponseMethodReturnTypeExten
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ShallowFunctionDefinition;
 use Dedoc\Scramble\Support\InferExtensions\TransformsToResourceCollectionExtension;
+use Dedoc\Scramble\Support\InferExtensions\TranslationReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\Type\FunctionType;
