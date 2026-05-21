@@ -6,6 +6,19 @@ return [
     /*
      * Your API path. By default, all routes starting with this path will be added to the docs.
      * If you need to change this behavior, you can add your custom routes resolver using `Scramble::routes()`.
+     *
+     * You can also use an array with `include` and `exclude` keys to filter routes more precisely:
+     *
+     * 'api_path' => [
+     *     'include' => 'api', // string|string[]; defaults to 'api'
+     *     'exclude' => ['api/internal'], // string|string[]
+     * ],
+     *
+     * Patterns without wildcards match as prefixes (api matches api/users).
+     * Patterns with * or ? use Laravel-style wildcard matching (api/v*, api/.../internal).
+     *
+     * When multiple `include` prefixes or wildcard includes are used, the default OpenAPI server URL
+     * becomes `/` and route paths are kept in full. Override with the `servers` config if needed.
      */
     'api_path' => 'api',
 
