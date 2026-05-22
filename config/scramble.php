@@ -4,8 +4,19 @@ use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 
 return [
     /*
-     * Your API path. By default, all routes starting with this path will be added to the docs.
-     * If you need to change this behavior, you can add your custom routes resolver using `Scramble::routes()`.
+     * Which routes to document. String or array form; use Scramble::routes() for custom selection.
+     *
+     * 'api_path' => [
+     *     'include' => 'api',
+     *     'exclude' => ['api/internal'],
+     * ],
+     *
+     * Without *, patterns match path segments (api matches api and api/users, not apiary).
+     * With *, Str::is is used (e.g. api/v*).
+     *
+     * One static include → default server is /{include} and paths are stripped (/users).
+     * Multiple includes or wildcards → server defaults to / and paths stay full (/api/users).
+     * Override with `servers`, or use Scramble::registerApi() for separate bases.
      */
     'api_path' => 'api',
 

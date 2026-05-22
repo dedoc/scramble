@@ -94,9 +94,7 @@ class Generator
             ->sortBy($this->createOperationsSorter())
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
-                    (string) Str::of($operation->path)
-                        ->replaceStart($config->get('api_path', 'api'), '')
-                        ->trim('/')
+                    $config->apiPath()->stripPrefix($operation->path)
                 )->addOperation($operation)
             ))
             ->toArray();
@@ -156,8 +154,8 @@ class Generator
         [$defaultProtocol] = explode('://', url('/'));
         $servers = $config->get('servers') ?: [
             '' => ($domain = $config->get('api_domain'))
-                ? $defaultProtocol.'://'.$domain.'/'.$config->get('api_path', 'api')
-                : $config->get('api_path', 'api'),
+                ? $defaultProtocol.'://'.$domain.'/'.$config->apiPath()->serverPath()
+                : $config->apiPath()->serverPath(),
         ];
         foreach ($servers as $description => $url) {
             $openApi->addServer(

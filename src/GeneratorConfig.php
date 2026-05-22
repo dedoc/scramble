@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble;
 
 use Closure;
+use Dedoc\Scramble\Configuration\ApiPath;
 use Dedoc\Scramble\Configuration\DocumentTransformers;
 use Dedoc\Scramble\Configuration\JsonApiConfig;
 use Dedoc\Scramble\Configuration\OperationTransformers;
@@ -16,7 +17,6 @@ use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use ReflectionFunction;
 use ReflectionNamedType;
 
@@ -47,6 +47,7 @@ class GeneratorConfig
         public readonly ServerVariables $serverVariables = new ServerVariables,
         ?Closure $operationMethodsResolver = null,
         public JsonApiConfig $jsonApi = new JsonApiConfig,
+        private ?ApiPath $resolvedApiPath = null,
     ) {
         $this->operationMethodsResolver = $operationMethodsResolver ?: fn (Route $r) => $r->methods()[0];
     }
@@ -54,6 +55,7 @@ class GeneratorConfig
     public function config(array $config)
     {
         $this->config = $config;
+        $this->resolvedApiPath = null;
 
         return $this;
     }
@@ -94,10 +96,13 @@ class GeneratorConfig
     {
         $expectedDomain = $this->get('api_domain');
 
-        $isBaseMatching = ! ($prefix = $this->get('api_path', 'api')) || Str::startsWith($route->uri, $prefix);
-
-        return $isBaseMatching
+        return $this->apiPath()->matches($route->uri)
             && (! $expectedDomain || $route->getDomain() === $expectedDomain);
+    }
+
+    public function apiPath(): ApiPath
+    {
+        return $this->resolvedApiPath ??= ApiPath::from($this->get('api_path'), 'api');
     }
 
     public function afterOpenApiGenerated(?callable $afterOpenApiGenerated = null)
@@ -116,6 +121,7 @@ class GeneratorConfig
     public function useConfig(array $config): static
     {
         $this->config = $config;
+        $this->resolvedApiPath = null;
 
         return $this;
     }

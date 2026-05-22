@@ -119,7 +119,7 @@ class RequestEssentialsExtension extends OperationExtension
 
         [$protocol] = explode('://', url('/'));
         $expectedServer = (new ServerFactory($this->config->serverVariables->all()))
-            ->make($protocol.'://'.$route->getDomain().'/'.$this->config->get('api_path', 'api'));
+            ->make($protocol.'://'.$route->getDomain().'/'.$this->config->apiPath()->serverPath());
 
         if ($this->isServerMatchesAllGivenServers($expectedServer, $this->openApi->servers)) {
             return [];
