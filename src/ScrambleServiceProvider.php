@@ -36,6 +36,7 @@ use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCrea
 use Dedoc\Scramble\Support\InferExtensions\AfterResponseDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\EloquentBuilderExtension;
+use Dedoc\Scramble\Support\InferExtensions\FacadeStaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceCollectionMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
@@ -49,6 +50,7 @@ use Dedoc\Scramble\Support\InferExtensions\ResourceResponseMethodReturnTypeExten
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ShallowFunctionDefinition;
 use Dedoc\Scramble\Support\InferExtensions\TransformsToResourceCollectionExtension;
+use Dedoc\Scramble\Support\InferExtensions\TranslationReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\Type\FunctionType;
@@ -142,7 +144,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
         $this->app->when(ExtensionsBroker::class)
             ->needs('$extensions')
-            ->give(function () {
+            ->give(function ($app) {
                 $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
 
                 $inferExtensionsClasses = array_values(array_filter(
@@ -174,12 +176,14 @@ class ScrambleServiceProvider extends PackageServiceProvider
                         new AbortHelpersExceptionInfer,
 
                         new PaginateMethodsReturnTypeExtension,
+                        new FacadeStaticMethodReturnTypeExtension,
 
                         new ValidatorTypeInfer,
                         new ResourceCollectionTypeInfer,
                         new ResponseFactoryTypeInfer,
 
                         new ArrayMergeReturnTypeExtension,
+                        $app->make(TranslationReturnTypeExtension::class),
 
                         /* Keep this extension last, so the trace info is preserved. */
                         new TypeTraceInfer,
