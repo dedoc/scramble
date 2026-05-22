@@ -6,7 +6,7 @@ it('infers __ type from string literal by running translation', function () {
     app('translator')->addLines(['messages.success' => 'Success!'], 'en');
 
     $type = getStatementType("__('messages.success')", [
-        new TranslationReturnTypeExtension,
+        app(TranslationReturnTypeExtension::class),
     ]);
 
     expect($type->toString())->toBe('string(Success!)');
@@ -14,7 +14,7 @@ it('infers __ type from string literal by running translation', function () {
 
 it('returns key as literal when translation is missing', function () {
     $type = getStatementType("__('missing.key')", [
-        new TranslationReturnTypeExtension,
+        app(TranslationReturnTypeExtension::class),
     ]);
 
     expect($type->toString())->toBe('string(missing.key)');
@@ -22,7 +22,7 @@ it('returns key as literal when translation is missing', function () {
 
 it('infers __ type as string when replace array is passed', function () {
     $type = getStatementType("__('Hello :name', ['name' => 'John'])", [
-        new TranslationReturnTypeExtension,
+        app(TranslationReturnTypeExtension::class),
     ]);
 
     expect($type->toString())->toBe('string');
@@ -30,7 +30,7 @@ it('infers __ type as string when replace array is passed', function () {
 
 it('passes through non-literal single argument type', function () {
     $type = getStatementType("__(['foo' => 'bar'])", [
-        new TranslationReturnTypeExtension,
+        app(TranslationReturnTypeExtension::class),
     ]);
 
     expect($type->toString())->toBe('array{foo: string(bar)}');

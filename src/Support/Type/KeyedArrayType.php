@@ -85,17 +85,11 @@ class KeyedArrayType extends AbstractType
         }
 
         if ($this->isList && is_int($offsetValue)) {
-            $position = 0;
-            foreach ($this->items as $item) {
-                if ($item->isNumericKey()) {
-                    if ($position === $offsetValue) {
-                        return $item->value->mergeAttributes($item->attributes());
-                    }
-                    $position++;
-                }
-            }
+            $item = $this->getListItemAt($offsetValue);
 
-            return $default;
+            return $item
+                ? $item->value->mergeAttributes($item->attributes())
+                : $default;
         }
 
         foreach ($this->items as $item) {
@@ -111,28 +105,49 @@ class KeyedArrayType extends AbstractType
     {
         $name = $this->isList ? 'list' : 'array';
 
-        $numIndex = 0;
-
         return sprintf(
             '%s{%s}',
             $name,
-            implode(', ', array_map(function (ArrayItemType_ $item) use (&$numIndex) {
-                $str = $this->isList ? sprintf(
-                    '%s',
-                    $item->value->toString()
-                ) : sprintf(
+            implode(', ', array_map(function (ArrayItemType_ $item) {
+                if ($this->isList) {
+                    return $item->value->toString();
+                }
+
+                return sprintf(
                     '%s%s: %s',
-                    $item->isNumericKey() ? $numIndex : $item->key,
+                    $item->isNumericKey() ? $this->indexOfNumericKeyItem($item) : $item->key,
                     $item->isOptional ? '?' : '',
                     $item->value->toString()
                 );
-
-                if ($item->isNumericKey()) {
-                    $numIndex++;
-                }
-
-                return $str;
             }, $this->items))
         );
+    }
+
+    private function getListItemAt(int $position): ?ArrayItemType_
+    {
+        $current = 0;
+
+        foreach ($this->items as $item) {
+            if ($item->isNumericKey()) {
+                if ($current === $position) {
+                    return $item;
+                }
+
+                $current++;
+            }
+        }
+
+        return null;
+    }
+
+    private function indexOfNumericKeyItem(ArrayItemType_ $search): int
+    {
+        for ($position = 0; $item = $this->getListItemAt($position); $position++) {
+            if ($item === $search) {
+                return $position;
+            }
+        }
+
+        return 0;
     }
 }

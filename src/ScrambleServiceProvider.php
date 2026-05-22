@@ -144,7 +144,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
         $this->app->when(ExtensionsBroker::class)
             ->needs('$extensions')
-            ->give(function () {
+            ->give(function ($app) {
                 $extensions = array_merge(config('scramble.extensions', []), Scramble::$extensions);
 
                 $inferExtensionsClasses = array_values(array_filter(
@@ -183,7 +183,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                         new ResponseFactoryTypeInfer,
 
                         new ArrayMergeReturnTypeExtension,
-                        new TranslationReturnTypeExtension,
+                        $app->make(TranslationReturnTypeExtension::class),
 
                         /* Keep this extension last, so the trace info is preserved. */
                         new TypeTraceInfer,
