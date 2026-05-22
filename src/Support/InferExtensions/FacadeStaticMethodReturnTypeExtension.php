@@ -19,8 +19,7 @@ class FacadeStaticMethodReturnTypeExtension implements StaticMethodReturnTypeExt
 
     public function shouldHandle(string $name): bool
     {
-        return is_a($name, Facade::class, true)
-            && $this->getRootClass($name) !== null;
+        return is_a($name, Facade::class, true);
     }
 
     public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
