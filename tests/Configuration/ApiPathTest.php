@@ -6,6 +6,8 @@ it('matches routes with string prefix', function () {
     $apiPath = ApiPath::from('api');
 
     expect($apiPath->matches('api/users'))->toBeTrue()
+        ->and($apiPath->matches('api'))->toBeTrue()
+        ->and($apiPath->matches('apiary/users'))->toBeFalse()
         ->and($apiPath->matches('second-api/users'))->toBeFalse();
 });
 
@@ -24,6 +26,7 @@ it('matches routes with include and exclude', function () {
 
     expect($apiPath->matches('api/users'))->toBeTrue()
         ->and($apiPath->matches('api/internal/secret'))->toBeFalse()
+        ->and($apiPath->matches('api/internalfoo'))->toBeTrue()
         ->and($apiPath->matches('second-api/users'))->toBeFalse();
 });
 
@@ -137,15 +140,6 @@ it('matches routes with wildcard exclude pattern', function () {
     expect($apiPath->matches('api/users'))->toBeTrue()
         ->and($apiPath->matches('api/internal/secret'))->toBeFalse()
         ->and($apiPath->matches('api/internalfoo'))->toBeTrue();
-});
-
-it('matches routes with single character wildcard', function () {
-    $apiPath = ApiPath::from([
-        'include' => 'api/v?/*',
-    ]);
-
-    expect($apiPath->matches('api/v1/users'))->toBeTrue()
-        ->and($apiPath->matches('api/v10/users'))->toBeFalse();
 });
 
 it('does not strip prefix or set server path for wildcard include', function () {

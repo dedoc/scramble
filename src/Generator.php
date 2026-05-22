@@ -5,7 +5,6 @@ namespace Dedoc\Scramble;
 use Closure;
 use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
-use Dedoc\Scramble\Configuration\ApiPath;
 use Dedoc\Scramble\Contracts\DocumentTransformer;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\OpenApiVisitor\SchemaEnforceVisitor;
@@ -53,9 +52,8 @@ class Generator
     public function __invoke(?GeneratorConfig $config = null)
     {
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
-        $apiPath = $config->apiPath();
 
-        $openApi = $this->makeOpenApi($config, $apiPath);
+        $openApi = $this->makeOpenApi($config);
         $context = new OpenApiContext($openApi, $config);
         $typeTransformer = $this->buildTypeTransformer($context);
 
@@ -96,7 +94,7 @@ class Generator
             ->sortBy($this->createOperationsSorter())
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
-                    $apiPath->stripPrefix($operation->path)
+                    $config->apiPath()->stripPrefix($operation->path)
                 )->addOperation($operation)
             ))
             ->toArray();
@@ -143,7 +141,7 @@ class Generator
         ];
     }
 
-    private function makeOpenApi(GeneratorConfig $config, ApiPath $apiPath)
+    private function makeOpenApi(GeneratorConfig $config)
     {
         $openApi = OpenApi::make('3.1.0')
             ->setComponents(new Components)
@@ -156,8 +154,8 @@ class Generator
         [$defaultProtocol] = explode('://', url('/'));
         $servers = $config->get('servers') ?: [
             '' => ($domain = $config->get('api_domain'))
-                ? $defaultProtocol.'://'.$domain.'/'.$apiPath->serverPath()
-                : $apiPath->serverPath(),
+                ? $defaultProtocol.'://'.$domain.'/'.$config->apiPath()->serverPath()
+                : $config->apiPath()->serverPath(),
         ];
         foreach ($servers as $description => $url) {
             $openApi->addServer(

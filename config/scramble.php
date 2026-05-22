@@ -4,21 +4,19 @@ use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 
 return [
     /*
-     * Your API path. By default, all routes starting with this path will be added to the docs.
-     * If you need to change this behavior, you can add your custom routes resolver using `Scramble::routes()`.
-     *
-     * You can also use an array with `include` and `exclude` keys to filter routes more precisely:
+     * Which routes to document. String or array form; use Scramble::routes() for custom selection.
      *
      * 'api_path' => [
-     *     'include' => 'api', // string|string[]; defaults to 'api'
-     *     'exclude' => ['api/internal'], // string|string[]
+     *     'include' => 'api',
+     *     'exclude' => ['api/internal'],
      * ],
      *
-     * Patterns without wildcards match as prefixes (api matches api/users).
-     * Patterns with * or ? use Laravel-style wildcard matching (api/v*, api/.../internal).
+     * Without *, patterns match path segments (api matches api and api/users, not apiary).
+     * With *, Str::is is used (e.g. api/v*).
      *
-     * When multiple `include` prefixes or wildcard includes are used, the default OpenAPI server URL
-     * becomes `/` and route paths are kept in full. Override with the `servers` config if needed.
+     * One static include → default server is /{include} and paths are stripped (/users).
+     * Multiple includes or wildcards → server defaults to / and paths stay full (/api/users).
+     * Override with `servers`, or use Scramble::registerApi() for separate bases.
      */
     'api_path' => 'api',
 

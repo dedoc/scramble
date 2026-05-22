@@ -22,45 +22,20 @@ class ApiPath
      */
     public static function from(mixed $config, string $default = 'api'): self
     {
-        if ($config === null) {
-            return self::fromParsed(
-                self::normalizePrefixes($default),
-                [],
-            );
+        if ($config === null || is_string($config)) {
+            return new self(self::normalizePrefixes($config ?? $default), []);
         }
 
-        if (is_string($config)) {
-            return self::fromParsed(
-                self::normalizePrefixes($config),
-                [],
-            );
-        }
-
-        if (is_array($config)) {
-            if (array_key_exists('include', $config) || array_key_exists('exclude', $config)) {
-                return self::fromParsed(
-                    self::normalizePrefixes($config['include'] ?? $default),
-                    self::normalizePrefixes($config['exclude'] ?? []),
-                );
-            }
-
-            throw new InvalidArgumentException(
-                'Invalid scramble.api_path config. Expected a string or an array with `include` and/or `exclude` keys.'
+        if (is_array($config) && (array_key_exists('include', $config) || array_key_exists('exclude', $config))) {
+            return new self(
+                self::normalizePrefixes($config['include'] ?? $default),
+                self::normalizePrefixes($config['exclude'] ?? []),
             );
         }
 
         throw new InvalidArgumentException(
             'Invalid scramble.api_path config. Expected a string or an array with `include` and/or `exclude` keys.'
         );
-    }
-
-    /**
-     * @param  list<string>  $includes
-     * @param  list<string>  $excludes
-     */
-    private static function fromParsed(array $includes, array $excludes): self
-    {
-        return new self($includes, $excludes);
     }
 
     /**
@@ -102,8 +77,7 @@ class ApiPath
 
     private function usesSingleBase(): bool
     {
-        return count($this->includes) === 1
-            && strpbrk($this->includes[0], '*?') === false;
+        return count($this->includes) === 1 && ! str_contains($this->includes[0], '*');
     }
 
     /**
@@ -112,24 +86,11 @@ class ApiPath
     private function matchesAny(string $uri, array $patterns): bool
     {
         foreach ($patterns as $pattern) {
-            if ($this->matchesPattern($uri, $pattern)) {
+            if (str_contains($pattern, '*') ? Str::is($pattern, $uri) : ($uri === $pattern || Str::startsWith($uri, $pattern.'/'))) {
                 return true;
             }
         }
 
         return false;
-    }
-
-    private function matchesPattern(string $uri, string $pattern): bool
-    {
-        if (strpbrk($pattern, '*?') === false) {
-            return Str::startsWith($uri, $pattern);
-        }
-
-        if (str_contains($pattern, '?')) {
-            return fnmatch($pattern, $uri);
-        }
-
-        return Str::is($pattern, $uri);
     }
 }
