@@ -144,4 +144,25 @@ return [
     ],
 
     'extensions' => [],
+
+    /*
+     * Automatically document API security (OpenAPI `security` / `securitySchemes`) based on route
+     * middleware. Set to `null` to disable.
+     *
+     * The default strategy documents bearer auth when at least one documented route uses the
+     * `auth:sanctum` middleware. Remove any manual `withDocumentTransformers` / `withOperationTransformers`
+     * security setup if you rely on this.
+     *
+     * Customize with a class-string or [class, options]:
+     *
+     * 'security_strategy' => [
+     *     \Dedoc\Scramble\SecurityDocumentation\BearerTokenSecurityStrategy::class,
+     *     [
+     *         'marker' => 'auth:api',
+     *         'publicWithout' => ['auth', 'auth:*'],
+     *         'scheme' => \Dedoc\Scramble\Support\Generator\SecurityScheme::http('bearer'),
+     *     ],
+     * ],
+     */
+    'security_strategy' => \Dedoc\Scramble\SecurityDocumentation\BearerTokenSecurityStrategy::class,
 ];

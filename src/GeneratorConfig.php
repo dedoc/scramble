@@ -126,6 +126,20 @@ class GeneratorConfig
         return $this;
     }
 
+    public function clone(): static
+    {
+        return new GeneratorConfig(
+            config: $this->config,
+            parametersExtractors: clone $this->parametersExtractors,
+            operationTransformers: clone $this->operationTransformers,
+            documentTransformers: clone $this->documentTransformers,
+            ruleTransformers: clone $this->ruleTransformers,
+            serverVariables: clone $this->serverVariables,
+            operationMethodsResolver: $this->operationMethodsResolver,
+            jsonApi: clone $this->jsonApi,
+        );
+    }
+
     public function withParametersExtractors(callable $callback): static
     {
         $callback($this->parametersExtractors);
