@@ -20,17 +20,19 @@ function generateForRouteUris(array $uris, array $configOverrides = []): array
     return app()->make(\Dedoc\Scramble\Generator::class)($config);
 }
 
-it('does not document security when no route has the marker middleware', function () {
-    $openApiDocument = generateForRoute(fn () => RouteFacade::get(
+it('does not document security when no route has auth middleware', function () {
+    RouteFacade::get(
         'api/public',
         [MiddlewareAuthSecurityStrategyTest_PublicController::class, 'index'],
-    ));
+    );
+
+    $openApiDocument = generateForRouteUris(['api/public']);
 
     expect($openApiDocument)->not->toHaveKey('security')
         ->and($openApiDocument['paths']['/public']['get'])->not->toHaveKey('security');
 });
 
-it('documents bearer security when a route has the marker middleware', function () {
+it('documents bearer security when a route has auth middleware', function () {
     RouteFacade::get(
         'api/protected',
         [MiddlewareAuthSecurityStrategyTest_ProtectedController::class, 'index'],
@@ -49,23 +51,23 @@ it('documents bearer security when a route has the marker middleware', function 
         ->and($openApiDocument['paths']['/public']['get']['security'])->toBe([]);
 });
 
-it('supports a custom marker middleware', function () {
+it('supports custom auth middleware patterns', function () {
     RouteFacade::get(
         'api/protected',
         [MiddlewareAuthSecurityStrategyTest_ProtectedController::class, 'index'],
-    )->middleware('auth:api');
+    )->middleware('api.token');
 
     $openApiDocument = generateForRouteUris(['api/protected'], [
         'security_strategy' => [
             MiddlewareAuthSecurityStrategy::class,
-            ['triggerMiddleware' => 'auth:api'],
+            ['middleware' => ['api.token']],
         ],
     ]);
 
     expect($openApiDocument)->toHaveKey('security');
 });
 
-it('marks routes as public when they lack publicUnlessMiddleware', function () {
+it('marks routes as public when they lack auth middleware', function () {
     RouteFacade::get(
         'api/guest',
         [MiddlewareAuthSecurityStrategyTest_PublicController::class, 'index'],

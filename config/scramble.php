@@ -149,9 +149,10 @@ return [
      * Automatically document API security (OpenAPI `security` / `securitySchemes`) based on route
      * middleware.
      *
-     * Disabled by default. Uncomment the line below to enable `MiddlewareAuthSecurityStrategy`, which
-     * documents bearer auth when at least one route uses `auth:sanctum`, applies it globally, and
-     * marks routes without auth middleware as public (`security: []`).
+     * Disabled by default. Uncomment the line below to enable `MiddlewareAuthSecurityStrategy`.
+     * When at least one documented route uses middleware matching the configured patterns (by default
+     * `auth` and `auth:*`), bearer auth is applied globally. Routes without matching middleware are
+     * marked as public (`security: []`).
      *
      * Set to `null` explicitly to disable. If you already configure security manually via
      * `afterOpenApiGenerated` / `extendOpenApi`, keep this disabled to avoid duplicate schemes.
@@ -161,8 +162,7 @@ return [
      * 'security_strategy' => [
      *     \Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy::class,
      *     [
-     *         'triggerMiddleware' => 'auth:api',
-     *         'publicUnlessMiddleware' => ['auth', 'auth:*'],
+     *         'middleware' => ['auth', 'auth:*'],
      *         'scheme' => \Dedoc\Scramble\Support\Generator\SecurityScheme::http('bearer'),
      *     ],
      * ],

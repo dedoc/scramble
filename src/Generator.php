@@ -142,7 +142,7 @@ class Generator
             return $config;
         }
 
-        return $strategy->configure(new SecurityDocumentationContext($routes, $config->clone()));
+        return $strategy->configure(new SecurityDocumentationContext($routes, $config->cloneWithoutExposing()));
     }
 
     private function createOperationsSorter(): array

@@ -18,11 +18,10 @@ class MiddlewareAuthSecurityStrategy implements SecurityDocumentationStrategy
     private SecurityScheme $scheme;
 
     /**
-     * @param  list<string>  $publicUnlessMiddleware
+     * @param  list<string>  $middleware
      */
     public function __construct(
-        private string $triggerMiddleware = 'auth:sanctum',
-        private array $publicUnlessMiddleware = ['auth', 'auth:*'],
+        private array $middleware = ['auth', 'auth:*'],
         ?SecurityScheme $scheme = null,
     ) {
         $this->scheme = $scheme ?? SecurityScheme::http('bearer');
@@ -30,11 +29,11 @@ class MiddlewareAuthSecurityStrategy implements SecurityDocumentationStrategy
 
     public function configure(SecurityDocumentationContext $context): GeneratorConfig
     {
-        $hasAuth = $context->routes->contains(
-            fn (Route $route) => in_array($this->triggerMiddleware, $route->gatherMiddleware()),
+        $hasAuthenticatedRoutes = $context->routes->contains(
+            fn (Route $route) => $this->routeHasMiddleware($route),
         );
 
-        if (! $hasAuth) {
+        if (! $hasAuthenticatedRoutes) {
             return $context->config;
         }
 
@@ -44,15 +43,18 @@ class MiddlewareAuthSecurityStrategy implements SecurityDocumentationStrategy
             })
             ->withOperationTransformers(function (OperationTransformers $transformers) {
                 $transformers->prepend(function (Operation $operation, RouteInfo $routeInfo): void {
-                    $hasAnyAuthMiddleware = collect($routeInfo->route->gatherMiddleware())
-                        ->some(fn ($m) => Str::is($this->publicUnlessMiddleware, $m));
-
-                    if ($hasAnyAuthMiddleware) {
+                    if ($this->routeHasMiddleware($routeInfo->route)) {
                         return;
                     }
 
                     $operation->security = [];
                 });
             });
+    }
+
+    private function routeHasMiddleware(Route $route): bool
+    {
+        return collect($route->gatherMiddleware())
+            ->some(fn (string $middleware) => Str::is($this->middleware, $middleware));
     }
 }

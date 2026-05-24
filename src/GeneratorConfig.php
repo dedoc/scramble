@@ -128,7 +128,7 @@ class GeneratorConfig
         return $this;
     }
 
-    public function clone(): static
+    public function cloneWithoutExposing(): static
     {
         return new GeneratorConfig(
             config: $this->config,

@@ -40,7 +40,7 @@ class GeneratorConfigCollection
     public function register(string $name, array $config): GeneratorConfig
     {
         $this->apis[$name] = $generatorConfig = $this->apis[Scramble::DEFAULT_API]
-            ->clone()
+            ->cloneWithoutExposing()
             ->useConfig(array_merge(config('scramble') ?: [], $config));
 
         return $generatorConfig;
