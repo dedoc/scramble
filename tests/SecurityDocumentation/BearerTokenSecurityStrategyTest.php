@@ -1,7 +1,7 @@
 <?php
 
 use Dedoc\Scramble\Scramble;
-use Dedoc\Scramble\SecurityDocumentation\BearerTokenSecurityStrategy;
+use Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
@@ -55,7 +55,7 @@ it('supports a custom marker middleware', function () {
 
     $openApiDocument = generateForRouteUris(['api/protected'], [
         'security_strategy' => [
-            BearerTokenSecurityStrategy::class,
+            MiddlewareAuthSecurityStrategy::class,
             ['authMiddleware' => 'auth:api'],
         ],
     ]);

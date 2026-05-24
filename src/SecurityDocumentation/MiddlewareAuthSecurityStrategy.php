@@ -13,16 +13,16 @@ use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Str;
 
-class BearerTokenSecurityStrategy implements SecurityDocumentationStrategy
+class MiddlewareAuthSecurityStrategy implements SecurityDocumentationStrategy
 {
     public SecurityScheme $scheme;
 
     /**
-     * @param  list<string>  $publicWithout
+     * @param  list<string>  $publicUnlessMiddleware
      */
     public function __construct(
-        public string $authMiddleware = 'auth:sanctum',
-        public array $publicWithout = ['auth', 'auth:*'],
+        public string $triggerMiddleware = 'auth:sanctum',
+        public array $publicUnlessMiddleware = ['auth', 'auth:*'],
         ?SecurityScheme $scheme = null,
     ) {
         $this->scheme = $scheme ?? SecurityScheme::http('bearer');
@@ -31,7 +31,7 @@ class BearerTokenSecurityStrategy implements SecurityDocumentationStrategy
     public function configure(SecurityDocumentationContext $context): GeneratorConfig
     {
         $hasAuth = $context->routes->contains(
-            fn (Route $route) => in_array($this->authMiddleware, $route->gatherMiddleware()),
+            fn (Route $route) => in_array($this->triggerMiddleware, $route->gatherMiddleware()),
         );
 
         if (! $hasAuth) {
@@ -45,7 +45,7 @@ class BearerTokenSecurityStrategy implements SecurityDocumentationStrategy
             ->withOperationTransformers(function (OperationTransformers $transformers) {
                 $transformers->prepend(function (Operation $operation, RouteInfo $routeInfo): void {
                     $hasAnyAuthMiddleware = collect($routeInfo->route->gatherMiddleware())
-                        ->some(fn ($m) => Str::is($this->publicWithout, $m));
+                        ->some(fn ($m) => Str::is($this->publicUnlessMiddleware, $m));
 
                     if ($hasAnyAuthMiddleware) {
                         return;

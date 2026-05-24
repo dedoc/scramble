@@ -130,6 +130,7 @@ class GeneratorConfig
     {
         return new GeneratorConfig(
             config: $this->config,
+            routeResolver: $this->routeResolver,
             parametersExtractors: clone $this->parametersExtractors,
             operationTransformers: clone $this->operationTransformers,
             documentTransformers: clone $this->documentTransformers,
