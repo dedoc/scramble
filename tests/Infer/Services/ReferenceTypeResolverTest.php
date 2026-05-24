@@ -18,6 +18,9 @@ use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
+use Dedoc\Scramble\Tests\Files\SampleUserModel;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 beforeEach(function () {
     $this->index = app(Index::class);
@@ -87,6 +90,39 @@ it('support method calls on unions with null', function () {
 
     expect($result->toString())->toBe('string(bar)');
 });
+
+it('prunes union members when method does not exist on known class', function () {
+    $type = getStatementType(
+        '(new '.ReferenceTypeResolverUnionServiceTest::class.'())->get(true)->orderBy("name")'
+    );
+
+    expect($type->toString())->toBe(
+        'Illuminate\Database\Eloquent\Builder<'.SampleUserModel::class.'>'
+    );
+});
+
+it('infers paginator type through union service builder chain', function () {
+    $type = getStatementType(
+        '(new '.ReferenceTypeResolverUnionServiceTest::class.'())->get(true)->orderBy("name")->paginate(4)'
+    );
+
+    expect($type->toString())->toBe(
+        'Illuminate\Pagination\LengthAwarePaginator<int, '.SampleUserModel::class.'>'
+    );
+});
+
+class ReferenceTypeResolverUnionServiceTest
+{
+    /**
+     * @return (Builder<SampleUserModel>|EloquentCollection<int, SampleUserModel>)
+     */
+    public function get(bool $toBuilder): Builder|EloquentCollection
+    {
+        $query = SampleUserModel::query();
+
+        return $toBuilder ? $query : $query->get();
+    }
+}
 
 /*
  * Callable calls

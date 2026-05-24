@@ -218,7 +218,7 @@ class ReferenceTypeResolver
             }
 
             if (! $methodDefinition = $calleeType->getMethodDefinition($type->methodName, $scope)) {
-                return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeType->name]");
+                return $this->unreachable("Cannot get a method type [$type->methodName] on type [$calleeType->name]");
             }
 
             $resultingType = $this->getFunctionCallResult($methodDefinition, new AutoResolvingArgumentTypeBag($scope, $type->arguments), $calleeType);
@@ -284,7 +284,7 @@ class ReferenceTypeResolver
         }
 
         if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
-            return new UnknownType("Cannot get a method type [$type->methodName] on type [$contextualClassName]");
+            return $this->unreachable("Cannot get a method type [$type->methodName] on type [$contextualClassName]");
         }
 
         return $this->finalizeStatic(
@@ -642,5 +642,10 @@ class ReferenceTypeResolver
             StaticReference::STATIC => $scope->context->classDefinition?->name,
             StaticReference::PARENT => $scope->context->classDefinition?->parentFqn,
         };
+    }
+
+    private function unreachable(string $error): NeverType
+    {
+        return tap(new NeverType, fn (NeverType $t) => $t->setAttribute('error', $error));
     }
 }
