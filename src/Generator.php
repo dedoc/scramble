@@ -6,7 +6,6 @@ use Closure;
 use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
 use Dedoc\Scramble\Configuration\SecurityDocumentationContext;
-use Dedoc\Scramble\Configuration\SecurityStrategyResolver;
 use Dedoc\Scramble\Contracts\DocumentTransformer;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\OpenApiVisitor\SchemaEnforceVisitor;
@@ -137,7 +136,7 @@ class Generator
 
     private function configureSecurityStrategy(Collection $routes, GeneratorConfig $config): GeneratorConfig
     {
-        $strategy = SecurityStrategyResolver::resolve($config);
+        $strategy = $config->securityStrategy();
 
         if (! $strategy) {
             return $config;

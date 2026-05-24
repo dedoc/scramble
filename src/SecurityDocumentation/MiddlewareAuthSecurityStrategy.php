@@ -15,14 +15,14 @@ use Illuminate\Support\Str;
 
 class MiddlewareAuthSecurityStrategy implements SecurityDocumentationStrategy
 {
-    public SecurityScheme $scheme;
+    private SecurityScheme $scheme;
 
     /**
      * @param  list<string>  $publicUnlessMiddleware
      */
     public function __construct(
-        public string $triggerMiddleware = 'auth:sanctum',
-        public array $publicUnlessMiddleware = ['auth', 'auth:*'],
+        private string $triggerMiddleware = 'auth:sanctum',
+        private array $publicUnlessMiddleware = ['auth', 'auth:*'],
         ?SecurityScheme $scheme = null,
     ) {
         $this->scheme = $scheme ?? SecurityScheme::http('bearer');

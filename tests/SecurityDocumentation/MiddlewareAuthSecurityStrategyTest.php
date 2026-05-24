@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Route as RouteFacade;
 function generateForRouteUris(array $uris, array $configOverrides = []): array
 {
     $config = Scramble::configure()
-        ->useConfig(array_merge(config('scramble'), $configOverrides))
+        ->useConfig(array_merge(config('scramble'), [
+            'security_strategy' => MiddlewareAuthSecurityStrategy::class,
+        ], $configOverrides))
         ->routes(fn (Route $r) => in_array($r->uri, $uris, true));
 
     return app()->make(\Dedoc\Scramble\Generator::class)($config);
@@ -21,7 +23,7 @@ function generateForRouteUris(array $uris, array $configOverrides = []): array
 it('does not document security when no route has the marker middleware', function () {
     $openApiDocument = generateForRoute(fn () => RouteFacade::get(
         'api/public',
-        [BearerTokenSecurityStrategyTest_PublicController::class, 'index'],
+        [MiddlewareAuthSecurityStrategyTest_PublicController::class, 'index'],
     ));
 
     expect($openApiDocument)->not->toHaveKey('security')
@@ -31,12 +33,12 @@ it('does not document security when no route has the marker middleware', functio
 it('documents bearer security when a route has the marker middleware', function () {
     RouteFacade::get(
         'api/protected',
-        [BearerTokenSecurityStrategyTest_ProtectedController::class, 'index'],
+        [MiddlewareAuthSecurityStrategyTest_ProtectedController::class, 'index'],
     )->middleware('auth:sanctum');
 
     RouteFacade::get(
         'api/public',
-        [BearerTokenSecurityStrategyTest_PublicController::class, 'index'],
+        [MiddlewareAuthSecurityStrategyTest_PublicController::class, 'index'],
     );
 
     $openApiDocument = generateForRouteUris(['api/protected', 'api/public']);
@@ -50,28 +52,28 @@ it('documents bearer security when a route has the marker middleware', function 
 it('supports a custom marker middleware', function () {
     RouteFacade::get(
         'api/protected',
-        [BearerTokenSecurityStrategyTest_ProtectedController::class, 'index'],
+        [MiddlewareAuthSecurityStrategyTest_ProtectedController::class, 'index'],
     )->middleware('auth:api');
 
     $openApiDocument = generateForRouteUris(['api/protected'], [
         'security_strategy' => [
             MiddlewareAuthSecurityStrategy::class,
-            ['authMiddleware' => 'auth:api'],
+            ['triggerMiddleware' => 'auth:api'],
         ],
     ]);
 
     expect($openApiDocument)->toHaveKey('security');
 });
 
-it('marks routes as public when they lack publicWithout middleware', function () {
+it('marks routes as public when they lack publicUnlessMiddleware', function () {
     RouteFacade::get(
         'api/guest',
-        [BearerTokenSecurityStrategyTest_PublicController::class, 'index'],
+        [MiddlewareAuthSecurityStrategyTest_PublicController::class, 'index'],
     )->middleware('guest');
 
     RouteFacade::get(
         'api/protected',
-        [BearerTokenSecurityStrategyTest_ProtectedController::class, 'index'],
+        [MiddlewareAuthSecurityStrategyTest_ProtectedController::class, 'index'],
     )->middleware('auth:sanctum');
 
     $openApiDocument = generateForRouteUris(['api/guest', 'api/protected']);
@@ -83,12 +85,12 @@ it('marks routes as public when they lack publicWithout middleware', function ()
 it('keeps @unauthenticated routes public even when they have auth middleware', function () {
     RouteFacade::get(
         'api/protected',
-        [BearerTokenSecurityStrategyTest_ProtectedController::class, 'index'],
+        [MiddlewareAuthSecurityStrategyTest_ProtectedController::class, 'index'],
     )->middleware('auth:sanctum');
 
     RouteFacade::get(
         'api/unauthenticated',
-        [BearerTokenSecurityStrategyTest_UnauthenticatedController::class, 'index'],
+        [MiddlewareAuthSecurityStrategyTest_UnauthenticatedController::class, 'index'],
     )->middleware('auth:sanctum');
 
     $openApiDocument = generateForRouteUris(['api/protected', 'api/unauthenticated']);
@@ -96,17 +98,17 @@ it('keeps @unauthenticated routes public even when they have auth middleware', f
     expect($openApiDocument['paths']['/unauthenticated']['get']['security'])->toBe([]);
 });
 
-class BearerTokenSecurityStrategyTest_PublicController
+class MiddlewareAuthSecurityStrategyTest_PublicController
 {
     public function index() {}
 }
 
-class BearerTokenSecurityStrategyTest_ProtectedController
+class MiddlewareAuthSecurityStrategyTest_ProtectedController
 {
     public function index() {}
 }
 
-class BearerTokenSecurityStrategyTest_UnauthenticatedController
+class MiddlewareAuthSecurityStrategyTest_UnauthenticatedController
 {
     /**
      * @unauthenticated

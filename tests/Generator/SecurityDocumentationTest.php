@@ -2,6 +2,7 @@
 
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 it('does not add security transformers multiple times for the same config', function () {
@@ -11,7 +12,9 @@ it('does not add security transformers multiple times for the same config', func
     )->middleware('auth:sanctum');
 
     $config = Scramble::configure()
-        ->useConfig(config('scramble'))
+        ->useConfig(array_merge(config('scramble'), [
+            'security_strategy' => MiddlewareAuthSecurityStrategy::class,
+        ]))
         ->routes(fn ($route) => $route->uri === 'api/protected');
 
     $generator = app()->make(Generator::class);
