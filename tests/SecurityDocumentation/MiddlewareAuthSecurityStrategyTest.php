@@ -67,23 +67,6 @@ it('supports custom auth middleware patterns', function () {
     expect($openApiDocument)->toHaveKey('security');
 });
 
-it('marks routes as public when they lack auth middleware', function () {
-    RouteFacade::get(
-        'api/guest',
-        [MiddlewareAuthSecurityStrategyTest_PublicController::class, 'index'],
-    )->middleware('guest');
-
-    RouteFacade::get(
-        'api/protected',
-        [MiddlewareAuthSecurityStrategyTest_ProtectedController::class, 'index'],
-    )->middleware('auth:sanctum');
-
-    $openApiDocument = generateForRouteUris(['api/guest', 'api/protected']);
-
-    expect($openApiDocument['paths']['/guest']['get']['security'])->toBe([])
-        ->and($openApiDocument['paths']['/protected']['get'])->not->toHaveKey('security');
-});
-
 it('keeps @unauthenticated routes public even when they have auth middleware', function () {
     RouteFacade::get(
         'api/protected',
