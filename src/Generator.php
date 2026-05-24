@@ -5,6 +5,7 @@ namespace Dedoc\Scramble;
 use Closure;
 use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
+use Dedoc\Scramble\Configuration\SecurityDocumentationContext;
 use Dedoc\Scramble\Contracts\DocumentTransformer;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\OpenApiVisitor\SchemaEnforceVisitor;
@@ -53,11 +54,15 @@ class Generator
     {
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
+        $routes = $this->getRoutes($config);
+        $config = $this->configureSecurityStrategy($routes, $config);
+
         $openApi = $this->makeOpenApi($config);
         $context = new OpenApiContext($openApi, $config);
+
         $typeTransformer = $this->buildTypeTransformer($context);
 
-        $this->getRoutes($config)
+        $routes
             ->flatMap(function (Route $route, int $index) use ($openApi, $config, $typeTransformer) {
                 try {
                     $operations = $this->routeToOperations($openApi, $route, $config, $typeTransformer);
@@ -127,6 +132,17 @@ class Generator
         }
 
         return $openApi->toArray();
+    }
+
+    private function configureSecurityStrategy(Collection $routes, GeneratorConfig $config): GeneratorConfig
+    {
+        $strategy = $config->securityStrategy();
+
+        if (! $strategy) {
+            return $config;
+        }
+
+        return $strategy->configure(new SecurityDocumentationContext($routes, $config->cloneWithoutExposing()));
     }
 
     private function createOperationsSorter(): array

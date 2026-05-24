@@ -12,11 +12,13 @@ use Dedoc\Scramble\Configuration\RuleTransformers;
 use Dedoc\Scramble\Configuration\ServerVariables;
 use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
 use Dedoc\Scramble\Contracts\RuleTransformer;
+use Dedoc\Scramble\Contracts\SecurityDocumentationStrategy;
 use Dedoc\Scramble\Enums\JsonApiArraySerialization;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
+use InvalidArgumentException;
 use ReflectionFunction;
 use ReflectionNamedType;
 
@@ -124,6 +126,21 @@ class GeneratorConfig
         $this->resolvedApiPath = null;
 
         return $this;
+    }
+
+    public function cloneWithoutExposing(): static
+    {
+        return new GeneratorConfig(
+            config: $this->config,
+            routeResolver: $this->routeResolver,
+            parametersExtractors: clone $this->parametersExtractors,
+            operationTransformers: clone $this->operationTransformers,
+            documentTransformers: clone $this->documentTransformers,
+            ruleTransformers: clone $this->ruleTransformers,
+            serverVariables: clone $this->serverVariables,
+            operationMethodsResolver: $this->operationMethodsResolver,
+            jsonApi: clone $this->jsonApi,
+        );
     }
 
     public function withParametersExtractors(callable $callback): static
@@ -254,5 +271,36 @@ class GeneratorConfig
     public function get(string $key, mixed $default = null)
     {
         return Arr::get($this->config, $key, $default);
+    }
+
+    public function securityStrategy(): ?SecurityDocumentationStrategy
+    {
+        $value = $this->get('security_strategy');
+
+        if ($value === null) {
+            return null;
+        }
+
+        [$class, $options] = is_string($value)
+            ? [$value, []]
+            : (is_array($value) && count($value) === 2 && is_string($value[0])
+                ? [$value[0], $value[1]]
+                : [null, []]);
+
+        if ($class === null) {
+            throw new InvalidArgumentException(
+                'Invalid scramble.security_strategy config. Expected null, a class-string, or [class-string, options array].'
+            );
+        }
+
+        $strategy = app($class, $options);
+
+        if (! $strategy instanceof SecurityDocumentationStrategy) {
+            throw new InvalidArgumentException(
+                "Security strategy [{$class}] must implement ".SecurityDocumentationStrategy::class.'.'
+            );
+        }
+
+        return $strategy;
     }
 }
