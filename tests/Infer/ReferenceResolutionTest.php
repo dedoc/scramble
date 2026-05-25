@@ -234,7 +234,7 @@ class Bar {
 }
 EOD)->getClassDefinition('Foo');
 
-    expect($type->methods['foo']->type->toString())->toBe('(): unknown');
+    expect($type->methods['foo']->type->toString())->toBe('(): never');
 });
 
 it('detects indirect calls cyclic reference', function () {

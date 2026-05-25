@@ -139,7 +139,7 @@ class Foo {
 }
 EOD)->getClassDefinition('Foo');
 
-    expect($type->methods['foo']->type->toString())->toBe('(): list{int(2), unknown}');
+    expect($type->methods['foo']->type->toString())->toBe('(): list{int(2), never}');
 });
 
 it('resolves a deep reference when encountered in self class', function () {
