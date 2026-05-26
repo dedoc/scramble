@@ -374,7 +374,10 @@ class ClassDefinition implements ClassDefinitionContract
             if ($definition = $this->getIndex()->getClass($type->name)) {
                 foreach ($definition->templateTypes as $i => $templateType) {
                     $concreteType = (new TypeWalker)->map(
-                        $type->templateTypes[$i] ?? $templateType->default ?? new UnknownType,
+                        $type->templateTypes[$i]
+                            ?? $this->templateTypes[$i]
+                            ?? $templateType->default
+                            ?? new UnknownType,
                         fn ($t) => $t instanceof ObjectType ? $classTemplatesByName->get($t->name, $t) : $t,
                     );
 

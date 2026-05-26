@@ -174,12 +174,30 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
     {
         if ($isManyRelation = Str::contains($relation['type'], 'Many')) {
             return new Generic(
-                \Illuminate\Database\Eloquent\Collection::class,
+                $this->getCollectionClassForModel($relation['related']),
                 [new IntegerType, new ObjectType($relation['related'])]
             );
         }
 
         return new ObjectType($relation['related']);
+    }
+
+    private function getCollectionClassForModel(string $modelClass): string
+    {
+        try {
+            $reflectionMethod = new \ReflectionMethod($modelClass, 'newCollection');
+
+            if ($reflectionMethod->getDeclaringClass()->getName() === Model::class) {
+                return \Illuminate\Database\Eloquent\Collection::class;
+            }
+
+            /** @var Model $model */
+            $model = app($modelClass);
+
+            return get_class($model->newCollection([]));
+        } catch (Throwable) {
+            return \Illuminate\Database\Eloquent\Collection::class;
+        }
     }
 
     protected function getToArrayMethodReturnType(MethodCallEvent $event): ?Type
