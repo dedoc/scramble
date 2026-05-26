@@ -170,13 +170,10 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         return $type;
     }
 
-    private function getRelationType(array $relation)
+    private function getRelationType(array $relation): Type
     {
         if ($isManyRelation = Str::contains($relation['type'], 'Many')) {
-            return new Generic(
-                \Illuminate\Database\Eloquent\Collection::class,
-                [new IntegerType, new ObjectType($relation['related'])]
-            );
+            return ModelCollectionTypeResolver::resolve(new ObjectType($relation['related']));
         }
 
         return new ObjectType($relation['related']);
@@ -325,7 +322,10 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
     {
-        return $this->maybeProxyMethodCallToBuilder($event);
+        return match ($event->name) {
+            'all' => ModelCollectionTypeResolver::resolve(new ObjectType($event->callee)),
+            default => $this->maybeProxyMethodCallToBuilder($event),
+        };
     }
 
     private function maybeProxyMethodCallToBuilder(MethodCallEvent|StaticMethodCallEvent $event): ?Type

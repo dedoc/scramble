@@ -90,6 +90,23 @@ class ReferenceTypeResolver
         return $resolved;
     }
 
+    /**
+     * When a parent method returns `static`, chained calls on that value must still resolve
+     * methods on the current class (late static binding), without widening the return type.
+     */
+    private function resolveStaticCalleeForMethodLookup(Scope $scope, Type $calleeType): Type
+    {
+        if (
+            $calleeType instanceof ObjectType
+            && $calleeType->name === StaticReference::STATIC
+            && $scope->context->classDefinition
+        ) {
+            return new SelfType($scope->context->classDefinition->name);
+        }
+
+        return $calleeType;
+    }
+
     private function finalizeStatic(Type $type, Type $staticType): Type
     {
         return (new TypeWalker)->map($type, function (Type $t) use ($staticType) {
@@ -173,6 +190,8 @@ class ReferenceTypeResolver
             : [$calleeType];
 
         return Union::wrap(array_map(function (Type $calleeType) use ($scope, $type, $arguments) {
+            $calleeType = $this->resolveStaticCalleeForMethodLookup($scope, $calleeType);
+
             $classDefinition = $calleeType instanceof ObjectType
                 ? $this->index->getClass($calleeType->name)
                 : null;
@@ -218,7 +237,7 @@ class ReferenceTypeResolver
             }
 
             if (! $methodDefinition = $calleeType->getMethodDefinition($type->methodName, $scope)) {
-                return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeType->name]");
+                return new NeverType;
             }
 
             $resultingType = $this->getFunctionCallResult($methodDefinition, new AutoResolvingArgumentTypeBag($scope, $type->arguments), $calleeType);
@@ -284,7 +303,7 @@ class ReferenceTypeResolver
         }
 
         if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
-            return new UnknownType("Cannot get a method type [$type->methodName] on type [$contextualClassName]");
+            return new NeverType;
         }
 
         return $this->finalizeStatic(
@@ -426,6 +445,8 @@ class ReferenceTypeResolver
             : [$callee];
 
         return Union::wrap(array_map(function (Type $callee) use ($scope, $type, $arguments) {
+            $callee = $this->resolveStaticCalleeForMethodLookup($scope, $callee);
+
             if (! $callee instanceof Generic) {
                 return $callee;
             }
@@ -476,6 +497,8 @@ class ReferenceTypeResolver
             : [$objectType];
 
         return Union::wrap(array_map(function (Type $objectType) use ($scope, $type) {
+            $objectType = $this->resolveStaticCalleeForMethodLookup($scope, $objectType);
+
             if ($objectType instanceof MixedType) {
                 return new UnknownType;
             }

@@ -194,6 +194,40 @@ it('understands method calls type', function () {
     expect($type->methods['bar']->type->toString())->toBe('(): int(1)');
 });
 
+it('infers return type for custom eloquent collection methods that chain other methods', function () {
+    $def = analyzeFile(__DIR__.'/files/custom_collection_chain.php')
+        ->getClassDefinition('CustomCollectionChainTest_Collection');
+
+    expect($def->methods['published']->getReturnType()->toString())
+        ->toBe('static')
+        ->and($def->methods['publishedFeatured']->getReturnType()->toString())
+        ->toBe('static');
+});
+
+it('binds parent collection template at same index when child uses a different template name', function () {
+    Scramble::infer()
+        ->configure()
+        ->buildDefinitionsUsingReflectionFor([
+            ParentWithTvalue_ClassDefinitionTest::class,
+        ]);
+
+    $def = app(Index::class)->getClass(ChildWithTmodel_ClassDefinitionTest::class);
+
+    expect($def->getMethod('first')->getReturnType()->toString())
+        ->toBe('TValue');
+});
+/**
+ * @template TKey
+ * @template TValue
+ */
+class ParentWithTvalue_ClassDefinitionTest
+{
+    /** @return TValue */
+    public function first() {}
+}
+
+class ChildWithTmodel_ClassDefinitionTest extends ParentWithTvalue_ClassDefinitionTest {}
+
 it('infers templated property fetch type', function () {
     $type = analyzeFile(__DIR__.'/files/class_with_property_fetch_in_method.php')
         ->getClassDefinition('Foo');

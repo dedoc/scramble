@@ -193,3 +193,61 @@ it('toResource returns instance of explicitly passed resource class', function (
 
     expect($type->toString())->toBe(ModelExtensionTest_AttributeResource::class.'<'.SampleUserModel::class.'>');
 })->skip(fn () => ! method_exists(Model::class, 'toResource'));
+
+class Foo_ModelExtensionTest extends Model
+{
+    public function newCollection(array $models = [])
+    {
+        return new FooCollection_ModelExtensionTest($models);
+    }
+}
+
+class FooCollection_ModelExtensionTest extends \Illuminate\Database\Eloquent\Collection {}
+
+class Bar_ModelExtensionTest extends Model
+{
+    public function foos()
+    {
+        return $this->hasMany(Foo_ModelExtensionTest::class);
+    }
+}
+
+it('uses custom collection type from newCollection for hasMany relations', function () {
+    $this->infer->analyzeClass(Foo_ModelExtensionTest::class);
+    $this->infer->analyzeClass(Bar_ModelExtensionTest::class);
+
+    $object = new ObjectType(Bar_ModelExtensionTest::class);
+
+    expect($object->getPropertyType('foos')->toString())
+        ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
+});
+
+it('uses custom collection type from newCollection for query get', function () {
+    $this->infer->analyzeClass(Foo_ModelExtensionTest::class);
+
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType(
+                new MethodCallReferenceType(
+                    new ObjectType(Foo_ModelExtensionTest::class),
+                    'query',
+                    []
+                ),
+                'get',
+                []
+            )
+        );
+
+    expect($type->toString())
+        ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
+});
+
+it('uses custom collection type from newCollection for all', function () {
+    $this->infer->analyzeClass(Foo_ModelExtensionTest::class);
+
+    $type = getStatementType(Foo_ModelExtensionTest::class.'::all()');
+
+    expect($type->toString())
+        ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
+});
