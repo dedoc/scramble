@@ -16,6 +16,6 @@ class CustomCollectionChainTest_Collection extends Collection
 
     public function publishedFeatured()
     {
-        return $this->where('is_featured', 1)->where('is_featured', 1)->where('is_featured', 1);
+        return $this->featured()->published()->where('is_featured', 1)->where('is_featured', 1)->where('is_featured', 1);
     }
 }

@@ -221,3 +221,33 @@ it('uses custom collection type from newCollection for hasMany relations', funct
     expect($object->getPropertyType('foos')->toString())
         ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
 });
+
+it('uses custom collection type from newCollection for query get', function () {
+    $this->infer->analyzeClass(Foo_ModelExtensionTest::class);
+
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType(
+                new MethodCallReferenceType(
+                    new ObjectType(Foo_ModelExtensionTest::class),
+                    'query',
+                    []
+                ),
+                'get',
+                []
+            )
+        );
+
+    expect($type->toString())
+        ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
+});
+
+it('uses custom collection type from newCollection for all', function () {
+    $this->infer->analyzeClass(Foo_ModelExtensionTest::class);
+
+    $type = getStatementType(Foo_ModelExtensionTest::class.'::all()');
+
+    expect($type->toString())
+        ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
+});

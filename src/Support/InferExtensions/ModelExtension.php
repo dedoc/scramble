@@ -27,6 +27,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -170,34 +171,13 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         return $type;
     }
 
-    private function getRelationType(array $relation)
+    private function getRelationType(array $relation): Type
     {
         if ($isManyRelation = Str::contains($relation['type'], 'Many')) {
-            return new Generic(
-                $this->getCollectionClassForModel($relation['related']),
-                [new IntegerType, new ObjectType($relation['related'])]
-            );
+            return ModelCollectionTypeResolver::resolve(new ObjectType($relation['related']));
         }
 
         return new ObjectType($relation['related']);
-    }
-
-    private function getCollectionClassForModel(string $modelClass): string
-    {
-        try {
-            $reflectionMethod = new \ReflectionMethod($modelClass, 'newCollection');
-
-            if ($reflectionMethod->getDeclaringClass()->getName() === Model::class) {
-                return \Illuminate\Database\Eloquent\Collection::class;
-            }
-
-            /** @var Model $model */
-            $model = app($modelClass);
-
-            return get_class($model->newCollection([]));
-        } catch (Throwable) {
-            return \Illuminate\Database\Eloquent\Collection::class;
-        }
     }
 
     protected function getToArrayMethodReturnType(MethodCallEvent $event): ?Type
@@ -343,7 +323,10 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
     {
-        return $this->maybeProxyMethodCallToBuilder($event);
+        return match ($event->name) {
+            'all' => ModelCollectionTypeResolver::resolve(new ObjectType($event->callee)),
+            default => $this->maybeProxyMethodCallToBuilder($event),
+        };
     }
 
     private function maybeProxyMethodCallToBuilder(MethodCallEvent|StaticMethodCallEvent $event): ?Type
