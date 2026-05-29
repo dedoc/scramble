@@ -35,8 +35,8 @@ class FileNameResolver
 
         $code = Str::before($content, $firstMatchedClassLikeString);
 
-        // Removes all comments.
-        $code = preg_replace('/\/\*(?:[^*]|\*+[^*\/])*\*+\/|(?<![:\'"])\/\/.*|(?<![:\'"])#.*/', '', $code);
+        // Removes all comments. Fall back to the original code if PCRE returns null.
+        $code = preg_replace('/\/\*(?:[^*]|\*+[^*\/])*\*+\/|(?<![:\'"])\/\/.*|(?<![:\'"])#.*/', '', $code) ?? $code;
 
         $re = '/^(namespace|use) ([.\s\S]*?);/m';
         preg_match_all($re, $code, $matches);
