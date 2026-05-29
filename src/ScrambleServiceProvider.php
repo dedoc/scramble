@@ -72,6 +72,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\PaginatedResourceResponseTypeT
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\PaginatorTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceResponseTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponsableTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\StreamedResponseToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\VoidTypeToSchema;
@@ -226,6 +227,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 $parameters['infer'] ?? $application->make(Infer::class),
                 $parameters['context'],
                 typeToSchemaExtensionsClasses: $parameters['typeToSchemaExtensions'] ?? array_merge([
+                    ResponsableTypeToSchema::class,
                     ArrayableToSchema::class,
                     EnumToSchema::class,
                     JsonResourceTypeToSchema::class,
