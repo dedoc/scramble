@@ -10,9 +10,7 @@ class TranslatedStringType extends StringType implements LateResolvingType
 {
     public function __construct(
         public Type $key,
-    )
-    {
-    }
+    ) {}
 
     public function nodes(): array
     {
