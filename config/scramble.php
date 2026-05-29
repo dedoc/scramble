@@ -43,8 +43,10 @@ return [
         'description' => '',
     ],
 
+    'theme' => 'scalar',
+
     /*
-     * Customize Stoplight Elements UI
+     * Customize UI
      */
     'ui' => [
         /*
