@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\RuleTransformers;
 
 use BackedEnum;
 use Dedoc\Scramble\Contracts\RuleTransformer;
+use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
@@ -42,11 +43,17 @@ class EnumRule implements RuleTransformer
         /** @var BackedEnum[] $only */
         $only = method_exists(Enum::class, 'only') ? $this->getProtectedValue($rule, 'only') : []; // @phpstan-ignore function.alreadyNarrowedType
 
-        if ($except || $only) {
-            return $this->createPartialEnum($enumName, $only, $except);
+        $enumType = ($except || $only)
+            ? $this->createPartialEnum($enumName, $only, $except)
+            : $this->openApiTransformer->transform($objectType);
+
+        if ($previous instanceof ArrayType) {
+            $previous->items = $enumType;
+
+            return $previous;
         }
 
-        return $this->openApiTransformer->transform($objectType);
+        return $enumType;
     }
 
     /**
