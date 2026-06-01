@@ -43,49 +43,29 @@ return [
         'description' => '',
     ],
 
+    'ui' => [
+        'title' => null,
+    ],
+
     'theme' => 'scalar',
 
-    /*
-     * Customize UI
-     */
-    'ui' => [
-        /*
-         * Define the title of the documentation's website. App name is used when this config is `null`.
-         */
-        'title' => null,
-
-        /*
-         * Define the theme of the documentation. Available options are `light`, `dark`, and `system`.
-         */
-        'theme' => 'light',
-
-        /*
-         * Hide the `Try It` feature. Enabled by default.
-         */
-        'hide_try_it' => false,
-
-        /*
-         * Hide the schemas in the Table of Contents. Enabled by default.
-         */
-        'hide_schemas' => false,
-
-        /*
-         * URL to an image that displays as a small square logo next to the title, above the table of contents.
-         */
-        'logo' => '',
-
-        /*
-         * Use to fetch the credential policy for the Try It feature. Options are: omit, include (default), and same-origin
-         */
-        'try_it_credentials_policy' => 'include',
-
-        /*
-         * There are three layouts for Elements:
-         * - sidebar - (Elements default) Three-column design with a sidebar that can be resized.
-         * - responsive - Like sidebar, except at small screen sizes it collapses the sidebar into a drawer that can be toggled open.
-         * - stacked - Everything in a single column, making integrations with existing websites that have their own sidebar or other columns already.
-         */
-        'layout' => 'responsive',
+    'themes' => [
+        'elements' => [
+            'theme' => 'light',
+            'hide_try_it' => false,
+            'hide_schemas' => false,
+            'logo' => '',
+            'try_it_credentials_policy' => 'include',
+            'layout' => 'responsive',
+            'router' => 'hash',
+        ],
+        'scalar' => [
+            'proxy_url' => 'https://proxy.scalar.com',
+            'dark_mode' => false,
+            'show_developer_tools' => 'never',
+            'agent' => ['disabled' => true],
+            'credentials' => 'include',
+        ],
     ],
 
     /*

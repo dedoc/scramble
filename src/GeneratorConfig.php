@@ -10,6 +10,7 @@ use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Dedoc\Scramble\Configuration\RuleTransformers;
 use Dedoc\Scramble\Configuration\ServerVariables;
+use Dedoc\Scramble\Configuration\ThemeConfig;
 use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Contracts\SecurityDocumentationStrategy;
@@ -73,6 +74,15 @@ class GeneratorConfig
         }
 
         return $this;
+    }
+
+    public function theme(): ThemeConfig
+    {
+        if (! array_key_exists('theme', $this->config)) {
+            return new ThemeConfig($this->get('ui'));
+        }
+
+        return new ThemeConfig($this->get('themes.'.$this->get('theme'), []));
     }
 
     /**
