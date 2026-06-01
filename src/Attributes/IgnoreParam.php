@@ -8,7 +8,7 @@ use Attribute;
 class IgnoreParam
 {
     /**
-     * @param  'query'|'body'|null  $in
+     * @param  'query'|'path'|'header'|'cookie'|'body'|null  $in
      */
     public function __construct(
         public readonly string $name,
