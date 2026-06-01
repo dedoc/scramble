@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Tests\Attributes;
 use Dedoc\Scramble\Attributes\BodyParameter;
 use Dedoc\Scramble\Attributes\Example;
 use Dedoc\Scramble\Attributes\HeaderParameter;
+use Dedoc\Scramble\Attributes\IgnoreParam;
 use Dedoc\Scramble\Attributes\Parameter;
 use Dedoc\Scramble\Attributes\PathParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
@@ -304,4 +305,159 @@ class OverrideFormRequestParamController_ParameterAnnotationsTest
 {
     #[BodyParameter('name', 'From Controller')]
     public function __invoke(OverrideFormRequestParamFormRequest_ParameterAnnotationsTest $request) {}
+}
+
+it('ignores action-level validated body parameters using IgnoreParam attribute', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->post('api/test', IgnoreValidatedBodyParameterController_ParameterAnnotationsTest::class));
+
+    expect($openApi['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'] ?? [])
+        ->toBeEmpty();
+});
+class IgnoreValidatedBodyParameterController_ParameterAnnotationsTest
+{
+    #[IgnoreParam('foo')]
+    public function __invoke(Request $request)
+    {
+        $request->validate(['foo' => 'integer']);
+    }
+}
+
+it('ignores action-level request retrieval body parameters using IgnoreParam attribute', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->post('api/test', IgnoreRequestRetrievalBodyParameterController_ParameterAnnotationsTest::class));
+
+    expect($openApi['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'] ?? [])
+        ->toBeEmpty();
+});
+class IgnoreRequestRetrievalBodyParameterController_ParameterAnnotationsTest
+{
+    #[IgnoreParam('foo')]
+    public function __invoke(Request $request)
+    {
+        $request->integer('foo');
+    }
+}
+
+it('does not ignore unrelated action-level inferred parameters', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->post('api/test', IgnoreMissingBodyParameterController_ParameterAnnotationsTest::class));
+
+    expect($openApi['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'])
+        ->toHaveKey('foo');
+});
+class IgnoreMissingBodyParameterController_ParameterAnnotationsTest
+{
+    #[IgnoreParam('missing')]
+    public function __invoke(Request $request)
+    {
+        $request->validate(['foo' => 'integer']);
+    }
+}
+
+it('keeps path parameters when ignoring same-name action-level query parameters', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->get('api/test/{foo}', IgnoreSameNameQueryParameterController_ParameterAnnotationsTest::class));
+
+    expect($openApi['paths']['/test/{foo}']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($openApi['paths']['/test/{foo}']['get']['parameters'][0]['name'])->toBe('foo')
+        ->and($openApi['paths']['/test/{foo}']['get']['parameters'][0]['in'])->toBe('path');
+});
+class IgnoreSameNameQueryParameterController_ParameterAnnotationsTest
+{
+    #[IgnoreParam('foo')]
+    public function __invoke(Request $request, string $foo)
+    {
+        $request->validate(['foo' => 'integer']);
+    }
+}
+
+it('ignores FormRequest body parameters using class-level IgnoreParam attribute', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->post('api/test', IgnoreFormRequestBodyParameterController_ParameterAnnotationsTest::class));
+
+    expect($openApi['components']['schemas']['IgnoreFormRequestBodyParameterFormRequest_ParameterAnnotationsTest']['properties'])
+        ->toHaveKey('visible')
+        ->not->toHaveKey('secret');
+});
+#[IgnoreParam('secret')]
+class IgnoreFormRequestBodyParameterFormRequest_ParameterAnnotationsTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return ['secret' => ['required', 'string'], 'visible' => ['required', 'string']];
+    }
+}
+class IgnoreFormRequestBodyParameterController_ParameterAnnotationsTest
+{
+    public function __invoke(IgnoreFormRequestBodyParameterFormRequest_ParameterAnnotationsTest $request) {}
+}
+
+it('ignores FormRequest query parameters using class-level IgnoreParam attribute', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->get('api/test', IgnoreFormRequestQueryParameterController_ParameterAnnotationsTest::class));
+
+    $parameterNames = collect($openApi['paths']['/test']['get']['parameters'])->pluck('name')->all();
+
+    expect($parameterNames)
+        ->toContain('visible')
+        ->not->toContain('search');
+});
+#[IgnoreParam('search')]
+class IgnoreFormRequestQueryParameterFormRequest_ParameterAnnotationsTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return ['search' => ['nullable', 'string'], 'visible' => ['nullable', 'string']];
+    }
+}
+class IgnoreFormRequestQueryParameterController_ParameterAnnotationsTest
+{
+    public function __invoke(IgnoreFormRequestQueryParameterFormRequest_ParameterAnnotationsTest $request) {}
+}
+
+it('does not apply FormRequest IgnoreParam attributes to other request classes', function () {
+    $openApi = generateForRoute(function (Router $r) {
+        $r->post('api/ignored', IgnoreScopedFormRequestController_ParameterAnnotationsTest::class);
+        $r->post('api/visible', VisibleScopedFormRequestController_ParameterAnnotationsTest::class);
+    });
+
+    expect($openApi['components']['schemas']['IgnoreScopedFormRequest_ParameterAnnotationsTest']['properties'])
+        ->not->toHaveKey('secret')
+        ->and($openApi['components']['schemas']['VisibleScopedFormRequest_ParameterAnnotationsTest']['properties'])
+        ->toHaveKey('secret');
+});
+#[IgnoreParam('secret')]
+class IgnoreScopedFormRequest_ParameterAnnotationsTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return ['secret' => ['required', 'string']];
+    }
+}
+class VisibleScopedFormRequest_ParameterAnnotationsTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return ['secret' => ['required', 'string']];
+    }
+}
+class IgnoreScopedFormRequestController_ParameterAnnotationsTest
+{
+    public function __invoke(IgnoreScopedFormRequest_ParameterAnnotationsTest $request) {}
+}
+class VisibleScopedFormRequestController_ParameterAnnotationsTest
+{
+    public function __invoke(VisibleScopedFormRequest_ParameterAnnotationsTest $request) {}
+}
+
+it('lets IgnoreParam win over matching parameter metadata attributes', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->post('api/test', IgnoreParamWinsOverMetadataController_ParameterAnnotationsTest::class));
+
+    expect($openApi['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'] ?? [])
+        ->toBeEmpty();
+});
+class IgnoreParamWinsOverMetadataController_ParameterAnnotationsTest
+{
+    #[IgnoreParam('foo')]
+    #[BodyParameter('foo', 'Hidden field')]
+    public function __invoke(Request $request)
+    {
+        $request->validate(['foo' => 'integer']);
+    }
 }
