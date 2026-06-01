@@ -47,9 +47,9 @@ return [
         'title' => null,
     ],
 
-    'theme' => 'elements',
+    'renderer' => 'elements',
 
-    'themes' => [
+    'renderers' => [
         /*
          * Stoplight Elements config options: https://docs.stoplight.io/docs/elements/b074dc47b2826-elements-configuration-options
          */

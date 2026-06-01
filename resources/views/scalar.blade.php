@@ -19,12 +19,12 @@
 
     Scalar.createApiReference('#app', {
         content: @json($spec),
-        ...@json($config->theme()->allCamel()),
+        ...@json($config->renderer()->allCamel()),
         onBeforeRequest: ({ requestBuilder }) => {
             requestBuilder.headers.set(CSRF_TOKEN_HEADER_KEY, decodeURIComponent(getCookieValue(CSRF_TOKEN_COOKIE_KEY)))
         },
         customFetch: (input, init) => {
-            return window.fetch(input, { ...init, credentials: @json($config->theme()->get('credentials', 'include')) })
+            return window.fetch(input, { ...init, credentials: @json($config->renderer()->get('credentials', 'include')) })
         }
     })
 </script>

@@ -5,7 +5,7 @@ namespace Dedoc\Scramble\Configuration;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
-class ThemeConfig
+class RendererConfig
 {
     public function __construct(private array $config = []) {}
 

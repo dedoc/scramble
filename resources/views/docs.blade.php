@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en" data-theme="{{ $config->theme()->get('theme', 'light') }}">
+<html lang="en" data-theme="{{ $config->renderer()->get('theme', 'light') }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="color-scheme" content="{{ $config->theme()->get('theme', 'light') }}">
+    <meta name="color-scheme" content="{{ $config->renderer()->get('theme', 'light') }}">
     <title>{{ $config->get('ui.title') ?? config('app.name') . ' - API Docs' }}</title>
 
     <script src="https://unpkg.com/@stoplight/elements@8.4.2/web-components.min.js"></script>
@@ -78,7 +78,7 @@
 <body style="height: 100vh; overflow-y: hidden">
 <elements-api
     id="docs"
-    @foreach($config->theme()->allCamel() as $key => $value)
+    @foreach($config->renderer()->allCamel() as $key => $value)
         @continue(! $value)
         {{ $key }}="{{ $value === true ? 'true' : ($value === false ? 'false' : $value) }}"
     @endforeach
@@ -90,7 +90,7 @@
     })();
 </script>
 
-@if($config->theme()->get('theme', 'light') === 'system')
+@if($config->renderer()->get('theme', 'light') === 'system')
     <script>
         var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
