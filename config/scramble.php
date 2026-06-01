@@ -47,9 +47,12 @@ return [
         'title' => null,
     ],
 
-    'theme' => 'scalar',
+    'theme' => 'elements',
 
     'themes' => [
+        /*
+         * Stoplight Elements config options: https://docs.stoplight.io/docs/elements/b074dc47b2826-elements-configuration-options
+         */
         'elements' => [
             'theme' => 'light',
             'hide_try_it' => false,
@@ -59,6 +62,9 @@ return [
             'layout' => 'responsive',
             'router' => 'hash',
         ],
+        /*
+         * Scalar API reference config options: https://scalar.com/products/api-references/configuration
+         */
         'scalar' => [
             'proxy_url' => 'https://proxy.scalar.com',
             'dark_mode' => false,
