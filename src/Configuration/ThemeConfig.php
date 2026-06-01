@@ -7,9 +7,7 @@ use Illuminate\Support\Str;
 
 class ThemeConfig
 {
-    public function __construct(private array $config = [])
-    {
-    }
+    public function __construct(private array $config = []) {}
 
     public function get(string $key, mixed $default = null): mixed
     {
@@ -22,6 +20,7 @@ class ThemeConfig
         foreach ($this->config as $key => $value) {
             $camelCasedConfig[Str::camel($key)] = $value;
         }
+
         return $camelCasedConfig;
     }
 }
