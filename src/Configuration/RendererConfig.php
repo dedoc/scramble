@@ -11,7 +11,7 @@ class RendererConfig
     private array $config;
 
     /**
-     * @param array{view: string} $config
+     * @param  array{view: string}  $config
      */
     public function __construct(
         array $config = []
