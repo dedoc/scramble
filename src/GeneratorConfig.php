@@ -78,8 +78,11 @@ class GeneratorConfig
 
     public function renderer(): RendererConfig
     {
-        if (! array_key_exists('renderer', $this->config)) {
-            return new RendererConfig($this->get('ui'));
+        if (Arr::has($this->config, 'ui.logo')) {
+            return new RendererConfig(array_merge(
+                $this->get('renderers.elements', []),
+                $this->get('ui'),
+            ));
         }
 
         return new RendererConfig($this->get('renderers.'.$this->get('renderer'), []));

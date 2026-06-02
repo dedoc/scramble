@@ -3,24 +3,30 @@
 namespace Dedoc\Scramble\Configuration;
 
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 
 class RendererConfig
 {
-    public function __construct(private array $config = []) {}
+    public readonly string $view;
+
+    private array $config;
+
+    /**
+     * @param array{view: string} $config
+     */
+    public function __construct(
+        array $config = []
+    ) {
+        $this->config = Arr::except($config, ['view']);
+        $this->view = $config['view'];
+    }
 
     public function get(string $key, mixed $default = null): mixed
     {
         return Arr::get($this->config, $key, $default);
     }
 
-    public function allCamel(): array
+    public function all(array $except = []): array
     {
-        $camelCasedConfig = [];
-        foreach ($this->config as $key => $value) {
-            $camelCasedConfig[Str::camel($key)] = $value;
-        }
-
-        return $camelCasedConfig;
+        return Arr::except($this->config, $except);
     }
 }

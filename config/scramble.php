@@ -54,11 +54,12 @@ return [
          * Stoplight Elements config options: https://docs.stoplight.io/docs/elements/b074dc47b2826-elements-configuration-options
          */
         'elements' => [
+            'view' => 'scramble::docs',
             'theme' => 'light',
-            'hide_try_it' => false,
-            'hide_schemas' => false,
+            'hideTryIt' => false,
+            'hideSchemas' => false,
             'logo' => '',
-            'try_it_credentials_policy' => 'include',
+            'tryItCredentialsPolicy' => 'include',
             'layout' => 'responsive',
             'router' => 'hash',
         ],
@@ -66,9 +67,12 @@ return [
          * Scalar API reference config options: https://scalar.com/products/api-references/configuration
          */
         'scalar' => [
-            'proxy_url' => 'https://proxy.scalar.com',
-            'dark_mode' => false,
-            'show_developer_tools' => 'never',
+            'view' => 'scramble::scalar',
+            'cdn' => 'https://cdn.jsdelivr.net/npm/@scalar/api-reference',
+            'theme' => 'laravel',
+            'proxyUrl' => 'https://proxy.scalar.com',
+            'darkMode' => false,
+            'showDeveloperTools' => 'never',
             'agent' => ['disabled' => true],
             'credentials' => 'include',
         ],

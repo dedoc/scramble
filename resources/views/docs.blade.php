@@ -78,7 +78,7 @@
 <body style="height: 100vh; overflow-y: hidden">
 <elements-api
     id="docs"
-    @foreach($config->renderer()->allCamel() as $key => $value)
+    @foreach($config->renderer()->all(except: ['theme']) as $key => $value)
         @continue(! $value)
         {{ $key }}="{{ $value === true ? 'true' : ($value === false ? 'false' : $value) }}"
     @endforeach

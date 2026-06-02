@@ -7,7 +7,7 @@
 </head>
 <body>
 <div id="app"></div>
-<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+<script src="{{ $config->renderer()->get('cdn', 'https://cdn.jsdelivr.net/npm/@scalar/api-reference') }}"></script>
 
 <script>
     const CSRF_TOKEN_COOKIE_KEY = "XSRF-TOKEN";
@@ -19,7 +19,7 @@
 
     Scalar.createApiReference('#app', {
         content: @json($spec),
-        ...@json($config->renderer()->allCamel()),
+        ...@json($config->renderer()->all(except: ['cdn', 'credentials'])),
         onBeforeRequest: ({ requestBuilder }) => {
             requestBuilder.headers.set(CSRF_TOKEN_HEADER_KEY, decodeURIComponent(getCookieValue(CSRF_TOKEN_COOKIE_KEY)))
         },
