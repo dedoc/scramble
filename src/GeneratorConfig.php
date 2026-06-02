@@ -8,6 +8,7 @@ use Dedoc\Scramble\Configuration\DocumentTransformers;
 use Dedoc\Scramble\Configuration\JsonApiConfig;
 use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Configuration\ParametersExtractors;
+use Dedoc\Scramble\Configuration\RendererConfig;
 use Dedoc\Scramble\Configuration\RuleTransformers;
 use Dedoc\Scramble\Configuration\ServerVariables;
 use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
@@ -73,6 +74,18 @@ class GeneratorConfig
         }
 
         return $this;
+    }
+
+    public function renderer(): RendererConfig
+    {
+        if (Arr::has($this->config, 'ui.logo')) {
+            return new RendererConfig(array_merge(
+                $this->get('renderers.elements', []),
+                $this->get('ui'),
+            ));
+        }
+
+        return new RendererConfig($this->get('renderers.'.$this->get('renderer'), []));
     }
 
     /**

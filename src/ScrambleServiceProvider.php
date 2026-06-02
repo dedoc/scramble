@@ -301,7 +301,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 $cb($router, function (Generator $generator) use ($api) {
                     $config = Scramble::getGeneratorConfig($api);
 
-                    return view('scramble::docs', [
+                    return view($config->renderer()->view, [
                         'spec' => $generator($config),
                         'config' => $config,
                     ]);
