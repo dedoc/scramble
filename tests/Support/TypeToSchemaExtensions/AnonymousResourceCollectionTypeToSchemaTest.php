@@ -84,6 +84,39 @@ class UserService_AnonymousResourceCollectionTypeToSchemaTest
         return $toBuilder ? $query : $query->get();
     }
 }
+
+it('documents paginated response when service returns LengthAwarePaginator', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('test', [ServicePaginatorPagination_AnonymousResourceCollectionTypeToSchemaTestController::class, 'myHandler']));
+
+    expect($responses = $openApiDocument['paths']['/test']['get']['responses'])
+        ->toHaveKey(200)
+        ->and($schema = $responses[200]['content']['application/json']['schema'])
+        ->toHaveKeys(['type', 'properties'])
+        ->and($schema['properties'])
+        ->toHaveKeys(['data', 'meta', 'links']);
+});
+class ServicePaginatorPagination_AnonymousResourceCollectionTypeToSchemaTestController
+{
+    public function __construct(private UserServicePaginator_AnonymousResourceCollectionTypeToSchemaTest $userService) {}
+
+    public function myHandler(Request $request): \Illuminate\Http\Resources\Json\ResourceCollection
+    {
+        return UserResource_AnonymousResourceCollectionTypeToSchemaTest::collection(
+            $this->userService->allUsers()
+        );
+    }
+}
+
+class UserServicePaginator_AnonymousResourceCollectionTypeToSchemaTest
+{
+    /**
+     * @return LengthAwarePaginator<int, User_AnonymousResourceCollectionTypeToSchemaTest>
+     */
+    public function allUsers(): LengthAwarePaginator
+    {
+        return User_AnonymousResourceCollectionTypeToSchemaTest::query()->paginate();
+    }
+}
 class InferredPagination_AnonymousResourceCollectionTypeToSchemaTestController
 {
     public function __invoke()

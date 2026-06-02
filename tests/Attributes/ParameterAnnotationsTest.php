@@ -10,6 +10,7 @@ use Dedoc\Scramble\Attributes\Parameter;
 use Dedoc\Scramble\Attributes\PathParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Dedoc\Scramble\Attributes\SchemaName;
+use Dedoc\Scramble\Generator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
@@ -412,10 +413,10 @@ class IgnoreFormRequestQueryParameterController_ParameterAnnotationsTest
 }
 
 it('does not apply FormRequest IgnoreParam attributes to other request classes', function () {
-    $openApi = generateForRoute(function (Router $r) {
-        $r->post('api/ignored', IgnoreScopedFormRequestController_ParameterAnnotationsTest::class);
-        $r->post('api/visible', VisibleScopedFormRequestController_ParameterAnnotationsTest::class);
-    });
+    Route::post('api/ignored', IgnoreScopedFormRequestController_ParameterAnnotationsTest::class);
+    Route::post('api/visible', VisibleScopedFormRequestController_ParameterAnnotationsTest::class);
+
+    $openApi = app(Generator::class)();
 
     expect($openApi['components']['schemas']['IgnoreScopedFormRequest_ParameterAnnotationsTest']['properties'])
         ->not->toHaveKey('secret')
@@ -427,14 +428,14 @@ class IgnoreScopedFormRequest_ParameterAnnotationsTest extends FormRequest
 {
     public function rules(): array
     {
-        return ['secret' => ['required', 'string']];
+        return ['f' => 'numeric', 'secret' => ['required', 'string']];
     }
 }
 class VisibleScopedFormRequest_ParameterAnnotationsTest extends FormRequest
 {
     public function rules(): array
     {
-        return ['secret' => ['required', 'string']];
+        return ['f' => 'numeric', 'secret' => ['required', 'string']];
     }
 }
 class IgnoreScopedFormRequestController_ParameterAnnotationsTest
