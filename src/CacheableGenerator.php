@@ -12,8 +12,14 @@ class CacheableGenerator
     {
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
-        $store = config('scramble.cache.store', 'file');
-        $key = config('scramble.cache.key').':'.$this->resolveApi($config);
+        $store = config('scramble.cache.store');
+        $keyBase = config('scramble.cache.key');
+
+        if (! $store || ! $keyBase) {
+            return ($this->generator)($config);
+        }
+
+        $key = $keyBase.':'.$this->resolveApi($config);
 
         if ($cached = cache()->store($store)->get($key)) {
             return $cached;
