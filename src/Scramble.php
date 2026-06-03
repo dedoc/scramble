@@ -149,7 +149,7 @@ class Scramble
     {
         $config = static::getGeneratorConfig($api);
 
-        return RouteFacade::get($path, function (Generator $generator) use ($api) {
+        return RouteFacade::get($path, function (CacheableGenerator $generator) use ($api) {
             $config = static::getGeneratorConfig($api);
 
             return view('scramble::docs', [
@@ -164,7 +164,7 @@ class Scramble
     {
         $config = static::getGeneratorConfig($api);
 
-        return RouteFacade::get($path, function (Generator $generator) use ($api) {
+        return RouteFacade::get($path, function (CacheableGenerator $generator) use ($api) {
             $config = static::getGeneratorConfig($api);
 
             return response()->json($generator($config), options: JSON_PRETTY_PRINT);
