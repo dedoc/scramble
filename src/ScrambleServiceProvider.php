@@ -5,6 +5,8 @@ namespace Dedoc\Scramble;
 use Dedoc\Scramble\Configuration\GeneratorConfigCollection;
 use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
+use Dedoc\Scramble\Console\Commands\CacheDocumentation;
+use Dedoc\Scramble\Console\Commands\ClearDocumentationCache;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Dedoc\Scramble\DocumentTransformers\AddDocumentTags;
 use Dedoc\Scramble\DocumentTransformers\CleanupUnusedResponseReferencesTransformer;
@@ -88,6 +90,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
     public $singletons = [
         PrettyPrinter::class => PrettyPrinter\Standard::class,
         GeneratorConfigCollection::class => GeneratorConfigCollection::class,
+        CacheableGenerator::class => CacheableGenerator::class,
     ];
 
     public function configurePackage(Package $package): void
@@ -97,6 +100,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasCommand(ExportDocumentation::class)
             ->hasCommand(AnalyzeDocumentation::class)
+            ->hasCommand(CacheDocumentation::class)
+            ->hasCommand(ClearDocumentationCache::class)
             ->hasViews('scramble');
 
         $this->app->singleton(FileParser::class, function () {
@@ -298,7 +303,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ? $generatorConfig->uiRoute
                     : fn ($router, $action) => $router->get($generatorConfig->uiRoute, $action);
 
-                $cb($router, function (Generator $generator) use ($api) {
+                $cb($router, function (CacheableGenerator $generator) use ($api) {
                     $config = Scramble::getGeneratorConfig($api);
 
                     return view($config->renderer()->view, [
@@ -313,7 +318,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     ? $generatorConfig->documentRoute
                     : fn ($router, $action) => $router->get($generatorConfig->documentRoute, $action);
 
-                $cb($router, function (Generator $generator) use ($api) {
+                $cb($router, function (CacheableGenerator $generator) use ($api) {
                     $config = Scramble::getGeneratorConfig($api);
 
                     return response()->json($generator($config), options: JSON_PRETTY_PRINT);
