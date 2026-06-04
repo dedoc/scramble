@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
+use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
@@ -32,6 +33,12 @@ class PropertyHandler
             $propertyDefinition = new ClassPropertyDefinition(
                 type: new TemplateType($scope->makeConflictFreeTemplateName('T'.Str::studly($prop->name->name)), $annotatedType),
                 defaultType: $prop->default ? $scope->getType($prop->default) : null,
+                isStatic: $node->isStatic(),
+                visibility: match (true) {
+                    $node->isPrivate() => PropertyVisibility::Private,
+                    $node->isProtected() => PropertyVisibility::Protected,
+                    default => PropertyVisibility::Public,
+                },
             );
             $ownProperties[$prop->name->name] = $propertyDefinition;
         }

@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Infer\Analyzer;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
+use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -59,6 +60,8 @@ class ClassAnalyzer
                     type: $reflectionProperty->hasDefaultValue()
                         ? (TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue()) ?: new UnknownType)
                         : new UnknownType,
+                    isStatic: $reflectionProperty->isStatic(),
+                    visibility: PropertyVisibility::fromReflectionProperty($reflectionProperty),
                 );
             } else {
                 $expectedTemplateTypeName = 'T'.Str::studly($reflectionProperty->name);
@@ -76,6 +79,7 @@ class ClassAnalyzer
                     defaultType: $reflectionProperty->hasDefaultValue()
                         ? PropertyAnalyzer::from($reflectionProperty)->getDefaultType()
                         : null,
+                    visibility: PropertyVisibility::fromReflectionProperty($reflectionProperty),
                 );
 
                 if (! $existingPropertyTemplateType) {

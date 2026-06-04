@@ -6,6 +6,7 @@ use Dedoc\Scramble\Infer\Contracts\ClassDefinitionBuilder;
 use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
+use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
 use Dedoc\Scramble\Infer\Definition\LazyShallowClassDefinition;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
@@ -49,6 +50,8 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                     type: $reflectionProperty->hasDefaultValue()
                         ? (TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue()) ?: new UnknownType)
                         : new UnknownType,
+                    isStatic: $reflectionProperty->isStatic(),
+                    visibility: PropertyVisibility::fromReflectionProperty($reflectionProperty),
                 );
             } else {
                 $classDefinitionData->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
@@ -59,6 +62,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                     defaultType: $reflectionProperty->hasDefaultValue()
                         ? TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue())
                         : null,
+                    visibility: PropertyVisibility::fromReflectionProperty($reflectionProperty),
                 );
                 $classDefinitionData->templateTypes[] = $t;
             }
