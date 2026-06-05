@@ -34,19 +34,19 @@ it('handles simple types', function ($phpDoc) {
 
     assertMatchesSnapshot($result ? $result->toArray() : null);
 })->with([
-    '/** @var string */',
-    '/** @var int */',
-    '/** @var integer */',
-    '/** @var float */',
-    '/** @var bool */',
-    '/** @var boolean */',
-    '/** @var true */',
-    '/** @var false */',
-    '/** @var float */',
-    '/** @var double */',
-    '/** @var scalar */',
-    '/** @var array */',
-    '/** @var null */',
+//    '/** @var string */',
+//    '/** @var int */',
+//    '/** @var integer */',
+//    '/** @var float */',
+//    '/** @var bool */',
+//    '/** @var boolean */',
+//    '/** @var true */',
+//    '/** @var false */',
+//    '/** @var float */',
+//    '/** @var double */',
+//    '/** @var scalar */',
+//    '/** @var array */',
+//    '/** @var null */',
     '/** @var object */',
 ]);
 

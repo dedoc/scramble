@@ -2,13 +2,15 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
+use ReflectionProperty;
+
 enum PropertyVisibility
 {
     case Private;
     case Protected;
     case Public;
 
-    public static function fromReflectionProperty(\ReflectionProperty $property): self
+    public static function fromReflectionProperty(ReflectionProperty $property): self
     {
         return match (true) {
             $property->isPrivate() => self::Private,

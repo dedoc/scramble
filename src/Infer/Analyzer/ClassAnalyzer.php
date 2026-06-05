@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Infer\Analyzer;
 
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\AttributeDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
@@ -62,6 +63,9 @@ class ClassAnalyzer
                         : new UnknownType,
                     isStatic: $reflectionProperty->isStatic(),
                     visibility: PropertyVisibility::fromReflectionProperty($reflectionProperty),
+                    attributes: AttributeDefinition::fromReflectionAttributesArray($reflectionProperty->getAttributes()),
+                    docComment: $reflectionProperty->getDocComment() ?: null,
+                    declaringFileName: $reflectionProperty->getDeclaringClass()->getFileName() ?: null,
                 );
             } else {
                 $expectedTemplateTypeName = 'T'.Str::studly($reflectionProperty->name);
@@ -80,6 +84,9 @@ class ClassAnalyzer
                         ? PropertyAnalyzer::from($reflectionProperty)->getDefaultType()
                         : null,
                     visibility: PropertyVisibility::fromReflectionProperty($reflectionProperty),
+                    attributes: AttributeDefinition::fromReflectionAttributesArray($reflectionProperty->getAttributes()),
+                    docComment: $reflectionProperty->getDocComment() ?: null,
+                    declaringFileName: $reflectionProperty->getDeclaringClass()->getFileName() ?: null,
                 );
 
                 if (! $existingPropertyTemplateType) {

@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Tests\Support\TypeToSchemaExtensions;
 
+use Dedoc\Scramble\Attributes\Hidden;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
@@ -85,4 +86,41 @@ class PlainObjectToSchemaTest_Profile implements JsonSerializable
             'email' => 'a@b.c',
         ];
     }
+}
+
+it('respects property PHPDoc and Hidden attribute', function () {
+    $schema = $this->transformer->transform(new ObjectType(PlainObjectToSchemaTest_DocumentedUser::class));
+
+    expect($schema->toArray())
+        ->toBe(['$ref' => '#/components/schemas/PlainObjectToSchemaTest_DocumentedUser'])
+        ->and($this->components->getSchema('PlainObjectToSchemaTest_DocumentedUser')->toArray())
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'The user display name.',
+                ],
+                'email' => [
+                    'type' => 'string',
+                ],
+            ],
+            'required' => ['name', 'email'],
+        ]);
+});
+
+class PlainObjectToSchemaTest_DocumentedUser
+{
+    /** The user display name. */
+    public string $name = 'Jane';
+
+    #[Hidden]
+    public string $secret = 'hidden';
+
+    /**
+     * @hidden
+     */
+    public string $token = 'token';
+
+    public string $email = 'a@b.c';
 }

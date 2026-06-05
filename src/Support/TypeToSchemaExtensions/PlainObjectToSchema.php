@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
+use Dedoc\Scramble\Attributes\Hidden;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinition;
@@ -9,20 +10,19 @@ use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
-use Dedoc\Scramble\Support\Generator\Components;
-use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
+use stdClass;
 
 class PlainObjectToSchema extends TypeToSchemaExtension
 {
     public function shouldHandle(Type $type)
     {
-        return $type instanceof ObjectType;
+        return $type instanceof ObjectType && class_exists($type->name);
     }
 
     /**
@@ -36,9 +36,11 @@ class PlainObjectToSchema extends TypeToSchemaExtension
             return $this->openApiTransformer->transform($jsonSerializableType);
         }
 
-        return $this->openApiTransformer->transform(
-            $this->getSerializedPublicPropertiesType($definition, $type)
-        );
+        if ($publicPropertiesType = $this->getSerializedPublicPropertiesType($definition, $type)) {
+            return $this->openApiTransformer->transform($publicPropertiesType);
+        }
+
+        return null;
     }
 
     private function getJsonSerializableType(ClassDefinition $definition, ObjectType $type): ?Type
@@ -55,21 +57,35 @@ class PlainObjectToSchema extends TypeToSchemaExtension
     }
 
     /** @see Infer\Definition\ClassPropertyDefinition */
-    private function getSerializedPublicPropertiesType(ClassDefinition $definition, ObjectType $type): Type
+    private function getSerializedPublicPropertiesType(ClassDefinition $definition, ObjectType $type): ?Type
     {
-        $resolver = ReferenceTypeResolver::getInstance();
-        $scope = new GlobalScope;
-
         $items = [];
         foreach ($definition->getData()->properties as $name => $propertyDefinition) {
             if ($propertyDefinition->visibility !== PropertyVisibility::Public) {
                 continue;
             }
 
-            $items[] = new ArrayItemType_(
+            if ($propertyDefinition->hasAttribute(Hidden::class)) {
+                continue;
+            }
+
+            $item = new ArrayItemType_(
                 $name,
-                $resolver->resolve($scope, new PropertyFetchReferenceType($type, $name)),
+                ReferenceTypeResolver::getInstance()->resolve(
+                    new GlobalScope,
+                    new PropertyFetchReferenceType($type, $name),
+                ),
             );
+
+            if ($docNode = $propertyDefinition->getDocNode()) {
+                $item->setAttribute('docNode', $docNode);
+            }
+
+            $items[] = $item;
+        }
+
+        if (! count($items)) {
+            return null;
         }
 
         return new KeyedArrayType($items);
@@ -77,6 +93,10 @@ class PlainObjectToSchema extends TypeToSchemaExtension
 
     public function reference(ObjectType $type)
     {
+        if (ltrim($type->name, '\\') === stdClass::class) {
+            return null;
+        }
+
         return ClassBasedReference::create('schemas', $type->name, $this->components);
     }
 }

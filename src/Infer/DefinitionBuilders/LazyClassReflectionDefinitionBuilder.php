@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinitionBuilder;
 use Dedoc\Scramble\Infer\Contracts\Index as IndexContract;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\AttributeDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
 use Dedoc\Scramble\Infer\Definition\LazyShallowClassDefinition;
@@ -52,6 +53,9 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                         : new UnknownType,
                     isStatic: $reflectionProperty->isStatic(),
                     visibility: PropertyVisibility::fromReflectionProperty($reflectionProperty),
+                    attributes: AttributeDefinition::fromReflectionAttributesArray($reflectionProperty->getAttributes()),
+                    docComment: $reflectionProperty->getDocComment() ?: null,
+                    declaringFileName: $reflectionProperty->getDeclaringClass()->getFileName() ?: null,
                 );
             } else {
                 $classDefinitionData->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
@@ -63,6 +67,9 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                         ? TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue())
                         : null,
                     visibility: PropertyVisibility::fromReflectionProperty($reflectionProperty),
+                    attributes: AttributeDefinition::fromReflectionAttributesArray($reflectionProperty->getAttributes()),
+                    docComment: $reflectionProperty->getDocComment() ?: null,
+                    declaringFileName: $reflectionProperty->getDeclaringClass()->getFileName() ?: null,
                 );
                 $classDefinitionData->templateTypes[] = $t;
             }

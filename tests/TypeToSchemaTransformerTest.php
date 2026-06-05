@@ -18,6 +18,7 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\CarbonInterfaceToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
@@ -329,7 +330,7 @@ class SamplePostWithDateApprovedAtModel extends \Illuminate\Database\Eloquent\Mo
 }
 
 it('infers date column directly referenced in json as date-time', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [CarbonInterfaceToSchema::class, JsonResourceTypeToSchema::class]);
 
     $type = new ObjectType(InferTypesTest_JsonResourceWithCarbonAttribute::class);
 
@@ -425,7 +426,7 @@ it('excludes properties with @hidden annotation from api resource schema', funct
 });
 
 it('supports simple comments descriptions in api resource', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [CarbonInterfaceToSchema::class, JsonResourceTypeToSchema::class]);
 
     $type = new ObjectType(ApiResourceTest_ResourceWithSimpleDescription::class);
 
