@@ -6,11 +6,11 @@ use Dedoc\Scramble\Infer\Definition\AttributeDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
 use Dedoc\Scramble\Infer\Scope\Scope;
-use ReflectionProperty;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Support\Str;
 use PhpParser\Node;
+use ReflectionProperty;
 
 class PropertyHandler
 {

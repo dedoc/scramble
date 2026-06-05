@@ -12,7 +12,7 @@ class AttributeDefinition
     ) {}
 
     /**
-     * @param ReflectionAttribute[] $reflectionAttributes
+     * @param  ReflectionAttribute[]  $reflectionAttributes
      * @return self[]
      */
     public static function fromReflectionAttributesArray(array $reflectionAttributes): array

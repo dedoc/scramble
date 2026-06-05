@@ -3,8 +3,8 @@
 namespace Dedoc\Scramble\Infer\Analyzer;
 
 use Dedoc\Scramble\Infer\Context;
-use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\AttributeDefinition;
+use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
