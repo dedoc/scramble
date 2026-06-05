@@ -16,13 +16,25 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
+use Illuminate\Http\Response;
+use ReflectionClass;
 use stdClass;
 
 class PlainObjectToSchema extends TypeToSchemaExtension
 {
     public function shouldHandle(Type $type)
     {
-        return $type instanceof ObjectType && class_exists($type->name);
+        $isObject = $type instanceof ObjectType && class_exists($type->name);
+
+        if (! $isObject) {
+            return false;
+        }
+
+        if (is_a($type->name, \Symfony\Component\HttpFoundation\Response::class, true)) {
+            return false;
+        }
+
+        return (new ReflectionClass($type->name))->isInstantiable();
     }
 
     /**
