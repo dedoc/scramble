@@ -18,9 +18,13 @@ use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use ReflectionClass;
 use stdClass;
+use Symfony\Component\HttpFoundation\Response;
 
 class PlainObjectToSchema extends TypeToSchemaExtension
 {
+    /** @var array<string, false|Type> */
+    private array $cache = [];
+
     public function shouldHandle(Type $type)
     {
         $isObject = $type instanceof ObjectType && class_exists($type->name);
@@ -29,11 +33,19 @@ class PlainObjectToSchema extends TypeToSchemaExtension
             return false;
         }
 
-        if (is_a($type->name, \Symfony\Component\HttpFoundation\Response::class, true)) {
+        if (is_a($type->name, Response::class, true)) {
             return false;
         }
 
-        return (new ReflectionClass($type->name))->isInstantiable();
+        if (!(new ReflectionClass($type->name))->isInstantiable()) {
+            return false;
+        }
+
+        if (! $this->getSerializedType($type)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -41,14 +53,39 @@ class PlainObjectToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
+        if ($serializedType = $this->getSerializedType($type)) {
+            return $this->openApiTransformer->transform($serializedType);
+        }
+
+        return null;
+    }
+
+
+    private function getSerializedType(ObjectType $type): ?Type
+    {
+        $cacheKey = $type->toString();
+
+        if (isset($this->cache[$cacheKey])) {
+            return $this->cache[$cacheKey] ?: null;
+        }
+
+        $serializedType = $this->getFreshSerializedType($type);
+
+        $this->cache[$cacheKey] = $serializedType ?: false;
+
+        return $serializedType;
+    }
+
+    private function getFreshSerializedType(ObjectType $type): ?Type
+    {
         $definition = $this->infer->analyzeClass($type->name);
 
         if ($jsonSerializableType = $this->getJsonSerializableType($definition, $type)) {
-            return $this->openApiTransformer->transform($jsonSerializableType);
+            return $jsonSerializableType;
         }
 
         if ($publicPropertiesType = $this->getSerializedPublicPropertiesType($definition, $type)) {
-            return $this->openApiTransformer->transform($publicPropertiesType);
+            return $publicPropertiesType;
         }
 
         return null;
@@ -105,6 +142,10 @@ class PlainObjectToSchema extends TypeToSchemaExtension
     public function reference(ObjectType $type)
     {
         if (ltrim($type->name, '\\') === stdClass::class) {
+            return null;
+        }
+
+        if (! $this->getSerializedType($type)) {
             return null;
         }
 
