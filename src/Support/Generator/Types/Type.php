@@ -115,6 +115,15 @@ abstract class Type
         return $this;
     }
 
+    public function matches($value): bool
+    {
+        if ($value === null && $this->nullable) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function toArray()
     {
         return array_merge(
@@ -129,11 +138,12 @@ abstract class Type
                 'enum' => count($this->enum) ? $this->enum : null,
                 'const' => ! is_null($this->const) ? $this->const : null,
             ]),
-            $this->example instanceof MissingValue ? [] : ['example' => $this->example],
+            $this->example instanceof MissingValue ? [] : ['example' => $this->example instanceof \Dedoc\Scramble\Support\Generator\Example ? $this->example->toArray() : $this->example],
             $this->default instanceof MissingValue ? [] : ['default' => $this->default],
             count(
                 $examples = collect($this->examples)
                     ->reject(fn ($example) => $example instanceof MissingValue)
+                    ->map(fn ($example) => $example instanceof \Dedoc\Scramble\Support\Generator\Example ? $example->toArray() : $example)
                     ->values()
                     ->toArray()
             ) ? ['examples' => $examples] : [],

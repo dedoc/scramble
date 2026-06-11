@@ -8,4 +8,9 @@ class NullType extends Type
     {
         parent::__construct('null');
     }
+
+    public function matches($value): bool
+    {
+        return is_null($value);
+    }
 }

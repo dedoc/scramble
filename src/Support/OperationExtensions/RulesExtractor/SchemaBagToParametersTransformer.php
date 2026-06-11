@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesExtractor;
 
+use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
+use Dedoc\Scramble\Support\Generator\Combined\OneOf;
 use Dedoc\Scramble\Support\Generator\MissingValue;
 use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Schema;
@@ -59,13 +61,26 @@ class SchemaBagToParametersTransformer
     {
         $description = $schema->description;
         $example = $schema->example;
+        $examples = $schema->examples;
 
-        $schema->setDescription('')->example(new MissingValue);
+        $schema->setDescription('');
+        if (! ($schema instanceof AnyOf || $schema instanceof OneOf)) {
+            $schema->example(new MissingValue)->examples([]);
+        } else {
+            $example = new MissingValue;
+            $examples = [];
+        }
 
-        return Parameter::make($name, $schema->getAttribute('isInQuery') ? 'query' : $this->in)
+        $parameter = Parameter::make($name, $schema->getAttribute('isInQuery') ? 'query' : $this->in)
             ->setSchema(Schema::fromType($schema))
             ->example($example)
             ->required((bool) $schema->getAttribute('required', false))
             ->description($description);
+
+        if (count($examples)) {
+            $parameter->examples($examples);
+        }
+
+        return $parameter;
     }
 }

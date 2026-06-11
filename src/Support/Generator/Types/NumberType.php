@@ -27,6 +27,11 @@ class NumberType extends Type
         return $this;
     }
 
+    public function matches($value): bool
+    {
+        return is_numeric($value);
+    }
+
     public function toArray()
     {
         return array_merge(parent::toArray(), array_filter([

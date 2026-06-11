@@ -8,4 +8,9 @@ class BooleanType extends Type
     {
         parent::__construct('boolean');
     }
+
+    public function matches($value): bool
+    {
+        return is_bool($value);
+    }
 }

@@ -74,6 +74,20 @@ class Reference extends Type
         return $casesDescription;
     }
 
+    public function matches($value): bool
+    {
+        if (parent::matches($value)) {
+            return true;
+        }
+
+        $resolved = $this->resolve();
+        if ($resolved instanceof Schema) {
+            return $resolved->type->matches($value);
+        }
+
+        return false;
+    }
+
     public function toArray()
     {
         if ($this->nullable) {
