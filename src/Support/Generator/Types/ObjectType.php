@@ -66,6 +66,11 @@ class ObjectType extends Type
         return $this;
     }
 
+    public function matches($value): bool
+    {
+        return is_array($value) || is_object($value);
+    }
+
     public function toArray()
     {
         $result = parent::toArray();

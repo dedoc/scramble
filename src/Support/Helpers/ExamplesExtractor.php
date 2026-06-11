@@ -41,6 +41,16 @@ class ExamplesExtractor
         if (function_exists('json_decode')) {
             $json = json_decode($exampleValue, true);
 
+            if (is_array($json) && (array_key_exists('value', $json) || array_key_exists('externalValue', $json)) && (array_key_exists('summary', $json) || array_key_exists('description', $json) || array_key_exists('type', $json))) {
+                return new \Dedoc\Scramble\Support\Generator\Example(
+                    value: array_key_exists('value', $json) ? $json['value'] : new \Dedoc\Scramble\Support\Generator\MissingValue,
+                    summary: $json['summary'] ?? null,
+                    description: $json['description'] ?? null,
+                    externalValue: $json['externalValue'] ?? null,
+                    type: $json['type'] ?? null,
+                );
+            }
+
             $exampleValue = $json === null || $json == $exampleValue
                 ? $exampleValue
                 : $json;

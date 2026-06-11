@@ -86,7 +86,7 @@ class Parameter
 
         return array_merge(
             $result,
-            $this->example instanceof MissingValue ? [] : ['example' => $this->example],
+            $this->example instanceof MissingValue ? [] : ['example' => $this->example instanceof Example ? $this->example->toArray() : $this->example],
             ! is_null($this->explode) ? [
                 'explode' => $this->explode,
             ] : [],
@@ -129,6 +129,13 @@ class Parameter
     public function example($example)
     {
         $this->example = $example;
+
+        return $this;
+    }
+
+    public function examples(array $examples)
+    {
+        $this->examples = $examples;
 
         return $this;
     }

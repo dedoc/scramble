@@ -10,6 +10,7 @@ use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
+use Dedoc\Scramble\Support\Generator\Combined\OneOf;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
@@ -267,6 +268,10 @@ class TypeTransformer
                 }
 
                 if ($examples = ExamplesExtractor::make($docNode)->extract(preferString: $openApiType instanceof StringType)) {
+                    if (count($examples) > 1 && $openApiType instanceof AnyOf) {
+                        $openApiType = (new OneOf)->setItems($openApiType->items)->addProperties($openApiType);
+                    }
+
                     $openApiType->examples($examples);
                 }
 

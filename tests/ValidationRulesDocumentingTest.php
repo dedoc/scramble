@@ -1172,27 +1172,63 @@ class ControllerWithoutSecurity
 it('extracts manual documentation for rules from request->validate call when rules are defined in a different method', function () {
     $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', ValidateCallDifferentMethodsRules_ValidationRulesDocumentingTest::class));
 
-    expect($openApiDocument['paths']['/test']['get']['parameters'][0])
+    expect($openApiDocument['paths']['/test']['get']['parameters'])
         ->toBe([
-            'name' => 'foo',
-            'in' => 'query',
-            'required' => true,
-            'description' => 'Nice parameter',
-            'schema' => ['type' => 'string'],
+            [
+                'name' => 'foo',
+                'in' => 'query',
+                'required' => true,
+                'description' => 'Nice parameter',
+                'schema' => ['type' => 'string'],
+            ],
+            [
+                'name' => 'bar',
+                'in' => 'query',
+                'description' => 'Another parameter',
+                'schema' => [
+                    'oneOf' => [
+                        [
+                            'type' => 'string',
+                            'description' => 'First Format',
+                            'example' => '123456-1234-4321-123456',
+                        ],
+                        [
+                            'type' => 'integer',
+                            'description' => 'Second Format',
+                            'example' => 1234,
+                        ],
+                    ],
+                ],
+            ],
         ]);
 });
 class ValidateCallDifferentMethodsRules_ValidationRulesDocumentingTest
 {
     public function __invoke(Request $request)
     {
-        $request->validate((new ValidateCallDifferentMethodsRules_ValidationRulesDocumentingTest)->getRules());
+        $request->validate([
+            ...(new ValidateCallDifferentMethodsRules_ValidationRulesDocumentingTest)->getFooRules(),
+            ...(new ValidateCallDifferentMethodsRules_ValidationRulesDocumentingTest)->getBarRules(),
+        ]);
     }
 
-    public function getRules()
+    public function getFooRules(): array
     {
         return [
             // Nice parameter
             'foo' => ['required', 'string'],
+        ];
+    }
+
+    public function getBarRules(): array
+    {
+        return [
+            /**
+             * Another parameter
+             * @example {"type": "string", "value": "123456-1234-4321-123456", "summary": "First Format"}
+             * @example {"type": "int", "value": 1234, "summary": "Second Format"}
+             */
+            'bar' => ['alpha_num'],
         ];
     }
 }

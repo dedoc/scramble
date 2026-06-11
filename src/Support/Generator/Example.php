@@ -9,7 +9,15 @@ class Example
         public ?string $summary = null,
         public ?string $description = null,
         public ?string $externalValue = null,
-    ) {}
+        public ?string $type = null,
+    ) {
+        if ($this->type === 'int') {
+            $this->type = 'integer';
+        }
+        if ($this->type === 'bool') {
+            $this->type = 'boolean';
+        }
+    }
 
     public function toArray()
     {

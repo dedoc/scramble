@@ -9,6 +9,11 @@ class MixedType extends Type
         parent::__construct('mixed');
     }
 
+    public function matches($value): bool
+    {
+        return true;
+    }
+
     public function toArray()
     {
         // Yes. It is not an array. I live with it.

@@ -8,4 +8,9 @@ class IntegerType extends NumberType
     {
         parent::__construct('integer');
     }
+
+    public function matches($value): bool
+    {
+        return is_int($value);
+    }
 }

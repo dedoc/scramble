@@ -8,18 +8,18 @@ use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use InvalidArgumentException;
 
-class AnyOf extends Type
+class OneOf extends Type
 {
     use HasCombinedItems;
 
-    public string $combinedOperator = 'anyOf';
+    public string $combinedOperator = 'oneOf';
 
     /** @var Type[] */
     public $items;
 
     public function __construct()
     {
-        parent::__construct('anyOf');
+        parent::__construct('oneOf');
         $this->items = [new StringType];
     }
 

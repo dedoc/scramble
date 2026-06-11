@@ -73,6 +73,11 @@ class ArrayType extends Type
         return $this;
     }
 
+    public function matches($value): bool
+    {
+        return is_array($value) && (empty($value) || array_keys($value) === range(0, count($value) - 1));
+    }
+
     public function toArray()
     {
         $shouldOmitItems = $this->items->getAttribute('missing')
