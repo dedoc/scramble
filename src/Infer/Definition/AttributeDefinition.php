@@ -6,6 +6,8 @@ use ReflectionAttribute;
 
 class AttributeDefinition
 {
+    public const IS_INSTANCEOF = ReflectionAttribute::IS_INSTANCEOF;
+
     public function __construct(
         public string $name,
         public array $arguments = [],

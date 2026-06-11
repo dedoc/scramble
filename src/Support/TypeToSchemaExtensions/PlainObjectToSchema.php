@@ -6,6 +6,7 @@ use Dedoc\Scramble\Attributes\Hidden;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Contracts\ClassDefinition;
+use Dedoc\Scramble\Infer\Definition\AttributeDefinition;
 use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
@@ -112,7 +113,7 @@ class PlainObjectToSchema extends TypeToSchemaExtension
                 continue;
             }
 
-            if ($propertyDefinition->hasAttribute(Hidden::class)) {
+            if ($propertyDefinition->getAttributes(Hidden::class, AttributeDefinition::IS_INSTANCEOF)) {
                 continue;
             }
 

@@ -34,14 +34,24 @@ class ClassPropertyDefinition
         );
     }
 
-    public function hasAttribute(string $name): bool
+    /**
+     * @return AttributeDefinition[]
+     */
+    public function getAttributes(?string $name = null, int $flags = 0): array
     {
-        foreach ($this->attributes as $attribute) {
-            if (is_a($attribute->name, $name, true)) {
-                return true;
-            }
+        if ($name === null) {
+            return $this->attributes;
         }
 
-        return false;
+        return array_values(array_filter(
+            $this->attributes,
+            function (AttributeDefinition $attribute) use ($name, $flags) {
+                if ($flags & AttributeDefinition::IS_INSTANCEOF) {
+                    return is_a($attribute->name, $name, true);
+                }
+
+                return $attribute->name === $name;
+            },
+        ));
     }
 }
