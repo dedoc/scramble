@@ -21,6 +21,24 @@ beforeEach(function () {
     ]);
 });
 
+it('does not document stdClass as components schema', function () {
+    $extension = new PlainObjectToSchema(
+        app(Infer::class),
+        $this->transformer,
+        $this->components,
+    );
+
+    $type = new ObjectType(\stdClass::class);
+
+    expect($extension->shouldHandle($type))->toBeFalse()
+        ->and($extension->reference($type))->toBeNull();
+
+    $schema = $this->transformer->transform($type);
+
+    expect($schema->toArray())->not->toHaveKey('$ref')
+        ->and($this->components->hasSchema('stdClass'))->toBeFalse();
+});
+
 it('handles plain object types', function () {
     $extension = new PlainObjectToSchema(
         app(Infer::class),

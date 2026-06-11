@@ -17,8 +17,8 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use ReflectionClass;
-use stdClass;
 use Symfony\Component\HttpFoundation\Response;
+use stdClass;
 
 class PlainObjectToSchema extends TypeToSchemaExtension
 {
@@ -60,7 +60,6 @@ class PlainObjectToSchema extends TypeToSchemaExtension
         return null;
     }
 
-
     private function getSerializedType(ObjectType $type): ?Type
     {
         $cacheKey = $type->toString();
@@ -78,7 +77,7 @@ class PlainObjectToSchema extends TypeToSchemaExtension
 
     private function getFreshSerializedType(ObjectType $type): ?Type
     {
-        $definition = $this->infer->analyzeClass($type->name);
+        $definition = $this->infer->index->getClass($type->name);
 
         if ($jsonSerializableType = $this->getJsonSerializableType($definition, $type)) {
             return $jsonSerializableType;
