@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-use Carbon\CarbonInterface;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
@@ -370,11 +369,7 @@ class TypeTransformer
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\MixedType) {
             $openApiType = new MixedType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\ObjectType) {
-            if ($type->isInstanceOf(CarbonInterface::class)) {
-                $openApiType = (new StringType)->format('date-time');
-            } else {
-                $openApiType = new ObjectType;
-            }
+            $openApiType = new ObjectType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntersectionType) {
             $openApiType = (new AllOf)->setItems(array_map(
                 fn ($t) => $this->transform($t),

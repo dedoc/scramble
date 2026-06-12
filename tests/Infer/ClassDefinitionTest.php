@@ -61,6 +61,7 @@ class AfterFoo_ClassDefinitionTest implements AfterClassDefinitionCreatedExtensi
         $event->classDefinition->properties['prop'] = new ClassPropertyDefinition(
             type: new GenericClassStringType($t),
             defaultType: new GenericClassStringType(new ObjectType(Builder::class)),
+            attributes: [],
         );
     }
 }
@@ -92,6 +93,7 @@ class AfterBar_ClassDefinitionTest implements AfterClassDefinitionCreatedExtensi
         $event->classDefinition->properties['prop'] = new ClassPropertyDefinition(
             type: new GenericClassStringType($t),
             defaultType: new GenericClassStringType(new ObjectType(Builder::class)),
+            attributes: [],
         );
     }
 }
