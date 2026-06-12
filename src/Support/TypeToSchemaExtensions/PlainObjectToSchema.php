@@ -18,8 +18,8 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use ReflectionClass;
-use Symfony\Component\HttpFoundation\Response;
 use stdClass;
+use Symfony\Component\HttpFoundation\Response;
 
 class PlainObjectToSchema extends TypeToSchemaExtension
 {
@@ -38,7 +38,7 @@ class PlainObjectToSchema extends TypeToSchemaExtension
             return false;
         }
 
-        if (!(new ReflectionClass($type->name))->isInstantiable()) {
+        if (! (new ReflectionClass($type->name))->isInstantiable()) {
             return false;
         }
 
