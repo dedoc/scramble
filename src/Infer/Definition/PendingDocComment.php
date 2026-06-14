@@ -43,7 +43,8 @@ class PendingDocComment
             $reflectionClass = new \ReflectionClass($declaringClass);
 
             return $reflectionClass->getFileName() ?: null;
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
 
         return null;
     }
