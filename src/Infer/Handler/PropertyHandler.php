@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Definition\AttributeDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
+use Dedoc\Scramble\Infer\Definition\PendingDocComment;
 use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -34,7 +35,6 @@ class PropertyHandler
 
             $attributes = [];
             $docComment = $node->getDocComment()?->getText();
-            $declaringFileName = null;
 
             try {
                 $reflectionProperty = new ReflectionProperty($classDefinition->name, $prop->name->name);
@@ -43,8 +43,6 @@ class PropertyHandler
                 if (! $docComment) {
                     $docComment = $reflectionProperty->getDocComment() ?: null;
                 }
-
-                $declaringFileName = $reflectionProperty->getDeclaringClass()->getFileName() ?: null;
             } catch (\ReflectionException) {
             }
 
@@ -58,8 +56,9 @@ class PropertyHandler
                     default => PropertyVisibility::Public,
                 },
                 attributes: $attributes,
-                docComment: $docComment,
-                declaringFileName: $declaringFileName,
+                pendingDocComment: $docComment
+                    ? new PendingDocComment($docComment, declaringClass: $classDefinition->name)
+                    : null,
             );
             $ownProperties[$prop->name->name] = $propertyDefinition;
         }

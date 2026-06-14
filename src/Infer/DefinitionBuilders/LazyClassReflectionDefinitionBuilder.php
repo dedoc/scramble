@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Definition\AttributeDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\LazyShallowClassDefinition;
+use Dedoc\Scramble\Infer\Definition\PendingDocComment;
 use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
@@ -54,8 +55,9 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                     isStatic: $reflectionProperty->isStatic(),
                     visibility: PropertyVisibility::fromReflectionProperty($reflectionProperty),
                     attributes: AttributeDefinition::fromReflectionAttributesArray($reflectionProperty->getAttributes()),
-                    docComment: $reflectionProperty->getDocComment() ?: null,
-                    declaringFileName: $reflectionProperty->getDeclaringClass()->getFileName() ?: null,
+                    pendingDocComment: ($docComment = $reflectionProperty->getDocComment() ?: null)
+                        ? new PendingDocComment($docComment, declaringClass: $this->reflection->name)
+                        : null,
                 );
             } else {
                 $classDefinitionData->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
@@ -68,8 +70,9 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                         : null,
                     visibility: PropertyVisibility::fromReflectionProperty($reflectionProperty),
                     attributes: AttributeDefinition::fromReflectionAttributesArray($reflectionProperty->getAttributes()),
-                    docComment: $reflectionProperty->getDocComment() ?: null,
-                    declaringFileName: $reflectionProperty->getDeclaringClass()->getFileName() ?: null,
+                    pendingDocComment: ($docComment = $reflectionProperty->getDocComment() ?: null)
+                        ? new PendingDocComment($docComment, declaringClass: $this->reflection->name)
+                        : null,
                 );
                 $classDefinitionData->templateTypes[] = $t;
             }
