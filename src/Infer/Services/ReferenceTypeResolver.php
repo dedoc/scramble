@@ -28,9 +28,11 @@ use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PotentialMethodMutatingCallType;
+use Dedoc\Scramble\Support\Type\Reference\PropertyAssignReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticReference;
+use Dedoc\Scramble\Support\Type\RecursiveTemplateSolver;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -75,6 +77,7 @@ class ReferenceTypeResolver
             CallableCallReferenceType::class => $this->resolveCallableCallReferenceType($scope, $t),
             NewCallReferenceType::class => $this->resolveNewCallReferenceType($scope, $t),
             PropertyFetchReferenceType::class => $this->resolvePropertyFetchReferenceType($scope, $t),
+            PropertyAssignReferenceType::class => $this->resolvePropertyAssignReferenceType($scope, $t),
             PotentialMethodMutatingCallType::class => $this->resolvePotentialMethodMutatingCallType($scope, $t),
             default => null,
         };
@@ -538,6 +541,48 @@ class ReferenceTypeResolver
                 ? ($propertyType->is ?: new UnknownType)
                 : $propertyType;
         }, $objectAllTypes));
+    }
+
+    private function resolvePropertyAssignReferenceType(Scope $scope, PropertyAssignReferenceType $type): Type
+    {
+        $objectType = $this->resolve($scope, $type->object);
+
+        if (! $objectType instanceof ObjectType) {
+            return $objectType;
+        }
+
+        $assignedType = $this->resolve($scope, $type->value);
+
+        $result = $objectType->withAssignedPropertyType($type->propertyName, $assignedType);
+
+        if (! $result instanceof Generic) {
+            return $result;
+        }
+
+        if (! $classDefinition = $this->index->getClass($result->name)) {
+            return $result;
+        }
+
+        if (! $propertyDefinition = $classDefinition->getPropertyDefinition($type->propertyName)) {
+            return $result;
+        }
+
+        if (! $declaredPropertyType = $propertyDefinition->type) {
+            return $result;
+        }
+
+        $propertyTemplates = (new TypeWalker)->findAll($declaredPropertyType, fn (Type $t) => $t instanceof TemplateType);
+        foreach ($classDefinition->templateTypes as $index => $classTemplate) {
+            if (! in_array($classTemplate, $propertyTemplates, strict: true)) {
+                continue;
+            }
+
+            if ($inferred = (new RecursiveTemplateSolver)->solve($declaredPropertyType, $assignedType, $classTemplate)) {
+                $result->templateTypes[$index] = $inferred;
+            }
+        }
+
+        return $result;
     }
 
     /**

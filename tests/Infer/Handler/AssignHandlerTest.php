@@ -65,3 +65,44 @@ it('infers types from nested destructuring assignment', function () {
 it('infers types from destructuring assignment with skipped slot', function () {
     expect(getVariableTypeAfter('[,$b] = [1, 2];', 'b')->toString())->toBe('int(2)');
 });
+
+it('tracks property types on object assignment', function () {
+    $a = new stdClass;
+    $a->foo = 42;
+
+    expect($a->foo)->toHaveType('int(42)');
+});
+
+it('tracks multiple property assignments', function () {
+    $a = new stdClass;
+    $a->foo = 42;
+    $a->bar = 'wow';
+
+    expect($a->foo)->toHaveType('int(42)');
+});
+
+class PropertyTypesGeneric_AssignHandlerTest
+{
+    public mixed $foo;
+}
+
+it('tracks property types when assigning to a templated property', function () {
+    $a = new PropertyTypesGeneric_AssignHandlerTest;
+    $a->foo = 42;
+
+    expect($a->foo)->toHaveType('int(42)');
+
+    expect(getVariableTypeAfter("\$a = new PropertyTypesGeneric_AssignHandlerTest(); \$a->foo = 42;", 'a')->toString())
+        ->toBe(PropertyTypesGeneric_AssignHandlerTest::class.'<int(42)>');
+});
+
+class PropertyArrayGeneric_AssignHandlerTest
+{
+    public array $items;
+}
+
+it('infers template type from array property assignment', function () {
+    $class = PropertyArrayGeneric_AssignHandlerTest::class;
+
+    expect(getVariableTypeAfter("\$a = new {$class}(); \$a->items = [1, 2];", 'a')->toString())->toBe("{$class}<list{int(1), int(2)}>");
+});
