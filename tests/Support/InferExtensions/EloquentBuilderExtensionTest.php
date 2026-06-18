@@ -10,6 +10,9 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+
+class PlainModel_EloquentBuilderExtensionTest extends Model {}
 
 test('supports extension methods', function (string $method, string $expectedType) {
     $type = ReferenceTypeResolver::getInstance()
@@ -51,43 +54,43 @@ it('tracks relations passed to with() on builder', function (string $expression,
     expect($eagerLoadType->toString())->toBe($expectedEagerLoadType);
 })->with([
     'variadic strings' => [
-        SamplePostModel::class."::query()->with('user', 'comments')->with('team')",
+        PlainModel_EloquentBuilderExtensionTest::class."::query()->with('user', 'comments')->with('team')",
         'list{string(user), string(comments), string(team)}',
     ],
     'relation with closure' => [
-        SamplePostModel::class."::query()->with('posts', fn (\$q) => \$q)",
+        PlainModel_EloquentBuilderExtensionTest::class."::query()->with('posts', fn (\$q) => \$q)",
         'list{string(posts)}',
     ],
     'array relations' => [
-        SamplePostModel::class."::query()->with(['posts' => fn (\$q) => \$q, 'comments' => fn (\$q) => \$q])",
+        PlainModel_EloquentBuilderExtensionTest::class."::query()->with(['posts' => fn (\$q) => \$q, 'comments' => fn (\$q) => \$q])",
         'list{string(posts), string(comments)}',
     ],
     'mixed array relations' => [
-        SamplePostModel::class."::query()->with(['users', 'posts' => fn (\$q) => \$q, 'comments' => fn (\$q) => \$q])",
+        PlainModel_EloquentBuilderExtensionTest::class."::query()->with(['users', 'posts' => fn (\$q) => \$q, 'comments' => fn (\$q) => \$q])",
         'list{string(users), string(posts), string(comments)}',
     ],
     'without variadic strings' => [
-        SamplePostModel::class."::query()->with('user', 'comments', 'team')->without('user', 'comments')",
+        PlainModel_EloquentBuilderExtensionTest::class."::query()->with('user', 'comments', 'team')->without('user', 'comments')",
         'list{string(team)}',
     ],
     'without array relations' => [
-        SamplePostModel::class."::query()->with(['user', 'comments', 'team'])->without(['user'])",
+        PlainModel_EloquentBuilderExtensionTest::class."::query()->with(['user', 'comments', 'team'])->without(['user'])",
         'list{string(comments), string(team)}',
     ],
     'withOnly replaces eager loads' => [
-        SamplePostModel::class."::query()->with('user', 'comments')->withOnly('team')",
+        PlainModel_EloquentBuilderExtensionTest::class."::query()->with('user', 'comments')->withOnly('team')",
         'list{string(team)}',
     ],
     'withOnly array relations' => [
-        SamplePostModel::class."::query()->with('user')->withOnly(['posts', 'comments'])",
+        PlainModel_EloquentBuilderExtensionTest::class."::query()->with('user')->withOnly(['posts', 'comments'])",
         'list{string(posts), string(comments)}',
     ],
     'setEagerLoads replaces eager loads' => [
-        SamplePostModel::class."::query()->with('user')->setEagerLoads(['posts', 'comments'])",
+        PlainModel_EloquentBuilderExtensionTest::class."::query()->with('user')->setEagerLoads(['posts', 'comments'])",
         'list{string(posts), string(comments)}',
     ],
     'withoutEagerLoads clears eager loads' => [
-        SamplePostModel::class."::query()->with('user', 'comments')->withoutEagerLoads()",
+        PlainModel_EloquentBuilderExtensionTest::class."::query()->with('user', 'comments')->withoutEagerLoads()",
         'list{}',
     ],
 ]);
