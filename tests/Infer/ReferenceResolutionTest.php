@@ -8,7 +8,6 @@ use Dedoc\Scramble\Infer\Extensions\FunctionReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\ResolvingType;
 use Dedoc\Scramble\Infer\Extensions\TypeResolverExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
-use Dedoc\Scramble\Infer\Services\LateTypeResolvingTypeVisitor;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type;
@@ -16,13 +15,6 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Tests\Infer\stubs\InvokableFoo;
 use Dedoc\Scramble\Tests\TestUtils;
-
-function resolveLateTypes(Type\Type $type): Type\Type
-{
-    return (new Type\TypeTraverser([
-        new LateTypeResolvingTypeVisitor,
-    ]))->traverse($type);
-}
 
 it('supports creating an object without constructor', function () {
     $type = analyzeFile(<<<'EOD'
@@ -488,15 +480,51 @@ it('dedupes ArrayMerge items by string keys', function () {
     expect($resolvedType->toString())->toBe('array{user: string(user.updated), posts: string(posts), comments: string(comments)}');
 });
 
+it('resolves SubtractArrays type', function () {
+    $type = new Type\Generic(Type\SubtractArrays::class, [
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('user')),
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('comments')),
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('team')),
+        ], isList: true),
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('user')),
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('comments')),
+        ], isList: true),
+    ]);
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType->toString())->toBe('list{string(team)}');
+});
+
+it('resolves SubtractArrays type by string keys', function () {
+    $type = new Type\Generic(Type\SubtractArrays::class, [
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_('user', new Type\Literal\LiteralStringType('user')),
+            new Type\ArrayItemType_('posts', new Type\Literal\LiteralStringType('posts')),
+            new Type\ArrayItemType_('comments', new Type\Literal\LiteralStringType('comments')),
+        ]),
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('user')),
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('comments')),
+        ], isList: true),
+    ]);
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType->toString())->toBe('array{posts: string(posts)}');
+});
+
 it('resolves ConditionalType for template types', function (Type\Type $subject, Type\Type $checkType, string $expectedTypeString) {
-    $type = resolveLateTypes(new Type\ConditionalType(
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new Type\ConditionalType(
         $subject,
         $checkType,
         new Type\Literal\LiteralStringType('true-branch'),
         new Type\Literal\LiteralStringType('false-branch'),
     ));
 
-    expect($type->toString())->toBe($expectedTypeString);
+    expect($resolvedType->toString())->toBe($expectedTypeString);
 })->with([
     'closure' => [
         new Type\FunctionType('{}', [], new Type\VoidType),
@@ -518,7 +546,7 @@ it('resolves ConditionalType for template types', function (Type\Type $subject, 
 ]);
 
 it('resolves nested ConditionalType for template types', function () {
-    $type = resolveLateTypes(new Type\ConditionalType(
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new Type\ConditionalType(
         new Type\FunctionType('{}', [], new Type\VoidType),
         new Type\FunctionType('{}', [], new Type\VoidType),
         new Type\KeyedArrayType([
@@ -537,26 +565,26 @@ it('resolves nested ConditionalType for template types', function () {
         ),
     ));
 
-    expect($type->toString())->toBe('list{string(posts)}');
+    expect($resolvedType->toString())->toBe('list{string(posts)}');
 });
 
 it('resolves KeyOf type', function () {
-    $type = resolveLateTypes(new Type\KeyOf(new Type\KeyedArrayType([
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new Type\KeyOf(new Type\KeyedArrayType([
         new Type\ArrayItemType_('posts', new Type\FunctionType('{}', [], new Type\VoidType)),
         new Type\ArrayItemType_('comments', new Type\FunctionType('{}', [], new Type\VoidType)),
     ])));
 
-    expect($type->toString())->toBe('list{string(posts), string(comments)}');
+    expect($resolvedType->toString())->toBe('list{string(posts), string(comments)}');
 });
 
 it('resolves KeyOf type with numeric keys', function () {
-    $type = resolveLateTypes(new Type\KeyOf(new Type\KeyedArrayType([
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new Type\KeyOf(new Type\KeyedArrayType([
         new Type\ArrayItemType_(0, new Type\Literal\LiteralStringType('users')),
         new Type\ArrayItemType_('posts', new Type\FunctionType('{}', [], new Type\VoidType)),
         new Type\ArrayItemType_('comments', new Type\FunctionType('{}', [], new Type\VoidType)),
     ])));
 
-    expect($type->toString())->toBe('list{int(0), string(posts), string(comments)}');
+    expect($resolvedType->toString())->toBe('list{int(0), string(posts), string(comments)}');
 });
 
 it('resolves EagerLoadRelationsList type', function () {
@@ -574,14 +602,14 @@ it('resolves EagerLoadRelationsList type', function () {
 });
 
 it('does not resolve ConditionalType while subject template is unknown', function () {
-    $type = resolveLateTypes(new Type\ConditionalType(
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new Type\ConditionalType(
         new Type\TemplateType('TRelations'),
         new Type\StringType,
         new Type\Literal\LiteralStringType('yes'),
         new Type\Literal\LiteralStringType('no'),
     ));
 
-    expect($type)->toBeInstanceOf(Type\ConditionalType::class);
+    expect($resolvedType)->toBeInstanceOf(Type\ConditionalType::class);
 });
 
 it('resolves WithProperties phpdoc type', function () {

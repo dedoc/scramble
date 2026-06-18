@@ -20,7 +20,7 @@ class ConditionalType extends AbstractType implements LateResolvingType
 
     public function resolve(): Type
     {
-        return static::matches($this->subject, $this->checkType)
+        return $this->matches($this->subject, $this->checkType)
             ? $this->ifTrue
             : $this->ifFalse;
     }
@@ -53,7 +53,7 @@ class ConditionalType extends AbstractType implements LateResolvingType
         );
     }
 
-    private static function matches(Type $subject, Type $checkType): bool
+    private function matches(Type $subject, Type $checkType): bool
     {
         return $subject->acceptedBy($checkType);
     }

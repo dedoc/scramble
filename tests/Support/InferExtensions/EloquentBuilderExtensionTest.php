@@ -66,4 +66,28 @@ it('tracks relations passed to with() on builder', function (string $expression,
         SamplePostModel::class."::query()->with(['users', 'posts' => fn (\$q) => \$q, 'comments' => fn (\$q) => \$q])",
         'list{string(users), string(posts), string(comments)}',
     ],
+    'without variadic strings' => [
+        SamplePostModel::class."::query()->with('user', 'comments', 'team')->without('user', 'comments')",
+        'list{string(team)}',
+    ],
+    'without array relations' => [
+        SamplePostModel::class."::query()->with(['user', 'comments', 'team'])->without(['user'])",
+        'list{string(comments), string(team)}',
+    ],
+    'withOnly replaces eager loads' => [
+        SamplePostModel::class."::query()->with('user', 'comments')->withOnly('team')",
+        'list{string(team)}',
+    ],
+    'withOnly array relations' => [
+        SamplePostModel::class."::query()->with('user')->withOnly(['posts', 'comments'])",
+        'list{string(posts), string(comments)}',
+    ],
+    'setEagerLoads replaces eager loads' => [
+        SamplePostModel::class."::query()->with('user')->setEagerLoads(['posts', 'comments'])",
+        'list{string(posts), string(comments)}',
+    ],
+    'withoutEagerLoads clears eager loads' => [
+        SamplePostModel::class."::query()->with('user', 'comments')->withoutEagerLoads()",
+        'list{}',
+    ],
 ]);

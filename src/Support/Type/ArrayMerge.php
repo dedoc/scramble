@@ -15,10 +15,10 @@ class ArrayMerge implements ResolvingType
             return null;
         }
 
-        return static::merge($type->templateTypes[0], $type->templateTypes[1]);
+        return $this->merge($type->templateTypes[0], $type->templateTypes[1]);
     }
 
-    public static function merge(Type $left, Type $right): Type
+    private function merge(Type $left, Type $right): Type
     {
         $types = collect([$left, $right])->map(
             fn (Type $type) => $type instanceof UnknownType ? new KeyedArrayType([], isList: true) : $type,
