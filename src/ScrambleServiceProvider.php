@@ -31,6 +31,7 @@ use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
 use Dedoc\Scramble\Support\IndexBuilders\PaginatorsCandidatesBuilder;
 use Dedoc\Scramble\Support\InferExtensions\AbortHelpersExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\AfterAnonymousResourceCollectionDefinitionCreatedExtension;
+use Dedoc\Scramble\Support\InferExtensions\AfterEloquentBuilderDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterEloquentCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterJsonApiResourceDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterJsonResourceDefinitionCreatedExtension;
@@ -164,6 +165,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     JsonApiResourceMethodReturnTypeExtension::class,
                     JsonApiResourceCollectionMethodReturnTypeExtension::class,
                     AfterJsonApiResourceDefinitionCreatedExtension::class,
+                    AfterEloquentBuilderDefinitionCreatedExtension::class,
                     AfterEloquentCollectionDefinitionCreatedExtension::class,
                     JsonResourceExtension::class,
                     ResourceResponseMethodReturnTypeExtension::class,

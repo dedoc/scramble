@@ -431,6 +431,55 @@ class AlwaysInt_ReferenceResolutionTest implements ResolvingType
     }
 }
 
+it('resolves PropertyFetch type', function () {
+    $builder = new Type\Generic(\Illuminate\Database\Eloquent\Builder::class, [
+        new Type\ObjectType('SomeModel'),
+    ])->withAssignedPropertyType('eagerLoad', new Type\KeyedArrayType([
+        new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('user')),
+    ], isList: true));
+
+    $type = new Type\Generic(Type\PropertyFetch::class, [
+        $builder,
+        new Type\Literal\LiteralStringType('eagerLoad'),
+    ]);
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType->toString())->toBe('list{string(user)}');
+});
+
+it('resolves ArrayMerge type', function () {
+    $type = new Type\Generic(Type\ArrayMerge::class, [
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('user')),
+        ], isList: true),
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(0, new Type\Literal\LiteralStringType('comments')),
+        ]),
+    ]);
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType->toString())->toBe('list{string(user), string(comments)}');
+});
+
+it('dedupes ArrayMerge items by string keys', function () {
+    $type = new Type\Generic(Type\ArrayMerge::class, [
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_('user', new Type\Literal\LiteralStringType('user')),
+            new Type\ArrayItemType_('posts', new Type\Literal\LiteralStringType('posts')),
+        ]),
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_('user', new Type\Literal\LiteralStringType('user.updated')),
+            new Type\ArrayItemType_('comments', new Type\Literal\LiteralStringType('comments')),
+        ]),
+    ]);
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType->toString())->toBe('array{user: string(user.updated), posts: string(posts), comments: string(comments)}');
+});
+
 it('resolves WithProperties phpdoc type', function () {
     $type = new Type\Generic(Type\WithProperties::class, [
         new Type\ObjectType('SomeClass'),
