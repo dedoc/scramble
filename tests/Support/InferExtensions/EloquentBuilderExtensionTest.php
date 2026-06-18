@@ -4,13 +4,10 @@ namespace Dedoc\Scramble\Tests\Support\InferExtensions;
 
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
-use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
-use Dedoc\Scramble\Support\Type\WithProperties;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -39,12 +36,8 @@ test('supports extension methods', function (string $method, string $expectedTyp
     ['createOrRestore', SamplePostModel::class],
 ]);
 
-
-/**
- * @return WithProperties<$this, array{eagerLoad: ArrayMerge<$this->eagerLoad, $callback is Closure ? list{$relations} : $relations is array ? array-keys<$relations> : null>}>
- */
-it('tracks relations passed to with() on builder', function () {
-    $builderType = getStatementType(SamplePostModel::class."::query()->with('user', 'comments')->with('team')");
+it('tracks relations passed to with() on builder', function (string $expression, string $expectedEagerLoadType) {
+    $builderType = getStatementType($expression);
 
     expect($builderType)->toBeInstanceOf(Generic::class)
         ->and($builderType->name)->toBe(Builder::class);
@@ -55,13 +48,22 @@ it('tracks relations passed to with() on builder', function () {
             new PropertyFetchReferenceType($builderType, 'eagerLoad'),
         );
 
-    expect($eagerLoadType->toString())->toBe('list{string(user), string(comments), string(team)}');
-});
-
-it('dssdsd', function () {
-    $phpDocType = 'WithProperties<$this, array{eagerLoad: ArrayMerge<PropertyFetch<$this, \'eagerLoad\'>, ($callback is Closure ? list{TRelations} : ($relations is string ? Arguments : key-of<TRelations>))>}>';
-
-    $type = PhpDoc::parse('/** @return '.$phpDocType.' */');
-
-    dd($type);
-});
+    expect($eagerLoadType->toString())->toBe($expectedEagerLoadType);
+})->with([
+    'variadic strings' => [
+        SamplePostModel::class."::query()->with('user', 'comments')->with('team')",
+        'list{string(user), string(comments), string(team)}',
+    ],
+    'relation with closure' => [
+        SamplePostModel::class."::query()->with('posts', fn (\$q) => \$q)",
+        'list{string(posts)}',
+    ],
+    'array relations' => [
+        SamplePostModel::class."::query()->with(['posts' => fn (\$q) => \$q, 'comments' => fn (\$q) => \$q])",
+        'list{string(posts), string(comments)}',
+    ],
+    'mixed array relations' => [
+        SamplePostModel::class."::query()->with(['users', 'posts' => fn (\$q) => \$q, 'comments' => fn (\$q) => \$q])",
+        'list{string(users), string(posts), string(comments)}',
+    ],
+]);

@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Extensions\FunctionReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\ResolvingType;
 use Dedoc\Scramble\Infer\Extensions\TypeResolverExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Services\LateTypeResolvingTypeVisitor;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Type;
@@ -15,6 +16,13 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Tests\Infer\stubs\InvokableFoo;
 use Dedoc\Scramble\Tests\TestUtils;
+
+function resolveLateTypes(Type\Type $type): Type\Type
+{
+    return (new Type\TypeTraverser([
+        new LateTypeResolvingTypeVisitor,
+    ]))->traverse($type);
+}
 
 it('supports creating an object without constructor', function () {
     $type = analyzeFile(<<<'EOD'
@@ -478,6 +486,102 @@ it('dedupes ArrayMerge items by string keys', function () {
     $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
 
     expect($resolvedType->toString())->toBe('array{user: string(user.updated), posts: string(posts), comments: string(comments)}');
+});
+
+it('resolves ConditionalType for template types', function (Type\Type $subject, Type\Type $checkType, string $expectedTypeString) {
+    $type = resolveLateTypes(new Type\ConditionalType(
+        $subject,
+        $checkType,
+        new Type\Literal\LiteralStringType('true-branch'),
+        new Type\Literal\LiteralStringType('false-branch'),
+    ));
+
+    expect($type->toString())->toBe($expectedTypeString);
+})->with([
+    'closure' => [
+        new Type\FunctionType('{}', [], new Type\VoidType),
+        new Type\FunctionType('{}', [], new Type\VoidType),
+        'string(true-branch)',
+    ],
+    'string' => [
+        new Type\Literal\LiteralStringType('user'),
+        new Type\StringType,
+        'string(true-branch)',
+    ],
+    'array' => [
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_('posts', new Type\FunctionType('{}', [], new Type\VoidType)),
+        ]),
+        new Type\KeyedArrayType,
+        'string(true-branch)',
+    ],
+]);
+
+it('resolves nested ConditionalType for template types', function () {
+    $type = resolveLateTypes(new Type\ConditionalType(
+        new Type\FunctionType('{}', [], new Type\VoidType),
+        new Type\FunctionType('{}', [], new Type\VoidType),
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('posts')),
+        ], isList: true),
+        new Type\ConditionalType(
+            new Type\Literal\LiteralStringType('user'),
+            new Type\StringType,
+            new Type\KeyedArrayType([
+                new Type\ArrayItemType_(0, new Type\Literal\LiteralStringType('user')),
+                new Type\ArrayItemType_(1, new Type\Literal\LiteralStringType('comments')),
+            ]),
+            new Type\KeyedArrayType([
+                new Type\ArrayItemType_('posts', new Type\Literal\LiteralStringType('posts')),
+            ]),
+        ),
+    ));
+
+    expect($type->toString())->toBe('list{string(posts)}');
+});
+
+it('resolves KeyOf type', function () {
+    $type = resolveLateTypes(new Type\KeyOf(new Type\KeyedArrayType([
+        new Type\ArrayItemType_('posts', new Type\FunctionType('{}', [], new Type\VoidType)),
+        new Type\ArrayItemType_('comments', new Type\FunctionType('{}', [], new Type\VoidType)),
+    ])));
+
+    expect($type->toString())->toBe('list{string(posts), string(comments)}');
+});
+
+it('resolves KeyOf type with numeric keys', function () {
+    $type = resolveLateTypes(new Type\KeyOf(new Type\KeyedArrayType([
+        new Type\ArrayItemType_(0, new Type\Literal\LiteralStringType('users')),
+        new Type\ArrayItemType_('posts', new Type\FunctionType('{}', [], new Type\VoidType)),
+        new Type\ArrayItemType_('comments', new Type\FunctionType('{}', [], new Type\VoidType)),
+    ])));
+
+    expect($type->toString())->toBe('list{int(0), string(posts), string(comments)}');
+});
+
+it('resolves EagerLoadRelationsList type', function () {
+    $type = new Type\Generic(Type\EagerLoadRelationsList::class, [
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(0, new Type\Literal\LiteralStringType('users')),
+            new Type\ArrayItemType_('posts', new Type\FunctionType('{}', [], new Type\VoidType)),
+            new Type\ArrayItemType_('comments', new Type\FunctionType('{}', [], new Type\VoidType)),
+        ]),
+    ]);
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType->toString())->toBe('list{string(users), string(posts), string(comments)}');
+});
+
+it('does not resolve ConditionalType while subject template is unknown', function () {
+    $type = resolveLateTypes(new Type\ConditionalType(
+        new Type\TemplateType('TRelations'),
+        new Type\StringType,
+        new Type\Literal\LiteralStringType('yes'),
+        new Type\Literal\LiteralStringType('no'),
+    ));
+
+    expect($type)->toBeInstanceOf(Type\ConditionalType::class);
 });
 
 it('resolves WithProperties phpdoc type', function () {
