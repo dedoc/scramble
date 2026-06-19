@@ -29,7 +29,13 @@ class AfterEloquentBuilderDefinitionCreatedExtension implements AfterClassDefini
 
     public function afterClassDefinitionCreated(ClassDefinitionCreatedEvent $event): void
     {
-        $tModel = collect($event->classDefinition->templateTypes)->firstOrFail('name', 'TModel');
+        $tModel = collect($event->classDefinition->templateTypes)->firstWhere('name', 'TModel');
+        if (! $tModel) {
+            $event->classDefinition->templateTypes = array_merge(
+                $event->classDefinition->templateTypes,
+                [$tModel = new TemplateType('TModel')],
+            );
+        }
 
         $event->classDefinition->methods['with'] = $this->buildWithMethodDefinition($tModel);
         $event->classDefinition->methods['without'] = $this->buildWithoutMethodDefinition($tModel);
