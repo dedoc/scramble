@@ -92,7 +92,7 @@ it('tracks property types when assigning to a templated property', function () {
 
     expect($a->foo)->toHaveType('int(42)');
 
-    expect(getVariableTypeAfter('$a = new PropertyTypesGeneric_AssignHandlerTest(); $a->foo = 42;', 'a')->toString())
+    expect(getVariableTypeAfter("\$a = new PropertyTypesGeneric_AssignHandlerTest(); \$a->foo = 42;", 'a')->toString())
         ->toBe(PropertyTypesGeneric_AssignHandlerTest::class.'<int(42)>');
 });
 

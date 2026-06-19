@@ -8,7 +8,11 @@ use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
+use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Tests\Files\SamplePostModel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -83,4 +87,51 @@ describe('model annotations (introduced in 11.15.0)', function () {
 
         expect($type->toString())->toBe(PostModel_ModelExtensionTest::class);
     });
+
+    it('seeds model relations from $with on query()', function () {
+        $builderType = getStatementType(SamplePostModel::class.'::query()');
+
+        expect($builderType)->toBeInstanceOf(Generic::class)
+            ->and($builderType->name)->toBe(Builder::class);
+
+        $relationsType = ReferenceTypeResolver::getInstance()
+            ->resolve(
+                new GlobalScope,
+                new PropertyFetchReferenceType($builderType->templateTypes[0], 'relations'),
+            );
+
+        expect($relationsType->toString())->toBe('list{string(parent), string(children), string(user)}');
+    });
+
+    it('carries loaded relations from $with through static model shortcuts', function (string $expression, string $expectedRelationsType) {
+        $type = getStatementType($expression);
+
+        $modelType = (new TypeWalker)->first(
+            $type,
+            fn ($t) => $t->isInstanceOf(SamplePostModel::class),
+        );
+
+        expect($modelType)->not->toBeNull();
+
+        $relationsType = ReferenceTypeResolver::getInstance()
+            ->resolve(
+                new GlobalScope,
+                new PropertyFetchReferenceType($modelType, 'relations'),
+            );
+
+        expect($relationsType->toString())->toBe($expectedRelationsType);
+    })->with([
+        'find' => [
+            SamplePostModel::class.'::find(1)',
+            'list{string(parent), string(children), string(user)}',
+        ],
+        'where first' => [
+            SamplePostModel::class."::where('id', 1)->first()",
+            'list{string(parent), string(children), string(user)}',
+        ],
+        'all' => [
+            SamplePostModel::class.'::all()',
+            'list{string(parent), string(children), string(user)}',
+        ],
+    ]);
 })->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));

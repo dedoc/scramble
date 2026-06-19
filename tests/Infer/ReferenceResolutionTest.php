@@ -431,6 +431,187 @@ class AlwaysInt_ReferenceResolutionTest implements ResolvingType
     }
 }
 
+it('resolves PropertyFetch type', function () {
+    $builder = new Type\Generic(\Illuminate\Database\Eloquent\Builder::class, [
+        new Type\ObjectType('SomeModel'),
+    ])->withAssignedPropertyType('eagerLoad', new Type\KeyedArrayType([
+        new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('user')),
+    ], isList: true));
+
+    $type = new Type\Generic(Type\PropertyFetch::class, [
+        $builder,
+        new Type\Literal\LiteralStringType('eagerLoad'),
+    ]);
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType->toString())->toBe('list{string(user)}');
+});
+
+it('resolves ArrayMerge type', function () {
+    $type = new Type\Generic(Type\ArrayMerge::class, [
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('user')),
+        ], isList: true),
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(0, new Type\Literal\LiteralStringType('comments')),
+        ]),
+    ]);
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType->toString())->toBe('list{string(user), string(comments)}');
+});
+
+it('dedupes ArrayMerge items by string keys', function () {
+    $type = new Type\Generic(Type\ArrayMerge::class, [
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_('user', new Type\Literal\LiteralStringType('user')),
+            new Type\ArrayItemType_('posts', new Type\Literal\LiteralStringType('posts')),
+        ]),
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_('user', new Type\Literal\LiteralStringType('user.updated')),
+            new Type\ArrayItemType_('comments', new Type\Literal\LiteralStringType('comments')),
+        ]),
+    ]);
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType->toString())->toBe('array{user: string(user.updated), posts: string(posts), comments: string(comments)}');
+});
+
+it('resolves SubtractArrays type', function () {
+    $type = new Type\Generic(Type\SubtractArrays::class, [
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('user')),
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('comments')),
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('team')),
+        ], isList: true),
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('user')),
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('comments')),
+        ], isList: true),
+    ]);
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType->toString())->toBe('list{string(team)}');
+});
+
+it('resolves SubtractArrays type by string keys', function () {
+    $type = new Type\Generic(Type\SubtractArrays::class, [
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_('user', new Type\Literal\LiteralStringType('user')),
+            new Type\ArrayItemType_('posts', new Type\Literal\LiteralStringType('posts')),
+            new Type\ArrayItemType_('comments', new Type\Literal\LiteralStringType('comments')),
+        ]),
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('user')),
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('comments')),
+        ], isList: true),
+    ]);
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType->toString())->toBe('array{posts: string(posts)}');
+});
+
+it('resolves ConditionalType for template types', function (Type\Type $subject, Type\Type $checkType, string $expectedTypeString) {
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new Type\ConditionalType(
+        $subject,
+        $checkType,
+        new Type\Literal\LiteralStringType('true-branch'),
+        new Type\Literal\LiteralStringType('false-branch'),
+    ));
+
+    expect($resolvedType->toString())->toBe($expectedTypeString);
+})->with([
+    'closure' => [
+        new Type\FunctionType('{}', [], new Type\VoidType),
+        new Type\FunctionType('{}', [], new Type\VoidType),
+        'string(true-branch)',
+    ],
+    'string' => [
+        new Type\Literal\LiteralStringType('user'),
+        new Type\StringType,
+        'string(true-branch)',
+    ],
+    'array' => [
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_('posts', new Type\FunctionType('{}', [], new Type\VoidType)),
+        ]),
+        new Type\KeyedArrayType,
+        'string(true-branch)',
+    ],
+]);
+
+it('resolves nested ConditionalType for template types', function () {
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new Type\ConditionalType(
+        new Type\FunctionType('{}', [], new Type\VoidType),
+        new Type\FunctionType('{}', [], new Type\VoidType),
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('posts')),
+        ], isList: true),
+        new Type\ConditionalType(
+            new Type\Literal\LiteralStringType('user'),
+            new Type\StringType,
+            new Type\KeyedArrayType([
+                new Type\ArrayItemType_(0, new Type\Literal\LiteralStringType('user')),
+                new Type\ArrayItemType_(1, new Type\Literal\LiteralStringType('comments')),
+            ]),
+            new Type\KeyedArrayType([
+                new Type\ArrayItemType_('posts', new Type\Literal\LiteralStringType('posts')),
+            ]),
+        ),
+    ));
+
+    expect($resolvedType->toString())->toBe('list{string(posts)}');
+});
+
+it('resolves KeyOf type', function () {
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new Type\KeyOf(new Type\KeyedArrayType([
+        new Type\ArrayItemType_('posts', new Type\FunctionType('{}', [], new Type\VoidType)),
+        new Type\ArrayItemType_('comments', new Type\FunctionType('{}', [], new Type\VoidType)),
+    ])));
+
+    expect($resolvedType->toString())->toBe('list{string(posts), string(comments)}');
+});
+
+it('resolves KeyOf type with numeric keys', function () {
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new Type\KeyOf(new Type\KeyedArrayType([
+        new Type\ArrayItemType_(0, new Type\Literal\LiteralStringType('users')),
+        new Type\ArrayItemType_('posts', new Type\FunctionType('{}', [], new Type\VoidType)),
+        new Type\ArrayItemType_('comments', new Type\FunctionType('{}', [], new Type\VoidType)),
+    ])));
+
+    expect($resolvedType->toString())->toBe('list{int(0), string(posts), string(comments)}');
+});
+
+it('resolves EagerLoadRelationsList type', function () {
+    $type = new Type\Generic(Type\EagerLoadRelationsList::class, [
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_(0, new Type\Literal\LiteralStringType('users')),
+            new Type\ArrayItemType_('posts', new Type\FunctionType('{}', [], new Type\VoidType)),
+            new Type\ArrayItemType_('comments', new Type\FunctionType('{}', [], new Type\VoidType)),
+        ]),
+    ]);
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType->toString())->toBe('list{string(users), string(posts), string(comments)}');
+});
+
+it('does not resolve ConditionalType while subject template is unknown', function () {
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new Type\ConditionalType(
+        new Type\TemplateType('TRelations'),
+        new Type\StringType,
+        new Type\Literal\LiteralStringType('yes'),
+        new Type\Literal\LiteralStringType('no'),
+    ));
+
+    expect($resolvedType)->toBeInstanceOf(Type\ConditionalType::class);
+});
+
 it('resolves WithProperties phpdoc type', function () {
     $type = new Type\Generic(Type\WithProperties::class, [
         new Type\ObjectType('SomeClass'),
