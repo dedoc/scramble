@@ -14,7 +14,6 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\PropertyFetch;
-use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\SubtractArrays;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -30,14 +29,16 @@ class AfterEloquentBuilderDefinitionCreatedExtension implements AfterClassDefini
 
     public function afterClassDefinitionCreated(ClassDefinitionCreatedEvent $event): void
     {
-        $event->classDefinition->methods['with'] = $this->buildWithMethodDefinition();
-        $event->classDefinition->methods['without'] = $this->buildWithoutMethodDefinition();
-        $event->classDefinition->methods['withOnly'] = $this->buildWithOnlyMethodDefinition();
-        $event->classDefinition->methods['setEagerLoads'] = $this->buildSetEagerLoadsMethodDefinition();
-        $event->classDefinition->methods['withoutEagerLoads'] = $this->buildWithoutEagerLoadsMethodDefinition();
+        $tModel = collect($event->classDefinition->templateTypes)->firstOrFail('name', 'TModel');
+
+        $event->classDefinition->methods['with'] = $this->buildWithMethodDefinition($tModel);
+        $event->classDefinition->methods['without'] = $this->buildWithoutMethodDefinition($tModel);
+        $event->classDefinition->methods['withOnly'] = $this->buildWithOnlyMethodDefinition($tModel);
+        $event->classDefinition->methods['setEagerLoads'] = $this->buildSetEagerLoadsMethodDefinition($tModel);
+        $event->classDefinition->methods['withoutEagerLoads'] = $this->buildWithoutEagerLoadsMethodDefinition($tModel);
     }
 
-    private function buildWithMethodDefinition(): ShallowFunctionDefinition
+    private function buildWithMethodDefinition(TemplateType $tModel): ShallowFunctionDefinition
     {
         $templates = [
             $tRelations = new TemplateType('TRelations'),
@@ -54,40 +55,44 @@ class AfterEloquentBuilderDefinitionCreatedExtension implements AfterClassDefini
                 /**
                  * @see Builder::with
                  *
-                 * @return WithProperties<
-                 *     $this,
-                 *     array{
-                 *         eagerLoad: ArrayMerge<
-                 *             PropertyFetch<$this, 'eagerLoad'>,
-                 *             TCallback is Closure
-                 *                 ? list{TRelations}
-                 *                 : (TRelations is string ? Arguments : EagerLoadRelationsList<TRelations>)
-                 *         >
-                 *     }
+                 * @return Builder<
+                 *     WithProperties<
+                 *         TModel,
+                 *         array{
+                 *             relations: ArrayMerge<
+                 *                 PropertyFetch<TModel, 'relations'>,
+                 *                 TCallback is Closure
+                 *                     ? list{TRelations}
+                 *                     : (TRelations is string ? Arguments : EagerLoadRelationsList<TRelations>)
+                 *             >
+                 *         }
+                 *     >
                  * >
                  */
-                returnType: new Generic(WithProperties::class, [
-                    new SelfType(''),
-                    new KeyedArrayType([
-                        new ArrayItemType_('eagerLoad', new Generic(ArrayMerge::class, [
-                            new Generic(PropertyFetch::class, [
-                                new SelfType(''),
-                                new LiteralStringType('eagerLoad'),
-                            ]),
-                            new ConditionalType(
-                                $tCallback,
-                                new ObjectType(\Closure::class),
-                                new KeyedArrayType([
-                                    new ArrayItemType_(null, $tRelations),
-                                ], isList: true),
+                returnType: new Generic(Builder::class, [
+                    new Generic(WithProperties::class, [
+                        $tModel,
+                        new KeyedArrayType([
+                            new ArrayItemType_('relations', new Generic(ArrayMerge::class, [
+                                new Generic(PropertyFetch::class, [
+                                    $tModel,
+                                    new LiteralStringType('relations'),
+                                ]),
                                 new ConditionalType(
-                                    $tRelations,
-                                    new StringType,
-                                    new TemplateType('Arguments'),
-                                    new Generic(EagerLoadRelationsList::class, [$tRelations]),
+                                    $tCallback,
+                                    new ObjectType(\Closure::class),
+                                    new KeyedArrayType([
+                                        new ArrayItemType_(null, $tRelations),
+                                    ], isList: true),
+                                    new ConditionalType(
+                                        $tRelations,
+                                        new StringType,
+                                        new TemplateType('Arguments'),
+                                        new Generic(EagerLoadRelationsList::class, [$tRelations]),
+                                    ),
                                 ),
-                            ),
-                        ])),
+                            ])),
+                        ]),
                     ]),
                 ]),
             ), function (FunctionType $ft) use ($templates) {
@@ -97,7 +102,7 @@ class AfterEloquentBuilderDefinitionCreatedExtension implements AfterClassDefini
         );
     }
 
-    private function buildWithoutMethodDefinition(): ShallowFunctionDefinition
+    private function buildWithoutMethodDefinition(TemplateType $tModel): ShallowFunctionDefinition
     {
         $templates = [
             $tRelations = new TemplateType('TRelations'),
@@ -112,31 +117,35 @@ class AfterEloquentBuilderDefinitionCreatedExtension implements AfterClassDefini
                 /**
                  * @see Builder::without
                  *
-                 * @return WithProperties<
-                 *     $this,
-                 *     array{
-                 *         eagerLoad: SubtractArrays<
-                 *             PropertyFetch<$this, 'eagerLoad'>,
-                 *             TRelations is string ? Arguments : EagerLoadRelationsList<TRelations>
-                 *         >
-                 *     }
+                 * @return Builder<
+                 *     WithProperties<
+                 *         TModel,
+                 *         array{
+                 *             relations: SubtractArrays<
+                 *                 PropertyFetch<TModel, 'relations'>,
+                 *                 TRelations is string ? Arguments : EagerLoadRelationsList<TRelations>
+                 *             >
+                 *         }
+                 *     >
                  * >
                  */
-                returnType: new Generic(WithProperties::class, [
-                    new SelfType(''),
-                    new KeyedArrayType([
-                        new ArrayItemType_('eagerLoad', new Generic(SubtractArrays::class, [
-                            new Generic(PropertyFetch::class, [
-                                new SelfType(''),
-                                new LiteralStringType('eagerLoad'),
-                            ]),
-                            new ConditionalType(
-                                $tRelations,
-                                new StringType,
-                                new TemplateType('Arguments'),
-                                new Generic(EagerLoadRelationsList::class, [$tRelations]),
-                            ),
-                        ])),
+                returnType: new Generic(Builder::class, [
+                    new Generic(WithProperties::class, [
+                        $tModel,
+                        new KeyedArrayType([
+                            new ArrayItemType_('relations', new Generic(SubtractArrays::class, [
+                                new Generic(PropertyFetch::class, [
+                                    $tModel,
+                                    new LiteralStringType('relations'),
+                                ]),
+                                new ConditionalType(
+                                    $tRelations,
+                                    new StringType,
+                                    new TemplateType('Arguments'),
+                                    new Generic(EagerLoadRelationsList::class, [$tRelations]),
+                                ),
+                            ])),
+                        ]),
                     ]),
                 ]),
             ), function (FunctionType $ft) use ($templates) {
@@ -146,7 +155,7 @@ class AfterEloquentBuilderDefinitionCreatedExtension implements AfterClassDefini
         );
     }
 
-    private function buildWithOnlyMethodDefinition(): ShallowFunctionDefinition
+    private function buildWithOnlyMethodDefinition(TemplateType $tModel): ShallowFunctionDefinition
     {
         $templates = [
             $tRelations = new TemplateType('TRelations'),
@@ -161,22 +170,26 @@ class AfterEloquentBuilderDefinitionCreatedExtension implements AfterClassDefini
                 /**
                  * @see Builder::withOnly
                  *
-                 * @return WithProperties<
-                 *     $this,
-                 *     array{
-                 *         eagerLoad: TRelations is string ? Arguments : EagerLoadRelationsList<TRelations>
-                 *     }
+                 * @return Builder<
+                 *     WithProperties<
+                 *         TModel,
+                 *         array{
+                 *             relations: TRelations is string ? Arguments : EagerLoadRelationsList<TRelations>
+                 *         }
+                 *     >
                  * >
                  */
-                returnType: new Generic(WithProperties::class, [
-                    new SelfType(''),
-                    new KeyedArrayType([
-                        new ArrayItemType_('eagerLoad', new ConditionalType(
-                            $tRelations,
-                            new StringType,
-                            new TemplateType('Arguments'),
-                            new Generic(EagerLoadRelationsList::class, [$tRelations]),
-                        )),
+                returnType: new Generic(Builder::class, [
+                    new Generic(WithProperties::class, [
+                        $tModel,
+                        new KeyedArrayType([
+                            new ArrayItemType_('relations', new ConditionalType(
+                                $tRelations,
+                                new StringType,
+                                new TemplateType('Arguments'),
+                                new Generic(EagerLoadRelationsList::class, [$tRelations]),
+                            )),
+                        ]),
                     ]),
                 ]),
             ), function (FunctionType $ft) use ($templates) {
@@ -186,30 +199,34 @@ class AfterEloquentBuilderDefinitionCreatedExtension implements AfterClassDefini
         );
     }
 
-    private function buildSetEagerLoadsMethodDefinition(): ShallowFunctionDefinition
+    private function buildSetEagerLoadsMethodDefinition(TemplateType $tModel): ShallowFunctionDefinition
     {
         $templates = [
-            $tEagerLoad = new TemplateType('TEagerLoad'),
+            $tRelations = new TemplateType('TRelations'),
         ];
 
         return new ShallowFunctionDefinition(
             type: tap(new FunctionType(
                 name: 'setEagerLoads',
                 arguments: [
-                    'eagerLoad' => $tEagerLoad,
+                    'eagerLoad' => $tRelations,
                 ],
                 /**
                  * @see Builder::setEagerLoads
                  *
-                 * @return WithProperties<
-                 *     $this,
-                 *     array{eagerLoad: TEagerLoad}
+                 * @return Builder<
+                 *     WithProperties<
+                 *         TModel,
+                 *         array{relations: TRelations}
+                 *     >
                  * >
                  */
-                returnType: new Generic(WithProperties::class, [
-                    new SelfType(''),
-                    new KeyedArrayType([
-                        new ArrayItemType_('eagerLoad', $tEagerLoad),
+                returnType: new Generic(Builder::class, [
+                    new Generic(WithProperties::class, [
+                        $tModel,
+                        new KeyedArrayType([
+                            new ArrayItemType_('relations', $tRelations),
+                        ]),
                     ]),
                 ]),
             ), function (FunctionType $ft) use ($templates) {
@@ -219,15 +236,27 @@ class AfterEloquentBuilderDefinitionCreatedExtension implements AfterClassDefini
         );
     }
 
-    private function buildWithoutEagerLoadsMethodDefinition(): ShallowFunctionDefinition
+    private function buildWithoutEagerLoadsMethodDefinition(TemplateType $tModel): ShallowFunctionDefinition
     {
         return new ShallowFunctionDefinition(
             type: new FunctionType(
                 name: 'withoutEagerLoads',
-                returnType: new Generic(WithProperties::class, [
-                    new SelfType(''),
-                    new KeyedArrayType([
-                        new ArrayItemType_('eagerLoad', new KeyedArrayType([], isList: true)),
+                /**
+                 * @see Builder::withoutEagerLoads
+                 *
+                 * @return Builder<
+                 *     WithProperties<
+                 *         TModel,
+                 *         array{relations: list{}}
+                 *     >
+                 * >
+                 */
+                returnType: new Generic(Builder::class, [
+                    new Generic(WithProperties::class, [
+                        $tModel,
+                        new KeyedArrayType([
+                            new ArrayItemType_('relations', new KeyedArrayType([], isList: true)),
+                        ]),
                     ]),
                 ]),
             ),

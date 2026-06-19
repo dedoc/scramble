@@ -60,17 +60,21 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
          * @see Model::query
          * @see Model::newQuery
          *
-         * @return WithProperties<
-         *     Builder<$this>,
-         *     array{eagerLoad: EagerLoadRelationsList<TWith>}
+         * @return Builder<
+         *     WithProperties<
+         *         $this,
+         *         array{relations: EagerLoadRelationsList<TWith>}
+         *     >
          * >
          */
-        return new Generic(WithProperties::class, [
-            new Generic(Builder::class, [new ObjectType($definition->name)]),
-            new KeyedArrayType([
-                new ArrayItemType_('eagerLoad', new Generic(EagerLoadRelationsList::class, [
-                    $this->resolveWithDefaultType($definition),
-                ])),
+        return new Generic(Builder::class, [
+            new Generic(WithProperties::class, [
+                new ObjectType($definition->name),
+                new KeyedArrayType([
+                    new ArrayItemType_('relations', new Generic(EagerLoadRelationsList::class, [
+                        $this->resolveWithDefaultType($definition),
+                    ])),
+                ]),
             ]),
         ]);
     }
