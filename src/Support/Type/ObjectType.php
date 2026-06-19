@@ -13,9 +13,19 @@ use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 
 class ObjectType extends AbstractType
 {
+    /**
+     * @var array<string, Type>
+     */
+    public array $propertyTypes = [];
+
     public function __construct(
         public string $name,
     ) {}
+
+    public function nodes(): array
+    {
+        return ['propertyTypes'];
+    }
 
     public function isInstanceOf(string $className): bool
     {
@@ -28,7 +38,29 @@ class ObjectType extends AbstractType
 
     public function isSame(Type $type)
     {
-        return $type instanceof static && $type->name === $this->name;
+        if (! $type instanceof static || $type->name !== $this->name) {
+            return false;
+        }
+
+        if (count($type->propertyTypes) !== count($this->propertyTypes)) {
+            return false;
+        }
+
+        foreach ($this->propertyTypes as $propertyName => $propertyType) {
+            if (! isset($type->propertyTypes[$propertyName]) || ! $propertyType->isSame($type->propertyTypes[$propertyName])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function withAssignedPropertyType(string $propertyName, Type $assignedType): static
+    {
+        $result = $this->clone();
+        $result->propertyTypes[$propertyName] = $assignedType;
+
+        return $result;
     }
 
     public function getPropertyType(string $propertyName, Scope $scope = new GlobalScope): Type
@@ -38,6 +70,10 @@ class ObjectType extends AbstractType
             name: $propertyName,
             scope: $scope,
         ))) {
+            return $propertyType;
+        }
+
+        if ($propertyType = $this->propertyTypes[$propertyName] ?? null) {
             return $propertyType;
         }
 

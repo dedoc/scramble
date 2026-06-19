@@ -430,3 +430,20 @@ class AlwaysInt_ReferenceResolutionTest implements ResolvingType
         return new Type\IntegerType;
     }
 }
+
+it('resolves WithProperties phpdoc type', function () {
+    $type = new Type\Generic(Type\WithProperties::class, [
+        new Type\ObjectType('SomeClass'),
+        new Type\KeyedArrayType([
+            new Type\ArrayItemType_('foo', new Type\IntegerType),
+            new Type\ArrayItemType_('bar', new Type\Literal\LiteralStringType('wow')),
+        ]),
+    ]);
+
+    $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolvedType)->toBeInstanceOf(Type\ObjectType::class)
+        ->and($resolvedType->name)->toBe('SomeClass')
+        ->and($resolvedType->propertyTypes['foo']->toString())->toBe('int')
+        ->and($resolvedType->propertyTypes['bar']->toString())->toBe('string(wow)');
+});
