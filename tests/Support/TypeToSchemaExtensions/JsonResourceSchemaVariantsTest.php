@@ -52,6 +52,8 @@ it('documents relation-conditioned properties as required when relation is loade
     $extension = makeJsonResourceExtension($this->context);
     $schema = $extension->toSchema($type)->toArray();
 
+    dd($schema);
+
     expect($schema)->toHaveKey('properties.user')
         ->and($schema['required'] ?? [])->toContain('user');
 });

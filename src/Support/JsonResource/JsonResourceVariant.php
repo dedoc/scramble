@@ -16,13 +16,14 @@ class JsonResourceVariant
     public function __construct(
         protected JsonResourceSchemaVariant $variant,
         protected array $loadedRelations,
+        protected bool $isDefault = false,
     )
     {
     }
 
-    public static function fromJsonResourceSchemaVariant(JsonResourceSchemaVariant $variant, array $loadedRelations): self
+    public static function fromJsonResourceSchemaVariant(JsonResourceSchemaVariant $variant, array $loadedRelations, bool $isDefault = false): self
     {
-        return new self($variant, $loadedRelations);
+        return new self($variant, $loadedRelations, $isDefault);
     }
 
     public function reference(Components $components): Reference
@@ -32,6 +33,8 @@ class JsonResourceVariant
 
     public function filterReferencableFields(KeyedArrayType $array): KeyedArrayType
     {
+        $array = $array->clone();
+
         $newItems = collect($array->items)
             ->filter(function (ArrayItemType_ $t) {
                 $conditionalRelation = $t->value->getAttribute('conditionalRelation');
@@ -43,6 +46,10 @@ class JsonResourceVariant
                 return in_array($conditionalRelation, $this->loadedRelations, strict: true);
             })
             ->map(function (ArrayItemType_ $t) {
+                if ($this->isDefault()) {
+                    return $t;
+                }
+
                 $conditionalRelation = $t->value->getAttribute('conditionalRelation');
 
                 if (! $conditionalRelation) {
@@ -69,13 +76,43 @@ class JsonResourceVariant
         return new KeyedArrayType($newItems);
     }
 
-    public function isFallback(): bool
+    public function isDefault()
     {
-        return $this->variant->fallback;
+        return $this->isDefault;
     }
 
     public function filterLoadedFields(KeyedArrayType $array): ?KeyedArrayType
     {
-        return null;//new KeyedArrayType([]);
+        $array = $array->clone();
+
+        $newItems = collect($array->items)
+            ->filter(function (ArrayItemType_ $t) {
+                $conditionalRelation = $t->value->getAttribute('conditionalRelation');
+
+                if (! $conditionalRelation) {
+                    return false;
+                }
+
+                return in_array($conditionalRelation, $this->loadedRelations, strict: true);
+            })
+            ->map(function (ArrayItemType_ $t) {
+                if ($t->isOptional) {
+                    $t->isOptional = false;
+
+                    return $t;
+                }
+
+                if ($t->value instanceof Union && collect($t->value->types)->some(fn ($t) => $t->isInstanceOf(MissingValue::class))) {
+                    $t->value = Union::wrap(collect($t->value->types)->reject(fn ($t) => $t->isInstanceOf(MissingValue::class))->values()->all());
+
+                    return $t;
+                }
+
+                return $t;
+            })
+            ->values()
+            ->all();
+
+        return new KeyedArrayType($newItems);
     }
 }

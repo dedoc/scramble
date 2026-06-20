@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Illuminate\Database\Eloquent\Model;
@@ -24,22 +25,22 @@ class JsonResourceVariantMatcher
     /**
      * @return JsonResourceVariant|null
      */
-    public function match(ObjectType $type): ?JsonResourceVariant
+    public function match(ObjectType $type): JsonResourceVariant
     {
         if (! $type->isInstanceOf(JsonResource::class)) {
-            return null;
-        }
-
-        if (! $variants = $this->getVariants($type->name)) {
-            return null;
+            return $this->default($type);
         }
 
         if (! $modelType = $this->getModelFromResource($type)) {
-            return null;
+            return $this->default($type);
         }
 
         if (! $knownLoadedRelations = $this->getKnownLoadedRelations($modelType)) {
-            return null;
+            return $this->default($type);
+        }
+
+        if (! $variants = $this->getVariants($type->name)) {
+            return $this->default($type, $knownLoadedRelations);
         }
 
         return $this->doMatch($variants, $knownLoadedRelations);
@@ -52,13 +53,6 @@ class JsonResourceVariantMatcher
      */
     private function doMatch(array $variants, array $knownLoadedRelations): JsonResourceVariant
     {
-        $knownLoadedRelations = collect($knownLoadedRelations)
-            ->map(fn (string $relation) => explode('.', $relation)[0])
-            ->unique()
-            ->sort()
-            ->values()
-            ->all();
-
         $variants = collect($variants)
             ->sort(function (JsonResourceSchemaVariant $v) {
                 return $v->fallback ? -1 : 0;
@@ -74,6 +68,15 @@ class JsonResourceVariantMatcher
         return JsonResourceVariant::fromJsonResourceSchemaVariant(
             $variants->first(),
             $knownLoadedRelations,
+        );
+    }
+
+    public function default(ObjectType $type, array $knownLoadedRelations = []): JsonResourceVariant
+    {
+        return JsonResourceVariant::fromJsonResourceSchemaVariant(
+            new JsonResourceSchemaVariant('', []),
+            $knownLoadedRelations,
+            isDefault: true,
         );
     }
 
@@ -97,10 +100,16 @@ class JsonResourceVariantMatcher
 
     private function getModelFromResource(ObjectType $type): ?ObjectType
     {
-        return (new TypeWalker())->first(
+        $modelType = (new TypeWalker())->first(
             $type,
             fn (Type $t) => $t->isInstanceOf(Model::class),
         );
+
+        if ($modelType instanceof TemplateType) {
+            $modelType = $modelType->is;
+        }
+
+        return $modelType instanceof ObjectType ? $modelType : null;
     }
 
     /**
@@ -114,9 +123,16 @@ class JsonResourceVariantMatcher
             return null;
         }
 
-        return array_values(array_filter(array_map(
+        $relations = array_values(array_filter(array_map(
             fn (ArrayItemType_ $t) => $t->value instanceof LiteralString ? $t->value->getValue() : null,
             $explicitRelationsType->items,
         )));
+
+        return collect($relations)
+            ->map(fn (string $relation) => explode('.', $relation)[0])
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
     }
 }

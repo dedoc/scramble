@@ -68,21 +68,11 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         }
 
         $variant = $this->variantMatcher->match($type);
-        if (! $variant) {
-            return $this->openApiTransformer->getOrCreateSchemaReference(
-                $this->defaultReference($type),
-                fn () => $this->openApiTransformer->transform($this->flatten($array)),
-            );
-        }
 
         $reference = $this->openApiTransformer->getOrCreateSchemaReference(
-            $variant->reference($this->components),
+            $variant->isDefault() ? $this->defaultReference($type) : $variant->reference($this->components),
             fn () => $this->openApiTransformer->transform($this->flatten($variant->filterReferencableFields($array))),
         );
-
-        if ($variant->isFallback()) {
-            return $reference;
-        }
 
         $loadedFields = $variant->filterLoadedFields($array);
 
