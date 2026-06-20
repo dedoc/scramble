@@ -115,6 +115,11 @@ abstract class Type
         return $this;
     }
 
+    public function resolve()
+    {
+        return $this;
+    }
+
     public function toArray()
     {
         return array_merge(

@@ -40,13 +40,13 @@ class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
         )->getResponseType();
     }
 
-    public function reference(ObjectType $type): ?Reference
+    public function defaultReference(ObjectType $type): ?Reference
     {
         if (! $this->shouldReferenceResourceCollection($type)) {
             return null;
         }
 
-        return parent::reference($type);
+        return parent::defaultReference($type);
     }
 
     /**

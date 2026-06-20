@@ -61,7 +61,10 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         );
 
         if (! $array instanceof KeyedArrayType) {
-            return $this->openApiTransformer->transform($array);
+            return $this->openApiTransformer->getOrCreateSchemaReference(
+                $this->defaultReference($type),
+                fn () => $this->openApiTransformer->transform($array),
+            );
         }
 
         $variant = $this->variantMatcher->match($type);
@@ -109,7 +112,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         return new Generic(ResourceResponse::class, [$type]);
     }
 
-    private function defaultReference(ObjectType $type): Reference
+    protected function defaultReference(ObjectType $type): ?Reference
     {
         return ClassBasedReference::create('schemas', $type->name, $this->components);
     }

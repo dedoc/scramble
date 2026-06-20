@@ -97,7 +97,7 @@ it('gets json resource type', function () {
 
     $type = new ObjectType(ComplexTypeHandlersTest_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
 });
 
 it('gets enum with values type', function () {
@@ -250,7 +250,7 @@ it('gets json resource type with nested merges', function () {
 
     $type = new ObjectType(ComplexTypeHandlersWithNestedTest_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
 });
 
 it('gets json resource type with when', function () {
@@ -259,7 +259,7 @@ it('gets json resource type with when', function () {
 
     $type = new ObjectType(ComplexTypeHandlersWithWhen_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
 });
 
 it('gets json resource type with when loaded', function () {
@@ -271,7 +271,7 @@ it('gets json resource type with when loaded', function () {
 
     $type = new ObjectType(ComplexTypeHandlersWithWhenLoaded_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
 });
 
 it('gets json resource type with when counted', function () {
@@ -283,7 +283,7 @@ it('gets json resource type with when counted', function () {
 
     $type = new ObjectType(ComplexTypeHandlersWithWhenCounted_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
 });
 
 it('getOrCreateSchemaReference creates schema on first call', function () {

@@ -79,8 +79,12 @@ class TypeTransformer
     /**
      * @param  callable(): (?OpenApiType)  $schemaFactory
      */
-    public function getOrCreateSchemaReference(Reference $reference, callable $schemaFactory): Reference
+    public function getOrCreateSchemaReference(?Reference $reference, callable $schemaFactory): OpenApiType
     {
+        if (! $reference) {
+            return $schemaFactory() ?: new UnknownType;
+        }
+
         if ($this->context->references->schemas->has($reference->fullName)) {
             return $this->context->references->schemas->add($reference->fullName, $reference);
         }
