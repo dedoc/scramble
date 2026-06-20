@@ -33,6 +33,10 @@ class JsonResourceVariant
 
     public function filterReferencableFields(KeyedArrayType $array): KeyedArrayType
     {
+        if ($this->isDefault()) {
+            return $array;
+        }
+
         $array = $array->clone();
 
         $newItems = collect($array->items)
@@ -46,10 +50,6 @@ class JsonResourceVariant
                 return in_array($conditionalRelation, $this->loadedRelations, strict: true);
             })
             ->map(function (ArrayItemType_ $t) {
-                if ($this->isDefault()) {
-                    return $t;
-                }
-
                 $conditionalRelation = $t->value->getAttribute('conditionalRelation');
 
                 if (! $conditionalRelation) {
@@ -81,7 +81,7 @@ class JsonResourceVariant
         return $this->isDefault;
     }
 
-    public function filterLoadedFields(KeyedArrayType $array): ?KeyedArrayType
+    public function filterLoadedFields(KeyedArrayType $array): KeyedArrayType
     {
         $array = $array->clone();
 

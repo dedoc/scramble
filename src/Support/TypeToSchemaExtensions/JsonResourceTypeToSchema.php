@@ -78,7 +78,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
         return $this->allOf([
             $reference,
-            $loadedFields ? $this->openApiTransformer->transform($this->flatten($loadedFields)) : null,
+            count($loadedFields->items) ? $this->openApiTransformer->transform($this->flatten($loadedFields)) : null,
         ]);
     }
 
