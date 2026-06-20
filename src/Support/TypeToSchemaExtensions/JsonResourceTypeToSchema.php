@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\JsonResource\JsonResourceVariantMatcher;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -27,13 +28,17 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     use FlattensMergeValues;
     use MergesOpenApiObjects;
 
+    private JsonResourceVariantMatcher $variantMatcher;
+
     public function __construct(
         Infer $infer,
         TypeTransformer $openApiTransformer,
         Components $components,
-        protected OpenApiContext $openApiContext
+        protected OpenApiContext $openApiContext,
     ) {
         parent::__construct($infer, $openApiTransformer, $components);
+
+        $this->variantMatcher = new JsonResourceVariantMatcher($infer->index);
     }
 
     public function shouldHandle(Type $type)
@@ -68,7 +73,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         }
 
         $reference = $this->openApiTransformer->getOrCreateSchemaReference(
-            $variant->reference(),
+            $variant->reference($this->components),
             fn () => $this->openApiTransformer->transform($this->flatten($variant->filterReferencableFields($array))),
         );
 
