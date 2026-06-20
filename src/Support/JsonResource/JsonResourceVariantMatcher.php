@@ -24,7 +24,7 @@ class JsonResourceVariantMatcher
     /**
      * @return JsonResourceVariant|null
      */
-    public function match(Generic $type): ?JsonResourceVariant
+    public function match(ObjectType $type): ?JsonResourceVariant
     {
         if (! $type->isInstanceOf(JsonResource::class)) {
             return null;
@@ -95,7 +95,7 @@ class JsonResourceVariantMatcher
         ));
     }
 
-    private function getModelFromResource(Generic $type): ?ObjectType
+    private function getModelFromResource(ObjectType $type): ?ObjectType
     {
         return (new TypeWalker())->first(
             $type,
