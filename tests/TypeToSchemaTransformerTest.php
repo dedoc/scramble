@@ -3,7 +3,11 @@
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\Types\IntegerType as OpenApiIntegerType;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
+use Dedoc\Scramble\Support\Generator\Types\StringType as OpenApiStringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
@@ -282,6 +286,86 @@ it('gets json resource type with when counted', function () {
     assertMatchesSnapshot($extension->toSchema($type)->toArray());
 });
 
+it('getOrCreateSchemaReference creates schema on first call', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    $reference = ClassBasedReference::create('schemas', GetOrCreateSchemaReferenceTest_SampleType::class, $this->context->openApi->components);
+
+    $factoryCalls = 0;
+    $result = $transformer->getOrCreateSchemaReference($reference, function () use (&$factoryCalls) {
+        $factoryCalls++;
+
+        return (new OpenApiObjectType)
+            ->addProperty('id', new OpenApiIntegerType)
+            ->setRequired(['id']);
+    });
+
+    expect($factoryCalls)->toBe(1)
+        ->and($result->toArray())->toBe([
+            '$ref' => '#/components/schemas/GetOrCreateSchemaReferenceTest_SampleType',
+        ])
+        ->and($this->context->openApi->components->getSchema(GetOrCreateSchemaReferenceTest_SampleType::class)->toArray())->toBe([
+            'type' => 'object',
+            'properties' => [
+                'id' => ['type' => 'integer'],
+            ],
+            'required' => ['id'],
+        ]);
+});
+
+it('getOrCreateSchemaReference reuses existing reference without calling factory again', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    $reference = ClassBasedReference::create('schemas', GetOrCreateSchemaReferenceTest_SampleType::class, $this->context->openApi->components);
+
+    $factoryCalls = 0;
+    $schemaFactory = function () use (&$factoryCalls) {
+        $factoryCalls++;
+
+        return (new OpenApiObjectType)
+            ->addProperty('id', new OpenApiIntegerType)
+            ->setRequired(['id']);
+    };
+
+    $transformer->getOrCreateSchemaReference($reference, $schemaFactory);
+
+    $secondReference = ClassBasedReference::create('schemas', GetOrCreateSchemaReferenceTest_SampleType::class, $this->context->openApi->components);
+    $result = $transformer->getOrCreateSchemaReference($secondReference, function () use (&$factoryCalls) {
+        $factoryCalls++;
+
+        return (new OpenApiObjectType)
+            ->addProperty('name', new OpenApiStringType)
+            ->setRequired(['name']);
+    });
+
+    expect($factoryCalls)->toBe(1)
+        ->and($result->toArray())->toBe([
+            '$ref' => '#/components/schemas/GetOrCreateSchemaReferenceTest_SampleType',
+        ])
+        ->and($this->context->openApi->components->getSchema(GetOrCreateSchemaReferenceTest_SampleType::class)->toArray()['properties'])
+        ->toHaveKey('id')
+        ->not->toHaveKey('name');
+});
+
+it('getOrCreateSchemaReference removes schema when factory returns null', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    $reference = ClassBasedReference::create('schemas', GetOrCreateSchemaReferenceTest_EmptyType::class, $this->context->openApi->components);
+
+    $result = $transformer->getOrCreateSchemaReference($reference, fn () => null);
+
+    expect($result->toArray())->toBe([
+        '$ref' => '#/components/schemas/GetOrCreateSchemaReferenceTest_EmptyType',
+    ])
+        ->and($this->context->openApi->components->hasSchema(GetOrCreateSchemaReferenceTest_EmptyType::class))->toBeFalse();
+});
+
 it('gets json resource type reference', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
 
@@ -546,6 +630,10 @@ it('supports integers', function () {
             ],
         ]);
 });
+
+class GetOrCreateSchemaReferenceTest_SampleType {}
+
+class GetOrCreateSchemaReferenceTest_EmptyType {}
 
 class ComplexTypeHandlersTest_SampleType extends JsonResource
 {

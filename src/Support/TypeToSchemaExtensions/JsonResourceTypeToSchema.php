@@ -61,13 +61,13 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
         $variant = $this->variantMatcher->match($type);
         if (! $variant) {
-            return $this->openApiTransformer->getOrCreateReference(
+            return $this->openApiTransformer->getOrCreateSchemaReference(
                 $this->defaultReference($type),
                 fn () => $this->openApiTransformer->transform($this->flatten($array)),
             );
         }
 
-        $reference = $this->openApiTransformer->getOrCreateReference(
+        $reference = $this->openApiTransformer->getOrCreateSchemaReference(
             $variant->reference(),
             fn () => $this->openApiTransformer->transform($this->flatten($variant->filterReferencableFields($array))),
         );
