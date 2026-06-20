@@ -8,9 +8,11 @@ use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
+use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Components;
+use Dedoc\Scramble\Support\Generator\Reference;
+use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -53,19 +55,33 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             new MethodCallReferenceType($type, 'toArray', arguments: []),
         );
 
-        // The case when `toArray` is not defined.
-        if ($array instanceof ArrayType) {
-            return $this->openApiTransformer->transform($array);
-        }
-
         if (! $array instanceof KeyedArrayType) {
             return $this->openApiTransformer->transform($array);
         }
 
-        $array->items = $this->flattenMergeValues($array->items);
-        $array->isList = KeyedArrayType::checkIsList($array->items);
+        $variant = $this->variantMatcher->match($type);
+        if (! $variant) {
+            return $this->openApiTransformer->getOrCreateReference(
+                $this->defaultReference($type),
+                fn () => $this->openApiTransformer->transform($this->flatten($array)),
+            );
+        }
 
-        return $this->openApiTransformer->transform($array);
+        $reference = $this->openApiTransformer->getOrCreateReference(
+            $variant->reference(),
+            fn () => $this->openApiTransformer->transform($this->flatten($variant->filterReferencableFields($array))),
+        );
+
+        if ($variant->isFallback()) {
+            return $reference;
+        }
+
+        $loadedFields = $variant->filterLoadedFields($array);
+
+        return $this->allOf([
+            $reference,
+            $loadedFields ? $this->openApiTransformer->transform($this->flatten($loadedFields)) : null,
+        ]);
     }
 
     /**
@@ -88,8 +104,30 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
         return new Generic(ResourceResponse::class, [$type]);
     }
 
-    public function reference(ObjectType $type)
+    private function defaultReference(ObjectType $type): Reference
     {
         return ClassBasedReference::create('schemas', $type->name, $this->components);
+    }
+
+    private function flatten(KeyedArrayType $type): KeyedArrayType
+    {
+        $type->items = $this->flattenMergeValues($type->items);
+        $type->isList = KeyedArrayType::checkIsList($type->items);
+
+        return $type;
+    }
+
+    /**
+     * @param list<OpenApiType|null> $jsonSchemas
+     */
+    private function allOf(array $jsonSchemas): OpenApiType
+    {
+        $jsonSchemas = array_values(array_filter($jsonSchemas));
+
+        if (count($jsonSchemas) === 1) {
+            return $jsonSchemas[0];
+        }
+
+        return (new AllOf)->setItems($jsonSchemas);
     }
 }
