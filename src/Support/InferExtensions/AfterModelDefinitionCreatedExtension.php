@@ -6,11 +6,18 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\AfterClassDefinitionCreatedExtension;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\ArrayMerge;
+use Dedoc\Scramble\Support\Type\ConditionalType;
 use Dedoc\Scramble\Support\Type\EagerLoadRelationsList;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\PropertyFetch;
+use Dedoc\Scramble\Support\Type\SelfType;
+use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\WithProperties;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,6 +36,8 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
 
         $definition->methods['query'] = $this->buildQueryMethodDefinition($definition);
         $definition->methods['newQuery'] = $this->buildNewQueryMethodDefinition($definition);
+        $definition->methods['load'] = $this->buildLoadMethodDefinition($definition);
+        $definition->methods['loadMissing'] = $this->buildLoadMissingMethodDefinition($definition);
     }
 
     private function buildQueryMethodDefinition(ClassDefinition $definition): ShallowFunctionDefinition
@@ -75,6 +84,91 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
                         $this->resolveWithDefaultType($definition),
                     ])),
                 ]),
+            ]),
+        ]);
+    }
+
+    private function buildLoadMethodDefinition(ClassDefinition $definition): ShallowFunctionDefinition
+    {
+        $templates = [
+            $tRelations = new TemplateType('TRelations'),
+        ];
+
+        $def = new ShallowFunctionDefinition(
+            type: tap(new FunctionType(
+                name: 'load',
+                arguments: [
+                    'relations' => $tRelations,
+                ],
+                returnType: $this->buildLoadRelationsReturnType($tRelations),
+            ), function (FunctionType $ft) use ($templates) {
+                $ft->templates = $templates;
+            }),
+            definingClassName: $definition->name,
+        );
+
+        $def->referencesResolved = true;
+
+        return $def;
+    }
+
+    private function buildLoadMissingMethodDefinition(ClassDefinition $definition): ShallowFunctionDefinition
+    {
+        $templates = [
+            $tRelations = new TemplateType('TRelations'),
+        ];
+
+        $def = new ShallowFunctionDefinition(
+            type: tap(new FunctionType(
+                name: 'loadMissing',
+                arguments: [
+                    'relations' => $tRelations,
+                ],
+                returnType: $this->buildLoadRelationsReturnType($tRelations),
+            ), function (FunctionType $ft) use ($templates) {
+                $ft->templates = $templates;
+            }),
+            definingClassName: $definition->name,
+        );
+
+        $def->referencesResolved = true;
+
+        return $def;
+    }
+
+    private function buildLoadRelationsReturnType(TemplateType $tRelations): Generic
+    {
+        $selfType = new SelfType('');
+
+        /**
+         * @see Model::load
+         * @see Model::loadMissing
+         *
+         * @return WithProperties<
+         *     $this,
+         *     array{
+         *         relations: ArrayMerge<
+         *             PropertyFetch<$this, 'relations'>,
+         *             TRelations is string ? Arguments : EagerLoadRelationsList<TRelations>
+         *         >
+         *     }
+         * >
+         */
+        return new Generic(WithProperties::class, [
+            $selfType,
+            new KeyedArrayType([
+                new ArrayItemType_('relations', new Generic(ArrayMerge::class, [
+                    new Generic(PropertyFetch::class, [
+                        $selfType,
+                        new LiteralStringType('relations'),
+                    ]),
+                    new ConditionalType(
+                        $tRelations,
+                        new StringType,
+                        new TemplateType('Arguments'),
+                        new Generic(EagerLoadRelationsList::class, [$tRelations]),
+                    ),
+                ])),
             ]),
         ]);
     }
