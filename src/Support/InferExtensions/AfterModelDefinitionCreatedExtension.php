@@ -94,7 +94,7 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
             $tRelations = new TemplateType('TRelations'),
         ];
 
-        $def = new ShallowFunctionDefinition(
+        return new ShallowFunctionDefinition(
             type: tap(new FunctionType(
                 name: 'load',
                 arguments: [
@@ -107,10 +107,6 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
             definingClassName: $definition->name,
             selfOutType: $this->buildLoadRelationsReturnType($tRelations),
         );
-
-        $def->referencesResolved = true;
-
-        return $def;
     }
 
     private function buildLoadMissingMethodDefinition(ClassDefinition $definition): ShallowFunctionDefinition
@@ -119,7 +115,7 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
             $tRelations = new TemplateType('TRelations'),
         ];
 
-        $def = new ShallowFunctionDefinition(
+        return new ShallowFunctionDefinition(
             type: tap(new FunctionType(
                 name: 'loadMissing',
                 arguments: [
@@ -132,10 +128,6 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
             definingClassName: $definition->name,
             selfOutType: $this->buildLoadRelationsReturnType($tRelations),
         );
-
-        $def->referencesResolved = true;
-
-        return $def;
     }
 
     private function buildLoadRelationsReturnType(TemplateType $tRelations): Generic
