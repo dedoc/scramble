@@ -12,6 +12,8 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\MissingValue;
 
 class JsonResourceVariant
@@ -37,7 +39,7 @@ class JsonResourceVariant
     public function filterReferencableFields(KeyedArrayType $array): KeyedArrayType
     {
         if ($this->isDefault()) {
-            return $array;
+//            return $array;
         }
 
         $array = $array->clone();
@@ -50,7 +52,11 @@ class JsonResourceVariant
                     return true;
                 }
 
-                return in_array($conditionalRelation, $this->loadedRelations, strict: true);
+                if ($this->variant->withLoaded === '*') {
+                    return true;
+                }
+
+                return in_array($conditionalRelation, $this->variant->withLoaded, strict: true);
             })
             ->map(function (ArrayItemType_ $t) {
                 $conditionalRelation = $this->getConditionalRelation($t);
@@ -91,11 +97,9 @@ class JsonResourceVariant
 
         if ($t->value instanceof Union && collect($t->value->types)->some(fn ($t) => $t->isInstanceOf(MissingValue::class))) {
             $t->value = Union::wrap(collect($t->value->types)->reject(fn ($t) => $t->isInstanceOf(MissingValue::class))->values()->all());
-
-            return;
         }
 
-        if ($t->value instanceof Generic && $t->value->isInstanceOf(AnonymousResourceCollection::class)) {
+        if ($t->value instanceof Generic && $t->value->isInstanceOf(JsonResource::class)) {
             $resource = $t->value->templateTypes[0] ?? null;
 
             if ($resource instanceof Union && collect($resource->types)->some(fn ($t) => $t->isInstanceOf(MissingValue::class))) {
