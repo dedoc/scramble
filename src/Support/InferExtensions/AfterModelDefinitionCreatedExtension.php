@@ -100,11 +100,12 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
                 arguments: [
                     'relations' => $tRelations,
                 ],
-                returnType: $this->buildLoadRelationsReturnType($tRelations),
+                returnType: new SelfType(''),
             ), function (FunctionType $ft) use ($templates) {
                 $ft->templates = $templates;
             }),
             definingClassName: $definition->name,
+            selfOutType: $this->buildLoadRelationsReturnType($tRelations),
         );
 
         $def->referencesResolved = true;
@@ -124,11 +125,12 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
                 arguments: [
                     'relations' => $tRelations,
                 ],
-                returnType: $this->buildLoadRelationsReturnType($tRelations),
+                returnType: new SelfType(''),
             ), function (FunctionType $ft) use ($templates) {
                 $ft->templates = $templates;
             }),
             definingClassName: $definition->name,
+            selfOutType: $this->buildLoadRelationsReturnType($tRelations),
         );
 
         $def->referencesResolved = true;

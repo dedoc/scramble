@@ -6,9 +6,12 @@ use Dedoc\Scramble\Attributes\JsonResourceSchemaVariant;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\MissingValue;
 
 class JsonResourceVariant
@@ -41,7 +44,7 @@ class JsonResourceVariant
 
         $newItems = collect($array->items)
             ->filter(function (ArrayItemType_ $t) {
-                $conditionalRelation = $t->value->getAttribute('conditionalRelation');
+                $conditionalRelation = $this->getConditionalRelation($t);
 
                 if (! $conditionalRelation) {
                     return true;
@@ -50,23 +53,13 @@ class JsonResourceVariant
                 return in_array($conditionalRelation, $this->loadedRelations, strict: true);
             })
             ->map(function (ArrayItemType_ $t) {
-                $conditionalRelation = $t->value->getAttribute('conditionalRelation');
+                $conditionalRelation = $this->getConditionalRelation($t);
 
                 if (! $conditionalRelation) {
                     return $t;
                 }
 
-                if ($t->isOptional) {
-                    $t->isOptional = false;
-
-                    return $t;
-                }
-
-                if ($t->value instanceof Union && collect($t->value->types)->some(fn ($t) => $t->isInstanceOf(MissingValue::class))) {
-                    $t->value = Union::wrap(collect($t->value->types)->reject(fn ($t) => $t->isInstanceOf(MissingValue::class))->values()->all());
-
-                    return $t;
-                }
+                $this->requireArrayItemType($t);
 
                 return $t;
             })
@@ -74,6 +67,41 @@ class JsonResourceVariant
             ->all();
 
         return new KeyedArrayType($newItems);
+    }
+
+    private function getConditionalRelation(ArrayItemType_ $item): ?string
+    {
+        if ($relation = $item->value->getAttribute('conditionalRelation')) {
+            return $relation;
+        }
+
+        $nestedType = (new TypeWalker)->first(
+            $item->value,
+            fn (Type $t) => (bool) $t->getAttribute('conditionalRelation'),
+        );
+
+        return $nestedType?->getAttribute('conditionalRelation');
+    }
+
+    private function requireArrayItemType(ArrayItemType_ $t): void
+    {
+        if ($t->isOptional) {
+            $t->isOptional = false;
+        }
+
+        if ($t->value instanceof Union && collect($t->value->types)->some(fn ($t) => $t->isInstanceOf(MissingValue::class))) {
+            $t->value = Union::wrap(collect($t->value->types)->reject(fn ($t) => $t->isInstanceOf(MissingValue::class))->values()->all());
+
+            return;
+        }
+
+        if ($t->value instanceof Generic && $t->value->isInstanceOf(AnonymousResourceCollection::class)) {
+            $resource = $t->value->templateTypes[0] ?? null;
+
+            if ($resource instanceof Union && collect($resource->types)->some(fn ($t) => $t->isInstanceOf(MissingValue::class))) {
+                $t->value->templateTypes[0] = Union::wrap(collect($resource->types)->reject(fn ($t) => $t->isInstanceOf(MissingValue::class))->values()->all());
+            }
+        }
     }
 
     public function isDefault()
@@ -87,7 +115,7 @@ class JsonResourceVariant
 
         $newItems = collect($array->items)
             ->filter(function (ArrayItemType_ $t) {
-                $conditionalRelation = $t->value->getAttribute('conditionalRelation');
+                $conditionalRelation = $this->getConditionalRelation($t);
 
                 if (! $conditionalRelation) {
                     return false;
@@ -96,17 +124,7 @@ class JsonResourceVariant
                 return in_array($conditionalRelation, $this->loadedRelations, strict: true);
             })
             ->map(function (ArrayItemType_ $t) {
-                if ($t->isOptional) {
-                    $t->isOptional = false;
-
-                    return $t;
-                }
-
-                if ($t->value instanceof Union && collect($t->value->types)->some(fn ($t) => $t->isInstanceOf(MissingValue::class))) {
-                    $t->value = Union::wrap(collect($t->value->types)->reject(fn ($t) => $t->isInstanceOf(MissingValue::class))->values()->all());
-
-                    return $t;
-                }
+                $this->requireArrayItemType($t);
 
                 return $t;
             })

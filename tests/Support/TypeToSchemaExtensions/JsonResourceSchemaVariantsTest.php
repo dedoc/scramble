@@ -10,9 +10,11 @@ use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceResponseTypeToSchema;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Request;
 
@@ -25,6 +27,7 @@ function makeJsonResourceExtension(OpenApiContext $context): JsonResourceTypeToS
 {
     $transformer = new TypeTransformer(app(Infer::class), $context, [
         JsonResourceTypeToSchema::class,
+        AnonymousResourceCollectionTypeToSchema::class,
         ResourceResponseTypeToSchema::class,
     ]);
 
@@ -52,10 +55,9 @@ it('documents relation-conditioned properties as required when relation is loade
     $extension = makeJsonResourceExtension($this->context);
     $schema = $extension->toSchema($type)->toArray();
 
-    dd($schema);
-
-    expect($schema)->toHaveKey('properties.user')
-        ->and($schema['required'] ?? [])->toContain('user');
+    expect($schema)->toHaveKey('allOf')
+        ->and($schema['allOf'][1]['properties'])->toHaveKey('user')
+        ->and($schema['allOf'][1]['required'] ?? [])->toContain('user');
 });
 
 it('excludes relation-conditioned properties when relation is not loaded', function () {
@@ -151,8 +153,53 @@ it('handles mergeWhen with relationLoaded', function () {
     $extension = makeJsonResourceExtension($this->context);
     $schema = $extension->toSchema($type)->toArray();
 
-    expect($schema)->toHaveKey('properties.profile')
-        ->and($schema['required'] ?? [])->toContain('profile');
+    expect($schema)->toHaveKey('allOf')
+        ->and($schema['allOf'][1]['properties'])->toHaveKey('profile')
+        ->and($schema['allOf'][1]['required'] ?? [])->toContain('profile');
+});
+
+it('documents relation-conditioned resource collection when relation is loaded', function () {
+    $type = modelWithRelations(
+        JsonResourceSchemaVariantsTest_PostModel::class."::query()->with('comments')->first()",
+        JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource::class,
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    expect($schema)->toHaveKey('allOf')
+        ->and($schema['allOf'][1]['properties']['comments'])->toMatchArray([
+            'type' => 'array',
+            'items' => ['$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_CommentResource'],
+        ])
+        ->and($schema['allOf'][1]['required'] ?? [])->toContain('comments');
+});
+
+it('excludes relation-conditioned resource collection when relation is not loaded', function () {
+    $type = modelWithRelations(
+        JsonResourceSchemaVariantsTest_PostModel::class.'::query()->withoutEagerLoads()->first()',
+        JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource::class,
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    expect($schema)->not->toHaveKey('properties.comments');
+});
+
+it('falls back to optional resource collection field when relation state is unknown', function () {
+    $type = new Generic(JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource::class, [new UnknownType]);
+
+    $extension = makeJsonResourceExtension($this->context);
+    $extension->toSchema($type);
+
+    $schema = $this->context->openApi->components
+        ->getSchema(JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource::class)
+        ->type
+        ->toArray();
+
+    expect($schema['properties'])->toHaveKey('comments')
+        ->and($schema['required'] ?? [])->not->toContain('comments');
 });
 
 it('throws when multiple variants match with equal specificity', function () {
@@ -180,11 +227,45 @@ class JsonResourceSchemaVariantsTest_PostModel extends Model
     {
         return $this->belongsTo(JsonResourceSchemaVariantsTest_TeamModel::class);
     }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(JsonResourceSchemaVariantsTest_CommentModel::class);
+    }
 }
 
 class JsonResourceSchemaVariantsTest_UserModel extends Model {}
 
 class JsonResourceSchemaVariantsTest_TeamModel extends Model {}
+
+class JsonResourceSchemaVariantsTest_CommentModel extends Model {}
+
+/**
+ * @property JsonResourceSchemaVariantsTest_CommentModel $resource
+ */
+class JsonResourceSchemaVariantsTest_CommentResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+        ];
+    }
+}
+
+/**
+ * @property JsonResourceSchemaVariantsTest_PostModel $resource
+ */
+class JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'comments' => JsonResourceSchemaVariantsTest_CommentResource::collection($this->whenLoaded('comments')),
+        ];
+    }
+}
 
 /**
  * @property JsonResourceSchemaVariantsTest_PostModel $resource
