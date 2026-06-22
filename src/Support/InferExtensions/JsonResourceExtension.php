@@ -64,19 +64,23 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                 new ArrayType,
             ]),
 
-            'whenLoaded' => count($event->arguments) === 1
-                ? Union::wrap([
-                    $this->getModelPropertyType(
-                        $event->getDefinition(),
-                        $event->getArg('attribute', 0)->value ?? '',
-                        $event->scope
-                    ),
-                    new ObjectType(MissingValue::class),
-                ])
-                : Union::wrap([
-                    $this->value($event->getArg('value', 1)),
-                    $this->value($event->getArg('default', 2, new ObjectType(MissingValue::class))),
-                ]),
+            /** @see JsonResource::whenLoaded() */
+            'whenLoaded' => $this->tagConditionalRelation(
+                $event->getArg('relationship', 0),
+                count($event->arguments) === 1
+                    ? Union::wrap([
+                        $this->getModelPropertyType(
+                            $event->getDefinition(),
+                            $event->getArg('attribute', 0)->value ?? '',
+                            $event->scope
+                        ),
+                        new ObjectType(MissingValue::class),
+                    ])
+                    : Union::wrap([
+                        $this->value($event->getArg('value', 1)),
+                        $this->value($event->getArg('default', 2, new ObjectType(MissingValue::class))),
+                    ]),
+            ),
 
             'when', 'unless', 'whenPivotLoaded' => Union::wrap([
                 $this->value($event->getArg('value', 1)),
@@ -183,6 +187,17 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                 ? null
                 : $this->getModelPropertyType($event->getDefinition(), $event->name, $event->scope),
         };
+    }
+
+    private function tagConditionalRelation(Type $relationshipType, Type $typeToTag): Type
+    {
+        if (! $relationshipType instanceof LiteralStringType) {
+            return $typeToTag;
+        }
+
+        $typeToTag->setAttribute('conditionalRelation', $relationshipType->getValue());
+
+        return $typeToTag;
     }
 
     private function getModelPropertyType(ClassDefinition $jsonResourceDefinition, string $name, Scope $scope): Type

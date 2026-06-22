@@ -32,7 +32,7 @@ test('transforms collection with toArray only', function () {
 
     $type = new ObjectType(UserCollection_One::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
 });
 class UserCollection_One extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
@@ -60,7 +60,7 @@ test('transforms collection with toArray and with', function () {
 
     $type = new ObjectType(UserCollection_Two::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
 });
 class UserCollection_Two extends \Illuminate\Http\Resources\Json\ResourceCollection
 {

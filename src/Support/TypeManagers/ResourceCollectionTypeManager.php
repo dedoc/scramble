@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\PaginatedResourceResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -46,7 +47,12 @@ class ResourceCollectionTypeManager
             return $this->getCollectedTypeFromManualAnnotation();
         }
 
-        return new Generic($collectsClassNameType->name, [new UnknownType]);
+        return new Generic($collectsClassNameType->name, [$this->getModelType()]);
+    }
+
+    private function getModelType(): Type
+    {
+        return (new TypeWalker)->first($this->type, fn (Type $t) => $t->isInstanceOf(Model::class)) ?: new UnknownType;
     }
 
     private function getCollectedTypeFromManualAnnotation(): ?Generic

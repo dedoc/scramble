@@ -76,6 +76,34 @@ class TypeTransformer
         return $this->context->openApi->components;
     }
 
+    /**
+     * @param  callable(): (?OpenApiType)  $schemaFactory
+     */
+    public function getOrCreateSchemaReference(?Reference $reference, callable $schemaFactory): OpenApiType
+    {
+        if (! $reference) {
+            return $schemaFactory() ?: new UnknownType;
+        }
+
+        if ($this->context->references->schemas->has($reference->fullName)) {
+            return $this->context->references->schemas->add($reference->fullName, $reference);
+        }
+
+        $reference = $this->context->references->schemas->add($reference->fullName, $reference);
+
+        $this->getComponents()->addSchema($reference->fullName, Schema::fromType(new UnknownType));
+
+        $handledType = $schemaFactory();
+
+        if ($handledType) {
+            $this->getComponents()->addSchema($reference->fullName, Schema::fromType($handledType));
+        } else {
+            $this->getComponents()->removeSchema($reference->fullName);
+        }
+
+        return $reference;
+    }
+
     public function transform(Type $type): OpenApiType
     {
         if ($type instanceof TemplateType && $type->is) {
