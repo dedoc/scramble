@@ -106,3 +106,29 @@ it('infers template type from array property assignment', function () {
 
     expect(getVariableTypeAfter("\$a = new {$class}(); \$a->items = [1, 2];", 'a')->toString())->toBe("{$class}<list{int(1), int(2)}>");
 });
+
+class MethodMutatingCall_AssignHandlerTest
+{
+    public $prop;
+
+    public function setProp($a)
+    {
+        $this->prop = $a;
+
+        return $this;
+    }
+}
+
+it('tracks variable type after mutating method call on variable', function () {
+    $class = MethodMutatingCall_AssignHandlerTest::class;
+
+    expect(getVariableTypeAfter("\$a = new {$class}(); \$a->setProp(123);", 'a')->toString())
+        ->toBe("{$class}<int(123)>");
+});
+
+it('tracks chained mutating method calls on variable', function () {
+    $class = MethodMutatingCall_AssignHandlerTest::class;
+
+    expect(getVariableTypeAfter("\$a = new {$class}(); \$a->setProp(123); \$a->setProp(456);", 'a')->toString())
+        ->toBe("{$class}<int(456)>");
+});
