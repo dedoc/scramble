@@ -157,11 +157,11 @@ it('uses fallback variant schema when relations unknown', function () {
     $schema = $extension->toSchema($type)->toArray();
 
     $componentSchema = $this->context->openApi->components
-        ->getSchema('ParticipantList')
+        ->getSchema('AccountList')
         ->toArray();
 
     expect($schema)->toBe([
-        '$ref' => '#/components/schemas/ParticipantList',
+        '$ref' => '#/components/schemas/AccountList',
     ])->and($componentSchema)->toBe([
         'type' => 'object',
         'properties' => [
@@ -181,11 +181,11 @@ it('can match no loaded relations variant', function () {
     $schema = $extension->toSchema($type)->toArray();
 
     $componentSchema = $this->context->openApi->components
-        ->getSchema('Participant')
+        ->getSchema('Account')
         ->toArray();
 
     expect($schema)->toBe([
-        '$ref' => '#/components/schemas/Participant',
+        '$ref' => '#/components/schemas/Account',
     ])->and($componentSchema)->toBe([
         'type' => 'object',
         'properties' => [
@@ -205,7 +205,7 @@ it('matches the most specific variant when relations are known', function () {
     $schema = $extension->toSchema($type)->toArray();
 
     expect($schema)->toBe([
-        '$ref' => '#/components/schemas/ExtendedParticipant',
+        '$ref' => '#/components/schemas/ExtendedAccount',
     ]);
 });
 
@@ -216,7 +216,7 @@ it('uses fallback variant when relation state is unknown', function () {
     $schema = $extension->toSchema($type)->toArray();
 
     expect($schema)->toBe([
-        '$ref' => '#/components/schemas/ParticipantList',
+        '$ref' => '#/components/schemas/AccountList',
     ]);
 });
 
@@ -227,11 +227,11 @@ it('uses base SchemaName when no fallback variant exists and relations are unkno
     $schema = $extension->toSchema($type)->toArray();
 
     $componentSchema = $this->context->openApi->components
-        ->getSchema('CustomParticipant')
+        ->getSchema('CustomAccount')
         ->toArray();
 
     expect($schema)->toBe([
-        '$ref' => '#/components/schemas/CustomParticipant',
+        '$ref' => '#/components/schemas/CustomAccount',
     ])->and($componentSchema)->toBe([
         'type' => 'object',
         'properties' => [
@@ -455,9 +455,9 @@ class JsonResourceSchemaVariantsTest_BaseResource extends JsonResource
 /**
  * @property JsonResourceSchemaVariantsTest_PostModel $resource
  */
-#[JsonResourceSchemaVariant(name: 'ParticipantList', fallback: true)]
-#[JsonResourceSchemaVariant(name: 'ParticipantWithUser', withLoaded: ['user'])]
-#[JsonResourceSchemaVariant(name: 'ExtendedParticipant', withLoaded: ['user', 'team'])]
+#[JsonResourceSchemaVariant(name: 'AccountList', fallback: true)]
+#[JsonResourceSchemaVariant(name: 'AccountWithUser', withLoaded: ['user'])]
+#[JsonResourceSchemaVariant(name: 'ExtendedAccount', withLoaded: ['user', 'team'])]
 class JsonResourceSchemaVariantsTest_VariantResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -473,8 +473,8 @@ class JsonResourceSchemaVariantsTest_VariantResource extends JsonResource
 /**
  * @property JsonResourceSchemaVariantsTest_PostModel $resource
  */
-#[JsonResourceSchemaVariant(name: 'Participant', withLoaded: [])]
-#[JsonResourceSchemaVariant(name: 'ExtendedParticipant', withLoaded: ['user', 'team'])]
+#[JsonResourceSchemaVariant(name: 'Account', withLoaded: [])]
+#[JsonResourceSchemaVariant(name: 'ExtendedAccount', withLoaded: ['user', 'team'])]
 class JsonResourceSchemaVariantsTest_NoFallbackVariantResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -490,7 +490,7 @@ class JsonResourceSchemaVariantsTest_NoFallbackVariantResource extends JsonResou
 /**
  * @property JsonResourceSchemaVariantsTest_PostModel $resource
  */
-#[SchemaName('CustomParticipant')]
+#[SchemaName('CustomAccount')]
 class JsonResourceSchemaVariantsTest_NamedResource extends JsonResource
 {
     public function toArray(Request $request): array
