@@ -6,9 +6,13 @@ use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\OpenApi;
-use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
@@ -39,173 +43,339 @@ function makeJsonResourceExtension(OpenApiContext $context): JsonResourceTypeToS
     );
 }
 
-function modelWithRelations(string $expression, string $resourceClass): Generic
+function modelWithRelations(string $modelClass, array $relations): ObjectType
 {
-    $modelType = getStatementType($expression);
+    $modelType = new ObjectType($modelClass);
 
+    $modelType->propertyTypes['relations'] = new KeyedArrayType(
+        array_map(
+            fn (string $relation) => new ArrayItemType_(null, new LiteralStringType($relation)),
+            $relations,
+        ),
+    );
+
+    return $modelType;
+}
+
+function resourceWithModel(string $resourceClass, Type $modelType): Generic
+{
     return new Generic($resourceClass, [$modelType]);
 }
 
 it('documents relation-conditioned properties as required when relation is loaded', function () {
-    $type = modelWithRelations(
-        JsonResourceSchemaVariantsTest_PostModel::class."::query()->with('user')->first()",
+    $type = resourceWithModel(
         JsonResourceSchemaVariantsTest_BaseResource::class,
+        modelWithRelations(JsonResourceSchemaVariantsTest_PostModel::class, ['user']),
     );
 
     $extension = makeJsonResourceExtension($this->context);
     $schema = $extension->toSchema($type)->toArray();
 
-    expect($schema)->toHaveKey('allOf')
-        ->and($schema['allOf'][1]['properties'])->toHaveKey('user')
-        ->and($schema['allOf'][1]['required'] ?? [])->toContain('user');
+    $componentSchema = $this->context->openApi->components
+        ->getSchema(JsonResourceSchemaVariantsTest_BaseResource::class)
+        ->toArray();
+
+    expect($schema)
+        ->toBe([
+            'allOf' => [
+                [
+                    '$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_BaseResource',
+                ],
+                [
+                    'type' => 'object',
+                    'properties' => [
+                        'user' => ['type' => 'object'],
+                    ],
+                    'required' => ['user'],
+                ],
+            ],
+        ])
+        ->and($componentSchema)->toBeSameJson([
+            'type' => 'object',
+            'properties' => [
+                'id' => ['type' => 'string'],
+                'user' => ['type' => 'object'],
+                'team' => ['type' => 'object'],
+            ],
+            'required' => ['id'],
+        ]);
 });
 
-it('excludes relation-conditioned properties when relation is not loaded', function () {
-    $type = modelWithRelations(
-        JsonResourceSchemaVariantsTest_PostModel::class.'::query()->withoutEagerLoads()->first()',
+it('ignores relation-conditioned properties when relation is not loaded', function () {
+    $type = resourceWithModel(
         JsonResourceSchemaVariantsTest_BaseResource::class,
+        modelWithRelations(JsonResourceSchemaVariantsTest_PostModel::class, []),
     );
 
     $extension = makeJsonResourceExtension($this->context);
     $schema = $extension->toSchema($type)->toArray();
 
-    expect($schema)->not->toHaveKey('properties.user')
-        ->and($schema)->not->toHaveKey('properties.team');
+    $componentSchema = $this->context->openApi->components
+        ->getSchema(JsonResourceSchemaVariantsTest_BaseResource::class)
+        ->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_BaseResource',
+    ])->and($componentSchema)->toBe([
+            'type' => 'object',
+            'properties' => [
+                'id' => ['type' => 'string'],
+                'user' => ['type' => 'object'],
+                'team' => ['type' => 'object'],
+            ],
+            'required' => ['id'],
+        ]);
 });
 
-it('falls back to optional relation fields when relation state is unknown', function () {
+it('falls back to optional relation fields when model state is unknown', function () {
     $type = new Generic(JsonResourceSchemaVariantsTest_BaseResource::class, [new UnknownType]);
 
     $extension = makeJsonResourceExtension($this->context);
     $schema = $extension->toSchema($type)->toArray();
 
-    expect($schema)->toHaveKey('properties.user')
-        ->and($schema['required'] ?? [])->not->toContain('user');
+    $componentSchema = $this->context->openApi->components
+        ->getSchema(JsonResourceSchemaVariantsTest_BaseResource::class)
+        ->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_BaseResource',
+    ])->and($componentSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'user' => ['type' => 'object'],
+            'team' => ['type' => 'object'],
+        ],
+        'required' => ['id'],
+    ]);
 });
 
-it('generates variant schema without relation-conditioned properties', function () {
+it('uses fallback variant schema when relations unknown', function () {
     $type = new Generic(JsonResourceSchemaVariantsTest_VariantResource::class, [new UnknownType]);
 
     $extension = makeJsonResourceExtension($this->context);
-    $extension->toSchema($type);
+    $schema = $extension->toSchema($type)->toArray();
 
-    expect($this->context->openApi->components->hasSchema('ParticipantList'))->toBeTrue();
+    $componentSchema = $this->context->openApi->components
+        ->getSchema('ParticipantList')
+        ->toArray();
 
-    $variantSchema = $this->context->openApi->components->getSchema('ParticipantList')->type->toArray();
-
-    expect($variantSchema)->not->toHaveKey('properties.user')
-        ->and($variantSchema)->not->toHaveKey('properties.team')
-        ->and($variantSchema['required'] ?? [])->toContain('id');
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/ParticipantList',
+    ])->and($componentSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+        ],
+        'required' => ['id'],
+    ]);
 });
 
-it('generates variant schema with loaded relations included and required', function () {
-    $type = new Generic(JsonResourceSchemaVariantsTest_VariantResource::class, [new UnknownType]);
-
-    $extension = makeJsonResourceExtension($this->context);
-    $extension->toSchema($type);
-
-    $variantSchema = $this->context->openApi->components->getSchema('ExtendedParticipant')->type->toArray();
-
-    expect($variantSchema)->toHaveKey('properties.user')
-        ->and($variantSchema)->toHaveKey('properties.team')
-        ->and($variantSchema['required'] ?? [])->toContain('user')
-        ->and($variantSchema['required'] ?? [])->toContain('team');
-});
-
-it('matches the most specific variant when relations are known', function () {
-    $type = modelWithRelations(
-        JsonResourceSchemaVariantsTest_PostModel::class."::query()->withoutEagerLoads()->with('user', 'team')->first()",
-        JsonResourceSchemaVariantsTest_VariantResource::class,
+it('can match no loaded relations variant', function () {
+    $type = resourceWithModel(
+        JsonResourceSchemaVariantsTest_NoFallbackVariantResource::class,
+        modelWithRelations(JsonResourceSchemaVariantsTest_PostModel::class, []),
     );
 
     $extension = makeJsonResourceExtension($this->context);
-    $schema = $extension->toSchema($type);
+    $schema = $extension->toSchema($type)->toArray();
 
-    expect($schema)->toBeInstanceOf(Reference::class)
-        ->and($schema->getUniqueName())->toBe('ExtendedParticipant');
+    $componentSchema = $this->context->openApi->components
+        ->getSchema('Participant')
+        ->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/Participant',
+    ])->and($componentSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+        ],
+        'required' => ['id'],
+    ]);
+});
+
+it('matches the most specific variant when relations are known', function () {
+    $type = resourceWithModel(
+        JsonResourceSchemaVariantsTest_VariantResource::class,
+        modelWithRelations(JsonResourceSchemaVariantsTest_PostModel::class, ['user', 'team']),
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/ExtendedParticipant',
+    ]);
 });
 
 it('uses fallback variant when relation state is unknown', function () {
     $type = new Generic(JsonResourceSchemaVariantsTest_VariantResource::class, [new UnknownType]);
 
     $extension = makeJsonResourceExtension($this->context);
-    $schema = $extension->toSchema($type);
+    $schema = $extension->toSchema($type)->toArray();
 
-    expect($schema)->toBeInstanceOf(Reference::class)
-        ->and($schema->getUniqueName())->toBe('ParticipantList');
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/ParticipantList',
+    ]);
 });
 
 it('uses base SchemaName when no fallback variant exists and relations are unknown', function () {
     $type = new Generic(JsonResourceSchemaVariantsTest_NamedResource::class, [new UnknownType]);
 
     $extension = makeJsonResourceExtension($this->context);
-    $reference = $extension->toSchema($type);
+    $schema = $extension->toSchema($type)->toArray();
 
-    expect($reference->getUniqueName())->toBe('CustomParticipant');
+    $componentSchema = $this->context->openApi->components
+        ->getSchema('CustomParticipant')
+        ->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/CustomParticipant',
+    ])->and($componentSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'user' => ['type' => 'object'],
+        ],
+        'required' => ['id'],
+    ]);
 });
 
 it('handles mergeWhen with relationLoaded', function () {
-    $type = modelWithRelations(
-        JsonResourceSchemaVariantsTest_PostModel::class."::query()->withoutEagerLoads()->with('user')->first()",
+    $type = resourceWithModel(
         JsonResourceSchemaVariantsTest_MergeWhenResource::class,
+        modelWithRelations(JsonResourceSchemaVariantsTest_PostModel::class, ['user']),
     );
 
     $extension = makeJsonResourceExtension($this->context);
     $schema = $extension->toSchema($type)->toArray();
 
-    expect($schema)->toHaveKey('allOf')
-        ->and($schema['allOf'][1]['properties'])->toHaveKey('profile')
-        ->and($schema['allOf'][1]['required'] ?? [])->toContain('profile');
+    $componentSchema = $this->context->openApi->components
+        ->getSchema(JsonResourceSchemaVariantsTest_MergeWhenResource::class)
+        ->toArray();
+
+    expect($schema)->toBe([
+        'allOf' => [
+            [
+                '$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_MergeWhenResource',
+            ],
+            [
+                'type' => 'object',
+                'properties' => [
+                    'profile' => ['type' => 'string'],
+                ],
+                'required' => ['profile'],
+            ],
+        ],
+    ])->and($componentSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+        ],
+        'required' => ['id'],
+    ]);
 });
 
 it('documents relation-conditioned resource collection when relation is loaded', function () {
-    $type = modelWithRelations(
-        JsonResourceSchemaVariantsTest_PostModel::class."::query()->with('comments')->first()",
+    $type = resourceWithModel(
         JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource::class,
+        modelWithRelations(JsonResourceSchemaVariantsTest_PostModel::class, ['comments']),
     );
 
     $extension = makeJsonResourceExtension($this->context);
     $schema = $extension->toSchema($type)->toArray();
 
-    expect($schema)->toHaveKey('allOf')
-        ->and($schema['allOf'][1]['properties']['comments'])->toMatchArray([
-            'type' => 'array',
-            'items' => ['$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_CommentResource'],
-        ])
-        ->and($schema['allOf'][1]['required'] ?? [])->toContain('comments');
+    $componentSchema = $this->context->openApi->components
+        ->getSchema(JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource::class)
+        ->toArray();
+
+    expect($schema)->toBe([
+        'allOf' => [
+            [
+                '$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource',
+            ],
+            [
+                'type' => 'object',
+                'properties' => [
+                    'comments' => [
+                        'type' => 'array',
+                        'items' => ['$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_CommentResource'],
+                    ],
+                ],
+                'required' => ['comments'],
+            ],
+        ],
+    ])->and($componentSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'comments' => [
+                'type' => 'array',
+                'items' => ['$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_CommentResource'],
+            ],
+        ],
+        'required' => ['id'],
+    ]);
 });
 
 it('excludes relation-conditioned resource collection when relation is not loaded', function () {
-    $type = modelWithRelations(
-        JsonResourceSchemaVariantsTest_PostModel::class.'::query()->withoutEagerLoads()->first()',
+    $type = resourceWithModel(
         JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource::class,
+        modelWithRelations(JsonResourceSchemaVariantsTest_PostModel::class, []),
     );
 
     $extension = makeJsonResourceExtension($this->context);
     $schema = $extension->toSchema($type)->toArray();
 
-    expect($schema)->not->toHaveKey('properties.comments');
+    $componentSchema = $this->context->openApi->components
+        ->getSchema(JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource::class)
+        ->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource',
+    ])->and($componentSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'comments' => [
+                'type' => 'array',
+                'items' => ['$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_CommentResource'],
+            ],
+        ],
+        'required' => ['id'],
+    ]);
 });
 
 it('falls back to optional resource collection field when relation state is unknown', function () {
     $type = new Generic(JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource::class, [new UnknownType]);
 
     $extension = makeJsonResourceExtension($this->context);
-    $extension->toSchema($type);
+    $schema = $extension->toSchema($type)->toArray();
 
-    $schema = $this->context->openApi->components
+    $componentSchema = $this->context->openApi->components
         ->getSchema(JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource::class)
-        ->type
         ->toArray();
 
-    expect($schema['properties'])->toHaveKey('comments')
-        ->and($schema['required'] ?? [])->not->toContain('comments');
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource',
+    ])->and($componentSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'comments' => [
+                'type' => 'array',
+                'items' => ['$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_CommentResource'],
+            ],
+        ],
+        'required' => ['id'],
+    ]);
 });
 
 it('throws when multiple variants match with equal specificity', function () {
-    $type = modelWithRelations(
-        JsonResourceSchemaVariantsTest_PostModel::class."::query()->withoutEagerLoads()->with('user')->first()",
+    $type = resourceWithModel(
         JsonResourceSchemaVariantsTest_AmbiguousVariantResource::class,
+        modelWithRelations(JsonResourceSchemaVariantsTest_PostModel::class, ['user']),
     );
 
     $extension = makeJsonResourceExtension($this->context);
@@ -289,6 +459,23 @@ class JsonResourceSchemaVariantsTest_BaseResource extends JsonResource
 #[JsonResourceSchemaVariant(name: 'ParticipantWithUser', withLoaded: ['user'])]
 #[JsonResourceSchemaVariant(name: 'ExtendedParticipant', withLoaded: ['user', 'team'])]
 class JsonResourceSchemaVariantsTest_VariantResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'user' => $this->whenLoaded('user'),
+            'team' => $this->whenLoaded('team'),
+        ];
+    }
+}
+
+/**
+ * @property JsonResourceSchemaVariantsTest_PostModel $resource
+ */
+#[JsonResourceSchemaVariant(name: 'Participant', withLoaded: [])]
+#[JsonResourceSchemaVariant(name: 'ExtendedParticipant', withLoaded: ['user', 'team'])]
+class JsonResourceSchemaVariantsTest_NoFallbackVariantResource extends JsonResource
 {
     public function toArray(Request $request): array
     {

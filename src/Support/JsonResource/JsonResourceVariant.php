@@ -39,7 +39,7 @@ class JsonResourceVariant
     public function filterReferencableFields(KeyedArrayType $array): KeyedArrayType
     {
         if ($this->isDefault()) {
-//            return $array;
+            return $array;
         }
 
         $array = $array->clone();
@@ -96,14 +96,16 @@ class JsonResourceVariant
         }
 
         if ($t->value instanceof Union && collect($t->value->types)->some(fn ($t) => $t->isInstanceOf(MissingValue::class))) {
-            $t->value = Union::wrap(collect($t->value->types)->reject(fn ($t) => $t->isInstanceOf(MissingValue::class))->values()->all());
+            $t->value = Union::wrap(collect($t->value->types)->reject(fn ($t) => $t->isInstanceOf(MissingValue::class))->values()->all())
+                ->mergeAttributes($t->value->attributes());
         }
 
         if ($t->value instanceof Generic && $t->value->isInstanceOf(JsonResource::class)) {
             $resource = $t->value->templateTypes[0] ?? null;
 
             if ($resource instanceof Union && collect($resource->types)->some(fn ($t) => $t->isInstanceOf(MissingValue::class))) {
-                $t->value->templateTypes[0] = Union::wrap(collect($resource->types)->reject(fn ($t) => $t->isInstanceOf(MissingValue::class))->values()->all());
+                $t->value->templateTypes[0] = Union::wrap(collect($resource->types)->reject(fn ($t) => $t->isInstanceOf(MissingValue::class))->values()->all())
+                    ->mergeAttributes($resource->attributes());
             }
         }
     }
@@ -117,15 +119,29 @@ class JsonResourceVariant
     {
         $array = $array->clone();
 
+        $referencableFields = $this->filterReferencableFields($array);
+
+        $requiredInReferencable = $this->isDefault()
+            ? []
+            : collect($referencableFields->items)
+                ->map(fn (ArrayItemType_ $t) => $this->getConditionalRelation($t))
+                ->filter()
+                ->values()
+                ->all();
+
         $newItems = collect($array->items)
-            ->filter(function (ArrayItemType_ $t) {
+            ->filter(function (ArrayItemType_ $t) use ($requiredInReferencable) {
                 $conditionalRelation = $this->getConditionalRelation($t);
 
                 if (! $conditionalRelation) {
                     return false;
                 }
 
-                return in_array($conditionalRelation, $this->loadedRelations, strict: true);
+                if (! in_array($conditionalRelation, $this->loadedRelations, strict: true)) {
+                    return false;
+                }
+
+                return ! in_array($conditionalRelation, $requiredInReferencable, strict: true);
             })
             ->map(function (ArrayItemType_ $t) {
                 $this->requireArrayItemType($t);

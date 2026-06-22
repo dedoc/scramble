@@ -32,11 +32,13 @@ class JsonResourceVariantMatcher
         }
 
         if (! $modelType = $this->getModelFromResource($type)) {
-            return $this->default($type);
+            return $this->fallbackOrDefault($type);
         }
 
-        if (! $knownLoadedRelations = $this->getKnownLoadedRelations($modelType)) {
-            return $this->default($type);
+        $knownLoadedRelations = $this->getKnownLoadedRelations($modelType);
+
+        if ($knownLoadedRelations === null) {
+            return $this->fallbackOrDefault($type);
         }
 
         if (! $variants = $this->getVariants($type->name)) {
@@ -78,6 +80,26 @@ class JsonResourceVariantMatcher
             $knownLoadedRelations,
             isDefault: true,
         );
+    }
+
+    private function fallbackOrDefault(ObjectType $type): JsonResourceVariant
+    {
+        if ($fallback = $this->findFallbackVariant($type->name)) {
+            return JsonResourceVariant::fromJsonResourceSchemaVariant($fallback, []);
+        }
+
+        return $this->default($type);
+    }
+
+    private function findFallbackVariant(string $jsonClassName): ?JsonResourceSchemaVariant
+    {
+        foreach ($this->getVariants($jsonClassName) as $variant) {
+            if ($variant->fallback) {
+                return $variant;
+            }
+        }
+
+        return null;
     }
 
     /**
