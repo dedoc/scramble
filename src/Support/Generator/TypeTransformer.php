@@ -25,9 +25,12 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\ObjectType as InferObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\DeprecatedTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
@@ -135,7 +138,13 @@ class TypeTransformer
             && ! $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
             && ! $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
             && ! $type instanceof Union
-            && ! $type instanceof \Dedoc\Scramble\Support\Type\IntersectionType;
+            && ! $type instanceof \Dedoc\Scramble\Support\Type\IntersectionType
+            && ! $this->isJsonResourceType($type);
+    }
+
+    private function isJsonResourceType(Type $type): bool
+    {
+        return $type instanceof InferObjectType && $type->isInstanceOf(JsonResource::class);
     }
 
     private function transformCached(Type $type): OpenApiType

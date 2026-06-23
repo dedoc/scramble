@@ -195,6 +195,37 @@ it('can match no loaded relations variant', function () {
     ]);
 });
 
+it('does not reuse cached schema when another variant of the same resource was transformed first', function () {
+    $context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
+
+    $transformer = new TypeTransformer(app(Infer::class), $context, [
+        JsonResourceTypeToSchema::class,
+        ResourceResponseTypeToSchema::class,
+    ]);
+
+    $resourceClass = JsonResourceSchemaVariantsTest_PriorityVariantResource::class;
+    $modelClass = JsonResourceSchemaVariantsTest_PostModel::class;
+
+    $extendedType = resourceWithModel($resourceClass, modelWithRelations($modelClass, ['user', 'team']));
+    $specificType = resourceWithModel($resourceClass, modelWithRelations($modelClass, ['user']));
+
+    expect($extendedType->toString())->toBe($specificType->toString());
+
+    $extendedSchema = $transformer->transform($extendedType)->toArray();
+    $specificSchema = $transformer->transform($specificType)->toArray();
+
+    $specificResponse = $transformer->toResponse(new Generic(
+        Illuminate\Http\Resources\Json\ResourceResponse::class,
+        [$specificType],
+    ));
+
+    expect($extendedSchema)->toBe([
+        '$ref' => '#/components/schemas/ExtendedAccount',
+    ])->and($specificSchema)->toBe([
+        '$ref' => '#/components/schemas/AccountWithUser',
+    ])->and($specificResponse->description)->toBe('`AccountWithUser`');
+});
+
 it('loads correct variant based on matched relations priority', function () {
     $type = resourceWithModel(
         JsonResourceSchemaVariantsTest_PriorityVariantResource::class,
