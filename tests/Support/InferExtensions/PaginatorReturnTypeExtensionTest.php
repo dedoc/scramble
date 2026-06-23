@@ -1,11 +1,11 @@
 <?php
 
 use Dedoc\Scramble\Support\InferExtensions\PaginateMethodsReturnTypeExtension;
+use Dedoc\Scramble\Tests\Files\CustomScoutBuilder;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Laravel\Scout\Searchable;
 
 it('guesses paginate type', function (string $expression, string $expectedTypeString) {
     $type = getStatementType($expression, [
@@ -19,6 +19,7 @@ it('guesses paginate type', function (string $expression, string $expectedTypeSt
     [SampleUserModel::class.'::query()->fastPaginate()', LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>'],
     [SampleUserModel::class.'::query()->where("foo", "bar")->paginate()', LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>'],
     [SampleUserModel::class.'::search("foo")->paginate()', LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>'],
+    ['(new '.CustomScoutBuilder::class.'('.SampleUserModel::class.'::search("foo")))->paginate(25)', LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>'],
 
     [SampleUserModel::class.'::cursorPaginate()', CursorPaginator::class.'<int, '.SampleUserModel::class.'>'],
     [SampleUserModel::class.'::query()->cursorPaginate()', CursorPaginator::class.'<int, '.SampleUserModel::class.'>'],
