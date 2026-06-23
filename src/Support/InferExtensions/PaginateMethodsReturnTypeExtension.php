@@ -105,6 +105,7 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
             BelongsToMany::class,
             HasManyThrough::class,
             Model::class,
+            \Laravel\Scout\Builder::class,
         ])->some(fn (string $queryClass) => is_a($class, $queryClass, true));
     }
 }
