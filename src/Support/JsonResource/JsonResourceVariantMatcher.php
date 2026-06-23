@@ -64,7 +64,11 @@ class JsonResourceVariantMatcher
                     ? $knownLoadedRelations
                     : $variant->withLoaded;
 
-                return count(array_intersect($variantRelations, $knownLoadedRelations));
+                $specificityMultiplier = $knownLoadedRelations === $variant->withLoaded
+                    ? ($variant->withLoaded === '*' ? 1 : 10)
+                    : 1;
+
+                return $specificityMultiplier * count(array_intersect($variantRelations, $knownLoadedRelations));
             });
 
         return JsonResourceVariant::fromJsonResourceSchemaVariant(

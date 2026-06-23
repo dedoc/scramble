@@ -195,6 +195,50 @@ it('can match no loaded relations variant', function () {
     ]);
 });
 
+it('loads correct variant based on matched relations priority', function () {
+    $type = resourceWithModel(
+        JsonResourceSchemaVariantsTest_PriorityVariantResource::class,
+        modelWithRelations(JsonResourceSchemaVariantsTest_PostModel::class, ['user']),
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    $componentSchema = $this->context->openApi->components
+        ->getSchema('AccountWithUser')
+        ->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/AccountWithUser',
+    ])->and($componentSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'user' => ['type' => 'object'],
+        ],
+        'required' => ['id', 'user'],
+    ]);
+});
+
+
+/**
+ * @property JsonResourceSchemaVariantsTest_PostModel $resource
+ */
+#[JsonResourceSchemaVariant(name: 'Account', withLoaded: [])]
+#[JsonResourceSchemaVariant(name: 'AccountWithUser', withLoaded: ['user'])]
+#[JsonResourceSchemaVariant(name: 'ExtendedAccount', withLoaded: '*')]
+class JsonResourceSchemaVariantsTest_PriorityVariantResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'user' => $this->whenLoaded('user'),
+            'team' => $this->whenLoaded('team'),
+        ];
+    }
+}
+
 it('matches the most specific variant when relations are known', function () {
     $type = resourceWithModel(
         JsonResourceSchemaVariantsTest_VariantResource::class,
