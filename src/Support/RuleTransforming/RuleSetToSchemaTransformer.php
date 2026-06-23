@@ -8,13 +8,11 @@ use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesMapper;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Rules\ExcludeIf;
-use Illuminate\Validation\Rules\File;
 use Illuminate\Validation\Rules\ProhibitedIf;
 use Illuminate\Validation\Rules\RequiredIf;
 
@@ -134,10 +132,6 @@ class RuleSetToSchemaTransformer
      */
     protected function transformRuleValueToSchema(OpenApiType $type, $rule, RuleTransformerContext $context): OpenApiType
     {
-        if ($rule instanceof File) {
-            return $this->transformToSchema(static::normalizeAndPrioritizeRules($this->buildFileValidationRules($rule)), $type, $context);
-        }
-
         $rulesHandler = new RulesMapper($this->openApiTransformer, $this);
 
         $methodName = Str::camel(class_basename(get_class($rule)));
@@ -145,17 +139,6 @@ class RuleSetToSchemaTransformer
         return method_exists($rulesHandler, $methodName)
             ? $rulesHandler->$methodName($type, $rule, $context)
             : $type;
-    }
-
-    /**
-     * @return list<string|ValidationRule>
-     */
-    private function buildFileValidationRules(File $rule): array
-    {
-        return array_values(array_map(
-            fn ($rule) => $rule instanceof ValidationRule ? $rule : (string) $rule,
-            (fn () => $this->buildValidationRules())->call($rule),
-        ));
     }
 
     /**

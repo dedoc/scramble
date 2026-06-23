@@ -7,6 +7,7 @@ use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\RuleTransformers\ConfirmedRule;
 use Dedoc\Scramble\RuleTransformers\EnumRule;
 use Dedoc\Scramble\RuleTransformers\ExistsRule;
+use Dedoc\Scramble\RuleTransformers\FileRule;
 use Dedoc\Scramble\RuleTransformers\InRule;
 use Dedoc\Scramble\RuleTransformers\RegexRule;
 use Dedoc\Scramble\Support\ContainerUtils;
@@ -83,6 +84,7 @@ class RuleTransformers
         $base = $this->transformers ?: [
             EnumRule::class,
             InRule::class,
+            FileRule::class,
             ConfirmedRule::class,
             ExistsRule::class,
             RegexRule::class,
