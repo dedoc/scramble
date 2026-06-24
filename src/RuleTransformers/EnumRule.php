@@ -18,7 +18,8 @@ class EnumRule implements RuleTransformer
 {
     public function __construct(
         protected TypeTransformer $openApiTransformer,
-    ) {}
+    ) {
+    }
 
     public function shouldHandle(NormalizedRule $rule): bool
     {
@@ -42,11 +43,31 @@ class EnumRule implements RuleTransformer
         /** @var BackedEnum[] $only */
         $only = method_exists(Enum::class, 'only') ? $this->getProtectedValue($rule, 'only') : []; // @phpstan-ignore function.alreadyNarrowedType
 
-        if ($except || $only) {
-            return $this->createPartialEnum($enumName, $only, $except);
+        if (!($except || $only)) {
+            return $this->openApiTransformer
+                ->transform($objectType)
+                ->addProperties($previous);
         }
 
-        return $this->openApiTransformer->transform($objectType);
+        $type = $this->createPartialEnum($enumName, $only, $except);
+
+        // Backup the enum/const properties generated for the partial enum,
+        // because addProperties() will overwrite them with values from $previous.
+        $enum = $type->enum;
+        $const = $type->const;
+
+        // Preserve attributes/properties (e.g. nullable, description) from preceding rules
+        $type->addProperties($previous);
+
+        // Restore the partial enum's constraints
+        if (count($enum)) {
+            $type->enum($enum);
+        }
+        if (!is_null($const)) {
+            $type->const($const);
+        }
+
+        return $type;
     }
 
     /**
@@ -57,23 +78,23 @@ class EnumRule implements RuleTransformer
     private function createPartialEnum(string $enumName, array $only, array $except): Type
     {
         $cases = collect($enumName::cases())
-            ->reject(fn ($case) => in_array($case, $except))
-            ->filter(fn ($case) => ! $only || in_array($case, $only));
+            ->reject(fn($case) => in_array($case, $except))
+            ->filter(fn($case) => !$only || in_array($case, $only));
 
-        if (! isset($cases->first()->value)) {
+        if ($cases->isEmpty()) {
             return new UnknownType; // $enumName enum doesnt have values (only/except context)
         }
 
         return $this->openApiTransformer->transform(Union::wrap(
-            $cases->map(fn ($c) => TypeHelper::createTypeFromValue($c->value))->all()
+            $cases->map(fn($c) => TypeHelper::createTypeFromValue($c->value))->all()
         ));
     }
 
     private function getProtectedValue(object $obj, string $name): mixed
     {
         $array = (array) $obj;
-        $prefix = chr(0).'*'.chr(0);
+        $prefix = chr(0) . '*' . chr(0);
 
-        return $array[$prefix.$name];
+        return $array[$prefix . $name];
     }
 }
