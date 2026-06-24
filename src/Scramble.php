@@ -152,7 +152,7 @@ class Scramble
         return RouteFacade::get($path, function (CacheableGenerator $generator) use ($api) {
             $config = static::getGeneratorConfig($api);
 
-            return view('scramble::docs', [
+            return view($config->renderer()->view, [
                 'spec' => $generator($config),
                 'config' => $config,
             ]);
