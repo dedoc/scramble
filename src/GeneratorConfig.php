@@ -19,6 +19,7 @@ use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use ReflectionFunction;
 use ReflectionNamedType;
@@ -81,7 +82,7 @@ class GeneratorConfig
         if (Arr::has($this->config, 'ui.logo')) {
             return new RendererConfig(array_merge(
                 $this->get('renderers.elements', []),
-                $this->get('ui'),
+                collect($this->get('ui'))->mapWithKeys(fn ($v, $k) => [Str::camel($k) => $v])->all(),
             ));
         }
 
