@@ -355,7 +355,11 @@ class ReflectionJsonApiResource
 
     private function getPropertyDefaultType(string $name): ?Type
     {
-        return $this->definition->getPropertyDefinition($name)?->defaultType;
+        if (! $defaultType = $this->definition->getPropertyDefinition($name)?->defaultType) {
+            return null;
+        }
+
+        return ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $defaultType);
     }
 
     private function getMethodReturnType(string $method): ?Type
