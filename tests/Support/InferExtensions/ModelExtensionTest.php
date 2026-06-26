@@ -167,6 +167,35 @@ describe('model annotations (introduced in 11.15.0)', function () {
         ],
     ]);
 
+    it('tracks relations after refresh and load on assigned model', function (string $mutatingExpression, string $expectedLoadedRelationsType) {
+        $class = PostModel_ModelExtensionTest::class;
+
+        $type = getVariableTypeAfter(<<<PHP
+\$model = new {$class}();
+{$mutatingExpression};
+PHP,
+            'model',
+        );
+
+        expect($type->toString())
+            ->toBe($class)
+            ->and($type->getPropertyType('relations')->toString())
+            ->toBe($expectedLoadedRelationsType);
+    })->with([
+        'load' => [
+            "\$model->load('comments')",
+            'list{string(comments)}',
+        ],
+        'refresh and load' => [
+            "\$model->refresh()->load('comments')",
+            'list{string(comments)}',
+        ],
+        'sequential loads' => [
+            "\$model->load('comments')->load('user')",
+            'list{string(comments), string(user)}',
+        ],
+    ]);
+
     it('tracks relations passed to loadMissing() on model', function (string $expression, string $expectedRelationsType) {
         $type = getStatementType($expression);
 

@@ -15,32 +15,6 @@ use PhpParser\Node;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 
-function getVariableTypeAfter(string $body, string $var): Type
-{
-    $index = app(Index::class);
-
-    $traverser = new NodeTraverser;
-    $traverser->addVisitor($nameResolver = new NameResolver);
-    $traverser->addVisitor(new PhpDocResolver(
-        $nameResolver = new FileNameResolver($nameResolver->getNameContext()),
-    ));
-    $traverser->addVisitor(new TypeInferer(
-        $index,
-        $nameResolver,
-        $scope = new Scope($index, new NodeTypesResolver, new ScopeContext, $nameResolver),
-        Context::getInstance()->extensionsBroker->extensions,
-    ));
-    $traverser->traverse(
-        FileParser::getInstance()->parseContent("<?php\n{$body}")->getStatements(),
-    );
-
-    $unresolvedType = $scope->getType(
-        new Node\Expr\Variable($var, ['startLine' => INF]),
-    );
-
-    return (new ReferenceTypeResolver($index))->resolve($scope, $unresolvedType)->setOriginal($unresolvedType);
-}
-
 it('infers types from list destructuring assignment', function () {
     expect(getVariableTypeAfter('[$a, $b] = [1, 2];', 'a')->toString())->toBe('int(1)')
         ->and(getVariableTypeAfter('[$a, $b] = [1, 2];', 'b')->toString())->toBe('int(2)');

@@ -17,11 +17,7 @@ class MethodCallHandler
 
     public function leave(Expr\MethodCall $node, Scope $scope): void
     {
-        if (! $node->var instanceof Expr\Variable || ! is_string($node->var->name)) {
-            return;
-        }
-
-        if (! $node->name instanceof Node\Identifier) {
+        if (! $varName = $this->getPotentiallyMutatingVarName($node)) {
             return;
         }
 
@@ -33,12 +29,29 @@ class MethodCallHandler
 
         $scope->addVariableType(
             $node->getAttribute('endLine', $node->getAttribute('startLine')) + 1,
-            $node->var->name,
+            $varName,
             new PotentialMethodMutatingCallType(
                 $type->callee,
                 $type->methodName,
                 $type->arguments,
             ),
         );
+    }
+
+    private function getPotentiallyMutatingVarName(Expr\MethodCall $node): ?string
+    {
+        if ($node->var instanceof Expr\MethodCall) {
+            return $this->getPotentiallyMutatingVarName($node->var);
+        }
+
+        if (! $node->var instanceof Expr\Variable || ! is_string($node->var->name)) {
+            return null;
+        }
+
+        if (! $node->name instanceof Node\Identifier) {
+            return null;
+        }
+
+        return $node->var->name;
     }
 }
