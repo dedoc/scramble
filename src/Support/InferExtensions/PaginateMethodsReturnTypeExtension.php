@@ -14,13 +14,13 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Contracts\Database\Query\Builder as BaseBuilder;
-use Laravel\Scout\Builder as ScoutBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Laravel\Scout\Builder as ScoutBuilder;
 
 class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension, StaticMethodReturnTypeExtension
 {
