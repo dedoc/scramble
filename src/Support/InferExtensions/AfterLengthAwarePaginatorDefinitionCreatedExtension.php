@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Type\IntegerRangeType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -27,7 +28,9 @@ class AfterLengthAwarePaginatorDefinitionCreatedExtension implements AfterClassD
     {
         $definition = $event->classDefinition;
 
-        $tValue = collect($definition->templateTypes)->firstOrFail('name', 'TValue');
+        if (! $tValue = collect($definition->templateTypes)->firstWhere('name', 'TValue')) {
+            $tValue = $definition->templateTypes[] = new TemplateType('TValue');
+        }
 
         $definition->methods['toArray'] = new ShallowFunctionDefinition(
             type: new FunctionType(
