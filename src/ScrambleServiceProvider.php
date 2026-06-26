@@ -37,6 +37,9 @@ use Dedoc\Scramble\Support\InferExtensions\AfterModelDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterEloquentCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterJsonApiResourceDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterJsonResourceDefinitionCreatedExtension;
+use Dedoc\Scramble\Support\InferExtensions\AfterCursorPaginatorDefinitionCreatedExtension;
+use Dedoc\Scramble\Support\InferExtensions\AfterLengthAwarePaginatorDefinitionCreatedExtension;
+use Dedoc\Scramble\Support\InferExtensions\AfterPaginatorDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResponseDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
@@ -179,6 +182,9 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     EloquentBuilderExtension::class,
                     RequestExtension::class,
                     AfterJsonResourceDefinitionCreatedExtension::class,
+                    AfterLengthAwarePaginatorDefinitionCreatedExtension::class,
+                    AfterPaginatorDefinitionCreatedExtension::class,
+                    AfterCursorPaginatorDefinitionCreatedExtension::class,
                     AfterResourceCollectionDefinitionCreatedExtension::class,
                     AfterAnonymousResourceCollectionDefinitionCreatedExtension::class,
                     AfterResponseDefinitionCreatedExtension::class,
