@@ -13,6 +13,7 @@ use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\InferExtensions\Concerns\ExtractsLiteralArrayKeys;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\AbstractType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
@@ -43,6 +44,8 @@ use Throwable;
 
 class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension, StaticMethodReturnTypeExtension
 {
+    use ExtractsLiteralArrayKeys;
+
     private static $cache;
 
     public function shouldHandle(ObjectType|string $type): bool
@@ -235,11 +238,94 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         );
     }
 
+    protected function getOnlyMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        if ($this->getRealHasAttributesMethodDefinitionClassName($event, 'only') !== Model::class) {
+            return null;
+        }
+
+        $keyTypes = $this->extractKeyTypesFromEvent($event, 'attributes', 0);
+
+        if ($keyTypes === null) {
+            return null;
+        }
+
+        $items = [];
+
+        foreach ($keyTypes as $keyType) {
+            if (! $literalKey = $this->getLiteralKey($keyType)) {
+                return null;
+            }
+
+            $propertyType = $this->getPropertyType(
+                new PropertyFetchEvent($event->getInstance(), $literalKey, $event->scope),
+            );
+
+            if (! $propertyType) {
+                return null;
+            }
+
+            $items[] = new ArrayItemType_(
+                key: $literalKey,
+                value: $propertyType,
+            );
+        }
+
+        return new KeyedArrayType($items);
+    }
+
+    protected function getExceptMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        if ($this->getRealHasAttributesMethodDefinitionClassName($event, 'except') !== Model::class) {
+            return null;
+        }
+
+        $keyTypes = $this->extractKeyTypesFromEvent($event, 'attributes', 0);
+
+        if ($keyTypes === null) {
+            return null;
+        }
+
+        if (! $attributesType = $this->getModelAttributesArrayType($event)) {
+            return null;
+        }
+
+        return $this->unsetKeysFromType($attributesType, $keyTypes);
+    }
+
+    protected function getModelAttributesArrayType(MethodCallEvent $event): ?KeyedArrayType
+    {
+        $items = $this->getModelInfo($event->getInstance())
+            ->get('attributes', collect())
+            ->map(function ($_, $name) use ($event) {
+                $propertyType = $this->getPropertyType(
+                    new PropertyFetchEvent($event->getInstance(), $name, $event->scope),
+                );
+
+                if (! $propertyType) {
+                    return null;
+                }
+
+                return new ArrayItemType_($name, $propertyType);
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        if (! count($items)) {
+            return null;
+        }
+
+        return new KeyedArrayType($items);
+    }
+
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         return match ($event->getName()) {
             'toArray' => $this->getToArrayMethodReturnType($event),
             'getOriginal' => $this->getGetOriginalMethodReturnType($event),
+            'only' => $this->getOnlyMethodReturnType($event),
+            'except' => $this->getExceptMethodReturnType($event),
             'resolveResourceFromAttribute' => $this->getResolveResourceFromAttributeMethodReturnType($event),
             'guessResource' => $this->getGuessResourceMethodReturnType($event),
             'toResource' => $this->getToResourceMethodReturnType($event),
@@ -380,10 +466,15 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
      */
     private function getRealToArrayMethodDefinitionClassName(MethodCallEvent $event)
     {
+        return $this->getRealHasAttributesMethodDefinitionClassName($event, 'toArray');
+    }
+
+    private function getRealHasAttributesMethodDefinitionClassName(MethodCallEvent $event, string $method): ?string
+    {
         $className = $event->methodDefiningClassName ?: $event->getInstance()->name;
 
         try {
-            $reflectionMethod = new \ReflectionMethod($className, 'toArray');
+            $reflectionMethod = new \ReflectionMethod($className, $method);
 
             return $reflectionMethod->getDeclaringClass()->getName();
         } catch (Throwable) {

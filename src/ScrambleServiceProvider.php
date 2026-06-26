@@ -34,15 +34,16 @@ use Dedoc\Scramble\Support\InferExtensions\AfterAnonymousResourceCollectionDefin
 use Dedoc\Scramble\Support\InferExtensions\AfterEloquentBuilderDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterEloquentRelationDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterModelDefinitionCreatedExtension;
+use Dedoc\Scramble\Support\InferExtensions\AfterCursorPaginatorDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterEloquentCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterJsonApiResourceDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterJsonResourceDefinitionCreatedExtension;
-use Dedoc\Scramble\Support\InferExtensions\AfterCursorPaginatorDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterLengthAwarePaginatorDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterPaginatorDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResponseDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
+use Dedoc\Scramble\Support\InferExtensions\ArrStaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\EloquentBuilderExtension;
 use Dedoc\Scramble\Support\InferExtensions\FacadeStaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceCollectionMethodReturnTypeExtension;
@@ -197,6 +198,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                         new PaginateMethodsReturnTypeExtension,
                         new FacadeStaticMethodReturnTypeExtension,
+                        new ArrStaticMethodReturnTypeExtension,
 
                         new ValidatorTypeInfer,
                         new ResourceCollectionTypeInfer,

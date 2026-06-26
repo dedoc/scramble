@@ -3,6 +3,7 @@
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
@@ -73,6 +74,62 @@ it('adds toArray method type the model class without defined toArray class', fun
             'created_at' => 'string|null',
             'updated_at' => 'string|null',
         ]);
+});
+
+it('infers only method return type', function () {
+    $this->infer->analyzeClass(SampleUserModel::class);
+
+    $scope = new Infer\Scope\GlobalScope;
+    $scope->index = $this->infer->index;
+
+    $onlyReturnType = (new ObjectType(SampleUserModel::class))
+        ->getMethodReturnType('only', scope: $scope, arguments: [
+            new KeyedArrayType([
+                new ArrayItemType_(0, new LiteralStringType('name')),
+                new ArrayItemType_(1, new LiteralStringType('email')),
+            ]),
+        ]);
+
+    expect(collect($onlyReturnType->items)->mapWithKeys(fn (ArrayItemType_ $t) => [$t->key => $t->value->toString()]))
+        ->toMatchArray([
+            'name' => 'string',
+            'email' => 'string',
+        ]);
+});
+
+it('infers except method return type', function () {
+    $this->infer->analyzeClass(SampleUserModel::class);
+
+    $scope = new Infer\Scope\GlobalScope;
+    $scope->index = $this->infer->index;
+
+    $exceptReturnType = ReferenceTypeResolver::getInstance()->resolve(
+        $scope,
+        (new ObjectType(SampleUserModel::class))
+            ->getMethodReturnType('except', scope: $scope, arguments: [
+                new KeyedArrayType([
+                    new ArrayItemType_(0, new LiteralStringType('password')),
+                ]),
+            ]),
+    );
+
+    expect(collect($exceptReturnType->items)->mapWithKeys(fn (ArrayItemType_ $t) => [$t->key => $t->value->toString()]))
+        ->not->toHaveKey('password')
+        ->and(collect($exceptReturnType->items)->mapWithKeys(fn (ArrayItemType_ $t) => [$t->key => $t->value->toString()]))
+        ->toHaveKeys(['id', 'name', 'email']);
+});
+
+it('infers only with array keys argument via toHaveType', function () {
+    $type = getStatementType('(new '.SampleUserModel::class.')->only(["name", "email"])');
+
+    expect($type->toString())->toBe('array{name: string, email: string}');
+});
+
+it('infers except with array keys argument via toHaveType', function () {
+    $type = getStatementType('(new '.SampleUserModel::class.')->except(["password"])');
+
+    expect($type->toString())->not->toContain('password')
+        ->and($type->toString())->toContain('name: string');
 });
 
 /*
