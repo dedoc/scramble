@@ -12,7 +12,6 @@ use Dedoc\Scramble\Support\Type as InferType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;

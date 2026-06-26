@@ -42,8 +42,11 @@ class ReflectionJsonApiResourceTestConst_JsonApi extends JsonApiResource
 class ReflectionJsonApiResourceTestConstUserModel extends SampleUserModel
 {
     public const ID = 'id';
+
     public const USER_ID = 'user_id';
+
     public const NAME = 'name';
+
     public const RELATION_SURVEYS = 'surveys';
 
     public function surveys()
