@@ -12,6 +12,7 @@ use Dedoc\Scramble\Support\Type as InferType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
@@ -355,7 +356,11 @@ class ReflectionJsonApiResource
 
     private function getPropertyDefaultType(string $name): ?Type
     {
-        return $this->definition->getPropertyDefinition($name)?->defaultType;
+        if (! $defaultType = $this->definition->getPropertyDefinition($name)?->defaultType) {
+            return null;
+        }
+
+        return ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $defaultType);
     }
 
     private function getMethodReturnType(string $method): ?Type

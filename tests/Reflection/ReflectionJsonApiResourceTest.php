@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Tests\Reflection;
 use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
@@ -13,6 +14,42 @@ if (! class_exists(JsonApiResource::class)) {
     test('JSON:API resources are available')->skip('JSON:API resources are not available in this Laravel version.');
 
     return;
+}
+
+test('returns attributes and relationships type from properties with model constants', function () {
+    $resource = ReflectionJsonApiResource::createForClass(ReflectionJsonApiResourceTestConst_JsonApi::class);
+
+    expect($resource->getAttributesType()->toString())->toBe('array{id: int, user_id: unknown, name: string, created_at: Carbon\Carbon|null}')
+        ->and($resource->getRelationshipsType()->toString())->toBe('array{surveys: Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection<unknown, unknown, Illuminate\Http\Resources\JsonApi\JsonApiResource>}');
+});
+/**
+ * @property-read ReflectionJsonApiResourceTestConstUserModel $resource
+ */
+class ReflectionJsonApiResourceTestConst_JsonApi extends JsonApiResource
+{
+    public array $attributes = [
+        ReflectionJsonApiResourceTestConstUserModel::ID,
+        ReflectionJsonApiResourceTestConstUserModel::USER_ID,
+        ReflectionJsonApiResourceTestConstUserModel::NAME,
+        Model::CREATED_AT,
+    ];
+
+    public array $relationships = [
+        ReflectionJsonApiResourceTestConstUserModel::RELATION_SURVEYS,
+    ];
+}
+
+class ReflectionJsonApiResourceTestConstUserModel extends SampleUserModel
+{
+    public const ID = 'id';
+    public const USER_ID = 'user_id';
+    public const NAME = 'name';
+    public const RELATION_SURVEYS = 'surveys';
+
+    public function surveys()
+    {
+        return $this->hasMany(SamplePostModel::class);
+    }
 }
 
 test('returns attributes type from property', function () {
