@@ -116,7 +116,7 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     }
 
     /**
-     * @param list<OpenApiType|null> $jsonSchemas
+     * @param  list<OpenApiType|null>  $jsonSchemas
      */
     private function allOf(array $jsonSchemas): OpenApiType
     {

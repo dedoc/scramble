@@ -1,20 +1,5 @@
 <?php
 
-use Dedoc\Scramble\Infer\Context;
-use Dedoc\Scramble\Infer\Scope\Index;
-use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
-use Dedoc\Scramble\Infer\Scope\Scope;
-use Dedoc\Scramble\Infer\Scope\ScopeContext;
-use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\Infer\Services\FileParser;
-use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
-use Dedoc\Scramble\Infer\TypeInferer;
-use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
-use Dedoc\Scramble\Support\Type\Type;
-use PhpParser\Node;
-use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\NameResolver;
-
 it('infers types from list destructuring assignment', function () {
     expect(getVariableTypeAfter('[$a, $b] = [1, 2];', 'a')->toString())->toBe('int(1)')
         ->and(getVariableTypeAfter('[$a, $b] = [1, 2];', 'b')->toString())->toBe('int(2)');
@@ -66,7 +51,7 @@ it('tracks property types when assigning to a templated property', function () {
 
     expect($a->foo)->toHaveType('int(42)');
 
-    expect(getVariableTypeAfter("\$a = new PropertyTypesGeneric_AssignHandlerTest(); \$a->foo = 42;", 'a')->toString())
+    expect(getVariableTypeAfter('$a = new PropertyTypesGeneric_AssignHandlerTest(); $a->foo = 42;', 'a')->toString())
         ->toBe(PropertyTypesGeneric_AssignHandlerTest::class.'<int(42)>');
 });
 

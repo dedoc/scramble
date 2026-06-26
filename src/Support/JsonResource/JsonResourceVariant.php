@@ -11,9 +11,7 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\MissingValue;
 
 class JsonResourceVariant
@@ -22,9 +20,7 @@ class JsonResourceVariant
         protected JsonResourceSchemaVariant $variant,
         protected array $loadedRelations,
         protected bool $isDefault = false,
-    )
-    {
-    }
+    ) {}
 
     public static function fromJsonResourceSchemaVariant(JsonResourceSchemaVariant $variant, array $loadedRelations, bool $isDefault = false): self
     {

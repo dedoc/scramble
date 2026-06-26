@@ -19,8 +19,8 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceResponseTypeToSchema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 beforeEach(function () {
     $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
@@ -117,14 +117,14 @@ it('ignores relation-conditioned properties when relation is not loaded', functi
     expect($schema)->toBe([
         '$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_BaseResource',
     ])->and($componentSchema)->toBe([
-            'type' => 'object',
-            'properties' => [
-                'id' => ['type' => 'string'],
-                'user' => ['type' => 'object'],
-                'team' => ['type' => 'object'],
-            ],
-            'required' => ['id'],
-        ]);
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'user' => ['type' => 'object'],
+            'team' => ['type' => 'object'],
+        ],
+        'required' => ['id'],
+    ]);
 });
 
 it('falls back to optional relation fields when model state is unknown', function () {
@@ -250,7 +250,6 @@ it('loads correct variant based on matched relations priority', function () {
         'required' => ['id', 'user'],
     ]);
 });
-
 
 /**
  * @property JsonResourceSchemaVariantsTest_PostModel $resource

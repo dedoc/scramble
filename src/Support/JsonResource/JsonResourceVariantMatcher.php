@@ -6,7 +6,6 @@ use Dedoc\Scramble\Attributes\JsonResourceSchemaVariant;
 use Dedoc\Scramble\Infer\Contracts\Index;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
-use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -49,8 +48,8 @@ class JsonResourceVariantMatcher
     }
 
     /**
-     * @param JsonResourceSchemaVariant[] $variants
-     * @param string[] $knownLoadedRelations
+     * @param  JsonResourceSchemaVariant[]  $variants
+     * @param  string[]  $knownLoadedRelations
      * @return void
      */
     private function doMatch(array $variants, array $knownLoadedRelations): JsonResourceVariant
@@ -107,7 +106,7 @@ class JsonResourceVariantMatcher
     }
 
     /**
-     * @param class-string<JsonResource> $jsonClassName
+     * @param  class-string<JsonResource>  $jsonClassName
      * @return JsonResourceSchemaVariant[]
      */
     private function getVariants(string $jsonClassName): array
@@ -126,7 +125,7 @@ class JsonResourceVariantMatcher
 
     private function getModelFromResource(ObjectType $type): ?ObjectType
     {
-        $modelType = (new TypeWalker())->first(
+        $modelType = (new TypeWalker)->first(
             $type,
             fn (Type $t) => $t->isInstanceOf(Model::class),
         );
