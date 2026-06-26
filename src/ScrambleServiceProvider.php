@@ -39,6 +39,7 @@ use Dedoc\Scramble\Support\InferExtensions\AfterLengthAwarePaginatorDefinitionCr
 use Dedoc\Scramble\Support\InferExtensions\AfterPaginatorDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterResponseDefinitionCreatedExtension;
+use Dedoc\Scramble\Support\InferExtensions\ArrStaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\EloquentBuilderExtension;
 use Dedoc\Scramble\Support\InferExtensions\FacadeStaticMethodReturnTypeExtension;
@@ -191,6 +192,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                         new PaginateMethodsReturnTypeExtension,
                         new FacadeStaticMethodReturnTypeExtension,
+                        new ArrStaticMethodReturnTypeExtension,
 
                         new ValidatorTypeInfer,
                         new ResourceCollectionTypeInfer,
