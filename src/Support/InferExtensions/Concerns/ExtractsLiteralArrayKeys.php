@@ -5,11 +5,11 @@ namespace Dedoc\Scramble\Support\InferExtensions\Concerns;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\OffsetUnsetType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
-use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 
 trait ExtractsLiteralArrayKeys
 {
