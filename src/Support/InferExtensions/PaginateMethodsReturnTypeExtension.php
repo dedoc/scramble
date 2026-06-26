@@ -14,6 +14,7 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Contracts\Database\Query\Builder as BaseBuilder;
+use Laravel\Scout\Builder as ScoutBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -101,10 +102,10 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
         return collect([
             EloquentBuilder::class,
             BaseBuilder::class,
+            ScoutBuilder::class,
             BelongsToMany::class,
             HasManyThrough::class,
             Model::class,
-            \Laravel\Scout\Builder::class,
         ])->some(fn (string $queryClass) => is_a($class, $queryClass, true));
     }
 }

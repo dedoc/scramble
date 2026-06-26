@@ -61,6 +61,7 @@ class TestCase extends Orchestra
     {
         config()->set('database.default', 'testing');
         config()->set('scout.driver', 'collection');
+        config()->set('permission.table_names.roles', 'roles');
     }
 
     protected function defineDatabaseMigrations()
