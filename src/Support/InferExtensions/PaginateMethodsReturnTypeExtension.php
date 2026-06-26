@@ -14,10 +14,10 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Contracts\Database\Query\Builder as BaseBuilder;
+use Laravel\Scout\Builder as ScoutBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
@@ -64,7 +64,7 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
 
         $shouldBeHandled = $event->getInstance() instanceof UnknownType
             || $this->isQueryLike($event->getInstance())
-            || $event->getDefinition()?->getMethodDefinition($event->name)?->definingClassName === Builder::class;
+            || $this->isQueryLikeClass($event->getDefinition()?->getMethodDefinition($event->name)->definingClassName ?? '');
 
         if (! $shouldBeHandled) {
             return null;
@@ -102,6 +102,7 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
         return collect([
             EloquentBuilder::class,
             BaseBuilder::class,
+            ScoutBuilder::class,
             BelongsToMany::class,
             HasManyThrough::class,
             Model::class,
