@@ -11,6 +11,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\RuleTransforming\RuleSetToSchemaTransformer;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rules\File;
 
 beforeEach(function () {
     $this->openApiTransformer = app(TypeTransformer::class, [
@@ -95,6 +96,40 @@ describe(InRule::class, function () {
                     'type' => 'string',
                     'enum' => ['a', 'b', 'c'],
                 ],
+            ]);
+    });
+});
+
+describe(File::class, function () {
+    test('file rule', function () {
+        $rules = [File::types(['pdf'])->min(1024)->max(12 * 1024)];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'string',
+                'format' => 'binary',
+                'contentMediaType' => 'application/octet-stream',
+                'minLength' => 1024.0,
+                'maxLength' => 12288.0,
+            ]);
+    });
+
+    test('image file rule', function () {
+        $rules = [
+            File::image()->dimensions(
+                Rule::dimensions()->maxWidth(1000)->maxHeight(500),
+            ),
+        ];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'string',
+                'format' => 'binary',
+                'contentMediaType' => 'application/octet-stream',
             ]);
     });
 });
