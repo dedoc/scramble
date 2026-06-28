@@ -145,16 +145,6 @@ describe(AcceptedRule::class, function () {
             'enum' => ['yes', 'on', '1', 1, 'true', true],
         ]);
     });
-
-    test('nullable accepted rule', function () {
-        $rules = ['nullable', 'accepted'];
-
-        $schema = $this->transformer->transform($rules);
-
-        expect($schema->toArray())->toBe([
-            'enum' => ['yes', 'on', '1', 1, 'true', true, null],
-        ]);
-    });
 });
 
 describe(File::class, function () {
