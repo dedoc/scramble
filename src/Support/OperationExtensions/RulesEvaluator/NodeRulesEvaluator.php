@@ -198,8 +198,10 @@ class NodeRulesEvaluator implements RulesEvaluator
                 return $evaluatedConstFetch;
             }
 
+            $code = $this->printer->prettyPrint([$expr]);
+
             try {
-                return $this->evaluateWithScopedVariables($this->printer->prettyPrint([$expr]), [
+                return $this->evaluateWithScopedVariables($code, [
                     ...$variables,
                     'request' => tap(request(), fn ($r) => $r->setMethod(strtoupper($this->method))),
                     'this' => $this->tryCreatingCurrentClassInstance(),
