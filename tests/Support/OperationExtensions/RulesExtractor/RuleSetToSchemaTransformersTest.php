@@ -107,8 +107,17 @@ describe(AcceptedRule::class, function () {
         $schema = $this->transformer->transform($rules);
 
         expect($schema->toArray())->toBe([
-            'type' => 'string',
-            'enum' => ['yes', 'on', '1', 'true'],
+            'enum' => ['yes', 'on', '1', 1, 'true', true],
+        ]);
+    });
+
+    test('nullable accepted rule', function () {
+        $rules = ['nullable', 'accepted'];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())->toBe([
+            'enum' => ['yes', 'on', '1', 1, 'true', true, null],
         ]);
     });
 });
