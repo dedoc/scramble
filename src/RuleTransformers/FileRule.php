@@ -14,8 +14,7 @@ class FileRule implements RuleTransformer
 {
     public function __construct(
         private RuleSetToSchemaTransformer $rulesToSchemaTransformer,
-    ) {
-    }
+    ) {}
 
     public function shouldHandle(NormalizedRule $rule): bool
     {
