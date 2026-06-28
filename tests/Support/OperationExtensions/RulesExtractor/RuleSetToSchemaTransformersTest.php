@@ -69,6 +69,40 @@ describe(EnumRule::class, function () {
                 'const' => 'bar',
             ]);
     })->skip(! method_exists(Enum::class, 'except'));
+
+    test('nullable enum rule', function () {
+        $rules = ['nullable', new Enum(Enum_RuleSetToSchemaTransformerTest::class)];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())->toBe([
+            'anyOf' => [
+                ['$ref' => '#/components/schemas/Enum_RuleSetToSchemaTransformerTest'],
+                ['type' => 'null'],
+            ],
+        ])
+            ->and($this->openApiTransformer->getComponents()->getSchema('Enum_RuleSetToSchemaTransformerTest')->toArray())
+            ->toBe([
+                'type' => 'string',
+                'enum' => ['foo', 'bar'],
+            ]);
+    });
+
+    test('nullable enum rule with only', function () {
+        $rules = [
+            'nullable',
+            (new Enum(Enum_RuleSetToSchemaTransformerTest::class))->only([
+                Enum_RuleSetToSchemaTransformerTest::FOO,
+            ]),
+        ];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())->toBe([
+            'type' => ['string', 'null'],
+            'enum' => ['foo', null],
+        ]);
+    })->skip(! method_exists(Enum::class, 'only'));
 });
 
 describe(InRule::class, function () {

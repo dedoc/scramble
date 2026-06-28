@@ -117,6 +117,18 @@ abstract class Type
 
     public function toArray()
     {
+        $enum = $this->enum;
+        $const = ! is_null($this->const) ? $this->const : null;
+
+        if ($this->nullable && $const !== null) {
+            $enum = [$const, null];
+            $const = null;
+        }
+
+        if ($this->nullable && count($enum) && ! in_array(null, $enum, true)) {
+            $enum = [...$enum, null];
+        }
+
         return array_merge(
             array_filter([
                 'type' => $this->nullable ? [$this->type, 'null'] : $this->type,
@@ -126,8 +138,8 @@ abstract class Type
                 'description' => $this->description,
                 'deprecated' => $this->deprecated,
                 'pattern' => $this->pattern,
-                'enum' => count($this->enum) ? $this->enum : null,
-                'const' => ! is_null($this->const) ? $this->const : null,
+                'enum' => count($enum) ? $enum : null,
+                'const' => $const,
             ]),
             $this->example instanceof MissingValue ? [] : ['example' => $this->example],
             $this->default instanceof MissingValue ? [] : ['default' => $this->default],
