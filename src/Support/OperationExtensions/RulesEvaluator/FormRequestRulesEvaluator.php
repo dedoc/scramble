@@ -42,7 +42,7 @@ class FormRequestRulesEvaluator implements RulesEvaluator
         }
 
         if (method_exists($request, 'rules')) {
-            $rules = $request->rules();
+            $rules = app()->call([$request, 'rules']);
         }
 
         return $rules;
