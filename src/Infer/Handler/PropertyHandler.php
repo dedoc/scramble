@@ -2,12 +2,16 @@
 
 namespace Dedoc\Scramble\Infer\Handler;
 
+use Dedoc\Scramble\Infer\Definition\AttributeDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
+use Dedoc\Scramble\Infer\Definition\PendingDocComment;
+use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Support\Str;
 use PhpParser\Node;
+use ReflectionProperty;
 
 class PropertyHandler
 {
@@ -29,9 +33,32 @@ class PropertyHandler
                 ? TypeHelper::createTypeFromTypeNode($node->type)
                 : null;
 
+            $attributes = [];
+            $docComment = $node->getDocComment()?->getText();
+
+            try {
+                $reflectionProperty = new ReflectionProperty($classDefinition->name, $prop->name->name);
+                $attributes = AttributeDefinition::fromReflectionAttributesArray($reflectionProperty->getAttributes());
+
+                if (! $docComment) {
+                    $docComment = $reflectionProperty->getDocComment() ?: null;
+                }
+            } catch (\ReflectionException) {
+            }
+
             $propertyDefinition = new ClassPropertyDefinition(
                 type: new TemplateType($scope->makeConflictFreeTemplateName('T'.Str::studly($prop->name->name)), $annotatedType),
                 defaultType: $prop->default ? $scope->getType($prop->default) : null,
+                isStatic: $node->isStatic(),
+                visibility: match (true) {
+                    $node->isPrivate() => PropertyVisibility::Private,
+                    $node->isProtected() => PropertyVisibility::Protected,
+                    default => PropertyVisibility::Public,
+                },
+                attributes: $attributes,
+                pendingDocComment: $docComment
+                    ? new PendingDocComment($docComment, declaringClass: $classDefinition->name)
+                    : null,
             );
             $ownProperties[$prop->name->name] = $propertyDefinition;
         }

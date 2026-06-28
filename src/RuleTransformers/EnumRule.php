@@ -43,10 +43,19 @@ class EnumRule implements RuleTransformer
         $only = method_exists(Enum::class, 'only') ? $this->getProtectedValue($rule, 'only') : []; // @phpstan-ignore function.alreadyNarrowedType
 
         if ($except || $only) {
-            return $this->createPartialEnum($enumName, $only, $except);
+            return $this->preservePreviousRules($this->createPartialEnum($enumName, $only, $except), $previous);
         }
 
-        return $this->openApiTransformer->transform($objectType);
+        return $this->preservePreviousRules($this->openApiTransformer->transform($objectType), $previous);
+    }
+
+    private function preservePreviousRules(Type $current, Type $previous): Type
+    {
+        if ($previous->nullable) {
+            $current->nullable(true);
+        }
+
+        return $current;
     }
 
     /**

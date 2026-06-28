@@ -3,13 +3,16 @@
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
+use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
@@ -73,6 +76,62 @@ it('adds toArray method type the model class without defined toArray class', fun
         ]);
 });
 
+it('infers only method return type', function () {
+    $this->infer->analyzeClass(SampleUserModel::class);
+
+    $scope = new Infer\Scope\GlobalScope;
+    $scope->index = $this->infer->index;
+
+    $onlyReturnType = (new ObjectType(SampleUserModel::class))
+        ->getMethodReturnType('only', scope: $scope, arguments: [
+            new KeyedArrayType([
+                new ArrayItemType_(0, new LiteralStringType('name')),
+                new ArrayItemType_(1, new LiteralStringType('email')),
+            ]),
+        ]);
+
+    expect(collect($onlyReturnType->items)->mapWithKeys(fn (ArrayItemType_ $t) => [$t->key => $t->value->toString()]))
+        ->toMatchArray([
+            'name' => 'string',
+            'email' => 'string',
+        ]);
+});
+
+it('infers except method return type', function () {
+    $this->infer->analyzeClass(SampleUserModel::class);
+
+    $scope = new Infer\Scope\GlobalScope;
+    $scope->index = $this->infer->index;
+
+    $exceptReturnType = ReferenceTypeResolver::getInstance()->resolve(
+        $scope,
+        (new ObjectType(SampleUserModel::class))
+            ->getMethodReturnType('except', scope: $scope, arguments: [
+                new KeyedArrayType([
+                    new ArrayItemType_(0, new LiteralStringType('password')),
+                ]),
+            ]),
+    );
+
+    expect(collect($exceptReturnType->items)->mapWithKeys(fn (ArrayItemType_ $t) => [$t->key => $t->value->toString()]))
+        ->not->toHaveKey('password')
+        ->and(collect($exceptReturnType->items)->mapWithKeys(fn (ArrayItemType_ $t) => [$t->key => $t->value->toString()]))
+        ->toHaveKeys(['id', 'name', 'email']);
+});
+
+it('infers only with array keys argument via toHaveType', function () {
+    $type = getStatementType('(new '.SampleUserModel::class.')->only(["name", "email"])');
+
+    expect($type->toString())->toBe('array{name: string, email: string}');
+});
+
+it('infers except with array keys argument via toHaveType', function () {
+    $type = getStatementType('(new '.SampleUserModel::class.')->except(["password"])');
+
+    expect($type->toString())->not->toContain('password')
+        ->and($type->toString())->toContain('name: string');
+});
+
 /*
  * `AsEnumCollection::of` is added in Laravel 11, hence this check so tests are passing with Laravel 10.
  */
@@ -133,4 +192,119 @@ it('supports getOriginal', function () {
         );
 
     expect($originalType->toString())->toBe('int');
+});
+
+it('toResource resolves resource type from UseResource attribute', function () {
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType(
+                new ObjectType(ModelExtensionTest_AttributeModel::class),
+                'toResource',
+                []
+            )
+        );
+
+    expect($type->toString())->toBe(ModelExtensionTest_AttributeResource::class.'<'.ModelExtensionTest_AttributeModel::class.'>');
+})->skip(fn () => ! class_exists(UseResource::class));
+
+#[UseResource(ModelExtensionTest_AttributeResource::class)]
+class ModelExtensionTest_AttributeModel extends Model {}
+
+class ModelExtensionTest_AttributeResource extends \Illuminate\Http\Resources\Json\JsonResource {}
+
+it('toResource resolves resource type by guessing class name', function () {
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType(
+                new ObjectType(ModelExtensionTest_GuessingModel::class),
+                'toResource',
+                []
+            )
+        );
+
+    ModelExtensionTest_GuessingModel::all()->toResourceCollection();
+
+    expect($type->toString())->toBe(ModelExtensionTest_AttributeResource::class.'<'.ModelExtensionTest_GuessingModel::class.'>');
+})->skip(fn () => ! method_exists(Model::class, 'toResource'));
+
+class ModelExtensionTest_GuessingModel extends SampleUserModel
+{
+    public static function guessResourceName(): array
+    {
+        return [ModelExtensionTest_AttributeResource::class];
+    }
+}
+
+it('toResource returns instance of explicitly passed resource class', function () {
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType(
+                new ObjectType(SampleUserModel::class),
+                'toResource',
+                [new LiteralStringType(ModelExtensionTest_AttributeResource::class)]
+            )
+        );
+
+    expect($type->toString())->toBe(ModelExtensionTest_AttributeResource::class.'<'.SampleUserModel::class.'>');
+})->skip(fn () => ! method_exists(Model::class, 'toResource'));
+
+class Foo_ModelExtensionTest extends Model
+{
+    public function newCollection(array $models = [])
+    {
+        return new FooCollection_ModelExtensionTest($models);
+    }
+}
+
+class FooCollection_ModelExtensionTest extends \Illuminate\Database\Eloquent\Collection {}
+
+class Bar_ModelExtensionTest extends Model
+{
+    public function foos()
+    {
+        return $this->hasMany(Foo_ModelExtensionTest::class);
+    }
+}
+
+it('uses custom collection type from newCollection for hasMany relations', function () {
+    $this->infer->analyzeClass(Foo_ModelExtensionTest::class);
+    $this->infer->analyzeClass(Bar_ModelExtensionTest::class);
+
+    $object = new ObjectType(Bar_ModelExtensionTest::class);
+
+    expect($object->getPropertyType('foos')->toString())
+        ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
+});
+
+it('uses custom collection type from newCollection for query get', function () {
+    $this->infer->analyzeClass(Foo_ModelExtensionTest::class);
+
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new Infer\Scope\GlobalScope,
+            new MethodCallReferenceType(
+                new MethodCallReferenceType(
+                    new ObjectType(Foo_ModelExtensionTest::class),
+                    'query',
+                    []
+                ),
+                'get',
+                []
+            )
+        );
+
+    expect($type->toString())
+        ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
+});
+
+it('uses custom collection type from newCollection for all', function () {
+    $this->infer->analyzeClass(Foo_ModelExtensionTest::class);
+
+    $type = getStatementType(Foo_ModelExtensionTest::class.'::all()');
+
+    expect($type->toString())
+        ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
 });

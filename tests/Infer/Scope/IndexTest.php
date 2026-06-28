@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 
 beforeEach(function () {
@@ -284,6 +285,18 @@ it('handles collection map call', function () {
     $type = getStatementType('(new '.Collection::class.'())->map(fn () => 1)');
 
     expect($type->toString())->toBe('Illuminate\Support\Collection<int|string, int(1)>');
+});
+
+it('handles eloquent collection map call without union proliferation', function () {
+    $type = getStatementType('(new '.EloquentCollection::class.'())->map(fn () => 1)');
+
+    expect($type->toString())->toBe('Illuminate\Database\Eloquent\Collection<int|string, int(1)>');
+});
+
+it('handles eloquent collection mapWithKeys call without union proliferation', function () {
+    $type = getStatementType('(new '.EloquentCollection::class.'())->mapWithKeys(fn () => ["foo" => 1])');
+
+    expect($type->toString())->toBe('Illuminate\Database\Eloquent\Collection<string(foo), int(1)>');
 });
 
 it('handles collection empty construct call', function () {

@@ -3,18 +3,24 @@
 namespace Dedoc\Scramble;
 
 use Closure;
+use Dedoc\Scramble\Configuration\ApiPath;
 use Dedoc\Scramble\Configuration\DocumentTransformers;
+use Dedoc\Scramble\Configuration\JsonApiConfig;
 use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Configuration\ParametersExtractors;
+use Dedoc\Scramble\Configuration\RendererConfig;
 use Dedoc\Scramble\Configuration\RuleTransformers;
 use Dedoc\Scramble\Configuration\ServerVariables;
 use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
 use Dedoc\Scramble\Contracts\RuleTransformer;
+use Dedoc\Scramble\Contracts\SecurityDocumentationStrategy;
+use Dedoc\Scramble\Enums\JsonApiArraySerialization;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use ReflectionFunction;
 use ReflectionNamedType;
 
@@ -44,6 +50,8 @@ class GeneratorConfig
         public readonly RuleTransformers $ruleTransformers = new RuleTransformers,
         public readonly ServerVariables $serverVariables = new ServerVariables,
         ?Closure $operationMethodsResolver = null,
+        public JsonApiConfig $jsonApi = new JsonApiConfig,
+        private ?ApiPath $resolvedApiPath = null,
     ) {
         $this->operationMethodsResolver = $operationMethodsResolver ?: fn (Route $r) => $r->methods()[0];
     }
@@ -51,6 +59,7 @@ class GeneratorConfig
     public function config(array $config)
     {
         $this->config = $config;
+        $this->resolvedApiPath = null;
 
         return $this;
     }
@@ -66,6 +75,18 @@ class GeneratorConfig
         }
 
         return $this;
+    }
+
+    public function renderer(): RendererConfig
+    {
+        if (Arr::has($this->config, 'ui.logo')) {
+            return new RendererConfig(array_merge(
+                $this->get('renderers.elements', []),
+                collect($this->get('ui'))->mapWithKeys(fn ($v, $k) => [Str::camel($k) => $v])->all(),
+            ));
+        }
+
+        return new RendererConfig($this->get('renderers.'.$this->get('renderer'), []));
     }
 
     /**
@@ -91,10 +112,13 @@ class GeneratorConfig
     {
         $expectedDomain = $this->get('api_domain');
 
-        $isBaseMatching = ! ($prefix = $this->get('api_path', 'api')) || Str::startsWith($route->uri, $prefix);
-
-        return $isBaseMatching
+        return $this->apiPath()->matches($route->uri)
             && (! $expectedDomain || $route->getDomain() === $expectedDomain);
+    }
+
+    public function apiPath(): ApiPath
+    {
+        return $this->resolvedApiPath ??= ApiPath::from($this->get('api_path'), 'api');
     }
 
     public function afterOpenApiGenerated(?callable $afterOpenApiGenerated = null)
@@ -113,8 +137,24 @@ class GeneratorConfig
     public function useConfig(array $config): static
     {
         $this->config = $config;
+        $this->resolvedApiPath = null;
 
         return $this;
+    }
+
+    public function cloneWithoutExposing(): static
+    {
+        return new GeneratorConfig(
+            config: $this->config,
+            routeResolver: $this->routeResolver,
+            parametersExtractors: clone $this->parametersExtractors,
+            operationTransformers: clone $this->operationTransformers,
+            documentTransformers: clone $this->documentTransformers,
+            ruleTransformers: clone $this->ruleTransformers,
+            serverVariables: clone $this->serverVariables,
+            operationMethodsResolver: $this->operationMethodsResolver,
+            jsonApi: clone $this->jsonApi,
+        );
     }
 
     public function withParametersExtractors(callable $callback): static
@@ -230,8 +270,51 @@ class GeneratorConfig
         return $this;
     }
 
+    public function jsonApi(
+        JsonApiArraySerialization $arraySerialization = JsonApiArraySerialization::Comma,
+        ?int $maxRelationshipDepth = null,
+    ): static {
+        $this->jsonApi = new JsonApiConfig(
+            arraySerialization: $arraySerialization,
+            maxRelationshipDepth: $maxRelationshipDepth,
+        );
+
+        return $this;
+    }
+
     public function get(string $key, mixed $default = null)
     {
         return Arr::get($this->config, $key, $default);
+    }
+
+    public function securityStrategy(): ?SecurityDocumentationStrategy
+    {
+        $value = $this->get('security_strategy');
+
+        if ($value === null) {
+            return null;
+        }
+
+        [$class, $options] = is_string($value)
+            ? [$value, []]
+            : (is_array($value) && count($value) === 2 && is_string($value[0])
+                ? [$value[0], $value[1]]
+                : [null, []]);
+
+        if ($class === null) {
+            throw new InvalidArgumentException(
+                'Invalid scramble.security_strategy config. Expected null, a class-string, or [class-string, options array].'
+            );
+        }
+
+        $strategy = app($class, $options);
+
+        if (! $strategy instanceof SecurityDocumentationStrategy) {
+            throw new InvalidArgumentException(
+                "Security strategy [{$class}] must implement ".SecurityDocumentationStrategy::class.'.'
+            );
+        }
+
+        return $strategy;
     }
 }

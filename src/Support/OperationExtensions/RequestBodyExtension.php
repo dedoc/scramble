@@ -7,6 +7,7 @@ use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Support\ContainerUtils;
+use Dedoc\Scramble\Support\Factories\JsonApiQueryParameterFactory;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
@@ -38,7 +39,7 @@ class RequestBodyExtension implements OperationTransformer
 
     public function handle(Operation $operation, RouteInfo $routeInfo): void
     {
-        $description = Str::of($routeInfo->phpDoc()->getAttribute('description')); // @phpstan-ignore argument.type
+        $description = Str::of($routeInfo->phpDoc()->getAttribute('description') ?: ''); // @phpstan-ignore argument.type
 
         /** @var Collection<int, ParametersExtractionResult> $rulesResults */
         $rulesResults = collect();
@@ -53,7 +54,7 @@ class RequestBodyExtension implements OperationTransformer
 
         // Only set summary and description from PHPDoc if they haven't been set by other extensions (e.g., Endpoint attribute)
         if (empty($operation->summary)) {
-            $operation->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'));  // @phpstan-ignore argument.type
+            $operation->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary') ?: '')->rtrim('.'));  // @phpstan-ignore argument.type
         }
 
         if (empty($operation->description)) {
@@ -263,9 +264,13 @@ class RequestBodyExtension implements OperationTransformer
         foreach ($this->config->parametersExtractors->all() as $extractorClass) {
             /** @var ParameterExtractor $extractor */
             $extractor = ContainerUtils::makeContextable($extractorClass, [
+                GeneratorConfig::class => $this->config,
                 TypeTransformer::class => $this->openApiTransformer,
                 Operation::class => $operation,
                 DiagnosticsCollector::class => $this->diagnostics,
+                JsonApiQueryParameterFactory::class => new JsonApiQueryParameterFactory(
+                    arraySerialization: $this->config->jsonApi->arraySerialization,
+                ),
             ]);
 
             $result = $extractor->handle($routeInfo, $result);

@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Infer\Definition;
 use Dedoc\Scramble\Infer\Flow\Nodes;
 use Dedoc\Scramble\Infer\FlowBuilder;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node\FunctionLike;
@@ -78,7 +79,10 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
 
         $traverser = new NodeTraverser;
 
-        $traverser->addVisitor($flowBuilder = new FlowBuilder($this->getScope()));
+        $traverser->addVisitor($flowBuilder = new FlowBuilder(
+            $this->type->arguments, // parameters
+            $this->getScope(),
+        ));
 
         $traverser->traverse([$this->getAstNode()]);
 
@@ -110,6 +114,10 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
     private function prefersInferredReturnType(?Type $declarationType, Type $inferredType): bool
     {
         if (! $declarationType || $declarationType instanceof UnknownType) {
+            return true;
+        }
+
+        if ($inferredType instanceof TemplateType) {
             return true;
         }
 

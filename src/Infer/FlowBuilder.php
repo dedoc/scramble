@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Flow\StatementNode;
 use Dedoc\Scramble\Infer\Flow\TerminateNode;
 use Dedoc\Scramble\Infer\Flow\TerminationKind;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\Type;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Match_;
@@ -19,9 +20,13 @@ class FlowBuilder extends NodeVisitorAbstract
 {
     public Nodes $flowNodes;
 
-    public function __construct(private Scope $scope)
+    /**
+     * @param  array<string, Type>  $parameters
+     */
+    public function __construct(private array $parameters, private Scope $scope)
     {
         $this->flowNodes = new Nodes(
+            $this->parameters,
             new ExpressionTypeInferrer($this->scope, $this->scope->nodeTypesResolver),
         );
     }
@@ -89,6 +94,12 @@ class FlowBuilder extends NodeVisitorAbstract
 
     public function leaveNode(Node $node)
     {
+        if ($node instanceof Node\FunctionLike) {
+            $this->ensureTerminated();
+
+            return null;
+        }
+
         if (! $this->shouldHandle($node)) {
             return null;
         }
@@ -100,6 +111,18 @@ class FlowBuilder extends NodeVisitorAbstract
         }
 
         return null;
+    }
+
+    private function ensureTerminated(): void
+    {
+        if ($this->flowNodes->head === null) {
+            return;
+        }
+
+        $this->flowNodes->pushTerminate(new TerminateNode(
+            kind: TerminationKind::RETURN,
+            value: null,
+        ));
     }
 
     private function pushTerminateMatch(Nodes $flow, Node\Expr\Match_ $match): void

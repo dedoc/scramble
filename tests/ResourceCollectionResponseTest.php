@@ -240,6 +240,21 @@ class UserCollection_Eight extends \Illuminate\Http\Resources\Json\ResourceColle
     }
 }
 
+test('transforms collection with paginationInformation with array annotation', function () {
+    $type = getStatementType('new '.UserCollection_Nine::class.'('.\Dedoc\Scramble\Tests\Files\SampleUserModel::class.'::paginate())');
+
+    assertMatchesSnapshot($this->transformer->toResponse($type)->toArray());
+});
+class UserCollection_Nine extends \Illuminate\Http\Resources\Json\ResourceCollection
+{
+    public $collects = UserResource::class;
+
+    public function paginationInformation($request, $paginated, $default): array
+    {
+        return $default;
+    }
+}
+
 class UserResource extends \Illuminate\Http\Resources\Json\JsonResource
 {
     public function toArray($request)

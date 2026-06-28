@@ -12,9 +12,15 @@ use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\Union;
+use Dedoc\Scramble\Tests\Files\SampleUserModel;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 beforeEach(function () {
     $this->index = app(Index::class);
@@ -51,6 +57,106 @@ it('infers new calls on child class', function (string $method, string $expected
     ['newStaticCall', 'Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar<string(foo)>'],
     ['newParentCall', 'Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo'],
 ]);
+
+/*
+ * Method calls
+ */
+it('support method calls on unions', function () {
+    $union = Union::wrap([
+        new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class),
+        new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo::class),
+    ]);
+
+    $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new MethodCallReferenceType(
+        $union,
+        'someMethod',
+        []
+    ));
+
+    expect($result->toString())->toBe('string(bar)|string(foo)');
+});
+
+it('support method calls on unions with null', function () {
+    $union = Union::wrap([
+        new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class),
+        new \Dedoc\Scramble\Support\Type\NullType,
+    ]);
+
+    $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new MethodCallReferenceType(
+        $union,
+        'someMethod',
+        []
+    ));
+
+    expect($result->toString())->toBe('string(bar)');
+});
+
+it('prunes union members when method does not exist on known class', function () {
+    $type = getStatementType(
+        '(new '.ReferenceTypeResolverUnionServiceTest::class.'())->get(true)->orderBy("name")'
+    );
+
+    expect($type->toString())->toBe(
+        'Illuminate\Database\Eloquent\Builder<'.SampleUserModel::class.'>'
+    );
+});
+
+it('infers paginator type through union service builder chain', function () {
+    $type = getStatementType(
+        '(new '.ReferenceTypeResolverUnionServiceTest::class.'())->get(true)->orderBy("name")->paginate(4)'
+    );
+
+    expect($type->toString())->toBe(
+        'Illuminate\Pagination\LengthAwarePaginator<int, '.SampleUserModel::class.'>'
+    );
+});
+
+class ReferenceTypeResolverUnionServiceTest
+{
+    /**
+     * @return (Builder<SampleUserModel>|EloquentCollection<int, SampleUserModel>)
+     */
+    public function get(bool $toBuilder): Builder|EloquentCollection
+    {
+        $query = SampleUserModel::query();
+
+        return $toBuilder ? $query : $query->get();
+    }
+}
+
+/*
+ * Callable calls
+ */
+it('support callable calls on unions with non-callable member', function () {
+    $union = Union::wrap([
+        new FunctionType('_', returnType: new LiteralStringType('foo')),
+        new \Dedoc\Scramble\Support\Type\IntegerType,
+    ]);
+
+    $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new CallableCallReferenceType(
+        $union,
+        []
+    ));
+
+    expect($result->toString())->toBe('string(foo)');
+});
+
+/*
+ * Property fetches
+ */
+it('support property fetches on unions with null', function () {
+    $union = Union::wrap([
+        new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class),
+        new \Dedoc\Scramble\Support\Type\NullType,
+    ]);
+
+    $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new PropertyFetchReferenceType(
+        $union,
+        'prop',
+    ));
+
+    expect($result->toString())->toBe('string');
+});
 
 /*
  * Static method calls (should work the same for both static and non-static methods)
@@ -183,6 +289,11 @@ it('allows overriding types accepted by another type', function () {
     );
 
     $def = new FunctionLikeDefinition($functionType);
+
+    FunctionLikeAstDefinitionBuilder::resolveFunctionParameterDefaults(
+        new GlobalScope,
+        $def,
+    );
 
     FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences(
         new GlobalScope,

@@ -16,7 +16,6 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceResponse;
@@ -53,9 +52,6 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             new GlobalScope,
             new MethodCallReferenceType($type, 'toArray', arguments: []),
         );
-
-        // @todo: why unpacking is here? ReferenceTypeResolver@resolve should've returned unpacked type
-        $array = TypeHelper::unpackIfArray($array);
 
         // The case when `toArray` is not defined.
         if ($array instanceof ArrayType) {

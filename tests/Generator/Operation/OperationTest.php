@@ -28,3 +28,24 @@ it('set extension property', function () {
 
     expect($array)->toBe(['x-custom-key' => 'custom-value']);
 });
+
+it('serializes parameter references in toArray', function () {
+    $components = new \Dedoc\Scramble\Support\Generator\Components;
+    $reference = new \Dedoc\Scramble\Support\Generator\Reference('parameters', 'MyParameter', $components);
+
+    $operation = new \Dedoc\Scramble\Support\Generator\Operation('get');
+    $operation->addParameters([
+        \Dedoc\Scramble\Support\Generator\Parameter::make('foo', 'query'),
+        $reference,
+    ]);
+
+    $array = $operation->toArray();
+
+    expect($array['parameters'])->toBe([
+        [
+            'name' => 'foo',
+            'in' => 'query',
+        ],
+        ['$ref' => '#/components/parameters/MyParameter'],
+    ]);
+});

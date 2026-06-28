@@ -4,7 +4,7 @@ namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
-use Dedoc\Scramble\Infer\Analyzer\MethodQuery;
+use Dedoc\Scramble\Infer\Flow\Node as FlowNode;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
@@ -19,16 +19,16 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceResponse;
 use LogicException;
+use PhpParser\Node\Expr\Variable;
 
 class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 {
@@ -157,19 +157,30 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 
         $responseType = new Generic(JsonResponse::class, [new UnknownType, new LiteralIntegerType(200), new KeyedArrayType]);
 
-        $methodQuery = MethodQuery::make($this->infer)
-            ->withArgumentType([null, 1], $responseType)
-            ->from($definition, 'withResponse');
+        $methodDefinition = $definition->getMethod('withResponse');
+        if (! $methodDefinition instanceof Infer\Definition\FunctionLikeAstDefinition) {
+            return $responseType;
+        }
 
-        $effectTypes = $methodQuery->getTypes(fn ($t) => (bool) (new TypeWalker)->first($t, fn ($t) => $t === $responseType));
+        $responseParameterName = array_keys($methodDefinition->type->arguments)[1] ?? null;
+        if (! is_string($responseParameterName)) {
+            return $responseType;
+        }
 
-        $effectTypes
-            ->filter(fn ($t) => $t instanceof AbstractReferenceType)
-            ->each(function (AbstractReferenceType $t) use ($methodQuery) {
-                ReferenceTypeResolver::getInstance()->resolve($methodQuery->getScope(), $t);
-            });
+        $flow = $methodDefinition->getFlowContainer();
 
-        return $responseType;
+        $responseFinalType = Union::wrap(...array_map(
+            fn (FlowNode $n) => $flow
+                ->withEntryBindings([$responseParameterName => $responseType])
+                ->getTypeAt(new Variable($responseParameterName), $n),
+            $flow->getReachableNodes(fn (FlowNode $n) => $n instanceof Infer\Flow\TerminateNode),
+        ));
+
+        $responseFinalType = ReferenceTypeResolver::getInstance()->resolve($methodDefinition->getScope(), $responseFinalType);
+
+        return $responseFinalType instanceof Generic && $responseFinalType->isInstanceOf(JsonResponse::class)
+            ? $responseFinalType
+            : $responseType;
     }
 
     protected function wrap(?string $wrapKey, OpenApiType $data, ?OpenApiType $additional): OpenApiType
