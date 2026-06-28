@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\NodeRulesEvaluator;
@@ -23,6 +24,7 @@ class ValidateCallParametersExtractor implements ParameterExtractor
     public function __construct(
         private PrettyPrinter $printer,
         private TypeTransformer $openApiTransformer,
+        private DiagnosticsCollector $diagnostics,
     ) {}
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
@@ -43,7 +45,7 @@ class ValidateCallParametersExtractor implements ParameterExtractor
 
         $parameterExtractionResults[] = new ParametersExtractionResult(
             parameters: $this->makeParameters(
-                rules: (new NodeRulesEvaluator($this->printer, $astNode, $validationRulesNode, $routeInfo->method, $routeInfo->className(), $routeInfo->getScope()))->handle(),
+                rules: (new NodeRulesEvaluator($this->printer, $astNode, $validationRulesNode, $routeInfo->method, $routeInfo->className(), $routeInfo->getScope(), $this->diagnostics))->handle(),
                 typeTransformer: $this->openApiTransformer,
                 rulesDocsRetriever: new TypeBasedRulesDocumentationRetriever(
                     $routeInfo->getScope(),

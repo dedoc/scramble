@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
 use Dedoc\Scramble\Attributes\SchemaName;
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
@@ -31,6 +32,7 @@ class FormRequestParametersExtractor implements ParameterExtractor
     public function __construct(
         private PrettyPrinter $printer,
         private TypeTransformer $openApiTransformer,
+        private DiagnosticsCollector $diagnostics,
     ) {}
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
@@ -123,7 +125,7 @@ class FormRequestParametersExtractor implements ParameterExtractor
 
         return new ParametersExtractionResult(
             parameters: $this->makeParameters(
-                rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->method))->handle(),
+                rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->method, $this->diagnostics))->handle(),
                 typeTransformer: $this->openApiTransformer,
                 rulesDocsRetriever: new TypeBasedRulesDocumentationRetriever(
                     $routeInfo->getScope(),

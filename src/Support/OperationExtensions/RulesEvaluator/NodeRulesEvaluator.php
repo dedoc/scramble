@@ -2,6 +2,9 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
+use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
@@ -33,6 +36,7 @@ class NodeRulesEvaluator implements RulesEvaluator
         private string $method,
         private ?string $className,
         private Scope $scope,
+        private DiagnosticsCollector $diagnostics,
     ) {}
 
     public function handle(): array
@@ -197,6 +201,10 @@ class NodeRulesEvaluator implements RulesEvaluator
                     'this' => $this->tryCreatingCurrentClassInstance(),
                 ]);
             } catch (Throwable $e) {
+                $this->diagnostics->report(
+                    GenericDiagnostic::fromException($e)->withSeverity(DiagnosticSeverity::Warning)
+                );
+
                 $this->lastEvaluationException = $e;
             }
 

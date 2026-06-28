@@ -27,13 +27,15 @@ class AnalyzeDocumentation extends Command
 
         $generator(Scramble::getGeneratorConfig($this->option('api')));
 
+        $exceptions = $generator->context->diagnostics->toExceptions();
+
         $i = 1;
-        $this->groupExceptions($generator->exceptions)->each(function (Collection $exceptions, string $group) use (&$i) {
+        $this->groupExceptions($exceptions)->each(function (Collection $exceptions, string $group) use (&$i) {
             $this->renderExceptionsGroup($exceptions, $group, $i);
         });
 
-        if (count($generator->exceptions)) {
-            $this->error('[ERROR] Found '.count($generator->exceptions).' errors.');
+        if (count($exceptions)) {
+            $this->error('[ERROR] Found '.count($exceptions).' errors.');
 
             return static::FAILURE;
         }

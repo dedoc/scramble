@@ -2,9 +2,10 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
-use Dedoc\Scramble\Extensions\OperationExtension;
+use Dedoc\Scramble\Contracts\OperationTransformer;
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
 use Dedoc\Scramble\GeneratorConfig;
-use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\ContainerUtils;
 use Dedoc\Scramble\Support\Factories\JsonApiQueryParameterFactory;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
@@ -26,9 +27,15 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Throwable;
 
-class RequestBodyExtension extends OperationExtension
+class RequestBodyExtension implements OperationTransformer
 {
     const HTTP_METHODS_WITHOUT_REQUEST_BODY = ['get', 'delete', 'head'];
+
+    public function __construct(
+        protected TypeTransformer $openApiTransformer,
+        protected GeneratorConfig $config,
+        protected DiagnosticsCollector $diagnostics,
+    ) {}
 
     public function handle(Operation $operation, RouteInfo $routeInfo): void
     {
@@ -40,9 +47,8 @@ class RequestBodyExtension extends OperationExtension
         try {
             $rulesResults = collect($this->extractParameters($operation, $routeInfo));
         } catch (Throwable $exception) {
-            if (Scramble::shouldThrowOnError()) {
-                throw $exception;
-            }
+            $this->diagnostics->report(GenericDiagnostic::fromException($exception));
+
             $description = $description->append('⚠️ Cannot generate request documentation: '.$exception->getMessage());
         }
 
@@ -261,6 +267,7 @@ class RequestBodyExtension extends OperationExtension
                 GeneratorConfig::class => $this->config,
                 TypeTransformer::class => $this->openApiTransformer,
                 Operation::class => $operation,
+                DiagnosticsCollector::class => $this->diagnostics,
                 JsonApiQueryParameterFactory::class => new JsonApiQueryParameterFactory(
                     arraySerialization: $this->config->jsonApi->arraySerialization,
                 ),

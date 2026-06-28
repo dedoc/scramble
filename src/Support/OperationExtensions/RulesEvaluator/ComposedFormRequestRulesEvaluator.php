@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use PhpParser\Node\Expr\Array_;
@@ -15,6 +16,7 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
         private PrettyPrinter $printer,
         private ClassReflector $classReflector,
         private string $method,
+        private DiagnosticsCollector $diagnostics,
     ) {}
 
     public function handle(): array
@@ -31,7 +33,7 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
 
         $evaluators = [
             new FormRequestRulesEvaluator($this->classReflector, $this->method),
-            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className, $rulesMethod->getFunctionLikeDefinition()->getScope()),
+            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className, $rulesMethod->getFunctionLikeDefinition()->getScope(), $this->diagnostics),
         ];
 
         $exceptions = [];
