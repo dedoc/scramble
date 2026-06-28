@@ -46,7 +46,7 @@ final class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
 
     public function toException(): Throwable
     {
-        return $this->originException;
+        return RulesEvaluationException::fromExceptions($this->exceptions);
     }
 
     protected function newInstance(

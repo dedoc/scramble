@@ -5,7 +5,9 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 use Dedoc\Scramble\Contracts\OperationTransformer;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
+use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\GeneratorConfig;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\ContainerUtils;
 use Dedoc\Scramble\Support\Factories\JsonApiQueryParameterFactory;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
@@ -47,10 +49,14 @@ class RequestBodyExtension implements OperationTransformer
         try {
             $rulesResults = collect($this->extractParameters($operation, $routeInfo));
         } catch (Throwable $exception) {
-            if (property_exists($exception, 'diagnostics') && $exception->diagnostics) {
-                $exception->diagnostics->report(GenericDiagnostic::fromException($exception));
-            } else {
-                $this->diagnostics->report(GenericDiagnostic::fromException($exception));
+            $collector = ($exception instanceof RulesEvaluationException && $exception->diagnostics)
+                ? $exception->diagnostics
+                : $this->diagnostics;
+
+            $collector->reportQuietly(GenericDiagnostic::fromException($exception));
+
+            if (Scramble::shouldThrowOnError()) {
+                throw $exception;
             }
 
             $description = $description->append('⚠️ Cannot generate request documentation: '.$exception->getMessage());
