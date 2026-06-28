@@ -17,6 +17,17 @@ class AnyOf extends Type
         $this->items = [new StringType];
     }
 
+    public function clone(): static
+    {
+        $clone = parent::clone();
+        $clone->items = array_map(
+            fn (Type $item) => $item->clone(),
+            $clone->items,
+        );
+
+        return $clone;
+    }
+
     public function toArray()
     {
         $parentArray = parent::toArray();

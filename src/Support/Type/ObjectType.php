@@ -28,7 +28,7 @@ class ObjectType extends AbstractType
 
     public function isSame(Type $type)
     {
-        return false;
+        return $type instanceof static && $type->name === $this->name;
     }
 
     public function getPropertyType(string $propertyName, Scope $scope = new GlobalScope): Type

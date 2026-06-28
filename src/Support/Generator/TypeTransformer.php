@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-use Carbon\CarbonInterface;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
@@ -40,6 +39,9 @@ use function DeepCopy\deep_copy;
  */
 class TypeTransformer
 {
+    /** @var array<string, OpenApiType> */
+    private array $cache = [];
+
     /** @var TypeToSchemaExtension[] */
     private array $typeToSchemaExtensions;
 
@@ -76,11 +78,105 @@ class TypeTransformer
 
     public function transform(Type $type): OpenApiType
     {
-        $openApiType = new UnknownType;
-
         if ($type instanceof TemplateType && $type->is) {
             $type = $type->is;
         }
+
+        $openApiType = $this->shouldCache($type)
+            ? $this->transformCached($type)
+            : $this->transformUncached($type);
+
+        return $this->applyTypeAttributes($openApiType, $type);
+    }
+
+    private function getCacheKey(Type $type): string
+    {
+        if ($type instanceof TemplateType && $type->is) {
+            $type = $type->is;
+        }
+
+        return $type::class.'|'.$type->toString();
+    }
+
+    private function shouldCache(Type $type): bool
+    {
+        $attributesHandledAfterCache = array_flip(['docNode', 'format', 'file', 'line']);
+
+        return ! array_diff_key($type->attributes(), $attributesHandledAfterCache)
+            && ! $type instanceof ArrayItemType_
+            && ! $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
+            && ! $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
+            && ! $type instanceof Union
+            && ! $type instanceof \Dedoc\Scramble\Support\Type\IntersectionType;
+    }
+
+    private function transformCached(Type $type): OpenApiType
+    {
+        if ($type instanceof TemplateType && $type->is) {
+            $type = $type->is;
+        }
+
+        $key = $this->getCacheKey($type);
+
+        if (isset($this->cache[$key])) {
+            $openApiType = $this->cache[$key]->clone();
+            $this->registerReferences($openApiType);
+
+            return $openApiType;
+        }
+
+        $openApiType = $this->transformUncached($type);
+        $this->cache[$key] = $openApiType->clone();
+
+        return $openApiType;
+    }
+
+    private function registerReferences(OpenApiType $type): void
+    {
+        if ($type instanceof Reference) {
+            $this->context->references->schemas->add($type->fullName, $type);
+
+            return;
+        }
+
+        if ($type instanceof ArrayType) {
+            $this->registerReferences($type->items);
+
+            foreach ($type->prefixItems as $item) {
+                $this->registerReferences($item);
+            }
+
+            return;
+        }
+
+        if ($type instanceof ObjectType) {
+            foreach ($type->properties as $property) {
+                if ($property) {
+                    $this->registerReferences($property);
+                }
+            }
+
+            if ($type->additionalProperties) {
+                $this->registerReferences($type->additionalProperties);
+            }
+
+            return;
+        }
+
+        if ($type instanceof AnyOf || $type instanceof AllOf) {
+            foreach ($type->items as $item) {
+                $this->registerReferences($item);
+            }
+        }
+    }
+
+    private function transformUncached(Type $type): OpenApiType
+    {
+        if ($type instanceof TemplateType && $type->is) {
+            $type = $type->is;
+        }
+
+        $openApiType = new UnknownType;
 
         if (
             $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
@@ -132,9 +228,7 @@ class TypeTransformer
                     ->additionalProperties($this->transform($type->value));
             }
         } elseif ($type instanceof ArrayItemType_) {
-            $openApiType = $this->transform($type->value);
-
-            // @todo use PhpDocSchemaTransformer
+            $typeValue = clone $type->value;
 
             /** @var PhpDocNode|null $valueDocNode */
             $valueDocNode = $type->value->getAttribute('docNode');
@@ -148,7 +242,17 @@ class TypeTransformer
                 ]);
                 PhpDoc::addSummaryAttributes($docNode);
 
-                /** @var PhpDocNode $docNode */
+                $typeValue->setAttribute('docNode', $docNode);
+            }
+
+            $openApiType = $this->transform($typeValue);
+
+            // @todo use PhpDocSchemaTransformer
+
+            /** @var PhpDocNode|null $docNode */
+            $docNode = $typeValue->getAttribute('docNode');
+
+            if ($docNode) {
                 $varNode = array_values($docNode->getVarTagValues())[0] ?? null;
 
                 $openApiType = $varNode
@@ -220,16 +324,7 @@ class TypeTransformer
                 // In case $otherTypes consist just of null and there is string or integer literals, make type nullable
                 $otherTypesIsNullable = count($otherTypes) === 1 && collect($otherTypes)->contains(fn ($t) => $t instanceof \Dedoc\Scramble\Support\Type\NullType);
                 if ($otherTypesIsNullable && ($stringLiterals->count() || $integerLiterals->count())) {
-                    $items = array_map(function ($s) {
-                        $s->nullable(true);
-                        // Per JSON Schema type and enum are independent constraints.
-                        // When type allows null, enum must also include null or it will reject valid null values.
-                        if (count($s->enum) > 0) {
-                            $s->enum(array_merge($s->enum, [null]));
-                        }
-
-                        return $s;
-                    }, $literalSchemas);
+                    $items = array_map(fn ($s) => $s->nullable(true), $literalSchemas);
                 }
 
                 // Removing duplicated schemas before making a resulting AnyOf type.
@@ -265,11 +360,7 @@ class TypeTransformer
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\MixedType) {
             $openApiType = new MixedType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\ObjectType) {
-            if ($type->isInstanceOf(CarbonInterface::class)) {
-                $openApiType = (new StringType)->format('date-time');
-            } else {
-                $openApiType = new ObjectType;
-            }
+            $openApiType = new ObjectType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntersectionType) {
             $openApiType = (new AllOf)->setItems(array_map(
                 fn ($t) => $this->transform($t),
@@ -281,6 +372,11 @@ class TypeTransformer
             $openApiType = $typeHandledByExtension;
         }
 
+        return $openApiType;
+    }
+
+    private function applyTypeAttributes(OpenApiType $openApiType, Type $type): OpenApiType
+    {
         if ($type->hasAttribute('format')) {
             $openApiType->format($type->getAttribute('format'));
         }

@@ -18,8 +18,15 @@ class Union extends AbstractType
 
     public function isSame(Type $type)
     {
-        return $type instanceof static
-            && collect($this->types)->every(fn (Type $t, $i) => $t->isSame($type->types[$i]));
+        if (! $type instanceof static) {
+            return false;
+        }
+
+        if (count($this->types) !== count($type->types)) {
+            return false;
+        }
+
+        return collect($this->types)->every(fn (Type $t, $i) => $t->isSame($type->types[$i]));
     }
 
     public function widen(): Type
@@ -66,20 +73,34 @@ class Union extends AbstractType
     public static function wrap(...$types): Type
     {
         $types = Arr::wrap(...$types);
-        $types = collect(array_values($types))
-            ->unique(fn (Type $t) => $t->toString())
-            ->values()
-            ->all();
 
-        if (! count($types)) {
+        $uniqueTypes = [];
+
+        foreach (array_values($types) as $type) {
+            $alreadyAdded = false;
+
+            foreach ($uniqueTypes as $existingType) {
+                if ($type->isSame($existingType)) {
+                    $alreadyAdded = true;
+
+                    break;
+                }
+            }
+
+            if (! $alreadyAdded) {
+                $uniqueTypes[] = $type;
+            }
+        }
+
+        if (! count($uniqueTypes)) {
             return new VoidType;
         }
 
-        if (count($types) === 1) {
-            return $types[0];
+        if (count($uniqueTypes) === 1) {
+            return $uniqueTypes[0];
         }
 
-        return new self($types);
+        return new self($uniqueTypes);
     }
 
     public function toString(): string

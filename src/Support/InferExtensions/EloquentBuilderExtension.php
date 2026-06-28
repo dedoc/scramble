@@ -21,7 +21,7 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         if ($event->getDefinition()->hasMethodDefinition($event->getName())) {
-            return null;
+            return $this->handleExistingMethodReturnType($event);
         }
 
         if ($this->shouldForwardCallToModel($event)) {
@@ -39,6 +39,16 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
         }
 
         return null;
+    }
+
+    private function handleExistingMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        return match ($event->getName()) {
+            'get' => ($modelType = $this->getModelType($event->getInstance()))
+                ? ModelCollectionTypeResolver::resolve($modelType)
+                : null,
+            default => null,
+        };
     }
 
     private function shouldForwardCallToModel(MethodCallEvent $event): bool

@@ -6,6 +6,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Illuminate\Support\Enumerable;
 
 class TypeWidener
 {
@@ -97,7 +98,7 @@ class TypeWidener
             $a instanceof Generic
             && $b instanceof Generic
             && $a->name === $b->name
-            && $a->isInstanceOf(\Traversable::class)
+            && $a->isInstanceOf(Enumerable::class)
         ) {
             return new Generic($a->name, [
                 (new Union([$a->templateTypes[0] ?? new UnknownType, $b->templateTypes[0] ?? new UnknownType]))->widen(),

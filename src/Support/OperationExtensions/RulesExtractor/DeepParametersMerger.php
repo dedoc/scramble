@@ -142,7 +142,7 @@ class DeepParametersMerger
                 ->addRequired($parameter->required ? [$settingKey] : []);
         }
 
-        if ($isSettingArrayItems && $containingType instanceof ObjectType) {
+        if ($isSettingArrayItems) {
             $containingType->properties = collect($containingType->properties)
                 ->map(fn ($prop) => $prop instanceof UnknownType ? $typeToSet : $prop)
                 ->all();

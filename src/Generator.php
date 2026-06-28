@@ -5,6 +5,7 @@ namespace Dedoc\Scramble;
 use Closure;
 use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
+use Dedoc\Scramble\Configuration\SecurityDocumentationContext;
 use Dedoc\Scramble\Contracts\DocumentTransformer;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Exceptions\RouteAware;
@@ -52,6 +53,9 @@ class Generator
     {
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
+        $routes = $this->getRoutes($config);
+        $config = $this->configureSecurityStrategy($routes, $config);
+
         $openApi = $this->makeOpenApi($config);
         $context = $this->context = new OpenApiContext($openApi, $config, diagnostics: new DiagnosticsCollector(throwOnError: $this->throwExceptions));
         $typeTransformer = $this->buildTypeTransformer($context);
@@ -61,9 +65,7 @@ class Generator
         $this->setUniqueOperationId($operations);
         $operations->each(fn (Operation $operation) => $openApi->addPath(
             Path::make(
-                (string) Str::of($operation->path)
-                    ->replaceStart($config->get('api_path', 'api'), '')
-                    ->trim('/')
+                $config->apiPath()->stripPrefix($operation->path)
             )->addOperation($operation)
         ));
         $this->moveSameAlternativeServersToPath($openApi);
@@ -112,6 +114,17 @@ class Generator
             ->sortBy($this->createOperationsSorter());
     }
 
+    private function configureSecurityStrategy(Collection $routes, GeneratorConfig $config): GeneratorConfig
+    {
+        $strategy = $config->securityStrategy();
+
+        if (! $strategy) {
+            return $config;
+        }
+
+        return $strategy->configure(new SecurityDocumentationContext($routes, $config->cloneWithoutExposing()));
+    }
+
     private function createOperationsSorter(): array
     {
         $defaultSortValue = fn (Operation $o) => $o->tags[0] ?? null;
@@ -137,8 +150,8 @@ class Generator
         [$defaultProtocol] = explode('://', url('/'));
         $servers = $config->get('servers') ?: [
             '' => ($domain = $config->get('api_domain'))
-                ? $defaultProtocol.'://'.$domain.'/'.$config->get('api_path', 'api')
-                : $config->get('api_path', 'api'),
+                ? $defaultProtocol.'://'.$domain.'/'.$config->apiPath()->serverPath()
+                : $config->apiPath()->serverPath(),
         ];
         foreach ($servers as $description => $url) {
             $openApi->addServer(

@@ -16,7 +16,8 @@ class TemplateType extends AbstractType
 
     public function isSame(Type $type)
     {
-        return false;
+        return $type instanceof self
+            && $this->name === $type->name;
     }
 
     public function isInstanceOf(string $className): bool

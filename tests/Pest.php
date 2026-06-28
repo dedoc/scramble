@@ -197,6 +197,7 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
             new ScopeContext(functionDefinition: $functionDefinition),
             new FileNameResolver(new NameContext(new Throwing)),
         );
+        FunctionLikeAstDefinitionBuilder::resolveFunctionParameterDefaults($fnScope, $functionDefinition);
         FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences($fnScope, $functionDefinition);
     }
 
@@ -208,6 +209,7 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
                 new ScopeContext($classDefinition, $methodDefinition),
                 new FileNameResolver(new NameContext(new Throwing)),
             );
+            FunctionLikeAstDefinitionBuilder::resolveFunctionParameterDefaults($methodScope, $methodDefinition);
             FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences($methodScope, $methodDefinition);
         }
     }

@@ -41,6 +41,36 @@ it('supports call to method', function () {
     ]);
 });
 
+it('removes null from nullable resource properties using null coalescing operator', function () {
+    $type = new Generic(JsonResourceTypeToSchemaTest_WithNullableName::class, [new UnknownType]);
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
+        JsonResourceTypeToSchema::class,
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
+
+    expect($extension->toSchema($type)->toArray())->toBe([
+        'type' => 'object',
+        'properties' => [
+            'name' => ['type' => 'string'],
+        ],
+        'required' => ['name'],
+    ]);
+});
+
+/**
+ * @property JsonResourceTypeToSchemaTest_User $resource
+ */
+class JsonResourceTypeToSchemaTest_WithNullableName extends JsonResource
+{
+    public function toArray(Request $request)
+    {
+        return [
+            'name' => (mt_rand() ? $this->name : null) ?? '',
+        ];
+    }
+}
+
 it('supports parent toArray class', function (string $className, array $expectedSchemaArray) {
     $type = new Generic($className, [new UnknownType]);
 
@@ -243,6 +273,71 @@ class JsonResourceTypeToSchemaTest_WithDefault extends JsonResource
              */
             'foo' => $this->resource->foo,
         ];
+    }
+}
+
+it('keeps collection union properties required while flattening nested missing values', function () {
+    $type = new Generic(JsonResourceTypeToSchemaTest_WithCollectionUnionMissingValue::class, [new UnknownType]);
+
+    $extension = new JsonResourceTypeToSchema($this->infer, $this->transformer, $this->context->openApi->components, $this->context);
+
+    expect($extension->toSchema($type)->toArray())->toEqual([
+        'type' => 'object',
+        'properties' => [
+            'planned_matches' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'event' => [
+                            'type' => 'array',
+                            'items' => (object) [],
+                        ],
+                    ],
+                ],
+            ],
+            'eloquent_planned_matches' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'event' => [
+                            'type' => 'array',
+                            'items' => (object) [],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        'required' => ['planned_matches', 'eloquent_planned_matches'],
+    ]);
+});
+class JsonResourceTypeToSchemaTest_WithCollectionUnionMissingValue extends JsonResource
+{
+    public function toArray(Request $request)
+    {
+        return [
+            'planned_matches' => unknown()
+                ? $this->supportPlannedMatches()
+                : $this->eloquentPlannedMatches(),
+            'eloquent_planned_matches' => $this->eloquentPlannedMatches(),
+        ];
+    }
+
+    /**
+     * @scramble-return \Illuminate\Support\Collection<int, array{event: array<mixed>|\Illuminate\Http\Resources\MissingValue}>
+     */
+    private function supportPlannedMatches()
+    {
+        return new \Illuminate\Support\Collection;
+    }
+
+    /**
+     * @scramble-return \Illuminate\Database\Eloquent\Collection<int, array{event: array<mixed>|\Illuminate\Http\Resources\MissingValue}>
+     */
+    private function eloquentPlannedMatches()
+    {
+        return new \Illuminate\Database\Eloquent\Collection;
     }
 }
 

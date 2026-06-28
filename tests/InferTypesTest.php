@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\CarbonInterfaceToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
@@ -58,6 +59,7 @@ it('infers model type', function () {
 
 it('infers model type when toArray is implemented', function () {
     $transformer = new TypeTransformer($infer = $this->infer, $this->context, [
+        CarbonInterfaceToSchema::class,
         ModelToSchema::class,
         CollectionToSchema::class,
     ]);
