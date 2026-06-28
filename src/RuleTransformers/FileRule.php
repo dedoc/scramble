@@ -4,8 +4,8 @@ namespace Dedoc\Scramble\RuleTransformers;
 
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Support\Generator\Types\Type;
-use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesMapper;
 use Dedoc\Scramble\Support\RuleTransforming\NormalizedRule;
+use Dedoc\Scramble\Support\RuleTransforming\RuleSetToSchemaTransformer;
 use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rules\File;
@@ -13,7 +13,7 @@ use Illuminate\Validation\Rules\File;
 class FileRule implements RuleTransformer
 {
     public function __construct(
-        protected RulesMapper $rulesMapper,
+        private RuleSetToSchemaTransformer $rulesToSchemaTransformer,
     ) {
     }
 
@@ -29,9 +29,7 @@ class FileRule implements RuleTransformer
     {
         $fileRule = $rule->getRule();
 
-        $rulesToSchemaTransformer = (fn () => $this->rulesToSchemaTransformer)->call($this->rulesMapper);
-
-        return $rulesToSchemaTransformer->transform(
+        return $this->rulesToSchemaTransformer->transform(
             $this->buildFileValidationRules($fileRule),
             $previous,
             $context,
@@ -45,6 +43,10 @@ class FileRule implements RuleTransformer
     {
         return array_values(array_map(
             fn ($rule) => $rule instanceof ValidationRule ? $rule : (string) $rule,
+            /**
+             * `buildValidationRules` is protected {@see File::buildValidationRules},
+             * so to get the rules the transformer can transform, this "magic" is used.
+             */
             (fn () => $this->buildValidationRules())->call($rule),
         ));
     }
