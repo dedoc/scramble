@@ -12,6 +12,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\RuleTransforming\RuleSetToSchemaTransformer;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rules\File;
 
 beforeEach(function () {
     $this->openApiTransformer = app(TypeTransformer::class, [
@@ -69,6 +70,40 @@ describe(EnumRule::class, function () {
                 'const' => 'bar',
             ]);
     })->skip(! method_exists(Enum::class, 'except'));
+
+    test('nullable enum rule', function () {
+        $rules = ['nullable', new Enum(Enum_RuleSetToSchemaTransformerTest::class)];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())->toBe([
+            'anyOf' => [
+                ['$ref' => '#/components/schemas/Enum_RuleSetToSchemaTransformerTest'],
+                ['type' => 'null'],
+            ],
+        ])
+            ->and($this->openApiTransformer->getComponents()->getSchema('Enum_RuleSetToSchemaTransformerTest')->toArray())
+            ->toBe([
+                'type' => 'string',
+                'enum' => ['foo', 'bar'],
+            ]);
+    });
+
+    test('nullable enum rule with only', function () {
+        $rules = [
+            'nullable',
+            (new Enum(Enum_RuleSetToSchemaTransformerTest::class))->only([
+                Enum_RuleSetToSchemaTransformerTest::FOO,
+            ]),
+        ];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())->toBe([
+            'type' => ['string', 'null'],
+            'enum' => ['foo', null],
+        ]);
+    })->skip(! method_exists(Enum::class, 'only'));
 });
 
 describe(InRule::class, function () {
@@ -119,6 +154,40 @@ describe(AcceptedRule::class, function () {
         expect($schema->toArray())->toBe([
             'enum' => ['yes', 'on', '1', 1, 'true', true, null],
         ]);
+    });
+});
+
+describe(File::class, function () {
+    test('file rule', function () {
+        $rules = [File::types(['pdf'])->min(1024)->max(12 * 1024)];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'string',
+                'format' => 'binary',
+                'contentMediaType' => 'application/octet-stream',
+                'minLength' => 1024.0,
+                'maxLength' => 12288.0,
+            ]);
+    });
+
+    test('image file rule', function () {
+        $rules = [
+            File::image()->dimensions(
+                Rule::dimensions()->maxWidth(1000)->maxHeight(500),
+            ),
+        ];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'string',
+                'format' => 'binary',
+                'contentMediaType' => 'application/octet-stream',
+            ]);
     });
 });
 

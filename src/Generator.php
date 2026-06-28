@@ -5,6 +5,7 @@ namespace Dedoc\Scramble;
 use Closure;
 use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
+use Dedoc\Scramble\Configuration\SecurityDocumentationContext;
 use Dedoc\Scramble\Contracts\DocumentTransformer;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\OpenApiVisitor\SchemaEnforceVisitor;
@@ -53,11 +54,15 @@ class Generator
     {
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
+        $routes = $this->getRoutes($config);
+        $config = $this->configureSecurityStrategy($routes, $config);
+
         $openApi = $this->makeOpenApi($config);
         $context = new OpenApiContext($openApi, $config);
+
         $typeTransformer = $this->buildTypeTransformer($context);
 
-        $this->getRoutes($config)
+        $routes
             ->flatMap(function (Route $route, int $index) use ($openApi, $config, $typeTransformer) {
                 try {
                     $operations = $this->routeToOperations($openApi, $route, $config, $typeTransformer);
@@ -94,9 +99,7 @@ class Generator
             ->sortBy($this->createOperationsSorter())
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
-                    (string) Str::of($operation->path)
-                        ->replaceStart($config->get('api_path', 'api'), '')
-                        ->trim('/')
+                    $config->apiPath()->stripPrefix($operation->path)
                 )->addOperation($operation)
             ))
             ->toArray();
@@ -131,6 +134,17 @@ class Generator
         return $openApi->toArray();
     }
 
+    private function configureSecurityStrategy(Collection $routes, GeneratorConfig $config): GeneratorConfig
+    {
+        $strategy = $config->securityStrategy();
+
+        if (! $strategy) {
+            return $config;
+        }
+
+        return $strategy->configure(new SecurityDocumentationContext($routes, $config->cloneWithoutExposing()));
+    }
+
     private function createOperationsSorter(): array
     {
         $defaultSortValue = fn (Operation $o) => $o->tags[0] ?? null;
@@ -156,8 +170,8 @@ class Generator
         [$defaultProtocol] = explode('://', url('/'));
         $servers = $config->get('servers') ?: [
             '' => ($domain = $config->get('api_domain'))
-                ? $defaultProtocol.'://'.$domain.'/'.$config->get('api_path', 'api')
-                : $config->get('api_path', 'api'),
+                ? $defaultProtocol.'://'.$domain.'/'.$config->apiPath()->serverPath()
+                : $config->apiPath()->serverPath(),
         ];
         foreach ($servers as $description => $url) {
             $openApi->addServer(

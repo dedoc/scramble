@@ -2,14 +2,12 @@
 
 namespace Dedoc\Scramble\Support\Generator\Types;
 
-use Dedoc\Scramble\Support\Generator\Schema;
-
 class ArrayType extends Type
 {
-    /** @var Type|Schema */
+    /** @var Type */
     public $items;
 
-    /** @var Type|Schema */
+    /** @var Type[] */
     public $prefixItems = [];
 
     public $minItems = null;
@@ -26,6 +24,18 @@ class ArrayType extends Type
         $defaultMissingType->setAttribute('missing', true);
 
         $this->items = $defaultMissingType;
+    }
+
+    public function clone(): static
+    {
+        $clone = parent::clone();
+        $clone->items = $clone->items->clone();
+        $clone->prefixItems = array_map(
+            fn (Type $item) => $item->clone(),
+            $clone->prefixItems,
+        );
+
+        return $clone;
     }
 
     public function setMin($min)

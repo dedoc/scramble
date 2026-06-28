@@ -7,7 +7,6 @@ use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
-use Illuminate\Support\Collection;
 use PhpParser\Node;
 use PhpParser\PrettyPrinter\Standard;
 use ReflectionNamedType;
@@ -18,19 +17,86 @@ class TypeHelper
 {
     public static function mergeTypes(...$types)
     {
-        $types = collect($types)
-            ->flatMap(fn ($type) => $type instanceof Union ? $type->types : [$type])
-            ->unique(fn (Type $type) => $type->toString())
-            ->pipe(function (Collection $c) {
-                if ($c->count() > 1 && $c->contains(fn ($t) => $t instanceof VoidType)) {
-                    return $c->reject(fn ($t) => $t instanceof VoidType);
+        $flattenedTypes = [];
+
+        foreach ($types as $type) {
+            $nestedTypes = $type instanceof Union
+                ? $type->types
+                : [$type];
+
+            foreach ($nestedTypes as $nestedType) {
+                $alreadyAdded = false;
+
+                foreach ($flattenedTypes as $existingType) {
+                    if ($nestedType->isSame($existingType)) {
+                        $alreadyAdded = true;
+
+                        break;
+                    }
                 }
 
-                return $c;
-            })
+                if (! $alreadyAdded) {
+                    $flattenedTypes[] = $nestedType;
+                }
+            }
+        }
+
+        $hasVoidOrNever = false;
+
+        foreach ($flattenedTypes as $type) {
+            if ($type instanceof VoidType || $type instanceof NeverType) {
+                $hasVoidOrNever = true;
+
+                break;
+            }
+        }
+
+        if ($hasVoidOrNever && count($flattenedTypes) > 1) {
+            $filtered = [];
+
+            foreach ($flattenedTypes as $type) {
+                if ($type instanceof VoidType || $type instanceof NeverType) {
+                    continue;
+                }
+
+                $filtered[] = $type;
+            }
+
+            $flattenedTypes = $filtered;
+        }
+
+        return Union::wrap($flattenedTypes);
+    }
+
+    public static function withoutNull(Type $type): Type
+    {
+        if ($type instanceof NullType) {
+            return new NeverType;
+        }
+
+        if (! $type instanceof Union) {
+            return $type;
+        }
+
+        $types = collect($type->types)
+            ->map(fn (Type $t) => static::withoutNull($t))
+            ->reject(fn (Type $t) => $t instanceof NeverType)
             ->all();
 
-        return Union::wrap($types);
+        return count($types) ? static::mergeTypes(...$types) : new NeverType;
+    }
+
+    public static function canContainNull(Type $type): bool
+    {
+        if ($type instanceof NullType || $type instanceof UnknownType || $type instanceof MixedType) {
+            return true;
+        }
+
+        if ($type instanceof Union) {
+            return collect($type->types)->contains(fn (Type $t) => static::canContainNull($t));
+        }
+
+        return false;
     }
 
     public static function createTypeFromTypeNode(Node $typeNode)
@@ -97,14 +163,15 @@ class TypeHelper
     /**
      * @param  (Node\Arg|Node\VariadicPlaceholder)[]  $args
      * @param  array{0: string, 1: int}  $parameterNameIndex
+     * @return ($default is null ? Type|null : Type)
      */
-    public static function getArgType(Scope $scope, array $args, array $parameterNameIndex, ?Type $default = null)
+    public static function getArgType(Scope $scope, array $args, array $parameterNameIndex, ?Type $default = null): ?Type
     {
         $default = $default ?: new UnknownType("Cannot get a type of the arg #{$parameterNameIndex[1]}($parameterNameIndex[0])");
 
         $matchingArg = static::getArg($args, $parameterNameIndex);
 
-        return $matchingArg ? $scope->getType($matchingArg->value) : $default;
+        return $matchingArg instanceof Node\Arg ? $scope->getType($matchingArg->value) : $default;
     }
 
     public static function unpackIfArray($type)
@@ -138,7 +205,7 @@ class TypeHelper
      * @param  (Node\Arg|Node\VariadicPlaceholder)[]  $args
      * @param  array{0: string, 1: int}  $parameterNameIndex
      */
-    private static function getArg(array $args, array $parameterNameIndex)
+    private static function getArg(array $args, array $parameterNameIndex): Node\Arg|Node\VariadicPlaceholder|null
     {
         [$name, $index] = $parameterNameIndex;
 

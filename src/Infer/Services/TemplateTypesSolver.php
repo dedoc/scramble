@@ -183,7 +183,7 @@ class TemplateTypesSolver
 
             $param = $argShouldBeReplaced ? $inferredTypeForReplacement : $arg->is;
 
-            if (! $param) {
+            if (! $param) { // @phpstan-ignore booleanNot.alwaysFalse
                 continue;
             }
 

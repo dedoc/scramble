@@ -50,19 +50,8 @@ trait FlattensMergeValues
                     }
                 }
 
-                if (
-                    $item->value instanceof Union
-                    && (new TypeWalker)->first($item->value, $this->isUnionWithMissingValue(...))
-                ) {
-                    $newType = (new TypeWalker)->replace($item->value, function (Type $t) {
-                        if (! $this->isUnionWithMissingValue($t)) {
-                            return null;
-                        }
-
-                        return Union::wrap(array_values(
-                            array_filter($t->types, fn (Type $t) => ! $t->isInstanceOf(MissingValue::class))
-                        ));
-                    });
+                if ($this->isUnionWithMissingValue($item->value)) {
+                    $newType = $this->removeMissingValueFromUnion($item->value);
 
                     if ($newType instanceof VoidType) {
                         return [];
@@ -74,6 +63,8 @@ trait FlattensMergeValues
 
                     return $this->flattenMergeValues([$item]);
                 }
+
+                $item->value = $this->flattenNestedKeyedArrayValues($item->value);
 
                 if (
                     $item->value instanceof Generic
@@ -105,6 +96,27 @@ trait FlattensMergeValues
             })
             ->values()
             ->all();
+    }
+
+    private function flattenNestedKeyedArrayValues(Type $type): Type
+    {
+        return (new TypeWalker)->replace($type, function (Type $t) {
+            if (! $t instanceof KeyedArrayType) {
+                return null;
+            }
+
+            $t->items = $this->flattenMergeValues($t->items);
+            $t->isList = KeyedArrayType::checkIsList($t->items);
+
+            return $t;
+        });
+    }
+
+    private function removeMissingValueFromUnion(Union $type): Type
+    {
+        return Union::wrap(array_values(
+            array_filter($type->types, fn (Type $t) => ! $t->isInstanceOf(MissingValue::class))
+        ));
     }
 
     /**
