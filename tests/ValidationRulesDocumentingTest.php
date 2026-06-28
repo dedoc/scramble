@@ -986,6 +986,7 @@ it('supports validation rules and form request at the same time', function () {
 
     assertMatchesSnapshot($openApiDocument);
 });
+
 class ValidationRulesDocumenting_Test
 {
     /**
