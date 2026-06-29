@@ -10,6 +10,7 @@ class Tag
     public function __construct(
         public string $name,
         public ?string $description = null,
+        public ?string $parent = null,
     ) {}
 
     public function toArray(): mixed
@@ -17,6 +18,7 @@ class Tag
         $result = array_filter([
             'name' => $this->name,
             'description' => $this->description,
+            'parent' => $this->parent,
         ]);
 
         return array_merge(

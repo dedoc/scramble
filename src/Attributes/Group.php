@@ -19,5 +19,6 @@ class Group
          * by the name (with `SORT_LOCALE_STRING` sorting flag).
          */
         public readonly int $weight = PHP_INT_MAX,
+        public readonly ?string $parent = null,
     ) {}
 }
