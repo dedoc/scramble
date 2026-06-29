@@ -4,9 +4,14 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
+use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\Union;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -47,8 +52,45 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
             'get' => ($modelType = $this->getModelType($event->getInstance()))
                 ? ModelCollectionTypeResolver::resolve($modelType)
                 : null,
+            'find' => $this->getFindReturnType($event),
+            'findOrFail' => $this->getFindOrFailReturnType($event),
             default => null,
         };
+    }
+
+    private function getFindReturnType(MethodCallEvent $event): ?Type
+    {
+        if (! $modelType = $this->getModelType($event->getInstance())) {
+            return null;
+        }
+
+        if ($this->isListOrArrayableId($event->getArg('id', 0))) {
+            return ModelCollectionTypeResolver::resolve($modelType);
+        }
+
+        return Union::wrap([$modelType, new NullType]);
+    }
+
+    private function getFindOrFailReturnType(MethodCallEvent $event): ?Type
+    {
+        if (! $modelType = $this->getModelType($event->getInstance())) {
+            return null;
+        }
+
+        if ($this->isListOrArrayableId($event->getArg('id', 0))) {
+            return ModelCollectionTypeResolver::resolve($modelType);
+        }
+
+        return $modelType;
+    }
+
+    private function isListOrArrayableId(Type $idType): bool
+    {
+        if ($idType instanceof KeyedArrayType || $idType instanceof ArrayType) {
+            return true;
+        }
+
+        return $idType->isInstanceOf(Arrayable::class);
     }
 
     private function shouldForwardCallToModel(MethodCallEvent $event): bool

@@ -23,7 +23,9 @@ class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
     protected function normalizeType(ObjectType $type): Generic
     {
         return $type instanceof Generic
-            ? $type
+            ? tap($type, function (Generic $t) {
+                $t->templateTypes[2 /* TCollects */] = ResourceCollectionTypeManager::make($t)->getCollectedType();
+            })
             : new Generic($type->name, [
                 new UnknownType,
                 new UnknownType,
@@ -38,13 +40,13 @@ class ResourceCollectionTypeToSchema extends JsonResourceTypeToSchema
         )->getResponseType();
     }
 
-    public function reference(ObjectType $type): ?Reference
+    public function defaultReference(ObjectType $type): ?Reference
     {
         if (! $this->shouldReferenceResourceCollection($type)) {
             return null;
         }
 
-        return parent::reference($type);
+        return parent::defaultReference($type);
     }
 
     /**

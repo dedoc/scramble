@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
+use Dedoc\Scramble\Support\JsonResource\JsonResourceVariantMatcher;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
@@ -170,7 +171,17 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
             return 'Paginated set';
         }
 
-        return 'Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectedType->name).'`';
+        return 'Paginated set of `'.$this->getReferenceUniqueName($collectedType).'`';
+    }
+
+    private function getReferenceUniqueName(ObjectType $type): string
+    {
+        $fullName = (new JsonResourceVariantMatcher($this->infer->index))
+            ->match($type)
+            ?->reference($this->components)
+            ->fullName ?: $type->name;
+
+        return $this->openApiContext->references->schemas->uniqueName($fullName);
     }
 
     private function getCollectingClassType(Generic $type): Generic|UnknownType

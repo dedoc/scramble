@@ -31,7 +31,7 @@ it('supports call to method', function () {
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
-    expect($extension->toSchema($type)->toArray())->toBe([
+    expect($extension->toSchema($type)->resolve()->toArray())->toBe([
         'type' => 'object',
         'properties' => [
             'res_int' => ['type' => 'integer'],
@@ -49,7 +49,7 @@ it('removes null from nullable resource properties using null coalescing operato
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
-    expect($extension->toSchema($type)->toArray())->toBe([
+    expect($extension->toSchema($type)->resolve()->toArray())->toBe([
         'type' => 'object',
         'properties' => [
             'name' => ['type' => 'string'],
@@ -79,7 +79,7 @@ it('supports parent toArray class', function (string $className, array $expected
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
-    expect($extension->toSchema($type)->toArray())->toBe($expectedSchemaArray);
+    expect($extension->toSchema($type)->resolve()->toArray())->toBe($expectedSchemaArray);
 })->with([
     [JsonResourceTypeToSchemaTest_NestedSample::class, [
         'type' => 'object',
@@ -252,7 +252,7 @@ it('handles default in json api resource', function () {
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
-    expect($extension->toSchema($type)->toArray())->toBe([
+    expect($extension->toSchema($type)->resolve()->toArray())->toBe([
         'type' => 'object',
         'properties' => [
             'foo' => [
@@ -281,7 +281,7 @@ it('keeps collection union properties required while flattening nested missing v
 
     $extension = new JsonResourceTypeToSchema($this->infer, $this->transformer, $this->context->openApi->components, $this->context);
 
-    expect($extension->toSchema($type)->toArray())->toEqual([
+    expect($extension->toSchema($type)->resolve()->toArray())->toEqual([
         'type' => 'object',
         'properties' => [
             'planned_matches' => [

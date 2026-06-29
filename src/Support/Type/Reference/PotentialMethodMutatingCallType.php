@@ -18,6 +18,11 @@ class PotentialMethodMutatingCallType extends AbstractReferenceType
         return ['callee', 'arguments'];
     }
 
+    public function isInstanceOf(string $className): bool
+    {
+        return $this->callee->isInstanceOf($className);
+    }
+
     public function toString(): string
     {
         $argsTypes = implode(

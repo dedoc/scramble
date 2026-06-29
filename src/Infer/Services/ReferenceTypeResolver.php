@@ -23,11 +23,13 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\NeverType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\RecursiveTemplateSolver;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PotentialMethodMutatingCallType;
+use Dedoc\Scramble\Support\Type\Reference\PropertyAssignReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticReference;
@@ -75,6 +77,7 @@ class ReferenceTypeResolver
             CallableCallReferenceType::class => $this->resolveCallableCallReferenceType($scope, $t),
             NewCallReferenceType::class => $this->resolveNewCallReferenceType($scope, $t),
             PropertyFetchReferenceType::class => $this->resolvePropertyFetchReferenceType($scope, $t),
+            PropertyAssignReferenceType::class => $this->resolvePropertyAssignReferenceType($scope, $t),
             PotentialMethodMutatingCallType::class => $this->resolvePotentialMethodMutatingCallType($scope, $t),
             default => null,
         };
@@ -251,7 +254,9 @@ class ReferenceTypeResolver
                 ? ($resultingType->is ?: new UnknownType)
                 : $resultingType;
 
-            return $this->finalizeStatic($resultingType, $calleeType);
+            $res = $this->finalizeStatic($resultingType, $calleeType);
+
+            return $res;
         }, $calleeAllTypes));
     }
 
@@ -426,13 +431,11 @@ class ReferenceTypeResolver
         $resultingTemplatesMap = (new TemplateTypesSolver)
             ->getGenericCreationTemplatesWithDefaults($classDefinition->templateTypes, $templatesMap);
 
-        $resultingTemplatesMap = $this->applySelfOutType(
-            $resultingTemplatesMap,
+        return $this->applySelfOutType(
+            new Generic($classDefinition->name, $resultingTemplatesMap),
             $constructorDefinition?->getSelfOutType(),
             $templatesMap,
         );
-
-        return new Generic($classDefinition->name, $resultingTemplatesMap);
     }
 
     private function resolvePotentialMethodMutatingCallType(Scope $scope, PotentialMethodMutatingCallType $type): Type
@@ -447,7 +450,7 @@ class ReferenceTypeResolver
         return Union::wrap(array_map(function (Type $callee) use ($scope, $type, $arguments) {
             $callee = $this->resolveStaticCalleeForMethodLookup($scope, $callee);
 
-            if (! $callee instanceof Generic) {
+            if (! $callee instanceof ObjectType) {
                 return $callee;
             }
 
@@ -479,13 +482,11 @@ class ReferenceTypeResolver
                 ->getFunctionContextTemplates($methodDefinition, $arguments)
                 ->prepend($classContextTemplates);
 
-            $newTemplateTypes = $this->applySelfOutType(
-                [...$callee->templateTypes],
+            return $this->applySelfOutType(
+                $callee,
                 $selfOutType,
                 $templatesMap,
             );
-
-            return new Generic($callee->name, $newTemplateTypes);
         }, $calleeAllTypes));
     }
 
@@ -540,6 +541,48 @@ class ReferenceTypeResolver
         }, $objectAllTypes));
     }
 
+    private function resolvePropertyAssignReferenceType(Scope $scope, PropertyAssignReferenceType $type): Type
+    {
+        $objectType = $this->resolve($scope, $type->object);
+
+        if (! $objectType instanceof ObjectType) {
+            return $objectType;
+        }
+
+        $assignedType = $this->resolve($scope, $type->value);
+
+        $result = $objectType->withAssignedPropertyType($type->propertyName, $assignedType);
+
+        if (! $result instanceof Generic) {
+            return $result;
+        }
+
+        if (! $classDefinition = $this->index->getClass($result->name)) {
+            return $result;
+        }
+
+        if (! $propertyDefinition = $classDefinition->getPropertyDefinition($type->propertyName)) {
+            return $result;
+        }
+
+        if (! $declaredPropertyType = $propertyDefinition->type) {
+            return $result;
+        }
+
+        $propertyTemplates = (new TypeWalker)->findAll($declaredPropertyType, fn (Type $t) => $t instanceof TemplateType);
+        foreach ($classDefinition->templateTypes as $index => $classTemplate) {
+            if (! in_array($classTemplate, $propertyTemplates, strict: true)) {
+                continue;
+            }
+
+            if ($inferred = (new RecursiveTemplateSolver)->solve($declaredPropertyType, $assignedType, $classTemplate)) {
+                $result->templateTypes[$index] = $inferred;
+            }
+        }
+
+        return $result;
+    }
+
     /**
      * Prepares the type of the value a method will be called on or a property will be fetched on. This includes
      * resolving the reference type and using the lower bound of if the callee is a template type.
@@ -574,28 +617,41 @@ class ReferenceTypeResolver
         return $this->resolveClassName($scope, $type);
     }
 
-    /**
-     * @param  Type[]  $resultingTemplatesMap
-     * @return Type[]
-     */
-    private function applySelfOutType(array $resultingTemplatesMap, ?Type $selfOutType, TemplatesMap $inferredTemplates): array
+    private function applySelfOutType(ObjectType $mutatingType, ?Type $selfOutType, TemplatesMap $inferredTemplates): ObjectType
     {
         if (! $selfOutType instanceof Generic) {
-            return $resultingTemplatesMap;
+            return $mutatingType;
         }
 
-        foreach ($selfOutType->templateTypes as $index => $genericSelfOutTypePart) {
-            if ($genericSelfOutTypePart instanceof TemplatePlaceholderType) {
-                continue;
+        if ($selfOutType->name === 'self') {
+            if (! $mutatingType instanceof Generic) {
+                return $mutatingType;
             }
 
-            $resultingTemplatesMap[$index] = (new TypeWalker)->map(
-                $genericSelfOutTypePart,
-                fn ($t) => $t instanceof TemplateType ? $inferredTemplates->get($t->name, $t) : $t,
-            );
+            $resultingTemplatesMap = $mutatingType->templateTypes;
+
+            foreach ($selfOutType->templateTypes as $index => $genericSelfOutTypePart) {
+                if ($genericSelfOutTypePart instanceof TemplatePlaceholderType) {
+                    continue;
+                }
+
+                $resultingTemplatesMap[$index] = (new TypeWalker)->map(
+                    $genericSelfOutTypePart,
+                    fn ($t) => $t instanceof TemplateType ? $inferredTemplates->get($t->name, $t) : $t,
+                );
+            }
+
+            return tap(clone $mutatingType, fn (Generic $t) => $t->templateTypes = $resultingTemplatesMap);
         }
 
-        return $resultingTemplatesMap;
+        $mapped = (new TypeWalker)->map(
+            $selfOutType->clone(),
+            fn ($t) => $t instanceof TemplateType ? $inferredTemplates->get($t->name, $t) : $t,
+        );
+
+        $result = $this->finalizeSelf($mapped, $mutatingType);
+
+        return $result instanceof ObjectType ? $result : $mutatingType;
     }
 
     private function getFunctionCallResult(
@@ -640,12 +696,8 @@ class ReferenceTypeResolver
             fn (Type $t) => $t instanceof TemplateType ? $templatesMap->get($t->name, $t) : $t,
         );
 
-        if ($returnType instanceof Generic && ($selfOutType = $callee->getSelfOutType())) {
-            $returnType->templateTypes = $this->applySelfOutType(
-                $returnType->templateTypes,
-                $selfOutType,
-                $templatesMap,
-            );
+        if ($returnType instanceof ObjectType && ($selfOutType = $callee->getSelfOutType())) {
+            $returnType = $this->applySelfOutType($returnType, $selfOutType, $templatesMap);
         }
 
         // void (unresolved) template types that are still present in the type, as this is probably an error
