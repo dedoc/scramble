@@ -9,6 +9,7 @@ use Dedoc\Scramble\Console\Commands\CacheDocumentation;
 use Dedoc\Scramble\Console\Commands\ClearDocumentationCache;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Dedoc\Scramble\DocumentTransformers\AddDocumentTags;
+use Dedoc\Scramble\DocumentTransformers\AddTagGroups;
 use Dedoc\Scramble\DocumentTransformers\CleanupUnusedResponseReferencesTransformer;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\OperationExtension;
@@ -292,6 +293,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             })
             ->withDocumentTransformers([
                 AddDocumentTags::class,
+                AddTagGroups::class,
                 CleanupUnusedResponseReferencesTransformer::class,
             ]);
 

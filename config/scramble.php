@@ -57,6 +57,35 @@ return [
         'title' => null,
     ],
 
+    /*
+     * Hierarchical grouping of endpoints (the documentation "explorer" tree).
+     *
+     * Disabled by default to preserve Scramble's flat, tag-based behaviour. When
+     * enabled, each operation is assigned to a (possibly nested) group resolved
+     * from, in order: the #[Group] attribute, the `rules` below, the route
+     * prefix/name, and finally the controller name.
+     *
+     * The resolved hierarchy is emitted as parent/child `tag` relationships plus
+     * the `x-tree` and `x-tagGroups` document extensions, and is rendered as a
+     * collapsible sidebar by the bundled UI.
+     */
+    'groups' => [
+        'enabled' => false,
+
+        /*
+         * Config-driven group assignment rules, evaluated top to bottom. The
+         * first matching rule wins. `group` supports nesting via `/`, `>` or `.`
+         * (e.g. 'Admin/Security'). `match` may combine `middleware`, `prefix`
+         * and `namespace` patterns (matched with Str::is).
+         *
+         * [
+         *     'group' => 'Admin/Security',
+         *     'match' => ['middleware' => 'auth:admin', 'prefix' => 'admin/*'],
+         * ],
+         */
+        'rules' => [],
+    ],
+
     'renderer' => 'elements',
 
     'renderers' => [

@@ -86,6 +86,7 @@ class RequestEssentialsExtension extends OperationExtension
         }
 
         $operation->setAttribute('operationId', $this->getOperationId($routeInfo));
+        $operation->setAttribute('route', $routeInfo->route);
 
         $this->setTitleAndDescriptionFromEndpointAttribute($operation, $routeInfo);
     }
