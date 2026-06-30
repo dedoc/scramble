@@ -7,7 +7,6 @@ use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -16,10 +15,6 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceCollectionTypeToSchema
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
-
-beforeEach(function () {
-    JsonResourceHelper::$jsonResourcesModelTypesCache = [];
-});
 
 it('reports JR001 when the underlying model type cannot be inferred', function () {
     $context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
@@ -115,5 +110,5 @@ class Jr001UnknownModelDiagnosticTest_ResourceWithMixin extends JsonResource
 
 class Jr001UnknownModelDiagnosticTest_Model extends \Illuminate\Database\Eloquent\Model
 {
-    protected $table = 'jr001_unknown_model_diagnostic_test_models';
+    protected $table = 'users';
 }

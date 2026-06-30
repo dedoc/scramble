@@ -5,6 +5,9 @@ namespace Dedoc\Scramble\Tests;
 use Closure;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
+use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
+use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\ScrambleServiceProvider;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -41,6 +44,10 @@ class TestCase extends Orchestra
     protected function tearDown(): void
     {
         Context::reset();
+
+        ModelInfo::$diagnostics = null;
+        ModelExtension::resetCache();
+        JsonResourceHelper::$jsonResourcesModelTypesCache = [];
 
         Scramble::$tagResolver = null;
         Scramble::$enforceSchemaRules = [];

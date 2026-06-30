@@ -49,6 +49,12 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     private static $cache;
 
+    /** @internal */
+    public static function resetCache(): void
+    {
+        static::$cache = [];
+    }
+
     public function shouldHandle(ObjectType|string $type): bool
     {
         if (is_string($type)) {

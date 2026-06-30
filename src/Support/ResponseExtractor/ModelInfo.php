@@ -3,6 +3,8 @@
 namespace Dedoc\Scramble\Support\ResponseExtractor;
 
 use BackedEnum;
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+use Dedoc\Scramble\Diagnostics\Model\Md001PendingMigrationsDiagnostic;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
@@ -16,7 +18,7 @@ use UnitEnum;
  */
 class ModelInfo
 {
-    public static array $cache = [];
+    public static ?DiagnosticsCollector $diagnostics = null;
 
     protected $relationMethods = [
         'hasMany',
@@ -72,6 +74,13 @@ class ModelInfo
         $connection = $model->getConnection();
         $schema = $connection->getSchemaBuilder();
         $table = $model->getTable();
+
+        if (! $schema->hasTable($table)) {
+            static::reportPendingMigrations($model);
+
+            return $this->getVirtualAttributes($model, []);
+        }
+
         $columns = $schema->getColumns($table);
         $indexes = $schema->getIndexes($table);
 
@@ -305,5 +314,18 @@ class ModelInfo
         return is_dir(app_path('Models'))
             ? $rootNamespace.'Models\\'.$model
             : $rootNamespace.$model;
+    }
+
+    /** @internal */
+    public static function reportPendingMigrations(Model $model): void
+    {
+        if (! static::$diagnostics) {
+            return;
+        }
+
+        static::$diagnostics->reportOnce(
+            'MD001|'.$model::class,
+            Md001PendingMigrationsDiagnostic::forModel($model::class, $model->getTable()),
+        );
     }
 }
