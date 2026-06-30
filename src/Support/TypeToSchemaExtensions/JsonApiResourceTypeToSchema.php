@@ -8,6 +8,7 @@ use Dedoc\Scramble\Reflection\ReflectionJsonApiResource;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiType;
+use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
@@ -34,6 +35,11 @@ class JsonApiResourceTypeToSchema extends JsonResourceTypeToSchema
     public function toSchema(Type $type): OpenApiType\ObjectType
     {
         $type = app(JsonApiResourceTypeManager::class)->normalizeType($type);
+
+        JsonResourceHelper::reportUnknownModelDiagnostic(
+            $this->openApiContext->diagnostics,
+            $this->infer->analyzeClass($type->name),
+        );
 
         $reflection = ReflectionJsonApiResource::createForClass($type->name);
 

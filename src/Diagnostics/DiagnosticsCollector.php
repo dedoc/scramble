@@ -17,6 +17,7 @@ class DiagnosticsCollector
         public ?Route $route = null,
         public ?string $category = null,
         public ?string $context = null,
+        private DiagnosticsSeenRegistry $seenRegistry = new DiagnosticsSeenRegistry,
     ) {}
 
     public function report(Diagnostic $diagnostic): void
@@ -26,6 +27,17 @@ class DiagnosticsCollector
         if ($this->throwOnError && $diagnostic->severity() === DiagnosticSeverity::Error) {
             throw $diagnostic->toException();
         }
+    }
+
+    public function reportOnce(string $key, Diagnostic $diagnostic): void
+    {
+        if (isset($this->seenRegistry->keys[$key])) {
+            return;
+        }
+
+        $this->seenRegistry->keys[$key] = true;
+
+        $this->report($diagnostic);
     }
 
     public function reportQuietly(Diagnostic $diagnostic): void
@@ -54,16 +66,23 @@ class DiagnosticsCollector
 
     public function forRoute(Route $route): self
     {
-        return new self($this->diagnostics, $this->throwOnError, $route, $this->category, $this->context);
+        return new self($this->diagnostics, $this->throwOnError, $route, $this->category, $this->context, $this->seenRegistry);
     }
 
     public function forCategory(string $category): self
     {
-        return new self($this->diagnostics, $this->throwOnError, $this->route, $category, $this->context);
+        return new self($this->diagnostics, $this->throwOnError, $this->route, $category, $this->context, $this->seenRegistry);
     }
 
     public function forContext(string $context): self
     {
-        return new self($this->diagnostics, $this->throwOnError, $this->route, $this->category, $context);
+        return new self($this->diagnostics, $this->throwOnError, $this->route, $this->category, $context, $this->seenRegistry);
     }
+}
+
+/** @internal */
+class DiagnosticsSeenRegistry
+{
+    /** @var array<string, true> */
+    public array $keys = [];
 }
