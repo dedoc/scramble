@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\PhpDoc\Pd001RedundantTypeAnnotationDiagnostic;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
@@ -261,7 +262,7 @@ class TypeTransformer
                 if ($varNode) {
                     $phpDocType = PhpDocTypeHelper::toType($varNode->type);
 
-                    $this->reportRedundantArrayItemPhpDoc($type, $phpDocType, $arrayItemDocNode, $valueDocNode);
+                    $this->reportRedundantArrayItemPhpDoc($type, $phpDocType);
 
                     $openApiType = $this->transform($phpDocType);
                 }
@@ -539,26 +540,14 @@ class TypeTransformer
         return null;
     }
 
-    private function reportRedundantArrayItemPhpDoc(
-        ArrayItemType_ $item,
-        Type $phpDocType,
-        ?PhpDocNode $arrayItemDocNode,
-        ?PhpDocNode $valueDocNode,
-    ): void {
+    private function reportRedundantArrayItemPhpDoc(ArrayItemType_ $item, Type $phpDocType): void
+    {
         if (! $this->shouldReportRedundantPhpDocType($item->value, $phpDocType)) {
             return;
         }
 
-        $context = $arrayItemDocNode?->getAttribute('sourceClass')
-            ?? $valueDocNode?->getAttribute('sourceClass');
-
         $this->context->diagnostics->reportOnce(
-            'PD001|'.$context.'|'.$item->key,
-            Pd001RedundantTypeAnnotationDiagnostic::forArrayItem(
-                (string) ($item->key ?? ''),
-                $item->value,
-                is_string($context) ? $context : null,
-            ),
+            Pd001RedundantTypeAnnotationDiagnostic::fromArrayItemType($item)
         );
     }
 

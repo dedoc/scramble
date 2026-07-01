@@ -324,7 +324,6 @@ class ModelInfo
         }
 
         static::$diagnostics->reportOnce(
-            'MD001|'.$model::class,
             Md001PendingMigrationsDiagnostic::forModel($model::class, $model->getTable()),
         );
     }

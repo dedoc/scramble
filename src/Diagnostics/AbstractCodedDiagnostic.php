@@ -27,6 +27,11 @@ abstract class AbstractCodedDiagnostic implements CodedDiagnostic
         return '';
     }
 
+    public function key(): string
+    {
+        return $this->code().'|'.($this->context() ?: '');
+    }
+
     public function message(): string
     {
         return $this->message;

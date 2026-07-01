@@ -58,7 +58,6 @@ class JsonResourceHelper
         }
 
         $diagnostics->reportOnce(
-            'JR001|'.$jsonClass->name,
             Jr001UnknownModelDiagnostic::forResource($jsonClass->name),
         );
     }

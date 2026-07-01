@@ -7,6 +7,8 @@ use Throwable;
 
 interface Diagnostic
 {
+    public function key(): string;
+
     public function message(): string;
 
     public function severity(): DiagnosticSeverity;

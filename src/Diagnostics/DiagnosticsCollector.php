@@ -29,8 +29,10 @@ class DiagnosticsCollector
         }
     }
 
-    public function reportOnce(string $key, Diagnostic $diagnostic): void
+    public function reportOnce(Diagnostic $diagnostic): void
     {
+        $key = $diagnostic->key();
+
         if (isset($this->seenRegistry->keys[$key])) {
             return;
         }
