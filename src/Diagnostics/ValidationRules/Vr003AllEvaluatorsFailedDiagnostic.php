@@ -8,7 +8,7 @@ use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Illuminate\Routing\Route;
 use Throwable;
 
-final class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
+class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
 {
     /**
      * @param  array<string, Throwable>  $exceptions

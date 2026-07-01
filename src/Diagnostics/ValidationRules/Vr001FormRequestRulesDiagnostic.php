@@ -6,7 +6,7 @@ use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Throwable;
 
-final class Vr001FormRequestRulesDiagnostic extends AbstractCodedDiagnostic
+class Vr001FormRequestRulesDiagnostic extends AbstractCodedDiagnostic
 {
     public static function fromThrowable(Throwable $throwable): self
     {
