@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Diagnostics;
 
+use ArrayObject;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Throwable;
@@ -17,7 +18,7 @@ class DiagnosticsCollector
         public ?Route $route = null,
         public ?string $category = null,
         public ?string $context = null,
-        private DiagnosticsSeenRegistry $seenRegistry = new DiagnosticsSeenRegistry,
+        private ArrayObject $seenRegistry = new ArrayObject,
     ) {}
 
     public function report(Diagnostic $diagnostic): void
@@ -33,11 +34,11 @@ class DiagnosticsCollector
     {
         $key = $diagnostic->key();
 
-        if (isset($this->seenRegistry->keys[$key])) {
+        if (isset($this->seenRegistry[$key])) {
             return;
         }
 
-        $this->seenRegistry->keys[$key] = true;
+        $this->seenRegistry[$key] = true;
 
         $this->report($diagnostic);
     }
@@ -80,11 +81,4 @@ class DiagnosticsCollector
     {
         return new self($this->diagnostics, $this->throwOnError, $this->route, $this->category, $context, $this->seenRegistry);
     }
-}
-
-/** @internal */
-class DiagnosticsSeenRegistry
-{
-    /** @var array<string, true> */
-    public array $keys = [];
 }
