@@ -10,9 +10,7 @@ class CodeLocation
     public function __construct(
         public readonly string $file,
         public readonly int $line,
-    )
-    {
-    }
+    ) {}
 
     /**
      * Array items combine PHPDoc both from array item node, and value node.

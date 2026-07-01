@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\PhpDoc\Pd001RedundantTypeAnnotationDiagnostic;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
