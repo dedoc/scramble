@@ -2,12 +2,14 @@
 
 namespace Dedoc\Scramble\Diagnostics\PhpDoc;
 
+use Dedoc\Scramble\Console\Commands\Components\Code;
 use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
 use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\Concerns\HasCodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\WithCodeLocation;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Illuminate\Console\OutputStyle;
 
 class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic implements WithCodeLocation
 {
@@ -52,5 +54,15 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic imp
     public function documentationUrl(): string
     {
         return 'https://scramble.dedoc.co/errors#pd001';
+    }
+
+    public function render(OutputStyle $style): void
+    {
+        if (! $this->location) {
+            return;
+        }
+
+        (new Code($this->location->file, $this->location->line))->render($style);
+
     }
 }

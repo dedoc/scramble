@@ -38,6 +38,7 @@ it('renders PD001 output when analyzing documentation', function () {
     Scramble::configure()->withDocumentTransformers(function (OpenApi $_, OpenApiContext $context) {
         $docNode = PhpDoc::parse('/** @var string */');
         $docNode->setAttribute('sourceClass', UserResource_Pd001RedundantTypeAnnotationDiagnosticTest::class);
+        $docNode->setAttribute('sourceLine', 35);
 
         $item = new ArrayItemType_('name', new StringType);
         $item->setAttribute('docNode', $docNode);
@@ -59,13 +60,25 @@ it('renders PD001 output when analyzing documentation', function () {
             : putenv("COLUMNS={$previousColumns}");
     }
 
-    $expectedDiagnosticOutput = <<<EOL
-      __FILE__: 
+//    $expectedDiagnosticOutput = <<<EOL
+//    [PD001] Redundant `@var` type annotation on array item [`name`]: the type is already inferred as [`string`].
+//    Tip: Remove the `@var` type annotation and keep the description, `@format`, `@example`, or other tags if needed. Scramble infers the type from the expression automatically.
+//    Docs: https://scramble.dedoc.co/errors#pd001
+//EOL;
 
-        [PD001] Redundant `@var` type annotation on array item [`name`]: the type is already inferred as [`string`].
-        Tip: Remove the `@var` type annotation and keep the description, `@format`, `@example`, or other tags if needed. Scramble infers the type from the expression automatically.
+    dd($output);
+
+    $expectedDiagnosticOutput = <<<'EOL'
+  --> line 40 [PD001] redundant `@var string` annotations
+    40 |             /**
+    41 |              * @var string
+       |                     ^^^^^^ inferred as `string`
+    42 |              */
+    43 |              'field' => $this->resource->field,
+
+        Help: remove the redundant `@var` annotations, but keep other (`@example`, `@format`, description, etc.).
         Docs: https://scramble.dedoc.co/errors#pd001
-    EOL;
+EOL;
 
     $expectedDiagnosticOutput = str_replace('__FILE__', __FILE__, $expectedDiagnosticOutput);
 

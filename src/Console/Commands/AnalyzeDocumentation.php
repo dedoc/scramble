@@ -191,6 +191,11 @@ class AnalyzeDocumentation extends Command
         $pad = 4;
 
         if ($d instanceof CodedDiagnostic) {
+            if (method_exists($d, 'render')) {
+                $d->render($this->output);
+                return;
+            }
+
             $message = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $d->message());
             $lines = explode("\n", $message);
             $first = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $lines[0]);

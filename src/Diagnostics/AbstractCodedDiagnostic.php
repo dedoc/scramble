@@ -73,35 +73,32 @@ abstract class AbstractCodedDiagnostic implements CodedDiagnostic
         return $exception;
     }
 
-    protected function newInstance(
-        string $message,
-        DiagnosticSeverity $severity,
-        ?Throwable $originException,
-        ?Route $route,
-        ?string $category,
-        ?string $context,
-    ): static {
-        return new static($message, $severity, $originException, $route, $category, $context);
-    }
-
     public function withRoute(?Route $route): static
     {
-        return $this->newInstance($this->message, $this->severity, $this->originException, $route, $this->category, $this->context);
+        $this->route = $route;
+
+        return $this;
     }
 
     public function withSeverity(DiagnosticSeverity $severity): static
     {
-        return $this->newInstance($this->message, $severity, $this->originException, $this->route, $this->category, $this->context);
+        $this->severity = $severity;
+
+        return $this;
     }
 
     public function withCategory(?string $category): static
     {
-        return $this->newInstance($this->message, $this->severity, $this->originException, $this->route, $category, $this->context);
+        $this->category = $category;
+
+        return $this;
     }
 
     public function withContext(?string $context): static
     {
-        return $this->newInstance($this->message, $this->severity, $this->originException, $this->route, $this->category, $context);
+        $this->context = $context;
+
+        return $this;
     }
 
     /**
@@ -109,8 +106,8 @@ abstract class AbstractCodedDiagnostic implements CodedDiagnostic
      */
     public function withMessage(string|callable $message): static
     {
-        $resolved = is_callable($message) ? $message($this->message) : $message;
+        $this->message = is_callable($message) ? $message($this->message) : $message;
 
-        return $this->newInstance($resolved, $this->severity, $this->originException, $this->route, $this->category, $this->context);
+        return $this;
     }
 }
