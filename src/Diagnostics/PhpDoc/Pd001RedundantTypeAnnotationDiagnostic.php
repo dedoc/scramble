@@ -26,7 +26,7 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic imp
             "Redundant `@var` type annotation on array item [`{$arrayItemKey}`]: the type is already inferred as [`{$inferredType}`].",
             DiagnosticSeverity::Warning,
             category: 'PHPDoc',
-            context: $location->file,
+            context: $location?->file,
         ))->withLocation($location);
 
         $diagnostic->arrayItemKey = $arrayItemKey;

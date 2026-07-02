@@ -4,6 +4,7 @@ use Dedoc\Scramble\Diagnostics\PhpDoc\Pd001RedundantTypeAnnotationDiagnostic;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
@@ -11,6 +12,7 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Support\Facades\Artisan;
 
 beforeEach(function () {
     $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
@@ -19,7 +21,7 @@ beforeEach(function () {
 
 it('reports PD001 when @var repeats an inferred type', function () {
     $docNode = PhpDoc::parse('/** @var string */');
-    $docNode->setAttribute('sourceClass', 'App\\UserResource');
+    $docNode->setAttribute('sourceClass', UserResource_Pd001RedundantTypeAnnotationDiagnosticTest::class);
 
     $item = new ArrayItemType_('name', new StringType);
     $item->setAttribute('docNode', $docNode);
@@ -28,7 +30,47 @@ it('reports PD001 when @var repeats an inferred type', function () {
 
     expect($this->context->diagnostics->diagnostics)->toHaveCount(1)
         ->and($this->context->diagnostics->diagnostics->first())->toBeInstanceOf(Pd001RedundantTypeAnnotationDiagnostic::class)
-        ->and($this->context->diagnostics->diagnostics->first()->context())->toBe('App\\UserResource');
+        ->and($this->context->diagnostics->diagnostics->first()->context())->toBe(__FILE__);
+});
+class UserResource_Pd001RedundantTypeAnnotationDiagnosticTest {}
+
+it('renders PD001 output when analyzing documentation', function () {
+    Scramble::configure()->withDocumentTransformers(function (OpenApi $_, OpenApiContext $context) {
+        $docNode = PhpDoc::parse('/** @var string */');
+        $docNode->setAttribute('sourceClass', UserResource_Pd001RedundantTypeAnnotationDiagnosticTest::class);
+
+        $item = new ArrayItemType_('name', new StringType);
+        $item->setAttribute('docNode', $docNode);
+
+        app()->make(TypeTransformer::class, [
+            'context' => $context,
+        ])->transform($item);
+    });
+
+    $previousColumns = getenv('COLUMNS');
+    putenv('COLUMNS=1000');
+
+    try {
+        $exitCode = Artisan::call('scramble:analyze');
+        $output = Artisan::output();
+    } finally {
+        $previousColumns === false
+            ? putenv('COLUMNS')
+            : putenv("COLUMNS={$previousColumns}");
+    }
+
+    $expectedDiagnosticOutput = <<<EOL
+      __FILE__: 
+
+        [PD001] Redundant `@var` type annotation on array item [`name`]: the type is already inferred as [`string`].
+        Tip: Remove the `@var` type annotation and keep the description, `@format`, `@example`, or other tags if needed. Scramble infers the type from the expression automatically.
+        Docs: https://scramble.dedoc.co/errors#pd001
+    EOL;
+
+    $expectedDiagnosticOutput = str_replace('__FILE__', __FILE__, $expectedDiagnosticOutput);
+
+    expect($exitCode)->toBe(0)
+        ->and($output)->toContain($expectedDiagnosticOutput);
 });
 
 it('does not report PD001 when @var adds information', function () {

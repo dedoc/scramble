@@ -39,6 +39,8 @@ class AnalyzeDocumentation extends Command
         /** @var Collection<int, Diagnostic> $diagnostics */
         $diagnostics = $context->diagnostics->diagnostics;
 
+
+
         $this->groupDiagnosticsByRoute($diagnostics)
             ->sortKeysUsing(static function (string $a, string $b): int {
                 if ($a === '') {
@@ -51,6 +53,9 @@ class AnalyzeDocumentation extends Command
                 return strcmp($a, $b);
             })
             ->each(function (Collection $routeDiagnostics, string $routeKey) {
+                if ($routeKey !== '') {
+                    return;
+                }
                 $this->renderRouteDiagnosticsGroup($routeDiagnostics, $routeKey);
             });
 

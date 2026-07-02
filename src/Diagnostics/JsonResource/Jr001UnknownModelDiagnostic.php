@@ -13,7 +13,7 @@ class Jr001UnknownModelDiagnostic extends AbstractCodedDiagnostic
             "Cannot infer the underlying model type for JSON resource [$resourceClass]. Model-dependent fields will be documented as `string`.",
             DiagnosticSeverity::Warning,
             category: 'JSON resources',
-            context: $resourceClass,
+            context: (new \ReflectionClass($resourceClass))->getFileName(),
         );
     }
 

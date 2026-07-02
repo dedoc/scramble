@@ -4,5 +4,5 @@ namespace Dedoc\Scramble\Diagnostics;
 
 interface WithCodeLocation
 {
-    public function withLocation(CodeLocation $location): static;
+    public function withLocation(?CodeLocation $location): static;
 }

@@ -8,9 +8,9 @@ use Dedoc\Scramble\Diagnostics\CodeLocation;
 /** @mixin AbstractCodedDiagnostic */
 trait HasCodeLocation
 {
-    public readonly CodeLocation $location;
+    public readonly ?CodeLocation $location;
 
-    public function withLocation(CodeLocation $location): static
+    public function withLocation(?CodeLocation $location): static
     {
         $this->location = $location;
 
