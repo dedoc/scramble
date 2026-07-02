@@ -59,7 +59,7 @@ it('renders PD001 output when analyzing documentation', function () {
             : putenv("COLUMNS={$previousColumns}");
     }
 
-    $expectedDiagnosticOutput = <<<EOL
+    $expectedDiagnosticOutput = <<<'EOL'
       __FILE__: 
 
         [PD001] Redundant `@var` type annotation on array item [`name`]: the type is already inferred as [`string`].
