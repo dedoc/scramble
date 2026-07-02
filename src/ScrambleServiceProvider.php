@@ -199,7 +199,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                         new ResponseFactoryTypeInfer,
 
                         new ArrayMergeReturnTypeExtension,
-                        $app->make(TranslationReturnTypeExtension::class),
+                        new TranslationReturnTypeExtension,
 
                         /* Keep this extension last, so the trace info is preserved. */
                         new TypeTraceInfer,

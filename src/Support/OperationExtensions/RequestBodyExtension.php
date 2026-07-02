@@ -5,7 +5,9 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 use Dedoc\Scramble\Contracts\OperationTransformer;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
+use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\GeneratorConfig;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\ContainerUtils;
 use Dedoc\Scramble\Support\Factories\JsonApiQueryParameterFactory;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
@@ -47,7 +49,15 @@ class RequestBodyExtension implements OperationTransformer
         try {
             $rulesResults = collect($this->extractParameters($operation, $routeInfo));
         } catch (Throwable $exception) {
-            $this->diagnostics->report(GenericDiagnostic::fromException($exception));
+            $collector = ($exception instanceof RulesEvaluationException && $exception->diagnostics)
+                ? $exception->diagnostics
+                : $this->diagnostics;
+
+            $collector->reportQuietly(GenericDiagnostic::fromException($exception));
+
+            if (Scramble::shouldThrowOnError()) {
+                throw $exception;
+            }
 
             $description = $description->append('⚠️ Cannot generate request documentation: '.$exception->getMessage());
         }
@@ -261,13 +271,15 @@ class RequestBodyExtension implements OperationTransformer
     private function extractParameters(Operation $operation, RouteInfo $routeInfo): array
     {
         $result = [];
+        $diagnostics = $this->diagnostics->forCategory('Validation rules evaluation');
+
         foreach ($this->config->parametersExtractors->all() as $extractorClass) {
             /** @var ParameterExtractor $extractor */
             $extractor = ContainerUtils::makeContextable($extractorClass, [
                 GeneratorConfig::class => $this->config,
                 TypeTransformer::class => $this->openApiTransformer,
                 Operation::class => $operation,
-                DiagnosticsCollector::class => $this->diagnostics,
+                DiagnosticsCollector::class => $diagnostics,
                 JsonApiQueryParameterFactory::class => new JsonApiQueryParameterFactory(
                     arraySerialization: $this->config->jsonApi->arraySerialization,
                 ),

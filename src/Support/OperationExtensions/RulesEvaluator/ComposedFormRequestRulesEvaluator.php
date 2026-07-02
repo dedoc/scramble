@@ -17,7 +17,9 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
         private ClassReflector $classReflector,
         private string $method,
         private DiagnosticsCollector $diagnostics,
-    ) {}
+    ) {
+        $this->diagnostics = $diagnostics->forContext('ComposedFormRequestRulesEvaluator');
+    }
 
     public function handle(): array
     {
@@ -32,7 +34,7 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
         $returnNode = $returnNodeStatement?->expr ?? null;
 
         $evaluators = [
-            new FormRequestRulesEvaluator($this->classReflector, $this->method),
+            new FormRequestRulesEvaluator($this->classReflector, $this->method, $this->diagnostics),
             new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className, $rulesMethod->getFunctionLikeDefinition()->getScope(), $this->diagnostics),
         ];
 
@@ -46,6 +48,6 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
             }
         }
 
-        throw RulesEvaluationException::fromExceptions($exceptions);
+        throw RulesEvaluationException::fromExceptions($exceptions)->forDiagnostics($this->diagnostics);
     }
 }
