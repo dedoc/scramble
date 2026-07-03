@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Diagnostics;
 
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+use ReflectionClass;
 
 class CodeLocation
 {
@@ -44,12 +45,21 @@ class CodeLocation
 
     private static function getFile(string $class): string
     {
-        $class = new \ReflectionClass($class);
+        $class = new ReflectionClass($class);
 
         if (is_string($file = $class->getFileName())) {
             return $file;
         }
 
         throw new \RuntimeException("Cannot get file name for class [$class]");
+    }
+
+    public static function fromReflection(ReflectionClass $reflection): self
+    {
+        if (! is_string($file = $reflection->getFileName())) {
+            throw new \RuntimeException("Cannot get file name for class [$reflection->name]");
+        }
+
+        return new self($file, $reflection->getStartLine());
     }
 }

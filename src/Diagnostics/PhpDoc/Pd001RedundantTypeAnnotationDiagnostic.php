@@ -15,6 +15,8 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic imp
 {
     use HasCodeLocation;
 
+    public ?ArrayItemType_ $arrayItemType = null;
+
     public ?string $arrayItemKey = null;
 
     public static function fromArrayItemType(ArrayItemType_ $item): self
@@ -25,12 +27,13 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic imp
         $location = CodeLocation::fromArrayItemType($item);
 
         $diagnostic = (new self(
-            "Redundant `@var` type annotation on array item [`{$arrayItemKey}`]: the type is already inferred as [`{$inferredType}`].",
+            "Redundant `@var` annotation. `{$arrayItemKey}` is already inferred as `{$inferredType}`.",
             DiagnosticSeverity::Warning,
             category: 'PHPDoc',
             context: $location?->file,
         ))->withLocation($location);
 
+        $diagnostic->arrayItemType = $item;
         $diagnostic->arrayItemKey = $arrayItemKey;
 
         return $diagnostic;
@@ -59,10 +62,16 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic imp
     public function render(OutputStyle $style): void
     {
         if (! $this->location) {
+            $style->writeln('    '.$this->message);
+
             return;
         }
 
-        (new Code($this->location->file, $this->location->line))->render($style);
+        $anchor = '@var';
 
+        (new Code($this->location->file, $this->location->line, linesAfter: 0))
+            ->linesBeforeFirst($anchor)
+            ->annotate($anchor, "redundant. `$this->arrayItemKey` is already inferred as `".$this->arrayItemType->value->toString()."`.")
+            ->render($style);
     }
 }

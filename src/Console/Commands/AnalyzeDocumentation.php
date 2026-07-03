@@ -36,10 +36,7 @@ class AnalyzeDocumentation extends Command
         $context = $generator->context;
         assert($context instanceof OpenApiContext);
 
-        /** @var Collection<int, Diagnostic> $diagnostics */
         $diagnostics = $context->diagnostics->diagnostics;
-
-
 
         $this->groupDiagnosticsByRoute($diagnostics)
             ->sortKeysUsing(static function (string $a, string $b): int {

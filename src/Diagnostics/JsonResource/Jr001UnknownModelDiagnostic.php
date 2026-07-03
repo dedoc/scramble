@@ -2,19 +2,34 @@
 
 namespace Dedoc\Scramble\Diagnostics\JsonResource;
 
+use Dedoc\Scramble\Console\Commands\Components\Code;
 use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
+use Dedoc\Scramble\Diagnostics\CodeLocation;
+use Dedoc\Scramble\Diagnostics\Concerns\HasCodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
+use Dedoc\Scramble\Diagnostics\WithCodeLocation;
+use Illuminate\Console\OutputStyle;
 
-class Jr001UnknownModelDiagnostic extends AbstractCodedDiagnostic
+class Jr001UnknownModelDiagnostic extends AbstractCodedDiagnostic implements WithCodeLocation
 {
+    use HasCodeLocation;
+
+    public ?string $resourceClass = null;
+
     public static function forResource(string $resourceClass): self
     {
-        return new self(
+        $location = CodeLocation::fromReflection(new \ReflectionClass($resourceClass));
+
+        $diagnostic = (new self(
             "Cannot infer the underlying model type for JSON resource [$resourceClass]. Model-dependent fields will be documented as `string`.",
             DiagnosticSeverity::Warning,
             category: 'JSON resources',
-            context: (new \ReflectionClass($resourceClass))->getFileName(),
-        );
+            context: $location->file,
+        ))->withLocation($location);
+
+        $diagnostic->resourceClass = $resourceClass;
+
+        return $diagnostic;
     }
 
     public function code(): string
@@ -30,5 +45,21 @@ class Jr001UnknownModelDiagnostic extends AbstractCodedDiagnostic
     public function documentationUrl(): string
     {
         return 'https://scramble.dedoc.co/errors#jr001';
+    }
+
+    public function render(OutputStyle $style): void
+    {
+        if (! $this->location || ! $this->resourceClass) {
+            $style->writeln('    '.$this->message);
+
+            return;
+        }
+
+        (new Code($this->location->file, $this->location->line, linesBefore: 0, linesAfter: 0))
+            ->annotate(
+                class_basename($this->resourceClass),
+                "cannot infer resource's model"
+            )
+            ->render($style);
     }
 }
