@@ -140,6 +140,14 @@ return [
      */
     'flatten_deep_query_parameters' => true,
 
+    /**
+     * Determines the default documented array query parameter serialization.
+     *
+     * When `query_array_parameter_explode` is `true`, Scramble relies on OpenAPI defaults (`style: form` and `explode: true`).
+     * When `query_array_parameter_explode` is `false`, Scramble will document array query parameters with `style: form` and `explode: false`.
+     */
+    'query_array_parameter_explode' => true,
+
     'middleware' => [
         'web',
         RestrictedDocsAccess::class,

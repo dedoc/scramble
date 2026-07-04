@@ -6,6 +6,8 @@ use Dedoc\Scramble\Attributes\Example;
 use Dedoc\Scramble\Attributes\IgnoreParam;
 use Dedoc\Scramble\Attributes\MissingValue;
 use Dedoc\Scramble\Attributes\Parameter as ParameterAttribute;
+use Dedoc\Scramble\Attributes\QueryParameter as QueryParameterAttribute;
+use Dedoc\Scramble\Attributes\QueryParameterStyle;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\MissingValue as OpenApiMissingValue;
 use Dedoc\Scramble\Support\Generator\Parameter;
@@ -109,18 +111,21 @@ class AttributesParametersExtractor implements ParameterExtractor
     private function createParameter(array $extractedParameters, ParameterAttribute $attribute, array $attributeArguments): Parameter
     {
         $attributeParameter = $this->createParameterFromAttribute($attribute);
+        $namedAttributes = $this->createNamedAttributes($attribute::class, $attributeArguments);
 
         if (! $attribute->infer) {
+            $attributeParameter->setAttribute('serializationInferenceEligible', false);
+
             return $attributeParameter;
         }
 
         if (! $inferredParameter = $this->getParameterFromAutomaticallyInferred($extractedParameters, $attribute->in, $attribute->name)) {
+            $attributeParameter->setAttribute('serializationInferenceEligible', false);
+
             return $attributeParameter;
         }
 
         $parameter = deep_copy($inferredParameter);
-
-        $namedAttributes = $this->createNamedAttributes($attribute::class, $attributeArguments);
 
         foreach ($namedAttributes as $name => $attrValue) {
             if ($name === 'in' || $name === 'name') {
@@ -162,6 +167,8 @@ class AttributesParametersExtractor implements ParameterExtractor
             $parameter->setAttribute('nonBody', $attributeParameter->getAttribute('nonBody'));
         }
 
+        $this->applyQueryParameterSerialization($parameter, $attribute, $namedAttributes);
+
         return $parameter;
     }
 
@@ -200,7 +207,36 @@ class AttributesParametersExtractor implements ParameterExtractor
             $type->format = $attribute->format;
         }
 
+        $this->applyQueryParameterSerialization($parameter, $attribute);
+
         return $parameter;
+    }
+
+    private function applyQueryParameterSerialization(Parameter $parameter, ParameterAttribute $attribute, array $namedAttributes = []): void
+    {
+        if (! $attribute instanceof QueryParameterAttribute) {
+            return;
+        }
+
+        if (array_key_exists('style', $namedAttributes) || $attribute->style !== null) {
+            $style = $attribute->style?->value;
+
+            $parameter->style = $style;
+
+            if ($style === QueryParameterStyle::DeepObject->value) {
+                $parameter->explode = true;
+            }
+        }
+
+        if (array_key_exists('explode', $namedAttributes) || $attribute->explode !== null) {
+            $parameter->explode = $attribute->style === QueryParameterStyle::DeepObject
+                ? true
+                : $attribute->explode;
+        }
+
+        if (array_key_exists('allowReserved', $namedAttributes) || $attribute->allowReserved !== null) {
+            $parameter->allowReserved = $attribute->allowReserved;
+        }
     }
 
     /**

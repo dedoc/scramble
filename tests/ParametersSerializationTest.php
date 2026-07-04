@@ -49,3 +49,20 @@ it('checks return type of param when "style" and "explode" not specified', funct
         ],
     ]);
 });
+
+it('checks return type of param when "allowReserved" specified', function () {
+    $type = new StringType;
+
+    $parameter = new Parameter('filter', 'query');
+    $parameter->setSchema(Schema::fromType($type));
+    $parameter->setAllowReserved(true);
+
+    expect($parameter->toArray())->toBe([
+        'name' => 'filter',
+        'in' => 'query',
+        'schema' => [
+            'type' => 'string',
+        ],
+        'allowReserved' => true,
+    ]);
+});

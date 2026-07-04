@@ -182,10 +182,53 @@ class RequestBodyExtension extends OperationExtension
     protected function prepareQueryParams(array $params): array
     {
         return $this->unescapeEscapedDotNamedParameters(
-            $this->config->get('flatten_deep_query_parameters', true)
-                ? $this->convertDotNamedParamsToFlatQueryParams($params)
-                : $this->convertDotNamedParamsToComplexStructures($params)
+            $this->applyQueryParameterSerialization(
+                $this->config->get('flatten_deep_query_parameters', true)
+                    ? $this->convertDotNamedParamsToFlatQueryParams($params)
+                    : $this->convertDotNamedParamsToComplexStructures($params)
+            )
         );
+    }
+
+    /**
+     * @param  Parameter[]  $params
+     * @return Parameter[]
+     */
+    protected function applyQueryParameterSerialization(array $params): array
+    {
+        $arrayExplode = $this->config->get('query_array_parameter_explode', true);
+        $deepQueryObjects = ! $this->config->get('flatten_deep_query_parameters', true);
+
+        return array_map(function (Parameter $parameter) use ($arrayExplode, $deepQueryObjects) {
+            if (! $parameter->getAttribute('serializationInferenceEligible', true)) {
+                return $parameter;
+            }
+
+            if ($parameter->style === 'deepObject') {
+                $parameter->explode = true;
+
+                return $parameter;
+            }
+
+            if ($deepQueryObjects && $parameter->style === null && $parameter->explode === null && $parameter->schema?->type?->type === 'object') {
+                $parameter->style = 'deepObject';
+                $parameter->explode = true;
+
+                return $parameter;
+            }
+
+            if (
+                ! $arrayExplode
+                && $parameter->style === null
+                && $parameter->explode === null
+                && $parameter->schema?->type?->type === 'array'
+            ) {
+                $parameter->style = 'form';
+                $parameter->explode = false;
+            }
+
+            return $parameter;
+        }, $params);
     }
 
     /**

@@ -656,6 +656,7 @@ it('documents deep query parameters without flattening', function () {
         ->toBe([
             'name' => 'filter',
             'in' => 'query',
+            'style' => 'deepObject',
             'schema' => [
                 'type' => 'object',
                 'properties' => [
@@ -664,6 +665,7 @@ it('documents deep query parameters without flattening', function () {
                     ],
                 ],
             ],
+            'explode' => true,
         ]);
 });
 
@@ -783,6 +785,26 @@ it('documents array query parameters as arrays of some type', function () {
                     'type' => 'string',
                 ],
             ],
+        ]);
+});
+
+it('documents inferred array query parameters with form style when explode config disabled', function () {
+    config()->set('scramble.query_array_parameter_explode', false);
+
+    $document = generateForRoute(fn () => RouteFacade::get('test', RequestBodyExtensionTest_ArrayQueryParametersController::class));
+
+    expect($document['paths']['/test']['get']['parameters'][0])
+        ->toBe([
+            'name' => 'tags[]',
+            'in' => 'query',
+            'style' => 'form',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'string',
+                ],
+            ],
+            'explode' => false,
         ]);
 });
 class RequestBodyExtensionTest_ArrayQueryParametersController

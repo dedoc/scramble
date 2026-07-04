@@ -18,6 +18,9 @@ class QueryParameter extends Parameter
         mixed $default = new MissingValue,
         mixed $example = new MissingValue,
         array $examples = [],
+        public readonly ?QueryParameterStyle $style = null,
+        public readonly ?bool $explode = null,
+        public readonly ?bool $allowReserved = null,
     ) {
         parent::__construct('query', $name, $description, $required, $deprecated, $type, $format, $infer, $default, $example, $examples);
     }

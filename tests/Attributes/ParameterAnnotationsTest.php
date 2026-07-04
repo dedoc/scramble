@@ -9,6 +9,7 @@ use Dedoc\Scramble\Attributes\IgnoreParam;
 use Dedoc\Scramble\Attributes\Parameter;
 use Dedoc\Scramble\Attributes\PathParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
+use Dedoc\Scramble\Attributes\QueryParameterStyle;
 use Dedoc\Scramble\Attributes\SchemaName;
 use Dedoc\Scramble\Generator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -247,6 +248,72 @@ it('reads QueryParameter attribute from FormRequest class for GET requests', fun
 
     expect($parameterNames)->toContain('search');
 });
+
+it('supports explicit query serialization attributes', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->get('api/test', ExplicitQuerySerializationController_ParameterAnnotationsTest::class));
+
+    expect($openApi['paths']['/test']['get']['parameters'][0])
+        ->toBe([
+            'name' => 'search',
+            'in' => 'query',
+            'style' => 'form',
+            'schema' => [
+                'type' => 'string',
+            ],
+            'explode' => true,
+            'allowReserved' => true,
+        ]);
+});
+
+it('supports explicit query explode false', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->get('api/test', ExplicitQueryExplodeFalseController_ParameterAnnotationsTest::class));
+
+    expect($openApi['paths']['/test']['get']['parameters'][0])
+        ->toBe([
+            'name' => 'tags[]',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'string',
+                ],
+            ],
+            'explode' => false,
+        ]);
+});
+
+it('ignores deepObject query serialization when query parameters are flattened', function () {
+    $openApi = generateForRoute(fn (Router $r) => $r->get('api/test', DeepObjectQuerySerializationController_ParameterAnnotationsTest::class));
+
+    expect($openApi['paths']['/test']['get']['parameters'][0])
+        ->toBe([
+            'name' => 'filter[accountable]',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'integer',
+            ],
+        ]);
+});
+
+it('lets explicit query serialization override inferred array config', function () {
+    config()->set('scramble.query_array_parameter_explode', false);
+
+    $openApi = generateForRoute(fn (Router $r) => $r->get('api/test', OverrideArraySerializationController_ParameterAnnotationsTest::class));
+
+    expect($openApi['paths']['/test']['get']['parameters'][0])
+        ->toBe([
+            'name' => 'tags[]',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'string',
+                ],
+            ],
+            'explode' => true,
+        ]);
+});
+
 #[QueryParameter('search', description: 'Search term')]
 class QueryParameterOnFormRequestFormRequest_ParameterAnnotationsTest extends FormRequest
 {
@@ -258,6 +325,46 @@ class QueryParameterOnFormRequestFormRequest_ParameterAnnotationsTest extends Fo
 class QueryParameterOnFormRequestController_ParameterAnnotationsTest
 {
     public function __invoke(QueryParameterOnFormRequestFormRequest_ParameterAnnotationsTest $request) {}
+}
+
+class ExplicitQuerySerializationController_ParameterAnnotationsTest
+{
+    #[QueryParameter('search', type: 'string', infer: false, style: QueryParameterStyle::Form, explode: true, allowReserved: true)]
+    public function __invoke() {}
+}
+
+class ExplicitQueryExplodeFalseController_ParameterAnnotationsTest
+{
+    #[QueryParameter('tags', explode: false)]
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            'tags' => 'array',
+        ]);
+    }
+}
+
+class DeepObjectQuerySerializationController_ParameterAnnotationsTest
+{
+    #[QueryParameter('filter', style: QueryParameterStyle::DeepObject, explode: false)]
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            'filter' => 'array',
+            'filter.accountable' => 'integer',
+        ]);
+    }
+}
+
+class OverrideArraySerializationController_ParameterAnnotationsTest
+{
+    #[QueryParameter('tags', explode: true)]
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            'tags' => 'array',
+        ]);
+    }
 }
 
 it('uses SchemaName attribute on FormRequest as component schema name', function () {

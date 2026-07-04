@@ -20,6 +20,8 @@ class Parameter
 
     public ?bool $explode = null;
 
+    public ?bool $allowReserved = null;
+
     /**
      * Possible values are "simple", "label", "matrix", "form", "spaceDelimited", "pipeDelimited" or "deepObject".
      *
@@ -90,6 +92,9 @@ class Parameter
             ! is_null($this->explode) ? [
                 'explode' => $this->explode,
             ] : [],
+            ! is_null($this->allowReserved) ? [
+                'allowReserved' => $this->allowReserved,
+            ] : [],
             $examples ? ['examples' => $examples] : [],
             $this->extensionPropertiesToArray(),
         );
@@ -143,6 +148,13 @@ class Parameter
     public function setStyle(string $style): self
     {
         $this->style = $style;
+
+        return $this;
+    }
+
+    public function setAllowReserved(?bool $allowReserved): self
+    {
+        $this->allowReserved = $allowReserved;
 
         return $this;
     }
