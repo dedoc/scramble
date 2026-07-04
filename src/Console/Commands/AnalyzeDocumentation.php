@@ -4,8 +4,9 @@ namespace Dedoc\Scramble\Console\Commands;
 
 use Dedoc\Scramble\Console\Commands\Components\Block;
 use Dedoc\Scramble\Console\Commands\Components\TermsOfContentItem;
-use Dedoc\Scramble\Diagnostics\CodedDiagnostic;
-use Dedoc\Scramble\Diagnostics\Diagnostic;
+use Dedoc\Scramble\Contracts\Diagnostics\CodedDiagnostic;
+use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
+use Dedoc\Scramble\Contracts\Diagnostics\WithCodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Exceptions\ConsoleRenderable;
 use Dedoc\Scramble\Generator;
@@ -50,10 +51,7 @@ class AnalyzeDocumentation extends Command
                 return strcmp($a, $b);
             })
             ->each(function (Collection $routeDiagnostics, string $routeKey) {
-                if ($routeKey !== '') {
-                    return;
-                }
-                $this->renderRouteDiagnosticsGroup($routeDiagnostics, $routeKey);
+                $this->renderDiagnosticsGroup($routeDiagnostics, $routeKey);
             });
 
         $errorCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)->count();
@@ -93,6 +91,7 @@ class AnalyzeDocumentation extends Command
     private function groupDiagnosticsByRoute(Collection $diagnostics): Collection
     {
         return $diagnostics->groupBy(function (Diagnostic $d) {
+            return '';
             $route = $d->route();
 
             return $route ? $this->getRouteKey($route) : '';
@@ -100,15 +99,32 @@ class AnalyzeDocumentation extends Command
     }
 
     /**
-     * @param  Collection<int, Diagnostic>  $routeDiagnostics
+     * @param  Collection<int, Diagnostic>  $diagnostics
      */
-    private function renderRouteDiagnosticsGroup(Collection $routeDiagnostics, string $routeKey): void
+    private function renderDiagnosticsGroup(Collection $diagnostics, string $groupKey): void
     {
-        if ($routeKey !== '') {
-            $this->renderRouteDiagnosticsHeader($routeDiagnostics);
+        if ($groupKey === '') {
+            $diagnostics
+                ->groupBy(fn (Diagnostic $d) => $d->context() ?: 'General')
+                ->sortKeys()
+                ->each(function (Collection $contextDiagnostics, string $context) {
+                    $context = Str::replace(base_path().DIRECTORY_SEPARATOR, '', $context);
+
+                    $this->line("<options=bold>{$context}</>");
+                    $this->line('');
+
+                    $contextDiagnostics->each(function (Diagnostic $d) {
+                        $this->renderDiagnosticEntry($d);
+                        $this->line('');
+                    });
+                });
+
+            return;
         }
 
-        $byCategory = $routeDiagnostics->groupBy(fn (Diagnostic $d) => $d->category() ?: 'General')->sortKeys();
+        $this->renderRouteDiagnosticsHeader($diagnostics);
+
+        $byCategory = $diagnostics->groupBy(fn (Diagnostic $d) => $d->category() ?: 'General')->sortKeys();
 
         $byCategory->each(function (Collection $categoryDiagnostics, string $category) {
             $this->line("<options=bold>{$category}</>");
@@ -122,11 +138,11 @@ class AnalyzeDocumentation extends Command
     }
 
     /**
-     * @param  Collection<int, Diagnostic>  $categoryDiagnostics
+     * @param  Collection<int, Diagnostic>  $diagnostics
      */
-    private function renderSeveritySection(Collection $categoryDiagnostics, DiagnosticSeverity $severity, string $label): void
+    private function renderSeveritySection(Collection $diagnostics, DiagnosticSeverity $severity, string $label): void
     {
-        $section = $categoryDiagnostics->filter(fn (Diagnostic $d) => $d->severity() === $severity);
+        $section = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === $severity);
         if ($section->isEmpty()) {
             return;
         }
@@ -134,16 +150,9 @@ class AnalyzeDocumentation extends Command
         $this->line("{$label} ({$section->count()})");
         $this->line('');
 
-        $byContext = $section->groupBy(fn (Diagnostic $d) => $d->context() ?: 'General')->sortKeys();
-
-        $byContext->each(function (Collection $items, string $context) {
-            $this->line("  {$context}: ");
+        $section->each(function (Diagnostic $d) {
+            $this->renderDiagnosticEntry($d);
             $this->line('');
-
-            $items->each(function (Diagnostic $d) {
-                $this->renderDiagnosticEntry($d);
-                $this->line('');
-            });
         });
     }
 
@@ -188,24 +197,29 @@ class AnalyzeDocumentation extends Command
         $pad = 4;
 
         if ($d instanceof CodedDiagnostic) {
+            if ($d instanceof WithCodeLocation) {
+                $this->output->writeln('    --> line '.$d->location->line.' ['.$d->code().']: '.$d->message());
+            }
+
             if (method_exists($d, 'render')) {
                 $d->render($this->output);
-                return;
+            } else {
+                $message = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $d->message());
+                $lines = explode("\n", $message);
+                $first = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $lines[0]);
+                $continuationLines = array_slice($lines, 1);
+
+                (new Block(
+                    "<options=bold>[{$d->code()}] {$first}</>",
+                    $pad,
+                ))->render($this->output);
+
+                foreach ($continuationLines as $line) {
+                    (new Block($line, $pad))->render($this->output);
+                }
             }
 
-            $message = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $d->message());
-            $lines = explode("\n", $message);
-            $first = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $lines[0]);
-            $continuationLines = array_slice($lines, 1);
-
-            (new Block(
-                "<options=bold>[{$d->code()}] {$first}</>",
-                $pad,
-            ))->render($this->output);
-
-            foreach ($continuationLines as $line) {
-                (new Block($line, $pad))->render($this->output);
-            }
+            $this->output->writeln('');
 
             if ($d->tip() !== '') {
                 (new Block("Tip: {$d->tip()}", $pad))->render($this->output);

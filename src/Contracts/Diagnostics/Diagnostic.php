@@ -1,7 +1,8 @@
 <?php
 
-namespace Dedoc\Scramble\Diagnostics;
+namespace Dedoc\Scramble\Contracts\Diagnostics;
 
+use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Illuminate\Routing\Route;
 use Throwable;
 

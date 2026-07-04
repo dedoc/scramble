@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
+use Dedoc\Scramble\Support\RouteInfo;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\NodeFinder;
@@ -17,6 +18,7 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
         private ClassReflector $classReflector,
         private string $method,
         private DiagnosticsCollector $diagnostics,
+        private RouteInfo $routeInfo,
     ) {
         $this->diagnostics = $diagnostics->forContext('ComposedFormRequestRulesEvaluator');
     }
@@ -35,7 +37,7 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
 
         $evaluators = [
             new FormRequestRulesEvaluator($this->classReflector, $this->method, $this->diagnostics),
-            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className, $rulesMethod->getFunctionLikeDefinition()->getScope(), $this->diagnostics),
+            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className, $rulesMethod->getFunctionLikeDefinition()->getScope(), $this->diagnostics, $this->routeInfo),
         ];
 
         $exceptions = [];

@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Diagnostics;
 
+use Dedoc\Scramble\Contracts\Diagnostics\CodedDiagnostic;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Exception;
 use Illuminate\Routing\Route;

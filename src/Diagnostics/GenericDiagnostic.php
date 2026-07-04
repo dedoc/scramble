@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Diagnostics;
 
+use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
 use Dedoc\Scramble\Diagnostics\ValidationRules\Vr003AllEvaluatorsFailedDiagnostic;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
@@ -19,6 +20,11 @@ class GenericDiagnostic implements Diagnostic
         private ?string $category = null,
         private ?string $context = null,
     ) {}
+
+    public function key(): string
+    {
+        return $this->context() ?: '';
+    }
 
     public function message(): string
     {

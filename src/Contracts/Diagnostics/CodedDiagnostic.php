@@ -1,6 +1,6 @@
 <?php
 
-namespace Dedoc\Scramble\Diagnostics;
+namespace Dedoc\Scramble\Contracts\Diagnostics;
 
 interface CodedDiagnostic extends Diagnostic
 {

@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Diagnostics;
 
 use ArrayObject;
+use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Throwable;

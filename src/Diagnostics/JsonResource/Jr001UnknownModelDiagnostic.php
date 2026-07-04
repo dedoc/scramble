@@ -3,11 +3,11 @@
 namespace Dedoc\Scramble\Diagnostics\JsonResource;
 
 use Dedoc\Scramble\Console\Commands\Components\Code;
+use Dedoc\Scramble\Contracts\Diagnostics\WithCodeLocation;
 use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
 use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\Concerns\HasCodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
-use Dedoc\Scramble\Diagnostics\WithCodeLocation;
 use Illuminate\Console\OutputStyle;
 
 class Jr001UnknownModelDiagnostic extends AbstractCodedDiagnostic implements WithCodeLocation
@@ -21,7 +21,7 @@ class Jr001UnknownModelDiagnostic extends AbstractCodedDiagnostic implements Wit
         $location = CodeLocation::fromReflection(new \ReflectionClass($resourceClass));
 
         $diagnostic = (new self(
-            "Cannot infer the underlying model type for JSON resource [$resourceClass]. Model-dependent fields will be documented as `string`.",
+            'cannot infer the resource model',
             DiagnosticSeverity::Warning,
             category: 'JSON resources',
             context: $location->file,

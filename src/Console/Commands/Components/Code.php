@@ -53,25 +53,6 @@ class Code implements Component
         return $this;
     }
 
-    public function linesBeforeFirst(string $content): self
-    {
-        $fileLines = explode("\n", file_get_contents($this->filePath));
-        $lineNumber = $this->line;
-
-        while ($lineNumber > 1) {
-            $line = $fileLines[$lineNumber - 1];
-            if (str_contains($line, $content)) {
-                break;
-            }
-
-            $lineNumber--;
-        }
-
-        $this->linesBefore = $this->line - $lineNumber;
-
-        return $this;
-    }
-
     private function doAnnotate(string $content): string
     {
         $lines = $this->insertAnnotation(

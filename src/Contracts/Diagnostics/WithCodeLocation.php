@@ -1,6 +1,8 @@
 <?php
 
-namespace Dedoc\Scramble\Diagnostics;
+namespace Dedoc\Scramble\Contracts\Diagnostics;
+
+use Dedoc\Scramble\Diagnostics\CodeLocation;
 
 interface WithCodeLocation
 {
