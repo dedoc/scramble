@@ -29,7 +29,7 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic imp
         $location = self::findVarTagLocation(CodeLocation::fromArrayItemType($item));
 
         $diagnostic = (new self(
-            'redundant `'.self::VAR_TAG."` annotation",
+            'redundant `'.self::VAR_TAG.'` annotation',
             DiagnosticSeverity::Warning,
             category: 'PHPDoc',
             context: $location?->file,

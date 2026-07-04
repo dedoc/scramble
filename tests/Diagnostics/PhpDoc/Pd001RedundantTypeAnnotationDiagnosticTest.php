@@ -60,11 +60,11 @@ it('renders PD001 output when analyzing documentation', function () {
             : putenv("COLUMNS={$previousColumns}");
     }
 
-//    $expectedDiagnosticOutput = <<<EOL
-//    [PD001] Redundant `@var` type annotation on array item [`name`]: the type is already inferred as [`string`].
-//    Tip: Remove the `@var` type annotation and keep the description, `@format`, `@example`, or other tags if needed. Scramble infers the type from the expression automatically.
-//    Docs: https://scramble.dedoc.co/errors#pd001
-//EOL;
+    //    $expectedDiagnosticOutput = <<<EOL
+    //    [PD001] Redundant `@var` type annotation on array item [`name`]: the type is already inferred as [`string`].
+    //    Tip: Remove the `@var` type annotation and keep the description, `@format`, `@example`, or other tags if needed. Scramble infers the type from the expression automatically.
+    //    Docs: https://scramble.dedoc.co/errors#pd001
+    // EOL;
 
     dd($output);
 

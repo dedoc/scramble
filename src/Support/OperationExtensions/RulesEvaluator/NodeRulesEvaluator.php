@@ -40,7 +40,7 @@ class NodeRulesEvaluator implements RulesEvaluator
         private DiagnosticsCollector $diagnostics,
         private RouteInfo $routeInfo,
     ) {
-        //$this->diagnostics = $diagnostics->forContext('NodeRulesEvaluator');
+        // $this->diagnostics = $diagnostics->forContext('NodeRulesEvaluator');
     }
 
     public function handle(): array
