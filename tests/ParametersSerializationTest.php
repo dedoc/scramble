@@ -17,6 +17,7 @@ it('checks return type of param when "style" and "explode" specified', function 
         'name' => 'includes',
         'in' => 'query',
         'style' => 'form',
+        'explode' => false,
         'schema' => [
             'type' => 'string',
             'enum' => [
@@ -25,7 +26,6 @@ it('checks return type of param when "style" and "explode" specified', function 
                 'condition',
             ],
         ],
-        'explode' => false,
     ]);
 });
 
@@ -60,9 +60,9 @@ it('checks return type of param when "allowReserved" specified', function () {
     expect($parameter->toArray())->toBe([
         'name' => 'filter',
         'in' => 'query',
+        'allowReserved' => true,
         'schema' => [
             'type' => 'string',
         ],
-        'allowReserved' => true,
     ]);
 });

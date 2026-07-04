@@ -24,6 +24,7 @@ test('extracts includes parameter', function () {
     expect($parameters->firstWhere('name', 'include'))->toBe([
         'name' => 'include',
         'in' => 'query',
+        'explode' => false,
         'schema' => [
             'type' => 'array',
             'items' => [
@@ -34,7 +35,6 @@ test('extracts includes parameter', function () {
                 ],
             ],
         ],
-        'explode' => false,
     ]);
 });
 
@@ -48,6 +48,7 @@ test('extracts includes parameter when resource transformed to response', functi
     expect($parameters->firstWhere('name', 'include'))->toBe([
         'name' => 'include',
         'in' => 'query',
+        'explode' => false,
         'schema' => [
             'type' => 'array',
             'items' => [
@@ -58,7 +59,6 @@ test('extracts includes parameter when resource transformed to response', functi
                 ],
             ],
         ],
-        'explode' => false,
     ]);
 });
 
@@ -72,6 +72,7 @@ test('extracts fields parameter', function () {
     expect($parameters->firstWhere('name', 'fields[sample_post_resource__json_apis]'))->toBe([
         'name' => 'fields[sample_post_resource__json_apis]',
         'in' => 'query',
+        'explode' => false,
         'schema' => [
             'type' => 'array',
             'items' => [
@@ -81,7 +82,6 @@ test('extracts fields parameter', function () {
                 ],
             ],
         ],
-        'explode' => false,
     ]);
 });
 /**

@@ -256,12 +256,12 @@ it('supports explicit query serialization attributes', function () {
         ->toBe([
             'name' => 'search',
             'in' => 'query',
+            'allowReserved' => true,
             'style' => 'form',
+            'explode' => true,
             'schema' => [
                 'type' => 'string',
             ],
-            'explode' => true,
-            'allowReserved' => true,
         ]);
 });
 
@@ -272,13 +272,13 @@ it('supports explicit query explode false', function () {
         ->toBe([
             'name' => 'tags[]',
             'in' => 'query',
+            'explode' => false,
             'schema' => [
                 'type' => 'array',
                 'items' => [
                     'type' => 'string',
                 ],
             ],
-            'explode' => false,
         ]);
 });
 
@@ -304,13 +304,13 @@ it('lets explicit query serialization override inferred array config', function 
         ->toBe([
             'name' => 'tags[]',
             'in' => 'query',
+            'explode' => true,
             'schema' => [
                 'type' => 'array',
                 'items' => [
                     'type' => 'string',
                 ],
             ],
-            'explode' => true,
         ]);
 });
 

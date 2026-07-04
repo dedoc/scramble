@@ -69,8 +69,13 @@ class Parameter
             'description' => $this->description,
             'deprecated' => $this->deprecated,
             'allowEmptyValue' => $this->allowEmptyValue,
+            'allowReserved' => $this->allowReserved,
             'style' => $this->style,
         ]);
+
+        if ($this->explode !== null) {
+            $result['explode'] = $this->explode;
+        }
 
         if ($this->schema) {
             $result['schema'] = $this->schema->toArray();
@@ -89,12 +94,6 @@ class Parameter
         return array_merge(
             $result,
             $this->example instanceof MissingValue ? [] : ['example' => $this->example],
-            ! is_null($this->explode) ? [
-                'explode' => $this->explode,
-            ] : [],
-            ! is_null($this->allowReserved) ? [
-                'allowReserved' => $this->allowReserved,
-            ] : [],
             $examples ? ['examples' => $examples] : [],
             $this->extensionPropertiesToArray(),
         );

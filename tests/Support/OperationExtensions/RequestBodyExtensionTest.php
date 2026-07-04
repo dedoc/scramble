@@ -657,6 +657,7 @@ it('documents deep query parameters without flattening', function () {
             'name' => 'filter',
             'in' => 'query',
             'style' => 'deepObject',
+            'explode' => true,
             'schema' => [
                 'type' => 'object',
                 'properties' => [
@@ -665,7 +666,6 @@ it('documents deep query parameters without flattening', function () {
                     ],
                 ],
             ],
-            'explode' => true,
         ]);
 });
 
@@ -798,13 +798,13 @@ it('documents inferred array query parameters with form style when explode confi
             'name' => 'tags[]',
             'in' => 'query',
             'style' => 'form',
+            'explode' => false,
             'schema' => [
                 'type' => 'array',
                 'items' => [
                     'type' => 'string',
                 ],
             ],
-            'explode' => false,
         ]);
 });
 class RequestBodyExtensionTest_ArrayQueryParametersController
