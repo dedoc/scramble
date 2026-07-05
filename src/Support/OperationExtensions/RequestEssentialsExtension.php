@@ -223,11 +223,11 @@ class RequestEssentialsExtension extends OperationExtension
         $reflection = $routeInfo->reflectionAction();
 
         $methodClassGroupAttributes = $reflection instanceof ReflectionMethod
-            ? $reflection->getDeclaringClass()->getAttributes(Group::class)
+            ? $reflection->getDeclaringClass()->getAttributes(Group::class, ReflectionAttribute::IS_INSTANCEOF)
             : [];
 
         return [
-            ...($reflection?->getAttributes(Group::class) ?? []),
+            ...($reflection?->getAttributes(Group::class, ReflectionAttribute::IS_INSTANCEOF) ?? []),
             ...$methodClassGroupAttributes,
         ];
     }
