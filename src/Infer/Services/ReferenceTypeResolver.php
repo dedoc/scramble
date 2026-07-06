@@ -36,6 +36,7 @@ use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeTraverser;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
@@ -88,26 +89,38 @@ class ReferenceTypeResolver
             return new UnknownType('self reference');
         }
 
-        return $this->withNullsafeShortCircuitType($t, $resolved);
+        return $this->withNullsafeShortCircuitType($t, $resolved, $scope);
     }
 
-    private function withNullsafeShortCircuitType(Type $original, Type $resolved): Type
+    private function withNullsafeShortCircuitType(Type $original, Type $resolved, Scope $scope): Type
     {
-        if (! $this->hasNullsafeShortCircuitType($original)) {
+        if (! $this->hasNullsafeShortCircuitType($original, $scope)) {
             return $resolved;
         }
 
         return Union::wrap([$resolved, new NullType]);
     }
 
-    private function hasNullsafeShortCircuitType(Type $original): bool
+    private function hasNullsafeShortCircuitType(Type $original, Scope $scope): bool
     {
         if ($original instanceof MethodCallReferenceType) {
-            return $original->isNullsafe || $this->hasNullsafeShortCircuitType($original->callee);
+            if ($original->isNullsafe) {
+                return TypeHelper::canContainNull(
+                    $this->resolve($scope, $original->callee),
+                );
+            }
+
+            return $this->hasNullsafeShortCircuitType($original->callee, $scope);
         }
 
         if ($original instanceof PropertyFetchReferenceType) {
-            return $original->isNullsafe || $this->hasNullsafeShortCircuitType($original->object);
+            if ($original->isNullsafe) {
+                return TypeHelper::canContainNull(
+                    $this->resolve($scope, $original->object),
+                );
+            }
+
+            return $this->hasNullsafeShortCircuitType($original->object, $scope);
         }
 
         return false;
