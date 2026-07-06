@@ -22,6 +22,7 @@ use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\NeverType;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
@@ -87,7 +88,29 @@ class ReferenceTypeResolver
             return new UnknownType('self reference');
         }
 
-        return $resolved;
+        return $this->withNullsafeShortCircuitType($t, $resolved);
+    }
+
+    private function withNullsafeShortCircuitType(Type $original, Type $resolved): Type
+    {
+        if (! $this->hasNullsafeShortCircuitType($original)) {
+            return $resolved;
+        }
+
+        return Union::wrap([$resolved, new NullType]);
+    }
+
+    private function hasNullsafeShortCircuitType(Type $original): bool
+    {
+        if ($original instanceof MethodCallReferenceType) {
+            return $original->isNullsafe || $this->hasNullsafeShortCircuitType($original->callee);
+        }
+
+        if ($original instanceof PropertyFetchReferenceType) {
+            return $original->isNullsafe || $this->hasNullsafeShortCircuitType($original->object);
+        }
+
+        return false;
     }
 
     /**

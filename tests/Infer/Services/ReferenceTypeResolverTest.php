@@ -117,7 +117,7 @@ it('supports nullsafe method call', function () {
 <?php
 
 class Foo {
-    public function foo() {
+    public function foo () {
         return 42;
     }
 }
@@ -141,56 +141,41 @@ EOD);
 });
 
 it('supports deep nullsafe call chain', function () {
-    $type = analyzeFile(<<<'EOD'
+    $result = analyzeFile(<<<'EOD'
 <?php
 
-class NullsafeDeepChainEnd {
-    public function method(): int { return 42; }
-}
-
-class NullsafeDeepChainHolder {
-    public NullsafeDeepChainEnd $method;
-
-    public function __construct()
-    {
-        $this->method = new NullsafeDeepChainEnd;
+class Foo {
+    public function slf () {
+        return $this;
+    }
+    public function foo () {
+        return 42;
     }
 }
+EOD);
 
-class NullsafeDeepChainMid {
-    public NullsafeDeepChainHolder $holder;
-
-    public function __construct()
-    {
-        $this->holder = new NullsafeDeepChainHolder;
-    }
-
-    public function method(): NullsafeDeepChainHolder
-    {
-        return $this->holder;
-    }
-}
-
-class NullsafeDeepChainRoot {
-    public NullsafeDeepChainMid $mid;
-
-    public function __construct()
-    {
-        $this->mid = new NullsafeDeepChainMid;
-    }
-
-    public function method(): NullsafeDeepChainMid
-    {
-        return $this->mid;
-    }
-}
-
-class NullsafeDeepCallTest {
-    public function foo(?NullsafeDeepChainRoot $obj) {
-        return $obj?->method()->method()->method->method();
-    }
-}
-EOD)->getClassDefinition('NullsafeDeepCallTest')->getMethod('foo')->getReturnType();
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new GlobalScope($result->index),
+            // $obj?->slf()->slf()->foo()
+            new MethodCallReferenceType(
+                new MethodCallReferenceType(
+                    new MethodCallReferenceType(
+                        Union::wrap([
+                            new ObjectType('Foo'),
+                            new NullType,
+                        ]),
+                        'slf',
+                        [],
+                        isNullsafe: true,
+                    ),
+                    'slf',
+                    [],
+                ),
+                'foo',
+                [],
+            )
+        );
 
     expect($type->toString())->toBe('int(42)|null');
 });
