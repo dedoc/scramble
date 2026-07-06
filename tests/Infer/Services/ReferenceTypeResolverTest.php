@@ -129,7 +129,7 @@ EOD);
             new MethodCallReferenceType(
                 Union::wrap([
                     new ObjectType('Foo'),
-                    new NullType(),
+                    new NullType,
                 ]),
                 'foo',
                 [],
