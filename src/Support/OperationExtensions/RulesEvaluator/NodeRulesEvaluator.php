@@ -124,7 +124,6 @@ class NodeRulesEvaluator implements RulesEvaluator
                     );
                     $this->diagnostics->report(
                         Vr002NodeRulesEvaluationDiagnostic::fromThrowable($e)
-                            ->withAstNode($param)
                             ->withLocation($location)
                             ->withContext($location->file)
                             ->withMessage(fn ($originalMessage) => "Failed to evaluate parameter \${$param->var->name} ($originalMessage)")
