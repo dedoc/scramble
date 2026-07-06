@@ -197,7 +197,7 @@ class NodeRulesEvaluator implements RulesEvaluator
             return null;
         }
 
-        return (new ConstExprEvaluator(function ($expr) use ($expression, $variables) {
+        return (new ConstExprEvaluator(function ($expr) use ($variables) {
             $default = new stdClass;
 
             $evaluatedConstFetch = (new ConstFetchEvaluator([
