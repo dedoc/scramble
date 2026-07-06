@@ -2,87 +2,34 @@
 
 namespace Dedoc\Scramble\Diagnostics;
 
-use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
+use Dedoc\Scramble\Console\Commands\Components\Block;
 use Dedoc\Scramble\Diagnostics\ValidationRules\Vr003AllEvaluatorsFailedDiagnostic;
-use Dedoc\Scramble\Exceptions\RouteAware;
+use Dedoc\Scramble\Exceptions\ConsoleRenderable;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
-use Exception;
-use Illuminate\Routing\Route;
+use Illuminate\Console\OutputStyle;
+use Illuminate\Support\Str;
 use Throwable;
 
-class GenericDiagnostic implements Diagnostic
+class GenericDiagnostic extends AbstractDiagnostic
 {
-    public function __construct(
-        public string $message,
-        public DiagnosticSeverity $severity,
-        private ?Throwable $originException = null,
-        private ?Route $route = null,
-        private ?string $category = null,
-        private ?string $context = null,
-    ) {}
-
     public function key(): string
     {
         return $this->context() ?: '';
     }
 
-    public function message(): string
+    public function render(OutputStyle $style): void
     {
-        return $this->message;
-    }
+        $pad = 4;
+        $msg = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $this->message());
+        (new Block($msg, $pad))->render($style);
 
-    public function severity(): DiagnosticSeverity
-    {
-        return $this->severity;
-    }
-
-    public function route(): ?Route
-    {
-        return $this->route;
-    }
-
-    public function category(): ?string
-    {
-        return $this->category;
-    }
-
-    public function context(): ?string
-    {
-        return $this->context;
-    }
-
-    public function toException(): Throwable
-    {
-        $exception = $this->originException ?? new Exception($this->message);
-
-        if ($this->route) {
-            $exception = $exception instanceof RouteAware ? $exception->setRoute($this->route) : $exception;
+        $exception = $this->toException();
+        if ($exception instanceof ConsoleRenderable) {
+            $exception->renderInConsole($style);
         }
-
-        return $exception;
     }
 
-    public function withRoute(?Route $route): self
-    {
-        return new self($this->message, $this->severity, $this->originException, $route, $this->category, $this->context);
-    }
-
-    public function withCategory(?string $category): self
-    {
-        return new self($this->message, $this->severity, $this->originException, $this->route, $category, $this->context);
-    }
-
-    public function withContext(?string $context): self
-    {
-        return new self($this->message, $this->severity, $this->originException, $this->route, $this->category, $context);
-    }
-
-    public function withSeverity(DiagnosticSeverity $severity): self
-    {
-        return new self($this->message, $severity, $this->originException, $this->route, $this->category, $this->context);
-    }
-
-    public static function fromException(Throwable $exception): Diagnostic
+    public static function fromException(Throwable $exception): self|Vr003AllEvaluatorsFailedDiagnostic
     {
         if ($exception instanceof RulesEvaluationException) {
             return Vr003AllEvaluatorsFailedDiagnostic::fromRulesEvaluationException($exception);

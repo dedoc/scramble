@@ -35,7 +35,7 @@ it('reports JR001 when the underlying model type cannot be inferred', function (
         ->and($diagnostic->severity())->toBe(DiagnosticSeverity::Warning)
         ->and($diagnostic->category())->toBe('JSON resources')
         ->and($diagnostic->context())->toBe(Jr001UnknownModelDiagnosticTest_Resource::class)
-        ->and($diagnostic->message())->toContain(Jr001UnknownModelDiagnosticTest_Resource::class);
+        ->and($diagnostic->message())->toBe('cannot infer the resource model');
 });
 
 it('does not report JR001 when the model type is known via mixin', function () {

@@ -39,9 +39,7 @@ class NodeRulesEvaluator implements RulesEvaluator
         private Scope $scope,
         private DiagnosticsCollector $diagnostics,
         private RouteInfo $routeInfo,
-    ) {
-        // $this->diagnostics = $diagnostics->forContext('NodeRulesEvaluator');
-    }
+    ) {}
 
     public function handle(): array
     {
@@ -222,13 +220,10 @@ class NodeRulesEvaluator implements RulesEvaluator
                     line: $expr->getStartLine(),
                 );
 
-                dump([$this->className, $this->method, "Failed to evaluate expression `$code`"]);
-
                 $this->diagnostics->report(
                     Vr002NodeRulesEvaluationDiagnostic::fromThrowable($e)
-//                        ->withAstNode($param)
-                        ->withContext($location->file)
                         ->withLocation($location)
+                        ->withContext($location->file)
                         ->withMessage(fn ($originalMessage) => "Failed to evaluate expression `$code` ($originalMessage)")
                 );
 

@@ -5,7 +5,7 @@ namespace Dedoc\Scramble;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Support\Generator\OpenApi;
-use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
+use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Illuminate\Support\Collection;
 use ReflectionAttribute;
 
@@ -21,7 +21,6 @@ class OpenApiContext
         public Collection $groups = new Collection,
         public DiagnosticsCollector $diagnostics = new DiagnosticsCollector,
     ) {
-        /** @todo remove this part when code analyzer/type inference is more modular and created per open api generation */
-        ModelInfo::$diagnostics = $this->diagnostics;
+        ModelExtension::useDiagnostics($this->diagnostics);
     }
 }

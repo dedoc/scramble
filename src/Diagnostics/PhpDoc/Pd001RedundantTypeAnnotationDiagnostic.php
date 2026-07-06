@@ -61,15 +61,19 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic imp
         return 'https://scramble.dedoc.co/errors#pd001';
     }
 
-    public function render(OutputStyle $style): void
+    protected function renderBody(OutputStyle $style, int $pad): void
     {
-        if (! $this->location) {
-            $style->writeln('    '.$this->message);
+        if (! $this->location()) {
+            $this->renderMessageBlock($style, $pad);
 
             return;
         }
 
-        (new Code($this->location->file, $this->location->line, linesBefore: 0, linesAfter: $this->linesAfterPhpDoc()))
+        $location = $this->location();
+
+        $this->writeLocationHeader($style);
+
+        (new Code($location->file, $location->line, linesBefore: 0, linesAfter: $this->linesAfterPhpDoc()))
             ->annotate(self::VAR_TAG, "redundant. `$this->arrayItemKey` is inferred as `".$this->arrayItemType->value->toString().'`.')
             ->render($style);
     }
@@ -100,7 +104,7 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic imp
 
     private function linesAfterPhpDoc(): int
     {
-        if (! $this->location) {
+        if (! ($location = $this->location())) {
             return 0;
         }
 
@@ -114,6 +118,6 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic imp
             return 0;
         }
 
-        return $line - $this->location->line;
+        return $line - $location->line;
     }
 }

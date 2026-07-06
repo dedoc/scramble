@@ -15,9 +15,7 @@ class FormRequestRulesEvaluator implements RulesEvaluator
         private ClassReflector $classReflector,
         private string $method,
         private DiagnosticsCollector $diagnostics,
-    ) {
-        // $this->diagnostics = $diagnostics->forContext('FormRequestRulesEvaluator');
-    }
+    ) {}
 
     public function handle(): array
     {

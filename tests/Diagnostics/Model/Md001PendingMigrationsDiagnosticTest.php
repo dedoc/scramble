@@ -18,7 +18,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 it('reports MD001 via ModelInfo when the model table does not exist', function () {
     $context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
 
-    (new ModelInfo(Md001PendingMigrationsDiagnosticTest_Model::class))->handle();
+    (new ModelInfo(Md001PendingMigrationsDiagnosticTest_Model::class, $context->diagnostics))->handle();
 
     expect($context->diagnostics->diagnostics)->toHaveCount(1);
 

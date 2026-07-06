@@ -9,7 +9,6 @@ use Dedoc\Scramble\ScrambleServiceProvider;
 use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
-use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Routing\Route;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -45,7 +44,7 @@ class TestCase extends Orchestra
     {
         Context::reset();
 
-        ModelInfo::$diagnostics = null;
+        ModelExtension::useDiagnostics(null);
         ModelExtension::resetCache();
         JsonResourceHelper::$jsonResourcesModelTypesCache = [];
 

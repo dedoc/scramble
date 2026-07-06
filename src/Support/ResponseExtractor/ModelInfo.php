@@ -18,8 +18,6 @@ use UnitEnum;
  */
 class ModelInfo
 {
-    public static ?DiagnosticsCollector $diagnostics = null;
-
     protected $relationMethods = [
         'hasMany',
         'hasManyThrough',
@@ -35,7 +33,8 @@ class ModelInfo
     ];
 
     public function __construct(
-        private string $class
+        private string $class,
+        private ?DiagnosticsCollector $diagnostics = null,
     ) {}
 
     public function handle()
@@ -76,7 +75,7 @@ class ModelInfo
         $table = $model->getTable();
 
         if (! $schema->hasTable($table)) {
-            static::reportPendingMigrations($model);
+            $this->reportPendingMigrations($model);
 
             return $this->getVirtualAttributes($model, []);
         }
@@ -316,14 +315,13 @@ class ModelInfo
             : $rootNamespace.$model;
     }
 
-    /** @internal */
-    public static function reportPendingMigrations(Model $model): void
+    private function reportPendingMigrations(Model $model): void
     {
-        if (! static::$diagnostics) {
+        if (! $this->diagnostics) {
             return;
         }
 
-        static::$diagnostics->reportOnce(
+        $this->diagnostics->reportOnce(
             Md001PendingMigrationsDiagnostic::forModel($model::class, $model->getTable()),
         );
     }

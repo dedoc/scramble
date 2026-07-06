@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Contracts\Diagnostics;
 
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
+use Illuminate\Console\OutputStyle;
 use Illuminate\Routing\Route;
 use Throwable;
 
@@ -16,9 +17,9 @@ interface Diagnostic
 
     public function toException(): Throwable;
 
-    public function withRoute(?Route $route): self;
+    public function render(OutputStyle $style): void;
 
-    public function withSeverity(DiagnosticSeverity $severity): self;
+    public function withRoute(?Route $route): self;
 
     public function withCategory(?string $category): self;
 

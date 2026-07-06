@@ -24,7 +24,7 @@ class Jr001UnknownModelDiagnostic extends AbstractCodedDiagnostic implements Wit
             'cannot infer the resource model',
             DiagnosticSeverity::Warning,
             category: 'JSON resources',
-            context: $location->file,
+            context: $resourceClass,
         ))->withLocation($location);
 
         $diagnostic->resourceClass = $resourceClass;
@@ -47,15 +47,19 @@ class Jr001UnknownModelDiagnostic extends AbstractCodedDiagnostic implements Wit
         return 'https://scramble.dedoc.co/errors#jr001';
     }
 
-    public function render(OutputStyle $style): void
+    protected function renderBody(OutputStyle $style, int $pad): void
     {
-        if (! $this->location || ! $this->resourceClass) {
-            $style->writeln('    '.$this->message);
+        if (! $this->location() || ! $this->resourceClass) {
+            $this->renderMessageBlock($style, $pad);
 
             return;
         }
 
-        (new Code($this->location->file, $this->location->line, linesBefore: 0, linesAfter: 0))
+        $location = $this->location();
+
+        $this->writeLocationHeader($style);
+
+        (new Code($location->file, $location->line, linesBefore: 0, linesAfter: 0))
             ->annotate(
                 class_basename($this->resourceClass),
                 "cannot infer resource's model"

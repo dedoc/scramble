@@ -6,7 +6,6 @@ use ArrayObject;
 use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
-use Throwable;
 
 class DiagnosticsCollector
 {
@@ -55,17 +54,6 @@ class DiagnosticsCollector
             ->withContext($context);
 
         $this->diagnostics->push($diagnostic);
-    }
-
-    /**
-     * @return array<int, Throwable>
-     */
-    public function toExceptions(): array
-    {
-        return array_map(
-            fn (Diagnostic $d): Throwable => $d->toException(),
-            $this->diagnostics->all()
-        );
     }
 
     public function forRoute(Route $route): self

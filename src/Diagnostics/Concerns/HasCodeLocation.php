@@ -10,6 +10,11 @@ trait HasCodeLocation
 {
     public ?CodeLocation $location = null;
 
+    public function location(): ?CodeLocation
+    {
+        return $this->location;
+    }
+
     public function withLocation(?CodeLocation $location): static
     {
         $this->location = $location;

@@ -2,23 +2,15 @@
 
 namespace Dedoc\Scramble\Diagnostics;
 
+use Dedoc\Scramble\Console\Commands\Components\Block;
+use Dedoc\Scramble\Console\Commands\Components\Code;
 use Dedoc\Scramble\Contracts\Diagnostics\CodedDiagnostic;
-use Dedoc\Scramble\Exceptions\RouteAware;
-use Exception;
-use Illuminate\Routing\Route;
-use Throwable;
+use Dedoc\Scramble\Contracts\Diagnostics\WithCodeLocation;
+use Illuminate\Console\OutputStyle;
+use Illuminate\Support\Str;
 
-abstract class AbstractCodedDiagnostic implements CodedDiagnostic
+abstract class AbstractCodedDiagnostic extends AbstractDiagnostic implements CodedDiagnostic
 {
-    public function __construct(
-        protected string $message,
-        protected DiagnosticSeverity $severity = DiagnosticSeverity::Warning,
-        protected ?Throwable $originException = null,
-        protected ?Route $route = null,
-        protected ?string $category = null,
-        protected ?string $context = null,
-    ) {}
-
     abstract public function code(): string;
 
     abstract public function documentationUrl(): string;
@@ -33,29 +25,9 @@ abstract class AbstractCodedDiagnostic implements CodedDiagnostic
         return $this->code().'|'.($this->context() ?: '');
     }
 
-    public function message(): string
-    {
-        return $this->message;
-    }
-
-    public function severity(): DiagnosticSeverity
-    {
-        return $this->severity;
-    }
-
     protected static function defaultContext(): ?string
     {
         return null;
-    }
-
-    public function route(): ?Route
-    {
-        return $this->route;
-    }
-
-    public function category(): ?string
-    {
-        return $this->category;
     }
 
     public function context(): ?string
@@ -63,52 +35,56 @@ abstract class AbstractCodedDiagnostic implements CodedDiagnostic
         return $this->context ?? static::defaultContext();
     }
 
-    public function toException(): Throwable
+    public function render(OutputStyle $style): void
     {
-        $exception = $this->originException ?? new Exception($this->message);
+        $pad = 4;
 
-        if ($this->route) {
-            $exception = $exception instanceof RouteAware ? $exception->setRoute($this->route) : $exception;
+        $this->renderBody($style, $pad);
+
+        $style->writeln('');
+
+        if ($this->tip() !== '') {
+            (new Block("Tip: {$this->tip()}", $pad))->render($style);
         }
 
-        return $exception;
+        (new Block("Docs: {$this->documentationUrl()}", $pad))->render($style);
     }
 
-    public function withRoute(?Route $route): static
+    protected function renderBody(OutputStyle $style, int $pad): void
     {
-        $this->route = $route;
+        if ($this instanceof WithCodeLocation && ($location = $this->location())) {
+            $this->writeLocationHeader($style);
+            (new Code($location->file, $location->line))->render($style);
 
-        return $this;
+            return;
+        }
+
+        $this->renderMessageBlock($style, $pad);
     }
 
-    public function withSeverity(DiagnosticSeverity $severity): static
+    protected function writeLocationHeader(OutputStyle $style): void
     {
-        $this->severity = $severity;
+        if (! $this instanceof WithCodeLocation || ! ($location = $this->location())) {
+            return;
+        }
 
-        return $this;
+        $style->writeln("    --> line {$location->line} [{$this->code()}]: {$this->message()}");
     }
 
-    public function withCategory(?string $category): static
+    protected function renderMessageBlock(OutputStyle $style, int $pad): void
     {
-        $this->category = $category;
+        $message = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $this->message());
+        $lines = explode("\n", $message);
+        $first = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $lines[0]);
+        $continuationLines = array_slice($lines, 1);
 
-        return $this;
-    }
+        (new Block(
+            "<options=bold>[{$this->code()}] {$first}</>",
+            $pad,
+        ))->render($style);
 
-    public function withContext(?string $context): static
-    {
-        $this->context = $context;
-
-        return $this;
-    }
-
-    /**
-     * @param  string|callable(string): string  $message
-     */
-    public function withMessage(string|callable $message): static
-    {
-        $this->message = is_callable($message) ? $message($this->message) : $message;
-
-        return $this;
+        foreach ($continuationLines as $line) {
+            (new Block($line, $pad))->render($style);
+        }
     }
 }

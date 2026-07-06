@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Diagnostics\ValidationRules;
 use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
-use Illuminate\Routing\Route;
 use Throwable;
 
 class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
@@ -17,7 +16,7 @@ class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
         private array $exceptions,
         string $message,
         DiagnosticSeverity $severity = DiagnosticSeverity::Error,
-        ?Route $route = null,
+        ?\Illuminate\Routing\Route $route = null,
         ?string $category = null,
         ?string $context = null,
     ) {
@@ -47,16 +46,5 @@ class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
     public function toException(): Throwable
     {
         return RulesEvaluationException::fromExceptions($this->exceptions);
-    }
-
-    protected function newInstance(
-        string $message,
-        DiagnosticSeverity $severity,
-        ?Throwable $originException,
-        ?Route $route,
-        ?string $category,
-        ?string $context,
-    ): static {
-        return new self($this->exceptions, $message, $severity, $route, $category, $context);
     }
 }

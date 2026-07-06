@@ -19,9 +19,7 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
         private string $method,
         private DiagnosticsCollector $diagnostics,
         private RouteInfo $routeInfo,
-    ) {
-        // $this->diagnostics = $diagnostics->forContext('ComposedFormRequestRulesEvaluator');
-    }
+    ) {}
 
     public function handle(): array
     {
