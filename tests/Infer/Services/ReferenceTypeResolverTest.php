@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\Type\AbstractType;
 use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
@@ -79,7 +80,7 @@ it('support method calls on unions', function () {
 it('support method calls on unions with null', function () {
     $union = Union::wrap([
         new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class),
-        new \Dedoc\Scramble\Support\Type\NullType,
+        new NullType,
     ]);
 
     $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new MethodCallReferenceType(
@@ -109,6 +110,111 @@ it('infers paginator type through union service builder chain', function () {
     expect($type->toString())->toBe(
         'Illuminate\Pagination\LengthAwarePaginator<int, '.SampleUserModel::class.'>'
     );
+});
+
+it('supports nullsafe method call', function () {
+    $result = analyzeFile(<<<'EOD'
+<?php
+
+class Foo {
+    public function foo () {
+        return 42;
+    }
+}
+EOD);
+
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new GlobalScope($result->index),
+            new MethodCallReferenceType(
+                Union::wrap([
+                    new ObjectType('Foo'),
+                    new NullType,
+                ]),
+                'foo',
+                [],
+                isNullsafe: true,
+            )
+        );
+
+    expect($type->toString())->toBe('int(42)|null');
+});
+
+it('supports deep nullsafe call chain', function () {
+    $result = analyzeFile(<<<'EOD'
+<?php
+
+class Foo {
+    public function slf () {
+        return $this;
+    }
+    public function foo () {
+        return 42;
+    }
+}
+EOD);
+
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new GlobalScope($result->index),
+            // $obj?->slf()->slf()->foo()
+            new MethodCallReferenceType(
+                new MethodCallReferenceType(
+                    new MethodCallReferenceType(
+                        Union::wrap([
+                            new ObjectType('Foo'),
+                            new NullType,
+                        ]),
+                        'slf',
+                        [],
+                        isNullsafe: true,
+                    ),
+                    'slf',
+                    [],
+                ),
+                'foo',
+                [],
+            )
+        );
+
+    expect($type->toString())->toBe('int(42)|null');
+});
+
+it('supports deep nullsafe call chain when callee is not nullable for sure', function () {
+    $result = analyzeFile(<<<'EOD'
+<?php
+
+class Foo {
+    public function slf () {
+        return $this;
+    }
+    public function foo () {
+        return 42;
+    }
+}
+EOD);
+
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new GlobalScope($result->index),
+            // $obj?->slf()->slf()->foo()
+            new MethodCallReferenceType(
+                new MethodCallReferenceType(
+                    new MethodCallReferenceType(
+                        new ObjectType('Foo'),
+                        'slf',
+                        [],
+                        isNullsafe: true,
+                    ),
+                    'slf',
+                    [],
+                ),
+                'foo',
+                [],
+            )
+        );
+
+    expect($type->toString())->toBe('int(42)');
 });
 
 class ReferenceTypeResolverUnionServiceTest
@@ -147,7 +253,7 @@ it('support callable calls on unions with non-callable member', function () {
 it('support property fetches on unions with null', function () {
     $union = Union::wrap([
         new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class),
-        new \Dedoc\Scramble\Support\Type\NullType,
+        new NullType,
     ]);
 
     $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new PropertyFetchReferenceType(

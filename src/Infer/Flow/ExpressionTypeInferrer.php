@@ -29,6 +29,8 @@ use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PhpParser\Node as PhpParserNode;
 use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\NullsafeMethodCall;
+use PhpParser\Node\Expr\NullsafePropertyFetch;
 
 /**
  * @internal
@@ -104,10 +106,10 @@ class ExpressionTypeInferrer
 
         $type = match (true) {
             $expr instanceof Expr\New_ => $this->inferNewCall($expr, $variableTypeGetter),
-            $expr instanceof Expr\MethodCall => $this->inferMethodCall($expr, $variableTypeGetter),
+            $expr instanceof Expr\MethodCall || $expr instanceof NullsafeMethodCall => $this->inferMethodCall($expr, $variableTypeGetter),
             $expr instanceof Expr\StaticCall => $this->inferStaticCall($expr, $variableTypeGetter),
             $expr instanceof Expr\FuncCall => $this->inferFuncCall($expr, $variableTypeGetter),
-            $expr instanceof Expr\PropertyFetch => $this->inferPropertyFetch($expr, $variableTypeGetter),
+            $expr instanceof Expr\PropertyFetch || $expr instanceof NullsafePropertyFetch => $this->inferPropertyFetch($expr, $variableTypeGetter),
             /**
              * When `dim` is empty, it means that the context is setting – handling in AssignHandler.
              *
@@ -142,7 +144,7 @@ class ExpressionTypeInferrer
         );
     }
 
-    private function inferMethodCall(Expr\MethodCall $expr, Closure $variableTypeGetter): Type
+    private function inferMethodCall(Expr\MethodCall|NullsafeMethodCall $expr, Closure $variableTypeGetter): Type
     {
         // Only string method names support.
         if (! $expr->name instanceof PhpParserNode\Identifier) {
@@ -155,6 +157,7 @@ class ExpressionTypeInferrer
             $calleeType,
             $expr->name->name,
             $this->inferArgsTypes($expr->args, $variableTypeGetter),
+            isNullsafe: $expr instanceof NullsafeMethodCall,
         );
     }
 
@@ -195,7 +198,7 @@ class ExpressionTypeInferrer
         );
     }
 
-    private function inferPropertyFetch(Expr\PropertyFetch $expr, Closure $variableTypeGetter): Type
+    private function inferPropertyFetch(Expr\PropertyFetch|NullsafePropertyFetch $expr, Closure $variableTypeGetter): Type
     {
         // Only string prop names support.
         if (! $name = ($expr->name->name ?? null)) {
@@ -205,6 +208,7 @@ class ExpressionTypeInferrer
         return new PropertyFetchReferenceType(
             $this->infer($expr->var, $variableTypeGetter),
             $name,
+            isNullsafe: $expr instanceof NullsafePropertyFetch,
         );
     }
 
