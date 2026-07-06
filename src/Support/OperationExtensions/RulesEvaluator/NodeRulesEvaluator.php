@@ -2,12 +2,13 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
+use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
-use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
-use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
+use Dedoc\Scramble\Diagnostics\ValidationRules\Vr002NodeRulesEvaluationDiagnostic;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -37,6 +38,7 @@ class NodeRulesEvaluator implements RulesEvaluator
         private ?string $className,
         private Scope $scope,
         private DiagnosticsCollector $diagnostics,
+        private RouteInfo $routeInfo,
     ) {}
 
     public function handle(): array
@@ -50,7 +52,7 @@ class NodeRulesEvaluator implements RulesEvaluator
         } catch (Throwable $e) {
             throw RulesEvaluationException::fromExceptions([
                 self::class => $this->lastEvaluationException ?? $e,
-            ]);
+            ])->forDiagnostics($this->diagnostics);
         }
     }
 
@@ -114,7 +116,17 @@ class NodeRulesEvaluator implements RulesEvaluator
                         $param->var->name => $value,
                     ];
                 } catch (Throwable $e) {
-                    // @todo communicate warning
+                    $location = new CodeLocation(
+                        file: $this->routeInfo->reflectionAction()->getFileName(),
+                        line: $param->getStartLine(),
+                    );
+                    $this->diagnostics->report(
+                        Vr002NodeRulesEvaluationDiagnostic::fromThrowable($e)
+                            ->withLocation($location)
+                            ->withContext($location->file)
+                            ->withMessage(fn ($originalMessage) => "Failed to evaluate parameter \${$param->var->name} ($originalMessage)")
+                    );
+
                     return [
                         $param->var->name => new Optional(null),
                     ];
@@ -194,15 +206,25 @@ class NodeRulesEvaluator implements RulesEvaluator
                 return $evaluatedConstFetch;
             }
 
+            $code = $this->printer->prettyPrint([$expr]);
+
             try {
-                return $this->evaluateWithScopedVariables($this->printer->prettyPrint([$expr]), [
+                return $this->evaluateWithScopedVariables($code, [
                     ...$variables,
                     'request' => tap(request(), fn ($r) => $r->setMethod(strtoupper($this->method))),
                     'this' => $this->tryCreatingCurrentClassInstance(),
                 ]);
             } catch (Throwable $e) {
+                $location = new CodeLocation(
+                    file: $this->getFileName(),
+                    line: $expr->getStartLine(),
+                );
+
                 $this->diagnostics->report(
-                    GenericDiagnostic::fromException($e)->withSeverity(DiagnosticSeverity::Warning)
+                    Vr002NodeRulesEvaluationDiagnostic::fromThrowable($e)
+                        ->withLocation($location)
+                        ->withContext($location->file)
+                        ->withMessage(fn ($originalMessage) => "Failed to evaluate expression `$code` ($originalMessage)")
                 );
 
                 $this->lastEvaluationException = $e;
@@ -271,5 +293,14 @@ class NodeRulesEvaluator implements RulesEvaluator
     private function getType(Node\Expr $expr): Type
     {
         return ReferenceTypeResolver::getInstance()->resolve($this->scope, $this->scope->getType($expr));
+    }
+
+    private function getFileName(): string
+    {
+        if ($this->className) {
+            return (new \ReflectionClass($this->className))->getFileName();
+        }
+
+        return $this->routeInfo->reflectionAction()->getFileName();
     }
 }

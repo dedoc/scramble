@@ -5,6 +5,7 @@ namespace Dedoc\Scramble;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Illuminate\Support\Collection;
 use ReflectionAttribute;
 
@@ -19,5 +20,7 @@ class OpenApiContext
          */
         public Collection $groups = new Collection,
         public DiagnosticsCollector $diagnostics = new DiagnosticsCollector,
-    ) {}
+    ) {
+        ModelExtension::useDiagnostics($this->diagnostics);
+    }
 }

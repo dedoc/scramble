@@ -6,18 +6,11 @@ use Dedoc\Scramble\Infer\Definition\FunctionLikeAstDefinition;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
-use Dedoc\Scramble\Support\Type\AbstractTypeVisitor;
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Dedoc\Scramble\Support\Type\BooleanType;
-use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\IntegerType;
-use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
-use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeTraverser;
+use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -138,8 +131,8 @@ class RouteResponseTypeRetriever
             return $phpDocReturnType;
         }
 
-        $phpDocReturnTypeWeight = $phpDocReturnType ? $this->countKnownTypes($phpDocReturnType) : 0;
-        $inferredReturnTypeWeight = $this->countKnownTypes($inferredReturnType);
+        $phpDocReturnTypeWeight = $phpDocReturnType ? TypeHelper::countKnownTypes($phpDocReturnType) : 0;
+        $inferredReturnTypeWeight = TypeHelper::countKnownTypes($inferredReturnType);
         if ($phpDocReturnTypeWeight > $inferredReturnTypeWeight) {
             return $phpDocReturnType;
         }
@@ -164,38 +157,5 @@ class RouteResponseTypeRetriever
         }
 
         return null;
-    }
-
-    private function countKnownTypes(Type $type): int
-    {
-        $counterVisitor = new class extends AbstractTypeVisitor
-        {
-            public int $count = 0;
-
-            public function leave(Type $type): ?Type
-            {
-                if (
-                    $type instanceof ObjectType
-                    || $type instanceof StringType
-                    || $type instanceof IntegerType
-                    || $type instanceof FloatType
-                    || $type instanceof BooleanType
-                    || $type instanceof NullType
-                    /*
-                     * Give some weight for keyed array item so when comparing `array<mixed>` to `array{foo: unknown}`,
-                     * the keyed array is preferred.
-                     */
-                    || $type instanceof ArrayItemType_ && is_string($type->key)
-                ) {
-                    $this->count++;
-                }
-
-                return null;
-            }
-        };
-
-        (new TypeTraverser([$counterVisitor]))->traverse($type);
-
-        return $counterVisitor->count;
     }
 }

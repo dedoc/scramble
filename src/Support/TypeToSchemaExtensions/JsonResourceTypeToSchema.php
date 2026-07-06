@@ -10,6 +10,7 @@ use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -47,6 +48,11 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     public function toSchema(Type $type)
     {
         $type = $this->normalizeType($type);
+
+        JsonResourceHelper::reportUnknownModelDiagnostic(
+            $this->openApiContext->diagnostics,
+            $this->infer->analyzeClass($type->name),
+        );
 
         $array = ReferenceTypeResolver::getInstance()->resolve(
             new GlobalScope,

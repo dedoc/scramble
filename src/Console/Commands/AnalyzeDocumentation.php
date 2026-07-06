@@ -2,16 +2,14 @@
 
 namespace Dedoc\Scramble\Console\Commands;
 
-use Dedoc\Scramble\Console\Commands\Components\TermsOfContentItem;
-use Dedoc\Scramble\Exceptions\ConsoleRenderable;
-use Dedoc\Scramble\Exceptions\RouteAware;
+use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
+use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Generator;
+use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Console\Command;
-use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Throwable;
 
 class AnalyzeDocumentation extends Command
 {
@@ -25,19 +23,44 @@ class AnalyzeDocumentation extends Command
     {
         $generator->setThrowExceptions(false);
 
-        $generator(Scramble::getGeneratorConfig($this->option('api')));
+        $apiOption = $this->option('api');
+        $api = is_string($apiOption) ? $apiOption : 'default';
 
-        $exceptions = $generator->context->diagnostics->toExceptions();
+        $generator(Scramble::getGeneratorConfig($api));
 
-        $i = 1;
-        $this->groupExceptions($exceptions)->each(function (Collection $exceptions, string $group) use (&$i) {
-            $this->renderExceptionsGroup($exceptions, $group, $i);
-        });
+        $context = $generator->context;
+        assert($context instanceof OpenApiContext);
 
-        if (count($exceptions)) {
-            $this->error('[ERROR] Found '.count($exceptions).' errors.');
+        $diagnostics = $context->diagnostics->diagnostics;
+
+        $diagnostics
+            ->groupBy(fn (Diagnostic $d) => $d->context() ?: 'General')
+            ->sortKeys()
+            ->each(function (Collection $contextDiagnostics, string $context) {
+                $context = Str::replace(base_path().DIRECTORY_SEPARATOR, '', $context);
+
+                $this->line("<options=bold>{$context}</>");
+                $this->line('');
+
+                $contextDiagnostics->each(function (Diagnostic $d) {
+                    $d->render($this->output);
+                    $this->line('');
+                });
+            });
+
+        $errorCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)->count();
+        $warningCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Warning)->count();
+
+        if ($errorCount > 0) {
+            $this->error($this->formatSummary($errorCount, $warningCount, isError: true));
 
             return static::FAILURE;
+        }
+
+        if ($warningCount > 0) {
+            $this->warn($this->formatSummary($errorCount, $warningCount, isError: false));
+
+            return static::SUCCESS;
         }
 
         $this->info('Everything is fine! Documentation is generated without any errors 🍻');
@@ -45,99 +68,13 @@ class AnalyzeDocumentation extends Command
         return static::SUCCESS;
     }
 
-    /**
-     * @return Collection<string, Collection<int, Throwable>>
-     */
-    private function groupExceptions(array $exceptions): Collection
+    private function formatSummary(int $errors, int $warnings, bool $isError): string
     {
-        return collect($exceptions)
-            ->groupBy(fn ($e) => $e instanceof RouteAware ? $this->getRouteKey($e->getRoute()) : '');
-    }
+        $errorLabel = $errors.' '.Str::plural('error', $errors);
+        $warningLabel = $warnings.' '.Str::plural('warning', $warnings);
 
-    /**
-     * @param  Collection<int, Throwable>  $exceptions
-     */
-    private function renderExceptionsGroup(Collection $exceptions, string $group, int &$i): void
-    {
-        // when route key is set, then the exceptions in the group are route aware.
-        if ($group) {
-            $this->renderRouteExceptionsGroupLine($exceptions);
-        }
+        $bracket = $isError ? 'ERROR' : 'WARNING';
 
-        $exceptions->each(function ($exception) use (&$i) {
-            $this->renderException($exception, $i);
-            $i++;
-            $this->line('');
-        });
-    }
-
-    private function getRouteKey(?Route $route): string
-    {
-        if (! $route) {
-            return '';
-        }
-
-        $method = implode('|', $route->methods());
-        $action = $route->getAction('uses');
-
-        return "$method.$action";
-    }
-
-    /**
-     * @param  Collection<int, RouteAware>  $exceptions
-     */
-    private function renderRouteExceptionsGroupLine(Collection $exceptions): void
-    {
-        $firstException = $exceptions->first();
-        $route = $firstException->getRoute();
-
-        $method = implode('|', $route->methods());
-        $errorsMessage = ($count = $exceptions->count()).' '.Str::plural('error', $count);
-
-        $tocComponent = new TermsOfContentItem(
-            right: '<options=bold;fg='.$this->getHttpMethodColor($method).'>'.$method."</> $route->uri <fg=red>$errorsMessage</>",
-            left: $this->getRouteAction($route),
-        );
-
-        $tocComponent->render($this->output);
-
-        $this->line('');
-    }
-
-    private function getHttpMethodColor(string $method): string
-    {
-        return match ($method) {
-            'POST', 'PUT' => 'blue',
-            'DELETE' => 'red',
-            default => 'yellow',
-        };
-    }
-
-    public function getRouteAction(?Route $route): ?string
-    {
-        if (! $uses = $route->getAction('uses')) {
-            return null;
-        }
-
-        if (count($parts = explode('@', $uses)) !== 2 || ! method_exists(...$parts)) {
-            return null;
-        }
-
-        [$class, $method] = $parts;
-
-        $eloquentClassName = Str::replace(['App\Http\Controllers\\', 'App\Http\\'], '', $class);
-
-        return "<fg=gray>{$eloquentClassName}@{$method}</>";
-    }
-
-    private function renderException(Throwable $exception, int $i): void
-    {
-        $message = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', property_exists($exception, 'originalMessage') ? $exception->originalMessage : $exception->getMessage()); // @phpstan-ignore argument.templateType
-
-        $this->output->writeln("<options=bold>$i. {$message}</>");
-
-        if ($exception instanceof ConsoleRenderable) {
-            $exception->renderInConsole($this->output);
-        }
+        return "[$bracket] Found $errorLabel, $warningLabel.";
     }
 }

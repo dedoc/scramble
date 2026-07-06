@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\Diagnostics\PhpDoc\Pd001RedundantTypeAnnotationDiagnostic;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
@@ -27,7 +28,9 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\Union;
+use Dedoc\Scramble\Support\Type\UnknownType as InferUnknownType;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\DeprecatedTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
@@ -255,9 +258,13 @@ class TypeTransformer
             if ($docNode) {
                 $varNode = array_values($docNode->getVarTagValues())[0] ?? null;
 
-                $openApiType = $varNode
-                    ? $this->transform(PhpDocTypeHelper::toType($varNode->type))
-                    : $openApiType;
+                if ($varNode) {
+                    $phpDocType = PhpDocTypeHelper::toType($varNode->type);
+
+                    $this->reportRedundantArrayItemPhpDoc($type, $phpDocType);
+
+                    $openApiType = $this->transform($phpDocType);
+                }
 
                 $commentDescription = trim($docNode->getAttribute('summary').' '.$docNode->getAttribute('description')); // @phpstan-ignore binaryOp.invalid, binaryOp.invalid
                 $varNodeDescription = $varNode && $varNode->description ? trim($varNode->description) : '';
@@ -530,6 +537,35 @@ class TypeTransformer
         }
 
         return null;
+    }
+
+    private function reportRedundantArrayItemPhpDoc(ArrayItemType_ $item, Type $phpDocType): void
+    {
+        if (! $this->shouldReportRedundantPhpDocType($item->value, $phpDocType)) {
+            return;
+        }
+
+        $this->context->diagnostics->reportOnce(
+            Pd001RedundantTypeAnnotationDiagnostic::fromArrayItemType($item)
+        );
+    }
+
+    private function shouldReportRedundantPhpDocType(Type $inferred, Type $phpDoc): bool
+    {
+        if ($inferred instanceof TemplateType && $inferred->is) {
+            $inferred = $inferred->is;
+        }
+
+        if ($inferred instanceof InferUnknownType) {
+            return false;
+        }
+
+        return $phpDoc->isSame($inferred)
+            || $inferred->toString() === $phpDoc->toString()
+            || (
+                TypeHelper::countKnownTypes($phpDoc) === TypeHelper::countKnownTypes($inferred)
+                && $phpDoc->accepts($inferred)
+            );
     }
 
     private function isHiddenArrayItem(ArrayItemType_ $item): bool

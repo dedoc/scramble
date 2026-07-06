@@ -2,12 +2,15 @@
 
 namespace Dedoc\Scramble\Support\Helpers;
 
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+use Dedoc\Scramble\Diagnostics\JsonResource\Jr001UnknownModelDiagnostic;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Str;
 
 class JsonResourceHelper
@@ -37,6 +40,26 @@ class JsonResourceHelper
         static::$jsonResourcesModelTypesCache[$jsonClass->name] = $modelType;
 
         return $modelType;
+    }
+
+    /**
+     * @internal
+     */
+    public static function reportUnknownModelDiagnostic(DiagnosticsCollector $diagnostics, ClassDefinition $jsonClass): void
+    {
+        if (is_a($jsonClass->name, ResourceCollection::class, true)) {
+            return;
+        }
+
+        $modelType = static::modelType($jsonClass);
+
+        if (! $modelType instanceof UnknownType) {
+            return;
+        }
+
+        $diagnostics->reportOnce(
+            Jr001UnknownModelDiagnostic::forResource($jsonClass->name),
+        );
     }
 
     private static function getModelName(string $jsonResourceClassName, \ReflectionClass $reflectionClass, FileNameResolver $getFqName)
