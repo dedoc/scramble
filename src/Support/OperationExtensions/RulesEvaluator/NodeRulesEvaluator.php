@@ -219,15 +219,15 @@ class NodeRulesEvaluator implements RulesEvaluator
                 ]);
             } catch (Throwable $e) {
                 $location = new CodeLocation(
-                    file: $this->routeInfo->reflectionAction()->getFileName(),
-                    line: $expression->getStartLine(),
+                    file: $this->getFileName(),
+                    line: $expr->getStartLine(),
                 );
 
-                dd($expression);
+                dump([$this->className, $this->method, "Failed to evaluate expression `$code`"]);
 
                 $this->diagnostics->report(
                     Vr002NodeRulesEvaluationDiagnostic::fromThrowable($e)
-                        ->withAstNode($param)
+//                        ->withAstNode($param)
                         ->withContext($location->file)
                         ->withLocation($location)
                         ->withMessage(fn ($originalMessage) => "Failed to evaluate expression `$code` ($originalMessage)")
@@ -299,5 +299,14 @@ class NodeRulesEvaluator implements RulesEvaluator
     private function getType(Node\Expr $expr): Type
     {
         return ReferenceTypeResolver::getInstance()->resolve($this->scope, $this->scope->getType($expr));
+    }
+
+    private function getFileName(): string
+    {
+        if ($this->className) {
+            return (new \ReflectionClass($this->className))->getFileName();
+        }
+
+        return $this->routeInfo->reflectionAction()->getFileName();
     }
 }
