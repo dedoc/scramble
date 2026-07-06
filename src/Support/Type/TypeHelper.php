@@ -88,7 +88,7 @@ class TypeHelper
 
     public static function canContainNull(Type $type): bool
     {
-        if ($type instanceof NullType || $type instanceof UnknownType || $type instanceof MixedType) {
+        if ($type instanceof NullType || $type instanceof UnknownType || $type instanceof MixedType || $type instanceof NeverType || $type instanceof VoidType) {
             return true;
         }
 

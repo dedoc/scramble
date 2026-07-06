@@ -543,7 +543,7 @@ class ReferenceTypeResolver
                 && ! $objectType instanceof UnknownType
                 && ! $objectType instanceof TemplateType
             ) {
-                return new NeverType;
+                return new NullType;
             }
             if (! $objectType instanceof ObjectType) {
                 return new UnknownType;
