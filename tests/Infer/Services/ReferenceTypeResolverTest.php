@@ -261,7 +261,21 @@ it('support property fetches on unions with null', function () {
         'prop',
     ));
 
-    expect($result->toString())->toBe('string');
+    expect($result->toString())->toBe('string|null');
+});
+
+it('support property fetches on unions with int', function () {
+    $union = Union::wrap([
+        new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class),
+        new \Dedoc\Scramble\Support\Type\IntegerType,
+    ]);
+
+    $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new PropertyFetchReferenceType(
+        $union,
+        'prop',
+    ));
+
+    expect($result->toString())->toBe('string|null');
 });
 
 /*
