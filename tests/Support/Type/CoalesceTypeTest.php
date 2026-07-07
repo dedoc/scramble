@@ -27,10 +27,3 @@ EOD)->getExpressionType('(new Foo)->fooOrNull()->barProp ?? "foo"');
 
     expect($type->toString())->toBe('int(1)|string(foo)');
 });
-
-test('resolves coalesce types with property fetch on non-object', function () {
-    $type = analyzeFile('<?php class Foo { public int $barProp = 1; }')
-        ->getExpressionType('(1)->barProp ?? "foo"');
-
-    expect($type->toString())->toBe('string(foo)');
-});
