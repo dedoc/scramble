@@ -15,6 +15,31 @@ use ReflectionUnionType;
 
 class TypeHelper
 {
+    public const MAY_BE_UNDEFINED_IN_COALESCE = 'mayBeUndefinedInCoalesce';
+
+    public static function mayBeUndefinedInCoalesce(Type $type): bool
+    {
+        return $type->getAttribute(self::MAY_BE_UNDEFINED_IN_COALESCE) === true;
+    }
+
+    public static function markMayBeUndefinedInCoalesce(Type $type): Type
+    {
+        $type->setAttribute(self::MAY_BE_UNDEFINED_IN_COALESCE, true);
+
+        return $type;
+    }
+
+    public static function withoutMayBeUndefinedInCoalesce(Type $type): Type
+    {
+        if (! static::mayBeUndefinedInCoalesce($type)) {
+            return $type;
+        }
+
+        $type->setAttribute(self::MAY_BE_UNDEFINED_IN_COALESCE, false);
+
+        return $type;
+    }
+
     public static function mergeTypes(...$types)
     {
         $flattenedTypes = [];
@@ -30,6 +55,9 @@ class TypeHelper
                 foreach ($flattenedTypes as $existingType) {
                     if ($nestedType->isSame($existingType)) {
                         $alreadyAdded = true;
+                        if (static::mayBeUndefinedInCoalesce($nestedType)) {
+                            static::markMayBeUndefinedInCoalesce($existingType);
+                        }
 
                         break;
                     }

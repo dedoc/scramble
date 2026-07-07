@@ -528,11 +528,12 @@ class ReferenceTypeResolver
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type): Type
     {
         $objectType = $this->resolveAndNormalizeCallee($scope, $type->object);
+        $mayBeUndefinedInCoalesce = TypeHelper::mayBeUndefinedInCoalesce($objectType);
         $objectAllTypes = $objectType instanceof Union
             ? $objectType->types
             : [$objectType];
 
-        return Union::wrap(array_map(function (Type $objectType) use ($scope, $type) {
+        $propertyType = Union::wrap(array_map(function (Type $objectType) use ($scope, $type, &$mayBeUndefinedInCoalesce) {
             $objectType = $this->resolveStaticCalleeForMethodLookup($scope, $objectType);
 
             if ($objectType instanceof MixedType) {
@@ -543,7 +544,9 @@ class ReferenceTypeResolver
                 && ! $objectType instanceof UnknownType
                 && ! $objectType instanceof TemplateType
             ) {
-                return new NullType;
+                $mayBeUndefinedInCoalesce = true;
+
+                return new NeverType;
             }
             if (! $objectType instanceof ObjectType) {
                 return new UnknownType;
@@ -570,10 +573,16 @@ class ReferenceTypeResolver
             }
 
             // @todo resolve template type?
-            return $propertyType instanceof TemplateType
+            $propertyType = $propertyType instanceof TemplateType
                 ? ($propertyType->is ?: new UnknownType)
                 : $propertyType;
+
+            return $propertyType;
         }, $objectAllTypes));
+
+        return $mayBeUndefinedInCoalesce
+            ? TypeHelper::markMayBeUndefinedInCoalesce($propertyType)
+            : $propertyType;
     }
 
     /**

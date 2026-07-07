@@ -27,3 +27,16 @@ EOD)->getExpressionType('(new Foo)->fooOrNull()->barProp ?? "foo"');
 
     expect($type->toString())->toBe('int(1)|string(foo)');
 });
+
+test('resolves coalesce types when conditional branch may be undefined', function () {
+    $type = analyzeFile(<<<'EOD'
+<?php
+
+class Foo {
+    public int $barProp = 1;
+    public function fooOrNull (): static|null {}
+}
+EOD)->getExpressionType('(unknown() ? (new Foo)->barProp : (new Foo)->fooOrNull()->barProp) ?? "foo"');
+
+    expect($type->toString())->toBe('int(1)|string(foo)');
+});
