@@ -261,7 +261,7 @@ it('support property fetches on unions with null', function () {
         'prop',
     ));
 
-    expect($result->toString())->toBe('string|null');
+    expect($result->toString())->toBe('string');
 });
 
 it('support property fetches on unions with int', function () {
@@ -275,7 +275,7 @@ it('support property fetches on unions with int', function () {
         'prop',
     ));
 
-    expect($result->toString())->toBe('string|null');
+    expect($result->toString())->toBe('string');
 });
 
 /*

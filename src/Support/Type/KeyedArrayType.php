@@ -72,7 +72,7 @@ class KeyedArrayType extends AbstractType
 
     public function getOffsetValueType(Type $offset): Type
     {
-        $default = parent::getOffsetValueType($offset);
+        $default = TypeHelper::markMayBeUndefinedInCoalesce(parent::getOffsetValueType($offset));
 
         if (! $offset instanceof LiteralType) {
             return $default;
@@ -87,14 +87,24 @@ class KeyedArrayType extends AbstractType
         if ($this->isList && is_int($offsetValue)) {
             $item = $this->getListItemAt($offsetValue);
 
-            return $item
-                ? $item->value->mergeAttributes($item->attributes())
-                : $default;
+            if (! $item) {
+                return $default;
+            }
+
+            $value = $item->value->clone()->mergeAttributes($item->attributes());
+
+            return $item->isOptional
+                ? TypeHelper::markMayBeUndefinedInCoalesce($value)
+                : $value;
         }
 
         foreach ($this->items as $item) {
             if ($item->key === $offsetValue) {
-                return $item->value->mergeAttributes($item->attributes());
+                $value = $item->value->clone()->mergeAttributes($item->attributes());
+
+                return $item->isOptional
+                    ? TypeHelper::markMayBeUndefinedInCoalesce($value)
+                    : $value;
             }
         }
 

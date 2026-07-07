@@ -16,7 +16,7 @@ class ArrayType extends AbstractType
 
     public function getOffsetValueType(Type $offset): Type
     {
-        return $this->value;
+        return TypeHelper::markMayBeUndefinedInCoalesce($this->value);
     }
 
     public function accepts(Type $otherType): bool

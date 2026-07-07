@@ -15,6 +15,9 @@ class UnionNormalizingTypeVisitor extends AbstractTypeVisitor
             return null;
         }
 
-        return TypeHelper::mergeTypes(...$type->types)->widen();
+        return TypeHelper::mergeTypes(...$type->types)
+            ->setOriginal($type->getOriginal())
+            ->mergeAttributes($type->attributes())
+            ->widen();
     }
 }
