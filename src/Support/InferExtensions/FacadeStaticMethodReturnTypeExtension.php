@@ -54,7 +54,7 @@ class FacadeStaticMethodReturnTypeExtension implements StaticMethodReturnTypeExt
     private function getFreshRootClass(string $facadeClass): ?string
     {
         $seeTag = SchemaClassDocReflector::createFromClassName($facadeClass)->getTagValue('@see');
-        $rootClass = ltrim(explode("\n", $seeTag?->value ?? '')[0], '\\');
+        $rootClass = ltrim(explode("\n", $seeTag->value ?? '')[0], '\\');
 
         if (! $rootClass) {
             return null;

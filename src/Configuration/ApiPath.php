@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Configuration;
 
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -18,7 +17,7 @@ class ApiPath
     ) {}
 
     /**
-     * @param  string|array{include?: string|string[], exclude?: string|string[]}|null  $config
+     * @param  mixed|string|array{include?: string|string[], exclude?: string|string[]}|null  $config
      */
     public static function from(mixed $config, string $default = 'api'): self
     {
@@ -47,7 +46,10 @@ class ApiPath
             return [];
         }
 
-        return array_values(array_filter(Arr::wrap($prefixes), fn ($prefix) => is_string($prefix) && $prefix !== ''));
+        return array_values(array_filter(
+            is_array($prefixes) ? $prefixes : [$prefixes],
+            fn ($prefix) => is_string($prefix) && $prefix !== '',
+        ));
     }
 
     public function matches(string $uri): bool

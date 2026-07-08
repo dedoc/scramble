@@ -26,7 +26,7 @@ trait ManagesDocumentationCache
     /** @return string[] */
     protected function resolveApis(): array
     {
-        $apis = array_filter($this->option('api') ?: []);
+        $apis = array_filter((array) ($this->option('api') ?: []));
 
         if ($apis === [] || $apis === ['*']) {
             return array_keys(Scramble::getConfigurationsInstance()->all());
@@ -37,6 +37,6 @@ trait ManagesDocumentationCache
 
     protected function cacheKey(string $api): string
     {
-        return config('scramble.cache.key').':'.$api;
+        return config()->string('scramble.cache.key').':'.$api;
     }
 }

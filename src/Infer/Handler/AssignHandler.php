@@ -53,7 +53,7 @@ class AssignHandler
         Scope $scope,
     ): void {
         $rhsType = $scope->getType($node->expr);
-        $line = $node->getAttribute('startLine');
+        $line = $node->getStartLine();
 
         $this->assignFromPattern($rhsType, $pattern, $line, $scope);
 

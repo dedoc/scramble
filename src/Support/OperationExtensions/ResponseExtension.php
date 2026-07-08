@@ -104,13 +104,13 @@ class ResponseExtension extends OperationExtension
                 ->map(fn (Response|Reference $r): Response => $r instanceof Reference ? $r->resolve() : $r)
                 ->first(fn (Response $r) => $r->code === $responseAttributeInstance->status);
 
+            $fileName = $routeInfo->reflectionAction()->getFileName();
+
             $newResponse = ResponseAttribute::toOpenApiResponse(
                 $responseAttributeInstance,
                 $originalResponse,
                 $this->openApiTransformer,
-                ($fileName = $routeInfo->reflectionAction()?->getFileName())
-                    ? FileNameResolver::createForFile($fileName)
-                    : null,
+                is_string($fileName) ? FileNameResolver::createForFile($fileName) : null,
             );
 
             $responseHasChanged = ! $originalResponse

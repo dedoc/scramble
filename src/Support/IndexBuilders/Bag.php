@@ -23,7 +23,7 @@ class Bag
      */
     public function set(string $key, $value): self
     {
-        $this->data[$key] = $value; // @phpstan-ignore-line
+        $this->data[$key] = $value;
 
         return $this;
     }

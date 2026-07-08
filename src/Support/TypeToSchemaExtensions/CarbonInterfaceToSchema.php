@@ -14,7 +14,7 @@ class CarbonInterfaceToSchema extends TypeToSchemaExtension
         return $type->isInstanceOf(CarbonInterface::class);
     }
 
-    public function toSchema(Type $type)
+    public function toSchema(Type $type): StringType
     {
         return (new StringType)->format('date-time');
     }
