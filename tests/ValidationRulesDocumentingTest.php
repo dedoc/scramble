@@ -953,6 +953,59 @@ it('extracts rules docs from form request', function () {
     assertMatchesSnapshot($openApiDocument['paths']['/test']['get']['parameters']);
 });
 
+it('moves a single @example from schema to parameter when transforming schema bag to parameters', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [ValidationRulesWithSingleExampleOnParameterDocs_Test::class, 'index']));
+
+    expect($openApiDocument['paths']['/test']['get']['parameters'][0])->toBe([
+        'name' => 'foo',
+        'in' => 'query',
+        'required' => true,
+        'schema' => ['type' => 'string'],
+        'example' => 'wow',
+    ]);
+});
+
+class ValidationRulesWithSingleExampleOnParameterDocs_Test
+{
+    public function index(Request $request)
+    {
+        $request->validate([
+            /**
+             * @example wow
+             */
+            'foo' => ['required', 'string'],
+        ]);
+    }
+}
+
+it('keeps multiple @example values on schema when transforming schema bag to parameters', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [ValidationRulesWithMultipleExamplesOnSchemaDocs_Test::class, 'index']));
+
+    expect($openApiDocument['paths']['/test']['get']['parameters'][0])->toBe([
+        'name' => 'foo',
+        'in' => 'query',
+        'required' => true,
+        'schema' => [
+            'type' => 'string',
+            'examples' => ['wow', 'another'],
+        ],
+    ]);
+});
+
+class ValidationRulesWithMultipleExamplesOnSchemaDocs_Test
+{
+    public function index(Request $request)
+    {
+        $request->validate([
+            /**
+             * @example wow
+             * @example another
+             */
+            'foo' => ['required', 'string'],
+        ]);
+    }
+}
+
 it('extracts rules docs when using consts in form request', function ($action) {
     $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', $action));
 

@@ -133,6 +133,17 @@ class Parameter
         return $this;
     }
 
+    /**
+     * @param  array<string, Example>  $examples
+     * @return $this
+     */
+    public function examples(array $examples): self
+    {
+        $this->examples = $examples;
+
+        return $this;
+    }
+
     public function setExplode(bool $explode): self
     {
         $this->explode = $explode;

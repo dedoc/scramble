@@ -63,7 +63,7 @@ class HttpExceptionToResponseExtension extends ExceptionToResponseExtension
                     if (! $messageType instanceof LiteralStringType) {
                         return;
                     }
-                    $t->example($messageType->value);
+                    $t->examples([$messageType->value]);
                 })
             )
             ->setRequired(['message']);

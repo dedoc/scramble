@@ -236,7 +236,7 @@ class DeepParametersMerger
         }
 
         $paramType->setDescription($parameter->description);
-        $paramType->example($parameter->example);
+        $paramType->examples([$parameter->example]);
 
         return $paramType;
     }
