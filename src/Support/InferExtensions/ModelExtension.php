@@ -259,7 +259,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             }
 
             $propertyType = $this->getPropertyType(
-                new PropertyFetchEvent($event->getInstance(), $literalKey, $event->scope),
+                new PropertyFetchEvent($event->getInstance(), (string) $literalKey, $event->scope),
             );
 
             if (! $propertyType) {

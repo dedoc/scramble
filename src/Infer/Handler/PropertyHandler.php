@@ -37,6 +37,10 @@ class PropertyHandler
             $docComment = $node->getDocComment()?->getText();
 
             try {
+                if (! class_exists($classDefinition->name)) {
+                    throw new \ReflectionException;
+                }
+
                 $reflectionProperty = new ReflectionProperty($classDefinition->name, $prop->name->name);
                 $attributes = AttributeDefinition::fromReflectionAttributesArray($reflectionProperty->getAttributes());
 

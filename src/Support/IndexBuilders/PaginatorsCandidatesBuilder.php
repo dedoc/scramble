@@ -7,7 +7,7 @@ use Dedoc\Scramble\Support\InferExtensions\PaginateMethodsReturnTypeExtension;
 use PhpParser\Node;
 
 /**
- * @phpstan-type PaginatorsCandidatesIndexBag array{scope: Scope, paginatorCandidates: (Node\Expr\StaticCall|Node\Expr\MethodCall)[]}
+ * @phpstan-type PaginatorsCandidatesIndexBag array{scope?: Scope, paginatorCandidates?: (Node\Expr\StaticCall|Node\Expr\MethodCall)[]}
  *
  * @implements IndexBuilder<PaginatorsCandidatesIndexBag>
  */
@@ -32,10 +32,12 @@ class PaginatorsCandidatesBuilder implements IndexBuilder
             return;
         }
 
+        $existing = $this->bag->data['paginatorCandidates'] ?? [];
+
         $this->bag->set(
-            $key = 'paginatorCandidates',
+            'paginatorCandidates',
             [
-                ...($this->bag->data[$key] ?? []),
+                ...$existing,
                 $node,
             ],
         );

@@ -23,7 +23,7 @@ class CacheDocumentation extends Command
             return self::SUCCESS;
         }
 
-        $store = config('scramble.cache.store');
+        $store = config()->string('scramble.cache.store');
 
         foreach ($this->resolveApis() as $api) {
             $config = Scramble::getGeneratorConfig($api);

@@ -11,6 +11,8 @@ use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
+use Dedoc\Scramble\Support\Generator\Reference;
+use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -26,7 +28,7 @@ class PlainObjectToSchema extends TypeToSchemaExtension
     /** @var array<string, false|Type> */
     private array $cache = [];
 
-    public function shouldHandle(Type $type)
+    public function shouldHandle(Type $type): bool
     {
         $isObject = $type instanceof ObjectType && class_exists($type->name);
 
@@ -52,7 +54,7 @@ class PlainObjectToSchema extends TypeToSchemaExtension
     /**
      * @param  ObjectType  $type
      */
-    public function toSchema(Type $type)
+    public function toSchema(Type $type): ?OpenApiType
     {
         if ($serializedType = $this->getSerializedType($type)) {
             return $this->openApiTransformer->transform($serializedType);
@@ -79,6 +81,10 @@ class PlainObjectToSchema extends TypeToSchemaExtension
     private function getFreshSerializedType(ObjectType $type): ?Type
     {
         $definition = $this->infer->index->getClass($type->name);
+
+        if (! $definition) {
+            return null;
+        }
 
         if ($jsonSerializableType = $this->getJsonSerializableType($definition, $type)) {
             return $jsonSerializableType;
@@ -139,7 +145,7 @@ class PlainObjectToSchema extends TypeToSchemaExtension
         return new KeyedArrayType($items);
     }
 
-    public function reference(ObjectType $type)
+    public function reference(ObjectType $type): ?Reference
     {
         if (ltrim($type->name, '\\') === stdClass::class) {
             return null;

@@ -1321,12 +1321,6 @@ parameters:
 			path: src/Infer/Services/FileNameResolver.php
 
 		-
-			message: '#^Parameter \#2 \$subject of function preg_match_all expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Services/FileNameResolver.php
-
-		-
 			message: '#^Property Dedoc\\Scramble\\Infer\\Services\\FileNameResolver\:\:\$nameContextCache has no type specified\.$#'
 			identifier: missingType.property
 			count: 1
@@ -1711,24 +1705,6 @@ parameters:
 			path: src/Reflection/ReflectionRoute.php
 
 		-
-			message: '#^Callable callable\(Dedoc\\Scramble\\Support\\Generator\\Types\\Type\)\: bool invoked with 2 parameters, 1 required\.$#'
-			identifier: arguments.count
-			count: 1
-			path: src/SchemaValidator.php
-
-		-
-			message: '#^Calling the helper function ''value\(\)'' without a closure as the first argument simply returns the first argument without doing anything$#'
-			identifier: larastan.uselessConstructs.value
-			count: 1
-			path: src/SchemaValidator.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function throw_if$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/SchemaValidator.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Scramble\:\:afterOpenApiGenerated\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -1808,12 +1784,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$routeResolver of method Dedoc\\Scramble\\GeneratorConfig\:\:routes\(\) expects Closure\|null, callable\(\)\: mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Scramble.php
-
-		-
-			message: '#^Parameter \#1 \$rules of class Dedoc\\Scramble\\SchemaValidator constructor expects array\<int, array\{callable\(Dedoc\\Scramble\\Support\\Generator\\Types\\Type\)\: bool, string\}\>, array\<int, array\{callable\(Dedoc\\Scramble\\Support\\Generator\\Types\\Type, string\)\: bool, \(callable\(Dedoc\\Scramble\\Support\\Generator\\Types\\Type, string\)\: string\)\|string, array\<string\>, bool\}\> given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Scramble.php
@@ -3137,12 +3107,6 @@ parameters:
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\ModelExtension\:\:getRealToArrayMethodDefinitionClassName\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/InferExtensions/ModelExtension.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\ModelExtension\:\:getRelationType\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
 			path: src/Support/InferExtensions/ModelExtension.php

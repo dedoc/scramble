@@ -8,20 +8,24 @@ class CacheableGenerator
         private Generator $generator,
     ) {}
 
+    /**
+     * @return array<mixed, mixed>
+     */
     public function __invoke(?GeneratorConfig $config = null): array
     {
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
-        $store = config('scramble.cache.store');
-        $keyBase = config('scramble.cache.key');
-
-        if (! $store || ! $keyBase) {
+        if (config('scramble.cache.store') === null || config('scramble.cache.key') === null) {
             return ($this->generator)($config);
         }
 
+        $store = config()->string('scramble.cache.store');
+        $keyBase = config()->string('scramble.cache.key');
+
         $key = $keyBase.':'.$this->resolveApi($config);
 
-        if ($cached = cache()->store($store)->get($key)) {
+        $cached = cache()->store($store)->get($key);
+        if (is_array($cached)) {
             return $cached;
         }
 

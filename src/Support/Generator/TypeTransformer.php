@@ -194,10 +194,7 @@ class TypeTransformer
                     )
                 )
                 ->setAdditionalItems(false);
-        } elseif (
-            $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
-            && ! $type->isList
-        ) {
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType) {
             $openApiType = new ObjectType;
             $requiredKeys = [];
 
