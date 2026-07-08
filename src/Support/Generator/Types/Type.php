@@ -141,10 +141,10 @@ abstract class Type
                 'enum' => count($enum) ? $enum : null,
                 'const' => $const,
             ]),
-            $this->example instanceof MissingValue ? [] : ['example' => $this->example],
             $this->default instanceof MissingValue ? [] : ['default' => $this->default],
             count(
                 $examples = collect($this->examples)
+                    ->push($this->example)
                     ->reject(fn ($example) => $example instanceof MissingValue)
                     ->values()
                     ->toArray()
