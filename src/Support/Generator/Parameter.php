@@ -134,7 +134,7 @@ class Parameter
     }
 
     /**
-     * @param  array<string, Example>  $example
+     * @param  array<string, Example>  $examples
      *
      * @return $this
      */
