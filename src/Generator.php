@@ -134,6 +134,9 @@ class Generator
         return $openApi->toArray();
     }
 
+    /**
+     * @param  Collection<int, Route>  $routes
+     */
     private function configureSecurityStrategy(Collection $routes, GeneratorConfig $config): GeneratorConfig
     {
         $strategy = $config->securityStrategy();

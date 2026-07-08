@@ -48,6 +48,9 @@ trait ExtractsLiteralArrayKeys
         return null;
     }
 
+    /**
+     * @param  list<Type>  $keyTypes
+     */
     protected function unsetKeysFromType(Type $type, array $keyTypes): Type
     {
         $result = $type;
@@ -64,6 +67,9 @@ trait ExtractsLiteralArrayKeys
         return $result;
     }
 
+    /**
+     * @return null|list<Type>
+     */
     protected function extractKeyTypesFromEvent(MethodCallEvent|StaticMethodCallEvent $event, string $name, int $position): ?array
     {
         if ($keyTypes = $this->extractKeyTypes($event->getArg($name, $position))) {

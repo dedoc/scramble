@@ -30,7 +30,7 @@ class TranslatedStringType extends StringType implements LateResolvingType
     public function resolve(): Type
     {
         if ($this->key instanceof LiteralStringType) {
-            $translator = tap(clone app('translator'), fn (Translator $t) => $t->setLocale(config('app.locale')));
+            $translator = tap(clone app('translator'), fn (Translator $t) => $t->setLocale(config()->string('app.locale')));
 
             return new LiteralStringType($translator->get($this->key->value));
         }

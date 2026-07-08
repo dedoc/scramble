@@ -21,7 +21,7 @@ class ClearDocumentationCache extends Command
             return self::SUCCESS;
         }
 
-        $store = config('scramble.cache.store');
+        $store = config()->string('scramble.cache.store');
 
         foreach ($this->resolveApis() as $api) {
             cache()->store($store)->forget($this->cacheKey($api));

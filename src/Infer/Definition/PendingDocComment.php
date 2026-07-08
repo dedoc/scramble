@@ -39,6 +39,10 @@ class PendingDocComment
 
     private function getDeclaringClassFile(string $declaringClass): ?string
     {
+        if (! class_exists($declaringClass)) {
+            return null;
+        }
+
         try {
             $reflectionClass = new \ReflectionClass($declaringClass);
 
