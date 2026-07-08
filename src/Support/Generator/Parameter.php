@@ -135,7 +135,6 @@ class Parameter
 
     /**
      * @param  array<string, Example>  $examples
-     *
      * @return $this
      */
     public function examples(array $examples): self

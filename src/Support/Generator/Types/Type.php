@@ -23,6 +23,7 @@ abstract class Type
 
     /**
      * @deprecated
+     *
      * @var array|scalar|null|MissingValue
      */
     public $example;
@@ -189,6 +190,7 @@ abstract class Type
 
     /**
      * @deprecated
+     *
      * @param  array|scalar|null|MissingValue  $example
      * @return $this
      */

@@ -3,10 +3,10 @@
 namespace Dedoc\Scramble\Support\TypeToSchemaExtensions;
 
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
-use Dedoc\Scramble\Support\Generator\Reference;
-use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\Generator\Reference;
+use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
