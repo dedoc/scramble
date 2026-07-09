@@ -21,7 +21,11 @@ abstract class Type
 
     public string $contentEncoding = '';
 
-    /** @var array|scalar|null|MissingValue */
+    /**
+     * @deprecated
+     *
+     * @var array|scalar|null|MissingValue
+     */
     public $example;
 
     /** @var array|scalar|null|MissingValue */
@@ -44,7 +48,7 @@ abstract class Type
     public function __construct(string $type)
     {
         $this->type = $type;
-        $this->example = new MissingValue;
+        $this->example = new MissingValue; // @phpstan-ignore property.deprecated
         $this->default = new MissingValue;
     }
 
@@ -103,7 +107,7 @@ abstract class Type
         $this->description = $fromType->description;
         $this->contentMediaType = $fromType->contentMediaType;
         $this->contentEncoding = $fromType->contentEncoding;
-        $this->example = $fromType->example;
+        $this->example = $fromType->example; // @phpstan-ignore property.deprecated, property.deprecated
         $this->default = $fromType->default;
         $this->examples = $fromType->examples;
         $this->enum = $fromType->enum;
@@ -141,10 +145,10 @@ abstract class Type
                 'enum' => count($enum) ? $enum : null,
                 'const' => $const,
             ]),
-            $this->example instanceof MissingValue ? [] : ['example' => $this->example],
             $this->default instanceof MissingValue ? [] : ['default' => $this->default],
             count(
                 $examples = collect($this->examples)
+                    ->prepend($this->example) // @phpstan-ignore property.deprecated
                     ->reject(fn ($example) => $example instanceof MissingValue)
                     ->values()
                     ->toArray()
@@ -185,6 +189,8 @@ abstract class Type
     }
 
     /**
+     * @deprecated
+     *
      * @param  array|scalar|null|MissingValue  $example
      * @return $this
      */
