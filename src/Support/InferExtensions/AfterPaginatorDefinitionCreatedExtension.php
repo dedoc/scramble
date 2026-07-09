@@ -27,6 +27,10 @@ class AfterPaginatorDefinitionCreatedExtension implements AfterClassDefinitionCr
     {
         $definition = $event->classDefinition;
 
+        /** Laravel 10.x compatibility layer */
+        if (! collect($definition->templateTypes)->firstWhere('name', 'TKey')) {
+            $definition->templateTypes[] = new TemplateType('TKey');
+        }
         if (! $tValue = collect($definition->templateTypes)->firstWhere('name', 'TValue')) {
             $tValue = $definition->templateTypes[] = new TemplateType('TValue');
         }
