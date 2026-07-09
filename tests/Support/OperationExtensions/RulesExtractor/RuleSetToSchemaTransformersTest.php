@@ -55,6 +55,30 @@ describe(EnumRule::class, function () {
             ]);
     })->skip(! method_exists(Enum::class, 'only'));
 
+    test('enum rule with only keeps case descriptions', function () {
+        config()->set('scramble.enum_cases_description_strategy', 'description');
+
+        $rules = [
+            Rule::enum(DocumentedEnum_RuleSetToSchemaTransformerTest::class)->only([
+                DocumentedEnum_RuleSetToSchemaTransformerTest::FOO,
+                DocumentedEnum_RuleSetToSchemaTransformerTest::BAR,
+            ]),
+        ];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())->toBe([
+            'type' => 'string',
+            'description' => <<<'EOF'
+| |
+|---|
+| `foo` <br/> Foo case description. |
+| `bar` <br/> Bar case description. |
+EOF,
+            'enum' => ['foo', 'bar'],
+        ]);
+    })->skip(! method_exists(Enum::class, 'only'));
+
     test('enum rule with except', function () {
         $rules = [
             Rule::enum(Enum_RuleSetToSchemaTransformerTest::class)->except([
@@ -70,6 +94,51 @@ describe(EnumRule::class, function () {
                 'const' => 'bar',
             ]);
     })->skip(! method_exists(Enum::class, 'except'));
+
+    test('enum rule with except keeps case descriptions', function () {
+        config()->set('scramble.enum_cases_description_strategy', 'description');
+
+        $rules = [
+            Rule::enum(DocumentedEnum_RuleSetToSchemaTransformerTest::class)->except([
+                DocumentedEnum_RuleSetToSchemaTransformerTest::BAZ,
+            ]),
+        ];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())->toBe([
+            'type' => 'string',
+            'description' => <<<'EOF'
+| |
+|---|
+| `foo` <br/> Foo case description. |
+| `bar` <br/> Bar case description. |
+EOF,
+            'enum' => ['foo', 'bar'],
+        ]);
+    })->skip(! method_exists(Enum::class, 'except'));
+
+    test('enum rule with only keeps case descriptions as extension', function () {
+        config()->set('scramble.enum_cases_description_strategy', 'extension');
+
+        $rules = [
+            Rule::enum(DocumentedEnum_RuleSetToSchemaTransformerTest::class)->only([
+                DocumentedEnum_RuleSetToSchemaTransformerTest::FOO,
+                DocumentedEnum_RuleSetToSchemaTransformerTest::BAR,
+            ]),
+        ];
+
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())->toBe([
+            'type' => 'string',
+            'enum' => ['foo', 'bar'],
+            'x-enumDescriptions' => [
+                'foo' => 'Foo case description.',
+                'bar' => 'Bar case description.',
+            ],
+        ]);
+    })->skip(! method_exists(Enum::class, 'only'));
 
     test('nullable enum rule', function () {
         $rules = ['nullable', new Enum(Enum_RuleSetToSchemaTransformerTest::class)];
@@ -185,4 +254,20 @@ enum Enum_RuleSetToSchemaTransformerTest: string
 {
     case FOO = 'foo';
     case BAR = 'bar';
+}
+
+enum DocumentedEnum_RuleSetToSchemaTransformerTest: string
+{
+    /**
+     * Foo case description.
+     */
+    case FOO = 'foo';
+    /**
+     * Bar case description.
+     */
+    case BAR = 'bar';
+    /**
+     * Baz case description.
+     */
+    case BAZ = 'baz';
 }
