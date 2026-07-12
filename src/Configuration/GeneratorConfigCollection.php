@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Configuration;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Collection;
 use LogicException;
 
 class GeneratorConfigCollection

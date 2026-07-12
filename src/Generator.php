@@ -30,6 +30,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use LogicException;
 use ReflectionException;
 use ReflectionMethod;
 use Throwable;
@@ -269,7 +270,25 @@ class Generator
             return null;
         }
 
-        return $attributes[0]->newInstance()->only;
+        $apiNames = $attributes[0]->newInstance()->only;
+
+        $this->ensureRegisteredApiNames($apiNames);
+
+        return $apiNames;
+    }
+
+    /**
+     * @param list<string> $apiNames
+     */
+    private function ensureRegisteredApiNames(array $apiNames): void
+    {
+        $registeredApis = array_keys(Scramble::getConfigurationsInstance()->all());
+
+        foreach ($apiNames as $apiName) {
+            if (! in_array($apiName, $registeredApis, true)) {
+                throw new LogicException("$apiName API is not registered. Register the API using `Scramble::registerApi` first.");
+            }
+        }
     }
 
     private function buildTypeTransformer(OpenApiContext $context): TypeTransformer

@@ -73,6 +73,18 @@ it('does not include Api-annotated routes rejected by the route resolver', funct
     expect(ApiAttributeFilteringTest_paths('internal'))->toBe([]);
 });
 
+it('fails when Api attribute references an unregistered api', function () {
+    RouteFacade::get('api-attr/bogus', [ApiAttributeFilteringTest_BogusController::class, 'index']);
+
+    app(Generator::class)(Scramble::getGeneratorConfig('public'));
+})->throws(LogicException::class, 'bogus API is not registered');
+
+class ApiAttributeFilteringTest_BogusController
+{
+    #[Api('bogus')]
+    public function index() {}
+}
+
 class ApiAttributeFilteringTest_Controller
 {
     public function open() {}
