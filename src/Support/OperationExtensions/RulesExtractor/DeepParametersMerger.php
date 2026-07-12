@@ -37,6 +37,8 @@ class DeepParametersMerger
      */
     private function handleNested(Collection $parameters): Collection
     {
+        $originalKeys = $parameters->keys();
+
         /**
          * @var Collection<string, Parameter> $forcedFlatParameters
          * @var Collection<string, Parameter> $maybeDeepParameters
@@ -93,7 +95,10 @@ class DeepParametersMerger
 
         return $parameters
             ->merge($forcedFlatParameters)
-            ->merge($nested);
+            ->merge($nested)
+            ->sortBy(fn ($_, $key) => $originalKeys->search(
+                fn ($k) => $k === $key || self::splitOnUnescapedDots($k)[0] === $key
+            ));
     }
 
     private function setDeepType(Type &$base, string $key, Parameter $parameter): void

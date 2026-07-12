@@ -35,6 +35,19 @@ function validationRulesToDocumentationWithDeep($rulesToParameters)
 }
 
 // @todo: move rules from here to Generator/Request/ValidationRulesDocumentation test
+it('maintains parameter order when merging nested rules', function () {
+    $rules = [
+        'name' => 'string|required',
+        'status' => 'array|required',
+        'status.*' => 'string',
+        'type' => 'string|nullable',
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect(collect($params)->pluck('name')->all())->toBe(['name', 'status', 'type']);
+});
+
 it('supports present rule', function () {
     $rules = [
         'password' => ['present'],
