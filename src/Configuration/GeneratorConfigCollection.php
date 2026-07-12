@@ -21,7 +21,7 @@ class GeneratorConfigCollection
 
     private function buildDefaultApiConfiguration(): GeneratorConfig
     {
-        return (new GeneratorConfig)
+        return (new GeneratorConfig(name: Scramble::DEFAULT_API))
             ->expose(
                 ui: fn (Router $router, $action) => $router->get('docs/api', $action)->name('scramble.docs.ui'),
                 document: fn (Router $router, $action) => $router->get('docs/api.json', $action)->name('scramble.docs.document'),
@@ -40,7 +40,7 @@ class GeneratorConfigCollection
     public function register(string $name, array $config): GeneratorConfig
     {
         $this->apis[$name] = $generatorConfig = $this->apis[Scramble::DEFAULT_API]
-            ->cloneWithoutExposing()
+            ->cloneWithoutExposing($name)
             ->useConfig(array_merge(config('scramble') ?: [], $config));
 
         return $generatorConfig;

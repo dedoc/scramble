@@ -22,7 +22,7 @@ class CacheableGenerator
             return ($this->generator)($config);
         }
 
-        $key = $keyBase.':'.$this->resolveApi($config);
+        $key = $keyBase.':'.$config->name;
 
         $cached = cache()->store($store)->get($key);
         if (is_array($cached)) {
@@ -30,16 +30,5 @@ class CacheableGenerator
         }
 
         return ($this->generator)($config);
-    }
-
-    private function resolveApi(GeneratorConfig $config): string
-    {
-        foreach (Scramble::getConfigurationsInstance()->all() as $api => $generatorConfig) {
-            if ($generatorConfig === $config) {
-                return $api;
-            }
-        }
-
-        return Scramble::DEFAULT_API;
     }
 }
