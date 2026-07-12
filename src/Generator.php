@@ -278,7 +278,7 @@ class Generator
     }
 
     /**
-     * @param list<string> $apiNames
+     * @param  list<string>  $apiNames
      */
     private function ensureRegisteredApiNames(array $apiNames): void
     {
