@@ -227,10 +227,69 @@ describe(File::class, function () {
                 'type' => 'string',
                 'format' => 'binary',
                 'contentMediaType' => 'application/octet-stream',
-                'minLength' => 1024.0,
-                'maxLength' => 12288.0,
+                'description' => 'File size must be between 1024 kilobytes and 12288 kilobytes.',
             ]);
     });
+
+    test('file min rule', function ($rules) {
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'string',
+                'format' => 'binary',
+                'contentMediaType' => 'application/octet-stream',
+                'description' => 'Minimum file size: 1024 kilobytes.',
+            ]);
+    })->with([
+        'file first' => [['file', 'min:1024']],
+        'min first' => [['min:1024', 'file']],
+    ]);
+
+    test('file max rule', function ($rules) {
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'string',
+                'format' => 'binary',
+                'contentMediaType' => 'application/octet-stream',
+                'description' => 'Maximum file size: 4096 kilobytes.',
+            ]);
+    })->with([
+        'file first' => [['file', 'max:4096']],
+        'max first' => [['max:4096', 'file']],
+    ]);
+
+    test('file size rule', function ($rules) {
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'string',
+                'format' => 'binary',
+                'contentMediaType' => 'application/octet-stream',
+                'description' => 'File size must be 2048 kilobytes.',
+            ]);
+    })->with([
+        'file first' => [['file', 'size:2048']],
+        'size first' => [['size:2048', 'file']],
+    ]);
+
+    test('file between rule', function ($rules) {
+        $schema = $this->transformer->transform($rules);
+
+        expect($schema->toArray())
+            ->toBe([
+                'type' => 'string',
+                'format' => 'binary',
+                'contentMediaType' => 'application/octet-stream',
+                'description' => 'File size must be between 1024 kilobytes and 4096 kilobytes.',
+            ]);
+    })->with([
+        'file first' => [['file', 'between:1024,4096']],
+        'between first' => [['between:1024,4096', 'file']],
+    ]);
 
     test('image file rule', function () {
         $rules = [

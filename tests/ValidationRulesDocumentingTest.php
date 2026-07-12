@@ -702,6 +702,72 @@ it('supports file rule', function () {
         ->and($type->contentMediaType)->toBe('application/octet-stream');
 });
 
+it('documents file min rule as description instead of minLength', function ($rules) {
+    $params = ($this->buildRulesToParameters)(['file' => $rules])->handle();
+
+    expect($params[0]->description)->toBe('Minimum file size: 1024 kilobytes.')
+        ->and($params[0]->schema->type->toArray())
+        ->toMatchArray([
+            'type' => 'string',
+            'format' => 'binary',
+            'contentMediaType' => 'application/octet-stream',
+        ])
+        ->not->toHaveKey('minLength');
+})->with([
+    'file first' => [['file', 'min:1024']],
+    'min first' => [['min:1024', 'file']],
+]);
+
+it('documents file max rule as description instead of maxLength', function ($rules) {
+    $params = ($this->buildRulesToParameters)(['file' => $rules])->handle();
+
+    expect($params[0]->description)->toBe('Maximum file size: 4096 kilobytes.')
+        ->and($params[0]->schema->type->toArray())
+        ->toMatchArray([
+            'type' => 'string',
+            'format' => 'binary',
+            'contentMediaType' => 'application/octet-stream',
+        ])
+        ->not->toHaveKey('maxLength');
+})->with([
+    'file first' => [['file', 'max:4096']],
+    'max first' => [['max:4096', 'file']],
+]);
+
+it('documents file size rule as description instead of length constraints', function ($rules) {
+    $params = ($this->buildRulesToParameters)(['file' => $rules])->handle();
+
+    expect($params[0]->description)->toBe('File size must be 2048 kilobytes.')
+        ->and($params[0]->schema->type->toArray())
+        ->toMatchArray([
+            'type' => 'string',
+            'format' => 'binary',
+            'contentMediaType' => 'application/octet-stream',
+        ])
+        ->not->toHaveKey('minLength')
+        ->not->toHaveKey('maxLength');
+})->with([
+    'file first' => [['file', 'size:2048']],
+    'size first' => [['size:2048', 'file']],
+]);
+
+it('documents file between rule as description instead of length constraints', function ($rules) {
+    $params = ($this->buildRulesToParameters)(['file' => $rules])->handle();
+
+    expect($params[0]->description)->toBe('File size must be between 1024 kilobytes and 4096 kilobytes.')
+        ->and($params[0]->schema->type->toArray())
+        ->toMatchArray([
+            'type' => 'string',
+            'format' => 'binary',
+            'contentMediaType' => 'application/octet-stream',
+        ])
+        ->not->toHaveKey('minLength')
+        ->not->toHaveKey('maxLength');
+})->with([
+    'file first' => [['file', 'between:1024,4096']],
+    'between first' => [['between:1024,4096', 'file']],
+]);
+
 it('converts min rule into "minimum" for numeric fields', function () {
     $rules = [
         'num' => ['int', 'min:8'],
