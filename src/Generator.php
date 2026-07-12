@@ -269,7 +269,7 @@ class Generator
             return null;
         }
 
-        return $attributes[0]->newInstance()->names;
+        return $attributes[0]->newInstance()->only;
     }
 
     private function buildTypeTransformer(OpenApiContext $context): TypeTransformer

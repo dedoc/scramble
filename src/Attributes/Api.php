@@ -18,10 +18,10 @@ class Api
     /**
      * @var list<string>
      */
-    public readonly array $names;
+    public readonly array $only;
 
-    public function __construct(string ...$names)
+    public function __construct(string|array $only)
     {
-        $this->names = array_values($names);
+        $this->only = is_array($only) ? array_values($only) : [$only];
     }
 }

@@ -80,7 +80,7 @@ class ApiAttributeFilteringTest_Controller
     #[Api('internal')]
     public function internalOnly() {}
 
-    #[Api('public', 'internal')]
+    #[Api(['public', 'internal'])]
     public function both() {}
 
     #[Api('internal')]
