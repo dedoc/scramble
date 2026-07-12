@@ -42,6 +42,7 @@ class GeneratorConfig
     public Closure $operationMethodsResolver;
 
     public function __construct(
+        public readonly string $name = Scramble::DEFAULT_API,
         private array $config = [],
         private ?Closure $routeResolver = null,
         public readonly ParametersExtractors $parametersExtractors = new ParametersExtractors,
@@ -148,9 +149,10 @@ class GeneratorConfig
         return $this;
     }
 
-    public function cloneWithoutExposing(): self
+    public function cloneWithoutExposing(?string $name = null): self
     {
         return new self(
+            name: $name ?? $this->name,
             config: $this->config,
             routeResolver: $this->routeResolver,
             parametersExtractors: clone $this->parametersExtractors,
