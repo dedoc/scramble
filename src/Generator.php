@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble;
 
 use Closure;
+use Dedoc\Scramble\Attributes\Api;
 use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
 use Dedoc\Scramble\Configuration\SecurityDocumentationContext;
@@ -220,7 +221,7 @@ class Generator
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
             })
             ->filter($config->routes())
-            ->filter(function (Route $route) {
+            ->filter(function (Route $route) use ($config) {
                 if (! is_string($route->getAction('uses'))) {
                     return true;
                 }
@@ -243,9 +244,43 @@ class Generator
                     return false;
                 }
 
+                $apiNames = $this->getApiAttributeNames($reflection);
+                if ($apiNames !== null && ! in_array($this->resolveApi($config), $apiNames, true)) {
+                    return false;
+                }
+
                 return true;
             })
             ->values();
+    }
+
+    /**
+     * @return list<string>|null `null` when the route has no #[Api] restriction
+     */
+    private function getApiAttributeNames(ReflectionMethod $reflection): ?array
+    {
+        $attributes = $reflection->getAttributes(Api::class);
+
+        if (! count($attributes)) {
+            $attributes = $reflection->getDeclaringClass()->getAttributes(Api::class);
+        }
+
+        if (! count($attributes)) {
+            return null;
+        }
+
+        return $attributes[0]->newInstance()->names;
+    }
+
+    private function resolveApi(GeneratorConfig $config): string
+    {
+        foreach (Scramble::getConfigurationsInstance()->all() as $api => $generatorConfig) {
+            if ($generatorConfig === $config) {
+                return $api;
+            }
+        }
+
+        return Scramble::DEFAULT_API;
     }
 
     private function buildTypeTransformer(OpenApiContext $context): TypeTransformer
