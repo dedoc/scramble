@@ -245,7 +245,7 @@ class Generator
                 }
 
                 $apiNames = $this->getApiAttributeNames($reflection);
-                if ($apiNames !== null && ! in_array($this->resolveApi($config), $apiNames, true)) {
+                if ($apiNames !== null && ! in_array($config->name, $apiNames, true)) {
                     return false;
                 }
 
@@ -270,17 +270,6 @@ class Generator
         }
 
         return $attributes[0]->newInstance()->names;
-    }
-
-    private function resolveApi(GeneratorConfig $config): string
-    {
-        foreach (Scramble::getConfigurationsInstance()->all() as $api => $generatorConfig) {
-            if ($generatorConfig === $config) {
-                return $api;
-            }
-        }
-
-        return Scramble::DEFAULT_API;
     }
 
     private function buildTypeTransformer(OpenApiContext $context): TypeTransformer
