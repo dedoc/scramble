@@ -170,8 +170,6 @@ class RequestEssentialsExtension extends OperationExtension
 
     private function getOperationId(RouteInfo $routeInfo)
     {
-        $routeClassName = $routeInfo->className() ?: '';
-
         return new UniqueNameOptions(
             eloquent: (function () use ($routeInfo) {
                 // Manual operation ID setting.
@@ -199,19 +197,20 @@ class RequestEssentialsExtension extends OperationExtension
                 // If no name and no operationId manually set, falling back to controller and method name (unique implementation).
                 return null;
             })(),
-            unique: collect(explode('\\', Str::endsWith($routeClassName, 'Controller') ? Str::replaceLast('Controller', '', $routeClassName) : $routeClassName))
+            unique: Str::of($routeInfo->className() ?? '')
+                ->replaceEnd('Controller', '')
+                ->explode('\\')
+                ->push($routeInfo->methodName() ?? '')
                 ->filter()
-                ->push($routeInfo->methodName())
-                ->map(function ($part) {
-                    if ($part === Str::upper($part)) {
-                        return Str::lower($part);
-                    }
-
-                    return Str::camel($part);
-                })
-                ->reject(fn ($p) => in_array(Str::lower($p), ['app', 'http', 'api', 'controllers', 'invoke']))
+                ->map(static fn (string $part) => Str::upper($part) === $part
+                    ? Str::lower($part)
+                    : Str::camel($part)
+                )
+                ->reject(static fn (string $p) => in_array(Str::lower($p), [
+                    'app', 'http', 'api', 'controllers', 'invoke',
+                ]))
                 ->values()
-                ->toArray(),
+                ->all(),
         );
     }
 

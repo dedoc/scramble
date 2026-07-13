@@ -3394,12 +3394,6 @@ parameters:
 			path: src/Support/OperationExtensions/RequestEssentialsExtension.php
 
 		-
-			message: '#^Parameter \#1 \.\.\.\$values of method Illuminate\\Support\\Collection\<int,string\>\:\:push\(\) expects non\-falsy\-string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/OperationExtensions/RequestEssentialsExtension.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>expr" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
