@@ -192,20 +192,33 @@ class Generator
      */
     private function getRoutes(GeneratorConfig $config): Collection
     {
+        $buildReflectionMethodFrom = function (string $action): ReflectionMethod {
+            if (PHP_VERSION_ID < 80300) { // Function 'createFromMethodName' is available since PHP 8.3
+                return new ReflectionMethod(...explode('@', $action));
+            }
+
+            // Using: `public function ReflectionMethod::__construct(string $classMethod)` signature is deprecated as of PHP 8.4.0
+            // We should use ReflectionMethod::createFromMethodName() instead.
+            return strpos($action, '@') === false
+                ? ReflectionMethod::createFromMethodName($action)
+                : new ReflectionMethod(...explode('@', $action));
+        };
+
         return collect(RouteFacade::getRoutes())
-            ->pipe(function (Collection $c) {
-                $onlyRoutes = $c->filter(function (Route $route) {
+            ->pipe(static function (Collection $c) use ($buildReflectionMethodFrom) {
+                $onlyRoutes = $c->filter(static function (Route $route) use ($buildReflectionMethodFrom) {
 
                     if (! is_string($route->getAction('controller'))) {
                         return false;
                     }
 
-                    if (! is_string($route->getAction('uses'))) {
+                    $action = $route->getAction('uses');
+                    if (! is_string($action)) {
                         return false;
                     }
 
                     try {
-                        $reflection = new ReflectionMethod(...explode('@', $route->getAction('uses')));
+                        $reflection = $buildReflectionMethodFrom($action);
 
                         if (str_contains($reflection->getDocComment() ?: '', '@only-docs')) {
                             return true;
@@ -222,13 +235,15 @@ class Generator
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
             })
             ->filter($config->routes())
-            ->filter(function (Route $route) use ($config) {
-                if (! is_string($route->getAction('uses'))) {
+            ->filter(function (Route $route) use ($config, $buildReflectionMethodFrom) {
+                $action = $route->getAction('uses');
+
+                if (! is_string($action)) {
                     return true;
                 }
 
                 try {
-                    $reflection = new ReflectionMethod(...explode('@', $route->getAction('uses')));
+                    $reflection = $buildReflectionMethodFrom($action);
                 } catch (ReflectionException) {
                     /*
                      * If route is registered but route method doesn't exist, it will not be included
