@@ -191,6 +191,35 @@ class DirectParentConstructorCallee_ClassAnalyzerTest
     }
 }
 
+it('resolves references passed to parent constructors in self out types', function () {
+    $constructor = $this->classAnalyzer
+        ->analyze(ParentConstructorReference_ClassAnalyzerTest::class)
+        ->getMethodDefinition('__construct');
+
+    expect($constructor->getSelfOutType()->toString())->toBe('self<int(42)>');
+});
+class ParentConstructorReference_ClassAnalyzerTest extends ParentConstructorReferenceCallee_ClassAnalyzerTest
+{
+    public function __construct()
+    {
+        parent::__construct($this->makeValue());
+    }
+
+    private function makeValue()
+    {
+        return 42;
+    }
+}
+class ParentConstructorReferenceCallee_ClassAnalyzerTest
+{
+    public $value;
+
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
+}
+
 it('describes properties set in setters as part of self out', function () {
     $constructor = $this->classAnalyzer
         ->analyze(SetterCall_ClassAnalyzerTest::class)
@@ -213,6 +242,55 @@ class SetterCall_ClassAnalyzerTest
     public function setBar(int $b)
     {
         $this->bar = $b;
+    }
+}
+
+it('resolves references used as setter arguments in self out types', function () {
+    $constructor = $this->classAnalyzer
+        ->analyze(SetterReference_ClassAnalyzerTest::class)
+        ->getMethodDefinition('__construct');
+
+    expect($constructor->getSelfOutType()->toString())->toBe('self<int(42)>');
+});
+class SetterReference_ClassAnalyzerTest
+{
+    public $value;
+
+    public function __construct()
+    {
+        $this->setValue($this->makeValue());
+    }
+
+    public function setValue($value)
+    {
+        $this->value = $value;
+    }
+
+    private function makeValue()
+    {
+        return 42;
+    }
+}
+
+it('resolves references used in direct self out assignments', function () {
+    $constructor = $this->classAnalyzer
+        ->analyze(DirectAssignmentReference_ClassAnalyzerTest::class)
+        ->getMethodDefinition('__construct');
+
+    expect($constructor->getSelfOutType()->toString())->toBe('self<int(42)>');
+});
+class DirectAssignmentReference_ClassAnalyzerTest
+{
+    public $value;
+
+    public function __construct()
+    {
+        $this->value = $this->makeValue();
+    }
+
+    private function makeValue()
+    {
+        return 42;
     }
 }
 
