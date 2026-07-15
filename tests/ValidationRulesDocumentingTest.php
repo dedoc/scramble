@@ -35,6 +35,19 @@ function validationRulesToDocumentationWithDeep($rulesToParameters)
 }
 
 // @todo: move rules from here to Generator/Request/ValidationRulesDocumentation test
+it('maintains parameter order when merging nested rules', function () {
+    $rules = [
+        'name' => 'string|required',
+        'status' => 'array|required',
+        'status.*' => 'string',
+        'type' => 'string|nullable',
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect(collect($params)->pluck('name')->all())->toBe(['name', 'status', 'type']);
+});
+
 it('supports present rule', function () {
     $rules = [
         'password' => ['present'],
@@ -702,6 +715,72 @@ it('supports file rule', function () {
         ->and($type->contentMediaType)->toBe('application/octet-stream');
 });
 
+it('documents file min rule as description instead of minLength', function ($rules) {
+    $params = ($this->buildRulesToParameters)(['file' => $rules])->handle();
+
+    expect($params[0]->description)->toBe('Minimum file size: 1024 kilobytes.')
+        ->and($params[0]->schema->type->toArray())
+        ->toMatchArray([
+            'type' => 'string',
+            'format' => 'binary',
+            'contentMediaType' => 'application/octet-stream',
+        ])
+        ->not->toHaveKey('minLength');
+})->with([
+    'file first' => [['file', 'min:1024']],
+    'min first' => [['min:1024', 'file']],
+]);
+
+it('documents file max rule as description instead of maxLength', function ($rules) {
+    $params = ($this->buildRulesToParameters)(['file' => $rules])->handle();
+
+    expect($params[0]->description)->toBe('Maximum file size: 4096 kilobytes.')
+        ->and($params[0]->schema->type->toArray())
+        ->toMatchArray([
+            'type' => 'string',
+            'format' => 'binary',
+            'contentMediaType' => 'application/octet-stream',
+        ])
+        ->not->toHaveKey('maxLength');
+})->with([
+    'file first' => [['file', 'max:4096']],
+    'max first' => [['max:4096', 'file']],
+]);
+
+it('documents file size rule as description instead of length constraints', function ($rules) {
+    $params = ($this->buildRulesToParameters)(['file' => $rules])->handle();
+
+    expect($params[0]->description)->toBe('File size must be 2048 kilobytes.')
+        ->and($params[0]->schema->type->toArray())
+        ->toMatchArray([
+            'type' => 'string',
+            'format' => 'binary',
+            'contentMediaType' => 'application/octet-stream',
+        ])
+        ->not->toHaveKey('minLength')
+        ->not->toHaveKey('maxLength');
+})->with([
+    'file first' => [['file', 'size:2048']],
+    'size first' => [['size:2048', 'file']],
+]);
+
+it('documents file between rule as description instead of length constraints', function ($rules) {
+    $params = ($this->buildRulesToParameters)(['file' => $rules])->handle();
+
+    expect($params[0]->description)->toBe('File size must be between 1024 kilobytes and 4096 kilobytes.')
+        ->and($params[0]->schema->type->toArray())
+        ->toMatchArray([
+            'type' => 'string',
+            'format' => 'binary',
+            'contentMediaType' => 'application/octet-stream',
+        ])
+        ->not->toHaveKey('minLength')
+        ->not->toHaveKey('maxLength');
+})->with([
+    'file first' => [['file', 'between:1024,4096']],
+    'between first' => [['between:1024,4096', 'file']],
+]);
+
 it('converts min rule into "minimum" for numeric fields', function () {
     $rules = [
         'num' => ['int', 'min:8'],
@@ -953,6 +1032,59 @@ it('extracts rules docs from form request', function () {
     assertMatchesSnapshot($openApiDocument['paths']['/test']['get']['parameters']);
 });
 
+it('moves a single @example from schema to parameter when transforming schema bag to parameters', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [ValidationRulesWithSingleExampleOnParameterDocs_Test::class, 'index']));
+
+    expect($openApiDocument['paths']['/test']['get']['parameters'][0])->toBe([
+        'name' => 'foo',
+        'in' => 'query',
+        'required' => true,
+        'schema' => ['type' => 'string'],
+        'example' => 'wow',
+    ]);
+});
+
+class ValidationRulesWithSingleExampleOnParameterDocs_Test
+{
+    public function index(Request $request)
+    {
+        $request->validate([
+            /**
+             * @example wow
+             */
+            'foo' => ['required', 'string'],
+        ]);
+    }
+}
+
+it('keeps multiple @example values on schema when transforming schema bag to parameters', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', [ValidationRulesWithMultipleExamplesOnSchemaDocs_Test::class, 'index']));
+
+    expect($openApiDocument['paths']['/test']['get']['parameters'][0])->toBe([
+        'name' => 'foo',
+        'in' => 'query',
+        'required' => true,
+        'schema' => [
+            'type' => 'string',
+            'examples' => ['wow', 'another'],
+        ],
+    ]);
+});
+
+class ValidationRulesWithMultipleExamplesOnSchemaDocs_Test
+{
+    public function index(Request $request)
+    {
+        $request->validate([
+            /**
+             * @example wow
+             * @example another
+             */
+            'foo' => ['required', 'string'],
+        ]);
+    }
+}
+
 it('extracts rules docs when using consts in form request', function ($action) {
     $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', $action));
 
@@ -986,6 +1118,7 @@ it('supports validation rules and form request at the same time', function () {
 
     assertMatchesSnapshot($openApiDocument);
 });
+
 class ValidationRulesDocumenting_Test
 {
     /**

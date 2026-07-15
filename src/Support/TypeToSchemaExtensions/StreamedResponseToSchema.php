@@ -123,7 +123,7 @@ class StreamedResponseToSchema extends TypeToSchemaExtension
 
         if ($this->isServerSentEventsResponse($type)) {
             $schema = (new ObjectType)
-                ->addProperty('event', (new StringType)->example('update'))
+                ->addProperty('event', (new StringType)->examples(['update']))
                 ->addProperty('data', new MixedType)
                 ->setRequired(['event', 'data']);
 

@@ -22,6 +22,7 @@ use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\NeverType;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\RecursiveTemplateSolver;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
@@ -37,6 +38,7 @@ use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\TypeTraverser;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
@@ -90,7 +92,41 @@ class ReferenceTypeResolver
             return new UnknownType('self reference');
         }
 
-        return $resolved;
+        return $this->withNullsafeShortCircuitType($t, $resolved, $scope);
+    }
+
+    private function withNullsafeShortCircuitType(Type $original, Type $resolved, Scope $scope): Type
+    {
+        if (! $this->hasNullsafeShortCircuitType($original, $scope)) {
+            return $resolved;
+        }
+
+        return Union::wrap([$resolved, new NullType]);
+    }
+
+    private function hasNullsafeShortCircuitType(Type $original, Scope $scope): bool
+    {
+        if ($original instanceof MethodCallReferenceType) {
+            if ($original->isNullsafe) {
+                return TypeHelper::canContainNull(
+                    $this->resolve($scope, $original->callee),
+                );
+            }
+
+            return $this->hasNullsafeShortCircuitType($original->callee, $scope);
+        }
+
+        if ($original instanceof PropertyFetchReferenceType) {
+            if ($original->isNullsafe) {
+                return TypeHelper::canContainNull(
+                    $this->resolve($scope, $original->object),
+                );
+            }
+
+            return $this->hasNullsafeShortCircuitType($original->object, $scope);
+        }
+
+        return false;
     }
 
     /**
@@ -493,11 +529,12 @@ class ReferenceTypeResolver
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type): Type
     {
         $objectType = $this->resolveAndNormalizeCallee($scope, $type->object);
+        $mayBeUndefinedInCoalesce = TypeHelper::mayBeUndefinedInCoalesce($objectType);
         $objectAllTypes = $objectType instanceof Union
             ? $objectType->types
             : [$objectType];
 
-        return Union::wrap(array_map(function (Type $objectType) use ($scope, $type) {
+        $propertyType = Union::wrap(array_map(function (Type $objectType) use ($scope, $type, &$mayBeUndefinedInCoalesce) {
             $objectType = $this->resolveStaticCalleeForMethodLookup($scope, $objectType);
 
             if ($objectType instanceof MixedType) {
@@ -508,6 +545,8 @@ class ReferenceTypeResolver
                 && ! $objectType instanceof UnknownType
                 && ! $objectType instanceof TemplateType
             ) {
+                $mayBeUndefinedInCoalesce = true;
+
                 return new NeverType;
             }
             if (! $objectType instanceof ObjectType) {
@@ -535,10 +574,16 @@ class ReferenceTypeResolver
             }
 
             // @todo resolve template type?
-            return $propertyType instanceof TemplateType
+            $propertyType = $propertyType instanceof TemplateType
                 ? ($propertyType->is ?: new UnknownType)
                 : $propertyType;
+
+            return $propertyType;
         }, $objectAllTypes));
+
+        return $mayBeUndefinedInCoalesce
+            ? TypeHelper::markMayBeUndefinedInCoalesce($propertyType)
+            : $propertyType;
     }
 
     private function resolvePropertyAssignReferenceType(Scope $scope, PropertyAssignReferenceType $type): Type

@@ -8,13 +8,13 @@ trait ManagesDocumentationCache
 {
     protected function ensureDocumentationCacheConfigured(): bool
     {
-        if (config('scramble.cache.store') === null) {
+        if (! is_string(config('scramble.cache.store'))) {
             $this->info('Documentation cache store is not configured. Set `scramble.cache.store` in your config.');
 
             return false;
         }
 
-        if (config('scramble.cache.key') === null) {
+        if (! is_string(config('scramble.cache.key'))) {
             $this->info('Documentation cache key is not configured. Set `scramble.cache.key` in your config.');
 
             return false;
@@ -26,7 +26,7 @@ trait ManagesDocumentationCache
     /** @return string[] */
     protected function resolveApis(): array
     {
-        $apis = array_filter($this->option('api') ?: []);
+        $apis = array_filter((array) ($this->option('api') ?: []));
 
         if ($apis === [] || $apis === ['*']) {
             return array_keys(Scramble::getConfigurationsInstance()->all());
@@ -37,6 +37,8 @@ trait ManagesDocumentationCache
 
     protected function cacheKey(string $api): string
     {
-        return config('scramble.cache.key').':'.$api;
+        $key = config('scramble.cache.key');
+
+        return (is_string($key) ? $key : '').':'.$api;
     }
 }

@@ -18,14 +18,14 @@ class CoalesceType extends AbstractType implements LateResolvingType
 
     public function resolve(): Type
     {
-        if (! TypeHelper::canContainNull($this->left)) {
+        if (! TypeHelper::canContainNull($this->left) && ! TypeHelper::mayBeUndefinedInCoalesce($this->left)) {
             return $this->left;
         }
 
-        return TypeHelper::mergeTypes(
+        return TypeHelper::withoutMayBeUndefinedInCoalesce(TypeHelper::mergeTypes(
             TypeHelper::withoutNull($this->left),
             $this->right,
-        );
+        ));
     }
 
     public function isResolvable(): bool

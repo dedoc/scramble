@@ -9,6 +9,7 @@ class PropertyFetchReferenceType extends AbstractReferenceType
     public function __construct(
         public Type $object,
         public string $propertyName,
+        public bool $isNullsafe = false,
     ) {}
 
     public function nodes(): array
@@ -18,6 +19,8 @@ class PropertyFetchReferenceType extends AbstractReferenceType
 
     public function toString(): string
     {
-        return "(#{$this->object->toString()}).{$this->propertyName}";
+        $op = $this->isNullsafe ? '?.' : '.';
+
+        return "(#{$this->object->toString()}){$op}{$this->propertyName}";
     }
 }

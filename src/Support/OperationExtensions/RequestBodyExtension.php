@@ -32,7 +32,7 @@ class RequestBodyExtension extends OperationExtension
 
     public function handle(Operation $operation, RouteInfo $routeInfo): void
     {
-        $description = Str::of($routeInfo->phpDoc()->getAttribute('description')); // @phpstan-ignore argument.type
+        $description = Str::of($routeInfo->phpDoc()->getAttribute('description') ?: ''); // @phpstan-ignore argument.type
 
         /** @var Collection<int, ParametersExtractionResult> $rulesResults */
         $rulesResults = collect();
@@ -48,7 +48,7 @@ class RequestBodyExtension extends OperationExtension
 
         // Only set summary and description from PHPDoc if they haven't been set by other extensions (e.g., Endpoint attribute)
         if (empty($operation->summary)) {
-            $operation->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'));  // @phpstan-ignore argument.type
+            $operation->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary') ?: '')->rtrim('.'));  // @phpstan-ignore argument.type
         }
 
         if (empty($operation->description)) {

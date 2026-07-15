@@ -42,6 +42,7 @@ class GeneratorConfig
     public Closure $operationMethodsResolver;
 
     public function __construct(
+        public readonly string $name = Scramble::DEFAULT_API,
         private array $config = [],
         private ?Closure $routeResolver = null,
         public readonly ParametersExtractors $parametersExtractors = new ParametersExtractors,
@@ -80,13 +81,19 @@ class GeneratorConfig
     public function renderer(): RendererConfig
     {
         if (Arr::has($this->config, 'ui.logo')) {
+            $ui = $this->get('ui', []);
+
             return new RendererConfig(array_merge(
+                ['view' => 'scramble::docs'],
                 $this->get('renderers.elements', []),
-                collect($this->get('ui'))->mapWithKeys(fn ($v, $k) => [Str::camel($k) => $v])->all(),
+                collect(is_array($ui) ? $ui : [])->mapWithKeys(fn ($v, $k) => [Str::camel($k) => $v])->all(),
             ));
         }
 
-        return new RendererConfig($this->get('renderers.'.$this->get('renderer'), []));
+        return new RendererConfig(array_merge(
+            ['view' => 'scramble::docs'],
+            $this->get('renderers.'.$this->get('renderer', 'elements'), []),
+        ));
     }
 
     /**
@@ -142,9 +149,10 @@ class GeneratorConfig
         return $this;
     }
 
-    public function cloneWithoutExposing(): static
+    public function cloneWithoutExposing(?string $name = null): self
     {
-        return new GeneratorConfig(
+        return new self(
+            name: $name ?? $this->name,
             config: $this->config,
             routeResolver: $this->routeResolver,
             parametersExtractors: clone $this->parametersExtractors,
@@ -307,7 +315,7 @@ class GeneratorConfig
             );
         }
 
-        $strategy = app($class, $options);
+        $strategy = app($class, is_array($options) ? $options : []);
 
         if (! $strategy instanceof SecurityDocumentationStrategy) {
             throw new InvalidArgumentException(
