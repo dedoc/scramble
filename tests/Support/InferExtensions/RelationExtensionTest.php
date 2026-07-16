@@ -7,6 +7,8 @@ use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\TypeWalker;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PlainPostModel_RelationExtensionTest extends \Illuminate\Database\Eloquent\Model {}
@@ -16,6 +18,30 @@ class PlainUserModel_RelationExtensionTest extends \Illuminate\Database\Eloquent
     public function posts()
     {
         return $this->hasMany(PlainPostModel_RelationExtensionTest::class);
+    }
+}
+
+class CustomBuilder_RelationExtensionTest extends Builder
+{
+    public function notArchived(): self
+    {
+        return $this->whereNull($this->qualifyColumn('archived_at'));
+    }
+}
+
+class CustomBuilderPostModel_RelationExtensionTest extends Model
+{
+    public function newEloquentBuilder($query): CustomBuilder_RelationExtensionTest
+    {
+        return new CustomBuilder_RelationExtensionTest($query);
+    }
+}
+
+class CustomBuilderUserModel_RelationExtensionTest extends Model
+{
+    public function posts(): HasMany
+    {
+        return $this->hasMany(CustomBuilderPostModel_RelationExtensionTest::class);
     }
 }
 
@@ -116,3 +142,19 @@ PHP,
         'list{string(author), string(comments)}',
     ],
 ]);
+
+it('tracks loaded relations after a custom builder method forwarded through a relation', function () {
+    $type = getStatementType(
+        CustomBuilderUserModel_RelationExtensionTest::class
+        ."::query()->first()->posts()->notArchived()->with(['author', 'comments'])->get()"
+    );
+
+    $modelType = (new TypeWalker)->first(
+        $type,
+        fn ($t) => $t->isInstanceOf(CustomBuilderPostModel_RelationExtensionTest::class),
+    );
+
+    expect($modelType)->not->toBeNull()
+        ->and($modelType->getPropertyType('relations')->toString())
+        ->toBe('list{string(author), string(comments)}');
+});

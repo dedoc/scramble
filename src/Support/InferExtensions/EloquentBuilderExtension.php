@@ -14,17 +14,23 @@ use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EloquentBuilderExtension implements MethodReturnTypeExtension
 {
     public function shouldHandle(ObjectType $type): bool
     {
-        return $type->isInstanceOf(Builder::class);
+        return $type->isInstanceOf(Builder::class)
+            || $type->isInstanceOf(Relation::class);
     }
 
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
+        if ($event->getInstance()->isInstanceOf(Relation::class)) {
+            return $this->forwardRelationCallToRelatedModelBuilder($event);
+        }
+
         if ($event->getDefinition()->hasMethodDefinition($event->getName())) {
             return $this->handleExistingMethodReturnType($event);
         }
@@ -44,6 +50,53 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
         }
 
         return null;
+    }
+
+    private function forwardRelationCallToRelatedModelBuilder(MethodCallEvent $event): ?Type
+    {
+        // Methods defined on Relation itself must use the relation definition. In
+        // particular, Scramble adds relation-aware definitions for with(), etc.
+        if ($event->getDefinition()?->hasMethodDefinition($event->getName())) {
+            return null;
+        }
+
+        $relationType = $this->normalizeType($event->getInstance());
+        $relatedModelType = $relationType->templateTypes[0] ?? null;
+
+        if (! $relatedModelType instanceof ObjectType || ! $relatedModelType->isInstanceOf(Model::class)) {
+            return null;
+        }
+
+        $builderType = new Generic(
+            ModelBuilderTypeResolver::resolveClass($relatedModelType->name),
+            [$relatedModelType],
+        );
+
+        if (! $event->scope->index->getClass($builderType->name)?->hasMethodDefinition($event->getName())) {
+            return null;
+        }
+
+        $returnType = $builderType->getMethodReturnType(
+            $event->getName(),
+            $event->arguments,
+            $event->scope,
+        );
+
+        return $this->replaceBuilderReturnWithRelation($returnType, $event->getInstance());
+    }
+
+    private function replaceBuilderReturnWithRelation(Type $returnType, ObjectType $relationType): Type
+    {
+        if ($returnType instanceof Union) {
+            return Union::wrap(array_map(
+                fn (Type $type) => $this->replaceBuilderReturnWithRelation($type, $relationType),
+                $returnType->types,
+            ));
+        }
+
+        return $returnType->isInstanceOf(Builder::class)
+            ? $relationType
+            : $returnType;
     }
 
     private function handleExistingMethodReturnType(MethodCallEvent $event): ?Type
