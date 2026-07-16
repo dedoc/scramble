@@ -31,6 +31,7 @@ class MethodCallHandler
             $node->getAttribute('endLine', $node->getAttribute('startLine')) + 1,
             $varName,
             new PotentialMethodMutatingCallType(
+                $scope->getType(new Expr\Variable($varName, ['startLine' => $node->getAttribute('startLine')])),
                 $type->callee,
                 $type->methodName,
                 $type->arguments,

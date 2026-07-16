@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Type\Type;
 class PotentialMethodMutatingCallType extends AbstractReferenceType
 {
     public function __construct(
+        public Type $subject,
         public Type $callee,
         public string $methodName,
         /** @var Type[] $arguments */

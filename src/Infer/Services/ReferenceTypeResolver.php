@@ -44,6 +44,7 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
+use Dedoc\Scramble\Support\Type\WithProperties;
 
 class ReferenceTypeResolver
 {
@@ -476,6 +477,15 @@ class ReferenceTypeResolver
 
     private function resolvePotentialMethodMutatingCallType(Scope $scope, PotentialMethodMutatingCallType $type): Type
     {
+        /*
+         * Before we actually mutate the type, we want to make sure that we apply only that part of the every call chain
+         * that actually points to "self". If some method call in the chain produces something that is not "self",
+         * the part after that should not be applied.
+         */
+        if (! $this->isSubjectMutatingCallChain($scope, $type)) {
+            return $this->resolve($scope, $type->subject);
+        }
+
         $callee = $this->resolveAndNormalizeCallee($scope, $type->callee);
         $arguments = new AutoResolvingArgumentTypeBag($scope, $type->arguments);
 
@@ -524,6 +534,113 @@ class ReferenceTypeResolver
                 $templatesMap,
             );
         }, $calleeAllTypes));
+    }
+
+    private function isSubjectMutatingCallChain(Scope $scope, PotentialMethodMutatingCallType $type): bool
+    {
+        $callChain = [];
+        $lookupType = $type;
+        while ($lookupType) {
+            $callChain = [$lookupType, ...$callChain];
+            $lookupType = $lookupType->callee ?? null;
+        }
+
+        // while $type->subject === $unresolvedType || method self out return = self - chain is valid
+        $subjectFound = false;
+        $lastMutatingType = null;
+        foreach ($callChain as $t) {
+            if (! $subjectFound) {
+                if ($t !== $type->subject) {
+                    continue;
+                }
+
+                $subjectFound = true;
+                $lastMutatingType = $t;
+
+                continue;
+            }
+
+            if ($t instanceof MethodCallReferenceType) {
+                $resolvedCallee = $this->resolve($scope, $t->callee);
+
+                if (! $this->isMutatingSelfMethod($scope, $resolvedCallee, $t->methodName)) {
+                    break;
+                }
+
+                $lastMutatingType = $t;
+
+                continue;
+            }
+
+            if ($t instanceof PotentialMethodMutatingCallType) {
+                $resolvedCallee = $this->resolve($scope, $t->callee);
+
+                if (! $this->isMutatingSelfMethod($scope, $resolvedCallee, $t->methodName)) {
+                    break;
+                }
+
+                $lastMutatingType = $t;
+
+                continue;
+            }
+        }
+
+        return $lastMutatingType === $type;
+    }
+
+    private function isMutatingSelfMethod(Scope $scope, Type $type, string $methodName): bool
+    {
+        $members = $type instanceof Union ? $type->types : [$type];
+
+        if ($members === []) {
+            return false;
+        }
+
+        foreach ($members as $member) {
+            if (! $member instanceof ObjectType) {
+                return false;
+            }
+
+            if (! $method = $member->getMethodDefinition($methodName, $scope)) {
+                return false;
+            }
+
+            $selfOut = $method->getSelfOutType();
+
+            if (! $selfOut && ! $this->isSelfReturningMethod($method->getReturnType())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function isSelfReturningMethod(Type $type): bool
+    {
+        $members = $type instanceof Union ? $type->types : [$type];
+
+        foreach ($members as $member) {
+//            if (! $member->getAttribute('isThis')) {
+//                return false;
+//            }
+            if ($member instanceof SelfType) {
+                continue;
+            }
+
+            if (! $member instanceof ObjectType) { // PHPDoc `$this`
+                return false;
+            }
+
+            if (! in_array($member->name, [
+                StaticReference::SELF,
+                StaticReference::STATIC,
+            ], true)) {
+                return false;
+            }
+
+        }
+
+        return true;
     }
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type): Type
