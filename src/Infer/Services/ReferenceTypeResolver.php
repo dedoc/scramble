@@ -44,7 +44,6 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\Type\VoidType;
-use Dedoc\Scramble\Support\Type\WithProperties;
 
 class ReferenceTypeResolver
 {
@@ -620,9 +619,9 @@ class ReferenceTypeResolver
         $members = $type instanceof Union ? $type->types : [$type];
 
         foreach ($members as $member) {
-//            if (! $member->getAttribute('isThis')) {
-//                return false;
-//            }
+            //            if (! $member->getAttribute('isThis')) {
+            //                return false;
+            //            }
             if ($member instanceof SelfType) {
                 continue;
             }
