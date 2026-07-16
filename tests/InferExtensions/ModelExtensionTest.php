@@ -316,6 +316,7 @@ class FooBuilder_ModelExtensionTest extends Builder
         if (mt_rand(0, 1)) {
             return $this;
         }
+
         return $this->where('user_id', $user->id);
     }
 }
