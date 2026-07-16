@@ -8,6 +8,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
+use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
@@ -214,6 +215,46 @@ it('toResource resolves resource type from UseResource attribute', function () {
 class ModelExtensionTest_AttributeModel extends Model {}
 
 class ModelExtensionTest_AttributeResource extends \Illuminate\Http\Resources\Json\JsonResource {}
+
+class ModelExtensionTest_Invoice extends Model {}
+
+class ModelExtensionTest_InvoiceController
+{
+    public function display(ModelExtensionTest_Invoice $invoice): ModelExtensionTest_Invoice
+    {
+        $invoice->load([
+            'customer',
+            'lineItems',
+        ]);
+
+        return $invoice;
+    }
+}
+
+it('tracks relations loaded on a model parameter returned from a method', function () {
+    $type = ReferenceTypeResolver::getInstance()->resolve(
+        new Infer\Scope\GlobalScope,
+        new MethodCallReferenceType(
+            new ObjectType(ModelExtensionTest_InvoiceController::class),
+            'display',
+            [new ObjectType(ModelExtensionTest_Invoice::class)],
+        ),
+    );
+
+    $modelType = (new TypeWalker)->first(
+        $type,
+        fn ($type) => $type->isInstanceOf(ModelExtensionTest_Invoice::class),
+    );
+
+    expect($modelType)->not->toBeNull();
+
+    $relationsType = ReferenceTypeResolver::getInstance()->resolve(
+        new Infer\Scope\GlobalScope,
+        new PropertyFetchReferenceType($modelType, 'relations'),
+    );
+
+    expect($relationsType->toString())->toBe('list{string(customer), string(lineItems)}');
+});
 
 it('toResource resolves resource type by guessing class name', function () {
     $type = ReferenceTypeResolver::getInstance()

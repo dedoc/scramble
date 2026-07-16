@@ -564,7 +564,7 @@ class ReferenceTypeResolver
             }
 
             if ($t instanceof MethodCallReferenceType) {
-                $resolvedCallee = $this->resolve($scope, $t->callee);
+                $resolvedCallee = $this->resolveAndNormalizeCallee($scope, $t->callee);
 
                 if (! $this->isMutatingSelfMethod($scope, $resolvedCallee, $t->methodName)) {
                     break;
@@ -576,7 +576,7 @@ class ReferenceTypeResolver
             }
 
             if ($t instanceof PotentialMethodMutatingCallType) {
-                $resolvedCallee = $this->resolve($scope, $t->callee);
+                $resolvedCallee = $this->resolveAndNormalizeCallee($scope, $t->callee);
 
                 if (! $this->isMutatingSelfMethod($scope, $resolvedCallee, $t->methodName)) {
                     break;
