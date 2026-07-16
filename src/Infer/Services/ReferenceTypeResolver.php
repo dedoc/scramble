@@ -156,6 +156,10 @@ class ReferenceTypeResolver
                 return $t;
             }
 
+            if ($staticType instanceof Generic && $t instanceof ObjectType && $t->name === StaticReference::SELF) {
+                return clone $staticType;
+            }
+
             if ($staticType instanceof ObjectType && $t instanceof ObjectType && $t->name === StaticReference::SELF) {
                 $t->name = $staticType->name;
 

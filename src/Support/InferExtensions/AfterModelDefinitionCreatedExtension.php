@@ -76,7 +76,7 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
          *     >
          * >
          */
-        return new Generic(Builder::class, [
+        return new Generic(ModelBuilderTypeResolver::resolveClass($definition->name), [
             new Generic(WithProperties::class, [
                 new ObjectType($definition->name),
                 new KeyedArrayType([

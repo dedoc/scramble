@@ -10,7 +10,9 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
+use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Attributes\UseResource;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -261,6 +263,33 @@ class Foo_ModelExtensionTest extends Model
 
 class FooCollection_ModelExtensionTest extends \Illuminate\Database\Eloquent\Collection {}
 
+class FooBuilder_ModelExtensionTest extends Builder
+{
+    public function published(): static
+    {
+        return $this;
+    }
+
+    public function visibleTo(SampleUserModel $user): self
+    {
+        if (mt_rand(0, 1)) {
+            return $this;
+        }
+        return $this->where('user_id', $user->id);
+    }
+}
+
+class ModelWithCustomBuilder_ModelExtensionTest extends Model
+{
+    public function newEloquentBuilder($query)
+    {
+        return new FooBuilder_ModelExtensionTest($query);
+    }
+}
+
+#[UseEloquentBuilder(FooBuilder_ModelExtensionTest::class)]
+class ModelWithCustomBuilderAttribute_ModelExtensionTest extends Model {}
+
 class Bar_ModelExtensionTest extends Model
 {
     public function foos()
@@ -299,6 +328,33 @@ it('uses custom collection type from newCollection for query get', function () {
     expect($type->toString())
         ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
 });
+
+it('uses custom query builder type from newEloquentBuilder', function () {
+    $this->infer->analyzeClass(ModelWithCustomBuilder_ModelExtensionTest::class);
+
+    expect(getStatementType(ModelWithCustomBuilder_ModelExtensionTest::class.'::query()')->toString())
+        ->toBe(FooBuilder_ModelExtensionTest::class.'<'.ModelWithCustomBuilder_ModelExtensionTest::class.'>')
+        ->and(getStatementType('(new '.ModelWithCustomBuilder_ModelExtensionTest::class.')->newQuery()')->toString())
+        ->toBe(FooBuilder_ModelExtensionTest::class.'<'.ModelWithCustomBuilder_ModelExtensionTest::class.'>')
+        ->and(getStatementType(ModelWithCustomBuilder_ModelExtensionTest::class.'::published()')->toString())
+        ->toBe(FooBuilder_ModelExtensionTest::class.'<'.ModelWithCustomBuilder_ModelExtensionTest::class.'>');
+});
+
+it('preserves custom query builder generics for self-returning methods', function () {
+    expect(getStatementType(ModelWithCustomBuilder_ModelExtensionTest::class.'::query()->visibleTo(new '.SampleUserModel::class.'())')->toString())
+        ->toBe(FooBuilder_ModelExtensionTest::class.'<'.ModelWithCustomBuilder_ModelExtensionTest::class.'>')
+        ->and(getStatementType(ModelWithCustomBuilder_ModelExtensionTest::class.'::visibleTo(new '.SampleUserModel::class.'())')->toString())
+        ->toBe(FooBuilder_ModelExtensionTest::class.'<'.ModelWithCustomBuilder_ModelExtensionTest::class.'>');
+});
+
+it('uses custom query builder type from UseEloquentBuilder', function () {
+    $this->infer->analyzeClass(ModelWithCustomBuilderAttribute_ModelExtensionTest::class);
+
+    expect(getStatementType(ModelWithCustomBuilderAttribute_ModelExtensionTest::class.'::query()')->toString())
+        ->toBe(FooBuilder_ModelExtensionTest::class.'<'.ModelWithCustomBuilderAttribute_ModelExtensionTest::class.'>')
+        ->and(getStatementType(ModelWithCustomBuilderAttribute_ModelExtensionTest::class.'::query()->visibleTo(new '.SampleUserModel::class.'())')->toString())
+        ->toBe(FooBuilder_ModelExtensionTest::class.'<'.ModelWithCustomBuilderAttribute_ModelExtensionTest::class.'>');
+})->skip(fn () => ! class_exists(UseEloquentBuilder::class));
 
 it('uses custom collection type from newCollection for all', function () {
     $this->infer->analyzeClass(Foo_ModelExtensionTest::class);
