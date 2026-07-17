@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\ResponseExtractor;
 
 use BackedEnum;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 use ReflectionClass;
@@ -200,11 +201,48 @@ class ModelInfo
                     'name' => $method->getName(),
                     'type' => Str::afterLast(get_class($relation), '\\'),
                     'related' => get_class($relation->getRelated()),
+                    'nullable' => $this->relationIsNullable($relation),
                 ];
             })
             ->filter()
             ->values()
             ->keyBy('name');
+    }
+
+    /**
+     * @param  Relation<Model, Model, mixed>  $relation
+     */
+    private function relationIsNullable(Relation $relation): bool
+    {
+        if (Str::contains(class_basename($relation), 'Many')) {
+            return false;
+        }
+
+        if (method_exists($relation, 'withDefault') && $this->getProtectedValue($relation, 'withDefault')) {
+            return false;
+        }
+
+        if (! method_exists($relation, 'getForeignKeyName')) {
+            return false;
+        }
+
+        $foreignKeyModel = $relation instanceof BelongsTo
+            ? $relation->getParent()
+            : $relation->getRelated();
+
+        $foreignKey = Str::afterLast($relation->getForeignKeyName(), '.');
+        $column = collect($foreignKeyModel->getConnection()->getSchemaBuilder()->getColumns($foreignKeyModel->getTable()))
+            ->firstWhere('name', $foreignKey);
+
+        return $column['nullable'] ?? false;
+    }
+
+    private function getProtectedValue(object $object, string $name): mixed
+    {
+        $properties = (array) $object;
+        $prefix = chr(0).'*'.chr(0);
+
+        return $properties[$prefix.$name] ?? null;
     }
 
     /**

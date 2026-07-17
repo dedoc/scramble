@@ -269,6 +269,96 @@ class Bar_ModelExtensionTest extends Model
     }
 }
 
+class RelationNullabilityOwner_ModelExtensionTest extends Model
+{
+    protected $table = 'relation_nullability_owners';
+
+    public function requiredModel()
+    {
+        return $this->hasOne(RelationNullabilityModel_ModelExtensionTest::class, 'required_owner_id');
+    }
+
+    public function nullableModel()
+    {
+        return $this->hasOne(RelationNullabilityModel_ModelExtensionTest::class, 'nullable_owner_id');
+    }
+
+    public function nullableModelWithDefault()
+    {
+        return $this->hasOne(RelationNullabilityModel_ModelExtensionTest::class, 'nullable_owner_id')->withDefault();
+    }
+
+    public function nullableModels()
+    {
+        return $this->hasMany(RelationNullabilityModel_ModelExtensionTest::class, 'nullable_owner_id');
+    }
+}
+
+class RelationNullabilityModel_ModelExtensionTest extends Model
+{
+    protected $table = 'relation_nullability_models';
+
+    public function requiredOwner()
+    {
+        return $this->belongsTo(RelationNullabilityOwner_ModelExtensionTest::class, 'required_owner_id');
+    }
+
+    public function nullableOwner()
+    {
+        return $this->belongsTo(RelationNullabilityOwner_ModelExtensionTest::class, 'nullable_owner_id');
+    }
+
+    public function nullableOwnerWithDefault()
+    {
+        return $this->belongsTo(RelationNullabilityOwner_ModelExtensionTest::class, 'nullable_owner_id')->withDefault();
+    }
+}
+
+it('infers singular relation nullability from the foreign key column', function () {
+    $this->infer->analyzeClass(RelationNullabilityOwner_ModelExtensionTest::class);
+    $this->infer->analyzeClass(RelationNullabilityModel_ModelExtensionTest::class);
+
+    $owner = new ObjectType(RelationNullabilityOwner_ModelExtensionTest::class);
+    $model = new ObjectType(RelationNullabilityModel_ModelExtensionTest::class);
+
+    expect($owner->getPropertyType('requiredModel')->toString())
+        ->toBe(RelationNullabilityModel_ModelExtensionTest::class)
+        ->and($owner->getPropertyType('nullableModel')->toString())
+        ->toBe(RelationNullabilityModel_ModelExtensionTest::class.'|null')
+        ->and($model->getPropertyType('requiredOwner')->toString())
+        ->toBe(RelationNullabilityOwner_ModelExtensionTest::class)
+        ->and($model->getPropertyType('nullableOwner')->toString())
+        ->toBe(RelationNullabilityOwner_ModelExtensionTest::class.'|null');
+});
+
+it('keeps singular relations with default models non-nullable', function () {
+    $this->infer->analyzeClass(RelationNullabilityOwner_ModelExtensionTest::class);
+    $this->infer->analyzeClass(RelationNullabilityModel_ModelExtensionTest::class);
+
+    $owner = new ObjectType(RelationNullabilityOwner_ModelExtensionTest::class);
+    $model = new ObjectType(RelationNullabilityModel_ModelExtensionTest::class);
+
+    expect($owner->getPropertyType('nullableModelWithDefault')->toString())
+        ->toBe(RelationNullabilityModel_ModelExtensionTest::class)
+        ->and($model->getPropertyType('nullableOwnerWithDefault')->toString())
+        ->toBe(RelationNullabilityOwner_ModelExtensionTest::class);
+});
+
+it('preserves nullable singular relations through nullsafe access', function () {
+    $type = getStatementType('(new '.RelationNullabilityModel_ModelExtensionTest::class.')->nullableOwner?->id');
+
+    expect($type->toString())->toBe('int|null');
+});
+
+it('keeps collection relations non-nullable when their foreign key is nullable', function () {
+    $this->infer->analyzeClass(RelationNullabilityOwner_ModelExtensionTest::class);
+
+    $owner = new ObjectType(RelationNullabilityOwner_ModelExtensionTest::class);
+
+    expect($owner->getPropertyType('nullableModels')->toString())
+        ->toBe('Illuminate\\Database\\Eloquent\\Collection<int, '.RelationNullabilityModel_ModelExtensionTest::class.'>');
+});
+
 it('uses custom collection type from newCollection for hasMany relations', function () {
     $this->infer->analyzeClass(Foo_ModelExtensionTest::class);
     $this->infer->analyzeClass(Bar_ModelExtensionTest::class);
