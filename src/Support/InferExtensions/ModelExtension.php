@@ -178,7 +178,11 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             return ModelCollectionTypeResolver::resolve(new ObjectType($relation['related']));
         }
 
-        return new ObjectType($relation['related']);
+        $relatedModelType = new ObjectType($relation['related']);
+
+        return ($relation['nullable'] ?? false)
+            ? Union::wrap([$relatedModelType, new NullType])
+            : $relatedModelType;
     }
 
     protected function getToArrayMethodReturnType(MethodCallEvent $event): ?Type
