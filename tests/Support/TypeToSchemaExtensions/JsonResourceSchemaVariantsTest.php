@@ -20,6 +20,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceResponseTypeToSchema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 beforeEach(function () {
@@ -351,6 +352,76 @@ it('handles mergeWhen with relationLoaded', function () {
     ]);
 });
 
+it('handles when with relationLoaded and a resource collection callback', function () {
+    $type = resourceWithModel(
+        JsonResourceSchemaVariantsTest_WhenRelationLoadedCollectionResource::class,
+        modelWithRelations(JsonResourceSchemaVariantsTest_PostModel::class, ['comments']),
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    $componentSchema = $this->context->openApi->components
+        ->getSchema(JsonResourceSchemaVariantsTest_WhenRelationLoadedCollectionResource::class)
+        ->toArray();
+
+    expect($schema)->toBe([
+        'allOf' => [
+            [
+                '$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_WhenRelationLoadedCollectionResource',
+            ],
+            [
+                'type' => 'object',
+                'properties' => [
+                    'comments' => [
+                        'type' => 'array',
+                        'items' => ['$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_CommentResource'],
+                    ],
+                ],
+                'required' => ['comments'],
+            ],
+        ],
+    ])->and($componentSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'comments' => [
+                'type' => 'array',
+                'items' => ['$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_CommentResource'],
+            ],
+        ],
+        'required' => ['id'],
+    ]);
+});
+
+it('keeps a resource collection callback optional when its relation is not loaded', function () {
+    $type = resourceWithModel(
+        JsonResourceSchemaVariantsTest_WhenRelationLoadedCollectionResource::class,
+        modelWithRelations(JsonResourceSchemaVariantsTest_PostModel::class, []),
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    $componentSchema = $this->context->openApi->components
+        ->getSchema(JsonResourceSchemaVariantsTest_WhenRelationLoadedCollectionResource::class)
+        ->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_WhenRelationLoadedCollectionResource',
+    ])->and($componentSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'comments' => [
+                'type' => 'array',
+                'items' => ['$ref' => '#/components/schemas/JsonResourceSchemaVariantsTest_CommentResource'],
+            ],
+        ],
+        'required' => ['id'],
+    ]);
+});
+
 it('documents relation-conditioned resource collection when relation is loaded', function () {
     $type = resourceWithModel(
         JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource::class,
@@ -508,6 +579,28 @@ class JsonResourceSchemaVariantsTest_CollectionWhenLoadedResource extends JsonRe
             'id' => $this->id,
             'comments' => JsonResourceSchemaVariantsTest_CommentResource::collection($this->whenLoaded('comments')),
         ];
+    }
+}
+
+/**
+ * @property JsonResourceSchemaVariantsTest_PostModel $resource
+ */
+class JsonResourceSchemaVariantsTest_WhenRelationLoadedCollectionResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'comments' => $this->when(
+                $this->resource->relationLoaded('comments'),
+                fn (): AnonymousResourceCollection => JsonResourceSchemaVariantsTest_CommentResource::collection($this->buildComments()),
+            ),
+        ];
+    }
+
+    private function buildComments()
+    {
+        return $this->resource->comments;
     }
 }
 

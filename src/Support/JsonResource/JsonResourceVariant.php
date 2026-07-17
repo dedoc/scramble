@@ -8,10 +8,12 @@ use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\MergeValue;
 use Illuminate\Http\Resources\MissingValue;
 
 class JsonResourceVariant
@@ -35,6 +37,12 @@ class JsonResourceVariant
     public function filterReferencableFields(KeyedArrayType $array): KeyedArrayType
     {
         if ($this->isDefault()) {
+            $array = $array->clone();
+            $array->items = collect($array->items)
+                ->reject(fn (ArrayItemType_ $item) => $this->isRelationConditionalMerge($item))
+                ->values()
+                ->all();
+
             return $array;
         }
 
@@ -104,6 +112,21 @@ class JsonResourceVariant
                     ->mergeAttributes($resource->attributes());
             }
         }
+
+        if (
+            $t->value instanceof Generic
+            && $t->value->isInstanceOf(MergeValue::class)
+            && $this->getConditionalRelation($t)
+        ) {
+            $t->value->templateTypes[0] = new LiteralBooleanType(true);
+        }
+    }
+
+    private function isRelationConditionalMerge(ArrayItemType_ $item): bool
+    {
+        return $item->value instanceof Generic
+            && $item->value->isInstanceOf(MergeValue::class)
+            && (bool) $this->getConditionalRelation($item);
     }
 
     public function isDefault()

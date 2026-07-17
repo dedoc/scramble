@@ -82,7 +82,15 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                     ]),
             ),
 
-            'when', 'unless', 'whenPivotLoaded' => Union::wrap([
+            'when' => $this->tagFromCondition(
+                $event->getArg('condition', 0),
+                Union::wrap([
+                    $this->value($event->getArg('value', 1)),
+                    $this->value($event->getArg('default', 2, new ObjectType(MissingValue::class))),
+                ]),
+            ),
+
+            'unless', 'whenPivotLoaded' => Union::wrap([
                 $this->value($event->getArg('value', 1)),
                 $this->value($event->getArg('default', 2, new ObjectType(MissingValue::class))),
             ]),
@@ -92,7 +100,15 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                 $this->value($event->getArg('value', 0)),
             ]),
 
-            'mergeWhen', 'mergeUnless' => new Generic(MergeValue::class, [
+            'mergeWhen' => $this->tagFromCondition(
+                $event->getArg('condition', 0),
+                new Generic(MergeValue::class, [
+                    new BooleanType,
+                    $this->value($event->getArg('value', 1)),
+                ]),
+            ),
+
+            'mergeUnless' => new Generic(MergeValue::class, [
                 new BooleanType,
                 $this->value($event->getArg('value', 1)),
             ]),
@@ -196,6 +212,15 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
         }
 
         $typeToTag->setAttribute('conditionalRelation', $relationshipType->getValue());
+
+        return $typeToTag;
+    }
+
+    private function tagFromCondition(Type $condition, Type $typeToTag): Type
+    {
+        if ($relation = $condition->getAttribute('conditionalRelation')) {
+            $typeToTag->setAttribute('conditionalRelation', $relation);
+        }
 
         return $typeToTag;
     }

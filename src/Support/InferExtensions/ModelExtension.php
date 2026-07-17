@@ -323,6 +323,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
     {
         return match ($event->getName()) {
             'toArray' => $this->getToArrayMethodReturnType($event),
+            'relationLoaded' => $this->getRelationLoadedMethodReturnType($event),
             'getOriginal' => $this->getGetOriginalMethodReturnType($event),
             'only' => $this->getOnlyMethodReturnType($event),
             'except' => $this->getExceptMethodReturnType($event),
@@ -331,6 +332,18 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             'toResource' => $this->getToResourceMethodReturnType($event),
             default => $this->maybeProxyMethodCallToBuilder($event),
         };
+    }
+
+    protected function getRelationLoadedMethodReturnType(MethodCallEvent $event): BooleanType
+    {
+        $type = new BooleanType;
+        $relation = $event->getArg('key', 0);
+
+        if ($relation instanceof LiteralString) {
+            $type->setAttribute('conditionalRelation', $relation->getValue());
+        }
+
+        return $type;
     }
 
     protected function getToResourceMethodReturnType(MethodCallEvent $event): ?Type
