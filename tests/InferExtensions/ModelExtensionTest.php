@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
+use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
 use Illuminate\Database\Eloquent\Model;
@@ -147,6 +148,72 @@ if (method_exists(AsEnumCollection::class, 'of')) {
             ->toBe('Illuminate\Support\Collection<int, Role>');
     });
 }
+
+it('uses custom cast get definition return type for model attributes', function () {
+    $this->infer->analyzeClass(ModelExtensionTest_CustomCastModel::class);
+
+    $object = new ObjectType(ModelExtensionTest_CustomCastModel::class);
+
+    expect($object->getPropertyType('title')->toString())
+        ->toBe(ModelExtensionTest_CustomCastValue::class);
+});
+
+it('uses custom cast get PHPDoc return type for model attributes', function () {
+    $this->infer->configure()->buildDefinitionsUsingReflectionFor([
+        ModelExtensionTest_CustomPhpDocCast::class,
+    ]);
+    $this->infer->analyzeClass(ModelExtensionTest_CustomPhpDocCastModel::class);
+
+    $object = new ObjectType(ModelExtensionTest_CustomPhpDocCastModel::class);
+
+    expect($object->getPropertyType('body')->toString())
+        ->toBe('array<string, '.ModelExtensionTest_CustomCastValue::class.'>');
+});
+
+class ModelExtensionTest_CustomCastModel extends SamplePostModel
+{
+    protected $casts = [
+        'title' => ModelExtensionTest_CustomCast::class.':with-arguments',
+    ];
+}
+
+class ModelExtensionTest_CustomPhpDocCastModel extends SamplePostModel
+{
+    protected $casts = [
+        'body' => ModelExtensionTest_CustomPhpDocCast::class,
+    ];
+}
+
+/** @implements CastsAttributes<ModelExtensionTest_CustomCastValue, mixed> */
+class ModelExtensionTest_CustomCast implements CastsAttributes
+{
+    public function get(Model $model, string $key, mixed $value, array $attributes): ModelExtensionTest_CustomCastValue
+    {
+        return new ModelExtensionTest_CustomCastValue;
+    }
+
+    public function set(Model $model, string $key, mixed $value, array $attributes): mixed
+    {
+        return $value;
+    }
+}
+
+/** @implements CastsAttributes<array<string, ModelExtensionTest_CustomCastValue>, mixed> */
+class ModelExtensionTest_CustomPhpDocCast implements CastsAttributes
+{
+    /** @return array<string, ModelExtensionTest_CustomCastValue> */
+    public function get(Model $model, string $key, mixed $value, array $attributes): array
+    {
+        return [];
+    }
+
+    public function set(Model $model, string $key, mixed $value, array $attributes): mixed
+    {
+        return $value;
+    }
+}
+
+class ModelExtensionTest_CustomCastValue {}
 
 /*
  * When resolving property types from models that are in vendor directory,
