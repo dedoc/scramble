@@ -270,6 +270,24 @@ it('gets json resource type with when loaded', function () {
     assertMatchesSnapshot($extension->toSchema($type)->toArray());
 });
 
+it('keeps resources made from nullable loaded relations nullable', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
+        JsonResourceTypeToSchema::class,
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
+
+    $schema = $extension
+        ->toSchema(new ObjectType(ComplexTypeHandlersWithNullableWhenLoaded_SampleType::class))
+        ->toArray();
+
+    expect($schema['properties']['submitted_by'])->toBe([
+        'anyOf' => [
+            ['$ref' => '#/components/schemas/ComplexTypeHandlersWithWhen_SampleType'],
+            ['type' => 'null'],
+        ],
+    ])->and($schema['required'] ?? [])->not->toContain('submitted_by');
+});
+
 it('gets json resource type with when counted', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
@@ -616,6 +634,34 @@ class ComplexTypeHandlersWithWhenLoaded_SampleType extends JsonResource
             'bar_nullable' => $this->whenLoaded('bar', fn () => 's', null),
         ];
     }
+}
+
+/**
+ * @property ComplexTypeHandlersWithNullableRelationModel $resource
+ */
+class ComplexTypeHandlersWithNullableWhenLoaded_SampleType extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'submitted_by' => ComplexTypeHandlersWithWhen_SampleType::make($this->whenLoaded('submittedBy')),
+        ];
+    }
+}
+
+class ComplexTypeHandlersWithNullableRelationModel extends \Illuminate\Database\Eloquent\Model
+{
+    protected $table = 'relation_nullability_models';
+
+    public function submittedBy()
+    {
+        return $this->belongsTo(ComplexTypeHandlersWithSubmitterModel::class, 'nullable_owner_id');
+    }
+}
+
+class ComplexTypeHandlersWithSubmitterModel extends \Illuminate\Database\Eloquent\Model
+{
+    protected $table = 'relation_nullability_owners';
 }
 
 class ComplexTypeHandlersWithWhenCounted_SampleType extends JsonResource
