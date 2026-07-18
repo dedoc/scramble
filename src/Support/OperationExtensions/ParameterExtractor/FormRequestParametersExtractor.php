@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
+use Dedoc\Scramble\Attributes\SchemaName;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
@@ -12,15 +13,20 @@ use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\SchemaClassDocReflector;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Illuminate\Support\Arr;
 use PhpParser\PrettyPrinter;
 use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionParameter;
-use Spatie\LaravelData\Contracts\BaseData;
 
 class FormRequestParametersExtractor implements ParameterExtractor
 {
     use GeneratesParametersFromRules;
+
+    /**
+     * @var class-string<mixed>[]
+     */
+    private static array $ignoredInstancesOf = [];
 
     public function __construct(
         private PrettyPrinter $printer,
@@ -33,13 +39,27 @@ class FormRequestParametersExtractor implements ParameterExtractor
             return $parameterExtractionResults;
         }
 
-        if (is_a($requestClassName, BaseData::class, true)) {
+        if ($this->isIgnored($requestClassName)) {
             return $parameterExtractionResults;
         }
 
         $parameterExtractionResults[] = $this->extractFormRequestParameters($requestClassName, $routeInfo);
 
         return $parameterExtractionResults;
+    }
+
+    /**
+     * @param  class-string<mixed>|class-string<mixed>[]  $ignoredClasses
+     */
+    public static function ignoreInstanceOf(string|array $ignoredClasses): void
+    {
+        $ignoredClasses = Arr::wrap($ignoredClasses);
+
+        foreach ($ignoredClasses as $ignoredClass) {
+            if (! in_array($ignoredClass, self::$ignoredInstancesOf, true)) {
+                self::$ignoredInstancesOf[] = $ignoredClass;
+            }
+        }
     }
 
     private function getFormRequestClassName(RouteInfo $routeInfo): ?string
@@ -77,15 +97,29 @@ class FormRequestParametersExtractor implements ParameterExtractor
         return method_exists($className, 'rules');
     }
 
+    private function isIgnored(string $className): bool
+    {
+        foreach (self::$ignoredInstancesOf as $ignoredClass) {
+            if (is_a($className, $ignoredClass, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function extractFormRequestParameters(string $requestClassName, RouteInfo $routeInfo): ParametersExtractionResult
     {
         $classReflector = Infer\Reflector\ClassReflector::make($requestClassName);
 
-        $phpDocReflector = SchemaClassDocReflector::createFromDocString($classReflector->getReflection()->getDocComment() ?: '');
+        $reflection = $classReflector->getReflection();
 
+        $phpDocReflector = SchemaClassDocReflector::createFromDocString($reflection->getDocComment() ?: '');
+
+        $schemaNameAttr = ($reflection->getAttributes(SchemaName::class)[0] ?? null)?->newInstance();
         $schemaName = ($phpDocReflector->getTagValue('@ignoreSchema')->value ?? null) !== null
             ? null
-            : $phpDocReflector->getSchemaName($requestClassName);
+            : ($schemaNameAttr ? ($schemaNameAttr->input ?? $schemaNameAttr->name) : $phpDocReflector->getSchemaName($requestClassName));
 
         return new ParametersExtractionResult(
             parameters: $this->makeParameters(
@@ -101,6 +135,7 @@ class FormRequestParametersExtractor implements ParameterExtractor
             ),
             schemaName: $schemaName,
             description: $phpDocReflector->getDescription(),
+            sourceClass: $requestClassName,
         );
     }
 }

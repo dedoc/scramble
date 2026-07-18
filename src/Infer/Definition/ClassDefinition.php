@@ -256,7 +256,7 @@ class ClassDefinition implements ClassDefinitionContract
             $name,
             $methodReflection,
             collect($this->templateTypes)->keyBy->name
-                ->merge($this->getMethodContextTemplates($methodReflection)), // @phpstan-ignore argument.type
+                ->merge($this->getMethodContextTemplates($methodReflection)),
         ))->build();
 
         return $this->methods[$name] = $definition;
@@ -294,6 +294,8 @@ class ClassDefinition implements ClassDefinitionContract
                         : tap(new NameContext(new Throwing), fn (NameContext $nc) => $nc->startNamespace()),
                 ),
             );
+
+            FunctionLikeAstDefinitionBuilder::resolveFunctionParameterDefaults($methodScope, $this->methods[$name]);
 
             FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences($methodScope, $this->methods[$name]);
 
@@ -372,7 +374,10 @@ class ClassDefinition implements ClassDefinitionContract
             if ($definition = $this->getIndex()->getClass($type->name)) {
                 foreach ($definition->templateTypes as $i => $templateType) {
                     $concreteType = (new TypeWalker)->map(
-                        $type->templateTypes[$i] ?? $templateType->default ?? new UnknownType,
+                        $type->templateTypes[$i]
+                            ?? $this->templateTypes[$i]
+                            ?? $templateType->default
+                            ?? new UnknownType,
                         fn ($t) => $t instanceof ObjectType ? $classTemplatesByName->get($t->name, $t) : $t,
                     );
 

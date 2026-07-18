@@ -28,6 +28,14 @@ it('parses tuple', function (string $phpDocType, string $expectedTypeString) {
     ['/** @var array{float, float} */', 'list{float, float}'],
 ]);
 
+it('parses class-string', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    ['/** @var class-string<mixed> */', 'class-string<mixed>'],
+]);
+
 it('parses list', function (string $phpDocType, string $expectedTypeString) {
     expect(
         getPhpTypeFromDoc_Copy($phpDocType)->toString()
@@ -53,4 +61,31 @@ it('parses integers', function (string $phpDocType, string $expectedTypeString) 
     ['/** @var int<min, 10> */', 'int<min, 10>'],
     ['/** @var int<max, 10> */', 'int'],
     ['/** @var int<10, min> */', 'int'],
+]);
+
+it('parses strings', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    ['/** @var string */', 'string'],
+    ['/** @var non-empty-string */', 'string'],
+    ['/** @var callable-string */', 'string'],
+    ['/** @var numeric-string */', 'string'],
+    ['/** @var non-falsy-string */', 'string'],
+    ['/** @var truthy-string */', 'string'],
+    ['/** @var literal-string */', 'string'],
+    ['/** @var lowercase-string */', 'string'],
+    ['/** @var uppercase-string */', 'string'],
+    ['/** @var non-empty-lowercase-string */', 'string'],
+    ['/** @var non-empty-uppercase-string */', 'string'],
+    ['/** @var non-empty-literal-string */', 'string'],
+]);
+
+it('parses unions', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    ["/** @var 'idle'|'charging'|'discharging'|null */", 'string(idle)|string(charging)|string(discharging)|null'],
 ]);

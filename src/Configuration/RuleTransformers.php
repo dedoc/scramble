@@ -4,9 +4,11 @@ namespace Dedoc\Scramble\Configuration;
 
 use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
 use Dedoc\Scramble\Contracts\RuleTransformer;
+use Dedoc\Scramble\RuleTransformers\AcceptedRule;
 use Dedoc\Scramble\RuleTransformers\ConfirmedRule;
 use Dedoc\Scramble\RuleTransformers\EnumRule;
 use Dedoc\Scramble\RuleTransformers\ExistsRule;
+use Dedoc\Scramble\RuleTransformers\FileRule;
 use Dedoc\Scramble\RuleTransformers\InRule;
 use Dedoc\Scramble\RuleTransformers\RegexRule;
 use Dedoc\Scramble\Support\ContainerUtils;
@@ -29,7 +31,7 @@ class RuleTransformers
      */
     public function append(array|string $transformers): self
     {
-        $this->appends = array_values(array_merge(
+        $this->appends = array_values(array_merge( // @phpstan-ignore arrayValues.list
             $this->appends,
             Arr::wrap($transformers)
         ));
@@ -42,7 +44,7 @@ class RuleTransformers
      */
     public function prepend(array|string $transformers): self
     {
-        $this->prepends = array_values(array_merge(
+        $this->prepends = array_values(array_merge( // @phpstan-ignore arrayValues.list
             $this->prepends,
             Arr::wrap($transformers)
         ));
@@ -81,8 +83,10 @@ class RuleTransformers
     public function all(): array
     {
         $base = $this->transformers ?: [
+            AcceptedRule::class,
             EnumRule::class,
             InRule::class,
+            FileRule::class,
             ConfirmedRule::class,
             ExistsRule::class,
             RegexRule::class,

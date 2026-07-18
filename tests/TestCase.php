@@ -34,7 +34,7 @@ class TestCase extends Orchestra
 
         return array_values(array_filter(
             $routes,
-            fn ($r) => ! $r->named('storage.local'),
+            fn ($r) => ! $r->named('storage.*'),
         ));
     }
 
@@ -60,6 +60,8 @@ class TestCase extends Orchestra
     public function getEnvironmentSetUp($app)
     {
         config()->set('database.default', 'testing');
+        config()->set('scout.driver', 'collection');
+        config()->set('permission.table_names.roles', 'roles');
     }
 
     protected function defineDatabaseMigrations()

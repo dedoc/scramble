@@ -9,10 +9,9 @@ use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\TypeManagers\CursorPaginatorTypeManager;
 use Illuminate\Pagination\CursorPaginator;
 
 class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
@@ -40,11 +39,16 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        if (! $collectedType = $this->getCollectedType($type)) {
+        if (! $normalizedType = $this->toNormalizedPaginatorType(CursorPaginator::class, $type)) {
             return null;
         }
 
-        $paginatorArray = (new CursorPaginatorTypeManager)->getToArrayType(new ArrayType($collectedType));
+        $paginatorArray = Infer\Services\ReferenceTypeResolver::getInstance()
+            ->resolve(new Infer\Scope\GlobalScope, new MethodCallReferenceType(
+                $normalizedType,
+                'toArray',
+                []
+            ));
 
         return $this->openApiTransformer->transform($paginatorArray);
     }
@@ -59,7 +63,7 @@ class CursorPaginatorTypeToSchema extends TypeToSchemaExtension
         }
 
         return Response::make(200)
-            ->setDescription('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectedType->name).'`')
-            ->setContent('application/json', Schema::fromType($this->openApiTransformer->transform($type)));
+            ->setContent('application/json', Schema::fromType($this->openApiTransformer->transform($type)))
+            ->setDescription('Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectedType->name).'`');
     }
 }

@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-use Carbon\CarbonInterface;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
@@ -30,6 +29,7 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Str;
+use PHPStan\PhpDocParser\Ast\PhpDoc\DeprecatedTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 
 use function DeepCopy\deep_copy;
@@ -39,6 +39,9 @@ use function DeepCopy\deep_copy;
  */
 class TypeTransformer
 {
+    /** @var array<string, OpenApiType> */
+    private array $cache = [];
+
     /** @var TypeToSchemaExtension[] */
     private array $typeToSchemaExtensions;
 
@@ -75,35 +78,128 @@ class TypeTransformer
 
     public function transform(Type $type): OpenApiType
     {
-        $openApiType = new UnknownType;
-
         if ($type instanceof TemplateType && $type->is) {
             $type = $type->is;
         }
+
+        $openApiType = $this->shouldCache($type)
+            ? $this->transformCached($type)
+            : $this->transformUncached($type);
+
+        return $this->applyTypeAttributes($openApiType, $type);
+    }
+
+    private function getCacheKey(Type $type): string
+    {
+        if ($type instanceof TemplateType && $type->is) {
+            $type = $type->is;
+        }
+
+        return $type::class.'|'.$type->toString();
+    }
+
+    private function shouldCache(Type $type): bool
+    {
+        $attributesHandledAfterCache = array_flip(['docNode', 'format', 'file', 'line']);
+
+        return ! array_diff_key($type->attributes(), $attributesHandledAfterCache)
+            && ! $type instanceof ArrayItemType_
+            && ! $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
+            && ! $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
+            && ! $type instanceof Union
+            && ! $type instanceof \Dedoc\Scramble\Support\Type\IntersectionType;
+    }
+
+    private function transformCached(Type $type): OpenApiType
+    {
+        if ($type instanceof TemplateType && $type->is) {
+            $type = $type->is;
+        }
+
+        $key = $this->getCacheKey($type);
+
+        if (isset($this->cache[$key])) {
+            $openApiType = $this->cache[$key]->clone();
+            $this->registerReferences($openApiType);
+
+            return $openApiType;
+        }
+
+        $openApiType = $this->transformUncached($type);
+        $this->cache[$key] = $openApiType->clone();
+
+        return $openApiType;
+    }
+
+    private function registerReferences(OpenApiType $type): void
+    {
+        if ($type instanceof Reference) {
+            $this->context->references->schemas->add($type->fullName, $type);
+
+            return;
+        }
+
+        if ($type instanceof ArrayType) {
+            $this->registerReferences($type->items);
+
+            foreach ($type->prefixItems as $item) {
+                $this->registerReferences($item);
+            }
+
+            return;
+        }
+
+        if ($type instanceof ObjectType) {
+            foreach ($type->properties as $property) {
+                if ($property) {
+                    $this->registerReferences($property);
+                }
+            }
+
+            if ($type->additionalProperties) {
+                $this->registerReferences($type->additionalProperties);
+            }
+
+            return;
+        }
+
+        if ($type instanceof AnyOf || $type instanceof AllOf) {
+            foreach ($type->items as $item) {
+                $this->registerReferences($item);
+            }
+        }
+    }
+
+    private function transformUncached(Type $type): OpenApiType
+    {
+        if ($type instanceof TemplateType && $type->is) {
+            $type = $type->is;
+        }
+
+        $openApiType = new UnknownType;
 
         if (
             $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
             && $type->isList
         ) {
+            $visibleItems = collect($type->items)->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))->values()->all();
             /** @see https://stackoverflow.com/questions/57464633/how-to-define-a-json-array-with-concrete-item-definition-for-every-index-i-e-a */
             $openApiType = (new ArrayType)
-                ->setMin(count($type->items))
-                ->setMax(count($type->items))
+                ->setMin(count($visibleItems))
+                ->setMax(count($visibleItems))
                 ->setPrefixItems(
                     array_map(
                         fn ($item) => $this->transform($item->value),
-                        $type->items
+                        $visibleItems
                     )
                 )
                 ->setAdditionalItems(false);
-        } elseif (
-            $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
-            && ! $type->isList
-        ) {
+        } elseif ($type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType) {
             $openApiType = new ObjectType;
             $requiredKeys = [];
 
             $props = collect($type->items)
+                ->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))
                 ->mapWithKeys(function (ArrayItemType_ $item) use (&$requiredKeys) {
                     if (! $item->isOptional) {
                         $requiredKeys[] = $item->key;
@@ -129,7 +225,7 @@ class TypeTransformer
                     ->additionalProperties($this->transform($type->value));
             }
         } elseif ($type instanceof ArrayItemType_) {
-            $openApiType = $this->transform($type->value);
+            $typeValue = clone $type->value;
 
             /** @var PhpDocNode|null $valueDocNode */
             $valueDocNode = $type->value->getAttribute('docNode');
@@ -143,7 +239,17 @@ class TypeTransformer
                 ]);
                 PhpDoc::addSummaryAttributes($docNode);
 
-                /** @var PhpDocNode $docNode */
+                $typeValue->setAttribute('docNode', $docNode);
+            }
+
+            $openApiType = $this->transform($typeValue);
+
+            // @todo use PhpDocSchemaTransformer
+
+            /** @var PhpDocNode|null $docNode */
+            $docNode = $typeValue->getAttribute('docNode');
+
+            if ($docNode) {
                 $varNode = array_values($docNode->getVarTagValues())[0] ?? null;
 
                 $openApiType = $varNode
@@ -162,6 +268,18 @@ class TypeTransformer
 
                 if ($default = ExamplesExtractor::make($docNode, '@default')->extract(preferString: $openApiType instanceof StringType)) {
                     $openApiType->default($default[0]);
+                }
+
+                $deprecated = array_values($docNode->getTagsByName('@deprecated'))[0]->value ?? null;
+                if ($deprecated instanceof DeprecatedTagValueNode) {
+                    $openApiType->deprecated(true);
+
+                    if ($deprecated->description) {
+                        $openApiType->setDescription(implode(' ', array_filter([
+                            $openApiType->description,
+                            $deprecated->description,
+                        ])));
+                    }
                 }
 
                 if ($format = array_values($docNode->getTagsByName('@format'))[0]->value->value ?? null) {
@@ -186,17 +304,24 @@ class TypeTransformer
                     ->all();
 
                 $items = array_map($this->transform(...), $otherTypes->values()->toArray()); // @phpstan-ignore argument.type
+                $literalSchemas = [];
 
                 if ($stringLiterals->count()) {
-                    $items[] = (new StringType)->enum(
+                    $items[] = $literalSchemas[] = (new StringType)->enum(
                         $stringLiterals->map->value->unique()->values()->toArray() // @phpstan-ignore property.notFound
                     );
                 }
 
                 if ($integerLiterals->count()) {
-                    $items[] = (new IntegerType)->enum(
+                    $items[] = $literalSchemas[] = (new IntegerType)->enum(
                         $integerLiterals->map->value->unique()->values()->toArray() // @phpstan-ignore property.notFound
                     );
+                }
+
+                // In case $otherTypes consist just of null and there is string or integer literals, make type nullable
+                $otherTypesIsNullable = count($otherTypes) === 1 && collect($otherTypes)->contains(fn ($t) => $t instanceof \Dedoc\Scramble\Support\Type\NullType);
+                if ($otherTypesIsNullable && ($stringLiterals->count() || $integerLiterals->count())) {
+                    $items = array_map(fn ($s) => $s->nullable(true), $literalSchemas);
                 }
 
                 // Removing duplicated schemas before making a resulting AnyOf type.
@@ -204,11 +329,11 @@ class TypeTransformer
                 $openApiType = count($uniqueItems) === 1 ? $uniqueItems[0] : (new AnyOf)->setItems($uniqueItems);
             }
         } elseif ($type instanceof LiteralStringType) {
-            $openApiType = (new StringType)->enum([$type->value]);
+            $openApiType = (new StringType)->const($type->value);
         } elseif ($type instanceof LiteralIntegerType) {
-            $openApiType = (new IntegerType)->enum([$type->value]);
+            $openApiType = (new IntegerType)->const($type->value);
         } elseif ($type instanceof LiteralFloatType) {
-            $openApiType = (new NumberType)->enum([$type->value]);
+            $openApiType = (new NumberType)->const($type->value);
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\StringType) {
             $openApiType = new StringType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\FloatType) {
@@ -232,11 +357,7 @@ class TypeTransformer
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\MixedType) {
             $openApiType = new MixedType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\ObjectType) {
-            if ($type->isInstanceOf(CarbonInterface::class)) {
-                $openApiType = (new StringType)->format('date-time');
-            } else {
-                $openApiType = new ObjectType;
-            }
+            $openApiType = new ObjectType;
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\IntersectionType) {
             $openApiType = (new AllOf)->setItems(array_map(
                 fn ($t) => $this->transform($t),
@@ -248,6 +369,11 @@ class TypeTransformer
             $openApiType = $typeHandledByExtension;
         }
 
+        return $openApiType;
+    }
+
+    private function applyTypeAttributes(OpenApiType $openApiType, Type $type): OpenApiType
+    {
         if ($type->hasAttribute('format')) {
             $openApiType->format($type->getAttribute('format'));
         }
@@ -401,5 +527,21 @@ class TypeTransformer
         }
 
         return null;
+    }
+
+    private function isHiddenArrayItem(ArrayItemType_ $item): bool
+    {
+        /** @var PhpDocNode|null $arrayItemDocNode */
+        $arrayItemDocNode = $item->getAttribute('docNode');
+        /** @var PhpDocNode|null $valueDocNode */
+        $valueDocNode = $item->value->getAttribute('docNode');
+
+        foreach ([$arrayItemDocNode, $valueDocNode] as $docNode) {
+            if ($docNode && count($docNode->getTagsByName('@hidden')) > 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -81,15 +81,15 @@ class TypeWalker
                 continue;
             }
             if (! is_array($node)) {
-                $subject->$propertyWithNode = TypeHelper::unpackIfArray($this->replace($node, $replacer));
+                $subject->$propertyWithNode = $this->replace($node, $replacer);
             } else {
                 foreach ($node as $index => $item) {
-                    $subject->$propertyWithNode[$index] = TypeHelper::unpackIfArray($this->replace($item, $replacer));
+                    $subject->$propertyWithNode[$index] = $this->replace($item, $replacer);
                 }
             }
         }
 
-        return TypeHelper::unpackIfArray($subject);
+        return $subject;
     }
 
     /**

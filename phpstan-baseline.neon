@@ -271,13 +271,13 @@ parameters:
 			path: src/Console/Commands/AnalyzeDocumentation.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Console\\Commands\\AnalyzeDocumentation\:\:groupExceptions\(\) should return Illuminate\\Support\\Collection\<string, Illuminate\\Support\\Collection\<int, Throwable\>\> but returns Illuminate\\Support\\Collection\<string, Illuminate\\Support\\Collection\<int, mixed\>\>\.$#'
+			message: '#^Method Dedoc\\Scramble\\Console\\Commands\\AnalyzeDocumentation\:\:groupExceptions\(\) should return Illuminate\\Support\\Collection\<string, Illuminate\\Support\\Collection\<int, Throwable\>\> but returns Illuminate\\Support\\Collection\<\(int\|string\), Illuminate\\Support\\Collection\<int, mixed\>\>\.$#'
 			identifier: return.type
 			count: 1
 			path: src/Console/Commands/AnalyzeDocumentation.php
 
 		-
-			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|string\|null given\.$#'
+			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|float\|int\|string\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Console/Commands/AnalyzeDocumentation.php
@@ -325,7 +325,7 @@ parameters:
 			path: src/Console/Commands/Components/TermsOfContentItem.php
 
 		-
-			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|string\|null given\.$#'
+			message: '#^Parameter \#1 \$api of static method Dedoc\\Scramble\\Scramble\:\:getGeneratorConfig\(\) expects string, array\|bool\|float\|int\|string\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Console/Commands/ExportDocumentation.php
@@ -337,7 +337,7 @@ parameters:
 			path: src/Console/Commands/ExportDocumentation.php
 
 		-
-			message: '#^Part \$api \(array\|bool\|string\|null\) of encapsed string cannot be cast to string\.$#'
+			message: '#^Part \$api \(array\|bool\|float\|int\|string\|null\) of encapsed string cannot be cast to string\.$#'
 			identifier: encapsedStringPart.nonString
 			count: 1
 			path: src/Console/Commands/ExportDocumentation.php
@@ -392,12 +392,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$filePath of class Dedoc\\Scramble\\Console\\Commands\\Components\\Code constructor expects string, string\|false given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Exceptions/InvalidSchema.php
-
-		-
-			message: '#^Parameter \#2 \$line of class Dedoc\\Scramble\\Console\\Commands\\Components\\Code constructor expects int, int\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Exceptions/InvalidSchema.php
@@ -655,30 +649,6 @@ parameters:
 			path: src/Infer/Analyzer/MethodAnalyzer.php
 
 		-
-			message: '#^If condition is always true\.$#'
-			identifier: if.alwaysTrue
-			count: 1
-			path: src/Infer/Analyzer/MethodQuery.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Infer\\Analyzer\\MethodQuery\:\:getTypes\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Infer/Analyzer/MethodQuery.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Infer\\Analyzer\\MethodQuery\:\:\$types type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Infer/Analyzer/MethodQuery.php
-
-		-
-			message: '#^Unsafe usage of new static\(\)\.$#'
-			identifier: new.static
-			count: 1
-			path: src/Infer/Analyzer/MethodQuery.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\Context\:\:configure\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -759,12 +729,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Infer\\DefinitionBuilders\\LazyClassReflectionDefinitionBuilder\:\:__construct\(\) has parameter \$reflection with generic class ReflectionClass but does not specify its types\: T$#'
 			identifier: missingType.generics
-			count: 1
-			path: src/Infer/DefinitionBuilders/LazyClassReflectionDefinitionBuilder.php
-
-		-
-			message: '#^Parameter \#1 \$reflectionType of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:createTypeFromReflectionType\(\) expects ReflectionType, ReflectionType\|null given\.$#'
-			identifier: argument.type
 			count: 1
 			path: src/Infer/DefinitionBuilders/LazyClassReflectionDefinitionBuilder.php
 
@@ -1117,12 +1081,6 @@ parameters:
 			path: src/Infer/Handler/FunctionLikeHandler.php
 
 		-
-			message: '#^Parameter \#3 \$type of method Dedoc\\Scramble\\Infer\\Scope\\Scope\:\:addVariableType\(\) expects Dedoc\\Scramble\\Support\\Type\\Type, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Handler/FunctionLikeHandler.php
-
-		-
 			message: '#^Possibly invalid array key type PhpParser\\Node\\Expr\|string\.$#'
 			identifier: offsetAccess.invalidOffset
 			count: 3
@@ -1358,12 +1316,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#2 \$subject of function preg_match expects string, string\|false given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Infer/Services/FileNameResolver.php
-
-		-
-			message: '#^Parameter \#2 \$subject of function preg_match_all expects string, string\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Infer/Services/FileNameResolver.php
@@ -1753,24 +1705,6 @@ parameters:
 			path: src/Reflection/ReflectionRoute.php
 
 		-
-			message: '#^Callable callable\(Dedoc\\Scramble\\Support\\Generator\\Types\\Type\)\: bool invoked with 2 parameters, 1 required\.$#'
-			identifier: arguments.count
-			count: 1
-			path: src/SchemaValidator.php
-
-		-
-			message: '#^Calling the helper function ''value\(\)'' without a closure as the first argument simply returns the first argument without doing anything$#'
-			identifier: larastan.uselessConstructs.value
-			count: 1
-			path: src/SchemaValidator.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function throw_if$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/SchemaValidator.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Scramble\:\:afterOpenApiGenerated\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -1850,12 +1784,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$routeResolver of method Dedoc\\Scramble\\GeneratorConfig\:\:routes\(\) expects Closure\|null, callable\(\)\: mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Scramble.php
-
-		-
-			message: '#^Parameter \#1 \$rules of class Dedoc\\Scramble\\SchemaValidator constructor expects array\<int, array\{callable\(Dedoc\\Scramble\\Support\\Generator\\Types\\Type\)\: bool, string\}\>, array\<int, array\{callable\(Dedoc\\Scramble\\Support\\Generator\\Types\\Type, string\)\: bool, \(callable\(Dedoc\\Scramble\\Support\\Generator\\Types\\Type, string\)\: string\)\|string, array\<string\>, bool\}\> given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Scramble.php
@@ -2335,12 +2263,6 @@ parameters:
 			path: src/Support/Generator/Operation.php
 
 		-
-			message: '#^Parameter \#1 \$callback of function array_map expects \(callable\(Dedoc\\Scramble\\Support\\Generator\\Parameter\|Dedoc\\Scramble\\Support\\Generator\\Reference\)\: mixed\)\|null, Closure\(Dedoc\\Scramble\\Support\\Generator\\Parameter\)\: array given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/Generator/Operation.php
-
-		-
 			message: '#^Property Dedoc\\Scramble\\Support\\Generator\\Operation\:\:\$tags type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -2692,12 +2614,6 @@ parameters:
 			path: src/Support/Generator/ServerVariable.php
 
 		-
-			message: '#^Call to an undefined method Dedoc\\Scramble\\Support\\Generator\\Schema\|Dedoc\\Scramble\\Support\\Generator\\Types\\Type\:\:getAttribute\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/Support/Generator/Types/ArrayType.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\ArrayType\:\:setAdditionalItems\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -2764,18 +2680,6 @@ parameters:
 			path: src/Support/Generator/Types/ArrayType.php
 
 		-
-			message: '#^Parameter \#1 \$value of function count expects array\|Countable, Dedoc\\Scramble\\Support\\Generator\\Schema\|Dedoc\\Scramble\\Support\\Generator\\Types\\Type given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/Generator/Types/ArrayType.php
-
-		-
-			message: '#^Parameter \#2 \$array of function array_map expects array, Dedoc\\Scramble\\Support\\Generator\\Schema\|Dedoc\\Scramble\\Support\\Generator\\Types\\Type given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/Generator/Types/ArrayType.php
-
-		-
 			message: '#^Property Dedoc\\Scramble\\Support\\Generator\\Types\\ArrayType\:\:\$additionalItems has no type specified\.$#'
 			identifier: missingType.property
 			count: 1
@@ -2790,18 +2694,6 @@ parameters:
 		-
 			message: '#^Property Dedoc\\Scramble\\Support\\Generator\\Types\\ArrayType\:\:\$minItems has no type specified\.$#'
 			identifier: missingType.property
-			count: 1
-			path: src/Support/Generator/Types/ArrayType.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Support\\Generator\\Types\\ArrayType\:\:\$prefixItems \(Dedoc\\Scramble\\Support\\Generator\\Schema\|Dedoc\\Scramble\\Support\\Generator\\Types\\Type\) does not accept default value of type array\.$#'
-			identifier: property.defaultValue
-			count: 1
-			path: src/Support/Generator/Types/ArrayType.php
-
-		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
 			count: 1
 			path: src/Support/Generator/Types/ArrayType.php
 
@@ -3220,12 +3112,6 @@ parameters:
 			path: src/Support/InferExtensions/ModelExtension.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\ModelExtension\:\:getRelationType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/InferExtensions/ModelExtension.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\InferExtensions\\ModelExtension\:\:getRelationType\(\) has parameter \$relation with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -3358,12 +3244,6 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
 
 		-
-			message: '#^Class Spatie\\LaravelData\\Contracts\\BaseData not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/FormRequestParametersExtractor.php
-
-		-
 			message: '#^Variable \$requestParam in PHPDoc tag @var does not exist\.$#'
 			identifier: varTag.variableNotFound
 			count: 1
@@ -3389,12 +3269,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$array of static method Illuminate\\Support\\Arr\:\:hasAny\(\) expects array\|ArrayAccess, array\<string, class\-string\>\|false given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
-
-		-
-			message: '#^Parameter \#1 \$reflectionType of static method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:createTypeFromReflectionType\(\) expects ReflectionType, ReflectionType\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Support/OperationExtensions/ParameterExtractor/PathParametersExtractor.php
@@ -3526,12 +3400,6 @@ parameters:
 			path: src/Support/OperationExtensions/RequestEssentialsExtension.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\ComposedFormRequestRulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/ComposedFormRequestRulesEvaluator.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>expr" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -3540,12 +3408,6 @@ parameters:
 		-
 			message: '#^Call to function method_exists\(\) with Illuminate\\Http\\Request and ''setMethod'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/FormRequestRulesEvaluator.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\FormRequestRulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: src/Support/OperationExtensions/RulesEvaluator/FormRequestRulesEvaluator.php
 
@@ -3574,28 +3436,10 @@ parameters:
 			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\NodeRulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\NodeRulesEvaluator\:\:handle\(\) should return array but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
-
-		-
 			message: '#^Possibly invalid array key type PhpParser\\Node\\Expr\|string\.$#'
 			identifier: array.invalidKey
 			count: 2
 			path: src/Support/OperationExtensions/RulesEvaluator/NodeRulesEvaluator.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesEvaluator\\RulesEvaluator\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Support/OperationExtensions/RulesEvaluator/RulesEvaluator.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\OperationExtensions\\RulesExtractor\\RulesMapper\:\:array\(\) has no return type specified\.$#'
@@ -3916,6 +3760,12 @@ parameters:
 			path: src/Support/ResponseExtractor/ModelInfo.php
 
 		-
+			message: '#^Parameter \#1 \$items of method Illuminate\\Support\\Collection\<string,string\>\:\:merge\(\) expects Illuminate\\Contracts\\Support\\Arrayable\<non\-falsy\-string, mixed\>\|iterable\<non\-falsy\-string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Support/ResponseExtractor/ModelInfo.php
+
+		-
 			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
 			identifier: argument.type
 			count: 1
@@ -4192,18 +4042,6 @@ parameters:
 			path: src/Support/Type/TypeHelper.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:getArg\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/TypeHelper.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:getArgType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Type/TypeHelper.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Type\\TypeHelper\:\:mergeTypes\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -4406,12 +4244,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: src/Support/TypeToSchemaExtensions/PaginatorTypeToSchema.php
-
-		-
-			message: '#^Parameter \#1 \$scope of method Dedoc\\Scramble\\Infer\\Services\\ReferenceTypeResolver\:\:resolve\(\) expects Dedoc\\Scramble\\Infer\\Scope\\Scope, Dedoc\\Scramble\\Infer\\Scope\\Scope\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/TypeToSchemaExtensions/ResourceResponseTypeToSchema.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\TypeToSchemaExtensions\\ResponseTypeToSchema\:\:shouldHandle\(\) has no return type specified\.$#'

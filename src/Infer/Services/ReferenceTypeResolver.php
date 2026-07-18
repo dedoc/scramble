@@ -13,18 +13,22 @@ use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
-use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
+use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
+use Dedoc\Scramble\Support\Type\NeverType;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\Reference\AbstractReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\PotentialMethodMutatingCallType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticReference;
@@ -61,12 +65,7 @@ class ReferenceTypeResolver
         );
 
         // Type finalization: removing duplicates from union, unpacking array items (inside `replace`), calling resolving extensions.
-        $finalizedResolvedType = (new TypeWalker)->replace(
-            $resolvedType,
-            fn (Type $t) => $t instanceof Union ? TypeHelper::mergeTypes(...$t->types) : null,
-        );
-
-        return $this->resolveLateTypes($finalizedResolvedType->setOriginal($originalType), $originalType)->widen();
+        return $this->finalizeType($resolvedType, $originalType);
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type
@@ -78,7 +77,7 @@ class ReferenceTypeResolver
             CallableCallReferenceType::class => $this->resolveCallableCallReferenceType($scope, $t),
             NewCallReferenceType::class => $this->resolveNewCallReferenceType($scope, $t),
             PropertyFetchReferenceType::class => $this->resolvePropertyFetchReferenceType($scope, $t),
-            LateResolvingType::class => $this->resolveLateTypeEarly($t),
+            PotentialMethodMutatingCallType::class => $this->resolvePotentialMethodMutatingCallType($scope, $t),
             default => null,
         };
 
@@ -90,7 +89,58 @@ class ReferenceTypeResolver
             return new UnknownType('self reference');
         }
 
-        return $this->resolve($scope, $resolved);
+        return $this->withNullsafeShortCircuitType($t, $resolved, $scope);
+    }
+
+    private function withNullsafeShortCircuitType(Type $original, Type $resolved, Scope $scope): Type
+    {
+        if (! $this->hasNullsafeShortCircuitType($original, $scope)) {
+            return $resolved;
+        }
+
+        return Union::wrap([$resolved, new NullType]);
+    }
+
+    private function hasNullsafeShortCircuitType(Type $original, Scope $scope): bool
+    {
+        if ($original instanceof MethodCallReferenceType) {
+            if ($original->isNullsafe) {
+                return TypeHelper::canContainNull(
+                    $this->resolve($scope, $original->callee),
+                );
+            }
+
+            return $this->hasNullsafeShortCircuitType($original->callee, $scope);
+        }
+
+        if ($original instanceof PropertyFetchReferenceType) {
+            if ($original->isNullsafe) {
+                return TypeHelper::canContainNull(
+                    $this->resolve($scope, $original->object),
+                );
+            }
+
+            return $this->hasNullsafeShortCircuitType($original->object, $scope);
+        }
+
+        return false;
+    }
+
+    /**
+     * When a parent method returns `static`, chained calls on that value must still resolve
+     * methods on the current class (late static binding), without widening the return type.
+     */
+    private function resolveStaticCalleeForMethodLookup(Scope $scope, Type $calleeType): Type
+    {
+        if (
+            $calleeType instanceof ObjectType
+            && $calleeType->name === StaticReference::STATIC
+            && $scope->context->classDefinition
+        ) {
+            return new SelfType($scope->context->classDefinition->name);
+        }
+
+        return $calleeType;
     }
 
     private function finalizeStatic(Type $type, Type $staticType): Type
@@ -112,21 +162,36 @@ class ReferenceTypeResolver
         });
     }
 
-    private function resolveLateTypeEarly(LateResolvingType $type): Type
+    private function finalizeSelf(Type $type, Type $concreteSelfType): Type
     {
-        if (! $type->isResolvable()) {
-            return $type;
-        }
-
-        return $type->resolve();
+        return (new TypeWalker)->map($type, function (Type $t) use ($concreteSelfType) {
+            return $t instanceof SelfType ? $concreteSelfType : $t;
+        });
     }
 
-    private function resolveLateTypes(Type $type, Type $originalType): Type
+    /**
+     * Replaces `SelfType` to `$calledOnType` only if it is coming from PHPDoc annotation (empty name). For now this
+     * happens only when argument type is augmented by {@see TemplateTypesSolver::addContextTypesToTypelessParametersOfCallableArgument}.
+     */
+    private function finalizeSelfForCallableArguments(Type $type, Type $calledOnType): Type
+    {
+        return (new TypeWalker)->map($type, function (Type $t) use ($calledOnType) {
+            if (! $t instanceof SelfType || $t->name !== '') {
+                return $t;
+            }
+
+            return $calledOnType;
+        });
+    }
+
+    private function finalizeType(Type $type, Type $originalType): Type
     {
         $attributes = $type->attributes();
 
         $traverser = new TypeTraverser([
+            new KeyedArrayUnpackingTypeVisitor,
             new LateTypeResolvingTypeVisitor,
+            new UnionNormalizingTypeVisitor,
         ]);
 
         return $traverser
@@ -154,59 +219,76 @@ class ReferenceTypeResolver
     private function resolveMethodCallReferenceType(Scope $scope, MethodCallReferenceType $type): Type
     {
         $calleeType = $this->resolveAndNormalizeCallee($scope, $type->callee);
-        $type->callee = $calleeType; // @todo stop mutating `$type` use `$calleeType` instead.
         $arguments = new AutoResolvingArgumentTypeBag($scope, $type->arguments);
 
-        $classDefinition = $calleeType instanceof ObjectType
-            ? $this->index->getClass($calleeType->name)
-            : null;
+        $calleeAllTypes = $calleeType instanceof Union
+            ? $calleeType->types
+            : [$calleeType];
 
-        if (! ($calleeType instanceof TemplateType) && $returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
-            instance: $calleeType,
-            name: $type->methodName,
-            scope: $scope,
-            arguments: $arguments,
-            methodDefiningClassName: $classDefinition
-                ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index)
-                : ($calleeType instanceof ObjectType ? $calleeType->name : null),
-        ))) {
-            return $this->finalizeStatic($returnType, $calleeType);
-        }
+        return Union::wrap(array_map(function (Type $calleeType) use ($scope, $type, $arguments) {
+            $calleeType = $this->resolveStaticCalleeForMethodLookup($scope, $calleeType);
 
-        if (! $calleeType instanceof ObjectType) {
-            return new UnknownType;
-        }
+            $classDefinition = $calleeType instanceof ObjectType
+                ? $this->index->getClass($calleeType->name)
+                : null;
 
-        if ($returnType = Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
-            instance: $calleeType,
-            name: $type->methodName,
-            scope: $scope,
-            arguments: $arguments,
-            methodDefiningClassName: $classDefinition ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index) : $calleeType->name,
-        ))) {
-            return $this->finalizeStatic($returnType, $calleeType);
-        }
+            if (! ($calleeType instanceof TemplateType) && $returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
+                instance: $calleeType,
+                name: $type->methodName,
+                scope: $scope,
+                arguments: $arguments,
+                methodDefiningClassName: $classDefinition
+                    ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index)
+                    : ($calleeType instanceof ObjectType ? $calleeType->name : null),
+            ))) {
+                return $this->finalizeStatic($returnType, $calleeType);
+            }
 
-        if (! $classDefinition) {
-            return new UnknownType;
-        }
+            if ($calleeType instanceof MixedType) {
+                return new UnknownType;
+            }
+            if (
+                ! $calleeType instanceof ObjectType
+                && ! $calleeType instanceof UnknownType
+                && ! $calleeType instanceof TemplateType
+            ) {
+                return new NeverType;
+            }
+            if (! $calleeType instanceof ObjectType) {
+                return new UnknownType;
+            }
 
-        if (! $methodDefinition = $calleeType->getMethodDefinition($type->methodName, $scope)) {
-            return new UnknownType("Cannot get a method type [$type->methodName] on type [$calleeType->name]");
-        }
+            if ($returnType = Context::getInstance()->extensionsBroker->getMethodReturnType(new MethodCallEvent(
+                instance: $calleeType,
+                name: $type->methodName,
+                scope: $scope,
+                arguments: $arguments,
+                methodDefiningClassName: $classDefinition ? $classDefinition->getMethodDefiningClassName($type->methodName, $scope->index) : $calleeType->name,
+            ))) {
+                return $this->finalizeStatic($returnType, $calleeType);
+            }
 
-        $resultingType = $this->getFunctionCallResult($methodDefinition, new AutoResolvingArgumentTypeBag($scope, $type->arguments), $calleeType);
+            if (! $classDefinition) {
+                return new UnknownType;
+            }
 
-        if ($calleeType instanceof SelfType) {
-            return $resultingType;
-        }
+            if (! $methodDefinition = $calleeType->getMethodDefinition($type->methodName, $scope)) {
+                return new NeverType;
+            }
 
-        // @todo resolve template type?
-        $resultingType = $resultingType instanceof TemplateType
-            ? ($resultingType->is ?: new UnknownType)
-            : $resultingType;
+            $resultingType = $this->getFunctionCallResult($methodDefinition, new AutoResolvingArgumentTypeBag($scope, $type->arguments), $calleeType);
 
-        return $this->finalizeStatic($resultingType, $calleeType);
+            if ($calleeType instanceof SelfType) {
+                return $resultingType;
+            }
+
+            // @todo resolve template type?
+            $resultingType = $resultingType instanceof TemplateType
+                ? ($resultingType->is ?: new UnknownType)
+                : $resultingType;
+
+            return $this->finalizeStatic($resultingType, $calleeType);
+        }, $calleeAllTypes));
     }
 
     private function resolveStaticMethodCallReferenceType(Scope $scope, StaticMethodCallReferenceType $type): Type
@@ -257,7 +339,7 @@ class ReferenceTypeResolver
         }
 
         if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
-            return new UnknownType("Cannot get a method type [$type->methodName] on type [$contextualClassName]");
+            return new NeverType;
         }
 
         return $this->finalizeStatic(
@@ -268,48 +350,63 @@ class ReferenceTypeResolver
 
     private function resolveCallableCallReferenceType(Scope $scope, CallableCallReferenceType $type): Type
     {
-        $callee = $this->resolve($scope, $type->callee);
-        $callee = $callee instanceof TemplateType ? $callee->is : $callee;
-
+        $callee = $this->resolveAndNormalizeCallee($scope, $type->callee);
         $arguments = new AutoResolvingArgumentTypeBag($scope, $type->arguments);
 
-        if ($callee instanceof CallableStringType) {
-            $returnType = Context::getInstance()->extensionsBroker->getFunctionReturnType(new FunctionCallEvent(
-                name: $callee->name,
-                scope: $scope,
-                arguments: $arguments,
-            ));
+        $calleeAllTypes = $callee instanceof Union
+            ? $callee->types
+            : [$callee];
 
-            if ($returnType) {
-                return $returnType;
+        return Union::wrap(array_map(function (Type $callee) use ($scope, $type, $arguments) {
+            /*
+             * String can be callable, and object with `__invoke` can be callable as well.
+             */
+            if (
+                $callee instanceof IntegerType
+                || $callee instanceof FloatType
+                || $callee instanceof BooleanType
+            ) {
+                return new NeverType;
             }
-        }
 
-        if ($callee instanceof ObjectType) {
-            return $this->resolve(
-                $scope,
-                new MethodCallReferenceType($callee, '__invoke', $type->arguments),
-            );
-        }
+            if ($callee instanceof CallableStringType) {
+                $returnType = Context::getInstance()->extensionsBroker->getFunctionReturnType(new FunctionCallEvent(
+                    name: $callee->name,
+                    scope: $scope,
+                    arguments: $arguments,
+                ));
 
-        $calleeType = $callee instanceof CallableStringType
-            ? $this->index->getFunctionDefinition($callee->name)
-            : $callee;
+                if ($returnType) {
+                    return $returnType;
+                }
+            }
 
-        if (! $calleeType) {
-            return new UnknownType;
-        }
+            if ($callee instanceof ObjectType) {
+                return $this->resolve(
+                    $scope,
+                    new MethodCallReferenceType($callee, '__invoke', $type->arguments),
+                );
+            }
 
-        if ($calleeType instanceof FunctionType) { // When resolving into a closure.
-            $calleeType = new FunctionLikeDefinition($calleeType);
-        }
+            $calleeType = $callee instanceof CallableStringType
+                ? $this->index->getFunctionDefinition($callee->name)
+                : $callee;
 
-        // @todo: callee now can be either in index or not, add support for other cases.
-        if (! $calleeType instanceof FunctionLikeDefinition) {
-            return new UnknownType;
-        }
+            if (! $calleeType) {
+                return new UnknownType;
+            }
 
-        return $this->getFunctionCallResult($calleeType, $arguments);
+            if ($calleeType instanceof FunctionType) { // When resolving into a closure.
+                $calleeType = new FunctionLikeDefinition($calleeType);
+            }
+
+            // @todo: callee now can be either in index or not, add support for other cases.
+            if (! $calleeType instanceof FunctionLikeDefinition) {
+                return new UnknownType;
+            }
+
+            return $this->getFunctionCallResult($calleeType, $arguments);
+        }, $calleeAllTypes));
     }
 
     private function resolveNewCallReferenceType(Scope $scope, NewCallReferenceType $type): Type
@@ -374,50 +471,127 @@ class ReferenceTypeResolver
         return new Generic($classDefinition->name, $resultingTemplatesMap);
     }
 
+    private function resolvePotentialMethodMutatingCallType(Scope $scope, PotentialMethodMutatingCallType $type): Type
+    {
+        $callee = $this->resolveAndNormalizeCallee($scope, $type->callee);
+        $arguments = new AutoResolvingArgumentTypeBag($scope, $type->arguments);
+
+        $calleeAllTypes = $callee instanceof Union
+            ? $callee->types
+            : [$callee];
+
+        return Union::wrap(array_map(function (Type $callee) use ($scope, $type, $arguments) {
+            $callee = $this->resolveStaticCalleeForMethodLookup($scope, $callee);
+
+            if (! $callee instanceof Generic) {
+                return $callee;
+            }
+
+            if (! $calleeDefinition = $this->index->getClass($callee->name)) {
+                return $callee;
+            }
+
+            if (! $methodDefinition = $calleeDefinition->getMethodDefinition($type->methodName, $scope)) {
+                return $callee;
+            }
+
+            $selfOutType = $methodDefinition->getSelfOutType();
+            if (! $selfOutType instanceof Generic) {
+                return $callee;
+            }
+
+            $classContextTemplates = (new TemplateTypesSolver)->getClassContextTemplates($callee, $calleeDefinition);
+
+            $arguments = $arguments->map(fn (Type $t, string|int $key) => (new TemplateTypesSolver)->addContextTypesToTypelessParametersOfCallableArgument(
+                $t,
+                $key,
+                $methodDefinition,
+                $classContextTemplates,
+            ));
+
+            $arguments = $arguments->map(fn (Type $argType) => $this->finalizeSelfForCallableArguments($argType, $callee));
+
+            $templatesMap = (new TemplateTypesSolver)
+                ->getFunctionContextTemplates($methodDefinition, $arguments)
+                ->prepend($classContextTemplates);
+
+            $newTemplateTypes = $this->applySelfOutType(
+                [...$callee->templateTypes],
+                $selfOutType,
+                $templatesMap,
+            );
+
+            return new Generic($callee->name, $newTemplateTypes);
+        }, $calleeAllTypes));
+    }
+
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type): Type
     {
         $objectType = $this->resolveAndNormalizeCallee($scope, $type->object);
+        $mayBeUndefinedInCoalesce = TypeHelper::mayBeUndefinedInCoalesce($objectType);
+        $objectAllTypes = $objectType instanceof Union
+            ? $objectType->types
+            : [$objectType];
 
-        if (! $objectType instanceof ObjectType) {
-            return new UnknownType;
-        }
+        $propertyType = Union::wrap(array_map(function (Type $objectType) use ($scope, $type, &$mayBeUndefinedInCoalesce) {
+            $objectType = $this->resolveStaticCalleeForMethodLookup($scope, $objectType);
 
-        if ($propertyType = Context::getInstance()->extensionsBroker->getPropertyType(new PropertyFetchEvent(
-            instance: $objectType,
-            name: $type->propertyName,
-            scope: $scope,
-        ))) {
+            if ($objectType instanceof MixedType) {
+                return new UnknownType;
+            }
+            if (
+                ! $objectType instanceof ObjectType
+                && ! $objectType instanceof UnknownType
+                && ! $objectType instanceof TemplateType
+            ) {
+                $mayBeUndefinedInCoalesce = true;
+
+                return new NeverType;
+            }
+            if (! $objectType instanceof ObjectType) {
+                return new UnknownType;
+            }
+
+            if ($propertyType = Context::getInstance()->extensionsBroker->getPropertyType(new PropertyFetchEvent(
+                instance: $objectType,
+                name: $type->propertyName,
+                scope: $scope,
+            ))) {
+                return $propertyType;
+            }
+
+            $classDefinition = $this->index->getClass($objectType->name);
+
+            if (! $classDefinition) {
+                return new UnknownType("Cannot get property [$type->propertyName] type on [$objectType->name]");
+            }
+
+            $propertyType = $objectType->getPropertyType($type->propertyName, $scope);
+
+            if ($objectType instanceof SelfType) {
+                return $propertyType;
+            }
+
+            // @todo resolve template type?
+            $propertyType = $propertyType instanceof TemplateType
+                ? ($propertyType->is ?: new UnknownType)
+                : $propertyType;
+
             return $propertyType;
-        }
+        }, $objectAllTypes));
 
-        $classDefinition = $this->index->getClass($objectType->name);
-
-        if (! $classDefinition) {
-            return new UnknownType("Cannot get property [$type->propertyName] type on [$objectType->name]");
-        }
-
-        $propertyType = $objectType->getPropertyType($type->propertyName, $scope);
-
-        if ($objectType instanceof SelfType) {
-            return $propertyType;
-        }
-
-        // @todo resolve template type?
-        return $propertyType instanceof TemplateType
-            ? ($propertyType->is ?: new UnknownType)
+        return $mayBeUndefinedInCoalesce
+            ? TypeHelper::markMayBeUndefinedInCoalesce($propertyType)
             : $propertyType;
     }
 
     /**
      * Prepares the type of the value a method will be called on or a property will be fetched on. This includes
      * resolving the reference type and using the lower bound of if the callee is a template type.
-     * Possible todo here is to add Union support as now only direct abstract reference will be resolved which is fine for now.
      */
     private function resolveAndNormalizeCallee(Scope $scope, Type $callee): Type
     {
-        $resolved = ($callee instanceof AbstractReferenceType || $callee instanceof LateResolvingType)
-            ? $this->resolve($scope, $callee)
-            : $callee;
+        $resolved = $this->resolve($scope, $callee);
 
         if ($resolved instanceof TemplateType && $resolved->is) {
             return $resolved->is;
@@ -475,12 +649,6 @@ class ReferenceTypeResolver
         /* When this is a handling for method call */
         ObjectType|SelfType|null $calledOnType = null,
     ): Type {
-        $returnType = $callee->getReturnType();
-
-        if ($isSelf = $returnType instanceof SelfType && $calledOnType) {
-            $returnType = $calledOnType;
-        }
-
         $classDefinition = $calledOnType instanceof ObjectType ? $this->index->getClass($calledOnType->name) : null;
 
         $classContextTemplates = $calledOnType && $classDefinition
@@ -494,6 +662,19 @@ class ReferenceTypeResolver
                 $callee,
                 $classContextTemplates,
             ));
+
+        $returnType = $callee->getReturnType();
+
+        /*
+         * Return type: PhpDoc `self` / `$this` placeholders bind to the method receiver (`$calledOnType`).
+         * Arguments: same for PhpDoc placeholders (`SelfType` with empty name); expression-inferred `$this`
+         * already uses `SelfType` with the lexical class name and must not be overwritten by the receiver.
+         */
+        if ($calledOnType) {
+            $returnType = $this->finalizeSelf($returnType, $calledOnType);
+
+            $arguments = $arguments->map(fn ($argType) => $this->finalizeSelfForCallableArguments($argType, $calledOnType));
+        }
 
         $templatesMap = (new TemplateTypesSolver)
             ->getFunctionContextTemplates($callee, $arguments)
@@ -511,6 +692,9 @@ class ReferenceTypeResolver
                 $templatesMap,
             );
         }
+
+        // void (unresolved) template types that are still present in the type, as this is probably an error
+        // @todo maybe better way to handle? just replacing to unknown (even taking is into account breaks a LOT, these templates will probably make sense later)
 
         return $returnType;
     }

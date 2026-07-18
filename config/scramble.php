@@ -4,8 +4,19 @@ use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 
 return [
     /*
-     * Your API path. By default, all routes starting with this path will be added to the docs.
-     * If you need to change this behavior, you can add your custom routes resolver using `Scramble::routes()`.
+     * Which routes to document. String or array form; use Scramble::routes() for custom selection.
+     *
+     * 'api_path' => [
+     *     'include' => 'api',
+     *     'exclude' => ['api/internal'],
+     * ],
+     *
+     * Without *, patterns match path segments (api matches api and api/users, not apiary).
+     * With *, Str::is is used (e.g. api/v*).
+     *
+     * One static include → default server is /{include} and paths are stripped (/users).
+     * Multiple includes or wildcards → server defaults to / and paths stay full (/api/users).
+     * Override with `servers`, or use Scramble::registerApi() for separate bases.
      */
     'api_path' => 'api',
 
@@ -20,6 +31,16 @@ return [
      */
     'export_path' => 'api.json',
 
+    /*
+     * Cache configuration for the generated OpenAPI document.
+     *
+     * Use `scramble:cache` to warm the cache and `scramble:clear` to invalidate it.
+     */
+    'cache' => [
+        'key' => 'scramble.openapi',
+        'store' => 'file',
+    ],
+
     'info' => [
         /*
          * API version.
@@ -32,47 +53,39 @@ return [
         'description' => '',
     ],
 
-    /*
-     * Customize Stoplight Elements UI
-     */
     'ui' => [
-        /*
-         * Define the title of the documentation's website. App name is used when this config is `null`.
-         */
         'title' => null,
+    ],
 
-        /*
-         * Define the theme of the documentation. Available options are `light`, `dark`, and `system`.
-         */
-        'theme' => 'light',
+    'renderer' => 'elements',
 
+    'renderers' => [
         /*
-         * Hide the `Try It` feature. Enabled by default.
+         * Stoplight Elements config options: https://docs.stoplight.io/docs/elements/b074dc47b2826-elements-configuration-options
          */
-        'hide_try_it' => false,
-
+        'elements' => [
+            'view' => 'scramble::docs',
+            'theme' => 'light',
+            'hideTryIt' => false,
+            'hideSchemas' => false,
+            'logo' => '',
+            'tryItCredentialsPolicy' => 'include',
+            'layout' => 'responsive',
+            'router' => 'hash',
+        ],
         /*
-         * Hide the schemas in the Table of Contents. Enabled by default.
+         * Scalar API reference config options: https://scalar.com/products/api-references/configuration
          */
-        'hide_schemas' => false,
-
-        /*
-         * URL to an image that displays as a small square logo next to the title, above the table of contents.
-         */
-        'logo' => '',
-
-        /*
-         * Use to fetch the credential policy for the Try It feature. Options are: omit, include (default), and same-origin
-         */
-        'try_it_credentials_policy' => 'include',
-
-        /*
-         * There are three layouts for Elements:
-         * - sidebar - (Elements default) Three-column design with a sidebar that can be resized.
-         * - responsive - Like sidebar, except at small screen sizes it collapses the sidebar into a drawer that can be toggled open.
-         * - stacked - Everything in a single column, making integrations with existing websites that have their own sidebar or other columns already.
-         */
-        'layout' => 'responsive',
+        'scalar' => [
+            'view' => 'scramble::scalar',
+            'cdn' => 'https://cdn.jsdelivr.net/npm/@scalar/api-reference',
+            'theme' => 'laravel',
+            'proxyUrl' => 'https://proxy.scalar.com',
+            'darkMode' => false,
+            'showDeveloperTools' => 'never',
+            'agent' => ['disabled' => true],
+            'credentials' => 'include',
+        ],
     ],
 
     /*
@@ -133,4 +146,29 @@ return [
     ],
 
     'extensions' => [],
+
+    /*
+     * Automatically document API security (OpenAPI `security` / `securitySchemes`) based on route
+     * middleware.
+     *
+     * Disabled by default. Uncomment the line below to enable `MiddlewareAuthSecurityStrategy`.
+     * When at least one documented route uses middleware matching the configured patterns (by default
+     * `auth` and `auth:*`), bearer auth is applied globally. Routes without matching middleware are
+     * marked as public (`security: []`).
+     *
+     * Set to `null` explicitly to disable. If you already configure security manually via
+     * `afterOpenApiGenerated` / `extendOpenApi`, keep this disabled to avoid duplicate schemes.
+     *
+     * Customize with a class-string or [class, options]:
+     *
+     * 'security_strategy' => [
+     *     \Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy::class,
+     *     [
+     *         'middleware' => ['auth', 'auth:*'],
+     *         'scheme' => \Dedoc\Scramble\Support\Generator\SecurityScheme::http('bearer'),
+     *     ],
+     * ],
+     */
+    // 'security_strategy' => \Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy::class,
+    'security_strategy' => null,
 ];

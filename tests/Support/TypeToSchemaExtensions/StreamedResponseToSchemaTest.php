@@ -29,7 +29,7 @@ it('transforms json inferred type to response', function () {
             'application/json' => [
                 'schema' => [
                     'type' => 'object',
-                    'properties' => ['foo' => ['type' => 'string', 'enum' => ['bar']]],
+                    'properties' => ['foo' => ['type' => 'string', 'const' => 'bar']],
                     'required' => ['foo'],
                 ],
             ],
@@ -58,7 +58,7 @@ it('transforms SSE inferred type to response', function () {
                         "event: update\ndata: {data}\n\nevent: update\ndata: </stream>\n\n",
                     ],
                     'properties' => [
-                        'event' => ['type' => 'string', 'example' => 'update'],
+                        'event' => ['type' => 'string', 'examples' => ['update']],
                         'data' => (object) [],
                     ],
                     'required' => ['event', 'data'],
@@ -89,7 +89,7 @@ it('transforms SSE without string end event to response', function () {
                         "event: update\ndata: {data}\n\n",
                     ],
                     'properties' => [
-                        'event' => ['type' => 'string', 'example' => 'update'],
+                        'event' => ['type' => 'string', 'examples' => ['update']],
                         'data' => (object) [],
                     ],
                     'required' => ['event', 'data'],

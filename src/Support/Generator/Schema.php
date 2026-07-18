@@ -57,7 +57,7 @@ class Schema
                 $paramType = $paramType instanceof Schema ? $paramType->type : $paramType;
 
                 $paramType->setDescription($parameter->description);
-                $paramType->example($parameter->example);
+                $paramType->examples([$parameter->example]);
 
                 $type->addProperty($parameter->name, $paramType);
             })

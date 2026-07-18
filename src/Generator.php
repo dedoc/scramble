@@ -3,8 +3,10 @@
 namespace Dedoc\Scramble;
 
 use Closure;
+use Dedoc\Scramble\Attributes\Api;
 use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
+use Dedoc\Scramble\Configuration\SecurityDocumentationContext;
 use Dedoc\Scramble\Contracts\DocumentTransformer;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\OpenApiVisitor\SchemaEnforceVisitor;
@@ -28,6 +30,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use LogicException;
 use ReflectionException;
 use ReflectionMethod;
 use Throwable;
@@ -53,11 +56,15 @@ class Generator
     {
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
+        $routes = $this->getRoutes($config);
+        $config = $this->configureSecurityStrategy($routes, $config);
+
         $openApi = $this->makeOpenApi($config);
         $context = new OpenApiContext($openApi, $config);
+
         $typeTransformer = $this->buildTypeTransformer($context);
 
-        $this->getRoutes($config)
+        $routes
             ->flatMap(function (Route $route, int $index) use ($openApi, $config, $typeTransformer) {
                 try {
                     $operations = $this->routeToOperations($openApi, $route, $config, $typeTransformer);
@@ -94,9 +101,7 @@ class Generator
             ->sortBy($this->createOperationsSorter())
             ->each(fn (Operation $operation) => $openApi->addPath(
                 Path::make(
-                    (string) Str::of($operation->path)
-                        ->replaceStart($config->get('api_path', 'api'), '')
-                        ->trim('/')
+                    $config->apiPath()->stripPrefix($operation->path)
                 )->addOperation($operation)
             ))
             ->toArray();
@@ -131,6 +136,20 @@ class Generator
         return $openApi->toArray();
     }
 
+    /**
+     * @param  Collection<int, Route>  $routes
+     */
+    private function configureSecurityStrategy(Collection $routes, GeneratorConfig $config): GeneratorConfig
+    {
+        $strategy = $config->securityStrategy();
+
+        if (! $strategy) {
+            return $config;
+        }
+
+        return $strategy->configure(new SecurityDocumentationContext($routes, $config->cloneWithoutExposing()));
+    }
+
     private function createOperationsSorter(): array
     {
         $defaultSortValue = fn (Operation $o) => $o->tags[0] ?? null;
@@ -156,8 +175,8 @@ class Generator
         [$defaultProtocol] = explode('://', url('/'));
         $servers = $config->get('servers') ?: [
             '' => ($domain = $config->get('api_domain'))
-                ? $defaultProtocol.'://'.$domain.'/'.$config->get('api_path', 'api')
-                : $config->get('api_path', 'api'),
+                ? $defaultProtocol.'://'.$domain.'/'.$config->apiPath()->serverPath()
+                : $config->apiPath()->serverPath(),
         ];
         foreach ($servers as $description => $url) {
             $openApi->addServer(
@@ -203,7 +222,7 @@ class Generator
                 return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
             })
             ->filter($config->routes())
-            ->filter(function (Route $route) {
+            ->filter(function (Route $route) use ($config) {
                 if (! is_string($route->getAction('uses'))) {
                     return true;
                 }
@@ -226,9 +245,50 @@ class Generator
                     return false;
                 }
 
+                $apiNames = $this->getApiAttributeNames($reflection);
+                if ($apiNames !== null && ! in_array($config->name, $apiNames, true)) {
+                    return false;
+                }
+
                 return true;
             })
             ->values();
+    }
+
+    /**
+     * @return list<string>|null `null` when the route has no #[Api] restriction
+     */
+    private function getApiAttributeNames(ReflectionMethod $reflection): ?array
+    {
+        $attributes = $reflection->getAttributes(Api::class);
+
+        if (! count($attributes)) {
+            $attributes = $reflection->getDeclaringClass()->getAttributes(Api::class);
+        }
+
+        if (! count($attributes)) {
+            return null;
+        }
+
+        $apiNames = $attributes[0]->newInstance()->only;
+
+        $this->ensureRegisteredApiNames($apiNames);
+
+        return $apiNames;
+    }
+
+    /**
+     * @param  list<string>  $apiNames
+     */
+    private function ensureRegisteredApiNames(array $apiNames): void
+    {
+        $registeredApis = array_keys(Scramble::getConfigurationsInstance()->all());
+
+        foreach ($apiNames as $apiName) {
+            if (! in_array($apiName, $registeredApis, true)) {
+                throw new LogicException("$apiName API is not registered. Register the API using `Scramble::registerApi` first.");
+            }
+        }
     }
 
     private function buildTypeTransformer(OpenApiContext $context): TypeTransformer

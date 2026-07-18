@@ -4,34 +4,14 @@ namespace Dedoc\Scramble\Infer\Scope;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
-use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
-use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
-use Dedoc\Scramble\Infer\Handler\AssignHandler;
+use Dedoc\Scramble\Infer\Flow\ExpressionTypeInferrer;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\Infer\SimpleTypeGetters\BooleanNotTypeGetter;
-use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
-use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;
-use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
-use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
-use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
-use Dedoc\Scramble\Support\Type\BooleanType;
-use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
-use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\OffsetAccessType;
-use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
-use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
-use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
-use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
-use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
-use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Dedoc\Scramble\Support\Type\VoidType;
 use PhpParser\Node;
 
 class Scope
@@ -60,175 +40,10 @@ class Scope
 
     public function getType(Node $node): Type
     {
-        if ($node instanceof Node\Scalar) {
-            return (new ScalarTypeGetter)($node);
-        }
-
-        if ($node instanceof Node\Expr\Cast) {
-            return (new CastTypeGetter)($node);
-        }
-
-        if ($node instanceof Node\Expr\ConstFetch) {
-            return (new ConstFetchTypeGetter)($node);
-        }
-
-        if ($node instanceof Node\Expr\Throw_) {
-            return new VoidType;
-        }
-
-        if ($node instanceof Node\Expr\Ternary) {
-            return Union::wrap([
-                $this->getType($node->if ?? $node->cond),
-                $this->getType($node->else),
-            ]);
-        }
-
-        if ($node instanceof Node\Expr\BinaryOp\Coalesce) {
-            return Union::wrap([
-                $this->getType($node->left),
-                $this->getType($node->right),
-            ]);
-        }
-
-        if ($node instanceof Node\Expr\Match_) {
-            return Union::wrap(array_map(fn (Node\MatchArm $arm) => $this->getType($arm->body), $node->arms));
-        }
-
-        if ($node instanceof Node\Expr\ClassConstFetch) {
-            return (new ClassConstFetchTypeGetter)($node, $this);
-        }
-
-        if (
-            $node instanceof Node\Expr\BinaryOp\Equal
-            || $node instanceof Node\Expr\BinaryOp\Identical
-            || $node instanceof Node\Expr\BinaryOp\NotEqual
-            || $node instanceof Node\Expr\BinaryOp\NotIdentical
-            || $node instanceof Node\Expr\BinaryOp\Greater
-            || $node instanceof Node\Expr\BinaryOp\GreaterOrEqual
-            || $node instanceof Node\Expr\BinaryOp\Smaller
-            || $node instanceof Node\Expr\BinaryOp\SmallerOrEqual
-        ) {
-            return new BooleanType;
-        }
-
-        if ($node instanceof Node\Expr\BooleanNot) {
-            return (new BooleanNotTypeGetter)($node);
-        }
-
-        if ($node instanceof Node\Expr\Variable && $node->name === 'this') {
-            return new SelfType($this->classDefinition()?->name ?: 'unknown');
-        }
-
-        if ($node instanceof Node\Expr\Variable) {
-            return $this->getVariableType($node);
-        }
-
-        $type = $this->nodeTypesResolver->getType($node);
-
-        if (! $type instanceof UnknownType) {
-            return $type;
-        }
-
-        if ($this->nodeTypesResolver->hasType($node)) { // For case when the unknown type was in node type resolver.
-            return $type;
-        }
-
-        if ($node instanceof Node\Expr\New_) {
-            if (! $node->class instanceof Node\Name) {
-                return $this->setType(
-                    $node,
-                    new NewCallReferenceType($this->getType($node->class), $this->getArgsTypes($node->args)),
-                );
-            }
-
-            return $this->setType(
-                $node,
-                new NewCallReferenceType($node->class->toString(), $this->getArgsTypes($node->args)),
-            );
-        }
-
-        if ($node instanceof Node\Expr\MethodCall) {
-            // Only string method names support.
-            if (! $node->name instanceof Node\Identifier) {
-                return $type;
-            }
-
-            $calleeType = $this->getType($node->var);
-
-            $event = $calleeType instanceof ObjectType
-                ? new MethodCallEvent($calleeType, $node->name->name, $this, new UnresolvableArgumentTypeBag($this->getArgsTypes($node->args)), $calleeType->name)
-                : null;
-
-            $exceptions = $event ? app(ExtensionsBroker::class)->getMethodCallExceptions($event) : [];
-
-            if ($this->functionDefinition()) {
-                $this->functionDefinition()->type->exceptions = array_merge(
-                    $this->functionDefinition()->type->exceptions,
-                    $exceptions,
-                );
-            }
-
-            return $this->setType($node, new MethodCallReferenceType($calleeType, $node->name->name, $this->getArgsTypes($node->args)));
-        }
-
-        if ($node instanceof Node\Expr\StaticCall) {
-            // Only string method names support.
-            if (! $node->name instanceof Node\Identifier) {
-                return $type;
-            }
-
-            if (! $node->class instanceof Node\Name) {
-                return $this->setType(
-                    $node,
-                    new StaticMethodCallReferenceType($this->getType($node->class), $node->name->name, $this->getArgsTypes($node->args)),
-                );
-            }
-
-            return $this->setType(
-                $node,
-                new StaticMethodCallReferenceType($node->class->toString(), $node->name->name, $this->getArgsTypes($node->args)),
-            );
-        }
-
-        if ($node instanceof Node\Expr\PropertyFetch) {
-            // Only string prop names support.
-            if (! $name = ($node->name->name ?? null)) {
-                return new UnknownType('Cannot infer type of property fetch: not supported yet.');
-            }
-
-            return $this->setType(
-                $node,
-                new PropertyFetchReferenceType($this->getType($node->var), $name),
-            );
-        }
-
-        if ($node instanceof Node\Expr\FuncCall) {
-            if ($node->name instanceof Node\Name) {
-                return $this->setType(
-                    $node,
-                    new CallableCallReferenceType(new CallableStringType($node->name->toString()), $this->getArgsTypes($node->args)),
-                );
-            }
-
-            return $this->setType(
-                $node,
-                new CallableCallReferenceType($this->getType($node->name), $this->getArgsTypes($node->args)),
-            );
-        }
-
-        /**
-         * When `dim` is empty, it means that the context is setting – handling in AssignHandler.
-         *
-         * @see AssignHandler
-         */
-        if ($node instanceof Node\Expr\ArrayDimFetch && $node->dim) {
-            return $this->setType($node, new OffsetAccessType(
-                $this->getType($node->var),
-                $this->getType($node->dim),
-            ));
-        }
-
-        return $type;
+        return (new ExpressionTypeInferrer($this, $this->nodeTypesResolver))->infer(
+            expr: $node,
+            variableTypeGetter: fn ($expr) => $this->getVariableType($expr),
+        );
     }
 
     // @todo: Move to some helper, Scope should be passed as a dependency.

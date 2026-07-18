@@ -10,7 +10,12 @@ class UnknownType extends AbstractType
 
     public function isSame(Type $type)
     {
-        return false;
+        return $type instanceof self;
+    }
+
+    public function intersect(Type $otherType): Type
+    {
+        return $otherType;
     }
 
     public function toString(): string

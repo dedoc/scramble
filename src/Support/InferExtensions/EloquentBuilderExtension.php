@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EloquentBuilderExtension implements MethodReturnTypeExtension
 {
@@ -20,14 +21,34 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         if ($event->getDefinition()->hasMethodDefinition($event->getName())) {
-            return null;
+            return $this->handleExistingMethodReturnType($event);
         }
 
         if ($this->shouldForwardCallToModel($event)) {
             return $this->forwardCallToModel($event);
         }
 
+        if (! $modelType = $this->getModelType($event->getInstance())) {
+            return null;
+        }
+        if (
+            $this->modelIsSoftDeletable($modelType)
+            && ($softDeleteCallResult = $this->handleSoftDeletes($event, $modelType))
+        ) {
+            return $softDeleteCallResult;
+        }
+
         return null;
+    }
+
+    private function handleExistingMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        return match ($event->getName()) {
+            'get' => ($modelType = $this->getModelType($event->getInstance()))
+                ? ModelCollectionTypeResolver::resolve($modelType)
+                : null,
+            default => null,
+        };
     }
 
     private function shouldForwardCallToModel(MethodCallEvent $event): bool
@@ -48,6 +69,23 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
         }
 
         return $event->getInstance();
+    }
+
+    /**
+     * @see SoftDeletes
+     */
+    private function modelIsSoftDeletable(ObjectType $modelType): bool
+    {
+        return method_exists($modelType->name, 'bootSoftDeletes');
+    }
+
+    private function handleSoftDeletes(MethodCallEvent $event, ObjectType $modelType): ?Type
+    {
+        return match ($event->name) {
+            'onlyTrashed', 'withTrashed', 'withoutTrashed' => $event->getInstance(),
+            'restoreOrCreate', 'createOrRestore' => $modelType,
+            default => null,
+        };
     }
 
     private function getModelType(ObjectType $instance): ?ObjectType

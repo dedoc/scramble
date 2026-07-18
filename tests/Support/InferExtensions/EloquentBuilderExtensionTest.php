@@ -10,7 +10,7 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Illuminate\Database\Eloquent\Builder;
 
-test('forwards call to scope', function (string $method, string $expectedType) {
+test('supports extension methods', function (string $method, string $expectedType) {
     $type = ReferenceTypeResolver::getInstance()
         ->resolve(
             new GlobalScope,
@@ -23,6 +23,14 @@ test('forwards call to scope', function (string $method, string $expectedType) {
 
     expect($type->toString())->toBe($expectedType);
 })->with([
+    // forwards call to scope
     ['approved', Builder::class.'<'.SamplePostModel::class.'>'],
     ['approvedTypedParam', Builder::class.'<'.SamplePostModel::class.'>'],
+
+    // supports soft deletes macro methods
+    ['onlyTrashed', Builder::class.'<'.SamplePostModel::class.'>'],
+    ['withTrashed', Builder::class.'<'.SamplePostModel::class.'>'],
+    ['withoutTrashed', Builder::class.'<'.SamplePostModel::class.'>'],
+    ['restoreOrCreate', SamplePostModel::class],
+    ['createOrRestore', SamplePostModel::class],
 ]);

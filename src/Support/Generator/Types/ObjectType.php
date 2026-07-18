@@ -17,6 +17,21 @@ class ObjectType extends Type
         parent::__construct('object');
     }
 
+    public function clone(): static
+    {
+        $clone = parent::clone();
+
+        foreach ($clone->properties as $name => $property) {
+            $clone->properties[$name] = $property?->clone();
+        }
+
+        if ($clone->additionalProperties) {
+            $clone->additionalProperties = $clone->additionalProperties->clone();
+        }
+
+        return $clone;
+    }
+
     public function addProperty(string $name, $propertyType)
     {
         $this->properties[$name] = $propertyType;

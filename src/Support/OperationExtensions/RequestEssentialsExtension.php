@@ -119,7 +119,7 @@ class RequestEssentialsExtension extends OperationExtension
 
         [$protocol] = explode('://', url('/'));
         $expectedServer = (new ServerFactory($this->config->serverVariables->all()))
-            ->make($protocol.'://'.$route->getDomain().'/'.$this->config->get('api_path', 'api'));
+            ->make($protocol.'://'.$route->getDomain().'/'.$this->config->apiPath()->serverPath());
 
         if ($this->isServerMatchesAllGivenServers($expectedServer, $this->openApi->servers)) {
             return [];
@@ -223,11 +223,11 @@ class RequestEssentialsExtension extends OperationExtension
         $reflection = $routeInfo->reflectionAction();
 
         $methodClassGroupAttributes = $reflection instanceof ReflectionMethod
-            ? $reflection->getDeclaringClass()->getAttributes(Group::class)
+            ? $reflection->getDeclaringClass()->getAttributes(Group::class, ReflectionAttribute::IS_INSTANCEOF)
             : [];
 
         return [
-            ...($reflection?->getAttributes(Group::class) ?? []),
+            ...($reflection?->getAttributes(Group::class, ReflectionAttribute::IS_INSTANCEOF) ?? []),
             ...$methodClassGroupAttributes,
         ];
     }

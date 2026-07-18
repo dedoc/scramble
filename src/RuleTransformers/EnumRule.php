@@ -4,14 +4,12 @@ namespace Dedoc\Scramble\RuleTransformers;
 
 use BackedEnum;
 use Dedoc\Scramble\Contracts\RuleTransformer;
+use Dedoc\Scramble\Support\EnumTransformer;
 use Dedoc\Scramble\Support\Generator\Types\Type;
-use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\RuleTransforming\NormalizedRule;
 use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\TypeHelper;
-use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Validation\Rules\Enum;
 
 class EnumRule implements RuleTransformer
@@ -35,38 +33,34 @@ class EnumRule implements RuleTransformer
         /** @var class-string<BackedEnum> $enumName */
         $enumName = $this->getProtectedValue($rule, 'type');
 
-        $objectType = new ObjectType($enumName);
-
         /** @var BackedEnum[] $except */
         $except = method_exists(Enum::class, 'except') ? $this->getProtectedValue($rule, 'except') : []; // @phpstan-ignore function.alreadyNarrowedType
         /** @var BackedEnum[] $only */
         $only = method_exists(Enum::class, 'only') ? $this->getProtectedValue($rule, 'only') : []; // @phpstan-ignore function.alreadyNarrowedType
 
         if ($except || $only) {
-            return $this->createPartialEnum($enumName, $only, $except);
+            return $this->preservePreviousRules(
+                EnumTransformer::make($enumName)
+                    ->except($except)
+                    ->only($only)
+                    ->transform(),
+                $previous,
+            );
         }
 
-        return $this->openApiTransformer->transform($objectType);
+        return $this->preservePreviousRules(
+            $this->openApiTransformer->transform(new ObjectType($enumName)),
+            $previous,
+        );
     }
 
-    /**
-     * @param  class-string<BackedEnum>  $enumName
-     * @param  BackedEnum[]  $only
-     * @param  BackedEnum[]  $except
-     */
-    private function createPartialEnum(string $enumName, array $only, array $except): Type
+    private function preservePreviousRules(Type $current, Type $previous): Type
     {
-        $cases = collect($enumName::cases())
-            ->reject(fn ($case) => in_array($case, $except))
-            ->filter(fn ($case) => ! $only || in_array($case, $only));
-
-        if (! isset($cases->first()->value)) {
-            return new UnknownType; // $enumName enum doesnt have values (only/except context)
+        if ($previous->nullable) {
+            $current->nullable(true);
         }
 
-        return $this->openApiTransformer->transform(Union::wrap(
-            $cases->map(fn ($c) => TypeHelper::createTypeFromValue($c->value))->all()
-        ));
+        return $current;
     }
 
     private function getProtectedValue(object $obj, string $name): mixed

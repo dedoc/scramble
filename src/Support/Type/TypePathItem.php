@@ -6,7 +6,7 @@ class TypePathItem
 {
     const KIND_DEFAULT = 0;
 
-    const KIND_ARRAY_KEY = 1;
+    const KIND_ARRAY_ITEM = 1;
 
     public function __construct(
         public string|int $key,
@@ -24,14 +24,26 @@ class TypePathItem
             return null;
         }
 
-        if ($this->kind === self::KIND_ARRAY_KEY) {
-            if (! $type instanceof KeyedArrayType) {
+        if ($this->kind === self::KIND_ARRAY_ITEM) {
+            if (! is_array($type)) {
+                // fail!
                 return null;
             }
 
-            $matchingItem = collect($type->items)->firstWhere('key', $this->key);
+            foreach ($type as $index => $arrayItem) {
+                if (! $arrayItem instanceof ArrayItemType_) {
+                    // fail?
+                    continue;
+                }
 
-            return $matchingItem?->value;
+                $itemKey = $arrayItem->key ?? $index;
+
+                if ($this->key === $itemKey) {
+                    return $arrayItem;
+                }
+            }
+
+            return null;
         }
 
         if (is_array($type)) {

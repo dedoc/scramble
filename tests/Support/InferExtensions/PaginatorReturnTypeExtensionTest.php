@@ -1,6 +1,7 @@
 <?php
 
 use Dedoc\Scramble\Support\InferExtensions\PaginateMethodsReturnTypeExtension;
+use Dedoc\Scramble\Tests\Files\CustomScoutBuilder;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -13,14 +14,17 @@ it('guesses paginate type', function (string $expression, string $expectedTypeSt
 
     expect($type->toString())->toBe($expectedTypeString);
 })->with([
-    [SampleUserModel::class.'::paginate()', LengthAwarePaginator::class.'<int, unknown>'],
-    [SampleUserModel::class.'::query()->paginate()', LengthAwarePaginator::class.'<int, unknown>'],
-    [SampleUserModel::class.'::query()->fastPaginate()', LengthAwarePaginator::class.'<int, unknown>'],
-    [SampleUserModel::class.'::query()->where("foo", "bar")->paginate()', LengthAwarePaginator::class.'<int, unknown>'],
+    [SampleUserModel::class.'::paginate()', LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>'],
+    [SampleUserModel::class.'::query()->paginate()', LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>'],
+    [SampleUserModel::class.'::query()->fastPaginate()', LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>'],
+    [SampleUserModel::class.'::query()->where("foo", "bar")->paginate()', LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>'],
+    [SampleUserModel::class.'::search("foo")->paginate()', LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>'],
+    ['(new '.CustomScoutBuilder::class.'('.SampleUserModel::class.'::search("foo")))->paginate(25)', LengthAwarePaginator::class.'<int, '.SampleUserModel::class.'>'],
 
-    [SampleUserModel::class.'::cursorPaginate()', CursorPaginator::class.'<int, unknown>'],
-    [SampleUserModel::class.'::query()->cursorPaginate()', CursorPaginator::class.'<int, unknown>'],
+    [SampleUserModel::class.'::cursorPaginate()', CursorPaginator::class.'<int, '.SampleUserModel::class.'>'],
+    [SampleUserModel::class.'::query()->cursorPaginate()', CursorPaginator::class.'<int, '.SampleUserModel::class.'>'],
 
-    [SampleUserModel::class.'::simplePaginate()', Paginator::class.'<int, unknown>'],
-    [SampleUserModel::class.'::query()->simplePaginate()', Paginator::class.'<int, unknown>'],
+    [SampleUserModel::class.'::simplePaginate()', Paginator::class.'<int, '.SampleUserModel::class.'>'],
+    [SampleUserModel::class.'::query()->simplePaginate()', Paginator::class.'<int, '.SampleUserModel::class.'>'],
+    [SampleUserModel::class.'::search("foo")->simplePaginate()', Paginator::class.'<int, '.SampleUserModel::class.'>'],
 ]);

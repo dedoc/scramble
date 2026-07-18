@@ -1,0 +1,13 @@
+type: object
+properties:
+    id: { type: integer }
+    children: { type: array, items: { $ref: '#/components/schemas/SamplePostModelWithToArray' } }
+    read_time: { type: string }
+    user: { $ref: '#/components/schemas/SampleUserModel' }
+    created_at: { type: [string, 'null'], format: date-time }
+required:
+    - id
+    - children
+    - read_time
+    - user
+    - created_at

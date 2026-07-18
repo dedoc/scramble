@@ -36,7 +36,7 @@ class PhpDocSchemaTransformer
         }
 
         if ($examples = ExamplesExtractor::make($docNode)->extract(preferString: $type instanceof StringType)) {
-            $type->example($examples[0]);
+            $type->examples($examples);
         }
 
         if ($default = ExamplesExtractor::make($docNode, '@default')->extract(preferString: $type instanceof StringType)) {
@@ -48,7 +48,10 @@ class PhpDocSchemaTransformer
             $type->deprecated(true);
 
             if ($deprecated->description) {
-                $type->setDescription($type->description.$deprecated->description);
+                $type->setDescription(implode(' ', array_filter([
+                    $type->description,
+                    $deprecated->description,
+                ])));
             }
         }
 

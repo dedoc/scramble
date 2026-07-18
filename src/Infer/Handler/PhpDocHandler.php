@@ -26,8 +26,10 @@ class PhpDocHandler
         if (! $parsedPhpDoc = $node->getAttribute('parsedPhpDoc')) {
             return null;
         }
+
         /** @var PhpDocNode $parsedPhpDoc */
         $parsedPhpDoc->setAttribute('sourceClass', $scope->classDefinition()?->name);
+
         $scope->getType($node)->setAttribute('docNode', $parsedPhpDoc);
 
         if ($node instanceof Node\Stmt\Return_ && $node->expr) {

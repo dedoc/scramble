@@ -33,6 +33,13 @@ class ConstFetchEvaluator
             return $default;
         }
 
-        return constant("$className::$constName");
+        if (! class_exists($className)) {
+            return $default;
+        }
+
+        return match ($constName) {
+            'class' => $className,
+            default => constant("$className::$constName"),
+        };
     }
 }

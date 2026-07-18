@@ -54,7 +54,7 @@ describe('model annotations (introduced in 11.15.0)', function () {
     it('handles chained method call relation', function () {
         $type = getStatementType('(new '.UserModel_ModelExtensionTest::class.')->posts()');
 
-        expect($type->toString())->toBe('Illuminate\Database\Eloquent\Relations\HasMany<'.PostModel_ModelExtensionTest::class.', self>');
+        expect($type->toString())->toBe('Illuminate\Database\Eloquent\Relations\HasMany<'.PostModel_ModelExtensionTest::class.', '.UserModel_ModelExtensionTest::class.'>');
     });
 
     it('handles mixin data', function () {

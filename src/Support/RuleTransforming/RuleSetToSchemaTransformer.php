@@ -11,6 +11,7 @@ use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesMapper;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Rules\ExcludeIf;
 use Illuminate\Validation\Rules\ProhibitedIf;
 use Illuminate\Validation\Rules\RequiredIf;
@@ -35,6 +36,7 @@ class RuleSetToSchemaTransformer
         RequiredIf::class,
         ExcludeIf::class,
         ProhibitedIf::class,
+        Enum::class,
     ];
 
     public function __construct(
@@ -97,6 +99,7 @@ class RuleSetToSchemaTransformer
 
         $extensions = $this->config
             ->instances(RuleTransformer::class, [
+                RuleSetToSchemaTransformer::class => $this,
                 TypeTransformer::class => $this->openApiTransformer,
                 RulesMapper::class => new RulesMapper($this->openApiTransformer, $this),
             ])

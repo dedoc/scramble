@@ -401,6 +401,28 @@ class RequestBodyExtensionTest__ignores_rules_param_with_annotation
     }
 }
 
+it('ignores param in rules with @hidden annotation', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::post('api/test', [RequestBodyExtensionTest__ignores_rules_param_with_hidden::class, 'index']);
+    });
+
+    expect($openApiDocument['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'] ?? [])
+        ->not->toHaveKey('secret')
+        ->and($openApiDocument['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'] ?? [])
+        ->toHaveKey('visible');
+});
+class RequestBodyExtensionTest__ignores_rules_param_with_hidden
+{
+    public function index(Request $request)
+    {
+        $request->validate([
+            'visible' => 'string',
+            /** @hidden */
+            'secret' => 'string',
+        ]);
+    }
+}
+
 it('makes reusable request body from marked validation rules', function () {
     $document = generateForRoute(function () {
         return RouteFacade::post('test', Validation_ReusableSchemaNamesTest_Controller::class);
@@ -644,6 +666,97 @@ it('documents deep query parameters without flattening', function () {
             ],
         ]);
 });
+
+it('documents request body with literal period in parameter name using escaped dot', function () {
+    $document = generateForRoute(fn () => RouteFacade::post('test', RequestBodyExtensionTest_EscapedDotRequestBodyController::class));
+
+    expect($document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'])
+        ->toHaveKey('user.name')
+        ->and($document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties']['user.name'])
+        ->toBe(['type' => 'string']);
+});
+class RequestBodyExtensionTest_EscapedDotRequestBodyController
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate(['user\.name' => 'string']);
+    }
+}
+
+it('documents query parameters with literal period in parameter name using escaped dot', function () {
+    $document = generateForRoute(fn () => RouteFacade::get('test', RequestBodyExtensionTest_EscapedDotQueryController::class));
+
+    expect($parameters = $document['paths']['/test']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($parameters[0]['name'])
+        ->toBe('filter.accountable')
+        ->and($parameters[0]['schema']['type'])
+        ->toBe('integer');
+});
+class RequestBodyExtensionTest_EscapedDotQueryController
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate(['filter\.accountable' => 'integer']);
+    }
+}
+
+it('distinguishes nested dot notation from literal period in same request', function () {
+    $document = generateForRoute(fn () => RouteFacade::post('test', RequestBodyExtensionTest_MixedDotNotationController::class));
+
+    $properties = $document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'];
+
+    expect($properties)->toHaveKey('user')
+        ->and($properties['user']['properties']['name'] ?? null)->toBe(['type' => 'string']);
+
+    expect($properties)->toHaveKey('user.email')
+        ->and($properties['user.email'])->toBe(['type' => 'string']);
+});
+class RequestBodyExtensionTest_MixedDotNotationController
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            'user.name' => 'string',
+            'user\.email' => 'string',
+        ]);
+    }
+}
+
+it('unescapes literal period in parameters from request retrieving methods', function () {
+    $document = generateForRoute(fn () => RouteFacade::post('test', RequestBodyExtensionTest_EscapedDotFromRetrievingMethodsController::class));
+
+    expect($document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties'])
+        ->toHaveKey('user.name')
+        ->and($document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties']['user.name'])
+        ->toMatchArray(['type' => 'string']);
+});
+
+it('unescapes literal period in query parameters from request retrieving methods', function () {
+    $document = generateForRoute(fn () => RouteFacade::get('test', RequestBodyExtensionTest_EscapedDotQueryFromRetrievingMethodsController::class));
+
+    expect($parameters = $document['paths']['/test']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($parameters[0]['name'])
+        ->toBe('filter.accountable')
+        ->and($parameters[0]['schema']['type'])
+        ->toBe('string');
+});
+class RequestBodyExtensionTest_EscapedDotFromRetrievingMethodsController
+{
+    public function __invoke(Request $request)
+    {
+        $request->string('user\.name', 'default');
+    }
+}
+class RequestBodyExtensionTest_EscapedDotQueryFromRetrievingMethodsController
+{
+    public function __invoke(Request $request)
+    {
+        $request->query('filter\.accountable', 'foo');
+    }
+}
+
 class RequestBodyExtensionTest_DeepQueryParametersWithContainerController
 {
     public function __invoke(Request $request)
@@ -780,7 +893,11 @@ class RequestBodyExtensionTest_UseHttpMethodsWithValidationRulesController
 it('allows marking request fields as deprecated', function () {
     $document = generateForRoute(RouteFacade::post('test', function (Request $request) {
         $request->validate([
-            /** @deprecated Since 1.0.0 is deprecated. */
+            /**
+             * Woah
+             *
+             * @deprecated Since 1.0.0 is deprecated.
+             */
             'foo' => ['integer'],
         ]);
     }));
@@ -789,7 +906,112 @@ it('allows marking request fields as deprecated', function () {
 
     expect($fooProperty)->toBe([
         'type' => 'integer',
-        'description' => 'Since 1.0.0 is deprecated.',
+        'description' => 'Woah Since 1.0.0 is deprecated.',
         'deprecated' => true,
     ]);
 });
+
+it('allows marking request array fields as deprecated', function () {
+    $document = generateForRoute(RouteFacade::post('test', function (Request $request) {
+        $request->validate([
+            /** @deprecated Since 1.0.0 is deprecated. */
+            'foo' => 'sometimes',
+            'foo.*' => ['integer'],
+        ]);
+    }));
+
+    $fooProperty = $document['paths']['/test']['post']['requestBody']['content']['application/json']['schema']['properties']['foo']; // woah...
+
+    expect($fooProperty)->toBe([
+        'type' => 'array',
+        'description' => 'Since 1.0.0 is deprecated.',
+        'deprecated' => true,
+        'items' => ['type' => 'integer'],
+    ]);
+});
+
+it('gracefully handles not evaluable validation rules', function () {
+    Scramble::throwOnError(false);
+
+    $document = generateForRoute(RouteFacade::post('test', function (CreateUser_RequestBodyExtensionTest $request) {
+        // ...
+    }));
+
+    expect($document['paths']['/test']['post']['description'])
+        ->toContain('Cannot generate request documentation: Cannot evaluate validation rules');
+});
+class CreateUser_RequestBodyExtensionTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'external_id' => [
+                ...$this->nonExistingMethod(),
+                Rule::unique(\Dedoc\Scramble\Tests\Files\SamplePostModel::class)
+                    ->where('company_id', $this->nonExistingMethod()->company_id),
+            ],
+        ];
+    }
+}
+
+it('gracefully handles unpacked method call in form request', function () {
+    $document = generateForRoute(RouteFacade::post('test', function (CreateUserUnpack_RequestBodyExtensionTest $request) {
+        // ...
+    }));
+
+    expect($document['components']['schemas']['CreateUserUnpack_RequestBodyExtensionTest'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                'external_id' => [
+                    'type' => 'number',
+                ],
+            ],
+            'title' => 'CreateUserUnpack_RequestBodyExtensionTest',
+        ]);
+});
+class CreateUserUnpack_RequestBodyExtensionTest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'external_id' => [
+                ...$this->someRules(),
+                Rule::unique(\Dedoc\Scramble\Tests\Files\SamplePostModel::class)
+                    ->where('company_id', $this->user()->company_id),
+            ],
+        ];
+    }
+
+    protected function someRules()
+    {
+        return ['numeric'];
+    }
+}
+
+it('does not crash when first-class callable syntax is used on a request method', function () {
+    $document = generateForRoute(function () {
+        return RouteFacade::put('test/{model}', [FirstClassCallable_RequestBodyExtensionTest_Controller::class, 'update']);
+    });
+
+    expect($document['paths']['/test/{model}']['put'])
+        ->toHaveKey('requestBody')
+        ->and($document['paths']['/test/{model}']['put']['requestBody']['content']['application/json']['schema'])
+        ->toHaveKey('$ref');
+});
+class FirstClassCallable_RequestBodyExtensionTest_Controller
+{
+    public function update(FirstClassCallable_RequestBodyExtensionTest_Request $request): \Illuminate\Http\Response
+    {
+        array_map($request->input(...), ['foo', 'bar']);
+
+        return response()->noContent();
+    }
+}
+class FirstClassCallable_RequestBodyExtensionTest_Request extends FormRequest
+{
+    public function rules(): array
+    {
+        return ['name' => 'string'];
+    }
+}

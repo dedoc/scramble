@@ -2,14 +2,24 @@
 
 namespace Dedoc\Scramble\Infer\Definition;
 
+use Dedoc\Scramble\Infer\Flow\Nodes;
+use Dedoc\Scramble\Infer\FlowBuilder;
+use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use PhpParser\Node\FunctionLike;
+use PhpParser\NodeTraverser;
 
 class FunctionLikeAstDefinition extends FunctionLikeDefinition
 {
-    use IndexAware;
-
     private ?FunctionLikeDefinition $declarationDefinition = null;
+
+    private ?Scope $scope = null;
+
+    private ?FunctionLike $astNode = null;
+
+    private ?Nodes $flowContainer = null;
 
     public function setDeclarationDefinition(?FunctionLikeDefinition $declarationDefinition): self
     {
@@ -21,6 +31,62 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
     public function getDeclarationDefinition(): ?FunctionLikeDefinition
     {
         return $this->declarationDefinition;
+    }
+
+    public function setAstNode(FunctionLike $astNode): self
+    {
+        $this->astNode = $astNode;
+
+        return $this;
+    }
+
+    public function getAstNode(): FunctionLike
+    {
+        if (! $this->astNode) {
+            /**
+             * @see \Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder
+             */
+            throw new \LogicException('AST node must be set before accessing it on FunctionLikeAstDefinition');
+        }
+
+        return $this->astNode;
+    }
+
+    public function setScope(Scope $scope): self
+    {
+        $this->scope = $scope;
+
+        return $this;
+    }
+
+    public function getScope(): Scope
+    {
+        if (! $this->scope) {
+            /**
+             * @see \Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder
+             */
+            throw new \LogicException('Scope must be set before accessing it on FunctionLikeAstDefinition');
+        }
+
+        return $this->scope;
+    }
+
+    public function getFlowContainer(): Nodes
+    {
+        if ($this->flowContainer) {
+            return $this->flowContainer;
+        }
+
+        $traverser = new NodeTraverser;
+
+        $traverser->addVisitor($flowBuilder = new FlowBuilder(
+            $this->type->arguments, // parameters
+            $this->getScope(),
+        ));
+
+        $traverser->traverse([$this->getAstNode()]);
+
+        return $this->flowContainer = $flowBuilder->flowNodes;
     }
 
     public function getInferredReturnType(): Type
@@ -48,6 +114,10 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
     private function prefersInferredReturnType(?Type $declarationType, Type $inferredType): bool
     {
         if (! $declarationType || $declarationType instanceof UnknownType) {
+            return true;
+        }
+
+        if ($inferredType instanceof TemplateType) {
             return true;
         }
 

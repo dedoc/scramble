@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Tests\Attributes;
 
+use Attribute;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
@@ -140,5 +141,50 @@ class GroupTest_B4_Controller
 #[Group('C', weight: 0)]
 class GroupTest_C4_Controller
 {
+    public function __invoke() {}
+}
+
+it('allows using attributes extending the Group attribute', function () {
+    RouteFacade::get('api/a', GroupTest_A5_Controller::class);
+    RouteFacade::get('api/b', GroupTest_B5_Controller::class);
+
+    Scramble::routes(fn (Route $r) => in_array($r->uri, ['api/a', 'api/b']));
+
+    $openApiDoc = app()->make(Generator::class)();
+
+    expect(array_keys($openApiDoc['paths']))
+        ->toBe(['/b', '/a'])
+        ->and(data_get($openApiDoc['paths'], '*.*.tags.*'))
+        ->toBe(['Orders', 'Users'])
+        ->and($openApiDoc['tags'])
+        ->toBe([
+            ['name' => 'Orders', 'description' => 'Orders related endpoints'],
+            ['name' => 'Users'],
+        ]);
+});
+#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
+class GroupTest_UsersGroup extends Group
+{
+    public function __construct()
+    {
+        parent::__construct(name: 'Users', weight: 2);
+    }
+}
+#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
+class GroupTest_OrdersGroup extends Group
+{
+    public function __construct()
+    {
+        parent::__construct(name: 'Orders', description: 'Orders related endpoints', weight: 1);
+    }
+}
+#[GroupTest_UsersGroup]
+class GroupTest_A5_Controller
+{
+    public function __invoke() {}
+}
+class GroupTest_B5_Controller
+{
+    #[GroupTest_OrdersGroup]
     public function __invoke() {}
 }

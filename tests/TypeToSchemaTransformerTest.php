@@ -18,6 +18,7 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\CarbonInterfaceToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
@@ -38,8 +39,8 @@ it('transforms simple types', function ($type, $openApiArrayed) {
 })->with([
     [new IntegerType, ['type' => 'integer']],
     [new StringType, ['type' => 'string']],
-    [new LiteralStringType('wow'), ['type' => 'string', 'enum' => ['wow']]],
-    [new LiteralFloatType(157.50), ['type' => 'number', 'enum' => [157.5]]],
+    [new LiteralStringType('wow'), ['type' => 'string', 'const' => 'wow']],
+    [new LiteralFloatType(157.50), ['type' => 'number', 'const' => 157.5]],
     [new BooleanType, ['type' => 'boolean']],
     [new MixedType, (object) []],
     [new ArrayType(value: new StringType), ['type' => 'array', 'items' => ['type' => 'string']]],
@@ -69,6 +70,21 @@ it('transforms simple types', function ($type, $openApiArrayed) {
         'maxItems' => 3,
         'additionalItems' => false,
     ]],
+]);
+
+it('transforms nullable unions', function ($type, $openApiArrayed) {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect(json_encode($transformer->transform($type)->toArray()))->toBe(json_encode($openApiArrayed));
+})->with([
+    [Union::wrap([
+        new LiteralStringType('idle'),
+        new LiteralStringType('charging'),
+        new LiteralStringType('discharging'),
+        new NullType,
+    ]), ['type' => ['string', 'null'], 'enum' => ['idle', 'charging', 'discharging', null]]],
 ]);
 
 it('gets json resource type', function () {
@@ -254,6 +270,24 @@ it('gets json resource type with when loaded', function () {
     assertMatchesSnapshot($extension->toSchema($type)->toArray());
 });
 
+it('keeps resources made from nullable loaded relations nullable', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
+        JsonResourceTypeToSchema::class,
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
+
+    $schema = $extension
+        ->toSchema(new ObjectType(ComplexTypeHandlersWithNullableWhenLoaded_SampleType::class))
+        ->toArray();
+
+    expect($schema['properties']['submitted_by'])->toBe([
+        'anyOf' => [
+            ['$ref' => '#/components/schemas/ComplexTypeHandlersWithWhen_SampleType'],
+            ['type' => 'null'],
+        ],
+    ])->and($schema['required'] ?? [])->not->toContain('submitted_by');
+});
+
 it('gets json resource type with when counted', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
@@ -294,8 +328,27 @@ it('gets nullable type reference', function () {
     ]);
 });
 
+it('infers date column when casted to date', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [\Dedoc\Scramble\Support\TypeToSchemaExtensions\ModelToSchema::class]);
+
+    $transformer->transform(new ObjectType(SamplePostWithDateApprovedAtModel::class));
+
+    expect($this->context->openApi->components->getSchema(SamplePostWithDateApprovedAtModel::class)->toArray()['properties']['approved_at'])->toBe([
+        'type' => ['string', 'null'],
+        'format' => 'date',
+    ]);
+});
+class SamplePostWithDateApprovedAtModel extends \Illuminate\Database\Eloquent\Model
+{
+    protected $table = 'posts';
+
+    protected $casts = [
+        'approved_at' => 'datetime:Y-m-d',
+    ];
+}
+
 it('infers date column directly referenced in json as date-time', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [CarbonInterfaceToSchema::class, JsonResourceTypeToSchema::class]);
 
     $type = new ObjectType(InferTypesTest_JsonResourceWithCarbonAttribute::class);
 
@@ -355,8 +408,43 @@ it('supports @format tag in api resource', function () {
     ]);
 });
 
-it('supports simple comments descriptions in api resource', function () {
+it('supports @deprecated tag in api resource', function () {
+    $transformer = new TypeTransformer(app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(ApiResourceTest_ResourceWithDeprecated::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithDeprecated',
+    ]);
+
+    expect($this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithDeprecated::class)->toArray()['properties']['old_field'])->toBe([
+        'type' => 'integer',
+        'deprecated' => true,
+    ]);
+
+    expect($this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithDeprecated::class)->toArray()['properties']['old_field_with_description'])->toBe([
+        'type' => 'string',
+        'description' => 'Use new_field instead.',
+        'deprecated' => true,
+    ]);
+});
+
+it('excludes properties with @hidden annotation from api resource schema', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(ApiResourceTest_ResourceWithHidden::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithHidden',
+    ]);
+
+    $properties = $this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithHidden::class)->toArray()['properties'];
+    expect($properties)->toHaveKey('visible')
+        ->and($properties)->not->toHaveKey('secret');
+});
+
+it('supports simple comments descriptions in api resource', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [CarbonInterfaceToSchema::class, JsonResourceTypeToSchema::class]);
 
     $type = new ObjectType(ApiResourceTest_ResourceWithSimpleDescription::class);
 
@@ -548,6 +636,34 @@ class ComplexTypeHandlersWithWhenLoaded_SampleType extends JsonResource
     }
 }
 
+/**
+ * @property ComplexTypeHandlersWithNullableRelationModel $resource
+ */
+class ComplexTypeHandlersWithNullableWhenLoaded_SampleType extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'submitted_by' => ComplexTypeHandlersWithWhen_SampleType::make($this->whenLoaded('submittedBy')),
+        ];
+    }
+}
+
+class ComplexTypeHandlersWithNullableRelationModel extends \Illuminate\Database\Eloquent\Model
+{
+    protected $table = 'relation_nullability_models';
+
+    public function submittedBy()
+    {
+        return $this->belongsTo(ComplexTypeHandlersWithSubmitterModel::class, 'nullable_owner_id');
+    }
+}
+
+class ComplexTypeHandlersWithSubmitterModel extends \Illuminate\Database\Eloquent\Model
+{
+    protected $table = 'relation_nullability_owners';
+}
+
 class ComplexTypeHandlersWithWhenCounted_SampleType extends JsonResource
 {
     public function toArray($request)
@@ -623,6 +739,43 @@ class ApiResourceTest_ResourceWithFormat extends JsonResource
              * @format date-time
              */
             'now' => now(),
+        ];
+    }
+}
+
+/**
+ * @property SamplePostModel $resource
+ */
+class ApiResourceTest_ResourceWithDeprecated extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            /**
+             * @deprecated
+             */
+            'old_field' => $this->id,
+            /**
+             * @deprecated Use new_field instead.
+             */
+            'old_field_with_description' => $this->title,
+        ];
+    }
+}
+
+/**
+ * @property SamplePostModel $resource
+ */
+class ApiResourceTest_ResourceWithHidden extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'visible' => $this->id,
+            /**
+             * @hidden
+             */
+            'secret' => $this->title,
         ];
     }
 }

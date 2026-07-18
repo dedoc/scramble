@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
+use Dedoc\Scramble\Attributes\IgnoreResponse;
 use Dedoc\Scramble\Attributes\Response as ResponseAttribute;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
@@ -28,6 +29,8 @@ class ResponseExtension extends OperationExtension
         $inferredResponses = $this->collectInferredResponses($routeInfo);
 
         $responses = $this->applyResponsesAttributes($inferredResponses, $routeInfo);
+
+        $responses = $this->applyIgnoreResponseAttributes($responses, $routeInfo);
 
         foreach ($responses as $response) {
             if (in_array($routeInfo->method, static::HTTP_METHODS_WITHOUT_RESPONSE_BODY)) {
@@ -104,13 +107,13 @@ class ResponseExtension extends OperationExtension
                 ->map(fn (Response|Reference $r): Response => $r instanceof Reference ? $r->resolve() : $r)
                 ->first(fn (Response $r) => $r->code === $responseAttributeInstance->status);
 
+            $fileName = $routeInfo->reflectionAction()->getFileName();
+
             $newResponse = ResponseAttribute::toOpenApiResponse(
                 $responseAttributeInstance,
                 $originalResponse,
                 $this->openApiTransformer,
-                ($fileName = $routeInfo->reflectionAction()?->getFileName())
-                    ? FileNameResolver::createForFile($fileName)
-                    : null,
+                is_string($fileName) ? FileNameResolver::createForFile($fileName) : null,
             );
 
             $responseHasChanged = ! $originalResponse
@@ -135,6 +138,36 @@ class ResponseExtension extends OperationExtension
         }
 
         return $inferredResponses;
+    }
+
+    /**
+     * @param  Collection<int, Response|Reference>  $responses
+     * @return Collection<int, Response|Reference>
+     */
+    private function applyIgnoreResponseAttributes(Collection $responses, RouteInfo $routeInfo): Collection
+    {
+        $ignoreAttributes = $routeInfo->reflectionAction()?->getAttributes(IgnoreResponse::class, ReflectionAttribute::IS_INSTANCEOF) ?: [];
+
+        if (! count($ignoreAttributes)) {
+            return $responses;
+        }
+
+        /** @var IgnoreResponse[] $ignoredResponses */
+        $ignoredResponses = array_map(fn (ReflectionAttribute $a) => $a->newInstance(), $ignoreAttributes);
+
+        return $responses
+            ->reject(function (Response|Reference $r) use ($ignoredResponses) {
+                $response = $r instanceof Reference ? $r->resolve() : $r;
+
+                foreach ($ignoredResponses as $ignoredResponse) {
+                    if ($ignoredResponse->matches($response->code)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            })
+            ->values();
     }
 
     /**
@@ -232,6 +265,7 @@ class ResponseExtension extends OperationExtension
             $response = clone $response->resolve();
         }
 
+        /** @var Response $response */
         $response->content = [];
 
         return $response;

@@ -3,8 +3,10 @@
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
+use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\ContainerUtils;
+use Dedoc\Scramble\Support\Factories\JsonApiQueryParameterFactory;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
@@ -30,7 +32,7 @@ class RequestBodyExtension extends OperationExtension
 
     public function handle(Operation $operation, RouteInfo $routeInfo): void
     {
-        $description = Str::of($routeInfo->phpDoc()->getAttribute('description')); // @phpstan-ignore argument.type
+        $description = Str::of($routeInfo->phpDoc()->getAttribute('description') ?: ''); // @phpstan-ignore argument.type
 
         /** @var Collection<int, ParametersExtractionResult> $rulesResults */
         $rulesResults = collect();
@@ -46,14 +48,18 @@ class RequestBodyExtension extends OperationExtension
 
         // Only set summary and description from PHPDoc if they haven't been set by other extensions (e.g., Endpoint attribute)
         if (empty($operation->summary)) {
-            $operation->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'));  // @phpstan-ignore argument.type
+            $operation->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary') ?: '')->rtrim('.'));  // @phpstan-ignore argument.type
         }
 
         if (empty($operation->description)) {
             $operation->description($description);
         }
 
-        $allParams = $rulesResults->flatMap(fn ($p) => $p->parameters)->unique(fn ($p) => "$p->name.$p->in")->values()->all();
+        $allParams = $rulesResults
+            ->flatMap(fn ($p) => $p->parameters)
+            ->unique(fn ($p) => "$p->name.$p->in")
+            ->values()
+            ->all();
 
         if (empty($allParams)) {
             return;
@@ -126,7 +132,7 @@ class RequestBodyExtension extends OperationExtension
     protected function makeSchemaFromResults(ParametersExtractionResult $result): Type
     {
         $requestBodySchema = Schema::createFromParameters(
-            $parameters = $this->convertDotNamedParamsToComplexStructures($result->parameters)
+            $parameters = $this->unescapeEscapedDotNamedParameters($this->convertDotNamedParamsToComplexStructures($result->parameters))
         );
 
         if (count($parameters) === 1 && $parameters[0]->name === '*' && $parameters[0]->schema) {
@@ -175,9 +181,11 @@ class RequestBodyExtension extends OperationExtension
      */
     protected function prepareQueryParams(array $params): array
     {
-        return config('scramble.flatten_deep_query_parameters', true)
-            ? $this->convertDotNamedParamsToFlatQueryParams($params)
-            : $this->convertDotNamedParamsToComplexStructures($params);
+        return $this->unescapeEscapedDotNamedParameters(
+            $this->config->get('flatten_deep_query_parameters', true)
+                ? $this->convertDotNamedParamsToFlatQueryParams($params)
+                : $this->convertDotNamedParamsToComplexStructures($params)
+        );
     }
 
     /**
@@ -196,6 +204,15 @@ class RequestBodyExtension extends OperationExtension
     protected function convertDotNamedParamsToFlatQueryParams(array $params): array
     {
         return (new QueryParametersConverter(collect($params)))->handle();
+    }
+
+    /**
+     * @param  Parameter[]  $params
+     * @return Parameter[]
+     */
+    protected function unescapeEscapedDotNamedParameters(array $params): array
+    {
+        return array_map(fn ($p) => tap($p, fn (Parameter $p) => $p->setName(Str::replace('\\.', '.', $p->name))), $params);
     }
 
     /**
@@ -241,8 +258,12 @@ class RequestBodyExtension extends OperationExtension
         foreach ($this->config->parametersExtractors->all() as $extractorClass) {
             /** @var ParameterExtractor $extractor */
             $extractor = ContainerUtils::makeContextable($extractorClass, [
+                GeneratorConfig::class => $this->config,
                 TypeTransformer::class => $this->openApiTransformer,
                 Operation::class => $operation,
+                JsonApiQueryParameterFactory::class => new JsonApiQueryParameterFactory(
+                    arraySerialization: $this->config->jsonApi->arraySerialization,
+                ),
             ]);
 
             $result = $extractor->handle($routeInfo, $result);

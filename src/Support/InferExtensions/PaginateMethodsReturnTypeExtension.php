@@ -10,16 +10,17 @@ use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Contracts\Database\Query\Builder as BaseBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Laravel\Scout\Builder as ScoutBuilder;
 
 class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension, StaticMethodReturnTypeExtension
 {
@@ -42,7 +43,17 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
             return null;
         }
 
-        return $this->getPaginatorType($event->name);
+        return $this->getPaginatorType(
+            $this->normalizeCalleeQueryBuilder($event->callee),
+            $event->name,
+        );
+    }
+
+    private function normalizeCalleeQueryBuilder(string $model): Generic
+    {
+        return new Generic(\Illuminate\Database\Eloquent\Builder::class, [
+            new ObjectType($model),
+        ]);
     }
 
     public function getMethodReturnType(AnyMethodCallEvent $event): ?Type
@@ -53,18 +64,21 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
 
         $shouldBeHandled = $event->getInstance() instanceof UnknownType
             || $this->isQueryLike($event->getInstance())
-            || $event->getDefinition()?->getMethodDefinition($event->name)?->definingClassName === Builder::class;
+            || $this->isQueryLikeClass($event->getDefinition()?->getMethodDefinition($event->name)->definingClassName ?? '');
 
         if (! $shouldBeHandled) {
             return null;
         }
 
-        return $this->getPaginatorType($event->name);
+        return $this->getPaginatorType($event->getInstance(), $event->name);
     }
 
-    private function getPaginatorType(string $name): Generic
+    private function getPaginatorType(Type $callee, string $name): Generic
     {
-        $valueType = new UnknownType;
+        $valueType = (new TypeWalker)->first(
+            $callee,
+            fn (Type $type) => $type->isInstanceOf(Model::class),
+        ) ?: new UnknownType;
 
         return match ($name) {
             'paginate', 'fastPaginate' => new Generic(LengthAwarePaginator::class, [new IntegerType, $valueType]),
@@ -88,6 +102,7 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
         return collect([
             EloquentBuilder::class,
             BaseBuilder::class,
+            ScoutBuilder::class,
             BelongsToMany::class,
             HasManyThrough::class,
             Model::class,

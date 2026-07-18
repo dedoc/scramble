@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 class SchemaValidator
 {
     /**
-     * @param  array<int, array{callable(OpenApiType): bool, string}>  $rules
+     * @param  array<int, array{callable(OpenApiType, string): bool, (callable(OpenApiType, string): string)|string, array<string>, bool}>  $rules
      */
     public function __construct(
         private array $rules,

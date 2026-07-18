@@ -1,0 +1,4 @@
+anyOf:
+    - { type: object, properties: { test: { type: string }, wow: { type: string } }, required: [test] }
+    - { type: object, properties: { nice: { type: boolean } }, required: [nice] }
+    - { type: object, properties: { kek: { type: boolean } }, required: [kek] }

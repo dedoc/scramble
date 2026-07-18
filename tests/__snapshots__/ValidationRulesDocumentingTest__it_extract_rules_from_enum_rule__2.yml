@@ -1,0 +1,4 @@
+-
+    name: status
+    in: query
+    schema: { $ref: '#/components/schemas/StatusValidationEnum' }

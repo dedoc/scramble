@@ -51,19 +51,29 @@ class SchemaBagToParametersTransformer
     {
         $rulesDocs = $this->rulesDocs[$name] ?? null;
 
-        return (bool) ($rulesDocs?->getTagsByName('@ignoreParam') ?? []);
+        return (bool) ($rulesDocs?->getTagsByName('@ignoreParam') ?? [])
+            || (bool) ($rulesDocs?->getTagsByName('@hidden') ?? []);
     }
 
+    /**
+     * When incoming JSON schema has one example, we move it from the schema to the resulting parameter. If
+     * incoming JSON schema has many parameters – we keep it on JSON schema instead. This is due to examples on
+     * parameter are named (array<string, Example>) and examples on JSON schema are just values (value[]).
+     */
     protected function makeParameterFromSchema(OpenApiSchema $schema, string $name): Parameter
     {
         $description = $schema->description;
-        $example = $schema->example;
 
-        $schema->setDescription('')->example(new MissingValue);
+        $schemaExamples = $schema->examples;
+
+        $schema->setDescription('');
+        if (count($schemaExamples) < 2) {
+            $schema->examples([]);
+        }
 
         return Parameter::make($name, $schema->getAttribute('isInQuery') ? 'query' : $this->in)
             ->setSchema(Schema::fromType($schema))
-            ->example($example)
+            ->example(count($schemaExamples) === 1 ? $schemaExamples[0] : new MissingValue)
             ->required((bool) $schema->getAttribute('required', false))
             ->description($description);
     }

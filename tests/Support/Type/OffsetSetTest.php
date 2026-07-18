@@ -17,12 +17,18 @@ it('handles array set type', function () {
     expect($a)->toHaveType('array{foo: int(42)}');
 });
 
+it('infers empty array as keyed array type', function () {
+    $a = [];
+
+    expect($a)->toHaveType('list{}');
+});
+
 it('handles array push type', function () {
     $a = [];
     $a[] = 42;
     $a[] = 1;
 
-    expect($a)->toHaveType('list{int(42), int(1)}');
+    expect($a)->toHaveType('array<int(42)|int(1)>');
 });
 
 it('handles array modify type', function () {
@@ -52,7 +58,7 @@ it('handles array deep push type', function () {
     $a['foo']['bar'][] = 42;
     $a['foo']['bar'][] = 1;
 
-    expect($a)->toHaveType('array{foo: array{bar: list{int(42), int(1)}}}');
+    expect($a)->toHaveType('array{foo: array{bar: array<int(42)|int(1)>}}');
 });
 
 it('allows setting keys on template type', function () {
@@ -147,7 +153,7 @@ it('preserves array key description when setting the offset from offset get', fu
                 'bar' => [
                     'type' => 'integer',
                     'description' => 'Foo description.',
-                    'enum' => [42],
+                    'const' => 42,
                 ],
             ],
             'required' => ['bar'],
@@ -180,7 +186,7 @@ it('preserves array key description when setting the key from offset get', funct
                 'bar' => [
                     'type' => 'integer',
                     'description' => 'Foo description.',
-                    'enum' => [42],
+                    'const' => 42,
                 ],
             ],
             'required' => ['bar'],

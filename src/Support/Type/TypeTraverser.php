@@ -2,17 +2,30 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+use WeakMap;
+
 class TypeTraverser
 {
+    /** @var WeakMap<Type, true> */
+    private WeakMap $traversedTypes;
+
     /**
      * @param  TypeVisitor[]  $visitors
      */
     public function __construct(
         private array $visitors = [],
-    ) {}
+    ) {
+        $this->traversedTypes = new WeakMap;
+    }
 
     public function traverse(Type $type): Type
     {
+        if (isset($this->traversedTypes[$type])) {
+            return $type;
+        }
+
+        $this->traversedTypes[$type] = true;
+
         $enterResult = $this->enterType($type);
 
         if ($enterResult === TypeVisitor::DONT_TRAVERSE_CURRENT_AND_CHILDREN) {
@@ -49,20 +62,38 @@ class TypeTraverser
     private function enterType(Type $type): Type|int|null
     {
         $result = null;
+        $resultType = $type;
         foreach ($this->visitors as $visitor) {
-            $result = $visitor->enter($result instanceof Type ? $result : $type);
+            $enterResult = $visitor->enter($resultType);
+
+            if ($enterResult === TypeVisitor::DONT_TRAVERSE_CURRENT_AND_CHILDREN) {
+                return $enterResult;
+            }
+
+            if ($enterResult instanceof Type) {
+                $resultType = $enterResult;
+            }
+
+            $result = $enterResult;
         }
 
-        return $result;
+        return $resultType === $type ? $result : $resultType;
     }
 
     private function leaveType(Type $type): Type|int|null
     {
         $result = null;
+        $resultType = $type;
         foreach ($this->visitors as $visitor) {
-            $result = $visitor->leave($result instanceof Type ? $result : $type);
+            $leaveResult = $visitor->leave($resultType);
+
+            if ($leaveResult instanceof Type) {
+                $resultType = $leaveResult;
+            }
+
+            $result = $leaveResult;
         }
 
-        return $result;
+        return $resultType === $type ? $result : $resultType;
     }
 }

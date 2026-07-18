@@ -5,8 +5,8 @@ info:
 servers:
     - { url: 'http://localhost/api' }
 security:
-    - { apiKey: {  } }
+    - { apiKey: {} }
 paths:
-    /test: { get: { operationId: controllerWithoutSecurity.index, tags: [WithoutSecurity], responses: { 200: { description: '' } }, security: {  } } }
+    /test: { get: { operationId: controllerWithoutSecurity.index, tags: [WithoutSecurity], responses: { 200: { description: '' } }, security: {} } }
 components:
     securitySchemes: { apiKey: { type: apiKey, in: query, name: api_token } }

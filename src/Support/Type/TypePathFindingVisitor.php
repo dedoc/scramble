@@ -62,31 +62,6 @@ class TypePathFindingVisitor implements TypeVisitor
 
     private function pushPointers(Type $type): void
     {
-        if ($type instanceof ArrayItemType_) {
-            return;
-        }
-
-        if ($type instanceof KeyedArrayType) {
-            foreach ($type->items as $item) {
-                if ($item->key === null) {
-                    // bug?
-                    continue;
-                }
-
-                $this->pointers->offsetSet(
-                    $item->value,
-                    [
-                        new TypePathItem(
-                            key: $item->key,
-                            kind: TypePathItem::KIND_ARRAY_KEY,
-                        ),
-                    ]
-                );
-            }
-
-            return;
-        }
-
         $propertiesWithNodes = $type->nodes();
 
         foreach ($propertiesWithNodes as $propertyWithNode) {
@@ -119,7 +94,10 @@ class TypePathFindingVisitor implements TypeVisitor
                                 )
                             ),
                             new TypePathItem(
-                                key: $index,
+                                key: $item instanceof ArrayItemType_
+                                    ? ($item->key ?? $index)
+                                    : $index,
+                                kind: $item instanceof ArrayItemType_ ? TypePathItem::KIND_ARRAY_ITEM : TypePathItem::KIND_DEFAULT,
                             ),
                         ]
                     );

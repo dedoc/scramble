@@ -45,6 +45,19 @@ abstract class AbstractType implements Type
         return is_a($this::class, $otherType::class, true);
     }
 
+    public function intersect(Type $otherType): Type
+    {
+        if ($this->accepts($otherType)) {
+            return $otherType;
+        }
+
+        if ($otherType->accepts($this)) {
+            return $this;
+        }
+
+        return new NeverType;
+    }
+
     public function getPropertyType(string $propertyName, Scope $scope): Type
     {
         $className = $this::class;

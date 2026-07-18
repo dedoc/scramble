@@ -159,7 +159,20 @@ class PhpDocTypeHelper
 
     private static function handleIdentifierNode(IdentifierTypeNode $type)
     {
-        if ($type->name === 'string') {
+        if (in_array($type->name, [
+            'string',
+            'non-empty-string',
+            'callable-string',
+            'numeric-string',
+            'non-falsy-string',
+            'truthy-string',
+            'literal-string',
+            'lowercase-string',
+            'uppercase-string',
+            'non-empty-lowercase-string',
+            'non-empty-uppercase-string',
+            'non-empty-literal-string',
+        ])) {
             return new StringType;
         }
         if (in_array($type->name, ['float', 'double'])) {
@@ -253,15 +266,13 @@ class PhpDocTypeHelper
             return new IntegerType;
         }
 
-        $min = match (true) {
-            $genericTypes[0] instanceof ConstTypeNode => $genericTypes[0]->constExpr->value, // @phpstan-ignore property.notFound
-            $genericTypes[0] instanceof IdentifierTypeNode => null,
-        };
+        $min = $genericTypes[0] instanceof ConstTypeNode
+            ? (int) $genericTypes[0]->constExpr->value
+            : null;
 
-        $max = match (true) {
-            $genericTypes[1] instanceof ConstTypeNode => $genericTypes[1]->constExpr->value, // @phpstan-ignore property.notFound
-            $genericTypes[1] instanceof IdentifierTypeNode => null,
-        };
+        $max = $genericTypes[1] instanceof ConstTypeNode
+            ? (int) $genericTypes[1]->constExpr->value
+            : null;
 
         return new IntegerRangeType(
             min: $min,

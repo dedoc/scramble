@@ -21,7 +21,11 @@ abstract class Type
 
     public string $contentEncoding = '';
 
-    /** @var array|scalar|null|MissingValue */
+    /**
+     * @deprecated
+     *
+     * @var array|scalar|null|MissingValue
+     */
     public $example;
 
     /** @var array|scalar|null|MissingValue */
@@ -32,6 +36,9 @@ abstract class Type
 
     public array $enum = [];
 
+    /** @var scalar|null */
+    public $const = null;
+
     public bool $nullable = false;
 
     public bool $deprecated = false;
@@ -41,8 +48,13 @@ abstract class Type
     public function __construct(string $type)
     {
         $this->type = $type;
-        $this->example = new MissingValue;
+        $this->example = new MissingValue; // @phpstan-ignore property.deprecated
         $this->default = new MissingValue;
+    }
+
+    public function clone(): static
+    {
+        return clone $this;
     }
 
     /**
@@ -91,18 +103,36 @@ abstract class Type
     public function addProperties(Type $fromType): self
     {
         $this->attributes = $fromType->attributes;
-
-        $this->nullable = $fromType->nullable;
-        $this->enum = $fromType->enum;
+        $this->format = $fromType->format;
         $this->description = $fromType->description;
-        $this->example = $fromType->example;
+        $this->contentMediaType = $fromType->contentMediaType;
+        $this->contentEncoding = $fromType->contentEncoding;
+        $this->example = $fromType->example; // @phpstan-ignore property.deprecated, property.deprecated
         $this->default = $fromType->default;
+        $this->examples = $fromType->examples;
+        $this->enum = $fromType->enum;
+        $this->const = $fromType->const;
+        $this->nullable = $fromType->nullable;
+        $this->deprecated = $fromType->deprecated;
+        $this->pattern = $fromType->pattern;
 
         return $this;
     }
 
     public function toArray()
     {
+        $enum = $this->enum;
+        $const = ! is_null($this->const) ? $this->const : null;
+
+        if ($this->nullable && $const !== null) {
+            $enum = [$const, null];
+            $const = null;
+        }
+
+        if ($this->nullable && count($enum) && ! in_array(null, $enum, true)) {
+            $enum = [...$enum, null];
+        }
+
         return array_merge(
             array_filter([
                 'type' => $this->nullable ? [$this->type, 'null'] : $this->type,
@@ -112,12 +142,13 @@ abstract class Type
                 'description' => $this->description,
                 'deprecated' => $this->deprecated,
                 'pattern' => $this->pattern,
-                'enum' => count($this->enum) ? $this->enum : null,
+                'enum' => count($enum) ? $enum : null,
+                'const' => $const,
             ]),
-            $this->example instanceof MissingValue ? [] : ['example' => $this->example],
             $this->default instanceof MissingValue ? [] : ['default' => $this->default],
             count(
                 $examples = collect($this->examples)
+                    ->prepend($this->example) // @phpstan-ignore property.deprecated
                     ->reject(fn ($example) => $example instanceof MissingValue)
                     ->values()
                     ->toArray()
@@ -147,6 +178,19 @@ abstract class Type
     }
 
     /**
+     * @param  scalar  $const
+     * @return $this
+     */
+    public function const($const): self
+    {
+        $this->const = $const;
+
+        return $this;
+    }
+
+    /**
+     * @deprecated
+     *
      * @param  array|scalar|null|MissingValue  $example
      * @return $this
      */

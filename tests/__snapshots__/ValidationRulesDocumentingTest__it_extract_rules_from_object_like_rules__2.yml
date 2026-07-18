@@ -1,0 +1,4 @@
+-
+    name: channels
+    in: query
+    schema: { type: object, properties: { agency: { type: [object, 'null'], properties: { id: { type: [integer, 'null'] }, name: { type: [string, 'null'] } } } } }

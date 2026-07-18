@@ -1,0 +1,18 @@
+-
+    name: foo
+    in: query
+    required: true
+    description: 'A foo prop.'
+    schema: { type: string }
+    example: wow
+-
+    name: bar
+    in: query
+    description: 'A bar prop.'
+    schema: { type: string }
+-
+    name: var
+    in: query
+    required: true
+    description: 'A type redefined prop.'
+    schema: { type: integer }

@@ -6,6 +6,7 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
@@ -40,6 +41,10 @@ trait FlattensMergeValues
                         return [];
                     }
 
+                    if ($this->isNullableResourceValue($resource)) {
+                        $item->value = Union::wrap([$item->value, new NullType]);
+                    }
+
                     if (
                         $resource instanceof Union
                         && (new TypeWalker)->first($resource, fn (Type $t) => $t->isInstanceOf(MissingValue::class))
@@ -50,19 +55,8 @@ trait FlattensMergeValues
                     }
                 }
 
-                if (
-                    $item->value instanceof Union
-                    && (new TypeWalker)->first($item->value, $this->isUnionWithMissingValue(...))
-                ) {
-                    $newType = (new TypeWalker)->replace($item->value, function (Type $t) {
-                        if (! $this->isUnionWithMissingValue($t)) {
-                            return null;
-                        }
-
-                        return Union::wrap(array_values(
-                            array_filter($t->types, fn (Type $t) => ! $t->isInstanceOf(MissingValue::class))
-                        ));
-                    });
+                if ($this->isUnionWithMissingValue($item->value)) {
+                    $newType = $this->removeMissingValueFromUnion($item->value);
 
                     if ($newType instanceof VoidType) {
                         return [];
@@ -74,6 +68,8 @@ trait FlattensMergeValues
 
                     return $this->flattenMergeValues([$item]);
                 }
+
+                $item->value = $this->flattenNestedKeyedArrayValues($item->value);
 
                 if (
                     $item->value instanceof Generic
@@ -107,6 +103,27 @@ trait FlattensMergeValues
             ->all();
     }
 
+    private function flattenNestedKeyedArrayValues(Type $type): Type
+    {
+        return (new TypeWalker)->replace($type, function (Type $t) {
+            if (! $t instanceof KeyedArrayType) {
+                return null;
+            }
+
+            $t->items = $this->flattenMergeValues($t->items);
+            $t->isList = KeyedArrayType::checkIsList($t->items);
+
+            return $t;
+        });
+    }
+
+    private function removeMissingValueFromUnion(Union $type): Type
+    {
+        return Union::wrap(array_values(
+            array_filter($type->types, fn (Type $t) => ! $t->isInstanceOf(MissingValue::class))
+        ));
+    }
+
     /**
      * @phpstan-assert-if-true Union $type
      */
@@ -135,5 +152,15 @@ trait FlattensMergeValues
         }
 
         return new UnknownType;
+    }
+
+    private function isNullableResourceValue(Type $type): bool
+    {
+        if ($type instanceof NullType) {
+            return true;
+        }
+
+        return $type instanceof Union
+            && (bool) array_filter($type->types, fn (Type $t) => $t instanceof NullType);
     }
 }
