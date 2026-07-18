@@ -6,6 +6,7 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
@@ -38,6 +39,10 @@ trait FlattensMergeValues
 
                     if ($resource->isInstanceOf(MissingValue::class)) {
                         return [];
+                    }
+
+                    if ($this->isNullableResourceValue($resource)) {
+                        $item->value = Union::wrap([$item->value, new NullType]);
                     }
 
                     if (
@@ -147,5 +152,15 @@ trait FlattensMergeValues
         }
 
         return new UnknownType;
+    }
+
+    private function isNullableResourceValue(Type $type): bool
+    {
+        if ($type instanceof NullType) {
+            return true;
+        }
+
+        return $type instanceof Union
+            && (bool) array_filter($type->types, fn (Type $t) => $t instanceof NullType);
     }
 }
