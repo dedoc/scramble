@@ -166,7 +166,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
     {
         $returnType = $scope->index
             ->getClass($cast)
-            ?->getMethodDefinition('get', $scope)
+            ?->getMethod('get')
             ?->getReturnType();
 
         return $returnType?->clone();
