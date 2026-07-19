@@ -68,6 +68,14 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     public function getPropertyType(PropertyFetchEvent $event): ?Type
     {
+        $propertyType = $event->getDefinition()
+            ?->getPropertyDefinition($event->getName())
+            ?->type;
+
+        if ($propertyType?->getAttribute('source') === 'phpDoc') {
+            return $propertyType;
+        }
+
         if (! $this->hasProperty($event->getInstance(), $event->getName())) {
             return null;
         }
