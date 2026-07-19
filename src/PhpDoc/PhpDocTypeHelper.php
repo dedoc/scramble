@@ -21,6 +21,7 @@ use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprFloatNode;
@@ -42,6 +43,14 @@ use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 class PhpDocTypeHelper
 {
     public static function toType(TypeNode $type)
+    {
+        $result = self::toTypeWithoutAttributes($type);
+        $result->setAttribute('source', 'phpDoc');
+
+        return $result;
+    }
+
+    private static function toTypeWithoutAttributes(TypeNode $type): Type
     {
         if ($type instanceof GenericTypeNode && $type->type->name === 'int') {
             return self::handleGenericInteger($type->genericTypes);

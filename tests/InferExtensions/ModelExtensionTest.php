@@ -56,6 +56,20 @@ it('adds models attributes to the model class definition as properties', functio
     }
 });
 
+it('allows overriding a relation type using PHPDoc', function () {
+    $cd = $this->infer->analyzeClass(ModelExtensionTest_ModelWithRelationOverride::class);
+
+    $propertyType = (new ObjectType(ModelExtensionTest_ModelWithRelationOverride::class))
+        ->getPropertyType('user');
+
+    expect($propertyType->toString())->toBe(ModelExtensionTest_OverriddenUser::class);
+});
+
+/** @property ModelExtensionTest_OverriddenUser $user */
+class ModelExtensionTest_ModelWithRelationOverride extends SamplePostModel {}
+
+class ModelExtensionTest_OverriddenUser extends Model {}
+
 it('adds toArray method type the model class without defined toArray class', function () {
     $this->infer->analyzeClass(SampleUserModel::class);
 

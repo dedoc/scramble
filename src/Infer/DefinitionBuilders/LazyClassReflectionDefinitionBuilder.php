@@ -10,14 +10,20 @@ use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\LazyShallowClassDefinition;
 use Dedoc\Scramble\Infer\Definition\PendingDocComment;
 use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
+use Dedoc\Scramble\Support\PhpDoc;
+use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionClass;
 
 class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 {
+    use BuildsPropertyType;
+
     public function __construct(
         public IndexContract $index,
         public ReflectionClass $reflection,
@@ -25,6 +31,12 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 
     public function build(): LazyShallowClassDefinition
     {
+        $classPhpDoc = (($comment = $this->reflection->getDocComment()) && ($path = $this->reflection->getFileName()))
+            ? PhpDoc::parse($comment, FileNameResolver::createForFile($path))
+            : new PhpDocNode([]);
+
+        $propertyPhpDocTypeExtractor = (new ReflectionPropertyPhpDocTypeExtractor($this->reflection))->setClassPhpDoc($classPhpDoc);
+
         $parentDefinition = ($parentName = ($this->reflection->getParentClass() ?: null)?->name)
             ? ($this->index->getClass($parentName)?->getData() ?? new ClassDefinition(name: ''))
             : new ClassDefinition(name: '');
@@ -48,10 +60,16 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             }
 
             if ($reflectionProperty->isStatic()) {
+                $phpDocType = $propertyPhpDocTypeExtractor->getType($reflectionProperty->name);
+
+                $declarationType = ($reflectionPropertyType = $reflectionProperty->getType())
+                    ? TypeHelper::createTypeFromReflectionType($reflectionPropertyType)
+                    : new UnknownType;
+
                 $classDefinitionData->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
                     type: $reflectionProperty->hasDefaultValue()
-                        ? (TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue()) ?: new UnknownType)
-                        : new UnknownType,
+                        ? (TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue()) ?: $this->buildPropertyType($declarationType, $phpDocType))
+                        : $this->buildPropertyType($declarationType, $phpDocType),
                     isStatic: $reflectionProperty->isStatic(),
                     visibility: PropertyVisibility::fromReflectionProperty($reflectionProperty),
                     attributes: AttributeDefinition::fromReflectionAttributesArray($reflectionProperty->getAttributes()),
@@ -60,10 +78,16 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                         : null,
                 );
             } else {
+                $phpDocType = $propertyPhpDocTypeExtractor->getType($reflectionProperty->name);
+
+                $declarationType = ($reflectionPropertyType = $reflectionProperty->getType())
+                    ? TypeHelper::createTypeFromReflectionType($reflectionPropertyType)
+                    : new UnknownType;
+
                 $classDefinitionData->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
                     type: $t = new TemplateType(
                         'T'.Str::studly($reflectionProperty->name),
-                        is: $reflectionProperty->hasType() ? TypeHelper::createTypeFromReflectionType($reflectionProperty->getType()) : new UnknownType,
+                        is: $this->buildPropertyType($declarationType, $phpDocType),
                     ),
                     defaultType: $reflectionProperty->hasDefaultValue()
                         ? TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue())
@@ -76,6 +100,15 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
                 );
                 $classDefinitionData->templateTypes[] = $t;
             }
+        }
+
+        foreach ($propertyPhpDocTypeExtractor->getClassDefinedPropertiesTagValueNodes() as $propertyTagValue) {
+            $name = ltrim($propertyTagValue->propertyName, '$');
+
+            $classDefinitionData->properties[$name] = new ClassPropertyDefinition(
+                type: $propertyPhpDocTypeExtractor->getType($name) ?: new MixedType,
+                visibility: PropertyVisibility::Public,
+            );
         }
 
         return new LazyShallowClassDefinition($classDefinitionData);

@@ -8,16 +8,24 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\PendingDocComment;
 use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
+use Dedoc\Scramble\Infer\DefinitionBuilders\BuildsPropertyType;
+use Dedoc\Scramble\Infer\DefinitionBuilders\ReflectionPropertyPhpDocTypeExtractor;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
+use Dedoc\Scramble\Support\PhpDoc;
+use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionClass;
 
 class ClassAnalyzer
 {
+    use BuildsPropertyType;
+
     public function __construct(private Index $index) {}
 
     /**
@@ -26,6 +34,12 @@ class ClassAnalyzer
     public function analyze(string $name): ClassDefinition
     {
         $classReflection = new ReflectionClass($name); // @phpstan-ignore argument.type
+
+        $classPhpDoc = (($comment = $classReflection->getDocComment()) && ($path = $classReflection->getFileName()))
+            ? PhpDoc::parse($comment, FileNameResolver::createForFile($path))
+            : new PhpDocNode([]);
+
+        $propertyPhpDocTypeExtractor = (new ReflectionPropertyPhpDocTypeExtractor($classReflection))->setClassPhpDoc($classPhpDoc);
 
         $parentName = ($classReflection->getParentClass() ?: null)?->name;
 
@@ -58,10 +72,16 @@ class ClassAnalyzer
             }
 
             if ($reflectionProperty->isStatic()) {
+                $phpDocType = $propertyPhpDocTypeExtractor->getType($reflectionProperty->name);
+
+                $declarationType = ($reflectionPropertyType = $reflectionProperty->getType())
+                    ? TypeHelper::createTypeFromReflectionType($reflectionPropertyType)
+                    : new UnknownType;
+
                 $classDefinition->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
                     type: $reflectionProperty->hasDefaultValue()
-                        ? (TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue()) ?: new UnknownType)
-                        : new UnknownType,
+                        ? (TypeHelper::createTypeFromValue($reflectionProperty->getDefaultValue()) ?: $this->buildPropertyType($declarationType, $phpDocType))
+                        : $this->buildPropertyType($declarationType, $phpDocType),
                     isStatic: $reflectionProperty->isStatic(),
                     visibility: PropertyVisibility::fromReflectionProperty($reflectionProperty),
                     attributes: AttributeDefinition::fromReflectionAttributesArray($reflectionProperty->getAttributes()),
@@ -70,6 +90,12 @@ class ClassAnalyzer
                         : null,
                 );
             } else {
+                $phpDocType = $propertyPhpDocTypeExtractor->getType($reflectionProperty->name);
+
+                $declarationType = ($reflectionPropertyType = $reflectionProperty->getType())
+                    ? TypeHelper::createTypeFromReflectionType($reflectionPropertyType)
+                    : new UnknownType;
+
                 $expectedTemplateTypeName = 'T'.Str::studly($reflectionProperty->name);
 
                 $existingPropertyTemplateType = collect($classDefinition->templateTypes)
@@ -77,7 +103,7 @@ class ClassAnalyzer
 
                 $propertyTemplateType = $existingPropertyTemplateType ?: new TemplateType(
                     $expectedTemplateTypeName,
-                    is: ($reflectionPropertyType = $reflectionProperty->getType()) ? TypeHelper::createTypeFromReflectionType($reflectionPropertyType) : new UnknownType,
+                    is: $this->buildPropertyType($declarationType, $phpDocType),
                 );
 
                 $classDefinition->properties[$reflectionProperty->name] = new ClassPropertyDefinition(
@@ -96,6 +122,15 @@ class ClassAnalyzer
                     $classDefinition->templateTypes[] = $propertyTemplateType;
                 }
             }
+        }
+
+        foreach ($propertyPhpDocTypeExtractor->getClassDefinedPropertiesTagValueNodes() as $propertyTagValue) {
+            $name = ltrim($propertyTagValue->propertyName, '$');
+
+            $classDefinition->properties[$name] = new ClassPropertyDefinition(
+                type: $propertyPhpDocTypeExtractor->getType($name) ?: new MixedType,
+                visibility: PropertyVisibility::Public,
+            );
         }
 
         $classDefinition->setIndex($this->index);
