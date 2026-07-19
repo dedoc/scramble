@@ -61,7 +61,6 @@ class PhpDoc
                 ...$node->getThrowsTagValues(),
                 ...$node->getPropertyTagValues(),
                 ...$node->getPropertyReadTagValues(),
-                ...$node->getPropertyWriteTagValues(),
             ];
 
             foreach ($tagValues as $tagValue) {

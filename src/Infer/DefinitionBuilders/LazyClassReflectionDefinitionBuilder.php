@@ -10,14 +10,10 @@ use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\LazyShallowClassDefinition;
 use Dedoc\Scramble\Infer\Definition\PendingDocComment;
 use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
-use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\Support\PhpDoc;
-use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
-use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionClass;
 
 class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
@@ -31,11 +27,7 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 
     public function build(): LazyShallowClassDefinition
     {
-        $classPhpDoc = (($comment = $this->reflection->getDocComment()) && ($path = $this->reflection->getFileName()))
-            ? PhpDoc::parse($comment, FileNameResolver::createForFile($path))
-            : new PhpDocNode([]);
-
-        $propertyPhpDocTypeExtractor = (new ReflectionPropertyPhpDocTypeExtractor($this->reflection))->setClassPhpDoc($classPhpDoc);
+        $propertyPhpDocTypeExtractor = new ReflectionPropertyPhpDocTypeExtractor($this->reflection);
 
         $parentDefinition = ($parentName = ($this->reflection->getParentClass() ?: null)?->name)
             ? ($this->index->getClass($parentName)?->getData() ?? new ClassDefinition(name: ''))
@@ -102,11 +94,13 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             }
         }
 
-        foreach ($propertyPhpDocTypeExtractor->getClassDefinedPropertiesTagValueNodes() as $propertyTagValue) {
-            $name = ltrim($propertyTagValue->propertyName, '$');
+        foreach ($propertyPhpDocTypeExtractor->getClassDefinedPropertyTypes() as $name => $type) {
+            if ($this->reflection->hasProperty($name)) {
+                continue;
+            }
 
             $classDefinitionData->properties[$name] = new ClassPropertyDefinition(
-                type: $propertyPhpDocTypeExtractor->getType($name) ?: new MixedType,
+                type: $type,
                 visibility: PropertyVisibility::Public,
             );
         }

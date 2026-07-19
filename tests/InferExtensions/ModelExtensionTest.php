@@ -57,7 +57,7 @@ it('adds models attributes to the model class definition as properties', functio
 });
 
 it('allows overriding a relation type using PHPDoc', function () {
-    $cd = $this->infer->analyzeClass(ModelExtensionTest_ModelWithRelationOverride::class);
+    $this->infer->analyzeClass(ModelExtensionTest_ModelWithRelationOverride::class);
 
     $propertyType = (new ObjectType(ModelExtensionTest_ModelWithRelationOverride::class))
         ->getPropertyType('user');
@@ -258,7 +258,6 @@ it('can fetch properties from vendor Role model', function () {
                 new PropertyFetchReferenceType($object, $name)
             );
 
-        // TODO: Fails due to role model having invalid PHPDoc, `?\Illuminate\Support\Carbon` should be `\Illuminate\Support\Carbon|null`
         expect(Str::replace('Dedoc\\Scramble\\Tests\\Files\\', '', $propertyType->toString()))
             ->toBe($type);
     }

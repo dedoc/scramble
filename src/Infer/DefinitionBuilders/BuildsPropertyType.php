@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\DefinitionBuilders;
 
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\UnknownType;
 
 trait BuildsPropertyType
 {
@@ -17,6 +18,10 @@ trait BuildsPropertyType
     {
         if (! $phpDocType) {
             return $declarationType;
+        }
+
+        if ($declarationType instanceof UnknownType) {
+            return $phpDocType;
         }
 
         if (! $declarationType->accepts($phpDocType)) {

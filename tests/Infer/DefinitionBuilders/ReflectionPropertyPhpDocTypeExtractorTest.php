@@ -19,7 +19,7 @@ it('extracts reflection property types from phpdoc', function (string $property,
     'magic class property' => ['magicProperty', 'string'],
 ]);
 
-it('keeps class property and var precedence from the phpdoc extension', function () {
+it('prioritizes class property PHPDoc over property and promoted parameter PHPDoc', function () {
     $extractor = new ReflectionPropertyPhpDocTypeExtractor(
         new ReflectionClass(PhpDocPropertyTypes_ReflectionPropertyPhpDocTypeExtractorTest::class),
     );

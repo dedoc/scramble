@@ -42,7 +42,7 @@ use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 
 class PhpDocTypeHelper
 {
-    public static function toType(TypeNode $type)
+    public static function toType(TypeNode $type): Type
     {
         $result = self::toTypeWithoutAttributes($type);
         $result->setAttribute('source', 'phpDoc');

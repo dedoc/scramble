@@ -7,7 +7,6 @@ use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\Type;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
-use PHPStan\PhpDocParser\Ast\PhpDoc\PropertyTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\VarTagValueNode;
 use ReflectionClass;
 use ReflectionProperty;
@@ -18,27 +17,22 @@ class ReflectionPropertyPhpDocTypeExtractor
 
     private PhpDocNode $constructorPhpDoc;
 
+    /** @var array<string, Type> */
+    private array $classDefinedPropertyTypes;
+
     /**
      * @param  ReflectionClass<covariant object>  $classReflection
      */
     public function __construct(private ReflectionClass $classReflection)
     {
+        $this->classPhpDoc = $this->getClassPhpDoc($classReflection);
         $this->constructorPhpDoc = $this->getConstructorPhpDoc($classReflection);
-    }
-
-    /** @return $this */
-    public function setClassPhpDoc(PhpDocNode $classPhpDoc): self
-    {
-        $this->classPhpDoc = $classPhpDoc;
-
-        return $this;
+        $this->classDefinedPropertyTypes = $this->extractClassDefinedPropertyTypes();
     }
 
     public function getType(string $propertyName): ?Type
     {
-        $this->classPhpDoc ??= $this->getClassPhpDoc($this->classReflection);
-
-        $classPropertyType = $this->getClassPropertyType($this->classPhpDoc, $propertyName);
+        $classPropertyType = $this->classDefinedPropertyTypes[$propertyName] ?? null;
 
         if ($classPropertyType) {
             return $classPropertyType;
@@ -59,36 +53,32 @@ class ReflectionPropertyPhpDocTypeExtractor
             return null;
         }
 
-        return $this->getPromotedParameterType(
-            $this->constructorPhpDoc,
-            $propertyName,
-        );
-    }
-
-    private function getClassPropertyType(PhpDocNode $phpDoc, string $propertyName): ?Type
-    {
-        $type = null;
-
-        foreach ($this->getClassDefinedPropertiesTagValueNodes() as $tag) {
-            if (ltrim($tag->propertyName, '$') !== $propertyName) {
-                continue;
-            }
-
-            $type = PhpDocTypeHelper::toType($tag->type);
-        }
-
-        return $type;
+        return $this->getPromotedParameterType($propertyName);
     }
 
     /**
-     * @return array<PropertyTagValueNode>
+     * @return array<string, Type>
      */
-    public function getClassDefinedPropertiesTagValueNodes(): array
+    public function getClassDefinedPropertyTypes(): array
     {
-        return [
+        return $this->classDefinedPropertyTypes;
+    }
+
+    /**
+     * @return array<string, Type>
+     */
+    private function extractClassDefinedPropertyTypes(): array
+    {
+        $properties = [];
+
+        foreach ([
             ...$this->classPhpDoc->getPropertyTagValues(),
             ...$this->classPhpDoc->getPropertyReadTagValues(),
-        ];
+        ] as $propertyTagValue) {
+            $properties[ltrim($propertyTagValue->propertyName, '$')] = PhpDocTypeHelper::toType($propertyTagValue->type);
+        }
+
+        return $properties;
     }
 
     private function getVarType(PhpDocNode $phpDoc): ?Type
@@ -99,11 +89,11 @@ class ReflectionPropertyPhpDocTypeExtractor
         return $varTag ? PhpDocTypeHelper::toType($varTag->type) : null;
     }
 
-    private function getPromotedParameterType(PhpDocNode $phpDoc, string $propertyName): ?Type
+    private function getPromotedParameterType(string $propertyName): ?Type
     {
         $type = null;
 
-        foreach ($phpDoc->getParamTagValues() as $paramTag) {
+        foreach ($this->constructorPhpDoc->getParamTagValues() as $paramTag) {
             if (ltrim($paramTag->parameterName, '$') !== $propertyName) {
                 continue;
             }

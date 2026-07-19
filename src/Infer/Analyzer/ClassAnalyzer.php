@@ -12,14 +12,10 @@ use Dedoc\Scramble\Infer\DefinitionBuilders\BuildsPropertyType;
 use Dedoc\Scramble\Infer\DefinitionBuilders\ReflectionPropertyPhpDocTypeExtractor;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
-use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\Support\PhpDoc;
-use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
-use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionClass;
 
 class ClassAnalyzer
@@ -35,11 +31,7 @@ class ClassAnalyzer
     {
         $classReflection = new ReflectionClass($name); // @phpstan-ignore argument.type
 
-        $classPhpDoc = (($comment = $classReflection->getDocComment()) && ($path = $classReflection->getFileName()))
-            ? PhpDoc::parse($comment, FileNameResolver::createForFile($path))
-            : new PhpDocNode([]);
-
-        $propertyPhpDocTypeExtractor = (new ReflectionPropertyPhpDocTypeExtractor($classReflection))->setClassPhpDoc($classPhpDoc);
+        $propertyPhpDocTypeExtractor = new ReflectionPropertyPhpDocTypeExtractor($classReflection);
 
         $parentName = ($classReflection->getParentClass() ?: null)?->name;
 
@@ -124,11 +116,13 @@ class ClassAnalyzer
             }
         }
 
-        foreach ($propertyPhpDocTypeExtractor->getClassDefinedPropertiesTagValueNodes() as $propertyTagValue) {
-            $name = ltrim($propertyTagValue->propertyName, '$');
+        foreach ($propertyPhpDocTypeExtractor->getClassDefinedPropertyTypes() as $name => $type) {
+            if ($classReflection->hasProperty($name)) {
+                continue;
+            }
 
             $classDefinition->properties[$name] = new ClassPropertyDefinition(
-                type: $propertyPhpDocTypeExtractor->getType($name) ?: new MixedType,
+                type: $type,
                 visibility: PropertyVisibility::Public,
             );
         }

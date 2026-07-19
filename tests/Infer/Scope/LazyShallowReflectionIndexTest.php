@@ -35,10 +35,14 @@ it('builds property types from PHPDoc', function () {
     $definition = $lazyDefinition->getData();
 
     $propertyType = $definition->getPropertyDefinition('number')->type;
+    $untypedPropertyType = $definition->getPropertyDefinition('untypedNumber')->type;
+    $conflictingPropertyType = $definition->getPropertyDefinition('nativeNumber')->type;
     $magicPropertyType = $definition->getPropertyDefinition('magic')->type;
 
     expect($propertyType)->toBeInstanceOf(TemplateType::class)
         ->and($propertyType->is?->toString())->toBe('int<1, max>')
+        ->and($untypedPropertyType->is?->toString())->toBe('int<1, max>')
+        ->and($conflictingPropertyType->is?->toString())->toBe('int')
         ->and($magicPropertyType->toString())->toBe('string')
         ->and($magicPropertyType->getAttribute('source'))->toBe('phpDoc');
 });
@@ -50,9 +54,17 @@ class Foo_LazyShallowReflectionIndexTest
     public function foo(): int {}
 }
 
-/** @property string $magic */
+/**
+ * @property string $magic
+ * @property string $nativeNumber
+ */
 class PhpDocProperties_LazyShallowReflectionIndexTest
 {
     /** @var positive-int */
     public int $number;
+
+    /** @var positive-int */
+    public $untypedNumber;
+
+    public int $nativeNumber;
 }
