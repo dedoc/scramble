@@ -59,6 +59,8 @@ class PhpDoc
                 ...$node->getReturnTagValues('@scramble-return'),
                 ...$node->getVarTagValues(),
                 ...$node->getThrowsTagValues(),
+                ...$node->getPropertyTagValues(),
+                ...$node->getPropertyReadTagValues(),
             ];
 
             foreach ($tagValues as $tagValue) {

@@ -1609,12 +1609,6 @@ parameters:
 			path: src/PhpDoc/PhpDocTypeHelper.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\PhpDoc\\PhpDocTypeHelper\:\:toType\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/PhpDoc/PhpDocTypeHelper.php
-
-		-
 			message: '#^Parameter \#1 \$value of class Dedoc\\Scramble\\Support\\Type\\Literal\\LiteralIntegerType constructor expects int, string given\.$#'
 			identifier: argument.type
 			count: 1

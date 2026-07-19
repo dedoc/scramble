@@ -12,6 +12,7 @@ use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\InferExtensions\Concerns\ExtractsLiteralArrayKeys;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
@@ -66,6 +67,14 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     public function getPropertyType(PropertyFetchEvent $event): ?Type
     {
+        $propertyType = $event->getDefinition()
+            ?->getPropertyDefinition($event->getName())
+            ?->type;
+
+        if ($propertyType?->getAttribute('source') === 'phpDoc') {
+            return $propertyType;
+        }
+
         if (! $this->hasProperty($event->getInstance(), $event->getName())) {
             return null;
         }
@@ -73,7 +82,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         $info = $this->getModelInfo($event->getInstance());
 
         if ($attribute = $info->get('attributes')->get($event->getName())) {
-            $baseType = $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '')
+            $baseType = $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '', $event->scope)
                 ?? $this->getAttributeTypeFromDbColumnType($attribute['type'], $attribute['driver'])
                 ?? new UnknownType("Virtual attribute ({$attribute['name']}) type inference not supported.");
 
@@ -121,20 +130,25 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         return new StringType;
     }
 
-    /**
-     * @todo Add support for custom castables.
-     */
-    private function getAttributeTypeFromEloquentCasts(string $cast): ?AbstractType
+    private function getAttributeTypeFromEloquentCasts(string $cast, Scope $scope): ?Type
     {
         if ($cast && enum_exists($cast)) {
             return new ObjectType($cast);
         }
 
         $castAsType = Str::before($cast, ':');
+        if ($castAsType === '') {
+            return null;
+        }
+
         $castAsParameters = str($cast)->after("{$castAsType}:")->explode(',');
 
-        if (Str::startsWith($castAsType, 'encrypted:')) {
+        if (Str::startsWith($cast, 'encrypted:')) {
             $castAsType = $castAsParameters->first(); // array, collection, json, object
+
+            if (! is_string($castAsType)) {
+                return null;
+            }
         }
 
         return match ($castAsType) {
@@ -151,8 +165,18 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             ]),
             'date', 'datetime', 'custom_datetime' => $this->addDateFormatForCast(new ObjectType(Carbon::class), $castAsParameters),
             'immutable_date', 'immutable_datetime', 'immutable_custom_datetime' => $this->addDateFormatForCast(new ObjectType(CarbonImmutable::class), $castAsParameters),
-            default => null,
+            default => $this->getAttributeTypeFromCustomCast($castAsType, $scope),
         };
+    }
+
+    private function getAttributeTypeFromCustomCast(string $cast, Scope $scope): ?Type
+    {
+        $returnType = $scope->index
+            ->getClass($cast)
+            ?->getMethod('get')
+            ?->getReturnType();
+
+        return $returnType?->clone();
     }
 
     /**
