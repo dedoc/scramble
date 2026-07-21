@@ -1,7 +1,7 @@
 <?php
 
-use Dedoc\Scramble\Attributes\SchemaVariant;
 use Dedoc\Scramble\Attributes\SchemaName;
+use Dedoc\Scramble\Attributes\SchemaVariant;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
