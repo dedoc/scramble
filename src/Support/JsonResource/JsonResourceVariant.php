@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\JsonResource;
 
-use Dedoc\Scramble\Attributes\JsonResourceSchemaVariant;
+use Dedoc\Scramble\Attributes\SchemaVariant;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
@@ -19,14 +19,14 @@ use Illuminate\Http\Resources\MissingValue;
 class JsonResourceVariant
 {
     public function __construct(
-        protected JsonResourceSchemaVariant $variant,
+        protected SchemaVariant $variant,
         protected array $loadedRelations,
-        protected bool $isDefault = false,
+        protected bool $isAnonymous = false,
     ) {}
 
-    public static function fromJsonResourceSchemaVariant(JsonResourceSchemaVariant $variant, array $loadedRelations, bool $isDefault = false): self
+    public static function fromSchemaVariant(SchemaVariant $variant, array $loadedRelations, bool $isAnonymous = false): self
     {
-        return new self($variant, $loadedRelations, $isDefault);
+        return new self($variant, $loadedRelations, $isAnonymous);
     }
 
     public function reference(Components $components): Reference
@@ -36,7 +36,7 @@ class JsonResourceVariant
 
     public function filterReferencableFields(KeyedArrayType $array): KeyedArrayType
     {
-        if ($this->isDefault()) {
+        if ($this->isAnonymous()) {
             $array = $array->clone();
             $array->items = collect($array->items)
                 ->reject(fn (ArrayItemType_ $item) => $this->isRelationConditionalMerge($item))
@@ -56,11 +56,11 @@ class JsonResourceVariant
                     return true;
                 }
 
-                if ($this->variant->withLoaded === '*') {
+                if ($this->variant->whenLoaded === '*') {
                     return true;
                 }
 
-                return in_array($conditionalRelation, $this->variant->withLoaded, strict: true);
+                return in_array($conditionalRelation, $this->variant->whenLoaded, strict: true);
             })
             ->map(function (ArrayItemType_ $t) {
                 $conditionalRelation = $this->getConditionalRelation($t);
@@ -129,9 +129,9 @@ class JsonResourceVariant
             && (bool) $this->getConditionalRelation($item);
     }
 
-    public function isDefault()
+    public function isAnonymous()
     {
-        return $this->isDefault;
+        return $this->isAnonymous;
     }
 
     public function filterLoadedFields(KeyedArrayType $array): KeyedArrayType
@@ -140,7 +140,7 @@ class JsonResourceVariant
 
         $referencableFields = $this->filterReferencableFields($array);
 
-        $requiredInReferencable = $this->isDefault()
+        $requiredInReferencable = $this->isAnonymous()
             ? []
             : collect($referencableFields->items)
                 ->map(fn (ArrayItemType_ $t) => $this->getConditionalRelation($t))

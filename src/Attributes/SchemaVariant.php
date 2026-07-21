@@ -8,14 +8,14 @@ use Attribute;
  * Defines a named OpenAPI schema variant for a JsonResource based on loaded Eloquent relations.
  */
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
-class JsonResourceSchemaVariant
+class SchemaVariant
 {
     /**
-     * @param  list<string>|'*'  $withLoaded
+     * @param  list<string>|'*'  $whenLoaded
      */
     public function __construct(
         public readonly string $name,
-        public readonly array|string $withLoaded = [],
-        public readonly bool $fallback = false,
+        public readonly array|string $whenLoaded = [],
+        public readonly bool $default = false,
     ) {}
 }

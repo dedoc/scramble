@@ -2,7 +2,7 @@
 
 namespace Dedoc\Scramble\Support\JsonResource;
 
-use Dedoc\Scramble\Attributes\JsonResourceSchemaVariant;
+use Dedoc\Scramble\Attributes\SchemaVariant;
 use Dedoc\Scramble\Infer\Contracts\Index;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
@@ -27,77 +27,77 @@ class JsonResourceVariantMatcher
     public function match(ObjectType $type): JsonResourceVariant
     {
         if (! $type->isInstanceOf(JsonResource::class)) {
-            return $this->default($type);
+            return $this->anonymous($type);
         }
 
         if (! $modelType = $this->getModelFromResource($type)) {
-            return $this->fallbackOrDefault($type);
+            return $this->defaultOrAnonymous($type);
         }
 
         $knownLoadedRelations = $this->getKnownLoadedRelations($modelType);
 
         if ($knownLoadedRelations === null) {
-            return $this->fallbackOrDefault($type);
+            return $this->defaultOrAnonymous($type);
         }
 
         if (! $variants = $this->getVariants($type->name)) {
-            return $this->default($type, $knownLoadedRelations);
+            return $this->anonymous($type, $knownLoadedRelations);
         }
 
         return $this->doMatch($variants, $knownLoadedRelations);
     }
 
     /**
-     * @param  JsonResourceSchemaVariant[]  $variants
+     * @param  SchemaVariant[]  $variants
      * @param  string[]  $knownLoadedRelations
      * @return void
      */
     private function doMatch(array $variants, array $knownLoadedRelations): JsonResourceVariant
     {
         $variants = collect($variants)
-            ->sort(function (JsonResourceSchemaVariant $v) {
-                return $v->fallback ? -1 : 0;
+            ->sort(function (SchemaVariant $v) {
+                return $v->default ? -1 : 0;
             })
-            ->sortByDesc(function (JsonResourceSchemaVariant $variant) use ($knownLoadedRelations) {
-                $variantRelations = $variant->withLoaded === '*'
+            ->sortByDesc(function (SchemaVariant $variant) use ($knownLoadedRelations) {
+                $variantRelations = $variant->whenLoaded === '*'
                     ? $knownLoadedRelations
-                    : $variant->withLoaded;
+                    : $variant->whenLoaded;
 
-                $specificityMultiplier = $knownLoadedRelations === $variant->withLoaded
-                    ? ($variant->withLoaded === '*' ? 1 : 10)
+                $specificityMultiplier = $knownLoadedRelations === $variant->whenLoaded
+                    ? ($variant->whenLoaded === '*' ? 1 : 10)
                     : 1;
 
                 return $specificityMultiplier * count(array_intersect($variantRelations, $knownLoadedRelations));
             });
 
-        return JsonResourceVariant::fromJsonResourceSchemaVariant(
+        return JsonResourceVariant::fromSchemaVariant(
             $variants->first(),
             $knownLoadedRelations,
         );
     }
 
-    public function default(ObjectType $type, array $knownLoadedRelations = []): JsonResourceVariant
+    public function anonymous(ObjectType $type, array $knownLoadedRelations = []): JsonResourceVariant
     {
-        return JsonResourceVariant::fromJsonResourceSchemaVariant(
-            new JsonResourceSchemaVariant('', []),
+        return JsonResourceVariant::fromSchemaVariant(
+            new SchemaVariant('', []),
             $knownLoadedRelations,
-            isDefault: true,
+            isAnonymous: true,
         );
     }
 
-    private function fallbackOrDefault(ObjectType $type): JsonResourceVariant
+    private function defaultOrAnonymous(ObjectType $type): JsonResourceVariant
     {
-        if ($fallback = $this->findFallbackVariant($type->name)) {
-            return JsonResourceVariant::fromJsonResourceSchemaVariant($fallback, []);
+        if ($default = $this->findDefaultVariant($type->name)) {
+            return JsonResourceVariant::fromSchemaVariant($default, []);
         }
 
-        return $this->default($type);
+        return $this->anonymous($type);
     }
 
-    private function findFallbackVariant(string $jsonClassName): ?JsonResourceSchemaVariant
+    private function findDefaultVariant(string $jsonClassName): ?SchemaVariant
     {
         foreach ($this->getVariants($jsonClassName) as $variant) {
-            if ($variant->fallback) {
+            if ($variant->default) {
                 return $variant;
             }
         }
@@ -107,7 +107,7 @@ class JsonResourceVariantMatcher
 
     /**
      * @param  class-string<JsonResource>  $jsonClassName
-     * @return JsonResourceSchemaVariant[]
+     * @return SchemaVariant[]
      */
     private function getVariants(string $jsonClassName): array
     {
@@ -119,7 +119,7 @@ class JsonResourceVariantMatcher
 
         return array_values(array_map(
             fn (ReflectionAttribute $attr) => $attr->newInstance(),
-            $reflection->getAttributes(JsonResourceSchemaVariant::class),
+            $reflection->getAttributes(SchemaVariant::class),
         ));
     }
 
