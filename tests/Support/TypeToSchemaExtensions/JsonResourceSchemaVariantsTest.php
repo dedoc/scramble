@@ -84,9 +84,6 @@ it('documents relation-conditioned properties as required when relation is loade
                 ],
                 [
                     'type' => 'object',
-                    'properties' => [
-                        'user' => ['type' => 'object'],
-                    ],
                     'required' => ['user'],
                 ],
             ],
@@ -337,9 +334,6 @@ it('handles mergeWhen with relationLoaded', function () {
             ],
             [
                 'type' => 'object',
-                'properties' => [
-                    'profile' => ['type' => 'string'],
-                ],
                 'required' => ['profile'],
             ],
         ],
@@ -347,6 +341,54 @@ it('handles mergeWhen with relationLoaded', function () {
         'type' => 'object',
         'properties' => [
             'id' => ['type' => 'string'],
+            'profile' => ['type' => 'string'],
+        ],
+        'required' => ['id'],
+    ]);
+});
+
+it('keeps mergeWhen fields optional when relation is not loaded', function () {
+    $type = resourceWithModel(
+        SchemaVariantsTest_MergeWhenResource::class,
+        modelWithRelations(SchemaVariantsTest_PostModel::class, []),
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    $componentSchema = $this->context->openApi->components
+        ->getSchema(SchemaVariantsTest_MergeWhenResource::class)
+        ->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/SchemaVariantsTest_MergeWhenResource',
+    ])->and($componentSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'profile' => ['type' => 'string'],
+        ],
+        'required' => ['id'],
+    ]);
+});
+
+it('keeps mergeWhen fields optional when relation state is unknown', function () {
+    $type = new Generic(SchemaVariantsTest_MergeWhenResource::class, [new UnknownType]);
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    $componentSchema = $this->context->openApi->components
+        ->getSchema(SchemaVariantsTest_MergeWhenResource::class)
+        ->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/SchemaVariantsTest_MergeWhenResource',
+    ])->and($componentSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'profile' => ['type' => 'string'],
         ],
         'required' => ['id'],
     ]);
@@ -372,12 +414,6 @@ it('handles when with relationLoaded and a resource collection callback', functi
             ],
             [
                 'type' => 'object',
-                'properties' => [
-                    'comments' => [
-                        'type' => 'array',
-                        'items' => ['$ref' => '#/components/schemas/SchemaVariantsTest_CommentResource'],
-                    ],
-                ],
                 'required' => ['comments'],
             ],
         ],
@@ -442,12 +478,6 @@ it('documents relation-conditioned resource collection when relation is loaded',
             ],
             [
                 'type' => 'object',
-                'properties' => [
-                    'comments' => [
-                        'type' => 'array',
-                        'items' => ['$ref' => '#/components/schemas/SchemaVariantsTest_CommentResource'],
-                    ],
-                ],
                 'required' => ['comments'],
             ],
         ],

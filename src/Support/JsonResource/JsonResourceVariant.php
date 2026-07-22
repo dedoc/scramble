@@ -37,13 +37,7 @@ class JsonResourceVariant
     public function filterReferencableFields(KeyedArrayType $array): KeyedArrayType
     {
         if ($this->isAnonymous()) {
-            $array = $array->clone();
-            $array->items = collect($array->items)
-                ->reject(fn (ArrayItemType_ $item) => $this->isRelationConditionalMerge($item))
-                ->values()
-                ->all();
-
-            return $array;
+            return $array->clone();
         }
 
         $array = $array->clone();
@@ -120,13 +114,6 @@ class JsonResourceVariant
         ) {
             $t->value->templateTypes[0] = new LiteralBooleanType(true);
         }
-    }
-
-    private function isRelationConditionalMerge(ArrayItemType_ $item): bool
-    {
-        return $item->value instanceof Generic
-            && $item->value->isInstanceOf(MergeValue::class)
-            && (bool) $this->getConditionalRelation($item);
     }
 
     public function isAnonymous()

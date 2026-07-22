@@ -11,9 +11,11 @@ use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Reference;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\JsonResource\JsonResourceVariantMatcher;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -78,8 +80,33 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
 
         return $this->allOf([
             $reference,
-            count($loadedFields->items) ? $this->openApiTransformer->transform($this->flatten($loadedFields)) : null,
+            $this->loadedFieldsOverlay($variant->isAnonymous(), $loadedFields),
         ]);
+    }
+
+    private function loadedFieldsOverlay(bool $isAnonymous, KeyedArrayType $loadedFields): ?OpenApiType
+    {
+        if (! count($loadedFields->items)) {
+            return null;
+        }
+
+        $flattened = $this->flatten($loadedFields);
+
+        if (! $isAnonymous) {
+            return $this->openApiTransformer->transform($flattened);
+        }
+
+        $required = collect($flattened->items)
+            ->map(fn (ArrayItemType_ $item) => $item->key)
+            ->filter(fn ($key) => is_string($key) && $key !== '')
+            ->values()
+            ->all();
+
+        if (! $required) {
+            return null;
+        }
+
+        return (new OpenApiObjectType)->setRequired($required);
     }
 
     /**
