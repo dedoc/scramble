@@ -230,11 +230,24 @@ class ModelInfo
             ? $relation->getParent()
             : $relation->getRelated();
 
-        $foreignKey = Str::afterLast($relation->getForeignKeyName(), '.');
-        $column = collect($foreignKeyModel->getConnection()->getSchemaBuilder()->getColumns($foreignKeyModel->getTable()))
-            ->firstWhere('name', $foreignKey);
+        $foreignKeyName = $relation->getForeignKeyName();
+        $foreignKeys = is_array($foreignKeyName) ? $foreignKeyName : [$foreignKeyName];
 
-        return $column['nullable'] ?? false;
+        if (! collect($foreignKeys)->every(fn ($foreignKey) => is_string($foreignKey))) {
+            return false;
+        }
+
+        $columns = collect($foreignKeyModel->getConnection()->getSchemaBuilder()->getColumns($foreignKeyModel->getTable()));
+
+        foreach ($foreignKeys as $foreignKey) {
+            $column = $columns->firstWhere('name', Str::afterLast($foreignKey, '.'));
+
+            if (! ($column['nullable'] ?? false)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function getProtectedValue(object $object, string $name): mixed

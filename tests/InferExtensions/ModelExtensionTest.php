@@ -65,8 +65,23 @@ it('allows overriding a relation type using PHPDoc', function () {
     expect($propertyType->toString())->toBe(ModelExtensionTest_OverriddenUser::class);
 });
 
+it('normalizes legacy Collection|T[] relation PHPDoc overrides', function () {
+    $this->infer->analyzeClass(ModelExtensionTest_ModelWithLegacyCollectionProperty::class);
+
+    $propertyType = (new ObjectType(ModelExtensionTest_ModelWithLegacyCollectionProperty::class))
+        ->getPropertyType('children');
+
+    expect($propertyType->toString())
+        ->toBe('Illuminate\Database\Eloquent\Collection<int, '.SamplePostModel::class.'>');
+});
+
 /** @property ModelExtensionTest_OverriddenUser $user */
 class ModelExtensionTest_ModelWithRelationOverride extends SamplePostModel {}
+
+/**
+ * @property \Illuminate\Database\Eloquent\Collection|SamplePostModel[] $children
+ */
+class ModelExtensionTest_ModelWithLegacyCollectionProperty extends SamplePostModel {}
 
 class ModelExtensionTest_OverriddenUser extends Model {}
 
