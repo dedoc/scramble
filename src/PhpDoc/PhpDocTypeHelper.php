@@ -24,6 +24,7 @@ use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Support\Collection;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprFloatNode;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprIntegerNode;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprStringNode;
@@ -132,10 +133,10 @@ class PhpDocTypeHelper
         }
 
         if ($type instanceof UnionTypeNode) {
-            return new Union(array_map(
+            return self::normalizeLaravelCollectionArrayUnion(new Union(array_map(
                 fn ($t) => static::toType($t),
                 $type->types,
-            ));
+            )));
         }
 
         if ($type instanceof ConstTypeNode) {
@@ -164,6 +165,54 @@ class PhpDocTypeHelper
         }
 
         return new UnknownType('Unknown phpDoc type ['.$type.']');
+    }
+
+    /**
+     * Rewrites the legacy Laravel/PhpStorm idiom `Collection|T[]` (and Eloquent
+     * Collection equivalents) into `Collection<int, T>`. Optionally keeps other
+     * union members such as `null`.
+     */
+    private static function normalizeLaravelCollectionArrayUnion(Union $union): Type
+    {
+        $collectionTypes = [];
+        $arrayTypes = [];
+        $otherTypes = [];
+
+        foreach ($union->types as $type) {
+            if (
+                $type instanceof ObjectType
+                && ! $type instanceof Generic
+                && $type->isInstanceOf(Collection::class)
+            ) {
+                $collectionTypes[] = $type;
+
+                continue;
+            }
+
+            if (
+                $type instanceof ArrayType
+                && $type->key instanceof IntegerType
+                && ! $type->value instanceof MixedType
+            ) {
+                $arrayTypes[] = $type;
+
+                continue;
+            }
+
+            $otherTypes[] = $type;
+        }
+
+        if (count($collectionTypes) !== 1 || count($arrayTypes) !== 1) {
+            return $union;
+        }
+
+        return Union::wrap([
+            new Generic($collectionTypes[0]->name, [
+                new IntegerType,
+                $arrayTypes[0]->value,
+            ]),
+            ...$otherTypes,
+        ]);
     }
 
     private static function handleIdentifierNode(IdentifierTypeNode $type)
