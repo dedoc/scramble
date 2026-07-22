@@ -559,6 +559,106 @@ it('throws when multiple variants match with equal specificity', function () {
         ->toThrow(LogicException::class, 'Ambiguous SchemaVariant match');
 });
 
+it('propagates nested eager loads to nested resource schema variants', function () {
+    $type = resourceWithModel(
+        SchemaVariantsTest_NestedPostResource::class,
+        modelWithRelations(SchemaVariantsTest_PostModel::class, ['user.team']),
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    $postSchema = $this->context->openApi->components
+        ->getSchema('NestedPostWithUser')
+        ->toArray();
+
+    expect($schema)->toBe([
+        'allOf' => [
+            [
+                '$ref' => '#/components/schemas/NestedPostWithUser',
+            ],
+            [
+                'type' => 'object',
+                'properties' => [
+                    'user' => ['$ref' => '#/components/schemas/NestedUserWithTeam'],
+                ],
+            ],
+        ],
+    ])->and($postSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'user' => ['$ref' => '#/components/schemas/NestedUser'],
+        ],
+        'required' => ['id', 'user'],
+    ]);
+
+    $userSchema = $this->context->openApi->components
+        ->getSchema('NestedUserWithTeam')
+        ->toArray();
+
+    expect($userSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'team' => ['type' => 'object'],
+        ],
+        'required' => ['id', 'team'],
+    ]);
+});
+
+it('propagates nested eager loads to nested anonymous resources', function () {
+    $type = resourceWithModel(
+        SchemaVariantsTest_AnonymousNestedPostResource::class,
+        modelWithRelations(SchemaVariantsTest_PostModel::class, ['user.team']),
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    $postSchema = $this->context->openApi->components
+        ->getSchema(SchemaVariantsTest_AnonymousNestedPostResource::class)
+        ->toArray();
+
+    $userSchema = $this->context->openApi->components
+        ->getSchema(SchemaVariantsTest_AnonymousNestedUserResource::class)
+        ->toArray();
+
+    expect($schema)->toBe([
+        'allOf' => [
+            [
+                '$ref' => '#/components/schemas/SchemaVariantsTest_AnonymousNestedPostResource',
+            ],
+            [
+                'type' => 'object',
+                'required' => ['user'],
+            ],
+        ],
+    ])->and($postSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'user' => [
+                'allOf' => [
+                    ['$ref' => '#/components/schemas/SchemaVariantsTest_AnonymousNestedUserResource'],
+                    [
+                        'type' => 'object',
+                        'required' => ['team'],
+                    ],
+                ],
+            ],
+        ],
+        'required' => ['id'],
+    ])->and($userSchema)->toBe([
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'string'],
+            'team' => ['type' => 'object'],
+        ],
+        'required' => ['id'],
+    ]);
+});
+
 class SchemaVariantsTest_PostModel extends Model
 {
     protected $with = ['user'];
@@ -579,7 +679,13 @@ class SchemaVariantsTest_PostModel extends Model
     }
 }
 
-class SchemaVariantsTest_UserModel extends Model {}
+class SchemaVariantsTest_UserModel extends Model
+{
+    public function team()
+    {
+        return $this->belongsTo(SchemaVariantsTest_TeamModel::class);
+    }
+}
 
 class SchemaVariantsTest_TeamModel extends Model {}
 
@@ -727,6 +833,66 @@ class SchemaVariantsTest_AmbiguousVariantResource extends JsonResource
         return [
             'id' => $this->id,
             'user' => $this->whenLoaded('user'),
+        ];
+    }
+}
+
+/**
+ * @property SchemaVariantsTest_PostModel $resource
+ */
+#[SchemaVariant(name: 'NestedPost', whenLoaded: [])]
+#[SchemaVariant(name: 'NestedPostWithUser', whenLoaded: ['user'])]
+class SchemaVariantsTest_NestedPostResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'user' => SchemaVariantsTest_NestedUserResource::make($this->whenLoaded('user')),
+        ];
+    }
+}
+
+/**
+ * @property SchemaVariantsTest_UserModel $resource
+ */
+#[SchemaVariant(name: 'NestedUser', whenLoaded: [], default: true)]
+#[SchemaVariant(name: 'NestedUserWithTeam', whenLoaded: ['team'])]
+class SchemaVariantsTest_NestedUserResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'team' => $this->whenLoaded('team'),
+        ];
+    }
+}
+
+/**
+ * @property SchemaVariantsTest_PostModel $resource
+ */
+class SchemaVariantsTest_AnonymousNestedPostResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'user' => SchemaVariantsTest_AnonymousNestedUserResource::make($this->whenLoaded('user')),
+        ];
+    }
+}
+
+/**
+ * @property SchemaVariantsTest_UserModel $resource
+ */
+class SchemaVariantsTest_AnonymousNestedUserResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'team' => $this->whenLoaded('team'),
         ];
     }
 }

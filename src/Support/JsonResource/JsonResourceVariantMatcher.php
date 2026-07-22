@@ -34,25 +34,26 @@ class JsonResourceVariantMatcher
             return $this->defaultOrAnonymous($type);
         }
 
-        $knownLoadedRelations = $this->getKnownLoadedRelations($modelType);
+        $eagerLoads = $this->getEagerLoads($modelType);
 
-        if ($knownLoadedRelations === null) {
+        if ($eagerLoads === null) {
             return $this->defaultOrAnonymous($type);
         }
 
+        $knownLoadedRelations = $this->normalizeLoadedRelations($eagerLoads);
+
         if (! $variants = $this->getVariants($type->name)) {
-            return $this->anonymous($type, $knownLoadedRelations);
+            return $this->anonymous($type, $knownLoadedRelations, $eagerLoads);
         }
 
-        return $this->doMatch($variants, $knownLoadedRelations);
+        return $this->doMatch($variants, $knownLoadedRelations, $eagerLoads);
     }
 
     /**
      * @param  SchemaVariant[]  $variants
      * @param  string[]  $knownLoadedRelations
-     * @return void
      */
-    private function doMatch(array $variants, array $knownLoadedRelations): JsonResourceVariant
+    private function doMatch(array $variants, array $knownLoadedRelations, KeyedArrayType $eagerLoads): JsonResourceVariant
     {
         $variants = collect($variants)
             ->sort(function (SchemaVariant $v) {
@@ -73,15 +74,20 @@ class JsonResourceVariantMatcher
         return JsonResourceVariant::fromSchemaVariant(
             $variants->first(),
             $knownLoadedRelations,
+            eagerLoads: $eagerLoads,
         );
     }
 
-    public function anonymous(ObjectType $type, array $knownLoadedRelations = []): JsonResourceVariant
+    /**
+     * @param  string[]  $knownLoadedRelations
+     */
+    public function anonymous(ObjectType $type, array $knownLoadedRelations = [], ?KeyedArrayType $eagerLoads = null): JsonResourceVariant
     {
         return JsonResourceVariant::fromSchemaVariant(
             new SchemaVariant('', []),
             $knownLoadedRelations,
             isAnonymous: true,
+            eagerLoads: $eagerLoads,
         );
     }
 
@@ -137,20 +143,23 @@ class JsonResourceVariantMatcher
         return $modelType instanceof ObjectType ? $modelType : null;
     }
 
-    /**
-     * @return string[]|null
-     */
-    private function getKnownLoadedRelations(ObjectType $modelType): ?array
+    private function getEagerLoads(ObjectType $modelType): ?KeyedArrayType
     {
         $explicitRelationsType = $modelType->propertyTypes['relations'] ?? null;
 
-        if (! $explicitRelationsType instanceof KeyedArrayType) {
-            return null;
-        }
+        return $explicitRelationsType instanceof KeyedArrayType
+            ? $explicitRelationsType
+            : null;
+    }
 
+    /**
+     * @return string[]
+     */
+    private function normalizeLoadedRelations(KeyedArrayType $eagerLoads): array
+    {
         $relations = array_values(array_filter(array_map(
             fn (ArrayItemType_ $t) => $t->value instanceof LiteralString ? $t->value->getValue() : null,
-            $explicitRelationsType->items,
+            $eagerLoads->items,
         )));
 
         return collect($relations)
