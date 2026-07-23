@@ -64,21 +64,33 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                 new ArrayType,
             ]),
 
-            'whenLoaded' => count($event->arguments) === 1
-                ? Union::wrap([
-                    $this->getModelPropertyType(
-                        $event->getDefinition(),
-                        $event->getArg('attribute', 0)->value ?? '',
-                        $event->scope
-                    ),
-                    new ObjectType(MissingValue::class),
-                ])
-                : Union::wrap([
+            /** @see JsonResource::whenLoaded() */
+            'whenLoaded' => $this->tagConditionalRelation(
+                $event->getArg('relationship', 0),
+                count($event->arguments) === 1
+                    ? Union::wrap([
+                        $this->getModelPropertyType(
+                            $event->getDefinition(),
+                            $event->getArg('attribute', 0)->value ?? '',
+                            $event->scope
+                        ),
+                        new ObjectType(MissingValue::class),
+                    ])
+                    : Union::wrap([
+                        $this->value($event->getArg('value', 1)),
+                        $this->value($event->getArg('default', 2, new ObjectType(MissingValue::class))),
+                    ]),
+            ),
+
+            'when' => $this->tagFromCondition(
+                $event->getArg('condition', 0),
+                Union::wrap([
                     $this->value($event->getArg('value', 1)),
                     $this->value($event->getArg('default', 2, new ObjectType(MissingValue::class))),
                 ]),
+            ),
 
-            'when', 'unless', 'whenPivotLoaded' => Union::wrap([
+            'unless', 'whenPivotLoaded' => Union::wrap([
                 $this->value($event->getArg('value', 1)),
                 $this->value($event->getArg('default', 2, new ObjectType(MissingValue::class))),
             ]),
@@ -88,7 +100,15 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                 $this->value($event->getArg('value', 0)),
             ]),
 
-            'mergeWhen', 'mergeUnless' => new Generic(MergeValue::class, [
+            'mergeWhen' => $this->tagFromCondition(
+                $event->getArg('condition', 0),
+                new Generic(MergeValue::class, [
+                    new BooleanType,
+                    $this->value($event->getArg('value', 1)),
+                ]),
+            ),
+
+            'mergeUnless' => new Generic(MergeValue::class, [
                 new BooleanType,
                 $this->value($event->getArg('value', 1)),
             ]),
@@ -183,6 +203,26 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                 ? null
                 : $this->getModelPropertyType($event->getDefinition(), $event->name, $event->scope),
         };
+    }
+
+    private function tagConditionalRelation(Type $relationshipType, Type $typeToTag): Type
+    {
+        if (! $relationshipType instanceof LiteralStringType) {
+            return $typeToTag;
+        }
+
+        $typeToTag->setAttribute('conditionalRelation', $relationshipType->getValue());
+
+        return $typeToTag;
+    }
+
+    private function tagFromCondition(Type $condition, Type $typeToTag): Type
+    {
+        if ($relation = $condition->getAttribute('conditionalRelation')) {
+            $typeToTag->setAttribute('conditionalRelation', $relation);
+        }
+
+        return $typeToTag;
     }
 
     private function getModelPropertyType(ClassDefinition $jsonResourceDefinition, string $name, Scope $scope): Type

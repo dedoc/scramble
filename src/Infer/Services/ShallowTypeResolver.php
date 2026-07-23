@@ -73,6 +73,10 @@ class ShallowTypeResolver
             return new UnknownType('fetching a property on a non-object');
         }
 
+        if ($propertyType = $callee->propertyTypes[$type->propertyName] ?? null) {
+            return $propertyType;
+        }
+
         $definition = $this->index->getClass($callee->name);
         if (! $definition) {
             return new UnknownType('cannot find a definition of '.$callee->name);

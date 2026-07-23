@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\JsonResource\JsonResourceVariantMatcher;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
@@ -81,7 +82,17 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
             return $this->getNonReferencedResourceCollectionDescription($resourceType);
         }
 
-        return '`'.$this->openApiContext->references->schemas->uniqueName($resourceType->name).'`';
+        return '`'.$this->getReferenceUniqueName($resourceType).'`';
+    }
+
+    private function getReferenceUniqueName(ObjectType $type): string
+    {
+        $fullName = (new JsonResourceVariantMatcher($this->infer->index))
+            ->match($type)
+            ?->reference($this->components)
+            ->fullName ?: $type->name;
+
+        return $this->openApiContext->references->schemas->uniqueName($fullName);
     }
 
     private function getMergedAdditionalSchema(ObjectType $resourceType): ?OpenApiType
@@ -116,7 +127,7 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
             return 'Array of items';
         }
 
-        return 'Array of `'.$this->openApiContext->references->schemas->uniqueName($collectedResourceType->name).'`';
+        return 'Array of `'.$this->getReferenceUniqueName($collectedResourceType).'`';
     }
 
     protected function isNonReferencedResourceCollection(ObjectType $resourceType): bool

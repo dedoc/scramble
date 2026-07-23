@@ -119,6 +119,11 @@ abstract class Type
         return $this;
     }
 
+    public function resolve()
+    {
+        return $this;
+    }
+
     public function toArray()
     {
         $enum = $this->enum;

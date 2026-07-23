@@ -121,7 +121,7 @@ trait FlattensMergeValues
     {
         return Union::wrap(array_values(
             array_filter($type->types, fn (Type $t) => ! $t->isInstanceOf(MissingValue::class))
-        ));
+        ))->mergeAttributes($type->attributes());
     }
 
     /**

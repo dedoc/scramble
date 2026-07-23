@@ -220,6 +220,32 @@ function getStatementType(string $statement, array $extensions = []): ?Type
     return analyzeFile('<?php', $extensions)->getExpressionType($statement);
 }
 
+function getVariableTypeAfter(string $body, string $var): Type
+{
+    $index = app(Index::class);
+
+    $traverser = new NodeTraverser;
+    $traverser->addVisitor($nameResolver = new NameResolver);
+    $traverser->addVisitor(new PhpDocResolver(
+        $nameResolver = new FileNameResolver($nameResolver->getNameContext()),
+    ));
+    $traverser->addVisitor(new TypeInferer(
+        $index,
+        $nameResolver,
+        $scope = new Scope($index, new NodeTypesResolver, new ScopeContext, $nameResolver),
+        Infer\Context::getInstance()->extensionsBroker->extensions,
+    ));
+    $traverser->traverse(
+        FileParser::getInstance()->parseContent("<?php\n{$body}")->getStatements(),
+    );
+
+    $unresolvedType = $scope->getType(
+        new \PhpParser\Node\Expr\Variable($var, ['startLine' => INF]),
+    );
+
+    return (new ReferenceTypeResolver($index))->resolve($scope, $unresolvedType)->setOriginal($unresolvedType);
+}
+
 dataset('extendableTemplateTypes', [
     ['int', 'TA', 'TA is int'],
     ['bool', 'TA', 'TA is boolean'],

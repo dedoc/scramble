@@ -25,9 +25,11 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\ObjectType as InferObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 use PHPStan\PhpDocParser\Ast\PhpDoc\DeprecatedTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
@@ -76,6 +78,34 @@ class TypeTransformer
         return $this->context->openApi->components;
     }
 
+    /**
+     * @param  callable(): (?OpenApiType)  $schemaFactory
+     */
+    public function getOrCreateSchemaReference(?Reference $reference, callable $schemaFactory): OpenApiType
+    {
+        if (! $reference) {
+            return $schemaFactory() ?: new UnknownType;
+        }
+
+        if ($this->context->references->schemas->has($reference->fullName)) {
+            return $this->context->references->schemas->add($reference->fullName, $reference);
+        }
+
+        $reference = $this->context->references->schemas->add($reference->fullName, $reference);
+
+        $this->getComponents()->addSchema($reference->fullName, Schema::fromType(new UnknownType));
+
+        $handledType = $schemaFactory();
+
+        if ($handledType) {
+            $this->getComponents()->addSchema($reference->fullName, Schema::fromType($handledType));
+        } else {
+            $this->getComponents()->removeSchema($reference->fullName);
+        }
+
+        return $reference;
+    }
+
     public function transform(Type $type): OpenApiType
     {
         if ($type instanceof TemplateType && $type->is) {
@@ -107,7 +137,13 @@ class TypeTransformer
             && ! $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
             && ! $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
             && ! $type instanceof Union
-            && ! $type instanceof \Dedoc\Scramble\Support\Type\IntersectionType;
+            && ! $type instanceof \Dedoc\Scramble\Support\Type\IntersectionType
+            && ! $this->isJsonResourceType($type);
+    }
+
+    private function isJsonResourceType(Type $type): bool
+    {
+        return $type instanceof InferObjectType && $type->isInstanceOf(JsonResource::class);
     }
 
     private function transformCached(Type $type): OpenApiType

@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Type\Type;
 class PotentialMethodMutatingCallType extends AbstractReferenceType
 {
     public function __construct(
+        public Type $subject,
         public Type $callee,
         public string $methodName,
         /** @var Type[] $arguments */
@@ -16,6 +17,11 @@ class PotentialMethodMutatingCallType extends AbstractReferenceType
     public function nodes(): array
     {
         return ['callee', 'arguments'];
+    }
+
+    public function isInstanceOf(string $className): bool
+    {
+        return $this->callee->isInstanceOf($className);
     }
 
     public function toString(): string
