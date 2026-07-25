@@ -9,10 +9,6 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
-use Dedoc\Scramble\Support\Type\TemplateType;
-use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeWalker;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use ReflectionAttribute;
 use ReflectionClass;
@@ -20,6 +16,8 @@ use ReflectionException;
 
 class JsonResourceVariantMatcher
 {
+    use ResolvesModelFromJsonResourceInstance;
+
     public function __construct(
         private Index $index,
         private bool $eagerLoadAnalysis = true,
@@ -35,7 +33,7 @@ class JsonResourceVariantMatcher
             return $this->defaultOrAnonymous($type);
         }
 
-        if (! $modelType = $this->getModelFromResource($type)) {
+        if (! $modelType = $this->resolveModelFromJsonResourceInstance($type, $this->index)) {
             return $this->defaultOrAnonymous($type);
         }
 
@@ -158,20 +156,6 @@ class JsonResourceVariantMatcher
             fn (ReflectionAttribute $attr) => $attr->newInstance(),
             $reflection->getAttributes(SchemaVariant::class),
         ));
-    }
-
-    private function getModelFromResource(ObjectType $type): ?ObjectType
-    {
-        $modelType = (new TypeWalker)->first(
-            $type,
-            fn (Type $t) => $t->isInstanceOf(Model::class),
-        );
-
-        if ($modelType instanceof TemplateType) {
-            $modelType = $modelType->is;
-        }
-
-        return $modelType instanceof ObjectType ? $modelType : null;
     }
 
     private function getEagerLoads(ObjectType $modelType): ?KeyedArrayType
