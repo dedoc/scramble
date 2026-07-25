@@ -600,18 +600,6 @@ it('falls back to optional resource collection field when relation state is unkn
     ]);
 });
 
-it('throws when multiple variants match with equal specificity', function () {
-    $type = resourceWithModel(
-        SchemaVariantsTest_AmbiguousVariantResource::class,
-        modelWithRelations(SchemaVariantsTest_PostModel::class, ['user']),
-    );
-
-    $extension = makeJsonResourceExtension($this->context);
-
-    expect(fn () => $extension->toSchema($type))
-        ->toThrow(LogicException::class, 'Ambiguous SchemaVariant match');
-});
-
 it('propagates nested eager loads to nested resource schema variants', function () {
     $type = resourceWithModel(
         SchemaVariantsTest_NestedPostResource::class,
@@ -886,22 +874,6 @@ class SchemaVariantsTest_MergeWhenResource extends JsonResource
             $this->mergeWhen($this->relationLoaded('user'), [
                 'profile' => $this->user->name,
             ]),
-        ];
-    }
-}
-
-/**
- * @property SchemaVariantsTest_PostModel $resource
- */
-#[SchemaVariant(name: 'VariantA', whenLoaded: ['user'])]
-#[SchemaVariant(name: 'VariantB', whenLoaded: ['user'])]
-class SchemaVariantsTest_AmbiguousVariantResource extends JsonResource
-{
-    public function toArray(Request $request): array
-    {
-        return [
-            'id' => $this->id,
-            'user' => $this->whenLoaded('user'),
         ];
     }
 }

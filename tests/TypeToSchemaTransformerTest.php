@@ -282,6 +282,7 @@ it('keeps resources made from nullable loaded relations nullable', function () {
 
     $schema = $extension
         ->toSchema(new ObjectType(ComplexTypeHandlersWithNullableWhenLoaded_SampleType::class))
+        ->resolve()
         ->toArray();
 
     expect($schema['properties']['submitted_by'])->toBe([
