@@ -45,8 +45,7 @@ class Response
         ?FileNameResolver $nameResolver,
         array $withRelationsAttributes,
         Index $index,
-    ): OpenApiResponse
-    {
+    ): OpenApiResponse {
         $response = $originalResponse ? deep_copy($originalResponse) : OpenApiResponse::make($responseAttribute->status);
 
         $response = self::applyResponseMediaType(
@@ -73,8 +72,7 @@ class Response
         ?FileNameResolver $nameResolver,
         array $withRelationsAttributes,
         Index $index,
-    ): OpenApiResponse
-    {
+    ): OpenApiResponse {
         if (! $responseAttribute->type) {
             return $response
                 ->setContent(
