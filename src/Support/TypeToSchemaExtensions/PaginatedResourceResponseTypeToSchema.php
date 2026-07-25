@@ -176,7 +176,10 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
 
     private function getReferenceUniqueName(ObjectType $type): string
     {
-        $fullName = (new JsonResourceVariantMatcher($this->infer->index))
+        $fullName = (new JsonResourceVariantMatcher(
+            $this->infer->index,
+            $this->openApiContext->config->eagerLoadAnalysis(),
+        ))
             ->match($type)
             ?->reference($this->components)
             ->fullName ?: $type->name;

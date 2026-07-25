@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\JsonResource;
 
 use Dedoc\Scramble\Attributes\SchemaVariant;
+use Dedoc\Scramble\Attributes\WithoutEagerLoadAnalysis;
 use Dedoc\Scramble\Infer\Contracts\Index;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
@@ -19,15 +20,19 @@ use ReflectionException;
 
 class JsonResourceVariantMatcher
 {
-    public function __construct(private Index $index) {}
+    public function __construct(
+        private Index $index,
+        private bool $eagerLoadAnalysis = true,
+    ) {}
 
-    /**
-     * @return JsonResourceVariant|null
-     */
     public function match(ObjectType $type): JsonResourceVariant
     {
         if (! $type->isInstanceOf(JsonResource::class)) {
             return $this->anonymous($type);
+        }
+
+        if (! $this->shouldAnalyzeEagerLoads($type->name)) {
+            return $this->defaultOrAnonymous($type);
         }
 
         if (! $modelType = $this->getModelFromResource($type)) {
@@ -47,6 +52,32 @@ class JsonResourceVariantMatcher
         }
 
         return $this->doMatch($variants, $knownLoadedRelations, $eagerLoads);
+    }
+
+    /**
+     * @param  class-string  $jsonClassName
+     */
+    private function shouldAnalyzeEagerLoads(string $jsonClassName): bool
+    {
+        if (! $this->eagerLoadAnalysis) {
+            return false;
+        }
+
+        return ! $this->hasWithoutEagerLoadAnalysisAttribute($jsonClassName);
+    }
+
+    /**
+     * @param  class-string  $jsonClassName
+     */
+    private function hasWithoutEagerLoadAnalysisAttribute(string $jsonClassName): bool
+    {
+        try {
+            $reflection = new ReflectionClass($jsonClassName);
+        } catch (ReflectionException) {
+            return false;
+        }
+
+        return $reflection->getAttributes(WithoutEagerLoadAnalysis::class) !== [];
     }
 
     /**

@@ -40,7 +40,10 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     ) {
         parent::__construct($infer, $openApiTransformer, $components);
 
-        $this->variantMatcher = new JsonResourceVariantMatcher($infer->index);
+        $this->variantMatcher = new JsonResourceVariantMatcher(
+            $infer->index,
+            $openApiContext->config->eagerLoadAnalysis(),
+        );
     }
 
     public function shouldHandle(Type $type)

@@ -41,6 +41,11 @@ class GeneratorConfig
      */
     public Closure $operationMethodsResolver;
 
+    /**
+     * Whether JsonResource schemas consider known eager-loaded Eloquent relations.
+     */
+    private bool $eagerLoadAnalysis = true;
+
     public function __construct(
         public readonly string $name = Scramble::DEFAULT_API,
         private array $config = [],
@@ -151,7 +156,7 @@ class GeneratorConfig
 
     public function cloneWithoutExposing(?string $name = null): self
     {
-        return new self(
+        $clone = new self(
             name: $name ?? $this->name,
             config: $this->config,
             routeResolver: $this->routeResolver,
@@ -163,6 +168,29 @@ class GeneratorConfig
             operationMethodsResolver: $this->operationMethodsResolver,
             jsonApi: clone $this->jsonApi,
         );
+
+        $clone->eagerLoadAnalysis = $this->eagerLoadAnalysis;
+
+        return $clone;
+    }
+
+    public function withoutEagerLoadAnalysis(): static
+    {
+        $this->eagerLoadAnalysis = false;
+
+        return $this;
+    }
+
+    public function withEagerLoadAnalysis(): static
+    {
+        $this->eagerLoadAnalysis = true;
+
+        return $this;
+    }
+
+    public function eagerLoadAnalysis(): bool
+    {
+        return $this->eagerLoadAnalysis;
     }
 
     public function withParametersExtractors(callable $callback): static

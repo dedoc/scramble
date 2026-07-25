@@ -2,6 +2,7 @@
 
 use Dedoc\Scramble\Attributes\SchemaName;
 use Dedoc\Scramble\Attributes\SchemaVariant;
+use Dedoc\Scramble\Attributes\WithoutEagerLoadAnalysis;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
@@ -97,6 +98,58 @@ it('documents relation-conditioned properties as required when relation is loade
             ],
             'required' => ['id'],
         ]);
+});
+
+it('ignores eager loads when analysis is disabled globally', function () {
+    $this->context = new OpenApiContext(
+        new OpenApi('3.1.0'),
+        (new GeneratorConfig)->withoutEagerLoadAnalysis(),
+    );
+
+    $type = resourceWithModel(
+        SchemaVariantsTest_BaseResource::class,
+        modelWithRelations(SchemaVariantsTest_PostModel::class, ['user']),
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/SchemaVariantsTest_BaseResource',
+    ]);
+});
+
+it('ignores eager loads for a resource marked with WithoutEagerLoadAnalysis', function () {
+    $type = resourceWithModel(
+        SchemaVariantsTest_WithoutEagerLoadAnalysisResource::class,
+        modelWithRelations(SchemaVariantsTest_PostModel::class, ['user']),
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/SchemaVariantsTest_WithoutEagerLoadAnalysisResource',
+    ]);
+});
+
+it('uses default schema variant when analysis is disabled and relations are loaded', function () {
+    $this->context = new OpenApiContext(
+        new OpenApi('3.1.0'),
+        (new GeneratorConfig)->withoutEagerLoadAnalysis(),
+    );
+
+    $type = resourceWithModel(
+        SchemaVariantsTest_VariantResource::class,
+        modelWithRelations(SchemaVariantsTest_PostModel::class, ['user', 'team']),
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/AccountList',
+    ]);
 });
 
 it('ignores relation-conditioned properties when relation is not loaded', function () {
@@ -744,6 +797,22 @@ class SchemaVariantsTest_WhenRelationLoadedCollectionResource extends JsonResour
  * @property SchemaVariantsTest_PostModel $resource
  */
 class SchemaVariantsTest_BaseResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'user' => $this->whenLoaded('user'),
+            'team' => $this->whenLoaded('team'),
+        ];
+    }
+}
+
+/**
+ * @property SchemaVariantsTest_PostModel $resource
+ */
+#[WithoutEagerLoadAnalysis]
+class SchemaVariantsTest_WithoutEagerLoadAnalysisResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
