@@ -432,9 +432,9 @@ class AlwaysInt_ReferenceResolutionTest implements ResolvingType
 }
 
 it('resolves PropertyFetch type', function () {
-    $builder = new Type\Generic(\Illuminate\Database\Eloquent\Builder::class, [
+    $builder = (new Type\Generic(\Illuminate\Database\Eloquent\Builder::class, [
         new Type\ObjectType('SomeModel'),
-    ])->withAssignedPropertyType('eagerLoad', new Type\KeyedArrayType([
+    ]))->withAssignedPropertyType('eagerLoad', new Type\KeyedArrayType([
         new Type\ArrayItemType_(null, new Type\Literal\LiteralStringType('user')),
     ], isList: true));
 
