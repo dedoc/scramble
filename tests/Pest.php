@@ -24,11 +24,22 @@ use PhpParser\NodeVisitor\NameResolver;
 
 uses(TestCase::class)->in(__DIR__);
 
+class JsonSnapshotDriver extends \Spatie\Snapshots\Drivers\JsonDriver
+{
+    public function match($expected, $actual)
+    {
+        \PHPUnit\Framework\Assert::assertJsonStringEqualsJsonString(
+            $expected,
+            is_string($actual) ? $actual : json_encode($actual, JSON_THROW_ON_ERROR),
+        );
+    }
+}
+
 function assertMatchesSnapshot(mixed $actual): void
 {
     \Spatie\Snapshots\assertMatchesSnapshot(
         $actual,
-        new \Spatie\Snapshots\Drivers\JsonDriver,
+        new JsonSnapshotDriver,
     );
 }
 
