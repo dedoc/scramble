@@ -32,7 +32,7 @@ it('correctly documents when annotated', function () {
     $extension = new LengthAwarePaginatorTypeToSchema($infer, $transformer, $this->components, $this->context);
 
     expect($extension->shouldHandle($type))->toBeTrue();
-    expect($extension->toResponse($type)->toArray())->toMatchSnapshot();
+    expect($extension->toResponse($type)->toArray())->toMatchJsonSnapshot();
 });
 
 class LengthAwarePaginatorTypeToSchemaTest_Resource extends JsonResource

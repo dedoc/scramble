@@ -1,8 +1,0 @@
-type: object
-properties:
-    foo: { type: integer, const: 1 }
-    hey: { type: string, const: ho }
-    bar: { type: string, const: foo }
-required:
-    - foo
-    - bar

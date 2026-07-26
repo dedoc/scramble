@@ -1,0 +1,14 @@
+{
+    "anyOf": [
+        {
+            "type": "string"
+        },
+        {
+            "type": "string",
+            "enum": [
+                "foo",
+                "bar"
+            ]
+        }
+    ]
+}

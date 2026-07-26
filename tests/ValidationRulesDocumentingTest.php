@@ -17,8 +17,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
-use function Spatie\Snapshots\assertMatchesSnapshot;
-
 beforeEach(function () {
     $this->openApiTransformer = $openApiTransformer = app()->make(TypeTransformer::class, [
         'context' => new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig),

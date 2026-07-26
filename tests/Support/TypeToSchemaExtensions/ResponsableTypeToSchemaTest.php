@@ -118,4 +118,4 @@ it('documents responsable return type from controller', function () {
             ],
             'required' => ['id', 'name'],
         ]);
-});
+})->skip(fn () => ! version_compare(app()->version(), '11.0.0', '>='));

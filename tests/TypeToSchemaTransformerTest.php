@@ -24,8 +24,6 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-use function Spatie\Snapshots\assertMatchesSnapshot;
-
 beforeEach(function () {
     $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
 });
