@@ -26,19 +26,41 @@ it('infers types from destructuring assignment with skipped slot', function () {
 });
 
 it('tracks property types on object assignment', function () {
-    $a = new stdClass;
-    $a->foo = 42;
+    $definition = analyzeFile(__FILE__)
+        ->getClassDefinition(ObjectAssignment_AssignHandlerTest_Controller::class)
+        ->getMethodDefinition('__invoke');
 
-    expect($a->foo)->toHaveType('int(42)');
+    expect($definition->getReturnType()->toString())->toBe('int(42)');
 });
+class ObjectAssignment_AssignHandlerTest_Controller
+{
+    public function __invoke()
+    {
+        $a = new stdClass;
+        $a->foo = 42;
+
+        return $a->foo;
+    }
+}
 
 it('tracks multiple property assignments', function () {
-    $a = new stdClass;
-    $a->foo = 42;
-    $a->bar = 'wow';
+    $definition = analyzeFile(__FILE__)
+        ->getClassDefinition(MultiplePropertyAssignments_AssignHandlerTest_Controller::class)
+        ->getMethodDefinition('__invoke');
 
-    expect($a->foo)->toHaveType('int(42)');
+    expect($definition->getReturnType()->toString())->toBe('int(42)');
 });
+class MultiplePropertyAssignments_AssignHandlerTest_Controller
+{
+    public function __invoke()
+    {
+        $a = new stdClass;
+        $a->foo = 42;
+        $a->bar = 'wow';
+
+        return $a->foo;
+    }
+}
 
 class PropertyTypesGeneric_AssignHandlerTest
 {
@@ -46,14 +68,24 @@ class PropertyTypesGeneric_AssignHandlerTest
 }
 
 it('tracks property types when assigning to a templated property', function () {
-    $a = new PropertyTypesGeneric_AssignHandlerTest;
-    $a->foo = 42;
+    $definition = analyzeFile(__FILE__)
+        ->getClassDefinition(TemplatedPropertyAssignment_AssignHandlerTest_Controller::class)
+        ->getMethodDefinition('__invoke');
 
-    expect($a->foo)->toHaveType('int(42)');
-
-    expect(getVariableTypeAfter('$a = new PropertyTypesGeneric_AssignHandlerTest(); $a->foo = 42;', 'a')->toString())
+    expect($definition->getReturnType()->toString())->toBe('int(42)')
+        ->and(getVariableTypeAfter('$a = new PropertyTypesGeneric_AssignHandlerTest(); $a->foo = 42;', 'a')->toString())
         ->toBe(PropertyTypesGeneric_AssignHandlerTest::class.'<int(42)>');
 });
+class TemplatedPropertyAssignment_AssignHandlerTest_Controller
+{
+    public function __invoke()
+    {
+        $a = new PropertyTypesGeneric_AssignHandlerTest;
+        $a->foo = 42;
+
+        return $a->foo;
+    }
+}
 
 class PropertyArrayGeneric_AssignHandlerTest
 {

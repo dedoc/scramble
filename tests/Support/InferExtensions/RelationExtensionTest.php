@@ -87,7 +87,7 @@ it('tracks relations passed to with() on relation', function (string $expression
         PlainUserModel_RelationExtensionTest::class."::query()->first()->posts()->with('author', 'comments')->withoutEagerLoads()",
         'list{}',
     ],
-]);
+])->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
 
 it('carries loaded relations from relation through get()', function (string $expression, string $expectedRelationsType) {
     $type = getStatementType($expression);
@@ -115,7 +115,7 @@ it('carries loaded relations from relation through get()', function (string $exp
         PlainUserModel_RelationExtensionTest::class."::query()->first()->posts()->with('author', 'comments')->first()",
         'list{string(author), string(comments)}',
     ],
-]);
+])->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
 
 it('tracks relations after with() on assigned relation', function (string $mutatingExpression, string $expectedLoadedRelationsType) {
     $class = PlainUserModel_RelationExtensionTest::class;
@@ -141,7 +141,7 @@ PHP,
         "\$relation->with('author')->with('comments')",
         'list{string(author), string(comments)}',
     ],
-]);
+])->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
 
 it('tracks loaded relations after a custom builder method forwarded through a relation', function () {
     $type = getStatementType(
@@ -157,4 +157,4 @@ it('tracks loaded relations after a custom builder method forwarded through a re
     expect($modelType)->not->toBeNull()
         ->and($modelType->getPropertyType('relations')->toString())
         ->toBe('list{string(author), string(comments)}');
-});
+})->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));

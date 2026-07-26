@@ -182,4 +182,4 @@ it('carries loaded relations from builder', function (string $expression, string
         'Illuminate\Pagination\CursorPaginator<int, '.PlainModel_EloquentBuilderExtensionTest::class.'>',
         'list{string(user), string(comments), string(team)}',
     ],
-]);
+])->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));

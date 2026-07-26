@@ -140,12 +140,8 @@ class WithRelationsTest_VariantController
     }
 }
 
-it('supports WithRelations on closure routes', function () {
-    $openApiDocument = generateForRoute(fn () => Route::get(
-        'api/test',
-        #[WithRelations(WithRelationsTest_PostResource::class, ['user'])]
-        fn () => new WithRelationsTest_PostResource(new WithRelationsTest_PostModel),
-    ));
+it('supports WithRelations on controller routes', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('api/test', WithRelationsTest_ControllerRouteController::class));
 
     expect($openApiDocument['paths']['/test']['get']['responses'][200]['content']['application/json']['schema']['properties']['data'])
         ->toBe([
@@ -158,6 +154,14 @@ it('supports WithRelations on closure routes', function () {
             ],
         ]);
 });
+class WithRelationsTest_ControllerRouteController
+{
+    #[WithRelations(WithRelationsTest_PostResource::class, ['user'])]
+    public function __invoke()
+    {
+        return new WithRelationsTest_PostResource(new WithRelationsTest_PostModel);
+    }
+}
 
 it('merges annotation relations with already inferred eager loads', function () {
     $model = (new ObjectType(WithRelationsTest_PostModel::class))->withAssignedPropertyType(
