@@ -20,7 +20,7 @@ test('builds the definition for phpstan-this-out', function () {
     ))->build();
 
     expect($def->getSelfOutType()?->toString())->toBe('self<int>');
-});
+})->skip(fn () => ! method_exists(\PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode::class, 'getSelfOutTypeTagValues'));
 
 /**
  * @template T

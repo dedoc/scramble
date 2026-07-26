@@ -12,8 +12,6 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceCollectionTypeToSchema;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
-use function Spatie\Snapshots\assertMatchesSnapshot;
-
 beforeEach(function () {
     $this->components = new Components;
     $this->context = new OpenApiContext((new OpenApi('3.1.0'))->setComponents($this->components), new GeneratorConfig);

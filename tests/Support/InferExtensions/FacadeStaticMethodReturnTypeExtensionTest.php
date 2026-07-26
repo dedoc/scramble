@@ -11,7 +11,7 @@ it('infers DB::transaction return type from closure', function () {
     ]);
 
     expect($type->toString())->toBe('int(1)');
-});
+})->skip(fn () => ! version_compare(app()->version(), '11.0.0', '>='));
 
 it('infers Config::string return type', function () {
     $type = getStatementType(Config::class.'::string(\'app.name\')', [
@@ -19,7 +19,7 @@ it('infers Config::string return type', function () {
     ]);
 
     expect($type->toString())->toBe('string');
-});
+})->skip(fn () => ! version_compare(app()->version(), '11.0.0', '>='));
 
 it('infers Cache::has return type', function () {
     $type = getStatementType(Cache::class.'::has(\'foo\')', [

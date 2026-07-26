@@ -100,7 +100,7 @@ it('prunes union members when method does not exist on known class', function ()
     expect($type->toString())->toBe(
         'Illuminate\Database\Eloquent\Builder<'.SampleUserModel::class.'>'
     );
-});
+})->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
 
 it('infers paginator type through union service builder chain', function () {
     $type = getStatementType(
@@ -110,7 +110,7 @@ it('infers paginator type through union service builder chain', function () {
     expect($type->toString())->toBe(
         'Illuminate\Pagination\LengthAwarePaginator<int, '.SampleUserModel::class.'>'
     );
-});
+})->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
 
 it('supports nullsafe method call', function () {
     $result = analyzeFile(<<<'EOD'

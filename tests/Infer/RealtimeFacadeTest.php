@@ -9,4 +9,4 @@ it('infers real-time facades types', function () {
 
     /* For now realtime facades are analyzed with reflection, not by reading AST */
     expect($type->toString())->toBe('int');
-});
+})->skip(fn () => ! version_compare(app()->version(), '11.0.0', '>='));

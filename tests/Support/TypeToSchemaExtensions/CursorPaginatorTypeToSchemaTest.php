@@ -32,7 +32,7 @@ it('correctly documents when annotated', function () {
     $extension = new CursorPaginatorTypeToSchema($infer, $transformer, $this->components, $this->context);
 
     expect($extension->shouldHandle($type))->toBeTrue();
-    expect($extension->toResponse($type)->toArray())->toMatchSnapshot();
+    expect($extension->toResponse($type)->toArray())->toMatchJsonSnapshot();
 });
 
 class CursorPaginatorTypeToSchemaTest_Resource extends JsonResource

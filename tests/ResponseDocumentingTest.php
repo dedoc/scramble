@@ -2,8 +2,6 @@
 
 use Illuminate\Routing\Route;
 
-use function Spatie\Snapshots\assertMatchesSnapshot;
-
 test('response()->noContent() call support', function () {
     \Illuminate\Support\Facades\Route::get('api/test', [Foo_Test::class, 'index']);
 

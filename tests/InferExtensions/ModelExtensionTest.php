@@ -534,7 +534,7 @@ it('uses custom collection type from newCollection for hasMany relations', funct
 
     expect($object->getPropertyType('foos')->toString())
         ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
-});
+})->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
 
 it('uses custom collection type from newCollection for query get', function () {
     $this->infer->analyzeClass(Foo_ModelExtensionTest::class);
@@ -555,7 +555,7 @@ it('uses custom collection type from newCollection for query get', function () {
 
     expect($type->toString())
         ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
-});
+})->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
 
 it('uses custom query builder type from newEloquentBuilder', function () {
     $this->infer->analyzeClass(ModelWithCustomBuilder_ModelExtensionTest::class);

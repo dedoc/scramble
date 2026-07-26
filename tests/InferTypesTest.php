@@ -16,7 +16,6 @@ use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-use function Spatie\Snapshots\assertMatchesSnapshot;
 use function Spatie\Snapshots\assertMatchesTextSnapshot;
 
 uses(RefreshDatabase::class);

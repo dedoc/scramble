@@ -7,8 +7,6 @@ use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
 
-use function Spatie\Snapshots\assertMatchesSnapshot;
-
 // @todo move all tests into PhpDoc/PhpDocTypeHelperTest
 
 function getTypeFromDoc(string $phpDoc)
