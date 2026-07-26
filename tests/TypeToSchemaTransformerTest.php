@@ -258,6 +258,21 @@ it('gets json resource type with when', function () {
     assertMatchesSnapshot($extension->toSchema($type)->toArray());
 });
 
+it('keeps a when value optional when its array item has a var annotation', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
+
+    $schema = $extension
+        ->toSchema(new ObjectType(ComplexTypeHandlersWithAnnotatedWhen_SampleType::class))
+        ->toArray();
+
+    expect($schema['properties'])->toBe([
+        'required_prop' => ['type' => 'integer'],
+        'conditional_prop' => ['type' => 'boolean'],
+    ])->and($schema['required'] ?? [])
+        ->toBe(['required_prop']);
+});
+
 it('gets json resource type with when loaded', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
@@ -617,6 +632,34 @@ class ComplexTypeHandlersWithWhen_SampleType extends JsonResource
             'bar' => $this->when(true, fn () => 'b', null),
         ];
     }
+}
+
+/**
+ * @property ComplexTypeHandlersWithAnnotatedWhen_Dto $resource
+ */
+class ComplexTypeHandlersWithAnnotatedWhen_SampleType extends JsonResource
+{
+    public function toArray($request)
+    {
+        /** @var array{prop_1: int, prop_2?: bool} $props */
+        $props = $this->resource->props;
+
+        return [
+            /** @var int */
+            'required_prop' => $props['prop_1'],
+            /** @var bool */
+            'conditional_prop' => $this->when(
+                array_key_exists('prop_2', $props),
+                fn () => $props['prop_2'],
+            ),
+        ];
+    }
+}
+
+class ComplexTypeHandlersWithAnnotatedWhen_Dto
+{
+    /** @var array<string, mixed> */
+    public array $props;
 }
 
 class ComplexTypeHandlersWithWhenLoaded_SampleType extends JsonResource
