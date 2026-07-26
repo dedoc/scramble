@@ -2,9 +2,14 @@
 
 namespace Dedoc\Scramble\Tests\Support\Type;
 
+use Dedoc\Scramble\Support\Type\MixedType;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Tests\TestUtils;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\MissingValue;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Enumerable;
@@ -21,6 +26,16 @@ test('types widening', function (string $type, string $expectedType) {
     ['42|69', 'int(42)|int(69)'],
     ['string|"wow"', 'string'],
 ]);
+
+test('preserves missing value when widening mixed types', function () {
+    $type = new Union([
+        new MixedType,
+        new ObjectType(MissingValue::class),
+    ]);
+
+    expect($type->widen()->toString())->toBe('mixed|'.MissingValue::class)
+        ->and((new Union([new MixedType, new StringType]))->widen()->toString())->toBe('mixed');
+});
 
 test('widens allowed key value generic collections', function (string $collectionClass) {
     $type = TestUtils::parseType("$collectionClass<int, string>|$collectionClass<string, int>");

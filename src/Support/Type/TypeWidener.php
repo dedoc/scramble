@@ -6,6 +6,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Illuminate\Http\Resources\MissingValue;
 use Illuminate\Support\Enumerable;
 
 class TypeWidener
@@ -44,6 +45,12 @@ class TypeWidener
 
     private function widenPair(Type $a, Type $b): ?Type
     {
+        // MissingValue carries property-presence information and must survive widening.
+        // mixed|MissingValue -> mixed|MissingValue
+        if ($a instanceof MixedType && $b->isInstanceOf(MissingValue::class)) {
+            return null;
+        }
+
         // mixed|* -> mixed
         if ($a instanceof MixedType) {
             return new MixedType;
