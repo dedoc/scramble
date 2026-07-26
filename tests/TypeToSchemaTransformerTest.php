@@ -266,6 +266,7 @@ it('keeps a when value optional when its array item has a var annotation', funct
 
     $schema = $extension
         ->toSchema(new ObjectType(ComplexTypeHandlersWithAnnotatedWhen_SampleType::class))
+        ->resolve()
         ->toArray();
 
     expect($schema['properties'])->toBe([
