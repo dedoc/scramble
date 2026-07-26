@@ -27,4 +27,4 @@ it('guesses paginate type', function (string $expression, string $expectedTypeSt
     [SampleUserModel::class.'::simplePaginate()', Paginator::class.'<int, '.SampleUserModel::class.'>'],
     [SampleUserModel::class.'::query()->simplePaginate()', Paginator::class.'<int, '.SampleUserModel::class.'>'],
     [SampleUserModel::class.'::search("foo")->simplePaginate()', Paginator::class.'<int, '.SampleUserModel::class.'>'],
-]);
+])->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
