@@ -2,7 +2,6 @@
 
 use Illuminate\Routing\Route;
 
-
 test('response()->noContent() call support', function () {
     \Illuminate\Support\Facades\Route::get('api/test', [Foo_Test::class, 'index']);
 

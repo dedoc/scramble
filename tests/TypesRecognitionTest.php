@@ -7,7 +7,6 @@ use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
 
-
 // @todo move all tests into PhpDoc/PhpDocTypeHelperTest
 
 function getTypeFromDoc(string $phpDoc)
