@@ -12,7 +12,6 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceCollectionTypeToSchema;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
-use function Spatie\Snapshots\assertMatchesSnapshot;
 
 beforeEach(function () {
     $this->components = new Components;

@@ -24,6 +24,14 @@ use PhpParser\NodeVisitor\NameResolver;
 
 uses(TestCase::class)->in(__DIR__);
 
+function assertMatchesSnapshot(mixed $actual): void
+{
+    \Spatie\Snapshots\assertMatchesSnapshot(
+        $actual,
+        new \Spatie\Snapshots\Drivers\JsonDriver,
+    );
+}
+
 expect()->extend('toBeSameJson', function (mixed $expectedData) {
     expect(json_encode($this->value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES))->toBe(json_encode($expectedData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 

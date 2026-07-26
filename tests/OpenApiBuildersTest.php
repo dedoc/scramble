@@ -6,7 +6,6 @@ use Dedoc\Scramble\Support\Generator\SecurityRequirement;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\OAuthFlow;
 
-use function Spatie\Snapshots\assertMatchesSnapshot;
 
 it('builds security scheme', function () {
     $openApi = (new OpenApi('3.1.0'))

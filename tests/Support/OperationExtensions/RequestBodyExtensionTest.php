@@ -563,7 +563,7 @@ it('allows to use validation on form request', function () {
 
     $document = app()->make(\Dedoc\Scramble\Generator::class)();
 
-    expect($document)->toMatchSnapshot();
+    expect($document)->toMatchJsonSnapshot();
 });
 class FormRequest_WithData extends FormRequest
 {
