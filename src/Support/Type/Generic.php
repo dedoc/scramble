@@ -28,7 +28,7 @@ class Generic extends ObjectType
 
     public function nodes(): array
     {
-        return ['templateTypes'];
+        return ['templateTypes', ...parent::nodes()];
     }
 
     public function accepts(Type $otherType): bool
@@ -88,7 +88,7 @@ class Generic extends ObjectType
             }
         }
 
-        return true;
+        return parent::isSame($type);
     }
 
     public function toString(): string

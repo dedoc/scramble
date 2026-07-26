@@ -38,7 +38,6 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Attributes\UseResource;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -367,6 +366,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
     {
         return match ($event->getName()) {
             'toArray' => $this->getToArrayMethodReturnType($event),
+            'relationLoaded' => $this->getRelationLoadedMethodReturnType($event),
             'getOriginal' => $this->getGetOriginalMethodReturnType($event),
             'only' => $this->getOnlyMethodReturnType($event),
             'except' => $this->getExceptMethodReturnType($event),
@@ -375,6 +375,18 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             'toResource' => $this->getToResourceMethodReturnType($event),
             default => $this->maybeProxyMethodCallToBuilder($event),
         };
+    }
+
+    protected function getRelationLoadedMethodReturnType(MethodCallEvent $event): BooleanType
+    {
+        $type = new BooleanType;
+        $relation = $event->getArg('key', 0);
+
+        if ($relation instanceof LiteralString) {
+            $type->setAttribute('conditionalRelation', $relation->getValue());
+        }
+
+        return $type;
     }
 
     protected function getToResourceMethodReturnType(MethodCallEvent $event): ?Type
@@ -452,7 +464,14 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
     public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
     {
         return match ($event->name) {
-            'all' => ModelCollectionTypeResolver::resolve(new ObjectType($event->callee)),
+            'all' => ReferenceTypeResolver::getInstance()->resolve(
+                $event->scope,
+                new MethodCallReferenceType(
+                    $this->getBuilderType($event, $event->callee),
+                    'get',
+                    [],
+                ),
+            ),
             default => $this->maybeProxyMethodCallToBuilder($event),
         };
     }
@@ -468,12 +487,20 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         }
 
         $referenceCall = new MethodCallReferenceType(
-            new Generic(Builder::class, [new ObjectType($definition->name)]),
+            $this->getBuilderType($event, $definition->name),
             $event->getName(),
             $event->arguments instanceof AutoResolvingArgumentTypeBag ? $event->arguments->allUnresolved() : $event->arguments->all(),
         );
 
         return ReferenceTypeResolver::getInstance()->resolve($event->scope, $referenceCall);
+    }
+
+    private function getBuilderType(MethodCallEvent|StaticMethodCallEvent $event, string $modelClass): Type
+    {
+        return ReferenceTypeResolver::getInstance()->resolve(
+            $event->scope,
+            new StaticMethodCallReferenceType($modelClass, 'query', []),
+        );
     }
 
     private function getModelInfo(ObjectType $type)

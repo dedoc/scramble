@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Type;
 
+use Closure;
+
 class FunctionType extends AbstractType implements FunctionLikeType
 {
     public string $name;
@@ -44,6 +46,12 @@ class FunctionType extends AbstractType implements FunctionLikeType
     public function getReturnType(): Type
     {
         return $this->returnType;
+    }
+
+    public function acceptedBy(Type $otherType): bool
+    {
+        return parent::acceptedBy($otherType)
+            || $otherType->isInstanceOf(Closure::class);
     }
 
     public function isSame(Type $type)

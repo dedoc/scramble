@@ -430,6 +430,7 @@ class Nodes
         }
 
         return new PotentialMethodMutatingCallType(
+            $this->getTypeAt($expr->var, $node),
             $type->callee,
             $type->methodName,
             $type->arguments,

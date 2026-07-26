@@ -8,6 +8,7 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\OffsetAccessType;
 use Dedoc\Scramble\Support\Type\OffsetSetType;
+use Dedoc\Scramble\Support\Type\Reference\PropertyAssignReferenceType;
 use Dedoc\Scramble\Support\Type\TemplatePlaceholderType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Support\Arr;
@@ -33,6 +34,10 @@ class AssignHandler
 
         if ($node->var instanceof Node\Expr\Array_ || $node->var instanceof Node\Expr\List_) {
             $this->handleDestructuringAssignment($node, $node->var, $scope);
+        }
+
+        if ($node->var instanceof Node\Expr\PropertyFetch) {
+            $this->handlePropertyAssignment($node, $node->var, $scope);
         }
     }
 
@@ -132,6 +137,31 @@ class AssignHandler
         $scope->addVariableType(
             $node->getAttribute('startLine'), // @phpstan-ignore argument.type
             $var->name,
+            $varType,
+        );
+
+        $scope->setType($node, $varType);
+    }
+
+    private function handlePropertyAssignment(Node\Expr\Assign $node, Node\Expr\PropertyFetch $targetNode, Scope $scope): void
+    {
+        if (! $targetNode->var instanceof Node\Expr\Variable || ! is_string($targetNode->var->name)) {
+            return;
+        }
+
+        if (! $targetNode->name instanceof Node\Identifier) {
+            return;
+        }
+
+        $varType = new PropertyAssignReferenceType(
+            $scope->getType($targetNode->var),
+            $targetNode->name->name,
+            $scope->getType($node->expr),
+        );
+
+        $scope->addVariableType(
+            $node->getAttribute('startLine'),
+            $targetNode->var->name,
             $varType,
         );
 
