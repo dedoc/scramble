@@ -37,6 +37,7 @@ use PHPStan\PhpDocParser\Ast\Type\ConstTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IntersectionTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\NullableTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\ThisTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
@@ -53,6 +54,13 @@ class PhpDocTypeHelper
 
     private static function toTypeWithoutAttributes(TypeNode $type): Type
     {
+        if ($type instanceof NullableTypeNode) {
+            return new Union([
+                self::toType($type->type),
+                new NullType,
+            ]);
+        }
+
         if ($type instanceof GenericTypeNode && $type->type->name === 'int') {
             return self::handleGenericInteger($type->genericTypes);
         }

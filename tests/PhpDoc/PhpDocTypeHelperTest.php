@@ -1,7 +1,9 @@
 <?php
 
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\PhpDoc;
+use Dedoc\Scramble\Tests\Files\Status;
 
 function getPhpTypeFromDoc_Copy(string $phpDoc)
 {
@@ -18,6 +20,24 @@ it('parses php doc into type correctly', function (string $phpDocType, string $e
 })->with([
     ['/** @var Foo */', 'Foo'],
     ['/** @var Foo<Bar, Baz> */', 'Foo<Bar, Baz>'],
+]);
+
+it('parses nullable types', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    ['/** @var ?string */', 'string|null'],
+]);
+
+it('resolves nullable enum types', function (string $phpDocType, string $expectedTypeString) {
+    $docNode = PhpDoc::parse($phpDocType, FileNameResolver::createForFile(__FILE__));
+    $varNode = $docNode->getVarTagValues()[0];
+
+    expect(PhpDocTypeHelper::toType($varNode->type)->toString())
+        ->toBe($expectedTypeString);
+})->with([
+    ['/** @var ?Status */', Status::class.'|null'],
 ]);
 
 it('parses tuple', function (string $phpDocType, string $expectedTypeString) {
