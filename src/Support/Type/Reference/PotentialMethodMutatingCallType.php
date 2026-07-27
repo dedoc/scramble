@@ -21,7 +21,7 @@ class PotentialMethodMutatingCallType extends AbstractReferenceType
 
     public function isInstanceOf(string $className): bool
     {
-        return $this->callee->isInstanceOf($className);
+        return $this->subject->isInstanceOf($className);
     }
 
     public function toString(): string

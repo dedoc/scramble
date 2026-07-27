@@ -381,6 +381,31 @@ class RequestBodyExtensionTest__allows_specifying_query_position_and_default_for
     }
 }
 
+it('infers request parameters after a request chain', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [RequestBodyExtensionTest__infers_request_parameters_after_a_request_chain::class, 'index']);
+    });
+
+    expect($openApiDocument['paths']['/test']['get']['parameters'])
+        ->toContainEqual([
+            'name' => 'per_page',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'string',
+            ],
+        ]);
+});
+class RequestBodyExtensionTest__infers_request_parameters_after_a_request_chain
+{
+    public function index(FormRequest $request)
+    {
+        $request->user()->getAuthIdentifier();
+        $request->get('per_page', config('app.pagination.per_page'));
+
+        return [];
+    }
+}
+
 it('ignores param in rules with annotation', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::get('api/test/{id}', [RequestBodyExtensionTest__ignores_rules_param_with_annotation::class, 'index']);
