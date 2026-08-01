@@ -282,6 +282,18 @@ it('collapses the same types in union', function () {
 
     expect($type->toString())->toBe('int(1)');
 });
+
+it('collapses the same self types in union', function () {
+    $type = Type\Union::wrap([
+        new Type\SelfType(SameSelfUnionTypes_Foo::class),
+        new Type\SelfType(SameSelfUnionTypes_Foo::class),
+    ]);
+
+    expect($type)->toBeInstanceOf(Type\SelfType::class);
+});
+
+class SameSelfUnionTypes_Foo {}
+
 class SameUnionTypes_Foo
 {
     public function foo()
