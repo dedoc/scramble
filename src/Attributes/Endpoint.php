@@ -28,5 +28,10 @@ class Endpoint
          * `PUT|PATCH` endpoint as `PATCH`. The method provided here MUST be the actual method the API will reply to.
          */
         public readonly ?string $method = null,
+        /**
+         * Determines the ordering of the endpoints. Endpoints with the same weight are sorted by the tag name,
+         * then by route registration order. Lower weight values appear first.
+         */
+        public readonly int $weight = PHP_INT_MAX,
     ) {}
 }

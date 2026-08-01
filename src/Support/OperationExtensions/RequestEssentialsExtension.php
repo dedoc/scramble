@@ -88,6 +88,7 @@ class RequestEssentialsExtension extends OperationExtension
         $operation->setAttribute('operationId', $this->getOperationId($routeInfo));
 
         $this->setTitleAndDescriptionFromEndpointAttribute($operation, $routeInfo);
+        $this->setWeightFromEndpointAttribute($operation, $routeInfo);
     }
 
     private function getOperationMethod(RouteInfo $routeInfo): string
@@ -262,6 +263,17 @@ class RequestEssentialsExtension extends OperationExtension
         if ($endpointAttribute->description) {
             $operation->description($endpointAttribute->description);
         }
+    }
+
+    private function setWeightFromEndpointAttribute(Operation $operation, RouteInfo $routeInfo): void
+    {
+        $weight = $this->getEndpointAttributeInstance($routeInfo)?->weight;
+
+        if ($weight === null || $weight === PHP_INT_MAX) {
+            return;
+        }
+
+        $operation->setAttribute('weight', $weight);
     }
 
     private function getEndpointAttributeInstance(RouteInfo $routeInfo): ?Endpoint
