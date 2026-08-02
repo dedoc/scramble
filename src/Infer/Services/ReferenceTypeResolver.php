@@ -480,16 +480,51 @@ class ReferenceTypeResolver
 
     private function resolvePotentialMethodMutatingCallType(Scope $scope, PotentialMethodMutatingCallType $type): Type
     {
+        // Consecutive calls on the same variable share their subject and callee. Resolve that history iteratively so
+        // each prior state is evaluated once instead of recursively evaluating it for both validation and fallback.
+        $callHistory = [];
+        $current = $type;
+
+        while (true) {
+            $callHistory[] = $current;
+
+            if ($current->callee !== $current->subject || ! $current->subject instanceof PotentialMethodMutatingCallType) {
+                $resolvedSubject = $this->resolve($scope, $current->subject);
+
+                break;
+            }
+
+            $current = $current->subject;
+        }
+
+        foreach (array_reverse($callHistory) as $call) {
+            $resolvedSubject = $this->resolvePotentialMethodMutatingCallTypeFromResolvedSubject(
+                $scope,
+                $call,
+                $resolvedSubject,
+            );
+        }
+
+        return $resolvedSubject;
+    }
+
+    private function resolvePotentialMethodMutatingCallTypeFromResolvedSubject(
+        Scope $scope,
+        PotentialMethodMutatingCallType $type,
+        Type $resolvedSubject,
+    ): Type {
         /*
          * Before we actually mutate the type, we want to make sure that we apply only that part of the every call chain
          * that actually points to "self". If some method call in the chain produces something that is not "self",
          * the part after that should not be applied.
          */
-        if (! $this->isSubjectMutatingCallChain($scope, $type)) {
-            return $this->resolve($scope, $type->subject);
+        if (! $this->isSubjectMutatingCallChain($scope, $type, $resolvedSubject)) {
+            return $resolvedSubject;
         }
 
-        $callee = $this->resolveAndNormalizeCallee($scope, $type->callee);
+        $callee = $type->callee === $type->subject
+            ? $this->normalizeResolvedCallee($resolvedSubject)
+            : $this->resolveAndNormalizeCallee($scope, $type->callee);
         $arguments = new AutoResolvingArgumentTypeBag($scope, $type->arguments);
 
         $calleeAllTypes = $callee instanceof Union
@@ -539,8 +574,16 @@ class ReferenceTypeResolver
         }, $calleeAllTypes));
     }
 
-    private function isSubjectMutatingCallChain(Scope $scope, PotentialMethodMutatingCallType $type): bool
+    private function isSubjectMutatingCallChain(Scope $scope, PotentialMethodMutatingCallType $type, Type $resolvedSubject): bool
     {
+        if ($type->callee === $type->subject) {
+            return $this->isMutatingSelfMethod(
+                $scope,
+                $this->normalizeResolvedCallee($resolvedSubject),
+                $type->methodName,
+            );
+        }
+
         $callChain = [];
         $lookupType = $type;
         while ($lookupType) {
@@ -564,7 +607,9 @@ class ReferenceTypeResolver
             }
 
             if ($t instanceof MethodCallReferenceType) {
-                $resolvedCallee = $this->resolveAndNormalizeCallee($scope, $t->callee);
+                $resolvedCallee = $t->callee === $type->subject
+                    ? $this->normalizeResolvedCallee($resolvedSubject)
+                    : $this->resolveAndNormalizeCallee($scope, $t->callee);
 
                 if (! $this->isMutatingSelfMethod($scope, $resolvedCallee, $t->methodName)) {
                     break;
@@ -576,7 +621,9 @@ class ReferenceTypeResolver
             }
 
             if ($t instanceof PotentialMethodMutatingCallType) {
-                $resolvedCallee = $this->resolveAndNormalizeCallee($scope, $t->callee);
+                $resolvedCallee = $t->callee === $type->subject
+                    ? $this->normalizeResolvedCallee($resolvedSubject)
+                    : $this->resolveAndNormalizeCallee($scope, $t->callee);
 
                 if (! $this->isMutatingSelfMethod($scope, $resolvedCallee, $t->methodName)) {
                     break;
@@ -754,8 +801,11 @@ class ReferenceTypeResolver
      */
     private function resolveAndNormalizeCallee(Scope $scope, Type $callee): Type
     {
-        $resolved = $this->resolve($scope, $callee);
+        return $this->normalizeResolvedCallee($this->resolve($scope, $callee));
+    }
 
+    private function normalizeResolvedCallee(Type $resolved): Type
+    {
         if ($resolved instanceof TemplateType && $resolved->is) {
             return $resolved->is;
         }

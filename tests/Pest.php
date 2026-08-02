@@ -239,7 +239,7 @@ function getStatementType(string $statement, array $extensions = []): ?Type
     return analyzeFile('<?php', $extensions)->getExpressionType($statement);
 }
 
-function getVariableTypeAfter(string $body, string $var): Type
+function getVariableTypeAfter(string $body, string $var, ?ReferenceTypeResolver $referenceTypeResolver = null): Type
 {
     $index = app(Index::class);
 
@@ -262,7 +262,9 @@ function getVariableTypeAfter(string $body, string $var): Type
         new \PhpParser\Node\Expr\Variable($var, ['startLine' => INF]),
     );
 
-    return (new ReferenceTypeResolver($index))->resolve($scope, $unresolvedType)->setOriginal($unresolvedType);
+    return ($referenceTypeResolver ?? new ReferenceTypeResolver($index))
+        ->resolve($scope, $unresolvedType)
+        ->setOriginal($unresolvedType);
 }
 
 dataset('extendableTemplateTypes', [
