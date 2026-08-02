@@ -58,7 +58,8 @@ class FunctionType extends AbstractType implements FunctionLikeType
     {
         return $type instanceof static
             && $this->returnType->isSame($type->returnType)
-            && collect($this->arguments)->every(fn (Type $t, $i) => $t->isSame($type->arguments[$i]));
+            && count($this->arguments) === count($type->arguments)
+            && collect(array_values($this->arguments))->every(fn (Type $t, $i) => $t->isSame(array_values($type->arguments)[$i]));
     }
 
     public function toString(): string
