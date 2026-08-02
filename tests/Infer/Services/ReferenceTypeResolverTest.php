@@ -3,6 +3,8 @@
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder;
+use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
+use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
@@ -91,6 +93,58 @@ it('support method calls on unions with null', function () {
 
     expect($result->toString())->toBe('string(bar)');
 });
+
+it('resolves a captured method call only once across closures', function () {
+    $counter = new CountingMethodExtension_ReferenceTypeResolverTest;
+    $callbacks = implode(",\n", array_fill(0, 100, '            fn () => $computed'));
+
+    $result = analyzeFile(<<<PHP
+<?php
+
+class ComputeService_ReferenceTypeResolverTest
+{
+    public function compute(): int
+    {
+        return 42;
+    }
+}
+
+class Consumer_ReferenceTypeResolverTest
+{
+    public function callbacks(): array
+    {
+        \$computed = (new ComputeService_ReferenceTypeResolverTest)->compute();
+
+        return [
+{$callbacks}
+        ];
+    }
+}
+PHP, [$counter]);
+
+    expect($result->getClassDefinition('Consumer_ReferenceTypeResolverTest'))
+        ->not->toBeNull()
+        ->and($counter->computeTypeResolutions)->toBe(1);
+});
+
+class CountingMethodExtension_ReferenceTypeResolverTest implements MethodReturnTypeExtension
+{
+    public int $computeTypeResolutions = 0;
+
+    public function shouldHandle(ObjectType $type): bool
+    {
+        return $type->name === 'ComputeService_ReferenceTypeResolverTest';
+    }
+
+    public function getMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        if ($event->name === 'compute') {
+            $this->computeTypeResolutions++;
+        }
+
+        return null;
+    }
+}
 
 it('prunes union members when method does not exist on known class', function () {
     $type = getStatementType(
