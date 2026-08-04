@@ -75,7 +75,7 @@ class ArrayType extends Type
         return $this;
     }
 
-    public function setUniqueItems(bool $uniqueItems = true): static
+    public function setUniqueItems(bool $uniqueItems): static
     {
         $this->uniqueItems = $uniqueItems;
 

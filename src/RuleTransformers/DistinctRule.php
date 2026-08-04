@@ -9,11 +9,8 @@ use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerg
 use Dedoc\Scramble\Support\RuleTransforming\NormalizedRule;
 use Dedoc\Scramble\Support\RuleTransforming\RuleTransformerContext;
 use Dedoc\Scramble\Support\RuleTransforming\SchemaBag;
+use Illuminate\Support\Str;
 
-/**
- * The `distinct` rule is applied to the items of an array (`foo.*`, `foo.*.id`), while `uniqueItems` documents
- * the array itself (`foo`), hence the containing array's schema is the one being transformed here.
- */
 class DistinctRule implements AllRulesSchemasTransformer
 {
     public function shouldHandle(NormalizedRule $rule): bool
@@ -27,39 +24,27 @@ class DistinctRule implements AllRulesSchemasTransformer
             return;
         }
 
-        $schema = $schemaBag->get($arrayField);
+        $schema = $schemaBag->get($arrayField) ?? new ArrayType;
 
-        $arraySchema = match (true) {
-            $schema === null => new ArrayType,
-            $schema instanceof ArrayType => $schema,
-            $schema instanceof UnknownType => (new ArrayType)->addProperties($schema),
-            default => null,
-        };
+        if ($schema instanceof UnknownType) {
+            $schema = (new ArrayType)->addProperties($schema);
+        }
 
-        if (! $arraySchema instanceof ArrayType) {
+        if (! $schema instanceof ArrayType) {
             return;
         }
 
-        $schemaBag->set($arrayField, $arraySchema->setUniqueItems());
+        $schemaBag->set($arrayField, $schema->setUniqueItems(true));
     }
 
-    /**
-     * Gets the name of the array containing the items the rule is applied to: `foo.*.id` results in `foo`.
-     */
     private function getContainingArrayField(string $field): ?string
     {
-        $parts = preg_split(DeepParametersMerger::DOT_REGEX, $field) ?: [$field];
+        $parts = Str::of($field)->split(DeepParametersMerger::DOT_REGEX);
 
-        $wildcardKeys = array_keys($parts, '*', true);
-
-        $lastWildcardKey = end($wildcardKeys);
-
-        // The rule is either not applied to array items, or applied to the items of the root
-        // array, which is not documented as a separate schema.
-        if (! is_int($lastWildcardKey) || $lastWildcardKey === 0) {
+        if (! $lastWildcardKey = $parts->reverse()->search('*')) {
             return null;
         }
 
-        return implode('.', array_slice($parts, 0, $lastWildcardKey));
+        return $parts->take($lastWildcardKey)->join('.');
     }
 }
