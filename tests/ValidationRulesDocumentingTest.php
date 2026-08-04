@@ -132,6 +132,124 @@ it('does not override explicit minItems when required rule is used on array', fu
         ]);
 });
 
+it('converts distinct rule into "uniqueItems" on the containing array', function () {
+    $rules = [
+        'items' => ['required', 'array'],
+        'items.*' => ['integer', 'distinct'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'name' => 'items',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => ['type' => 'integer'],
+                'minItems' => 1,
+                'uniqueItems' => true,
+            ],
+            'required' => true,
+        ]);
+});
+
+it('converts distinct rule into "uniqueItems" when the containing array has no rules on its own', function () {
+    $rules = [
+        'items.*' => ['integer', 'distinct'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'name' => 'items',
+            'schema' => [
+                'type' => 'array',
+                'items' => ['type' => 'integer'],
+                'uniqueItems' => true,
+            ],
+        ]);
+});
+
+it('converts distinct rule on array items property into "uniqueItems" on the containing array', function () {
+    $rules = [
+        'items' => ['array'],
+        'items.*.id' => ['integer', 'distinct:strict'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'name' => 'items',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'id' => ['type' => 'integer'],
+                    ],
+                ],
+                'uniqueItems' => true,
+            ],
+        ]);
+});
+
+it('converts distinct rule into "uniqueItems" on the closest containing array', function () {
+    $rules = [
+        'groups' => ['array'],
+        'groups.*.items' => ['array'],
+        'groups.*.items.*' => ['string', 'distinct:ignore_case'],
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'name' => 'groups',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'items' => [
+                            'type' => 'array',
+                            'items' => ['type' => 'string'],
+                            'uniqueItems' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ])
+        ->and($params[0]['schema'])
+        ->not->toHaveKey('uniqueItems');
+});
+
+it('ignores distinct rule when it is not applied to array items', function () {
+    $rules = [
+        'name' => ['string', 'distinct'],
+    ];
+
+    $params = ($this->buildRulesToParameters)($rules)->handle();
+
+    expect($params = collect($params)->map->toArray()->all())
+        ->toHaveCount(1)
+        ->and($params[0])
+        ->toMatchArray([
+            'name' => 'name',
+            'schema' => ['type' => 'string'],
+        ]);
+});
+
 it('supports present rule in array', function () {
     $rules = [
         'user.password' => ['present'],
