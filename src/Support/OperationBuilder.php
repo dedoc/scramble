@@ -9,6 +9,7 @@ use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\ProNudge\ProNudgeCollector;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
 use InvalidArgumentException;
@@ -19,15 +20,19 @@ class OperationBuilder
     /**
      * @return Operation[]
      */
-    public function buildAll(OpenApiContext $context, Route $route, TypeTransformer $typeTransformer): array
-    {
+    public function buildAll(
+        OpenApiContext $context,
+        Route $route,
+        TypeTransformer $typeTransformer,
+        ProNudgeCollector $proNudge,
+    ): array {
         $methods = array_map('strtolower', Arr::wrap(($context->config->operationMethodsResolver)($route)));
 
         $operations = [];
         foreach ($methods as $method) {
             $routeInfo = new RouteInfo($route, $method);
 
-            $operation = $this->build($routeInfo, $context->openApi, $context->config, $typeTransformer);
+            $operation = $this->build($routeInfo, $context->openApi, $context->config, $typeTransformer, $proNudge);
 
             $operations[] = $operation;
         }
@@ -35,8 +40,13 @@ class OperationBuilder
         return $operations;
     }
 
-    public function build(RouteInfo $routeInfo, OpenApi $openApi, GeneratorConfig $config, TypeTransformer $typeTransformer): Operation
-    {
+    public function build(
+        RouteInfo $routeInfo,
+        OpenApi $openApi,
+        GeneratorConfig $config,
+        TypeTransformer $typeTransformer,
+        ProNudgeCollector $proNudge,
+    ): Operation {
         $operation = new Operation('get');
 
         foreach ($config->operationTransformers->all() as $operationTransformerClass) {
@@ -48,6 +58,7 @@ class OperationBuilder
                     GeneratorConfig::class => $config,
                     TypeTransformer::class => $typeTransformer,
                     DiagnosticsCollector::class => $typeTransformer->context->diagnostics->forRoute($routeInfo->route),
+                    ProNudgeCollector::class => $proNudge,
                 ]);
 
             if (is_callable($instance)) {

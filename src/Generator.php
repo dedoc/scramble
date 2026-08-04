@@ -23,6 +23,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Generator\UniqueNameOptions;
 use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
 use Dedoc\Scramble\Support\OperationBuilder;
+use Dedoc\Scramble\Support\ProNudge\ProNudgeCollector;
 use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
@@ -36,13 +37,17 @@ use Throwable;
 
 class Generator
 {
+    public ProNudgeCollector $proNudge;
+
     protected bool $throwExceptions = true;
 
     public ?OpenApiContext $context = null;
 
     public function __construct(
         private OperationBuilder $operationBuilder,
-    ) {}
+    ) {
+        $this->proNudge = new ProNudgeCollector;
+    }
 
     public function setThrowExceptions(bool $throwExceptions): static
     {
@@ -53,6 +58,8 @@ class Generator
 
     public function __invoke(?GeneratorConfig $config = null)
     {
+        $this->proNudge = new ProNudgeCollector;
+
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
         $routes = $this->getRoutes($config);
@@ -307,7 +314,7 @@ class Generator
     /** @return Operation[] */
     private function routeToOperations(OpenApiContext $context, Route $route, TypeTransformer $typeTransformer): array
     {
-        $operations = $this->operationBuilder->buildAll($context, $route, $typeTransformer);
+        $operations = $this->operationBuilder->buildAll($context, $route, $typeTransformer, $this->proNudge);
 
         foreach ($operations as $operation) {
             $this->ensureSchemaTypes($context, $route, $operation);

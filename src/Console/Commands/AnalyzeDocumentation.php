@@ -7,6 +7,7 @@ use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\ProNudge\ProNudgeReporter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -54,6 +55,8 @@ class AnalyzeDocumentation extends Command
         if ($errorCount > 0) {
             $this->error($this->formatSummary($errorCount, $warningCount, isError: true));
 
+            (new ProNudgeReporter($generator->proNudge))->report($this);
+
             return static::FAILURE;
         }
 
@@ -64,6 +67,8 @@ class AnalyzeDocumentation extends Command
         }
 
         $this->info('Everything is fine! Documentation is generated without any errors 🍻');
+
+        (new ProNudgeReporter($generator->proNudge))->report($this);
 
         return static::SUCCESS;
     }

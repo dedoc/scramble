@@ -23,6 +23,7 @@ use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\ParameterExtra
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\QueryParametersConverter;
+use Dedoc\Scramble\Support\ProNudge\ProNudgeCollector;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -37,6 +38,7 @@ class RequestBodyExtension implements OperationTransformer
         protected TypeTransformer $openApiTransformer,
         protected GeneratorConfig $config,
         protected DiagnosticsCollector $diagnostics,
+        private readonly ProNudgeCollector $proNudge,
     ) {}
 
     public function handle(Operation $operation, RouteInfo $routeInfo): void
@@ -280,6 +282,7 @@ class RequestBodyExtension implements OperationTransformer
                 TypeTransformer::class => $this->openApiTransformer,
                 Operation::class => $operation,
                 DiagnosticsCollector::class => $diagnostics,
+                ProNudgeCollector::class => $this->proNudge,
                 JsonApiQueryParameterFactory::class => new JsonApiQueryParameterFactory(
                     arraySerialization: $this->config->jsonApi->arraySerialization,
                 ),

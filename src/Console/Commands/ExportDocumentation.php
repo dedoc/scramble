@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Console\Commands;
 
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\ProNudge\ProNudgeReporter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
@@ -31,5 +32,7 @@ class ExportDocumentation extends Command
         File::put($filename, $specification);
 
         $this->info("OpenAPI document exported to {$filename}.");
+
+        (new ProNudgeReporter($generator->proNudge))->report($this);
     }
 }
