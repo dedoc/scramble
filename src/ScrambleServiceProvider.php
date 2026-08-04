@@ -4,6 +4,7 @@ namespace Dedoc\Scramble;
 
 use Dedoc\Scramble\Configuration\GeneratorConfigCollection;
 use Dedoc\Scramble\Configuration\OperationTransformers;
+use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\CacheDocumentation;
 use Dedoc\Scramble\Console\Commands\ClearDocumentationCache;
@@ -62,6 +63,9 @@ use Dedoc\Scramble\Support\InferExtensions\TransformsToResourceCollectionExtensi
 use Dedoc\Scramble\Support\InferExtensions\TranslationReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
+use Dedoc\Scramble\Support\ProNudge\Extensions\LaravelDataRequestBodyNudgeExtractor;
+use Dedoc\Scramble\Support\ProNudge\Extensions\LaravelDataReturnTypeNudgeExtension;
+use Dedoc\Scramble\Support\ProNudge\Extensions\QueryBuilderUsageNudgeExtension;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\VoidType;
@@ -305,9 +309,27 @@ class ScrambleServiceProvider extends PackageServiceProvider
             Scramble::configure()->expose(false);
         }
 
+        $this->registerProNudge();
+
         $this->app->booted(function () {
             $this->registerRoutes();
         });
+    }
+
+    private function registerProNudge(): void
+    {
+        if (class_exists('Dedoc\ScramblePro\ScrambleProServiceProvider')) {
+            return;
+        }
+
+        Scramble::configure()
+            ->withOperationTransformers([
+                LaravelDataReturnTypeNudgeExtension::class,
+                QueryBuilderUsageNudgeExtension::class,
+            ])
+            ->withParametersExtractors(function (ParametersExtractors $extractors) {
+                $extractors->append(LaravelDataRequestBodyNudgeExtractor::class);
+            });
     }
 
     private function registerRoutes(): void

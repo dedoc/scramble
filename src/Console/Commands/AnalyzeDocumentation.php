@@ -7,6 +7,7 @@ use Dedoc\Scramble\Exceptions\ConsoleRenderable;
 use Dedoc\Scramble\Exceptions\RouteAware;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\ProNudge\ProNudgeReporter;
 use Illuminate\Console\Command;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
@@ -35,10 +36,14 @@ class AnalyzeDocumentation extends Command
         if (count($generator->exceptions)) {
             $this->error('[ERROR] Found '.count($generator->exceptions).' errors.');
 
+            (new ProNudgeReporter($generator->proNudge))->report($this);
+
             return static::FAILURE;
         }
 
         $this->info('Everything is fine! Documentation is generated without any errors 🍻');
+
+        (new ProNudgeReporter($generator->proNudge))->report($this);
 
         return static::SUCCESS;
     }

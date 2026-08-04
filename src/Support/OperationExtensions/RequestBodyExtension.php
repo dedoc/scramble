@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\GeneratorConfig;
+use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\ContainerUtils;
 use Dedoc\Scramble\Support\Factories\JsonApiQueryParameterFactory;
@@ -20,6 +21,7 @@ use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\ParameterExtra
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\QueryParametersConverter;
+use Dedoc\Scramble\Support\ProNudge\ProNudgeCollector;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -29,6 +31,15 @@ use Throwable;
 class RequestBodyExtension extends OperationExtension
 {
     const HTTP_METHODS_WITHOUT_REQUEST_BODY = ['get', 'delete', 'head'];
+
+    public function __construct(
+        Infer $infer,
+        TypeTransformer $openApiTransformer,
+        GeneratorConfig $config,
+        private readonly ProNudgeCollector $proNudge,
+    ) {
+        parent::__construct($infer, $openApiTransformer, $config);
+    }
 
     public function handle(Operation $operation, RouteInfo $routeInfo): void
     {
@@ -261,6 +272,7 @@ class RequestBodyExtension extends OperationExtension
                 GeneratorConfig::class => $this->config,
                 TypeTransformer::class => $this->openApiTransformer,
                 Operation::class => $operation,
+                ProNudgeCollector::class => $this->proNudge,
                 JsonApiQueryParameterFactory::class => new JsonApiQueryParameterFactory(
                     arraySerialization: $this->config->jsonApi->arraySerialization,
                 ),
