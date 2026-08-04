@@ -16,6 +16,8 @@ class ArrayType extends Type
 
     public $additionalItems = null;
 
+    public ?bool $uniqueItems = null;
+
     public function __construct()
     {
         parent::__construct('array');
@@ -73,6 +75,13 @@ class ArrayType extends Type
         return $this;
     }
 
+    public function setUniqueItems(bool $uniqueItems): static
+    {
+        $this->uniqueItems = $uniqueItems;
+
+        return $this;
+    }
+
     public function toArray()
     {
         $shouldOmitItems = $this->items->getAttribute('missing')
@@ -90,6 +99,7 @@ class ArrayType extends Type
                 'minItems' => $this->minItems,
                 'maxItems' => $this->maxItems,
                 'additionalItems' => $this->additionalItems,
+                'uniqueItems' => $this->uniqueItems,
             ], fn ($v) => $v !== null)
         );
     }

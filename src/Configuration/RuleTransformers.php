@@ -6,6 +6,7 @@ use Dedoc\Scramble\Contracts\AllRulesSchemasTransformer;
 use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\RuleTransformers\AcceptedRule;
 use Dedoc\Scramble\RuleTransformers\ConfirmedRule;
+use Dedoc\Scramble\RuleTransformers\DistinctRule;
 use Dedoc\Scramble\RuleTransformers\EnumRule;
 use Dedoc\Scramble\RuleTransformers\ExistsRule;
 use Dedoc\Scramble\RuleTransformers\FileRule;
@@ -88,6 +89,7 @@ class RuleTransformers
             InRule::class,
             FileRule::class,
             ConfirmedRule::class,
+            DistinctRule::class,
             ExistsRule::class,
             RegexRule::class,
         ];
