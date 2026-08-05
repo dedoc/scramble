@@ -12,10 +12,13 @@ use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
+use Dedoc\Scramble\Tests\Files\SampleUserModel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Laravel\Scout\Builder as ScoutBuilder;
+use Laravel\Scout\Searchable;
 
 beforeEach(function () {
     $this->index = new Index;
@@ -35,6 +38,13 @@ class UserModel_ModelExtensionTest extends Model
 }
 
 class PostModel_ModelExtensionTest extends Model {}
+
+class SearchableModel_ModelExtensionTest extends Model
+{
+    use Searchable;
+
+    protected $with = ['posts'];
+}
 
 describe('model annotations (introduced in 11.15.0)', function () {
     it('handles static', function () {
@@ -102,6 +112,30 @@ describe('model annotations (introduced in 11.15.0)', function () {
 
         expect($relationsType->toString())->toBe('list{string(parent), string(children), string(user)}');
     });
+
+    it('seeds model relations from $with on Scout search()', function (string $model, string $expectedRelationsType) {
+        $builderType = getStatementType($model.'::search()');
+
+        expect($builderType)->toBeInstanceOf(Generic::class)
+            ->and($builderType->name)->toBe(ScoutBuilder::class);
+
+        $relationsType = ReferenceTypeResolver::getInstance()
+            ->resolve(
+                new GlobalScope,
+                new PropertyFetchReferenceType($builderType->templateTypes[0], 'relations'),
+            );
+
+        expect($relationsType->toString())->toBe($expectedRelationsType);
+    })->with([
+        'without default eager loads' => [
+            SampleUserModel::class,
+            'list{}',
+        ],
+        'with default eager loads' => [
+            SearchableModel_ModelExtensionTest::class,
+            'list{string(posts)}',
+        ],
+    ]);
 
     it('carries loaded relations from $with through static model shortcuts', function (string $expression, string $expectedRelationsType) {
         $type = getStatementType($expression);

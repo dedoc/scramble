@@ -39,7 +39,38 @@ class KeyedArrayType extends AbstractType
 
     public function isSame(Type $type)
     {
-        return false;
+        if (
+            ! $type instanceof static
+            || $type->isList !== $this->isList
+            || count($type->items) !== count($this->items)
+        ) {
+            return false;
+        }
+
+        foreach ($this->items as $index => $item) {
+            $otherItem = $type->items[$index];
+
+            if (
+                $item->key !== $otherItem->key
+                || $item->isOptional !== $otherItem->isOptional
+                || $item->shouldUnpack !== $otherItem->shouldUnpack
+                || ! $item->value->isSame($otherItem->value)
+                || ! $this->keyTypesAreSame($item->keyType, $otherItem->keyType)
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function keyTypesAreSame(?Type $left, ?Type $right): bool
+    {
+        if ($left === null || $right === null) {
+            return $left === $right;
+        }
+
+        return $left->isSame($right);
     }
 
     public function getItemValueTypeByKey(string|int $key, Type $default = new UnknownType): Type
