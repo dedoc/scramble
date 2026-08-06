@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
@@ -87,6 +88,24 @@ class ModelExtensionTest_ModelWithRelationOverride extends SamplePostModel {}
 class ModelExtensionTest_ModelWithLegacyCollectionProperty extends SamplePostModel {}
 
 class ModelExtensionTest_OverriddenUser extends Model {}
+
+it('refines a compatible PHPDoc union with the inferred model attribute type', function () {
+    $this->infer->analyzeClass(ModelExtensionTest_ModelWithAnnotatedDate::class);
+
+    $propertyType = (new ObjectType(ModelExtensionTest_ModelWithAnnotatedDate::class))
+        ->getPropertyType('title');
+
+    expect($propertyType->toString())->toBe(Carbon::class.'|null')
+        ->and($propertyType->getAttribute('source'))->toBe('phpDoc');
+});
+
+/** @property Carbon|null $title */
+class ModelExtensionTest_ModelWithAnnotatedDate extends SamplePostModel
+{
+    protected $casts = [
+        'title' => 'datetime:Y-m-d',
+    ];
+}
 
 it('adds toArray method type the model class without defined toArray class', function () {
     $this->infer->analyzeClass(SampleUserModel::class);
