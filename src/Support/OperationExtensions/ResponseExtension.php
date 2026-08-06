@@ -226,7 +226,30 @@ class ResponseExtension extends OperationExtension
      */
     private function mergeHeaders(Collection $responses): array
     {
-        return array_merge(...$responses->map->headers);
+        $headers = array_merge(...$responses->map->headers);
+
+        foreach ($headers as $name => $header) {
+            if ($responses->contains(fn (Response $response) => ! array_key_exists($name, $response->headers))) {
+                $headers[$name] = $this->makeHeaderOptional($header);
+            }
+        }
+
+        return $headers;
+    }
+
+    private function makeHeaderOptional(Header|Reference $header): Header|Reference
+    {
+        if ($header instanceof Reference) {
+            $resolvedHeader = $header->resolve();
+
+            if (! $resolvedHeader instanceof Header) {
+                return $header;
+            }
+
+            $header = $resolvedHeader;
+        }
+
+        return (clone $header)->setRequired(null);
     }
 
     /**

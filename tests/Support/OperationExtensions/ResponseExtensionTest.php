@@ -49,6 +49,7 @@ it('combines responses with different content types', function () {
     expect($response = $openApiDocument['paths']['/test']['get']['responses'][200])
         ->not->toBeNull()
         ->and($response['headers'])->toHaveKey('Content-Disposition')
+        ->and($response['headers']['Content-Disposition'])->not->toHaveKey('required')
         ->and($response['content'])->toBe([
             'application/pdf' => ['schema' => ['type' => 'string', 'format' => 'binary']],
             'application/json' => [
@@ -71,6 +72,24 @@ class MultipleMimes_ResponseExtensionTest_Controller
         }
 
         return response()->download('data.pdf');
+    }
+}
+
+it('marks streamed response headers optional when another same-status response is not streamed', function () {
+    $openApiDocument = generateForRoute(fn () => RouteFacade::get('api/test', PartiallyStreamed_ResponseExtensionTest_Controller::class));
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][200]['headers']['Transfer-Encoding'])
+        ->not->toHaveKey('required');
+});
+class PartiallyStreamed_ResponseExtensionTest_Controller
+{
+    public function __invoke()
+    {
+        if (foobar()) {
+            return response()->stream(fn () => null);
+        }
+
+        return response()->json(['foo' => 'bar']);
     }
 }
 
