@@ -45,6 +45,44 @@ class Deprecated_Description_ResponseExtensionTest_Controller
     }
 }
 
+it('deprecated attribute sets key and description', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [Deprecated_Attribute_ResponseExtensionTest_Controller::class, 'deprecated']);
+    });
+
+    expect($openApiDocument['paths']['/test']['get'])
+        ->toHaveKey('description', '1.0.0 Use replacement instead')
+        ->toHaveKey('deprecated', true);
+});
+
+class Deprecated_Attribute_ResponseExtensionTest_Controller
+{
+    #[\Deprecated(message: 'Use replacement instead', since: '1.0.0')]
+    public function deprecated()
+    {
+        return false;
+    }
+}
+
+it('deprecated attribute without arguments sets deprecation key', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [Deprecated_Attribute_Without_Arguments_ResponseExtensionTest_Controller::class, 'deprecated']);
+    });
+
+    expect($openApiDocument['paths']['/test']['get'])
+        ->not()->toHaveKey('description')
+        ->toHaveKey('deprecated', true);
+});
+
+class Deprecated_Attribute_Without_Arguments_ResponseExtensionTest_Controller
+{
+    #[\Deprecated]
+    public function deprecated()
+    {
+        return false;
+    }
+}
+
 it('deprecated class with description sets keys', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::get('api/test', [Deprecated_Class_Description_ResponseExtensionTest_Controller::class, 'deprecated']);
