@@ -59,6 +59,7 @@ use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ShallowFunctionDefinition;
+use Dedoc\Scramble\Support\InferExtensions\StorageResponseTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\TransformsToResourceCollectionExtension;
 use Dedoc\Scramble\Support\InferExtensions\TranslationReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
@@ -207,6 +208,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                         new ValidatorTypeInfer,
                         new ResourceCollectionTypeInfer,
                         new ResponseFactoryTypeInfer,
+                        new StorageResponseTypeInfer,
 
                         new ArrayMergeReturnTypeExtension,
                         $app->make(TranslationReturnTypeExtension::class),

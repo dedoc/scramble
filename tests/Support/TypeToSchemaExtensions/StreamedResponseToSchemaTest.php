@@ -8,7 +8,15 @@ use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\StringType as InferStringType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\StreamedResponseToSchema;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 beforeEach(function () {
     $this->components = new Components;
@@ -124,6 +132,107 @@ it('transforms plain streamed type to response', function () {
                 'required' => true,
                 'schema' => ['type' => 'string', 'enum' => ['chunked']],
             ],
+        ],
+    ]);
+});
+
+it('documents a streamed download with a binary content type', function () {
+    $type = new Generic(StreamedResponse::class, [
+        new InferStringType,
+        new LiteralIntegerType(200),
+        new KeyedArrayType([
+            new ArrayItemType_(
+                'Content-Type',
+                new LiteralStringType('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+            ),
+        ]),
+    ]);
+
+    $response = $this->transformer->toResponse($type);
+
+    expect($response->toArray())->toBeSameJson([
+        'description' => '',
+        'content' => [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => [
+                'schema' => [
+                    'type' => 'string',
+                    'format' => 'binary',
+                ],
+            ],
+        ],
+        'headers' => [
+            'Transfer-Encoding' => [
+                'required' => true,
+                'schema' => ['type' => 'string', 'enum' => ['chunked']],
+            ],
+        ],
+    ]);
+});
+
+it('documents Storage streamed file responses as binary', function (string $expression) {
+    $type = getStatementType($expression);
+
+    expect($type->toString())->toBe(StreamedResponse::class.'<string, int(200), array{Content-Type: string(application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)}>');
+
+    $response = $this->transformer->toResponse($type);
+
+    expect($response->toArray())->toBeSameJson([
+        'description' => '',
+        'content' => [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => [
+                'schema' => [
+                    'type' => 'string',
+                    'format' => 'binary',
+                ],
+            ],
+        ],
+        'headers' => [
+            'Transfer-Encoding' => [
+                'required' => true,
+                'schema' => ['type' => 'string', 'enum' => ['chunked']],
+            ],
+        ],
+    ]);
+})->with([
+    'download' => Storage::class."::download(\$pathToSpreadSheet, 'device_export_'.now()->format('Ymd_His').'.xlsx', ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])",
+    'disk download' => Storage::class."::disk()->download(\$pathToSpreadSheet, 'device_export_'.now()->format('Ymd_His').'.xlsx', ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])",
+    'response' => Storage::class."::response(\$pathToSpreadSheet, 'device_export_'.now()->format('Ymd_His').'.xlsx', ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])",
+    'serve' => Storage::class."::serve(\$request, \$pathToSpreadSheet, 'device_export_'.now()->format('Ymd_His').'.xlsx', ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])",
+]);
+
+it('infers Storage response MIME type from file arguments', function (string $expression, string $contentType) {
+    $type = getStatementType($expression);
+
+    expect($type->getAttribute('mimeType'))->toBe($contentType);
+
+    $content = $this->transformer->toResponse($type)->toArray()['content'];
+
+    expect($content)->toHaveKey($contentType)
+        ->and($content[$contentType]['schema'])->toBe([
+            'type' => 'string',
+            'format' => 'binary',
+        ]);
+})->with([
+    'path' => [
+        Storage::class."::download('exports/report.xlsx')",
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ],
+    'name fallback' => [
+        Storage::class."::download(\$path, 'report.pdf')",
+        'application/pdf',
+    ],
+]);
+
+it('prefers an explicit Storage response content type over the file extension', function () {
+    $type = getStatementType(
+        Storage::class."::download('exports/report.xlsx', headers: ['Content-Type' => 'text/csv'])",
+    );
+
+    $content = $this->transformer->toResponse($type)->toArray()['content'];
+
+    expect($content)->toBe([
+        'text/csv' => [
+            'schema' => ['type' => 'string'],
         ],
     ]);
 });
