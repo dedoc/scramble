@@ -1,11 +1,17 @@
 <?php
 
+use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
+use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
+use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
 use Dedoc\Scramble\Generator;
+use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\ProNudge\ProNudgeReporter;
 use Dedoc\Scramble\Support\ProNudge\ProNudgeSignal;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
@@ -86,6 +92,48 @@ it('prints pro nudge after export when signals are present', function () {
         ->expectsOutputToContain('Laravel Data request and response schemas')
         ->expectsOutputToContain('Learn more: '.ProNudgeReporter::PRO_URL)
         ->assertOk();
+});
+
+it('prints diagnostics and then pro nudge when analyzing documentation', function () {
+    Scramble::routes(fn (Route $r) => str_starts_with($r->uri, 'api/pro-nudge'));
+    Scramble::configure()->withDocumentTransformers(function (OpenApi $_, OpenApiContext $context) {
+        $context->diagnostics->report(new GenericDiagnostic('Test diagnostic warning.', DiagnosticSeverity::Warning));
+    });
+
+    RouteFacade::get('api/pro-nudge/data-return', [ProNudge_DataReturn_Controller::class, 'index']);
+
+    $exitCode = Artisan::call(AnalyzeDocumentation::class);
+    $output = Artisan::output();
+    $diagnosticPosition = strpos($output, 'Test diagnostic warning.');
+    $proNudgePosition = strpos($output, 'Scramble detected:');
+
+    expect($exitCode)->toBe(0)
+        ->and($diagnosticPosition)->not->toBeFalse()
+        ->and($proNudgePosition)->not->toBeFalse()
+        ->and($diagnosticPosition)->toBeLessThan($proNudgePosition)
+        ->and(str_ends_with(trim($output), ProNudgeReporter::PRO_URL))->toBeTrue();
+});
+
+it('prints diagnostics and then pro nudge when exporting documentation', function () {
+    Scramble::routes(fn (Route $r) => str_starts_with($r->uri, 'api/pro-nudge'));
+    Scramble::configure()->withDocumentTransformers(function (OpenApi $_, OpenApiContext $context) {
+        $context->diagnostics->report(new GenericDiagnostic('Test diagnostic error.', DiagnosticSeverity::Error));
+    });
+
+    RouteFacade::get('api/pro-nudge/data-return', [ProNudge_DataReturn_Controller::class, 'index']);
+
+    File::shouldReceive('put')->never();
+
+    $exitCode = Artisan::call(ExportDocumentation::class);
+    $output = Artisan::output();
+    $diagnosticPosition = strpos($output, 'Test diagnostic error.');
+    $proNudgePosition = strpos($output, 'Scramble detected:');
+
+    expect($exitCode)->toBe(1)
+        ->and($diagnosticPosition)->not->toBeFalse()
+        ->and($proNudgePosition)->not->toBeFalse()
+        ->and($diagnosticPosition)->toBeLessThan($proNudgePosition)
+        ->and(str_ends_with(trim($output), ProNudgeReporter::PRO_URL))->toBeTrue();
 });
 
 class ProNudge_DataReturn_Controller
