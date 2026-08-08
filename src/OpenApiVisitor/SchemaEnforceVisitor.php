@@ -63,7 +63,7 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
                 $exception->setRoute($this->route);
             }
 
-            $this->diagnostics->reportQuietly(GenericDiagnostic::fromException($exception));
+            $this->diagnostics->report(GenericDiagnostic::fromException($exception));
         }
     }
 }

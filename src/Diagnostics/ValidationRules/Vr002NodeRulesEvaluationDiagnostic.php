@@ -2,19 +2,15 @@
 
 namespace Dedoc\Scramble\Diagnostics\ValidationRules;
 
-use Dedoc\Scramble\Contracts\Diagnostics\WithCodeLocation;
 use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
-use Dedoc\Scramble\Diagnostics\Concerns\HasCodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Throwable;
 
-class Vr002NodeRulesEvaluationDiagnostic extends AbstractCodedDiagnostic implements WithCodeLocation
+class Vr002NodeRulesEvaluationDiagnostic extends AbstractCodedDiagnostic
 {
-    use HasCodeLocation;
-
-    public static function fromThrowable(Throwable $throwable): self
+    public static function fromThrowable(Throwable $throwable, string $message): self
     {
-        return new self($throwable->getMessage(), DiagnosticSeverity::Warning, $throwable);
+        return new self($message, DiagnosticSeverity::Warning, $throwable);
     }
 
     public function code(): string

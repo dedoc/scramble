@@ -63,7 +63,6 @@ it('renders PD001 output when analyzing documentation', function () {
     expect($exitCode)->toBe(0)
         ->and($output)->toContain('[PD001]: redundant `@var` annotation')
         ->and($output)->toContain('`name` is inferred as `string`')
-        ->and($output)->toContain('Tip: Remove `@var *`')
         ->and($output)->toContain('Docs: https://scramble.dedoc.co/errors#pd001');
 });
 

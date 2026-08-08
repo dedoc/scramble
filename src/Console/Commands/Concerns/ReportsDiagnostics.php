@@ -3,14 +3,13 @@
 namespace Dedoc\Scramble\Console\Commands\Concerns;
 
 use Dedoc\Scramble\Console\Commands\Components\Block;
-use Dedoc\Scramble\Console\Commands\Components\TermsOfContentItem;
+use Dedoc\Scramble\Console\Commands\Components\Code;
 use Dedoc\Scramble\Contracts\Diagnostics\CodedDiagnostic;
 use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
-use Dedoc\Scramble\Contracts\Diagnostics\WithCodeLocation;
+use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Exceptions\ConsoleRenderable;
 use Illuminate\Console\Command;
-use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -22,19 +21,19 @@ trait ReportsDiagnostics
      */
     protected function reportDiagnostics(Collection $diagnostics, bool $reportSuccess = true): int
     {
-        $this->groupDiagnosticsByRoute($diagnostics)
-            ->sortKeysUsing(static function (string $a, string $b): int {
-                if ($a === '') {
-                    return $b === '' ? 0 : 1;
-                }
-                if ($b === '') {
-                    return -1;
-                }
+        $diagnostics
+            ->groupBy(fn (Diagnostic $d) => $d->context() ?: 'General')
+            ->sortKeys()
+            ->each(function (Collection $contextDiagnostics, string $context) {
+                $context = Str::replace(base_path().DIRECTORY_SEPARATOR, '', $context);
 
-                return strcmp($a, $b);
-            })
-            ->each(function (Collection $routeDiagnostics, string $routeKey) {
-                $this->renderDiagnosticsGroup($routeDiagnostics, $routeKey);
+                $this->line("<options=bold>{$context}</>");
+                $this->line('');
+
+                $contextDiagnostics->each(function (Diagnostic $d) {
+                    $this->renderDiagnosticEntry($d);
+                    $this->line('');
+                });
             });
 
         $errorCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)->count();
@@ -69,148 +68,17 @@ trait ReportsDiagnostics
         return "[$bracket] Found $errorLabel, $warningLabel.";
     }
 
-    /**
-     * @param  Collection<int, Diagnostic>  $diagnostics
-     * @return Collection<string, Collection<int, Diagnostic>>
-     */
-    private function groupDiagnosticsByRoute(Collection $diagnostics): Collection
-    {
-        return $diagnostics->groupBy(fn (Diagnostic $d) => '');
-    }
-
-    /**
-     * @param  Collection<int, Diagnostic>  $diagnostics
-     */
-    private function renderDiagnosticsGroup(Collection $diagnostics, string $groupKey): void
-    {
-        if ($groupKey === '') {
-            $diagnostics
-                ->groupBy(fn (Diagnostic $d) => $d->context() ?: 'General')
-                ->sortKeys()
-                ->each(function (Collection $contextDiagnostics, string $context) {
-                    $context = Str::replace(base_path().DIRECTORY_SEPARATOR, '', $context);
-
-                    $this->line("<options=bold>{$context}</>");
-                    $this->line('');
-
-                    $contextDiagnostics->each(function (Diagnostic $d) {
-                        $this->renderDiagnosticEntry($d);
-                        $this->line('');
-                    });
-                });
-
-            return;
-        }
-
-        $this->renderRouteDiagnosticsHeader($diagnostics);
-
-        $byCategory = $diagnostics->groupBy(fn (Diagnostic $d) => $d->category() ?: 'General')->sortKeys();
-
-        $byCategory->each(function (Collection $categoryDiagnostics, string $category) {
-            $this->line("<options=bold>{$category}</>");
-            $this->line('');
-
-            $this->renderSeveritySection($categoryDiagnostics, DiagnosticSeverity::Error, 'Errors');
-            $this->renderSeveritySection($categoryDiagnostics, DiagnosticSeverity::Warning, 'Warnings');
-
-            $this->line('');
-        });
-    }
-
-    /**
-     * @param  Collection<int, Diagnostic>  $diagnostics
-     */
-    private function renderSeveritySection(Collection $diagnostics, DiagnosticSeverity $severity, string $label): void
-    {
-        $section = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === $severity);
-        if ($section->isEmpty()) {
-            return;
-        }
-
-        $this->line("{$label} ({$section->count()})");
-        $this->line('');
-
-        $section->each(function (Diagnostic $d) {
-            $this->renderDiagnosticEntry($d);
-            $this->line('');
-        });
-    }
-
-    /**
-     * @param  Collection<int, Diagnostic>  $routeDiagnostics
-     */
-    private function renderRouteDiagnosticsHeader(Collection $routeDiagnostics): void
-    {
-        $first = $routeDiagnostics->first(fn (Diagnostic $d) => $d->route() !== null);
-        if (! $first instanceof Diagnostic || ! $route = $first->route()) {
-            return;
-        }
-
-        $method = implode('|', $route->methods());
-        $errorCount = $routeDiagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)->count();
-        $warningCount = $routeDiagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Warning)->count();
-
-        $statsParts = [];
-        if ($errorCount > 0) {
-            $statsParts[] = '<fg=red>'.$errorCount.' '.Str::plural('error', $errorCount).'</>';
-        }
-        if ($warningCount > 0) {
-            $statsParts[] = '<fg=yellow>'.$warningCount.' '.Str::plural('warning', $warningCount).'</>';
-        }
-
-        $stats = implode(', ', $statsParts);
-
-        $right = '<options=bold;fg='.$this->getHttpMethodColor($method).'>'.$method."</> $route->uri $stats";
-
-        $tocComponent = new TermsOfContentItem(
-            right: $right,
-            left: $this->getRouteAction($route),
-        );
-
-        $tocComponent->render($this->output);
-
-        $this->line('');
-    }
-
     private function renderDiagnosticEntry(Diagnostic $d): void
     {
         $pad = 4;
 
         if ($d instanceof CodedDiagnostic) {
-            if ($d instanceof WithCodeLocation && $location = $d->location()) {
-                $this->output->writeln('    --> line '.$location->line.' ['.$d->code().']: '.$d->message());
-            }
-
-            if (method_exists($d, 'render')) {
-                $d->render($this->output);
-            } else {
-                $message = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $d->message());
-                $lines = explode("\n", $message);
-                $first = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $lines[0]);
-                $continuationLines = array_slice($lines, 1);
-
-                (new Block(
-                    "<options=bold>[{$d->code()}] {$first}</>",
-                    $pad,
-                ))->render($this->output);
-
-                foreach ($continuationLines as $line) {
-                    (new Block($line, $pad))->render($this->output);
-                }
-            }
-
-            $this->output->writeln('');
-
-            if ($d->tip() !== '') {
-                (new Block("Tip: {$d->tip()}", $pad))->render($this->output);
-            }
-
-            (new Block("Docs: {$d->documentationUrl()}", $pad))->render($this->output);
+            $this->renderCodedDiagnostic($d, $pad);
 
             return;
         }
 
-        $msg = Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $d->message());
+        $msg = $this->formatDiagnosticMessage($d->message());
         (new Block($msg, $pad))->render($this->output);
 
         $exception = $d->toException();
@@ -219,47 +87,52 @@ trait ReportsDiagnostics
         }
     }
 
-    private function getRouteKey(?Route $route): string
+    private function renderCodedDiagnostic(CodedDiagnostic $d, int $pad): void
     {
-        if (! $route) {
-            return '';
+        $location = $d instanceof AbstractCodedDiagnostic ? $d->location() : null;
+        $annotation = $d instanceof AbstractCodedDiagnostic ? $d->codeAnnotation() : null;
+
+        if ($location && $annotation) {
+            $this->output->writeln('    --> line '.$location->line.' ['.$d->code().']: '.$d->message());
+
+            (new Code(
+                $location->file,
+                $location->line,
+                linesBefore: $annotation->linesBefore,
+                linesAfter: $annotation->linesAfter,
+            ))
+                ->annotate($annotation->anchor, $annotation->message)
+                ->render($this->output);
+        } elseif ($location) {
+            $this->output->writeln('    --> line '.$location->line.' ['.$d->code().']: '.$d->message());
+
+            (new Code($location->file, $location->line))->render($this->output);
+        } else {
+            $message = $this->formatDiagnosticMessage($d->message());
+            $lines = explode("\n", $message);
+            $first = $this->formatDiagnosticMessage($lines[0]);
+
+            (new Block(
+                "<options=bold>[{$d->code()}] {$first}</>",
+                $pad,
+            ))->render($this->output);
+
+            foreach (array_slice($lines, 1) as $line) {
+                (new Block($line, $pad))->render($this->output);
+            }
         }
 
-        $method = implode('|', $route->methods());
-        $uses = $route->getAction('uses');
-        $actionPart = is_string($uses) ? $uses : '';
+        $this->output->writeln('');
 
-        return $method.'.'.$actionPart;
+        if ($d->tip() !== '') {
+            (new Block("Tip: {$d->tip()}", $pad))->render($this->output);
+        }
+
+        (new Block("Docs: {$d->documentationUrl()}", $pad))->render($this->output);
     }
 
-    private function getHttpMethodColor(string $method): string
+    private function formatDiagnosticMessage(string $message): string
     {
-        return match ($method) {
-            'POST', 'PUT' => 'blue',
-            'DELETE' => 'red',
-            default => 'yellow',
-        };
-    }
-
-    private function getRouteAction(?Route $route): ?string
-    {
-        if (! $route) {
-            return null;
-        }
-
-        $uses = $route->getAction('uses');
-        if (! $uses || ! is_string($uses)) {
-            return null;
-        }
-
-        if (count($parts = explode('@', $uses)) !== 2 || ! method_exists(...$parts)) {
-            return null;
-        }
-
-        [$class, $method] = $parts;
-
-        $eloquentClassName = Str::replace(['App\Http\Controllers\\', 'App\Http\\'], '', $class);
-
-        return "<fg=gray>{$eloquentClassName}@{$method}</>";
+        return Str::replace('Dedoc\Scramble\Support\Generator\Types\\', '', $message);
     }
 }

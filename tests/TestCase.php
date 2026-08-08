@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Tests;
 
 use Closure;
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\ScrambleServiceProvider;
@@ -44,7 +45,7 @@ class TestCase extends Orchestra
     {
         Context::reset();
 
-        ModelExtension::useDiagnostics(null);
+        app()->forgetInstance(DiagnosticsCollector::class);
         ModelExtension::resetCache();
         JsonResourceHelper::$jsonResourcesModelTypesCache = [];
 

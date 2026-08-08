@@ -75,14 +75,4 @@ abstract class AbstractDiagnostic implements Diagnostic
 
         return $this;
     }
-
-    /**
-     * @param  string|callable(string): string  $message
-     */
-    public function withMessage(string|callable $message): static
-    {
-        $this->message = is_callable($message) ? $message($this->message) : $message;
-
-        return $this;
-    }
 }

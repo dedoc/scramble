@@ -48,6 +48,6 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
             }
         }
 
-        throw RulesEvaluationException::fromExceptions($exceptions)->forDiagnostics($this->diagnostics);
+        throw RulesEvaluationException::fromExceptions($exceptions);
     }
 }

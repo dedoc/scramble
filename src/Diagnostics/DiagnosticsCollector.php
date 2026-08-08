@@ -49,7 +49,7 @@ class DiagnosticsCollector
         $context = $this->context ?? $diagnostic->context();
 
         $diagnostic = $diagnostic
-            ->withRoute($this->route)
+            ->withRoute($this->route ?? $diagnostic->route())
             ->withCategory($category)
             ->withContext($context);
 

@@ -2,48 +2,56 @@
 
 namespace Dedoc\Scramble\Diagnostics\PhpDoc;
 
-use Dedoc\Scramble\Console\Commands\Components\Code;
-use Dedoc\Scramble\Contracts\Diagnostics\WithCodeLocation;
 use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
+use Dedoc\Scramble\Diagnostics\CodeAnnotation;
 use Dedoc\Scramble\Diagnostics\CodeLocation;
-use Dedoc\Scramble\Diagnostics\Concerns\HasCodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Illuminate\Console\OutputStyle;
 
-class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic implements WithCodeLocation
+class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic
 {
-    use HasCodeLocation;
-
     private const VAR_TAG = '@var';
 
-    public ?ArrayItemType_ $arrayItemType = null;
-
-    public ?string $arrayItemKey = null;
+    public function __construct(
+        public readonly string $arrayItemKey,
+        public readonly string $inferredType,
+        public readonly int $linesAfter,
+        ?string $context = null,
+    ) {
+        parent::__construct(
+            'redundant `'.self::VAR_TAG.'` annotation',
+            DiagnosticSeverity::Warning,
+            category: 'PHPDoc',
+            context: $context,
+        );
+    }
 
     public static function fromArrayItemType(ArrayItemType_ $item): self
     {
         $arrayItemKey = (string) ($item->key ?: '*');
-        $inferredType = $item->value->toString();
-
         $location = self::findVarTagLocation(CodeLocation::fromArrayItemType($item));
 
-        $diagnostic = (new self(
-            'redundant `'.self::VAR_TAG.'` annotation',
-            DiagnosticSeverity::Warning,
-            category: 'PHPDoc',
+        return (new self(
+            arrayItemKey: $arrayItemKey,
+            inferredType: $item->value->toString(),
+            linesAfter: self::linesAfterPhpDoc($item, $location),
             context: $location?->file,
         ))->withLocation($location);
+    }
 
-        $diagnostic->arrayItemType = $item;
-        $diagnostic->arrayItemKey = $arrayItemKey;
-
-        return $diagnostic;
+    public function codeAnnotation(): CodeAnnotation
+    {
+        return new CodeAnnotation(
+            anchor: self::VAR_TAG,
+            message: "redundant. `$this->arrayItemKey` is inferred as `$this->inferredType`.",
+            linesBefore: 0,
+            linesAfter: $this->linesAfter,
+        );
     }
 
     public function key(): string
     {
-        return parent::key().'|'.($this->arrayItemKey ?: '');
+        return parent::key().'|'.$this->arrayItemKey;
     }
 
     public function code(): string
@@ -59,23 +67,6 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic imp
     public function documentationUrl(): string
     {
         return 'https://scramble.dedoc.co/errors#pd001';
-    }
-
-    protected function renderBody(OutputStyle $style, int $pad): void
-    {
-        if (! $this->location()) {
-            $this->renderMessageBlock($style, $pad);
-
-            return;
-        }
-
-        $location = $this->location();
-
-        $this->writeLocationHeader($style);
-
-        (new Code($location->file, $location->line, linesBefore: 0, linesAfter: $this->linesAfterPhpDoc()))
-            ->annotate(self::VAR_TAG, "redundant. `$this->arrayItemKey` is inferred as `".$this->arrayItemType->value->toString().'`.')
-            ->render($style);
     }
 
     private static function findVarTagLocation(?CodeLocation $location): ?CodeLocation
@@ -102,13 +93,13 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic imp
         return $location;
     }
 
-    private function linesAfterPhpDoc(): int
+    private static function linesAfterPhpDoc(ArrayItemType_ $item, ?CodeLocation $location): int
     {
-        if (! ($location = $this->location())) {
+        if (! $location) {
             return 0;
         }
 
-        $phpDoc = $this->arrayItemType->getAttribute('docNode') ?: $this->arrayItemType->value->getAttribute('docNode');
+        $phpDoc = $item->getAttribute('docNode') ?: $item->value->getAttribute('docNode');
         if (! $phpDoc) {
             return 0;
         }

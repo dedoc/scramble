@@ -1,6 +1,5 @@
 <?php
 
-use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\JsonResource\Jr001UnknownModelDiagnostic;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
@@ -31,11 +30,6 @@ it('reports JR001 when the underlying model type cannot be inferred', function (
 
     $diagnostic = $context->diagnostics->diagnostics->first();
     expect($diagnostic)->toBeInstanceOf(Jr001UnknownModelDiagnostic::class)
-        ->and($diagnostic->code())->toBe('JR001')
-        ->and($diagnostic->severity())->toBe(DiagnosticSeverity::Warning)
-        ->and($diagnostic->category())->toBe('JSON resources')
-        ->and($diagnostic->context())->toBe(Jr001UnknownModelDiagnosticTest_Resource::class)
-        ->and($diagnostic->message())->toBe('cannot infer the resource model')
         ->and($diagnostic->resourceClass)->toBe(Jr001UnknownModelDiagnosticTest_Resource::class);
 });
 

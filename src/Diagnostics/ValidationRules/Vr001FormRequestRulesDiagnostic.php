@@ -2,26 +2,23 @@
 
 namespace Dedoc\Scramble\Diagnostics\ValidationRules;
 
-use Dedoc\Scramble\Contracts\Diagnostics\WithCodeLocation;
 use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
 use Dedoc\Scramble\Diagnostics\CodeLocation;
-use Dedoc\Scramble\Diagnostics\Concerns\HasCodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Throwable;
 
-class Vr001FormRequestRulesDiagnostic extends AbstractCodedDiagnostic implements WithCodeLocation
+class Vr001FormRequestRulesDiagnostic extends AbstractCodedDiagnostic
 {
-    use HasCodeLocation;
-
     public static function fromThrowableAndReflection(Throwable $throwable, \ReflectionClass $reflectionClass): self
     {
         $location = CodeLocation::fromReflection($reflectionClass);
 
-        $diagnostic = new self($throwable->getMessage(), DiagnosticSeverity::Warning, $throwable, context: $location->file);
-
-        $diagnostic->withLocation($location);
-
-        return $diagnostic;
+        return (new self(
+            $throwable->getMessage(),
+            DiagnosticSeverity::Warning,
+            $throwable,
+            context: $location->file,
+        ))->withLocation($location);
     }
 
     protected static function defaultContext(): ?string

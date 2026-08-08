@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
-use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Infer\AutoResolvingArgumentTypeBag;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
@@ -50,18 +49,10 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     private static $cache;
 
-    private static ?DiagnosticsCollector $diagnostics = null;
-
     /** @internal */
     public static function resetCache(): void
     {
         static::$cache = [];
-    }
-
-    /** @internal */
-    public static function useDiagnostics(?DiagnosticsCollector $diagnostics): void
-    {
-        static::$diagnostics = $diagnostics;
     }
 
     public function shouldHandle(ObjectType|string $type): bool
@@ -505,7 +496,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     private function getModelInfo(ObjectType $type)
     {
-        return static::$cache[$type->name] ??= (new ModelInfo($type->name, static::$diagnostics))->handle();
+        return static::$cache[$type->name] ??= (new ModelInfo($type->name))->handle();
     }
 
     private function getProtectedValue($obj, $name)

@@ -36,7 +36,11 @@ class ModelInfo
     public function __construct(
         private string $class,
         private ?DiagnosticsCollector $diagnostics = null,
-    ) {}
+    ) {
+        $this->diagnostics ??= app()->bound(DiagnosticsCollector::class)
+            ? app(DiagnosticsCollector::class)
+            : null;
+    }
 
     public function handle()
     {

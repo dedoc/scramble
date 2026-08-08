@@ -26,7 +26,7 @@ class FormRequestRulesEvaluator implements RulesEvaluator
                 Vr001FormRequestRulesDiagnostic::fromThrowableAndReflection($e, $this->classReflector->getReflection())
             );
 
-            throw RulesEvaluationException::fromExceptions([self::class => $e])->forDiagnostics($this->diagnostics);
+            throw RulesEvaluationException::fromExceptions([self::class => $e]);
         }
     }
 

@@ -15,17 +15,13 @@ class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
     public function __construct(
         private array $exceptions,
         string $message,
-        DiagnosticSeverity $severity = DiagnosticSeverity::Error,
-        ?\Illuminate\Routing\Route $route = null,
-        ?string $category = null,
-        ?string $context = null,
     ) {
-        parent::__construct($message, $severity, null, $route, $category, $context);
+        parent::__construct($message, DiagnosticSeverity::Error);
     }
 
     public static function fromRulesEvaluationException(RulesEvaluationException $exception): self
     {
-        return new self($exception->exceptions, $exception->getMessage(), DiagnosticSeverity::Error);
+        return new self($exception->exceptions, $exception->getMessage());
     }
 
     public function code(): string
