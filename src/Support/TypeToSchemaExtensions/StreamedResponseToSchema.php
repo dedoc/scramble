@@ -90,8 +90,9 @@ class StreamedResponseToSchema extends TypeToSchemaExtension
             ? $attributeMimeType
             : null;
 
-        return $attributeMimeType
+        return ($this->isServerSentEventsResponse($type) ? $attributeMimeType : null)
             ?: $this->guessMimeTypeFromHeaders($type->templateTypes[2 /* THeaders */])
+            ?: $attributeMimeType
             ?: ($type->isInstanceOf(StreamedJsonResponse::class) ? 'application/json' : self::$defaultMimeType)
             ?: self::$defaultMimeType;
     }
@@ -134,7 +135,13 @@ class StreamedResponseToSchema extends TypeToSchemaExtension
             return $schema;
         }
 
-        return new StringType;
+        $stringType = new StringType;
+
+        if (! in_array($this->getContentType($type), BinaryFileResponseToSchema::$nonBinaryMimeTypes)) {
+            $stringType->format('binary');
+        }
+
+        return $stringType;
     }
 
     private function makeExample(Generic $type): ?string

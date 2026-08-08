@@ -13,9 +13,12 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Route;
+use Laravel\Scout\Searchable;
 
 class User_AnonymousResourceCollectionTypeToSchemaTest extends Model
 {
+    use Searchable;
+
     protected $table = 'users';
 }
 
@@ -114,6 +117,39 @@ class UserServicePaginator_AnonymousResourceCollectionTypeToSchemaTest
      */
     public function allUsers(): LengthAwarePaginator
     {
+        return User_AnonymousResourceCollectionTypeToSchemaTest::query()->paginate();
+    }
+}
+
+it('documents paginated response from service with Scout and Eloquent pagination branches', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('test', [MixedPaginatorPagination_AnonymousResourceCollectionTypeToSchemaTestController::class, 'index']));
+
+    expect($responses = $openApiDocument['paths']['/test']['get']['responses'])
+        ->toHaveKey(200)
+        ->and($schema = $responses[200]['content']['application/json']['schema'])
+        ->toHaveKeys(['type', 'properties'])
+        ->and($schema['properties'])
+        ->toHaveKeys(['data', 'meta', 'links']);
+});
+class MixedPaginatorPagination_AnonymousResourceCollectionTypeToSchemaTestController
+{
+    public function index(MixedPaginatorService_AnonymousResourceCollectionTypeToSchemaTest $service): AnonymousResourceCollection
+    {
+        return UserResource_AnonymousResourceCollectionTypeToSchemaTest::collection($service->users(null));
+    }
+}
+
+class MixedPaginatorService_AnonymousResourceCollectionTypeToSchemaTest
+{
+    /**
+     * @return LengthAwarePaginator<int, User_AnonymousResourceCollectionTypeToSchemaTest>
+     */
+    public function users(?string $search): LengthAwarePaginator
+    {
+        if ($search !== null) {
+            return User_AnonymousResourceCollectionTypeToSchemaTest::search($search)->paginate();
+        }
+
         return User_AnonymousResourceCollectionTypeToSchemaTest::query()->paginate();
     }
 }

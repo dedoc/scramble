@@ -7,6 +7,8 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Illuminate\Http\Resources\MissingValue;
+use Illuminate\Pagination\AbstractCursorPaginator;
+use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\Enumerable;
 
 class TypeWidener
@@ -105,7 +107,9 @@ class TypeWidener
             $a instanceof Generic
             && $b instanceof Generic
             && $a->name === $b->name
-            && $a->isInstanceOf(Enumerable::class)
+            && ($a->isInstanceOf(Enumerable::class)
+                || $a->isInstanceOf(AbstractPaginator::class)
+                || $a->isInstanceOf(AbstractCursorPaginator::class))
         ) {
             return new Generic($a->name, [
                 (new Union([$a->templateTypes[0] ?? new UnknownType, $b->templateTypes[0] ?? new UnknownType]))->widen(),

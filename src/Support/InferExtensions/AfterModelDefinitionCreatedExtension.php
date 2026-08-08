@@ -5,6 +5,8 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\AfterClassDefinitionCreatedExtension;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
+use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
+use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayMerge;
 use Dedoc\Scramble\Support\Type\ConditionalType;
@@ -22,8 +24,10 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\WithProperties;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Scout\Builder as ScoutBuilder;
+use Laravel\Scout\Searchable;
 
-class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreatedExtension
+class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreatedExtension, StaticMethodReturnTypeExtension
 {
     public function shouldHandle(string $name): bool
     {
@@ -38,6 +42,24 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
         $definition->methods['newQuery'] = $this->buildNewQueryMethodDefinition($definition);
         $definition->methods['load'] = $this->buildLoadMethodDefinition($definition);
         $definition->methods['loadMissing'] = $this->buildLoadMissingMethodDefinition($definition);
+    }
+
+    public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
+    {
+        if (! $definition = $event->scope->index->getClass($event->callee)) {
+            return null;
+        }
+
+        if (in_array(Searchable::class, class_uses_recursive($event->callee), true)) {
+            return match ($event->name) {
+                'search' => new Generic(ScoutBuilder::class, [
+                    $this->buildSeededModelType($definition),
+                ]),
+                default => null,
+            };
+        }
+
+        return null;
     }
 
     private function buildQueryMethodDefinition(ClassDefinition $definition): ShallowFunctionDefinition
@@ -77,13 +99,18 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
          * >
          */
         return new Generic(ModelBuilderTypeResolver::resolveClass($definition->name), [
-            new Generic(WithProperties::class, [
-                new ObjectType($definition->name),
-                new KeyedArrayType([
-                    new ArrayItemType_('relations', new Generic(EagerLoadRelationsList::class, [
-                        $this->resolveWithDefaultType($definition),
-                    ])),
-                ]),
+            $this->buildSeededModelType($definition),
+        ]);
+    }
+
+    private function buildSeededModelType(ClassDefinition $definition): Generic
+    {
+        return new Generic(WithProperties::class, [
+            new ObjectType($definition->name),
+            new KeyedArrayType([
+                new ArrayItemType_('relations', new Generic(EagerLoadRelationsList::class, [
+                    $this->resolveWithDefaultType($definition),
+                ])),
             ]),
         ]);
     }

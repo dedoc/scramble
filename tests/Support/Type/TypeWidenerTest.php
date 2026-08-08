@@ -2,6 +2,9 @@
 
 namespace Dedoc\Scramble\Tests\Support\Type;
 
+use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
@@ -15,6 +18,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\MissingValue;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Enumerable;
 use Illuminate\Support\LazyCollection;
@@ -52,6 +56,35 @@ test('widens allowed key value generic collections', function (string $collectio
     LazyCollection::class,
     Enumerable::class,
 ]);
+
+test('widens same paginator item types', function () {
+    $modelWithoutKnownRelations = new ObjectType(SampleUserModel::class);
+    $modelWithKnownRelations = new ObjectType(SampleUserModel::class);
+    $modelWithKnownRelations->propertyTypes['relations'] = new KeyedArrayType;
+
+    $type = new Union([
+        new Generic(LengthAwarePaginator::class, [new IntegerType, $modelWithoutKnownRelations]),
+        new Generic(LengthAwarePaginator::class, [new IntegerType, $modelWithKnownRelations]),
+    ]);
+
+    $widened = $type->widen();
+
+    expect($widened)
+        ->toBeInstanceOf(Generic::class)
+        ->and($widened->name)->toBe(LengthAwarePaginator::class)
+        ->and($widened->templateTypes[0])->toBeInstanceOf(IntegerType::class)
+        ->and($widened->templateTypes[1])->toBeInstanceOf(Union::class)
+        ->and($widened->templateTypes[1]->types)->toHaveCount(2);
+});
+
+test('does not widen different paginator classes', function () {
+    $type = new Union([
+        new Generic(LengthAwarePaginator::class, [new IntegerType, new ObjectType(SampleUserModel::class)]),
+        new Generic(Paginator::class, [new IntegerType, new ObjectType(SampleUserModel::class)]),
+    ]);
+
+    expect($type->widen())->toBeInstanceOf(Union::class);
+});
 
 test('does not widen anonymous resource collection templates as key value pairs', function () {
     $type = TestUtils::parseType(AnonymousResourceCollection::class.'<unknown, array<mixed>, App\Http\Brands\Events\Resources\EventResource>'

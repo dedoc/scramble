@@ -437,13 +437,50 @@ it('infers date column when casted to date', function () {
         'format' => 'date',
     ]);
 });
+
+it('preserves cast date formats through compatible model property annotations', function () {
+    $transformer = new TypeTransformer(app(Infer::class), $this->context, [CarbonInterfaceToSchema::class, JsonResourceTypeToSchema::class]);
+
+    $transformer->transform(new ObjectType(InferTypesTest_JsonResourceWithAnnotatedCarbonAttributes::class));
+
+    $properties = $this->context->openApi->components->getSchema(InferTypesTest_JsonResourceWithAnnotatedCarbonAttributes::class)->toArray()['properties'];
+
+    expect($properties['date'])->toBe([
+        'type' => 'string',
+        'format' => 'date',
+    ])->and($properties['nullable_date'])->toBe([
+        'type' => ['string', 'null'],
+        'format' => 'date',
+    ]);
+});
+
+/**
+ * @property \Carbon\Carbon $body
+ * @property \Carbon\Carbon|null $title
+ */
 class SamplePostWithDateApprovedAtModel extends \Illuminate\Database\Eloquent\Model
 {
     protected $table = 'posts';
 
     protected $casts = [
+        'body' => 'datetime:Y-m-d',
+        'title' => 'datetime:Y-m-d',
         'approved_at' => 'datetime:Y-m-d',
     ];
+}
+
+/**
+ * @property SamplePostWithDateApprovedAtModel $resource
+ */
+class InferTypesTest_JsonResourceWithAnnotatedCarbonAttributes extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'date' => $this->resource->body,
+            'nullable_date' => $this->resource->title,
+        ];
+    }
 }
 
 it('infers date column directly referenced in json as date-time', function () {
