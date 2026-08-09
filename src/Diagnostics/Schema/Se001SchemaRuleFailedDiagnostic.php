@@ -3,9 +3,9 @@
 namespace Dedoc\Scramble\Diagnostics\Schema;
 
 use Dedoc\Scramble\Diagnostics\AbstractDiagnostic;
+use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
-use Dedoc\Scramble\Diagnostics\SchemaContext;
 use Dedoc\Scramble\Exceptions\InvalidSchema;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Illuminate\Routing\Route;
@@ -23,7 +23,7 @@ class Se001SchemaRuleFailedDiagnostic extends AbstractDiagnostic
         return new self(
             DiagnosticSeverity::Error,
             $message,
-            context: SchemaContext::createFromJsonPointer($jsonPointer, $originFile),
+            context: $originFile && class_exists($originFile) ? new ClassContext($originFile) : null,
             codeLocation: CodeLocation::from($originFile, $originLine),
             openApiLocation: $jsonPointer,
         );

@@ -26,6 +26,8 @@ class StyledConsoleTextWrapper
      */
     private function wrapParagraph(string $paragraph, int $maxWidth): array
     {
+        $maxWidth = max(1, $maxWidth);
+
         $parts = preg_split(self::PARTS_PATTERN, $paragraph, flags: PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
 
         $lines = [];

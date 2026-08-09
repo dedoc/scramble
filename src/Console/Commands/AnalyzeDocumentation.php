@@ -3,10 +3,11 @@
 namespace Dedoc\Scramble\Console\Commands;
 
 use Dedoc\Scramble\Console\Commands\Components\Code;
+use Dedoc\Scramble\Console\Commands\Components\StyledConsoleTextWrapper;
 use Dedoc\Scramble\Console\Commands\Components\TermsOfContentItem;
 use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
-use Dedoc\Scramble\Diagnostics\SchemaContext;
+use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Scramble;
@@ -15,6 +16,7 @@ use Illuminate\Console\Command;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Symfony\Component\Console\Terminal;
 
 class AnalyzeDocumentation extends Command
 {
@@ -40,19 +42,21 @@ class AnalyzeDocumentation extends Command
             $this->renderDiagnosticsGroup($groupDiagnostics, $groupKey, $i);
         });
 
-        $errorCount = $diagnostics
-            ->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)
-            ->count();
+        $errorCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)->count();
+        $warningCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Warning)->count();
 
         if ($errorCount > 0) {
             $this->error('[ERROR] Found '.$errorCount.' '.Str::plural('error', $errorCount).'.');
-
             (new ProNudgeReporter($generator->proNudge))->report($this);
 
             return static::FAILURE;
         }
 
-        $this->info('Everything is fine! Documentation is generated without any errors 🍻');
+        if ($warningCount > 0) {
+            $this->warn('[WARNING] Found '.$warningCount.' '.Str::plural('warning', $warningCount).'.');
+        } else {
+            $this->info('Everything is fine! Documentation is generated without any errors 🍻');
+        }
 
         (new ProNudgeReporter($generator->proNudge))->report($this);
 
@@ -68,8 +72,8 @@ class AnalyzeDocumentation extends Command
         return $diagnostics->groupBy(function (Diagnostic $d) {
             $context = $d->context();
 
-            if ($context instanceof SchemaContext) {
-                return 'schema:'.$context->name;
+            if ($context instanceof ClassContext) {
+                return 'class:'.$context->class;
             }
 
             if ($context instanceof Route) {
@@ -77,6 +81,10 @@ class AnalyzeDocumentation extends Command
             }
 
             return '';
+        })->sortBy(fn (Collection $_, string $key) => match (true) {
+            str_starts_with($key, 'route:') => 0,
+            str_starts_with($key, 'class:') => 1,
+            default => 2,
         });
     }
 
@@ -87,8 +95,8 @@ class AnalyzeDocumentation extends Command
     {
         if (str_starts_with($groupKey, 'route:')) {
             $this->renderRouteGroupHeader($diagnostics);
-        } elseif (str_starts_with($groupKey, 'schema:')) {
-            $this->renderSchemaGroupHeader($diagnostics);
+        } elseif (str_starts_with($groupKey, 'class:')) {
+            $this->renderClassGroupHeader($diagnostics);
         }
 
         $diagnostics->each(function (Diagnostic $diagnostic) use (&$i) {
@@ -109,16 +117,10 @@ class AnalyzeDocumentation extends Command
         }
 
         $method = implode('|', $route->methods());
-        $errorCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)->count();
-        $warningCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Warning)->count();
-
-        $stats = collect([
-            $errorCount > 0 ? $errorCount.' '.Str::plural('error', $errorCount) : null,
-            $warningCount > 0 ? $warningCount.' '.Str::plural('warning', $warningCount) : null,
-        ])->filter()->implode(', ');
+        $stats = $this->severityStats($diagnostics);
 
         $tocComponent = new TermsOfContentItem(
-            right: '<options=bold;fg='.$this->getHttpMethodColor($method).'>'.$method."</> $route->uri".($stats ? " <fg=red>$stats</>" : ''),
+            right: '<options=bold;fg='.$this->getHttpMethodColor($method).'>'.$method."</> $route->uri".($stats ? " $stats" : ''),
             left: $this->getRouteAction($route),
         );
 
@@ -129,22 +131,17 @@ class AnalyzeDocumentation extends Command
     /**
      * @param  Collection<int, Diagnostic>  $diagnostics
      */
-    private function renderSchemaGroupHeader(Collection $diagnostics): void
+    private function renderClassGroupHeader(Collection $diagnostics): void
     {
-        $schema = $diagnostics->first()?->context();
-        if (! $schema instanceof SchemaContext) {
+        $class = $diagnostics->first()?->context();
+        if (! $class instanceof ClassContext) {
             return;
         }
 
-        $errorCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)->count();
-        $stats = $errorCount.' '.Str::plural('error', $errorCount);
+        $stats = $this->severityStats($diagnostics);
+        $right = class_basename($class->class).($stats ? " $stats" : '');
 
-        $right = "Schema $schema->name <fg=red>$stats</>";
-        $left = $schema->class
-            ? '<fg=gray>'.Str::replace(['App\\Http\\Resources\\', 'App\\'], '', $schema->class).'</>'
-            : null;
-
-        (new TermsOfContentItem(right: $right, left: $left))->render($this->output);
+        (new TermsOfContentItem(right: $right, left: ' '))->render($this->output);
         $this->line('');
     }
 
@@ -156,15 +153,25 @@ class AnalyzeDocumentation extends Command
             $diagnostic->message(),
         );
 
-        $this->line("<options=bold>$i. [{$diagnostic->code()}] {$message}</>");
+        $level = match ($diagnostic->severity()) {
+            DiagnosticSeverity::Error => '<fg=red;options=bold>ERR</>',
+            DiagnosticSeverity::Warning => '<fg=yellow;options=bold>WARN</>',
+        };
 
-        $this->renderTable($diagnostic->details());
+        $this->line("$i. $level <options=bold>[{$diagnostic->code()}] {$message}</>");
 
-        if ($location = $diagnostic->codeLocation()) {
+        $details = $diagnostic->details();
+
+        $location = $diagnostic->codeLocation();
+        $shouldRenderCodeSnippet = $diagnostic->shouldRenderCodeSnippet() && $location;
+
+        if ($shouldRenderCodeSnippet) {
+            $this->renderTable($details);
+
             (new Code($location->file, $location->line))->render($this->output);
         }
 
-        $postfixTableRows = [];
+        $postfixTableRows = $shouldRenderCodeSnippet ? [] : $details;
         if ($tip = $diagnostic->tip()) {
             $postfixTableRows[] = ['Tip', $tip];
         }
@@ -184,13 +191,33 @@ class AnalyzeDocumentation extends Command
             return;
         }
 
+        $maxLabelLength = max(array_map(fn (array $row) => strlen($row[0]), $rows));
+        $terminalWidth = (new Terminal)->getWidth();
+
         $this->output->createTable()
             ->setRows(array_map(
-                fn (array $row) => ['<fg=gray>'.$row[0].'</>', $row[1]],
+                fn (array $row) => [
+                    '<fg=gray>'.$row[0].'</>',
+                    implode("\n", (new StyledConsoleTextWrapper)->wrap($row[1], $terminalWidth - $maxLabelLength - 2)),
+                ],
                 $rows,
             ))
             ->setStyle('compact')
             ->render();
+    }
+
+    /**
+     * @param  Collection<int, Diagnostic>  $diagnostics
+     */
+    private function severityStats(Collection $diagnostics): string
+    {
+        $errorCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)->count();
+        $warningCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Warning)->count();
+
+        return collect([
+            $errorCount > 0 ? "<fg=red>$errorCount ".Str::plural('error', $errorCount).'</>' : null,
+            $warningCount > 0 ? "<fg=yellow>$warningCount ".Str::plural('warning', $warningCount).'</>' : null,
+        ])->filter()->implode(', ');
     }
 
     private function getRouteKey(Route $route): string

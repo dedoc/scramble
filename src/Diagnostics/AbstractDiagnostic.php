@@ -12,7 +12,7 @@ abstract class AbstractDiagnostic implements Diagnostic
     public function __construct(
         protected DiagnosticSeverity $severity,
         protected string $message,
-        protected Route|SchemaContext|null $context = null,
+        protected Route|ClassContext|null $context = null,
         protected ?CodeLocation $codeLocation = null,
         protected ?string $openApiLocation = null,
         protected ?string $tip = null,
@@ -31,6 +31,7 @@ abstract class AbstractDiagnostic implements Diagnostic
     public function withSeverity(DiagnosticSeverity $severity): self
     {
         $this->severity = $severity;
+
         return $this;
     }
 
@@ -39,7 +40,7 @@ abstract class AbstractDiagnostic implements Diagnostic
         return $this->message;
     }
 
-    public function context(): Route|SchemaContext|null
+    public function context(): Route|ClassContext|null
     {
         return $this->context;
     }
@@ -74,7 +75,7 @@ abstract class AbstractDiagnostic implements Diagnostic
 
         if ($this->codeLocation) {
             $path = str_replace(base_path().DIRECTORY_SEPARATOR, '', $this->codeLocation->file);
-            $details[] = ['Inferred at', $path.':'.$this->codeLocation->line];
+            $details[] = ['Located at', $path.':'.$this->codeLocation->line];
         }
 
         return $details;
@@ -91,7 +92,7 @@ abstract class AbstractDiagnostic implements Diagnostic
         ], fn ($part) => $part !== null && $part !== ''));
     }
 
-    public function withContext(Route|SchemaContext|null $context): static
+    public function withContext(Route|ClassContext|null $context): static
     {
         $this->context = $context;
 
@@ -111,10 +112,15 @@ abstract class AbstractDiagnostic implements Diagnostic
             return implode('|', $context->methods()).'.'.$context->uri();
         }
 
-        if ($context instanceof SchemaContext) {
-            return 'schema:'.$context->name;
+        if ($context instanceof ClassContext) {
+            return 'class:'.$context->class;
         }
 
         return '';
+    }
+
+    public function shouldRenderCodeSnippet(): bool
+    {
+        return true;
     }
 }
