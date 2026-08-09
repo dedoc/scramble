@@ -19,6 +19,5 @@ class OpenApiContext
          */
         public Collection $groups = new Collection,
         public DiagnosticsCollector $diagnostics = new DiagnosticsCollector,
-    ) {
-    }
+    ) {}
 }

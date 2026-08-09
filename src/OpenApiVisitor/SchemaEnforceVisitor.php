@@ -8,7 +8,6 @@ use Dedoc\Scramble\OpenApiTraverser;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Types\Type;
-use Illuminate\Routing\Route;
 
 class SchemaEnforceVisitor extends AbstractOpenApiVisitor
 {

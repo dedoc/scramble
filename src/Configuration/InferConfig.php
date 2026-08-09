@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Configuration;
 use Dedoc\Scramble\Infer\Configuration\ClassLike;
 use Dedoc\Scramble\Infer\Configuration\DefinitionMatcher;
 use Dedoc\Scramble\Infer\Context;
-use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 

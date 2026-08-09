@@ -54,9 +54,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     public function __construct(
         private ?DiagnosticsCollector $diagnostics = null,
-    )
-    {
-    }
+    ) {}
 
     public function shouldHandle(ObjectType|string $type): bool
     {

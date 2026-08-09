@@ -9,7 +9,6 @@ use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
 use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Generator;
-use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\ProNudge\ProNudgeReporter;
 use Illuminate\Console\Command;

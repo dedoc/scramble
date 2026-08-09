@@ -8,7 +8,7 @@ use Exception;
 use Illuminate\Support\Arr;
 use Throwable;
 
-class RulesEvaluationException extends Exception implements RouteAware, BuildsDiagnostics
+class RulesEvaluationException extends Exception implements BuildsDiagnostics, RouteAware
 {
     use RouteAwareTrait;
 
