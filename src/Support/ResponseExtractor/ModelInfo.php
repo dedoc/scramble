@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\ResponseExtractor;
 
 use BackedEnum;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+use Dedoc\Scramble\Diagnostics\Model\Md001PendingMigrationsDiagnostic;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -375,9 +376,8 @@ class ModelInfo
             return;
         }
 
-        // @todo migrate to MD001
-        // $this->diagnostics->reportOnce(
-        //     Md001PendingMigrationsDiagnostic::forModel($model::class, $model->getTable()),
-        // );
+        $this->diagnostics->reportOnce(
+            Md001PendingMigrationsDiagnostic::forModel($model::class, $model->getTable()),
+        );
     }
 }

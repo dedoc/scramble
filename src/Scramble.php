@@ -126,7 +126,7 @@ class Scramble
 
         static::enforceSchema(
             fn ($schema, $path) => ! in_array($schema::class, $forbiddenSchemas),
-            fn ($schema) => 'Schema ['.$schema::class.'] is not allowed.',
+            fn ($schema) => 'Schema `'.$schema::class.'` is not allowed',
             $ignorePaths,
             $throw,
         );

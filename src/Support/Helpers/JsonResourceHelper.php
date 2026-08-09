@@ -69,7 +69,7 @@ class JsonResourceHelper
         $mixinOrPropertyLine = Str::of($phpDoc)
             ->replace(['/**', '*/'], '')
             ->explode("\n")
-            ->first(fn ($str) => Str::is(['*@property*$resource', '*@mixin*'], $str));
+            ->first(fn ($str) => Str::is(['*@property*$resource*', '*@mixin*'], $str));
 
         if ($mixinOrPropertyLine) {
             $modelName = Str::replace(['@property-read', '@property', '$resource', '@mixin', ' ', '*', "\r"], '', $mixinOrPropertyLine);

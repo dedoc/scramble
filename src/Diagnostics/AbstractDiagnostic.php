@@ -37,7 +37,7 @@ abstract class AbstractDiagnostic implements Diagnostic
 
     public function message(): string
     {
-        return $this->message;
+        return rtrim($this->message, '.');
     }
 
     public function context(): Route|ClassContext|null
@@ -62,7 +62,7 @@ abstract class AbstractDiagnostic implements Diagnostic
 
     public function docs(): ?string
     {
-        return $this->docs ?? 'https://scramble.dedoc.co/errors#'.strtolower($this->code());
+        return null;
     }
 
     public function details(): array
@@ -101,7 +101,7 @@ abstract class AbstractDiagnostic implements Diagnostic
 
     public function toException(): Throwable
     {
-        return $this->originException ?? new Exception("[{$this->code()}] {$this->message}");
+        return $this->originException ?? new Exception("[{$this->code()}] {$this->message()}");
     }
 
     protected function contextKey(): string

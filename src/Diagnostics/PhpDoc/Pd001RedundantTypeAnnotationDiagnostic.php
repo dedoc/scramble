@@ -2,52 +2,38 @@
 
 namespace Dedoc\Scramble\Diagnostics\PhpDoc;
 
-use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
-use Dedoc\Scramble\Diagnostics\CodeAnnotation;
+use Dedoc\Scramble\Diagnostics\AbstractDiagnostic;
+use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 
-class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic
+class Pd001RedundantTypeAnnotationDiagnostic extends AbstractDiagnostic
 {
     private const VAR_TAG = '@var';
 
-    public function __construct(
-        public string $arrayItemKey,
-        public string $inferredType,
-        public int $linesAfter,
-    ) {
-        parent::__construct(
-            "`$arrayItemKey` is inferred as `$inferredType`.",
-            DiagnosticSeverity::Warning,
-        );
-    }
+    private string $arrayItemKey;
 
     public static function fromArrayItemType(ArrayItemType_ $item): self
     {
         $arrayItemKey = (string) ($item->key ?: '*');
+        $inferredType = $item->value->toString();
         $location = self::findVarTagLocation(CodeLocation::fromArrayItemType($item));
 
-        return (new self(
-            arrayItemKey: $arrayItemKey,
-            inferredType: $item->value->toString(),
-            linesAfter: self::linesAfterPhpDoc($item, $location),
-        ))->withLocation($location);
-    }
+        /** @var \PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode|null $docNode */
+        $docNode = $item->getAttribute('docNode') ?: $item->value->getAttribute('docNode');
+        $sourceClass = $docNode?->getAttribute('sourceClass');
 
-    public function codeAnnotation(): CodeAnnotation
-    {
-        return new CodeAnnotation(
-            anchor: self::VAR_TAG,
-            message: "redundant. `$this->arrayItemKey` is inferred as `$this->inferredType`.",
-            linesBefore: 0,
-            linesAfter: $this->linesAfter,
+        $diagnostic = new self(
+            DiagnosticSeverity::Warning,
+            'Redundant `'.self::VAR_TAG.'` annotation for `'.$arrayItemKey.'`',
+            context: is_string($sourceClass) ? new ClassContext($sourceClass) : null,
+            codeLocation: $location,
+            tip: 'Remove `'.self::VAR_TAG.'`; the type is already inferred as `'.$inferredType.'`',
         );
-    }
+        $diagnostic->arrayItemKey = $arrayItemKey;
 
-    public function key(): string
-    {
-        return parent::key().'|'.$this->arrayItemKey;
+        return $diagnostic;
     }
 
     public function code(): string
@@ -55,14 +41,9 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic
         return 'PD001';
     }
 
-    public function tip(): ?string
+    public function key(): string
     {
-        return 'Remove `'.self::VAR_TAG.' *`; keep description, `@format`, `@example`, and other annotations.';
-    }
-
-    public function documentationUrl(): string
-    {
-        return 'https://scramble.dedoc.co/errors#pd001';
+        return parent::key().'|'.$this->arrayItemKey;
     }
 
     private static function findVarTagLocation(?CodeLocation $location): ?CodeLocation
@@ -87,24 +68,5 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic
         }
 
         return $location;
-    }
-
-    private static function linesAfterPhpDoc(ArrayItemType_ $item, ?CodeLocation $location): int
-    {
-        if (! $location) {
-            return 0;
-        }
-
-        $phpDoc = $item->getAttribute('docNode') ?: $item->value->getAttribute('docNode');
-        if (! $phpDoc) {
-            return 0;
-        }
-
-        $line = $phpDoc->getAttribute('sourceLine');
-        if (! $line) {
-            return 0;
-        }
-
-        return $line - $location->line;
     }
 }

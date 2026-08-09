@@ -34,11 +34,6 @@ class Se001SchemaRuleFailedDiagnostic extends AbstractDiagnostic
         return 'SE001';
     }
 
-    public function docs(): ?string
-    {
-        return null;
-    }
-
     public function toException(): Throwable
     {
         $exception = InvalidSchema::createForSchema(
