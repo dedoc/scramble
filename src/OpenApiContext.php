@@ -20,6 +20,5 @@ class OpenApiContext
         public Collection $groups = new Collection,
         public DiagnosticsCollector $diagnostics = new DiagnosticsCollector,
     ) {
-        app()->instance(DiagnosticsCollector::class, $this->diagnostics);
     }
 }

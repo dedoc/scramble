@@ -57,7 +57,7 @@ class OperationBuilder
                     OpenApiContext::class => $typeTransformer->context,
                     GeneratorConfig::class => $config,
                     TypeTransformer::class => $typeTransformer,
-                    DiagnosticsCollector::class => $typeTransformer->context->diagnostics->forRoute($routeInfo->route),
+                    DiagnosticsCollector::class => $typeTransformer->context->diagnostics->forRoute($routeInfo->route, throwOnError: false),
                     ProNudgeCollector::class => $proNudge,
                 ]);
 

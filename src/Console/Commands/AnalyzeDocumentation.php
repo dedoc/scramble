@@ -29,13 +29,11 @@ class AnalyzeDocumentation extends Command
     public function handle(Generator $generator): int
     {
         $generator->setThrowExceptions(false);
+        Scramble::throwOnError(false);
 
         $generator(Scramble::getGeneratorConfig($this->option('api')));
 
-        $context = $generator->context;
-        assert($context instanceof OpenApiContext);
-
-        $diagnostics = $context->diagnostics->diagnostics;
+        $diagnostics = $generator->diagnostics->all();
 
         $i = 1;
         $this->groupDiagnostics($diagnostics)->each(function (Collection $groupDiagnostics, string $groupKey) use (&$i) {

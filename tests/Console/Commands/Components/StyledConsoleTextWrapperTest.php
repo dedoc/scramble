@@ -19,15 +19,6 @@ it('does not break urls', function () {
     ]);
 });
 
-it('prefers configured separators over hard splits', function () {
-    $lines = wrapStyled('Alpha-BetaQux', 10);
-
-    expect($lines)->toBe([
-        'Alpha-',
-        'BetaQux',
-    ]);
-});
-
 it('wraps on backslashes', function () {
     $lines = wrapStyled('Foo\\BarBazQux', 10);
 

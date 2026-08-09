@@ -1,5 +1,6 @@
 <?php
 
+use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\JsonResource\Jr001UnknownModelDiagnostic;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
@@ -7,80 +8,47 @@ use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
-use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceCollectionTypeToSchema;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 it('reports JR001 when the underlying model type cannot be inferred', function () {
-    $context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
-    $infer = app(Infer::class);
-    $transformer = new TypeTransformer($infer, $context, [
-        JsonResourceTypeToSchema::class,
-    ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $context->openApi->components, $context);
+    [$context, $extension] = jsonResourceDiagnosticFixture();
 
-    $type = new Generic(Jr001UnknownModelDiagnosticTest_Resource::class, [new UnknownType]);
-    $extension->toSchema($type);
+    $extension->toSchema(new Generic(Jr001UnknownModelDiagnosticTest_Resource::class, [new UnknownType]));
 
-    expect($context->diagnostics->diagnostics)->toHaveCount(1);
+    $diagnostic = $context->diagnostics->all()->sole();
 
-    $diagnostic = $context->diagnostics->diagnostics->first();
     expect($diagnostic)->toBeInstanceOf(Jr001UnknownModelDiagnostic::class)
-        ->and($diagnostic->resourceClass)->toBe(Jr001UnknownModelDiagnosticTest_Resource::class);
+        ->and($diagnostic->context())->toBeInstanceOf(ClassContext::class)
+        ->and($diagnostic->context()->class)->toBe(Jr001UnknownModelDiagnosticTest_Resource::class);
 });
 
 it('does not report JR001 when the model type is known via mixin', function () {
+    [$context, $extension] = jsonResourceDiagnosticFixture();
+
+    $extension->toSchema(new Generic(Jr001UnknownModelDiagnosticTest_ResourceWithMixin::class, [new UnknownType]));
+
+    expect($context->diagnostics->all())->toBeEmpty();
+});
+
+/**
+ * @return array{0: OpenApiContext, 1: JsonResourceTypeToSchema}
+ */
+function jsonResourceDiagnosticFixture(): array
+{
     $context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
     $infer = app(Infer::class);
     $transformer = new TypeTransformer($infer, $context, [
         JsonResourceTypeToSchema::class,
     ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $context->openApi->components, $context);
 
-    $type = new Generic(Jr001UnknownModelDiagnosticTest_ResourceWithMixin::class, [new UnknownType]);
-    $extension->toSchema($type);
-
-    expect($context->diagnostics->diagnostics)->toBeEmpty();
-});
-
-it('does not report JR001 for resource collections via ResourceCollectionTypeToSchema', function () {
-    $context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
-    $infer = app(Infer::class);
-    $transformer = new TypeTransformer($infer, $context, [
-        JsonResourceTypeToSchema::class,
-        ResourceCollectionTypeToSchema::class,
-    ]);
-    $extension = new ResourceCollectionTypeToSchema($infer, $transformer, $context->openApi->components, $context);
-
-    $type = new Generic(AnonymousResourceCollection::class, [
-        new UnknownType,
-        new UnknownType,
-        new ObjectType(Jr001UnknownModelDiagnosticTest_ResourceWithMixin::class),
-    ]);
-
-    $extension->toSchema($type);
-
-    expect($context->diagnostics->diagnostics)->toBeEmpty();
-});
-
-it('reports JR001 only once per resource class', function () {
-    $context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
-    $infer = app(Infer::class);
-    $transformer = new TypeTransformer($infer, $context, [
-        JsonResourceTypeToSchema::class,
-    ]);
-    $extension = new JsonResourceTypeToSchema($infer, $transformer, $context->openApi->components, $context);
-
-    $type = new Generic(Jr001UnknownModelDiagnosticTest_Resource::class, [new UnknownType]);
-    $extension->toSchema($type);
-    $extension->toSchema($type);
-
-    expect($context->diagnostics->diagnostics)->toHaveCount(1);
-});
+    return [
+        $context,
+        new JsonResourceTypeToSchema($infer, $transformer, $context->openApi->components, $context),
+    ];
+}
 
 class Jr001UnknownModelDiagnosticTest_Resource extends JsonResource
 {

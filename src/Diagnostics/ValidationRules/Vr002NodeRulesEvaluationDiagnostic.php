@@ -12,7 +12,7 @@ class Vr002NodeRulesEvaluationDiagnostic extends AbstractDiagnostic
 {
     private string $source;
 
-    public static function fromThrowable(
+    public static function fromEvaluationFail(
         Throwable $throwable,
         string $source,
         string $message,

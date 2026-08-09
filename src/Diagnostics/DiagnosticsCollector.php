@@ -30,6 +30,10 @@ class DiagnosticsCollector
 
     public function reportOnce(Diagnostic $diagnostic): void
     {
+        if ($this->route && $diagnostic->context() === null) {
+            $diagnostic = $diagnostic->withContext($this->route);
+        }
+
         $key = $diagnostic->key();
 
         if (isset($this->seenRegistry[$key])) {
@@ -41,6 +45,11 @@ class DiagnosticsCollector
         $this->report($diagnostic);
     }
 
+    public function forRoute(Route $route, ?bool $throwOnError = null): self
+    {
+        return new self($this->diagnostics, $throwOnError ?? $this->throwOnError, $route, $this->seenRegistry);
+    }
+
     public function reportQuietly(Diagnostic $diagnostic): void
     {
         if ($this->route && $diagnostic->context() === null) {
@@ -50,8 +59,11 @@ class DiagnosticsCollector
         $this->diagnostics->push($diagnostic);
     }
 
-    public function forRoute(Route $route): self
+    /**
+     * @return Collection<int, Diagnostic>
+     */
+    public function all(): Collection
     {
-        return new self($this->diagnostics, $this->throwOnError, $route, $this->seenRegistry);
+        return $this->diagnostics;
     }
 }

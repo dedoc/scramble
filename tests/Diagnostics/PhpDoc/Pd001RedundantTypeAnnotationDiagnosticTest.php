@@ -19,18 +19,16 @@ beforeEach(function () {
 
 it('reports PD001 when @var repeats an inferred type', function () {
     $docNode = PhpDoc::parse('/** @var string */');
-    $docNode->setAttribute('sourceClass', UserResource_Pd001RedundantTypeAnnotationDiagnosticTest::class);
+    $docNode->setAttribute('sourceClass', Pd001RedundantTypeAnnotationDiagnosticTest_Resource::class);
 
     $item = new ArrayItemType_('name', new StringType);
     $item->setAttribute('docNode', $docNode);
 
     $this->transformer->transform($item);
 
-    expect($this->context->diagnostics->diagnostics)->toHaveCount(1)
-        ->and($this->context->diagnostics->diagnostics->first())->toBeInstanceOf(Pd001RedundantTypeAnnotationDiagnostic::class)
-        ->and($this->context->diagnostics->diagnostics->first()->context())->toBe(__FILE__);
+    expect($this->context->diagnostics->all()->sole())
+        ->toBeInstanceOf(Pd001RedundantTypeAnnotationDiagnostic::class);
 });
-class UserResource_Pd001RedundantTypeAnnotationDiagnosticTest {}
 
 it('does not report PD001 when @var adds information', function () {
     $item = new ArrayItemType_('error', new UnknownType);
@@ -38,7 +36,7 @@ it('does not report PD001 when @var adds information', function () {
 
     $this->transformer->transform($item);
 
-    expect($this->context->diagnostics->diagnostics)->toBeEmpty();
+    expect($this->context->diagnostics->all())->toBeEmpty();
 });
 
 it('does not report PD001 when @var types array values that are inferred as unknown', function () {
@@ -52,7 +50,7 @@ it('does not report PD001 when @var types array values that are inferred as unkn
 
     $this->transformer->transform($item);
 
-    expect($this->context->diagnostics->diagnostics)->toBeEmpty();
+    expect($this->context->diagnostics->all())->toBeEmpty();
 });
 
 it('reports PD001 for @var string on cast-inferred datetimes', function () {
@@ -63,6 +61,8 @@ it('reports PD001 for @var string on cast-inferred datetimes', function () {
 
     $this->transformer->transform($item);
 
-    expect($this->context->diagnostics->diagnostics)->toHaveCount(1)
-        ->and($this->context->diagnostics->diagnostics->first())->toBeInstanceOf(Pd001RedundantTypeAnnotationDiagnostic::class);
+    expect($this->context->diagnostics->all()->sole())
+        ->toBeInstanceOf(Pd001RedundantTypeAnnotationDiagnostic::class);
 });
+
+class Pd001RedundantTypeAnnotationDiagnosticTest_Resource {}

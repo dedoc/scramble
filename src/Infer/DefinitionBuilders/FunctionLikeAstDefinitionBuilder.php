@@ -9,7 +9,6 @@ use Dedoc\Scramble\Infer\Definition\FunctionLikeAstDefinition;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\SideEffectCallEvent;
-use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Dedoc\Scramble\Infer\Handler\IndexBuildingHandler;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
@@ -203,7 +202,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
             $calleeType->name
         );
 
-        $exceptions = app(ExtensionsBroker::class)->getMethodCallExceptions($event);
+        $exceptions = Context::getInstance()->extensionsBroker->getMethodCallExceptions($event);
 
         if (empty($exceptions)) {
             return;

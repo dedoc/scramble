@@ -3,8 +3,6 @@
 namespace Dedoc\Scramble\Support\ResponseExtractor;
 
 use BackedEnum;
-use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
-use Dedoc\Scramble\Diagnostics\Model\Md001PendingMigrationsDiagnostic;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -35,12 +33,7 @@ class ModelInfo
 
     public function __construct(
         private string $class,
-        private ?DiagnosticsCollector $diagnostics = null,
-    ) {
-        $this->diagnostics ??= app()->bound(DiagnosticsCollector::class)
-            ? app(DiagnosticsCollector::class)
-            : null;
-    }
+    ) {}
 
     public function handle()
     {
@@ -53,17 +46,21 @@ class ModelInfo
                 'class' => $class,
                 'attributes' => collect(),
                 'relations' => collect(),
+                'table_missing' => false,
             ]);
         }
 
         /** @var Model $model */
         $model = app()->make($class);
 
+        $tableMissing = ! $model->getConnection()->getSchemaBuilder()->hasTable($model->getTable());
+
         return $this->displayJson(
             $model,
             $class,
-            $this->getAttributes($model),
+            $this->getAttributes($model, $tableMissing),
             $this->getRelations($model),
+            $tableMissing,
         );
     }
 
@@ -73,17 +70,15 @@ class ModelInfo
      * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return \Illuminate\Support\Collection
      */
-    protected function getAttributes($model)
+    protected function getAttributes($model, bool $tableMissing = false)
     {
+        if ($tableMissing) {
+            return $this->getVirtualAttributes($model, []);
+        }
+
         $connection = $model->getConnection();
         $schema = $connection->getSchemaBuilder();
         $table = $model->getTable();
-
-        if (! $schema->hasTable($table)) {
-            $this->reportPendingMigrations($model);
-
-            return $this->getVirtualAttributes($model, []);
-        }
 
         $columns = $schema->getColumns($table);
         $indexes = $schema->getIndexes($table);
@@ -273,13 +268,14 @@ class ModelInfo
     /**
      * Render the model information as JSON.
      */
-    protected function displayJson($model, $class, $attributes, $relations)
+    protected function displayJson($model, $class, $attributes, $relations, bool $tableMissing = false)
     {
         return collect([
             'instance' => $model,
             'class' => $class,
             'attributes' => $attributes,
             'relations' => $relations,
+            'table_missing' => $tableMissing,
         ]);
     }
 
@@ -368,16 +364,5 @@ class ModelInfo
         return is_dir(app_path('Models'))
             ? $rootNamespace.'Models\\'.$model
             : $rootNamespace.$model;
-    }
-
-    private function reportPendingMigrations(Model $model): void
-    {
-        if (! $this->diagnostics) {
-            return;
-        }
-
-        $this->diagnostics->reportOnce(
-            Md001PendingMigrationsDiagnostic::forModel($model::class, $model->getTable()),
-        );
     }
 }

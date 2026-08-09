@@ -3,6 +3,9 @@
 namespace Dedoc\Scramble\Diagnostics;
 
 use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
+use Dedoc\Scramble\Diagnostics\ValidationRules\Vr003AllEvaluatorsFailedDiagnostic;
+use Dedoc\Scramble\Exceptions\BuildsDiagnostics;
+use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Exception;
 use Illuminate\Routing\Route;
 use Throwable;
@@ -116,5 +119,19 @@ abstract class AbstractDiagnostic implements Diagnostic
     public function shouldRenderCodeSnippet(): bool
     {
         return true;
+    }
+
+    public static function fromThrowable(Throwable $throwable): AbstractDiagnostic
+    {
+        if ($throwable instanceof BuildsDiagnostics) {
+            return $throwable->toDiagnostic();
+        }
+
+        return new GenericDiagnostic(
+            DiagnosticSeverity::Error,
+            $throwable->getMessage(),
+            codeLocation: CodeLocation::from($throwable->getFile(), $throwable->getLine()),
+            originException: $throwable,
+        );
     }
 }

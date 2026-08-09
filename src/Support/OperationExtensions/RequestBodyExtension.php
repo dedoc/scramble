@@ -3,9 +3,8 @@
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Contracts\OperationTransformer;
+use Dedoc\Scramble\Diagnostics\AbstractDiagnostic;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
-use Dedoc\Scramble\Diagnostics\ValidationRules\Vr003AllEvaluatorsFailedDiagnostic;
-use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\ContainerUtils;
@@ -51,14 +50,12 @@ class RequestBodyExtension implements OperationTransformer
         try {
             $rulesResults = collect($this->extractParameters($operation, $routeInfo));
         } catch (Throwable $exception) {
-            if ($exception instanceof RulesEvaluationException) {
-                $this->diagnostics->reportQuietly(
-                    Vr003AllEvaluatorsFailedDiagnostic::fromRulesEvaluationException($exception)
-                );
-            }
+            $this->diagnostics->reportQuietly(
+                $diagnostic = AbstractDiagnostic::fromThrowable($exception)
+            );
 
             if (Scramble::shouldThrowOnError()) {
-                throw $exception;
+                throw $diagnostic->toException();
             }
 
             $description = $description->append('⚠️ Cannot generate request documentation: '.$exception->getMessage());

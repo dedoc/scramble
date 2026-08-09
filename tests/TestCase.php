@@ -3,12 +3,10 @@
 namespace Dedoc\Scramble\Tests;
 
 use Closure;
-use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Infer\Context;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\ScrambleServiceProvider;
 use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
-use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\RulesToParameters;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Routing\Route;
@@ -45,8 +43,6 @@ class TestCase extends Orchestra
     {
         Context::reset();
 
-        app()->forgetInstance(DiagnosticsCollector::class);
-        ModelExtension::resetCache();
         JsonResourceHelper::$jsonResourcesModelTypesCache = [];
 
         Scramble::$tagResolver = null;

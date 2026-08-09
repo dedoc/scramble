@@ -22,6 +22,7 @@ use Dedoc\Scramble\Support\Generator\Server;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Generator\UniqueNameOptions;
 use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
+use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\ProNudge\ProNudgeCollector;
 use Dedoc\Scramble\Support\ServerFactory;
@@ -39,14 +40,16 @@ class Generator
 {
     public ProNudgeCollector $proNudge;
 
-    protected bool $throwExceptions = true;
+    public DiagnosticsCollector $diagnostics;
 
     public ?OpenApiContext $context = null;
+
+    protected bool $throwExceptions = true;
 
     public function __construct(
         private OperationBuilder $operationBuilder,
     ) {
-        $this->proNudge = new ProNudgeCollector;
+        $this->resetContext();
     }
 
     public function setThrowExceptions(bool $throwExceptions): static
@@ -56,9 +59,25 @@ class Generator
         return $this;
     }
 
-    public function __invoke(?GeneratorConfig $config = null)
+    private function resetContext(): void
     {
         $this->proNudge = new ProNudgeCollector;
+        $this->diagnostics = new DiagnosticsCollector(throwOnError: $this->throwExceptions);
+    }
+
+    private function configureInference(): void
+    {
+        Scramble::infer()
+            ->configure()
+            ->replaceExtensions([
+                new ModelExtension($this->diagnostics),
+            ]);
+    }
+
+    public function __invoke(?GeneratorConfig $config = null)
+    {
+        $this->resetContext();
+        $this->configureInference();
 
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
@@ -66,7 +85,7 @@ class Generator
         $config = $this->configureSecurityStrategy($routes, $config);
 
         $openApi = $this->makeOpenApi($config);
-        $context = $this->context = new OpenApiContext($openApi, $config, diagnostics: new DiagnosticsCollector(throwOnError: $this->throwExceptions));
+        $context = $this->context = new OpenApiContext($openApi, $config, diagnostics: $this->diagnostics);
         $typeTransformer = $this->buildTypeTransformer($context);
 
         $operations = $this->generateOperations($context, $typeTransformer);
@@ -347,7 +366,7 @@ class Generator
      */
     private function createSchemaEnforceTraverser(Route $route, OpenApiContext $context): array
     {
-        $traverser = new OpenApiTraverser([$visitor = new SchemaEnforceVisitor($route, $context->diagnostics->forRoute($route))]);
+        $traverser = new OpenApiTraverser([$visitor = new SchemaEnforceVisitor($context->diagnostics->forRoute($route))]);
 
         return [$traverser, $visitor];
     }

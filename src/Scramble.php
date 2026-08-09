@@ -67,7 +67,7 @@ class Scramble
      *
      * @deprecated
      */
-    public static function extendOpenApi(callable $openApiExtender)
+    public static function extendOpenApi(callable $openApiExtender): void
     {
         static::afterOpenApiGenerated($openApiExtender);
     }
@@ -75,12 +75,12 @@ class Scramble
     /**
      * Update Open API document before finally rendering it.
      */
-    public static function afterOpenApiGenerated(callable $afterOpenApiGenerated)
+    public static function afterOpenApiGenerated(callable $afterOpenApiGenerated): void
     {
         static::configure()->withDocumentTransformers($afterOpenApiGenerated);
     }
 
-    public static function routes(callable $routeResolver)
+    public static function routes(callable $routeResolver): void
     {
         static::configure()->routes($routeResolver);
     }
@@ -106,7 +106,7 @@ class Scramble
      *
      * @param  callable(RouteInfo, Operation): string[]  $tagResolver
      */
-    public static function resolveTagsUsing(callable $tagResolver)
+    public static function resolveTagsUsing(callable $tagResolver): void
     {
         static::$tagResolver = $tagResolver;
     }
@@ -115,12 +115,12 @@ class Scramble
      * @param  bool  $throw  When `true` documentation won't be generated in case of the error. When `false`,
      *                       documentation will be generated but errors will be available in `scramble:analyze` command.
      */
-    public static function enforceSchema(callable $cb, string|callable $errorMessageGetter, array $ignorePaths = [], bool $throw = true)
+    public static function enforceSchema(callable $cb, string|callable $errorMessageGetter, array $ignorePaths = [], bool $throw = true): void
     {
         static::$enforceSchemaRules[] = [$cb, $errorMessageGetter, $ignorePaths, $throw];
     }
 
-    public static function preventSchema(string|array $schemaTypes, array $ignorePaths = [], bool $throw = true)
+    public static function preventSchema(string|array $schemaTypes, array $ignorePaths = [], bool $throw = true): void
     {
         $forbiddenSchemas = Arr::wrap($schemaTypes);
 
@@ -188,6 +188,10 @@ class Scramble
         return app(GeneratorConfigCollection::class);
     }
 
+    /**
+     * When true, failures during operation building (e.g. rules evaluation) abort generation.
+     * Independent of Generator::setThrowExceptions() (schema-enforcement failures).
+     */
     public static function throwOnError(bool $throw = true): void
     {
         static::$throwOnError = $throw;

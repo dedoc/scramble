@@ -2,11 +2,13 @@
 
 namespace Dedoc\Scramble\Exceptions;
 
+use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
+use Dedoc\Scramble\Diagnostics\ValidationRules\Vr003AllEvaluatorsFailedDiagnostic;
 use Exception;
 use Illuminate\Support\Arr;
 use Throwable;
 
-class RulesEvaluationException extends Exception implements RouteAware
+class RulesEvaluationException extends Exception implements RouteAware, BuildsDiagnostics
 {
     use RouteAwareTrait;
 
@@ -71,5 +73,10 @@ class RulesEvaluationException extends Exception implements RouteAware
         }
 
         return null;
+    }
+
+    public function toDiagnostic(): Diagnostic
+    {
+        return Vr003AllEvaluatorsFailedDiagnostic::fromRulesEvaluationException($this);
     }
 }
