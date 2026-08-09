@@ -20,39 +20,40 @@ class ProNudgeReporter
         }
 
         $command->newLine();
-        $command->line('Scramble detected:');
+
+        $lines = [];
 
         foreach ($this->collector->summaries() as $summary) {
-            $command->line('  • '.$summary['signal']->description($summary['count']));
+            $lines[] = '  • '.$summary['signal']->description($summary['count']);
         }
 
-        $command->newLine();
-        $this->renderPitch($command);
-        $command->newLine();
-        $command->line('Learn more: <href='.self::PRO_URL.'>'.self::PRO_URL.'</>');
+        $command->getOutput()->block(implode("\n", [
+            '⚡️ Scramble detected:',
+            ...$lines,
+            ...$this->renderPitch(),
+            'Learn more: '.self::PRO_URL,
+        ]), null, 'fg=gray', ' | ', escape: false);
     }
 
-    private function renderPitch(Command $command): void
+    /** @return string[] */
+    private function renderPitch(): array
     {
         $hasQueryBuilder = $this->collector->count(ProNudgeSignal::QueryBuilder) > 0;
         $hasLaravelData = $this->collector->count(ProNudgeSignal::LaravelDataReturn) > 0
             || $this->collector->count(ProNudgeSignal::LaravelDataRequest) > 0;
 
         if ($hasQueryBuilder && $hasLaravelData) {
-            $command->line('Scramble PRO understands these packages and automatically documents:');
-            $command->newLine();
-            $command->line('  • Query Builder filters, sorts, includes, and sparse fieldsets');
-            $command->line('  • Laravel Data request and response schemas');
-
-            return;
+            return [
+                'Scramble PRO understands these packages and automatically documents:',
+                '  • Query Builder filters, sorts, includes, and sparse fieldsets',
+                '  • Laravel Data request and response schemas',
+            ];
         }
 
         if ($hasQueryBuilder) {
-            $command->line('Scramble PRO understands Spatie Query Builder and automatically documents filters, sorts, includes, and sparse fieldsets.');
-
-            return;
+            return ['Scramble PRO understands Spatie Query Builder and automatically documents filters, sorts, includes, and sparse fieldsets.'];
         }
 
-        $command->line('Scramble PRO understands Laravel Data and automatically generates accurate request and response schemas from your Data objects.');
+        return ['Scramble PRO understands Laravel Data and automatically generates accurate request and response schemas from your Data objects.'];
     }
 }
