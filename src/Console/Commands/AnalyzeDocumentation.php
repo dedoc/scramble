@@ -6,8 +6,8 @@ use Dedoc\Scramble\Console\Commands\Components\Code;
 use Dedoc\Scramble\Console\Commands\Components\StyledConsoleTextWrapper;
 use Dedoc\Scramble\Console\Commands\Components\TermsOfContentItem;
 use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
-use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\ClassContext;
+use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Scramble;
@@ -185,7 +185,7 @@ class AnalyzeDocumentation extends Command
     }
 
     /**
-     * @param list<array{0: string, 1: string}> $rows
+     * @param  list<array{0: string, 1: string}>  $rows
      */
     private function renderTable(array $rows): void
     {
