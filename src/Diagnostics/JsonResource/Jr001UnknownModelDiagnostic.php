@@ -13,7 +13,7 @@ class Jr001UnknownModelDiagnostic extends AbstractDiagnostic
     {
         return new self(
             DiagnosticSeverity::Warning,
-            'cannot infer the resource model',
+            'Cannot infer the resource model',
             context: new ClassContext($resourceClass),
             codeLocation: CodeLocation::fromReflection(new \ReflectionClass($resourceClass)),
             tip: 'Add a `@mixin`, `@property`, or `@property-read` PHPDoc annotation to the resource class with the wrapped model type, or name the resource following Laravel conventions (e.g. `UserResource` → `App\\Models\\User`).',

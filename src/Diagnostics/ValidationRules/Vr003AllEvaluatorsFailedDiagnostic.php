@@ -2,26 +2,31 @@
 
 namespace Dedoc\Scramble\Diagnostics\ValidationRules;
 
-use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
+use Dedoc\Scramble\Diagnostics\AbstractDiagnostic;
+use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
+use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\FormRequestRulesEvaluator;
+use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\NodeRulesEvaluator;
 use Throwable;
 
-class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
+class Vr003AllEvaluatorsFailedDiagnostic extends AbstractDiagnostic
 {
-    /**
-     * @param  array<string, Throwable>  $exceptions
-     */
-    public function __construct(
-        private array $exceptions,
-        string $message,
-    ) {
-        parent::__construct($message, DiagnosticSeverity::Error);
-    }
+    /** @var array<string, Throwable> */
+    private array $exceptions;
 
     public static function fromRulesEvaluationException(RulesEvaluationException $exception): self
     {
-        return new self($exception->exceptions, $exception->getMessage());
+        $diagnostic = new self(
+            DiagnosticSeverity::Error,
+            'Cannot evaluate validation rules',
+            context: $exception->class ? new ClassContext($exception->class) : null,
+            tip: 'Fix one of the warnings above. Scramble only needs one evaluation strategy to succeed in order to determine the validation rules.',
+            originException: $exception,
+        );
+        $diagnostic->exceptions = $exception->exceptions;
+
+        return $diagnostic;
     }
 
     public function code(): string
@@ -29,18 +34,25 @@ class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
         return 'VR003';
     }
 
-    public function tip(): ?string
+    public function details(): array
     {
-        return 'Go through warnings to see if there is an easy fix. Fixing at least one evaluator will enable Scramble to evaluate the rules.';
-    }
+        $exceptionsNameMap = [
+            FormRequestRulesEvaluator::class => 'Direct evaluation',
+            NodeRulesEvaluator::class => 'Node evaluation',
+        ];
 
-    public function documentationUrl(): string
-    {
-        return 'https://scramble.dedoc.co/errors#vr003';
+        return [
+            ...parent::details(),
+            ...collect($this->exceptions)
+                ->map(fn (Throwable $e, string $evaluator) => [$exceptionsNameMap[$evaluator] ?? class_basename($evaluator), $e->getMessage()])
+                ->values()
+                ->all(),
+        ];
     }
 
     public function toException(): Throwable
     {
-        return RulesEvaluationException::fromExceptions($this->exceptions);
+        return RulesEvaluationException::fromExceptions($this->exceptions)
+            ->forClass($this->context instanceof ClassContext ? $this->context->class : null);
     }
 }

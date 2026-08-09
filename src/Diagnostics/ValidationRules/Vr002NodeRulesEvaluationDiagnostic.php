@@ -2,17 +2,33 @@
 
 namespace Dedoc\Scramble\Diagnostics\ValidationRules;
 
-use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
+use Dedoc\Scramble\Diagnostics\AbstractDiagnostic;
+use Dedoc\Scramble\Diagnostics\ClassContext;
+use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Throwable;
 
-class Vr002NodeRulesEvaluationDiagnostic extends AbstractCodedDiagnostic
+class Vr002NodeRulesEvaluationDiagnostic extends AbstractDiagnostic
 {
-    public static function fromThrowable(Throwable $throwable, string $source, string $message): self
-    {
-        $message = "$message\n  $source\n\nReason: {$throwable->getMessage()}";
+    private string $source;
 
-        return new self($message, DiagnosticSeverity::Warning, $throwable);
+    public static function fromThrowable(
+        Throwable $throwable,
+        string $source,
+        string $message,
+        ?CodeLocation $codeLocation = null,
+        ?string $className = null,
+    ): self {
+        $diagnostic = new self(
+            DiagnosticSeverity::Warning,
+            $message,
+            context: $className ? new ClassContext($className) : null,
+            codeLocation: $codeLocation,
+            originException: $throwable,
+        );
+        $diagnostic->source = $source;
+
+        return $diagnostic;
     }
 
     public function code(): string
@@ -20,8 +36,12 @@ class Vr002NodeRulesEvaluationDiagnostic extends AbstractCodedDiagnostic
         return 'VR002';
     }
 
-    public function documentationUrl(): string
+    public function details(): array
     {
-        return 'https://scramble.dedoc.co/errors#vr002';
+        return [
+            ...parent::details(),
+            ['Expression', $this->source],
+            ['Message', $this->originException->getMessage()],
+        ];
     }
 }

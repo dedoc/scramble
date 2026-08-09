@@ -2,7 +2,9 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
+use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+use Dedoc\Scramble\Diagnostics\ValidationRules\Vr002NodeRulesEvaluationDiagnostic;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
@@ -50,7 +52,7 @@ class NodeRulesEvaluator implements RulesEvaluator
         } catch (Throwable $e) {
             throw RulesEvaluationException::fromExceptions([
                 self::class => $this->lastEvaluationException ?? $e,
-            ]);
+            ])->forClass($this->className);
         }
     }
 
@@ -114,20 +116,15 @@ class NodeRulesEvaluator implements RulesEvaluator
                         $param->var->name => $value,
                     ];
                 } catch (Throwable $e) {
-                    // @todo migrate to VR002
-                    // $location = new CodeLocation(
-                    //     file: $this->routeInfo->reflectionAction()->getFileName(),
-                    //     line: $param->getStartLine(),
-                    // );
-                    // $this->diagnostics->report(
-                    //     Vr002NodeRulesEvaluationDiagnostic::fromThrowable(
-                    //         $e,
-                    //         "\${$param->var->name}",
-                    //         'Failed to evaluate parameter',
-                    //     )
-                    //         ->withLocation($location)
-                    //         ->withContext($location->file)
-                    // );
+                    $this->diagnostics->reportOnce(
+                        Vr002NodeRulesEvaluationDiagnostic::fromThrowable(
+                            $e,
+                            "\${$param->var->name}",
+                            'Failed to evaluate parameter',
+                            CodeLocation::from($this->routeInfo->reflectionAction()->getFileName() ?: null, $param->getStartLine()),
+                            $this->className,
+                        )
+                    );
 
                     return [
                         $param->var->name => new Optional(null),
@@ -217,20 +214,15 @@ class NodeRulesEvaluator implements RulesEvaluator
                     'this' => $this->tryCreatingCurrentClassInstance(),
                 ]);
             } catch (Throwable $e) {
-                // @todo migrate to VR002
-                // $location = new CodeLocation(
-                //     file: $this->getFileName(),
-                //     line: $expr->getStartLine(),
-                // );
-                // $this->diagnostics->report(
-                //     Vr002NodeRulesEvaluationDiagnostic::fromThrowable(
-                //         $e,
-                //         $code,
-                //         'Failed to evaluate expression',
-                //     )
-                //         ->withLocation($location)
-                //         ->withContext($location->file)
-                // );
+                $this->diagnostics->reportOnce(
+                    Vr002NodeRulesEvaluationDiagnostic::fromThrowable(
+                        $e,
+                        $code,
+                        'Failed to evaluate expression',
+                        CodeLocation::from($this->getFileName(), $expr->getStartLine()),
+                        $this->className,
+                    )
+                );
 
                 $this->lastEvaluationException = $e;
             }

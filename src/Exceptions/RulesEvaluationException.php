@@ -13,6 +13,8 @@ class RulesEvaluationException extends Exception implements RouteAware
     /** @var array<string, Throwable> */
     public array $exceptions = [];
 
+    public ?string $class = null;
+
     /**
      * @param  array<string, Throwable>  $exceptions
      */
@@ -33,6 +35,13 @@ class RulesEvaluationException extends Exception implements RouteAware
         $exception->exceptions = $exceptions;
 
         return $exception;
+    }
+
+    public function forClass(?string $class): self
+    {
+        $this->class = $class;
+
+        return $this;
     }
 
     /**

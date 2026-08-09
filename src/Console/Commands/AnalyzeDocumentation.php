@@ -45,15 +45,20 @@ class AnalyzeDocumentation extends Command
         $errorCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)->count();
         $warningCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Warning)->count();
 
+        $summary = collect([
+            $errorCount > 0 ? $errorCount.' '.Str::plural('error', $errorCount) : null,
+            $warningCount > 0 ? $warningCount.' '.Str::plural('warning', $warningCount) : null,
+        ])->filter()->implode(' and ');
+
         if ($errorCount > 0) {
-            $this->error('[ERROR] Found '.$errorCount.' '.Str::plural('error', $errorCount).'.');
+            $this->error("[ERROR] Found {$summary}.");
             (new ProNudgeReporter($generator->proNudge))->report($this);
 
             return static::FAILURE;
         }
 
         if ($warningCount > 0) {
-            $this->warn('[WARNING] Found '.$warningCount.' '.Str::plural('warning', $warningCount).'.');
+            $this->warn("[WARNING] Found {$summary}.");
         } else {
             $this->info('Everything is fine! Documentation is generated without any errors 🍻');
         }
@@ -198,7 +203,10 @@ class AnalyzeDocumentation extends Command
             ->setRows(array_map(
                 fn (array $row) => [
                     '<fg=gray>'.$row[0].'</>',
-                    implode("\n", (new StyledConsoleTextWrapper)->wrap($row[1], $terminalWidth - $maxLabelLength - 2)),
+                    implode(
+                        "\n",
+                        array_map('trim', (new StyledConsoleTextWrapper)->wrap($row[1], $terminalWidth - $maxLabelLength - 2)),
+                    ),
                 ],
                 $rows,
             ))

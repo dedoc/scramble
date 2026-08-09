@@ -2,31 +2,28 @@
 
 namespace Dedoc\Scramble\Diagnostics\ValidationRules;
 
-use Dedoc\Scramble\Diagnostics\AbstractCodedDiagnostic;
+use Dedoc\Scramble\Diagnostics\AbstractDiagnostic;
+use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
+use ReflectionClass;
 use Throwable;
 
-class Vr001FormRequestRulesDiagnostic extends AbstractCodedDiagnostic
+class Vr001FormRequestRulesDiagnostic extends AbstractDiagnostic
 {
-    public static function fromThrowableAndReflection(Throwable $throwable, \ReflectionClass $reflectionClass): self
+    public static function fromThrowableAndReflection(Throwable $throwable, ReflectionClass $reflectionClass): self
     {
-        $file = $reflectionClass->getFileName();
-        $line = $reflectionClass->getStartLine() ?: 1;
-
-        if (is_string($file) && $throwable->getFile() === $file && $throwable->getLine() > 0) {
-            $line = $throwable->getLine();
-        }
-
-        $location = is_string($file)
-            ? new CodeLocation($file, $line)
+        $location = ($file = $throwable->getFile())
+            ? CodeLocation::from($file, $throwable->getLine())
             : CodeLocation::fromReflection($reflectionClass);
 
         return new self(
-            $throwable->getMessage(),
             DiagnosticSeverity::Warning,
-            $throwable,
+            class_basename($reflectionClass->getName()).'::rules() call failed',
+            context: new ClassContext($reflectionClass->getName()),
             codeLocation: $location,
+            tip: 'Scramble evaluates rules() outside the normal request lifecycle, so some values may be unavailable. Make such access safe when appropriate, for example: $this->user()?->company_id, $this->route(\'param\').',
+            originException: $throwable,
         );
     }
 
@@ -35,13 +32,11 @@ class Vr001FormRequestRulesDiagnostic extends AbstractCodedDiagnostic
         return 'VR001';
     }
 
-    public function tip(): ?string
+    public function details(): array
     {
-        return 'Form requests are evaluated without an authenticated user or route parameters. Use null-safe access when these values may be absent: `$this->user()?->company_id`, `$this->route(\'param\')`.';
-    }
-
-    public function documentationUrl(): string
-    {
-        return 'https://scramble.dedoc.co/errors#vr001';
+        return [
+            ...parent::details(),
+            ['Message', $this->originException->getMessage()],
+        ];
     }
 }
