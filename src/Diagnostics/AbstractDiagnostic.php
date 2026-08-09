@@ -16,7 +16,6 @@ abstract class AbstractDiagnostic implements Diagnostic
         protected ?CodeLocation $codeLocation = null,
         protected ?string $openApiLocation = null,
         protected ?string $tip = null,
-        protected ?string $docs = null,
         protected ?Throwable $originException = null,
     ) {}
 
@@ -58,11 +57,6 @@ abstract class AbstractDiagnostic implements Diagnostic
     public function tip(): ?string
     {
         return $this->tip;
-    }
-
-    public function docs(): ?string
-    {
-        return null;
     }
 
     public function details(): array

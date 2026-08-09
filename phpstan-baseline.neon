@@ -451,12 +451,6 @@ parameters:
 			path: src/Generator.php
 
 		-
-			message: '#^Property Dedoc\\Scramble\\Generator\:\:\$exceptions type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Generator.php
-
-		-
 			message: '#^Unable to resolve the template type TKey in call to function collect$#'
 			identifier: argument.templateType
 			count: 1
@@ -1481,18 +1475,6 @@ parameters:
 			identifier: missingType.return
 			count: 1
 			path: src/OpenApiVisitor.php
-
-		-
-			message: '#^Instanceof between Dedoc\\Scramble\\Exceptions\\InvalidSchema and Dedoc\\Scramble\\Exceptions\\RouteAware will always evaluate to true\.$#'
-			identifier: instanceof.alwaysTrue
-			count: 1
-			path: src/OpenApiVisitor/SchemaEnforceVisitor.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\OpenApiVisitor\\SchemaEnforceVisitor\:\:__construct\(\) has parameter \$exceptions with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/OpenApiVisitor/SchemaEnforceVisitor.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\OpenApiVisitor\\SchemaEnforceVisitor\:\:enter\(\) has no return type specified\.$#'

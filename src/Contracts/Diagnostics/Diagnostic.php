@@ -26,8 +26,6 @@ interface Diagnostic
 
     public function tip(): ?string;
 
-    public function docs(): ?string;
-
     /**
      * @return list<array{0: string, 1: string}>
      */

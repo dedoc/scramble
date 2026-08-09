@@ -180,9 +180,6 @@ class AnalyzeDocumentation extends Command
         if ($tip = $diagnostic->tip()) {
             $postfixTableRows[] = ['Tip', $tip];
         }
-        if ($docs = $diagnostic->docs()) {
-            $postfixTableRows[] = ['Docs', $docs];
-        }
 
         $this->renderTable($postfixTableRows);
     }
