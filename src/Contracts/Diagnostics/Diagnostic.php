@@ -2,7 +2,9 @@
 
 namespace Dedoc\Scramble\Contracts\Diagnostics;
 
+use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
+use Dedoc\Scramble\Diagnostics\SchemaContext;
 use Illuminate\Routing\Route;
 use Throwable;
 
@@ -10,21 +12,28 @@ interface Diagnostic
 {
     public function key(): string;
 
-    public function message(): string;
-
     public function severity(): DiagnosticSeverity;
 
+    public function code(): string;
+
+    public function message(): string;
+
+    public function context(): Route|SchemaContext|null;
+
+    public function codeLocation(): ?CodeLocation;
+
+    public function openApiLocation(): ?string;
+
+    public function tip(): ?string;
+
+    public function docs(): ?string;
+
+    /**
+     * @return list<array{0: string, 1: string}>
+     */
+    public function details(): array;
+
+    public function withContext(Route|SchemaContext|null $context): static;
+
     public function toException(): Throwable;
-
-    public function withRoute(?Route $route): self;
-
-    public function withCategory(?string $category): self;
-
-    public function withContext(?string $context): self;
-
-    public function route(): ?Route;
-
-    public function category(): ?string;
-
-    public function context(): ?string;
 }

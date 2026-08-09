@@ -22,22 +22,12 @@ class Vr001FormRequestRulesDiagnostic extends AbstractCodedDiagnostic
             ? new CodeLocation($file, $line)
             : CodeLocation::fromReflection($reflectionClass);
 
-        return (new self(
+        return new self(
             $throwable->getMessage(),
             DiagnosticSeverity::Warning,
             $throwable,
-            context: $location->file,
-        ))->withLocation($location);
-    }
-
-    public function title(): string
-    {
-        return 'Direct evaluation failed';
-    }
-
-    protected static function defaultContext(): ?string
-    {
-        return 'FormRequestRulesEvaluator';
+            codeLocation: $location,
+        );
     }
 
     public function code(): string
@@ -45,7 +35,7 @@ class Vr001FormRequestRulesDiagnostic extends AbstractCodedDiagnostic
         return 'VR001';
     }
 
-    public function tip(): string
+    public function tip(): ?string
     {
         return 'Form requests are evaluated without an authenticated user or route parameters. Use null-safe access when these values may be absent: `$this->user()?->company_id`, `$this->route(\'param\')`.';
     }

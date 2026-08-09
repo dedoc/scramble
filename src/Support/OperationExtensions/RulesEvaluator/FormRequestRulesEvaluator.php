@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
-use Dedoc\Scramble\Diagnostics\ValidationRules\Vr001FormRequestRulesDiagnostic;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
 use Illuminate\Http\Request;
@@ -22,9 +21,10 @@ class FormRequestRulesEvaluator implements RulesEvaluator
         try {
             return $this->rules($this->classReflector->className, $this->method);
         } catch (Throwable $e) {
-            $this->diagnostics->report(
-                Vr001FormRequestRulesDiagnostic::fromThrowableAndReflection($e, $this->classReflector->getReflection())
-            );
+            // @todo migrate to VR001
+            // $this->diagnostics->report(
+            //     Vr001FormRequestRulesDiagnostic::fromThrowableAndReflection($e, $this->classReflector->getReflection())
+            // );
 
             throw RulesEvaluationException::fromExceptions([self::class => $e]);
         }

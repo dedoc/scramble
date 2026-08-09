@@ -8,11 +8,6 @@ use Throwable;
 
 class GenericDiagnostic extends AbstractDiagnostic
 {
-    public function key(): string
-    {
-        return $this->context() ?: '';
-    }
-
     public static function fromException(Throwable $exception): self|Vr003AllEvaluatorsFailedDiagnostic
     {
         if ($exception instanceof RulesEvaluationException) {
@@ -20,9 +15,14 @@ class GenericDiagnostic extends AbstractDiagnostic
         }
 
         return new self(
-            $exception->getMessage(),
             DiagnosticSeverity::Error,
-            $exception,
+            $exception->getMessage(),
+            originException: $exception,
         );
+    }
+
+    public function code(): string
+    {
+        return 'GEN001';
     }
 }

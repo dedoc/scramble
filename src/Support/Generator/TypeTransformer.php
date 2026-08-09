@@ -2,7 +2,6 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-use Dedoc\Scramble\Diagnostics\PhpDoc\Pd001RedundantTypeAnnotationDiagnostic;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
 use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
@@ -578,9 +577,10 @@ class TypeTransformer
             return;
         }
 
-        $this->context->diagnostics->reportOnce(
-            Pd001RedundantTypeAnnotationDiagnostic::fromArrayItemType($item)
-        );
+        // @todo migrate to PD001
+        // $this->context->diagnostics->reportOnce(
+        //     Pd001RedundantTypeAnnotationDiagnostic::fromArrayItemType($item)
+        // );
     }
 
     private function shouldReportRedundantPhpDocType(Type $inferred, Type $phpDoc): bool

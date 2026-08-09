@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Diagnostics;
 
 use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
-use Dedoc\Scramble\Exceptions\RouteAware;
 use Exception;
 use Illuminate\Routing\Route;
 use Throwable;
@@ -11,68 +10,111 @@ use Throwable;
 abstract class AbstractDiagnostic implements Diagnostic
 {
     public function __construct(
+        protected DiagnosticSeverity $severity,
         protected string $message,
-        protected DiagnosticSeverity $severity = DiagnosticSeverity::Warning,
+        protected Route|SchemaContext|null $context = null,
+        protected ?CodeLocation $codeLocation = null,
+        protected ?string $openApiLocation = null,
+        protected ?string $tip = null,
+        protected ?string $docs = null,
         protected ?Throwable $originException = null,
-        protected ?Route $route = null,
-        protected ?string $category = null,
-        protected ?string $context = null,
     ) {}
 
-    public function message(): string
-    {
-        return $this->message;
-    }
+    abstract public function code(): string;
 
     public function severity(): DiagnosticSeverity
     {
         return $this->severity;
     }
 
-    public function route(): ?Route
+    /** @return $this */
+    public function withSeverity(DiagnosticSeverity $severity): self
     {
-        return $this->route;
+        $this->severity = $severity;
+        return $this;
     }
 
-    public function category(): ?string
+    public function message(): string
     {
-        return $this->category;
+        return $this->message;
     }
 
-    public function context(): ?string
+    public function context(): Route|SchemaContext|null
     {
         return $this->context;
     }
 
-    public function toException(): Throwable
+    public function codeLocation(): ?CodeLocation
     {
-        $exception = $this->originException ?? new Exception($this->message);
+        return $this->codeLocation;
+    }
 
-        if ($this->route) {
-            $exception = $exception instanceof RouteAware ? $exception->setRoute($this->route) : $exception;
+    public function openApiLocation(): ?string
+    {
+        return $this->openApiLocation;
+    }
+
+    public function tip(): ?string
+    {
+        return $this->tip;
+    }
+
+    public function docs(): ?string
+    {
+        return $this->docs ?? 'https://scramble.dedoc.co/errors#'.strtolower($this->code());
+    }
+
+    public function details(): array
+    {
+        $details = [];
+
+        if ($this->openApiLocation) {
+            $details[] = ['Found at', $this->openApiLocation];
         }
 
-        return $exception;
+        if ($this->codeLocation) {
+            $path = str_replace(base_path().DIRECTORY_SEPARATOR, '', $this->codeLocation->file);
+            $details[] = ['Inferred at', $path.':'.$this->codeLocation->line];
+        }
+
+        return $details;
     }
 
-    public function withRoute(?Route $route): static
+    public function key(): string
     {
-        $this->route = $route;
-
-        return $this;
+        return implode('|', array_filter([
+            $this->code(),
+            $this->contextKey(),
+            $this->openApiLocation,
+            $this->codeLocation?->file,
+            (string) ($this->codeLocation?->line ?: ''),
+        ], fn ($part) => $part !== null && $part !== ''));
     }
 
-    public function withCategory(?string $category): static
-    {
-        $this->category = $category;
-
-        return $this;
-    }
-
-    public function withContext(?string $context): static
+    public function withContext(Route|SchemaContext|null $context): static
     {
         $this->context = $context;
 
         return $this;
+    }
+
+    public function toException(): Throwable
+    {
+        return $this->originException ?? new Exception("[{$this->code()}] {$this->message}");
+    }
+
+    protected function contextKey(): string
+    {
+        $context = $this->context;
+
+        if ($context instanceof Route) {
+            return implode('|', $context->methods()).'.'.$context->uri();
+        }
+
+        if ($context instanceof SchemaContext) {
+            return 'schema:'.$context->name;
+        }
+
+        return '';
     }
 }

@@ -2,49 +2,46 @@
 
 namespace Dedoc\Scramble\Diagnostics;
 
-use Dedoc\Scramble\Contracts\Diagnostics\CodedDiagnostic;
+use Throwable;
 
-abstract class AbstractCodedDiagnostic extends AbstractDiagnostic implements CodedDiagnostic
+/**
+ * Temporary base for legacy coded diagnostics (VR/JR/MD/PD) until they are migrated
+ * to the new Diagnostic shape used by SE001.
+ */
+abstract class AbstractCodedDiagnostic extends AbstractDiagnostic
 {
-    public ?CodeLocation $location = null;
-
-    abstract public function code(): string;
-
     abstract public function documentationUrl(): string;
 
-    public function title(): string
-    {
-        return $this->message();
+    public function __construct(
+        string $message,
+        DiagnosticSeverity $severity = DiagnosticSeverity::Warning,
+        ?Throwable $originException = null,
+        ?CodeLocation $codeLocation = null,
+        ?string $tip = null,
+    ) {
+        parent::__construct(
+            $severity,
+            $message,
+            codeLocation: $codeLocation,
+            tip: $tip,
+            docs: null,
+            originException: $originException,
+        );
     }
 
-    public function tip(): string
+    public function docs(): ?string
     {
-        return '';
-    }
-
-    public function key(): string
-    {
-        return $this->code().'|'.($this->context() ?: '');
-    }
-
-    protected static function defaultContext(): ?string
-    {
-        return null;
-    }
-
-    public function context(): ?string
-    {
-        return $this->context ?? static::defaultContext();
+        return $this->documentationUrl();
     }
 
     public function location(): ?CodeLocation
     {
-        return $this->location;
+        return $this->codeLocation;
     }
 
     public function withLocation(?CodeLocation $location): static
     {
-        $this->location = $location;
+        $this->codeLocation = $location;
 
         return $this;
     }

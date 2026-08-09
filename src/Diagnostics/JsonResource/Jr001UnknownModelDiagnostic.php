@@ -10,13 +10,11 @@ use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 class Jr001UnknownModelDiagnostic extends AbstractCodedDiagnostic
 {
     public function __construct(
-        public readonly string $resourceClass,
+        public string $resourceClass,
     ) {
         parent::__construct(
             'cannot infer the resource model',
             DiagnosticSeverity::Warning,
-            category: 'JSON resources',
-            context: $resourceClass,
         );
     }
 
@@ -41,7 +39,7 @@ class Jr001UnknownModelDiagnostic extends AbstractCodedDiagnostic
         return 'JR001';
     }
 
-    public function tip(): string
+    public function tip(): ?string
     {
         return 'Add a `@mixin`, `@property`, or `@property-read` PHPDoc annotation to the resource class with the wrapped model type, or name the resource following Laravel conventions (e.g. `UserResource` → `App\\Models\\User`).';
     }

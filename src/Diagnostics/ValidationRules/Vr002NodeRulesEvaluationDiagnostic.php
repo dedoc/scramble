@@ -15,11 +15,6 @@ class Vr002NodeRulesEvaluationDiagnostic extends AbstractCodedDiagnostic
         return new self($message, DiagnosticSeverity::Warning, $throwable);
     }
 
-    public function title(): string
-    {
-        return 'Node evaluation failed';
-    }
-
     public function code(): string
     {
         return 'VR002';

@@ -13,6 +13,23 @@ class CodeLocation
         public readonly int $line,
     ) {}
 
+    public static function from(?string $originFile, ?int $originLine): ?self
+    {
+        if (! $originFile || ! $originLine) {
+            return null;
+        }
+
+        $file = class_exists($originFile)
+            ? (new ReflectionClass($originFile))->getFileName()
+            : $originFile;
+
+        if (! is_string($file)) {
+            return null;
+        }
+
+        return new CodeLocation($file, $originLine);
+    }
+
     /**
      * Array items combine PHPDoc both from array item node, and value node.
      */

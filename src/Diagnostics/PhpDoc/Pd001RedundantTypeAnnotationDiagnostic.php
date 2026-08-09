@@ -13,16 +13,13 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic
     private const VAR_TAG = '@var';
 
     public function __construct(
-        public readonly string $arrayItemKey,
-        public readonly string $inferredType,
-        public readonly int $linesAfter,
-        ?string $context = null,
+        public string $arrayItemKey,
+        public string $inferredType,
+        public int $linesAfter,
     ) {
         parent::__construct(
             "`$arrayItemKey` is inferred as `$inferredType`.",
             DiagnosticSeverity::Warning,
-            category: 'PHPDoc',
-            context: $context,
         );
     }
 
@@ -35,13 +32,7 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic
             arrayItemKey: $arrayItemKey,
             inferredType: $item->value->toString(),
             linesAfter: self::linesAfterPhpDoc($item, $location),
-            context: $location?->file,
         ))->withLocation($location);
-    }
-
-    public function title(): string
-    {
-        return 'redundant `'.self::VAR_TAG.'` annotation';
     }
 
     public function codeAnnotation(): CodeAnnotation
@@ -64,7 +55,7 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic
         return 'PD001';
     }
 
-    public function tip(): string
+    public function tip(): ?string
     {
         return 'Remove `'.self::VAR_TAG.' *`; keep description, `@format`, `@example`, and other annotations.';
     }

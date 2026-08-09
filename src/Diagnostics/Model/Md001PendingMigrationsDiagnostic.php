@@ -12,14 +12,7 @@ class Md001PendingMigrationsDiagnostic extends AbstractCodedDiagnostic
         return new self(
             "Cannot read database schema for model [$modelClass]: table [$table] does not exist. Model attributes will be documented without database column information.",
             DiagnosticSeverity::Warning,
-            category: 'Models',
-            context: $modelClass,
         );
-    }
-
-    public function title(): string
-    {
-        return 'Pending migrations';
     }
 
     public function code(): string
@@ -27,7 +20,7 @@ class Md001PendingMigrationsDiagnostic extends AbstractCodedDiagnostic
         return 'MD001';
     }
 
-    public function tip(): string
+    public function tip(): ?string
     {
         return 'Run `php artisan migrate` to create the missing table, or ensure Scramble is analyzing against a database with migrations applied.';
     }

@@ -24,17 +24,12 @@ class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
         return new self($exception->exceptions, $exception->getMessage());
     }
 
-    public function title(): string
-    {
-        return 'All rule evaluators failed';
-    }
-
     public function code(): string
     {
         return 'VR003';
     }
 
-    public function tip(): string
+    public function tip(): ?string
     {
         return 'Go through warnings to see if there is an easy fix. Fixing at least one evaluator will enable Scramble to evaluate the rules.';
     }

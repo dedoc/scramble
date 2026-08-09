@@ -16,8 +16,6 @@ class DiagnosticsCollector
         public Collection $diagnostics = new Collection,
         public bool $throwOnError = false,
         public ?Route $route = null,
-        public ?string $category = null,
-        public ?string $context = null,
         private ArrayObject $seenRegistry = new ArrayObject,
     ) {}
 
@@ -45,29 +43,15 @@ class DiagnosticsCollector
 
     public function reportQuietly(Diagnostic $diagnostic): void
     {
-        $category = $this->category ?? $diagnostic->category();
-        $context = $this->context ?? $diagnostic->context();
-
-        $diagnostic = $diagnostic
-            ->withRoute($this->route ?? $diagnostic->route())
-            ->withCategory($category)
-            ->withContext($context);
+        if ($this->route && $diagnostic->context() === null) {
+            $diagnostic = $diagnostic->withContext($this->route);
+        }
 
         $this->diagnostics->push($diagnostic);
     }
 
     public function forRoute(Route $route): self
     {
-        return new self($this->diagnostics, $this->throwOnError, $route, $this->category, $this->context, $this->seenRegistry);
-    }
-
-    public function forCategory(string $category): self
-    {
-        return new self($this->diagnostics, $this->throwOnError, $this->route, $category, $this->context, $this->seenRegistry);
-    }
-
-    public function forContext(string $context): self
-    {
-        return new self($this->diagnostics, $this->throwOnError, $this->route, $this->category, $context, $this->seenRegistry);
+        return new self($this->diagnostics, $this->throwOnError, $route, $this->seenRegistry);
     }
 }

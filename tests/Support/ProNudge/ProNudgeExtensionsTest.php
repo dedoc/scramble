@@ -114,7 +114,7 @@ it('prints diagnostics and then pro nudge when analyzing documentation', functio
         ->and(str_ends_with(trim($output), ProNudgeReporter::PRO_URL))->toBeTrue();
 });
 
-it('prints diagnostics and then pro nudge when exporting documentation', function () {
+it('exports documentation and then prints pro nudge', function () {
     Scramble::routes(fn (Route $r) => str_starts_with($r->uri, 'api/pro-nudge'));
     Scramble::configure()->withDocumentTransformers(function (OpenApi $_, OpenApiContext $context) {
         $context->diagnostics->report(new GenericDiagnostic('Test diagnostic error.', DiagnosticSeverity::Error));
@@ -122,17 +122,17 @@ it('prints diagnostics and then pro nudge when exporting documentation', functio
 
     RouteFacade::get('api/pro-nudge/data-return', [ProNudge_DataReturn_Controller::class, 'index']);
 
-    File::shouldReceive('put')->never();
+    File::shouldReceive('put')->once();
 
     $exitCode = Artisan::call(ExportDocumentation::class);
     $output = Artisan::output();
-    $diagnosticPosition = strpos($output, 'Test diagnostic error.');
+    $exportPosition = strpos($output, 'OpenAPI document exported to');
     $proNudgePosition = strpos($output, 'Scramble detected:');
 
-    expect($exitCode)->toBe(1)
-        ->and($diagnosticPosition)->not->toBeFalse()
+    expect($exitCode)->toBe(0)
+        ->and($exportPosition)->not->toBeFalse()
         ->and($proNudgePosition)->not->toBeFalse()
-        ->and($diagnosticPosition)->toBeLessThan($proNudgePosition)
+        ->and($exportPosition)->toBeLessThan($proNudgePosition)
         ->and(str_ends_with(trim($output), ProNudgeReporter::PRO_URL))->toBeTrue();
 });
 

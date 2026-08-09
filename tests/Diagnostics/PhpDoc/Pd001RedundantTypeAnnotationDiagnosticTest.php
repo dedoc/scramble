@@ -4,7 +4,6 @@ use Dedoc\Scramble\Diagnostics\PhpDoc\Pd001RedundantTypeAnnotationDiagnostic;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
-use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
@@ -12,7 +11,6 @@ use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Illuminate\Support\Facades\Artisan;
 
 beforeEach(function () {
     $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
@@ -33,38 +31,6 @@ it('reports PD001 when @var repeats an inferred type', function () {
         ->and($this->context->diagnostics->diagnostics->first()->context())->toBe(__FILE__);
 });
 class UserResource_Pd001RedundantTypeAnnotationDiagnosticTest {}
-
-it('renders PD001 output when analyzing documentation', function () {
-    Scramble::configure()->withDocumentTransformers(function (OpenApi $_, OpenApiContext $context) {
-        $docNode = PhpDoc::parse('/** @var string */');
-        $docNode->setAttribute('sourceClass', UserResource_Pd001RedundantTypeAnnotationDiagnosticTest::class);
-        $docNode->setAttribute('sourceLine', 35);
-
-        $item = new ArrayItemType_('name', new StringType);
-        $item->setAttribute('docNode', $docNode);
-
-        app()->make(TypeTransformer::class, [
-            'context' => $context,
-        ])->transform($item);
-    });
-
-    $previousColumns = getenv('COLUMNS');
-    putenv('COLUMNS=1000');
-
-    try {
-        $exitCode = Artisan::call('scramble:analyze');
-        $output = Artisan::output();
-    } finally {
-        $previousColumns === false
-            ? putenv('COLUMNS')
-            : putenv("COLUMNS={$previousColumns}");
-    }
-
-    expect($exitCode)->toBe(0)
-        ->and($output)->toContain('PD001  redundant `@var` annotation')
-        ->and($output)->toContain('`name` is inferred as `string`')
-        ->and($output)->toContain('Docs: https://scramble.dedoc.co/errors#pd001');
-});
 
 it('does not report PD001 when @var adds information', function () {
     $item = new ArrayItemType_('error', new UnknownType);

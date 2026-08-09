@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Contracts\OperationTransformer;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
-use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\ContainerUtils;
@@ -50,7 +49,8 @@ class RequestBodyExtension implements OperationTransformer
         try {
             $rulesResults = collect($this->extractParameters($operation, $routeInfo));
         } catch (Throwable $exception) {
-            $this->diagnostics->reportQuietly(GenericDiagnostic::fromException($exception));
+            // @todo migrate rules evaluation failures to coded diagnostics (VR003, etc.)
+            // $this->diagnostics->reportQuietly(...);
 
             if (Scramble::shouldThrowOnError()) {
                 throw $exception;
@@ -268,7 +268,7 @@ class RequestBodyExtension implements OperationTransformer
     private function extractParameters(Operation $operation, RouteInfo $routeInfo): array
     {
         $result = [];
-        $diagnostics = $this->diagnostics->forCategory('Validation rules evaluation');
+        $diagnostics = $this->diagnostics;
 
         foreach ($this->config->parametersExtractors->all() as $extractorClass) {
             /** @var ParameterExtractor $extractor */
