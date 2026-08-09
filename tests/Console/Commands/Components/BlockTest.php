@@ -65,6 +65,16 @@ it('does not leak synthetic closing tags when wrapping styled namespaces', funct
     expect(implode('', $lines))->toContain('\\NodeRulesEvaluator::unknownMethod()');
 });
 
+it('preserves blank lines in multiline content', function () {
+    [, $plain] = renderBlock("Alpha\n\nBeta", 2, 40);
+
+    expect(explode(PHP_EOL, $plain))->toBe([
+        '  Alpha',
+        '',
+        '  Beta',
+    ]);
+});
+
 function renderBlock(string $content, int $paddingLeft, int $columns, bool $decorated = false): array
 {
     $previousColumns = getenv('COLUMNS');

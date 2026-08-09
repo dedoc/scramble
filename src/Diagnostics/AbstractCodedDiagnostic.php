@@ -12,6 +12,11 @@ abstract class AbstractCodedDiagnostic extends AbstractDiagnostic implements Cod
 
     abstract public function documentationUrl(): string;
 
+    public function title(): string
+    {
+        return $this->message();
+    }
+
     public function tip(): string
     {
         return '';

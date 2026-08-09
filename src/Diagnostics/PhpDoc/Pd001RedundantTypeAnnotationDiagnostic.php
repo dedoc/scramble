@@ -19,7 +19,7 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic
         ?string $context = null,
     ) {
         parent::__construct(
-            'redundant `'.self::VAR_TAG.'` annotation',
+            "`$arrayItemKey` is inferred as `$inferredType`.",
             DiagnosticSeverity::Warning,
             category: 'PHPDoc',
             context: $context,
@@ -37,6 +37,11 @@ class Pd001RedundantTypeAnnotationDiagnostic extends AbstractCodedDiagnostic
             linesAfter: self::linesAfterPhpDoc($item, $location),
             context: $location?->file,
         ))->withLocation($location);
+    }
+
+    public function title(): string
+    {
+        return 'redundant `'.self::VAR_TAG.'` annotation';
     }
 
     public function codeAnnotation(): CodeAnnotation

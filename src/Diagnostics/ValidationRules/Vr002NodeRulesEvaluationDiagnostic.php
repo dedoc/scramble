@@ -8,9 +8,16 @@ use Throwable;
 
 class Vr002NodeRulesEvaluationDiagnostic extends AbstractCodedDiagnostic
 {
-    public static function fromThrowable(Throwable $throwable, string $message): self
+    public static function fromThrowable(Throwable $throwable, string $source, string $message): self
     {
+        $message = "$message\n  $source\n\nReason: {$throwable->getMessage()}";
+
         return new self($message, DiagnosticSeverity::Warning, $throwable);
+    }
+
+    public function title(): string
+    {
+        return 'Node evaluation failed';
     }
 
     public function code(): string

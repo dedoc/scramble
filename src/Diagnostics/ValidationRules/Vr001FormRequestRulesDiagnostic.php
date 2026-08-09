@@ -11,7 +11,16 @@ class Vr001FormRequestRulesDiagnostic extends AbstractCodedDiagnostic
 {
     public static function fromThrowableAndReflection(Throwable $throwable, \ReflectionClass $reflectionClass): self
     {
-        $location = CodeLocation::fromReflection($reflectionClass);
+        $file = $reflectionClass->getFileName();
+        $line = $reflectionClass->getStartLine() ?: 1;
+
+        if (is_string($file) && $throwable->getFile() === $file && $throwable->getLine() > 0) {
+            $line = $throwable->getLine();
+        }
+
+        $location = is_string($file)
+            ? new CodeLocation($file, $line)
+            : CodeLocation::fromReflection($reflectionClass);
 
         return (new self(
             $throwable->getMessage(),
@@ -19,6 +28,11 @@ class Vr001FormRequestRulesDiagnostic extends AbstractCodedDiagnostic
             $throwable,
             context: $location->file,
         ))->withLocation($location);
+    }
+
+    public function title(): string
+    {
+        return 'Direct evaluation failed';
     }
 
     protected static function defaultContext(): ?string
@@ -33,7 +47,7 @@ class Vr001FormRequestRulesDiagnostic extends AbstractCodedDiagnostic
 
     public function tip(): string
     {
-        return 'When evaluating form request rules Scramble is not injecting any specific user instance, or parameters, meaning `$this->user()` is `null`, and any parameter you\'d expect to be non-null in runtime is also `null`. Consider using nullable safe method calls and property fetching: `$this->user()?->getSomething()`, or `$this->param?->something()`.';
+        return 'Form requests are evaluated without an authenticated user or route parameters. Use null-safe access when these values may be absent: `$this->user()?->company_id`, `$this->route(\'param\')`.';
     }
 
     public function documentationUrl(): string

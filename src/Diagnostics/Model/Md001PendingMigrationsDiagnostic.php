@@ -17,6 +17,11 @@ class Md001PendingMigrationsDiagnostic extends AbstractCodedDiagnostic
         );
     }
 
+    public function title(): string
+    {
+        return 'Pending migrations';
+    }
+
     public function code(): string
     {
         return 'MD001';

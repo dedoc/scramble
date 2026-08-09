@@ -15,6 +15,8 @@ class Block implements Component
     public function render(OutputStyle $style): void
     {
         if ($this->content === '') {
+            $style->writeln('');
+
             return;
         }
 
@@ -23,7 +25,7 @@ class Block implements Component
         $lines = (new StyledConsoleTextWrapper)->wrap($this->content, $width);
 
         foreach ($lines as $line) {
-            $style->writeln($padding.$line);
+            $style->writeln($line === '' ? '' : $padding.$line);
         }
     }
 }

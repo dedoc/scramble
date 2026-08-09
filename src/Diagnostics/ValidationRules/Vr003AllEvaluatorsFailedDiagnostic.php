@@ -24,6 +24,11 @@ class Vr003AllEvaluatorsFailedDiagnostic extends AbstractCodedDiagnostic
         return new self($exception->exceptions, $exception->getMessage());
     }
 
+    public function title(): string
+    {
+        return 'All rule evaluators failed';
+    }
+
     public function code(): string
     {
         return 'VR003';

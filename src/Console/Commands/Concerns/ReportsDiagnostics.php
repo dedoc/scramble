@@ -21,20 +21,10 @@ trait ReportsDiagnostics
      */
     protected function reportDiagnostics(Collection $diagnostics, bool $reportSuccess = true): int
     {
-        $diagnostics
-            ->groupBy(fn (Diagnostic $d) => $d->context() ?: 'General')
-            ->sortKeys()
-            ->each(function (Collection $contextDiagnostics, string $context) {
-                $context = Str::replace(base_path().DIRECTORY_SEPARATOR, '', $context);
-
-                $this->line("<options=bold>{$context}</>");
-                $this->line('');
-
-                $contextDiagnostics->each(function (Diagnostic $d) {
-                    $this->renderDiagnosticEntry($d);
-                    $this->line('');
-                });
-            });
+        $diagnostics->each(function (Diagnostic $d) {
+            $this->renderDiagnosticEntry($d);
+            $this->line('');
+        });
 
         $errorCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)->count();
         $warningCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Warning)->count();
@@ -70,16 +60,14 @@ trait ReportsDiagnostics
 
     private function renderDiagnosticEntry(Diagnostic $d): void
     {
-        $pad = 4;
-
         if ($d instanceof CodedDiagnostic) {
-            $this->renderCodedDiagnostic($d, $pad);
+            $this->renderCodedDiagnostic($d);
 
             return;
         }
 
         $msg = $this->formatDiagnosticMessage($d->message());
-        (new Block($msg, $pad))->render($this->output);
+        (new Block($msg, 2))->render($this->output);
 
         $exception = $d->toException();
         if ($exception instanceof ConsoleRenderable) {
@@ -87,48 +75,52 @@ trait ReportsDiagnostics
         }
     }
 
-    private function renderCodedDiagnostic(CodedDiagnostic $d, int $pad): void
+    private function renderCodedDiagnostic(CodedDiagnostic $d): void
     {
         $location = $d instanceof AbstractCodedDiagnostic ? $d->location() : null;
         $annotation = $d instanceof AbstractCodedDiagnostic ? $d->codeAnnotation() : null;
 
-        if ($location && $annotation) {
-            $this->output->writeln('    --> line '.$location->line.' ['.$d->code().']: '.$d->message());
+        if ($location) {
+            $path = Str::replace(base_path().DIRECTORY_SEPARATOR, '', $location->file);
+            $this->line("{$path}:{$location->line}");
+            $this->line('');
 
             (new Code(
                 $location->file,
                 $location->line,
-                linesBefore: $annotation->linesBefore,
-                linesAfter: $annotation->linesAfter,
-            ))
-                ->annotate($annotation->anchor, $annotation->message)
-                ->render($this->output);
-        } elseif ($location) {
-            $this->output->writeln('    --> line '.$location->line.' ['.$d->code().']: '.$d->message());
-
-            (new Code($location->file, $location->line))->render($this->output);
-        } else {
-            $message = $this->formatDiagnosticMessage($d->message());
-            $lines = explode("\n", $message);
-            $first = $this->formatDiagnosticMessage($lines[0]);
-
-            (new Block(
-                "<options=bold>[{$d->code()}] {$first}</>",
-                $pad,
+                linesBefore: $annotation?->linesBefore ?? 2,
+                linesAfter: $annotation?->linesAfter ?? 2,
             ))->render($this->output);
 
-            foreach (array_slice($lines, 1) as $line) {
-                (new Block($line, $pad))->render($this->output);
+            $this->line('');
+        }
+
+        $this->renderCodedDiagnosticMessage($d);
+    }
+
+    private function renderCodedDiagnosticMessage(CodedDiagnostic $d): void
+    {
+        $title = $this->formatDiagnosticMessage($d->title());
+        $detail = $this->formatDiagnosticMessage($d->message());
+
+        $prefix = '  '.$d->code().'  ';
+        $indent = strlen($prefix);
+
+        $this->line($prefix.$title);
+
+        if ($detail !== '' && $detail !== $title) {
+            foreach (explode("\n", $detail) as $line) {
+                (new Block($line, $indent))->render($this->output);
             }
         }
 
-        $this->output->writeln('');
-
         if ($d->tip() !== '') {
-            (new Block("Tip: {$d->tip()}", $pad))->render($this->output);
+            $this->line('');
+            (new Block("Tip: {$d->tip()}", $indent))->render($this->output);
         }
 
-        (new Block("Docs: {$d->documentationUrl()}", $pad))->render($this->output);
+        $this->line('');
+        (new Block("Docs: {$d->documentationUrl()}", $indent))->render($this->output);
     }
 
     private function formatDiagnosticMessage(string $message): string

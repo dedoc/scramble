@@ -123,7 +123,8 @@ class NodeRulesEvaluator implements RulesEvaluator
                     $this->diagnostics->report(
                         Vr002NodeRulesEvaluationDiagnostic::fromThrowable(
                             $e,
-                            "Failed to evaluate parameter \${$param->var->name} ({$e->getMessage()})",
+                            "\${$param->var->name}",
+                            'Failed to evaluate parameter',
                         )
                             ->withLocation($location)
                             ->withContext($location->file)
@@ -225,7 +226,8 @@ class NodeRulesEvaluator implements RulesEvaluator
                 $this->diagnostics->report(
                     Vr002NodeRulesEvaluationDiagnostic::fromThrowable(
                         $e,
-                        "Failed to evaluate expression `$code` ({$e->getMessage()})",
+                        $code,
+                        'Failed to evaluate expression',
                     )
                         ->withLocation($location)
                         ->withContext($location->file)
