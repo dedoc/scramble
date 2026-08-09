@@ -22,8 +22,6 @@ interface Diagnostic
 
     public function codeLocation(): ?CodeLocation;
 
-    public function openApiLocation(): ?string;
-
     public function tip(): ?string;
 
     /**

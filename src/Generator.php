@@ -42,8 +42,6 @@ class Generator
 
     public DiagnosticsCollector $diagnostics;
 
-    public ?OpenApiContext $context = null;
-
     protected bool $throwExceptions = true;
 
     public function __construct(
@@ -85,7 +83,7 @@ class Generator
         $config = $this->configureSecurityStrategy($routes, $config);
 
         $openApi = $this->makeOpenApi($config);
-        $context = $this->context = new OpenApiContext($openApi, $config, diagnostics: $this->diagnostics);
+        $context = new OpenApiContext($openApi, $config, diagnostics: $this->diagnostics);
         $typeTransformer = $this->buildTypeTransformer($context);
 
         $operations = $this->generateOperations($context, $typeTransformer);

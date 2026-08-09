@@ -50,11 +50,6 @@ abstract class AbstractDiagnostic implements Diagnostic
         return $this->codeLocation;
     }
 
-    public function openApiLocation(): ?string
-    {
-        return $this->openApiLocation;
-    }
-
     public function tip(): ?string
     {
         return $this->tip;
