@@ -128,6 +128,9 @@ class NodeRulesEvaluator implements RulesEvaluator
                             "\${$param->var->name}",
                             'Failed to evaluate parameter',
                             CodeLocation::from($this->routeInfo->reflectionAction()->getFileName() ?: null, $param->getStartLine()),
+                            Vr002NodeRulesEvaluationDiagnostic::tipForParameter(
+                                in_array($param->var->name, $this->collectVariableNames(), true),
+                            ),
                         )
                     );
 
@@ -230,6 +233,9 @@ class NodeRulesEvaluator implements RulesEvaluator
                         $code,
                         'Failed to evaluate expression',
                         CodeLocation::from($this->getFileName(), $expr->getStartLine()),
+                        $expr instanceof Assign
+                            ? Vr002NodeRulesEvaluationDiagnostic::tipForAssignment()
+                            : Vr002NodeRulesEvaluationDiagnostic::tipForExpression(),
                     )
                 );
 

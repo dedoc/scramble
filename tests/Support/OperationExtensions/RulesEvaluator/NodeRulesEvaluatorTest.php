@@ -141,3 +141,42 @@ class ControllerWithVarBeforeRules_NodeRulesEvaluatorTest
         ]);
     }
 }
+
+it('adds a tip when a validation rule expression fails', function () {
+    [$rules, $diagnostics] = evaluateNodeRules([ControllerWithFailingRuleExpr_NodeRulesEvaluatorTest::class, 'store']);
+
+    expect($rules)->toBe([
+        'name' => ['string'],
+    ])
+        ->and($diagnostics->all()->sole())
+        ->toBeInstanceOf(Vr002NodeRulesEvaluationDiagnostic::class)
+        ->tip()->toBe(Vr002NodeRulesEvaluationDiagnostic::tipForExpression());
+});
+class ControllerWithFailingRuleExpr_NodeRulesEvaluatorTest
+{
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => [$missing->foo, 'string'],
+        ]);
+    }
+}
+
+it('adds a tip when a variable assignment used by rules fails', function () {
+    [$rules, $diagnostics] = evaluateNodeRules([ControllerWithFailingAssign_NodeRulesEvaluatorTest::class, 'store']);
+
+    expect($diagnostics->all()->sole())
+        ->toBeInstanceOf(Vr002NodeRulesEvaluationDiagnostic::class)
+        ->tip()->toBe(Vr002NodeRulesEvaluationDiagnostic::tipForAssignment());
+});
+class ControllerWithFailingAssign_NodeRulesEvaluatorTest
+{
+    public function store(Request $request)
+    {
+        $format = $missing->foo;
+
+        $request->validate([
+            'name' => ['required', 'string', $format],
+        ]);
+    }
+}
