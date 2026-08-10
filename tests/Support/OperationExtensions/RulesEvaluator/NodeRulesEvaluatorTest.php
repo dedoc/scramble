@@ -1,7 +1,6 @@
 <?php
 
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
-use Dedoc\Scramble\Diagnostics\ValidationRules\Vr002NodeRulesEvaluationDiagnostic;
 use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\NodeRulesEvaluator;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Database\Eloquent\Model;

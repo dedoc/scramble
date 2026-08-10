@@ -114,7 +114,7 @@ class NodeRulesEvaluator implements RulesEvaluator
 
                     $value = match (true) {
                         array_key_exists($type, $primitives) => $primitives[$type],
-                        class_exists($type) && rescue(fn () => (new ReflectionClass($type))->isInstantiable() === false, report: false) => new DelayedNonInstantiableInstance(),
+                        class_exists($type) && rescue(fn () => (new ReflectionClass($type))->isInstantiable() === false, report: false) => new DelayedNonInstantiableInstance,
                         default => app($type),
                     };
 

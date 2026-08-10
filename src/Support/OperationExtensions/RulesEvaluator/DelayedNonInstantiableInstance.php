@@ -20,7 +20,5 @@ class DelayedNonInstantiableInstance
     /**
      * @param  mixed  $value
      */
-    public function __set(string $name, $value): void
-    {
-    }
+    public function __set(string $name, $value): void {}
 }
