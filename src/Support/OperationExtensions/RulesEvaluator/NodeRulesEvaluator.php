@@ -23,6 +23,7 @@ use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Stmt;
 use PhpParser\NodeFinder;
 use PhpParser\PrettyPrinter;
+use ReflectionClass;
 use stdClass;
 use Throwable;
 
@@ -110,7 +111,12 @@ class NodeRulesEvaluator implements RulesEvaluator
                         'string' => '',
                         'float' => 1,
                     ];
-                    $value = $primitives[$type] ?? app($type);
+
+                    $value = match (true) {
+                        array_key_exists($type, $primitives) => $primitives[$type],
+                        class_exists($type) && rescue(fn () => (new ReflectionClass($type))->isInstantiable() === false, report: false) => new DelayedNonInstantiableInstance(),
+                        default => app($type),
+                    };
 
                     return [
                         $param->var->name => $value,
@@ -145,7 +151,12 @@ class NodeRulesEvaluator implements RulesEvaluator
             return [];
         }
 
+        if (! $this->rulesNode) {
+            return [];
+        }
+
         return collect($this->functionLikeNode->getStmts())
+            ->takeUntil(fn (Stmt $stmt) => (bool) (new NodeFinder)->find([$stmt], fn ($n) => $n === $this->rulesNode))
             ->filter(fn (Stmt $stmt) => $stmt instanceof Stmt\Expression && $stmt->expr instanceof Assign)
             ->filter(fn (Stmt $stmt) => isset($stmt->expr->var->name) && in_array($stmt->expr->var->name, $variables))
             ->reduce(fn (array $variables, Stmt $stmt) => [
@@ -293,7 +304,7 @@ class NodeRulesEvaluator implements RulesEvaluator
     private function getFileName(): string
     {
         if ($this->className) {
-            return (new \ReflectionClass($this->className))->getFileName();
+            return (new ReflectionClass($this->className))->getFileName();
         }
 
         return $this->routeInfo->reflectionAction()->getFileName();
