@@ -122,7 +122,6 @@ class NodeRulesEvaluator implements RulesEvaluator
                             "\${$param->var->name}",
                             'Failed to evaluate parameter',
                             CodeLocation::from($this->routeInfo->reflectionAction()->getFileName() ?: null, $param->getStartLine()),
-                            $this->className,
                         )
                     );
 
@@ -220,7 +219,6 @@ class NodeRulesEvaluator implements RulesEvaluator
                         $code,
                         'Failed to evaluate expression',
                         CodeLocation::from($this->getFileName(), $expr->getStartLine()),
-                        $this->className,
                     )
                 );
 

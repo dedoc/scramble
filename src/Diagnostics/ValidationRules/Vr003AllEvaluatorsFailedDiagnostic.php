@@ -20,7 +20,6 @@ class Vr003AllEvaluatorsFailedDiagnostic extends AbstractDiagnostic
         $diagnostic = new self(
             DiagnosticSeverity::Error,
             'Cannot evaluate validation rules',
-            context: $exception->class ? new ClassContext($exception->class) : null,
             tip: 'Fix one of the warnings above. Scramble only needs one evaluation strategy to succeed in order to determine the validation rules.',
             originException: $exception,
         );

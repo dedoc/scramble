@@ -15,7 +15,7 @@ class DiagnosticsCollector
     public function __construct(
         public Collection $diagnostics = new Collection,
         public bool $throwOnError = false,
-        public ?Route $route = null,
+        public Route|ClassContext|null $context = null,
         private ArrayObject $seenRegistry = new ArrayObject,
     ) {}
 
@@ -30,9 +30,7 @@ class DiagnosticsCollector
 
     public function reportOnce(Diagnostic $diagnostic): void
     {
-        if ($this->route && $diagnostic->context() === null) {
-            $diagnostic = $diagnostic->withContext($this->route);
-        }
+        $diagnostic = $this->applyContext($diagnostic);
 
         $key = $diagnostic->key();
 
@@ -45,18 +43,35 @@ class DiagnosticsCollector
         $this->report($diagnostic);
     }
 
-    public function forRoute(Route $route, ?bool $throwOnError = null): self
+    public function forRoute(Route $route): self
     {
-        return new self($this->diagnostics, $throwOnError ?? $this->throwOnError, $route, $this->seenRegistry);
+        return new self($this->diagnostics, $this->throwOnError, $route, $this->seenRegistry);
+    }
+
+    public function forClass(string $class): self
+    {
+        return new self($this->diagnostics, $this->throwOnError, new ClassContext($class), $this->seenRegistry);
     }
 
     public function reportQuietly(Diagnostic $diagnostic): void
     {
-        if ($this->route && $diagnostic->context() === null) {
-            $diagnostic = $diagnostic->withContext($this->route);
+        $this->diagnostics->push($this->applyContext($diagnostic));
+    }
+
+    /** Prefer route over ClassContext when that class is this route's controller. */
+    private function applyContext(Diagnostic $diagnostic): Diagnostic
+    {
+        $existing = $diagnostic->context();
+
+        if ($existing !== null && ! (
+            $this->context instanceof Route
+            && $existing instanceof ClassContext
+            && ltrim($existing->class, '\\') === ltrim((string) $this->context->getControllerClass(), '\\')
+        )) {
+            return $diagnostic;
         }
 
-        $this->diagnostics->push($diagnostic);
+        return $this->context ? $diagnostic->withContext($this->context) : $diagnostic;
     }
 
     /**

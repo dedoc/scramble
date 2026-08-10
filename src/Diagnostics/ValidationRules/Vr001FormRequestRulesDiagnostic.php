@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Diagnostics\ValidationRules;
 
 use Dedoc\Scramble\Diagnostics\AbstractDiagnostic;
-use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use ReflectionClass;
@@ -20,7 +19,6 @@ class Vr001FormRequestRulesDiagnostic extends AbstractDiagnostic
         return new self(
             DiagnosticSeverity::Warning,
             class_basename($reflectionClass->getName()).'::rules() call failed',
-            context: new ClassContext($reflectionClass->getName()),
             codeLocation: $location,
             tip: 'Scramble evaluates rules() outside the normal request lifecycle, so some values may be unavailable. Make such access safe when appropriate, for example: $this->user()?->company_id, $this->route(\'param\').',
             originException: $throwable,

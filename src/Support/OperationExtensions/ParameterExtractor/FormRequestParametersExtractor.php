@@ -125,7 +125,7 @@ class FormRequestParametersExtractor implements ParameterExtractor
 
         return new ParametersExtractionResult(
             parameters: $this->makeParameters(
-                rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->method, $this->diagnostics, $routeInfo))->handle(),
+                rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->method, $this->diagnostics->forClass($requestClassName), $routeInfo))->handle(),
                 typeTransformer: $this->openApiTransformer,
                 rulesDocsRetriever: new TypeBasedRulesDocumentationRetriever(
                     $routeInfo->getScope(),
