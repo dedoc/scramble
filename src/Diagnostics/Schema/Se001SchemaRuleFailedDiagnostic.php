@@ -13,6 +13,9 @@ use Throwable;
 
 class Se001SchemaRuleFailedDiagnostic extends AbstractDiagnostic
 {
+    /** Raw `file` attribute from the schema (class name or path), for exception messaging. */
+    private ?string $originFile = null;
+
     public static function forSchema(string $message, string $jsonPointer, OpenApiType $schema): self
     {
         /** @var string|null $originFile */
@@ -20,13 +23,16 @@ class Se001SchemaRuleFailedDiagnostic extends AbstractDiagnostic
         /** @var int|null $originLine */
         $originLine = $schema->getAttribute('line');
 
-        return new self(
+        $diagnostic = new self(
             DiagnosticSeverity::Error,
             $message,
             context: $originFile && class_exists($originFile) ? new ClassContext($originFile) : null,
             codeLocation: CodeLocation::from($originFile, $originLine),
             openApiLocation: $jsonPointer,
         );
+        $diagnostic->originFile = is_string($originFile) ? $originFile : null;
+
+        return $diagnostic;
     }
 
     public function code(): string
@@ -39,7 +45,7 @@ class Se001SchemaRuleFailedDiagnostic extends AbstractDiagnostic
         $exception = InvalidSchema::createForSchema(
             $this->message,
             $this->openApiLocation,
-            $this->codeLocation?->file,
+            $this->originFile ?? $this->codeLocation?->file,
             $this->codeLocation?->line,
         );
 

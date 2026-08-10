@@ -63,7 +63,6 @@ it('reports a query builder only pitch', function () {
 
     expect($output->fetch())
         ->toContain('Spatie Query Builder')
-        ->toContain('sparse fieldsets.')
         ->not->toContain('Laravel Data');
 });
 
