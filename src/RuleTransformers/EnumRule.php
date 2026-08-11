@@ -47,7 +47,7 @@ class EnumRule implements RuleTransformer
             : $this->openApiTransformer->transform(new ObjectType($enumName));
 
         if ($previous instanceof ArrayType) {
-            $previous->items = $enumType;
+            $previous->items = $this->preservePreviousRules($enumType, $previous);
 
             return $previous;
         }
