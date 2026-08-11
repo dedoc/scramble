@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\TypeManagers;
 
 use Dedoc\Scramble\Infer\Scope\Index;
+use Dedoc\Scramble\Support\JsonResource\ResolvesModelFromJsonResourceInstance;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\GenericClassStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -10,6 +11,7 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\PaginatedResourceResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -23,6 +25,8 @@ use Illuminate\Support\Str;
  */
 class ResourceCollectionTypeManager
 {
+    use ResolvesModelFromJsonResourceInstance;
+
     public function __construct(private Generic $type, private Index $index) {}
 
     public function getCollectedType(): Generic|UnknownType
@@ -40,13 +44,47 @@ class ResourceCollectionTypeManager
 
     private function getInferredCollectedType(): ?Generic
     {
-        $collectsClassNameType = $this->type->templateTypes[/* TCollects */ 2] ?? null;
+        $collects = $this->type->templateTypes[/* TCollects */ 2] ?? null;
 
-        if (! $collectsClassNameType instanceof ObjectType) {
+        if (! $collects instanceof ObjectType) {
             return $this->getCollectedTypeFromManualAnnotation();
         }
 
-        return new Generic($collectsClassNameType->name, [new UnknownType]);
+        // TCollects is the collected resource — enrich it, never rebuild from a random Model.
+        $collected = $collects instanceof Generic
+            ? $collects
+            : new Generic($collects->name, [new UnknownType]);
+
+        $model = $collected->templateTypes[0] ?? null;
+        if ($model?->isInstanceOf(Model::class)) {
+            return $collected;
+        }
+
+        $collected = $collects instanceof Generic ? $collected->clone() : $collected;
+        $collected->templateTypes[0] = $this->modelTypeForResource($collected);
+
+        return $collected;
+    }
+
+    private function modelTypeForResource(ObjectType $resourceType): Type
+    {
+        $expected = $this->resolveModelFromJsonResourceInstance($resourceType, $this->index);
+
+        if ($expected instanceof ObjectType) {
+            $fromCollection = (new TypeWalker)->first(
+                $this->type,
+                fn (Type $t) => $t instanceof ObjectType
+                    && $t->isInstanceOf(Model::class)
+                    && $t->isInstanceOf($expected->name),
+            );
+
+            return $fromCollection ?? $expected;
+        }
+
+        return (new TypeWalker)->first(
+            $this->type,
+            fn (Type $t) => $t instanceof ObjectType && $t->isInstanceOf(Model::class),
+        ) ?: new UnknownType;
     }
 
     private function getCollectedTypeFromManualAnnotation(): ?Generic

@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Infer\Services;
 use Illuminate\Support\Str;
 use PhpParser\NameContext;
 use PhpParser\Node\Name;
+use PhpParser\Node\Stmt\Use_;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 
@@ -34,8 +35,8 @@ class FileNameResolver
 
         $code = Str::before($content, $firstMatchedClassLikeString);
 
-        // Removes all comments.
-        $code = preg_replace('/\/\*(?:[^*]|\*+[^*\/])*\*+\/|(?<![:\'"])\/\/.*|(?<![:\'"])#.*/', '', $code);
+        // Removes all comments. Fall back to the original code if PCRE returns null.
+        $code = preg_replace('/\/\*(?:[^*]|\*+[^*\/])*\*+\/|(?<![:\'"])\/\/.*|(?<![:\'"])#.*/', '', $code) ?? $code;
 
         $re = '/^(namespace|use) ([.\s\S]*?);/m';
         preg_match_all($re, $code, $matches);
@@ -53,7 +54,10 @@ class FileNameResolver
 
     public function __invoke(string $shortName): string
     {
-        $name = $this->nameContext->getResolvedName(new Name([$shortName]), 1)->toString();
+        // If the name is prefixed with `\\`, it is already FQN
+        $name = str_starts_with($shortName, '\\')
+            ? ltrim($shortName, '\\')
+            : $this->nameContext->getResolvedName(new Name([$shortName]), Use_::TYPE_NORMAL)->toString();
 
         $classLikeExists = class_exists($name)
             || interface_exists($name)

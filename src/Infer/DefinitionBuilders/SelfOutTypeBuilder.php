@@ -189,9 +189,12 @@ class SelfOutTypeBuilder
             }
         }
 
-        return new Generic(
-            'self',
-            array_values(array_map(fn ($type) => $type ?: new TemplatePlaceholderType, $expectedTemplatesMap))
+        return ReferenceTypeResolver::getInstance()->resolve(
+            $this->scope,
+            new Generic(
+                'self',
+                array_values(array_map(fn ($type) => $type ?: new TemplatePlaceholderType, $expectedTemplatesMap))
+            ),
         );
     }
 

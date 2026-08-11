@@ -121,7 +121,7 @@ class FunctionLikeReflectionDefinitionBuilder implements FunctionLikeDefinitionB
             );
         }
 
-        if (method_exists($phpDoc, 'getSelfOutTypeTagValues')) {
+        if (method_exists($phpDoc, 'getSelfOutTypeTagValues')) { // @phpstan-ignore function.alreadyNarrowedType
             foreach ($phpDoc->getSelfOutTypeTagValues() as $selfOutTypeTagValue) {
                 $selfOutType = $this->handleStatic(
                     PhpDocTypeHelper::toType($selfOutTypeTagValue->type),

@@ -2,7 +2,9 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
+use Dedoc\Scramble\Attributes\IgnoreResponse;
 use Dedoc\Scramble\Attributes\Response as ResponseAttribute;
+use Dedoc\Scramble\Attributes\WithRelations;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
@@ -13,6 +15,7 @@ use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
+use Dedoc\Scramble\Support\JsonResource\AppliesWithRelationsAttributes;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
@@ -28,6 +31,8 @@ class ResponseExtension extends OperationExtension
         $inferredResponses = $this->collectInferredResponses($routeInfo);
 
         $responses = $this->applyResponsesAttributes($inferredResponses, $routeInfo);
+
+        $responses = $this->applyIgnoreResponseAttributes($responses, $routeInfo);
 
         foreach ($responses as $response) {
             if (in_array($routeInfo->method, static::HTTP_METHODS_WITHOUT_RESPONSE_BODY)) {
@@ -54,6 +59,7 @@ class ResponseExtension extends OperationExtension
             : [$returnType];
 
         $responses = collect($returnTypes)
+            ->map(fn (Type $returnType) => $this->applyResponseTypeModifyingAttributes($returnType, $routeInfo))
             ->merge($routeInfo->getActionType()->exceptions ?? [])
             ->map(function (Type $type) use ($routeInfo) {
                 /*
@@ -85,6 +91,28 @@ class ResponseExtension extends OperationExtension
             ->values();
     }
 
+    private function applyResponseTypeModifyingAttributes(Type $returnType, RouteInfo $routeInfo): Type
+    {
+        if ($withRelationsAttributes = $this->getWithRelationsAttributes($routeInfo)) {
+            return (new AppliesWithRelationsAttributes($this->infer->index))->apply($returnType, $withRelationsAttributes);
+        }
+
+        return $returnType;
+    }
+
+    /**
+     * @return list<WithRelations>
+     */
+    private function getWithRelationsAttributes(RouteInfo $routeInfo): array
+    {
+        $attributes = $routeInfo->reflectionAction()?->getAttributes(WithRelations::class, ReflectionAttribute::IS_INSTANCEOF) ?: [];
+
+        return array_map(
+            fn (ReflectionAttribute $attribute) => $attribute->newInstance(),
+            $attributes,
+        );
+    }
+
     /**
      * @param  Collection<int, Response|Reference>  $inferredResponses
      * @return Collection<int, Response|Reference>
@@ -97,6 +125,8 @@ class ResponseExtension extends OperationExtension
             return $inferredResponses;
         }
 
+        $withRelationsAttributes = $this->getWithRelationsAttributes($routeInfo);
+
         foreach ($responseAttributes as $responseAttribute) {
             $responseAttributeInstance = $responseAttribute->newInstance();
 
@@ -104,13 +134,15 @@ class ResponseExtension extends OperationExtension
                 ->map(fn (Response|Reference $r): Response => $r instanceof Reference ? $r->resolve() : $r)
                 ->first(fn (Response $r) => $r->code === $responseAttributeInstance->status);
 
+            $fileName = $routeInfo->reflectionAction()->getFileName();
+
             $newResponse = ResponseAttribute::toOpenApiResponse(
                 $responseAttributeInstance,
                 $originalResponse,
                 $this->openApiTransformer,
-                ($fileName = $routeInfo->reflectionAction()?->getFileName())
-                    ? FileNameResolver::createForFile($fileName)
-                    : null,
+                is_string($fileName) ? FileNameResolver::createForFile($fileName) : null,
+                $withRelationsAttributes,
+                $this->infer->index,
             );
 
             $responseHasChanged = ! $originalResponse
@@ -135,6 +167,36 @@ class ResponseExtension extends OperationExtension
         }
 
         return $inferredResponses;
+    }
+
+    /**
+     * @param  Collection<int, Response|Reference>  $responses
+     * @return Collection<int, Response|Reference>
+     */
+    private function applyIgnoreResponseAttributes(Collection $responses, RouteInfo $routeInfo): Collection
+    {
+        $ignoreAttributes = $routeInfo->reflectionAction()?->getAttributes(IgnoreResponse::class, ReflectionAttribute::IS_INSTANCEOF) ?: [];
+
+        if (! count($ignoreAttributes)) {
+            return $responses;
+        }
+
+        /** @var IgnoreResponse[] $ignoredResponses */
+        $ignoredResponses = array_map(fn (ReflectionAttribute $a) => $a->newInstance(), $ignoreAttributes);
+
+        return $responses
+            ->reject(function (Response|Reference $r) use ($ignoredResponses) {
+                $response = $r instanceof Reference ? $r->resolve() : $r;
+
+                foreach ($ignoredResponses as $ignoredResponse) {
+                    if ($ignoredResponse->matches($response->code)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            })
+            ->values();
     }
 
     /**
@@ -164,7 +226,30 @@ class ResponseExtension extends OperationExtension
      */
     private function mergeHeaders(Collection $responses): array
     {
-        return array_merge(...$responses->map->headers);
+        $headers = array_merge(...$responses->map->headers);
+
+        foreach ($headers as $name => $header) {
+            if ($responses->contains(fn (Response $response) => ! array_key_exists($name, $response->headers))) {
+                $headers[$name] = $this->makeHeaderOptional($header);
+            }
+        }
+
+        return $headers;
+    }
+
+    private function makeHeaderOptional(Header|Reference $header): Header|Reference
+    {
+        if ($header instanceof Reference) {
+            $resolvedHeader = $header->resolve();
+
+            if (! $resolvedHeader instanceof Header) {
+                return $header;
+            }
+
+            $header = $resolvedHeader;
+        }
+
+        return (clone $header)->setRequired(null);
     }
 
     /**

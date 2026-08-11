@@ -19,6 +19,9 @@ class TemplatesMap
     /** @var array<string, Type> */
     public array $additional = [];
 
+    /** @var array<string, Type> */
+    private array $cache = [];
+
     /**
      * @param  TemplateType[]  $templates
      * @param  array<string, Type>  $parameters
@@ -43,6 +46,11 @@ class TemplatesMap
     }
 
     public function get(string $name, Type $defaultType = new UnknownType): Type
+    {
+        return $this->cache[$name] ??= $this->doGet($name, $defaultType);
+    }
+
+    private function doGet(string $name, Type $defaultType = new UnknownType): Type
     {
         if ($name === self::ARGUMENTS) {
             return new KeyedArrayType(collect($this->arguments->all())->map(fn ($t, $k) => new ArrayItemType_($k, $t))->all());

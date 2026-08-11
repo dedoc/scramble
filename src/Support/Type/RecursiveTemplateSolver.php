@@ -9,7 +9,7 @@ class RecursiveTemplateSolver
     public function solve(Type $parameter, Type $argument, TemplateType $template): ?Type
     {
         if ($template === $parameter) {
-            return $argument;
+            return $argument->clone();
         }
 
         if ($parameter instanceof Union) {

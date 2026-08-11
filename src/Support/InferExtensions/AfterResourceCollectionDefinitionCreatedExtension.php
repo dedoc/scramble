@@ -41,6 +41,7 @@ class AfterResourceCollectionDefinitionCreatedExtension implements AfterClassDef
 
         $definition->properties['collects'] = new ClassPropertyDefinition(
             type: new GenericClassStringType($tCollects),
+            attributes: [],
         );
 
         $definition->properties['collection'] = new ClassPropertyDefinition(
@@ -48,6 +49,7 @@ class AfterResourceCollectionDefinitionCreatedExtension implements AfterClassDef
                 new IntegerType,
                 $tCollects,
             ]),
+            attributes: [],
         );
 
         $definition->methods['toArray'] = new ShallowFunctionDefinition(

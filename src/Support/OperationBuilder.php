@@ -8,13 +8,19 @@ use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\ProNudge\ProNudgeCollector;
 use InvalidArgumentException;
 
 /** @internal */
 class OperationBuilder
 {
-    public function build(RouteInfo $routeInfo, OpenApi $openApi, GeneratorConfig $config, TypeTransformer $typeTransformer)
-    {
+    public function build(
+        RouteInfo $routeInfo,
+        OpenApi $openApi,
+        GeneratorConfig $config,
+        TypeTransformer $typeTransformer,
+        ProNudgeCollector $proNudge,
+    ) {
         $operation = new Operation('get');
 
         foreach ($config->operationTransformers->all() as $operationTransformerClass) {
@@ -25,6 +31,7 @@ class OperationBuilder
                     OpenApiContext::class => $typeTransformer->context,
                     GeneratorConfig::class => $config,
                     TypeTransformer::class => $typeTransformer,
+                    ProNudgeCollector::class => $proNudge,
                 ]);
 
             if (is_callable($instance)) {

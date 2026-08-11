@@ -116,6 +116,10 @@ class RulesMapper
 
     public function min(Type $type, $params)
     {
+        if ($this->isFileType($type)) {
+            return $this->appendFileSizeDescription($type, "Minimum file size: {$params[0]} kilobytes.");
+        }
+
         if (
             $type instanceof NumberType
             || $type instanceof ArrayType
@@ -129,6 +133,10 @@ class RulesMapper
 
     public function max(Type $type, $params)
     {
+        if ($this->isFileType($type)) {
+            return $this->appendFileSizeDescription($type, "Maximum file size: {$params[0]} kilobytes.");
+        }
+
         if (
             $type instanceof NumberType
             || $type instanceof ArrayType
@@ -142,6 +150,10 @@ class RulesMapper
 
     public function size(Type $type, $params)
     {
+        if ($this->isFileType($type)) {
+            return $this->appendFileSizeDescription($type, "File size must be {$params[0]} kilobytes.");
+        }
+
         $type = $this->min($type, $params);
 
         return $this->max($type, $params);
@@ -156,9 +168,25 @@ class RulesMapper
             return $type;
         }
 
+        if ($this->isFileType($type)) {
+            return $this->appendFileSizeDescription($type, "File size must be between {$params[0]} kilobytes and {$params[1]} kilobytes.");
+        }
+
         $type = $this->min($type, [$params[0]]);
 
         return $this->max($type, [$params[1]]);
+    }
+
+    private function isFileType(Type $type): bool
+    {
+        return $type instanceof StringType && $type->format === 'binary';
+    }
+
+    private function appendFileSizeDescription(Type $type, string $description): Type
+    {
+        $type->setDescription(trim($type->description ? "{$type->description} {$description}" : $description));
+
+        return $type;
     }
 
     public function image(Type $type)

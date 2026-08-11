@@ -364,4 +364,13 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         $resolvedReference = ReferenceTypeResolver::getInstance()->resolve($scope, $returnType);
         $functionType->setReturnType($resolvedReference);
     }
+
+    public static function resolveFunctionParameterDefaults(Scope $scope, FunctionLikeDefinition $functionLikeDefinition): void
+    {
+        $referenceTypeResolver = ReferenceTypeResolver::getInstance();
+
+        foreach ($functionLikeDefinition->argumentsDefaults as $name => $argumentDefault) {
+            $functionLikeDefinition->argumentsDefaults[$name] = $referenceTypeResolver->resolve($scope, $argumentDefault);
+        }
+    }
 }

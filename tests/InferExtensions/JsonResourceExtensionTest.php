@@ -42,7 +42,7 @@ function JsonResourceExtensionTest_analyze(Infer $infer, OpenApiContext $context
 it('supports whenHas', function () {
     [$schema] = JsonResourceExtensionTest_analyze($this->infer, $this->context, JsonResourceExtensionTest_WhenHas::class);
 
-    expect($schema->toArray())->toBe([
+    expect($schema->resolve()->toArray())->toBe([
         'type' => 'object',
         'properties' => [
             'user' => [
@@ -98,7 +98,7 @@ class JsonResourceExtensionTest_MatchWithThrow extends JsonResource
 it('supports match with throw', function () {
     [$schema] = JsonResourceExtensionTest_analyze($this->infer, $this->context, JsonResourceExtensionTest_MatchWithThrow::class);
 
-    expect($schema->toArray())->toBe([
+    expect($schema->resolve()->toArray())->toBe([
         'type' => 'object',
         'properties' => [
             'property' => [

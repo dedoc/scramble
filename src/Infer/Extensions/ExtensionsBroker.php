@@ -52,7 +52,7 @@ class ExtensionsBroker
      */
     public function priority(array $priority): self
     {
-        $this->priorities = array_merge($this->priorities, $priority);
+        $this->priorities = array_values(array_unique(array_merge($this->priorities, $priority)));
 
         $this->buildExtensions();
 

@@ -9,10 +9,9 @@ use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
-use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\TypeManagers\LengthAwarePaginatorTypeManager;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
@@ -40,11 +39,16 @@ class LengthAwarePaginatorTypeToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type)
     {
-        if (! $collectedType = $this->getCollectedType($type)) {
+        if (! $normalizedType = $this->toNormalizedPaginatorType(LengthAwarePaginator::class, $type)) {
             return null;
         }
 
-        $paginatorArray = (new LengthAwarePaginatorTypeManager)->getToArrayType(new ArrayType($collectedType));
+        $paginatorArray = Infer\Services\ReferenceTypeResolver::getInstance()
+            ->resolve(new Infer\Scope\GlobalScope, new MethodCallReferenceType(
+                $normalizedType,
+                'toArray',
+                []
+            ));
 
         return $this->openApiTransformer->transform($paginatorArray);
     }

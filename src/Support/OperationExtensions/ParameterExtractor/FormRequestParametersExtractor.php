@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
+use Dedoc\Scramble\Attributes\SchemaName;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
@@ -111,11 +112,14 @@ class FormRequestParametersExtractor implements ParameterExtractor
     {
         $classReflector = Infer\Reflector\ClassReflector::make($requestClassName);
 
-        $phpDocReflector = SchemaClassDocReflector::createFromDocString($classReflector->getReflection()->getDocComment() ?: '');
+        $reflection = $classReflector->getReflection();
 
+        $phpDocReflector = SchemaClassDocReflector::createFromDocString($reflection->getDocComment() ?: '');
+
+        $schemaNameAttr = ($reflection->getAttributes(SchemaName::class)[0] ?? null)?->newInstance();
         $schemaName = ($phpDocReflector->getTagValue('@ignoreSchema')->value ?? null) !== null
             ? null
-            : $phpDocReflector->getSchemaName($requestClassName);
+            : ($schemaNameAttr ? ($schemaNameAttr->input ?? $schemaNameAttr->name) : $phpDocReflector->getSchemaName($requestClassName));
 
         return new ParametersExtractionResult(
             parameters: $this->makeParameters(
@@ -131,6 +135,7 @@ class FormRequestParametersExtractor implements ParameterExtractor
             ),
             schemaName: $schemaName,
             description: $phpDocReflector->getDescription(),
+            sourceClass: $requestClassName,
         );
     }
 }

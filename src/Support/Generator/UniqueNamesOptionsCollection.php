@@ -29,8 +29,9 @@ class UniqueNamesOptionsCollection
     {
         $this->names->push($name);
 
-        $this->eloquentNames[$name->eloquent] ??= [];
-        $this->eloquentNames[$name->eloquent][] = $name;
+        $eloquentKey = $name->eloquent ?? '';
+        $this->eloquentNames[$eloquentKey] ??= [];
+        $this->eloquentNames[$eloquentKey][] = $name;
 
         $this->fallbackEloquentNames[$name->getFallbackEloquent()] ??= [];
         $this->fallbackEloquentNames[$name->getFallbackEloquent()][] = $name;

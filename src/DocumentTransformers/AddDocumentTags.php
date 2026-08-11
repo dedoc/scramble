@@ -25,16 +25,16 @@ class AddDocumentTags implements DocumentTransformer
     {
         /** @var Collection<string, Tag> $tags */
         $tags = $groupsAttributes->reduce(function (Collection $acc, ReflectionAttribute $attribute) {
-            $arguments = $attribute->getArguments();
+            $group = $attribute->newInstance();
 
-            $name = $arguments['name'] ?? $arguments[0] ?? null;
+            $name = $group->name;
 
             if (! $name) {
                 return $acc;
             }
 
-            $description = $arguments['description'] ?? $arguments[1] ?? null;
-            $weight = $arguments['weight'] ?? $arguments[2] ?? null;
+            $description = $group->description;
+            $weight = $group->weight !== PHP_INT_MAX ? $group->weight : null;
 
             /** @var Tag $tag */
             $tag = $acc->get($name, new Tag($name));

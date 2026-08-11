@@ -98,6 +98,11 @@ class QueryParametersConverter
 
     private function maybeMarkDeepParameter(Parameter $parameter): Parameter
     {
+        // if parameter has serialization attributes set (style or explode), we do not mark parameter with extension property
+        if ($parameter->explode !== null || $parameter->style !== null) {
+            return $parameter;
+        }
+
         $isDeep = in_array($parameter->schema?->type->type, ['array', 'object', null], strict: true);
 
         if ($isDeep) {

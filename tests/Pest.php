@@ -24,6 +24,25 @@ use PhpParser\NodeVisitor\NameResolver;
 
 uses(TestCase::class)->in(__DIR__);
 
+class JsonSnapshotDriver extends \Spatie\Snapshots\Drivers\JsonDriver
+{
+    public function match($expected, $actual)
+    {
+        \PHPUnit\Framework\Assert::assertJsonStringEqualsJsonString(
+            $expected,
+            is_string($actual) ? $actual : json_encode($actual, JSON_THROW_ON_ERROR),
+        );
+    }
+}
+
+function assertMatchesSnapshot(mixed $actual): void
+{
+    \Spatie\Snapshots\assertMatchesSnapshot(
+        $actual,
+        new JsonSnapshotDriver,
+    );
+}
+
 expect()->extend('toBeSameJson', function (mixed $expectedData) {
     expect(json_encode($this->value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES))->toBe(json_encode($expectedData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
@@ -197,6 +216,7 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
             new ScopeContext(functionDefinition: $functionDefinition),
             new FileNameResolver(new NameContext(new Throwing)),
         );
+        FunctionLikeAstDefinitionBuilder::resolveFunctionParameterDefaults($fnScope, $functionDefinition);
         FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences($fnScope, $functionDefinition);
     }
 
@@ -208,6 +228,7 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
                 new ScopeContext($classDefinition, $methodDefinition),
                 new FileNameResolver(new NameContext(new Throwing)),
             );
+            FunctionLikeAstDefinitionBuilder::resolveFunctionParameterDefaults($methodScope, $methodDefinition);
             FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences($methodScope, $methodDefinition);
         }
     }
@@ -216,6 +237,34 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
 function getStatementType(string $statement, array $extensions = []): ?Type
 {
     return analyzeFile('<?php', $extensions)->getExpressionType($statement);
+}
+
+function getVariableTypeAfter(string $body, string $var, ?ReferenceTypeResolver $referenceTypeResolver = null): Type
+{
+    $index = app(Index::class);
+
+    $traverser = new NodeTraverser;
+    $traverser->addVisitor($nameResolver = new NameResolver);
+    $traverser->addVisitor(new PhpDocResolver(
+        $nameResolver = new FileNameResolver($nameResolver->getNameContext()),
+    ));
+    $traverser->addVisitor(new TypeInferer(
+        $index,
+        $nameResolver,
+        $scope = new Scope($index, new NodeTypesResolver, new ScopeContext, $nameResolver),
+        Infer\Context::getInstance()->extensionsBroker->extensions,
+    ));
+    $traverser->traverse(
+        FileParser::getInstance()->parseContent("<?php\n{$body}")->getStatements(),
+    );
+
+    $unresolvedType = $scope->getType(
+        new \PhpParser\Node\Expr\Variable($var, ['startLine' => INF]),
+    );
+
+    return ($referenceTypeResolver ?? new ReferenceTypeResolver($index))
+        ->resolve($scope, $unresolvedType)
+        ->setOriginal($unresolvedType);
 }
 
 dataset('extendableTemplateTypes', [

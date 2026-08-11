@@ -22,7 +22,7 @@ it('documents abort helper as not referenced error response', function () {
         ->toHaveKey('content')
         ->and($response)
         ->not->toHaveKey('$ref')
-        ->toHaveKey('content.application/json.schema.properties.message.example', 'Something is wrong.');
+        ->toHaveKey('content.application/json.schema.properties.message.examples', ['Something is wrong.']);
 });
 
 it('documents abort_if helper', function () {
@@ -35,7 +35,7 @@ it('documents abort_if helper', function () {
         ->toHaveKey('content')
         ->and($response)
         ->not->toHaveKey('$ref')
-        ->toHaveKey('content.application/json.schema.properties.message.example', 'Something is wrong.');
+        ->toHaveKey('content.application/json.schema.properties.message.examples', ['Something is wrong.']);
 });
 
 it('documents abort_unless helper', function () {
@@ -48,7 +48,7 @@ it('documents abort_unless helper', function () {
         ->toHaveKey('content')
         ->and($response)
         ->not->toHaveKey('$ref')
-        ->toHaveKey('content.application/json.schema.properties.message.example', 'Something is wrong.');
+        ->toHaveKey('content.application/json.schema.properties.message.examples', ['Something is wrong.']);
 });
 
 class AbortHelpersResponseDocumentation_Test extends \Illuminate\Routing\Controller

@@ -6,6 +6,10 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Illuminate\Http\Resources\MissingValue;
+use Illuminate\Pagination\AbstractCursorPaginator;
+use Illuminate\Pagination\AbstractPaginator;
+use Illuminate\Support\Enumerable;
 
 class TypeWidener
 {
@@ -43,6 +47,12 @@ class TypeWidener
 
     private function widenPair(Type $a, Type $b): ?Type
     {
+        // MissingValue carries property-presence information and must survive widening.
+        // mixed|MissingValue -> mixed|MissingValue
+        if ($a instanceof MixedType && $b->isInstanceOf(MissingValue::class)) {
+            return null;
+        }
+
         // mixed|* -> mixed
         if ($a instanceof MixedType) {
             return new MixedType;
@@ -97,7 +107,9 @@ class TypeWidener
             $a instanceof Generic
             && $b instanceof Generic
             && $a->name === $b->name
-            && $a->isInstanceOf(\Traversable::class)
+            && ($a->isInstanceOf(Enumerable::class)
+                || $a->isInstanceOf(AbstractPaginator::class)
+                || $a->isInstanceOf(AbstractCursorPaginator::class))
         ) {
             return new Generic($a->name, [
                 (new Union([$a->templateTypes[0] ?? new UnknownType, $b->templateTypes[0] ?? new UnknownType]))->widen(),

@@ -1,5 +1,0 @@
-type: object
-properties:
-    wow: { type: string }
-required:
-    - wow

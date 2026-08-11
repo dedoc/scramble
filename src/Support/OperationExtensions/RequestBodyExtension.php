@@ -3,8 +3,11 @@
 namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Extensions\OperationExtension;
+use Dedoc\Scramble\GeneratorConfig;
+use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\ContainerUtils;
+use Dedoc\Scramble\Support\Factories\JsonApiQueryParameterFactory;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
@@ -18,6 +21,7 @@ use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\ParameterExtra
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\DeepParametersMerger;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\ParametersExtractionResult;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\QueryParametersConverter;
+use Dedoc\Scramble\Support\ProNudge\ProNudgeCollector;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -28,9 +32,18 @@ class RequestBodyExtension extends OperationExtension
 {
     const HTTP_METHODS_WITHOUT_REQUEST_BODY = ['get', 'delete', 'head'];
 
+    public function __construct(
+        Infer $infer,
+        TypeTransformer $openApiTransformer,
+        GeneratorConfig $config,
+        private readonly ProNudgeCollector $proNudge,
+    ) {
+        parent::__construct($infer, $openApiTransformer, $config);
+    }
+
     public function handle(Operation $operation, RouteInfo $routeInfo): void
     {
-        $description = Str::of($routeInfo->phpDoc()->getAttribute('description')); // @phpstan-ignore argument.type
+        $description = Str::of($routeInfo->phpDoc()->getAttribute('description') ?: ''); // @phpstan-ignore argument.type
 
         /** @var Collection<int, ParametersExtractionResult> $rulesResults */
         $rulesResults = collect();
@@ -46,7 +59,7 @@ class RequestBodyExtension extends OperationExtension
 
         // Only set summary and description from PHPDoc if they haven't been set by other extensions (e.g., Endpoint attribute)
         if (empty($operation->summary)) {
-            $operation->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary'))->rtrim('.'));  // @phpstan-ignore argument.type
+            $operation->summary(Str::of($routeInfo->phpDoc()->getAttribute('summary') ?: '')->rtrim('.'));  // @phpstan-ignore argument.type
         }
 
         if (empty($operation->description)) {
@@ -256,8 +269,13 @@ class RequestBodyExtension extends OperationExtension
         foreach ($this->config->parametersExtractors->all() as $extractorClass) {
             /** @var ParameterExtractor $extractor */
             $extractor = ContainerUtils::makeContextable($extractorClass, [
+                GeneratorConfig::class => $this->config,
                 TypeTransformer::class => $this->openApiTransformer,
                 Operation::class => $operation,
+                ProNudgeCollector::class => $this->proNudge,
+                JsonApiQueryParameterFactory::class => new JsonApiQueryParameterFactory(
+                    arraySerialization: $this->config->jsonApi->arraySerialization,
+                ),
             ]);
 
             $result = $extractor->handle($routeInfo, $result);

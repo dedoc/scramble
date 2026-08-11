@@ -6,7 +6,7 @@ class SelfType extends ObjectType
 {
     public function isSame(Type $type)
     {
-        return false;
+        return parent::isSame($type);
     }
 
     public function toString(): string

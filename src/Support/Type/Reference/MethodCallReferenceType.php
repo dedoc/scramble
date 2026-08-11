@@ -11,6 +11,7 @@ class MethodCallReferenceType extends AbstractReferenceType
         public string $methodName,
         /** @var Type[] $arguments */
         public array $arguments,
+        public bool $isNullsafe = false,
     ) {}
 
     public function nodes(): array
@@ -25,6 +26,8 @@ class MethodCallReferenceType extends AbstractReferenceType
             array_map(fn ($t) => $t->toString(), $this->arguments),
         );
 
-        return "(#{$this->callee->toString()}).{$this->methodName}($argsTypes)";
+        $op = $this->isNullsafe ? '?.' : '.';
+
+        return "(#{$this->callee->toString()}){$op}{$this->methodName}($argsTypes)";
     }
 }

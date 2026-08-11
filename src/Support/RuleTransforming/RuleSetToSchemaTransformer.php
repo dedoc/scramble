@@ -99,6 +99,7 @@ class RuleSetToSchemaTransformer
 
         $extensions = $this->config
             ->instances(RuleTransformer::class, [
+                RuleSetToSchemaTransformer::class => $this,
                 TypeTransformer::class => $this->openApiTransformer,
                 RulesMapper::class => new RulesMapper($this->openApiTransformer, $this),
             ])

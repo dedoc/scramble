@@ -11,7 +11,11 @@ class MixedType extends Type
 
     public function toArray()
     {
-        // Yes. It is not an array. I live with it.
-        return (object) [];
+        $result = parent::toArray();
+
+        unset($result['type']);
+
+        // Yes. It is not an array sometimes. I live with it.
+        return count($result) ? $result : (object) [];
     }
 }
