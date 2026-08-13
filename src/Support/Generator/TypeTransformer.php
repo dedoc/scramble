@@ -10,6 +10,7 @@ use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Combined\AnyOf;
+use Dedoc\Scramble\Support\Generator\Combined\CombinedType;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType;
 use Dedoc\Scramble\Support\Generator\Types\BooleanType;
 use Dedoc\Scramble\Support\Generator\Types\IntegerType;
@@ -202,9 +203,15 @@ class TypeTransformer
             return;
         }
 
-        if ($type instanceof AnyOf || $type instanceof AllOf) {
+        if ($type instanceof CombinedType) {
             foreach ($type->items as $item) {
                 $this->registerReferences($item);
+            }
+
+            foreach ($type->discriminator?->mapping ?: [] as $mappedSchema) {
+                if ($mappedSchema instanceof Reference) {
+                    $this->registerReferences($mappedSchema);
+                }
             }
         }
     }

@@ -2,10 +2,10 @@
 
 namespace Dedoc\Scramble\Support\Generator\Combined;
 
-class AnyOf extends CombinedType
+class OneOf extends CombinedType
 {
     public function __construct()
     {
-        parent::__construct('anyOf');
+        parent::__construct('oneOf');
     }
 }

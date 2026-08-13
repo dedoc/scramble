@@ -44,6 +44,11 @@ class Reference extends Type
         return $this->components->uniqueSchemaName($this->shortName ?: $this->fullName);
     }
 
+    public function getReferenceUri(): string
+    {
+        return "#/components/{$this->referenceType}/{$this->getUniqueName()}";
+    }
+
     public function setDescription(string $description): Type
     {
         $casesDescription = $this->getEnumReferenceCasesDescription();
@@ -85,7 +90,7 @@ class Reference extends Type
 
         return array_filter([
             ...$parentArray,
-            '$ref' => "#/components/{$this->referenceType}/{$this->getUniqueName()}",
+            '$ref' => $this->getReferenceUri(),
         ]);
     }
 }
