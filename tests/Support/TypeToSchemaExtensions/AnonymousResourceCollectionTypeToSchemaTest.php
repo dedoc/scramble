@@ -8,6 +8,7 @@ use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -51,6 +52,27 @@ it('documents inferred pagination response', function () {
         ->and($schema['properties'])
         ->toHaveKeys(['data', 'meta', 'links']);
 });
+
+it('documents inferred pagination response converted to a JsonResponse', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('test', [JsonResponsePagination_AnonymousResourceCollectionTypeToSchemaTestController::class, 'index']));
+
+    expect($responses = $openApiDocument['paths']['/test']['get']['responses'])
+        ->toHaveKey(200)
+        ->and($schema = $responses[200]['content']['application/json']['schema'])
+        ->toHaveKeys(['type', 'properties'])
+        ->and($schema['properties'])
+        ->toHaveKeys(['data', 'meta', 'links']);
+});
+
+class JsonResponsePagination_AnonymousResourceCollectionTypeToSchemaTestController
+{
+    public function index(Request $request): JsonResponse
+    {
+        return UserResource_AnonymousResourceCollectionTypeToSchemaTest::collection(
+            User_AnonymousResourceCollectionTypeToSchemaTest::query()->paginate()
+        )->toResponse($request);
+    }
+}
 
 it('documents paginated response from service builder union chain', function () {
     $openApiDocument = generateForRoute(fn () => Route::get('test', ServiceBuilderPagination_AnonymousResourceCollectionTypeToSchemaTestController::class));

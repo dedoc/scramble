@@ -34,8 +34,10 @@ use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceResponse;
 use Illuminate\Http\Resources\MergeValue;
 use Illuminate\Http\Resources\MissingValue;
@@ -59,7 +61,9 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                 : null,
 
             'response', 'toResponse' => new Generic(JsonResponse::class, [
-                new Generic(ResourceResponse::class, [$event->getInstance()]),
+                $event->getInstance()->isInstanceOf(ResourceCollection::class)
+                    ? ResourceCollectionTypeManager::make($event->getInstance())->getResponseType()
+                    : new Generic(ResourceResponse::class, [$event->getInstance()]),
                 new UnknownType,
                 new ArrayType,
             ]),
