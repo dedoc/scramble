@@ -80,7 +80,7 @@ export function CloseButton({ className, onClose }: CloseButtonProps) {
 
 export function IssuesHeader({ className, onClose }: CloseButtonProps) {
     return (
-        <header className={cx('flex h-11 items-center justify-between px-4', className)}>
+        <header className={cx('flex pt-3 pb-1 items-center justify-between px-4', className)}>
             <span className="text-sm font-semibold text-gray-800">Issues</span>
             <CloseButton className="-mr-2.5" onClose={onClose} />
         </header>
@@ -101,10 +101,10 @@ export function IssueTab({ active, children, className, onClick }: IssueTabProps
             aria-selected={active}
             aria-controls="scramble-issues-panel"
             className={cx(
-                `relative flex h-full items-center gap-2 px-2 text-[13px] font-medium outline-none
-                focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-gray-500`,
+                `relative flex items-center gap-1 p-2 text-xs leading-3.75 font-medium outline-none
+                focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gray-500`,
                 active
-                    ? 'text-gray-900 after:absolute after:inset-x-0 after:bottom-[-1px] after:h-px after:bg-gray-900'
+                    ? 'text-gray-900 after:absolute after:inset-x-0 after:-bottom-px after:h-px after:bg-gray-900'
                     : 'text-gray-600 hover:cursor-pointer hover:text-gray-900',
                 className,
             )}
@@ -135,7 +135,7 @@ export function IssuesTabs({
         <div
             role="tablist"
             aria-label="Filter issues"
-            className={cx('flex h-9 items-end gap-5 border-b border-gray-200 px-4', className)}
+            className={cx('flex items-end border-b border-gray-200 px-4', className)}
         >
             <IssueTab active={activeSeverity === 'all'} onClick={() => onChange('all')}>
                 All

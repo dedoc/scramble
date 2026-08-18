@@ -42,7 +42,7 @@ export function DevToolsApp({ diagnostics }: DevToolsProps) {
                     </span>
 
                     {errorCount > 0 && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                             <ErrorIcon />
 
                             <span className="text-[13px] font-normal leading-none text-gray-800">
@@ -52,7 +52,7 @@ export function DevToolsApp({ diagnostics }: DevToolsProps) {
                     )}
 
                     {warningCount > 0 && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                             <WarningIcon />
 
                             <span className="text-[13px] font-normal leading-none text-gray-800">
