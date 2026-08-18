@@ -22,6 +22,7 @@ use Dedoc\Scramble\Infer\Extensions\InferExtension;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\Support\DevTools;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthenticationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthorizationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\HttpExceptionToResponseExtension;
@@ -336,6 +337,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
     private function registerRoutes(): void
     {
+        $this->registerDevToolsAssetsRoute();
+
         foreach (Scramble::getConfigurationsInstance()->all() as $api => $generatorConfig) {
             /** @var Router $router */
             $router = $this->app->get(Router::class);
@@ -367,5 +370,37 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 })->middleware($generatorConfig->get('middleware', [RestrictedDocsAccess::class]));
             }
         }
+    }
+
+    private function registerDevToolsAssetsRoute(): void
+    {
+        if (! DevTools::enabled()) {
+            return;
+        }
+
+        /** @var Router $router */
+        $router = $this->app->get(Router::class);
+        $middleware = array_values(array_filter(
+            (array) config('scramble.middleware', [RestrictedDocsAccess::class]),
+            fn ($middleware) => is_string($middleware),
+        ));
+
+        $router->get('_scramble/dev-tools/{file}', function (string $file) {
+            abort_unless(in_array($file, DevTools::ASSETS, true), 404);
+
+            $path = DevTools::assetPath($file);
+
+            abort_unless(is_file($path), 404);
+
+            return response()->file($path, [
+                'Cache-Control' => 'no-store',
+                'Content-Type' => match ($file) {
+                    'devtools.js' => 'text/javascript; charset=UTF-8',
+                    'devtools.css' => 'text/css; charset=UTF-8',
+                },
+            ]);
+        })
+            ->name('scramble.dev-tools.asset')
+            ->middleware($middleware);
     }
 }
