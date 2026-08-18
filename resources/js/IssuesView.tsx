@@ -163,7 +163,9 @@ interface IssueItemProps extends ClassNameProps {
 }
 
 export function IssueItem({ className, diagnostic }: IssueItemProps) {
-    const detail = diagnostic.context?.detail ?? diagnostic.details.at(-1)?.[1];
+    const fileLocation = diagnostic.details.find(([label]) => label === 'Located at')?.[1];
+    const openApiLocation = diagnostic.details.find(([label]) => label === 'Found at')?.[1];
+    const detail = fileLocation ?? openApiLocation ?? diagnostic.context?.detail;
     const Icon = diagnostic.severity === 'error' ? ErrorIcon : WarningIcon;
 
     return (
@@ -176,7 +178,9 @@ export function IssueItem({ className, diagnostic }: IssueItemProps) {
             </div>
 
             <div className="break-words pl-5 text-xs leading-5 text-gray-500">
-                {diagnostic.code}{detail ? ` · ${detail}` : ''}
+                {detail
+                    ? `${diagnostic.code}\u00A0·\u00A0${detail}`
+                    : diagnostic.code}
             </div>
         </li>
     );

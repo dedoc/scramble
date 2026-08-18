@@ -65,7 +65,10 @@ it('loads the official react refresh preamble from the client entry', function (
 
 it('serializes diagnostics for the dev tools payload', function () {
     $diagnostics = new DiagnosticsCollector;
-    $diagnostics->reportQuietly(new GenericDiagnostic(DiagnosticSeverity::Error, 'Broken documentation.'));
+    $diagnostics->reportQuietly(new GenericDiagnostic(
+        DiagnosticSeverity::Error,
+        'Schema `Dedoc\Scramble\Support\Generator\Types\UnknownType` is not allowed.',
+    ));
     $diagnostics->reportQuietly(new GenericDiagnostic(DiagnosticSeverity::Warning, 'Incomplete documentation'));
 
     expect($diagnostics->toArray())->toBe([
@@ -73,7 +76,7 @@ it('serializes diagnostics for the dev tools payload', function () {
             'key' => 'GEN001',
             'code' => 'GEN001',
             'severity' => 'error',
-            'message' => 'Broken documentation',
+            'message' => 'Schema `UnknownType` is not allowed',
             'tip' => null,
             'details' => [],
             'context' => null,
@@ -145,6 +148,8 @@ it('mounts react and tailwind inside an open shadow root', function () {
         ->toContain('export function IssuesTabs(')
         ->toContain('export function IssueGroup(')
         ->toContain('export function IssueItem(')
+        ->toContain("label === 'Located at'")
+        ->toContain('fileLocation ?? openApiLocation ?? diagnostic.context?.detail')
         ->toContain("event.key === 'Escape'")
         ->and($types)
         ->toContain("export type DiagnosticSeverity = 'error' | 'warning';")

@@ -112,7 +112,7 @@ class DiagnosticsCollector
                     DiagnosticSeverity::Error => 'error',
                     DiagnosticSeverity::Warning => 'warning',
                 },
-                'message' => $diagnostic->message(),
+                'message' => $diagnostic->shortMessage(),
                 'tip' => $diagnostic->tip(),
                 'details' => $diagnostic->details(),
                 'context' => $this->serializeContext($diagnostic),
@@ -139,10 +139,7 @@ class DiagnosticsCollector
             $method = collect($context->methods())->first(fn (string $method) => $method !== 'HEAD')
                 ?? $context->methods()[0]
                 ?? 'GET';
-            $uses = $context->getAction('uses');
-            $detail = is_string($uses)
-                ? collect(explode('@', $uses, 2))->map(fn (string $part) => class_basename($part))->implode('@')
-                : null;
+            $detail = $diagnostic::routeAction($context);
 
             return [
                 'key' => 'route:'.$method.':'.$context->uri().':'.$detail,
