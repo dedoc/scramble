@@ -8,10 +8,13 @@ use Dedoc\Scramble\Extensions\TypeToSchemaExtension;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
+use Dedoc\Scramble\Support\Generator\Combined\CombinedType;
 use Dedoc\Scramble\Support\Generator\Combined\OneOf;
 use Dedoc\Scramble\Support\Generator\Components;
 use Dedoc\Scramble\Support\Generator\Discriminator;
 use Dedoc\Scramble\Support\Generator\Reference;
+use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -59,6 +62,7 @@ class DiscriminatedObjectToSchema extends TypeToSchemaExtension
         $items = [];
         /** @var array<string, Reference> $mapping */
         $mapping = [];
+        $timesMapped = array_count_values(array_filter($attribute->mapping, is_string(...)));
 
         foreach ($attribute->mapping as $value => $mappedClass) {
             if (! class_exists($mappedClass) && ! interface_exists($mappedClass)) {
@@ -71,9 +75,18 @@ class DiscriminatedObjectToSchema extends TypeToSchemaExtension
 
             $items[] = $schema = $this->openApiTransformer->transform(new ObjectType($mappedClass));
 
+            if (! is_string($value)) {
+                continue;
+            }
+
             // Only the types documented as components schemas can be mapped to a discriminator value.
-            if (is_string($value) && $schema instanceof Reference) {
+            if ($schema instanceof Reference) {
                 $mapping[$value] = $schema;
+            }
+
+            // Only a type mapped to a single value is known to always hold it.
+            if ($timesMapped[$mappedClass] === 1) {
+                $this->documentDiscriminatorValue($schema, $attribute->propertyName, $value);
             }
         }
 
@@ -84,6 +97,44 @@ class DiscriminatedObjectToSchema extends TypeToSchemaExtension
         return (new OneOf)
             ->setItems($items)
             ->setDiscriminator(new Discriminator($attribute->propertyName, $mapping));
+    }
+
+    /** Validators ignore the discriminator, so the value is documented as a const on the mapped type. */
+    private function documentDiscriminatorValue(OpenApiType $schema, string $propertyName, string $value): void
+    {
+        $objectType = $this->findObjectTypeWithProperty($schema, $propertyName);
+
+        if (! $property = $objectType?->getProperty($propertyName)) {
+            return;
+        }
+
+        $property->const($value);
+
+        $objectType->addRequired([$propertyName]);
+    }
+
+    private function findObjectTypeWithProperty(?OpenApiType $schema, string $propertyName): ?OpenApiObjectType
+    {
+        if ($schema instanceof Reference) {
+            $resolved = $this->components->has($schema) ? $schema->resolve() : null;
+
+            $schema = $resolved instanceof Schema ? $resolved->type : null;
+        }
+
+        if ($schema instanceof OpenApiObjectType) {
+            return $schema->hasProperty($propertyName) ? $schema : null;
+        }
+
+        // JSON resources are documented as a combination of schemas.
+        if ($schema instanceof CombinedType) {
+            foreach ($schema->items as $item) {
+                if ($found = $this->findObjectTypeWithProperty($item, $propertyName)) {
+                    return $found;
+                }
+            }
+        }
+
+        return null;
     }
 
     public function reference(ObjectType $type): ?Reference

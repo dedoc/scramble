@@ -11,6 +11,7 @@ use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\DiscriminatedObjectToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\PlainObjectToSchema;
 
 beforeEach(function () {
@@ -18,6 +19,7 @@ beforeEach(function () {
     $this->context = new OpenApiContext((new OpenApi('3.1.0'))->setComponents($this->components), new GeneratorConfig);
     $this->transformer = new TypeTransformer(app(Infer::class), $this->context, [
         PlainObjectToSchema::class,
+        EnumToSchema::class,
         DiscriminatedObjectToSchema::class,
     ]);
 });
@@ -61,10 +63,44 @@ it('documents the mapped types as schemas', function () {
         ->toBe([
             'type' => 'object',
             'properties' => [
-                'petType' => ['type' => 'string'],
+                'petType' => ['type' => 'string', 'const' => 'cat'],
                 'huntingSkill' => ['type' => 'string'],
             ],
             'required' => ['petType', 'huntingSkill'],
+        ]);
+});
+
+it('documents the const on a property documented as a reference', function () {
+    $this->transformer->transform(new ObjectType(DiscriminatedObjectToSchemaTest_EnumPet::class));
+    $this->transformer->transform(new ObjectType(DiscriminatedObjectToSchemaTest_EnumOwner::class));
+
+    expect($this->components->getSchema('DiscriminatedObjectToSchemaTest_EnumCat')->toArray()['properties']['petType'])
+        ->toBe([
+            'const' => 'cat',
+            '$ref' => '#/components/schemas/DiscriminatedObjectToSchemaTest_PetType',
+        ])
+        // The enum itself stays untouched.
+        ->and($this->components->getSchema('DiscriminatedObjectToSchemaTest_PetType')->toArray())
+        ->toBe(['type' => 'string', 'enum' => ['cat', 'dog']])
+        ->and($this->components->getSchema('DiscriminatedObjectToSchemaTest_EnumOwner')->toArray()['properties']['petType'])
+        ->toBe(['$ref' => '#/components/schemas/DiscriminatedObjectToSchemaTest_PetType']);
+});
+
+it('does not document a const for a type mapped to several values', function () {
+    $this->transformer->transform(new ObjectType(DiscriminatedObjectToSchemaTest_RepeatedPet::class));
+
+    expect($this->components->getSchema('DiscriminatedObjectToSchemaTest_Cat')->toArray()['properties']['petType'])
+        ->toBe(['type' => 'string']);
+});
+
+it('leaves a mapped type without the discriminator property alone', function () {
+    $this->transformer->transform(new ObjectType(DiscriminatedObjectToSchemaTest_UnpinnablePet::class));
+
+    expect($this->components->getSchema('DiscriminatedObjectToSchemaTest_Nameless')->toArray())
+        ->toBe([
+            'type' => 'object',
+            'properties' => ['name' => ['type' => 'string']],
+            'required' => ['name'],
         ]);
 });
 
@@ -80,7 +116,9 @@ it('omits the mapping when the mapped types are not keyed', function () {
             'discriminator' => [
                 'propertyName' => 'petType',
             ],
-        ]);
+        ])
+        ->and($this->components->getSchema('DiscriminatedObjectToSchemaTest_Cat')->toArray()['properties']['petType'])
+        ->toBe(['type' => 'string']);
 });
 
 it('supports interfaces', function () {
@@ -150,4 +188,34 @@ class DiscriminatedObjectToSchemaTest_Cat extends DiscriminatedObjectToSchemaTes
 class DiscriminatedObjectToSchemaTest_Dog extends DiscriminatedObjectToSchemaTest_Pet
 {
     public int $packSize = 1;
+}
+
+enum DiscriminatedObjectToSchemaTest_PetType: string
+{
+    case Cat = 'cat';
+    case Dog = 'dog';
+}
+
+#[Discriminator('petType', ['cat' => DiscriminatedObjectToSchemaTest_EnumCat::class])]
+abstract class DiscriminatedObjectToSchemaTest_EnumPet
+{
+    public DiscriminatedObjectToSchemaTest_PetType $petType;
+}
+
+class DiscriminatedObjectToSchemaTest_EnumCat extends DiscriminatedObjectToSchemaTest_EnumPet {}
+
+class DiscriminatedObjectToSchemaTest_EnumOwner
+{
+    public DiscriminatedObjectToSchemaTest_PetType $petType;
+}
+
+#[Discriminator('petType', ['cat' => DiscriminatedObjectToSchemaTest_Cat::class, 'kitten' => DiscriminatedObjectToSchemaTest_Cat::class])]
+abstract class DiscriminatedObjectToSchemaTest_RepeatedPet {}
+
+#[Discriminator('petType', ['nameless' => DiscriminatedObjectToSchemaTest_Nameless::class])]
+abstract class DiscriminatedObjectToSchemaTest_UnpinnablePet {}
+
+class DiscriminatedObjectToSchemaTest_Nameless
+{
+    public string $name = 'x';
 }

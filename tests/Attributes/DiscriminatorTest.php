@@ -35,8 +35,16 @@ it('documents a polymorphic response as oneOf with a discriminator', function ()
             ],
             'title' => 'Pet_DiscriminatorTest',
         ])
-        ->and($openApiDocument['components']['schemas'])
-        ->toHaveKeys(['Cat_DiscriminatorTest', 'Dog_DiscriminatorTest']);
+        ->and($openApiDocument['components']['schemas']['Cat_DiscriminatorTest'])
+        ->toBe([
+            'type' => 'object',
+            'properties' => [
+                'petType' => ['type' => 'string', 'const' => 'cat'],
+                'huntingSkill' => ['type' => 'string'],
+            ],
+            'required' => ['petType', 'huntingSkill'],
+            'title' => 'Cat_DiscriminatorTest',
+        ]);
 });
 
 #[Discriminator('petType', ['cat' => Cat_DiscriminatorTest::class, 'dog' => Dog_DiscriminatorTest::class])]
