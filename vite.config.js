@@ -16,6 +16,16 @@ export default defineConfig(({ command }) => ({
         cors: true,
         strictPort: true,
     },
+    optimizeDeps: {
+        entries: ['resources/js/devtools.js'],
+        include: [
+            'react',
+            'react/jsx-dev-runtime',
+            'react/jsx-runtime',
+            'react-dom',
+            'react-dom/client',
+        ],
+    },
     plugins: [
         react(),
         tailwindcss(),

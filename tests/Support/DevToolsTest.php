@@ -69,6 +69,8 @@ it('mounts react and tailwind inside an open shadow root', function () {
         ->toContain('import.meta.hot.dispose')
         ->and($styles)
         ->toContain('@source "./**/*.{js,jsx}";')
+        ->toContain(':host, *, ::before, ::after, ::backdrop')
+        ->toContain('--tw-inset-shadow: 0 0 #0000;')
         ->not->toContain('prefix(')
         ->not->toContain('important')
         ->and($component)

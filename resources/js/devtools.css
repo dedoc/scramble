@@ -1,3 +1,33 @@
 @import "tailwindcss" source(none);
 
 @source "./**/*.{js,jsx}";
+
+/*
+ * Tailwind's @property registrations do not apply from a shadow tree. Keep its
+ * non-inheriting utility state local by resetting the generated properties on
+ * every element in this tree, just like Tailwind's compatibility fallback.
+ */
+@layer properties {
+    :host, *, ::before, ::after, ::backdrop {
+        --tw-leading: initial;
+        --tw-font-weight: initial;
+        --tw-shadow: 0 0 #0000;
+        --tw-shadow-color: initial;
+        --tw-shadow-alpha: 100%;
+        --tw-inset-shadow: 0 0 #0000;
+        --tw-inset-shadow-color: initial;
+        --tw-inset-shadow-alpha: 100%;
+        --tw-ring-color: initial;
+        --tw-ring-shadow: 0 0 #0000;
+        --tw-inset-ring-color: initial;
+        --tw-inset-ring-shadow: 0 0 #0000;
+        --tw-ring-inset: initial;
+        --tw-ring-offset-width: 0px;
+        --tw-ring-offset-color: #fff;
+        --tw-ring-offset-shadow: 0 0 #0000;
+        --tw-content: "";
+        --tw-translate-x: 0;
+        --tw-translate-y: 0;
+        --tw-translate-z: 0;
+    }
+}
