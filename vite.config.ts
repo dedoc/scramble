@@ -17,7 +17,7 @@ export default defineConfig(({ command }) => ({
         strictPort: true,
     },
     optimizeDeps: {
-        entries: ['resources/js/devtools.js'],
+        entries: ['resources/js/devtools.tsx'],
         include: [
             'react',
             'react/jsx-dev-runtime',
@@ -33,8 +33,13 @@ export default defineConfig(({ command }) => ({
             name: 'scramble-hot-file',
             configureServer(server) {
                 server.httpServer?.once('listening', () => {
+                    const localUrl = server.resolvedUrls?.local[0];
+                    if (!localUrl) {
+                        return;
+                    }
+
                     mkdirSync(dist, { recursive: true });
-                    writeFileSync(hotFile, server.resolvedUrls.local[0]);
+                    writeFileSync(hotFile, localUrl);
                 });
                 server.httpServer?.once('close', removeHotFile);
                 process.once('exit', removeHotFile);
@@ -63,7 +68,7 @@ export default defineConfig(({ command }) => ({
         },
         lib: {
             entry: [
-                resolve(import.meta.dirname, 'resources/js/devtools.js'),
+                resolve(import.meta.dirname, 'resources/js/devtools.tsx'),
                 resolve(import.meta.dirname, 'resources/js/devtools.css'),
             ],
             formats: ['es'],

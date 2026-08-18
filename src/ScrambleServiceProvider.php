@@ -350,10 +350,12 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                 $cb($router, function (CacheableGenerator $generator) use ($api) {
                     $config = Scramble::getGeneratorConfig($api);
+                    $spec = $generator($config);
 
                     return view($config->renderer()->view, [
-                        'spec' => $generator($config),
+                        'spec' => $spec,
                         'config' => $config,
+                        'diagnostics' => $generator->diagnostics(),
                     ]);
                 })->middleware($generatorConfig->get('middleware', [RestrictedDocsAccess::class]));
             }

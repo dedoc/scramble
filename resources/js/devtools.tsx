@@ -1,9 +1,13 @@
 import '@vitejs/plugin-react/preamble';
 import devToolsStyles from './devtools.css?inline';
-import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
-import { DevTools } from './DevTools.jsx';
-import { PortalTargetProvider } from './Portal.jsx';
+import { DevToolsApp } from './DevToolsApp';
+import { PortalTargetProvider } from './Portal';
+import type { DevToolsData } from './types';
+
+const data: DevToolsData = JSON.parse(
+    document.getElementById('scramble-dev-tools-data')?.textContent ?? '{"diagnostics":[]}',
+);
 
 document.documentElement.dataset.scrambleDevTools = 'enabled';
 
@@ -24,16 +28,16 @@ document.body.append(host);
 const root = createRoot(container);
 
 root.render(
-    createElement(
-        PortalTargetProvider,
-        { target: portalTarget },
-        createElement(DevTools),
-    ),
+    <PortalTargetProvider target={portalTarget}>
+        <DevToolsApp diagnostics={data.diagnostics} />
+    </PortalTargetProvider>,
 );
 
 if (import.meta.hot) {
     import.meta.hot.accept('./devtools.css?inline', (module) => {
-        stylesheet.textContent = module.default;
+        if (module) {
+            stylesheet.textContent = module.default;
+        }
     });
 
     import.meta.hot.dispose(() => {

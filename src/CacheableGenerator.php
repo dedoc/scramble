@@ -2,24 +2,32 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+
 class CacheableGenerator
 {
+    private DiagnosticsCollector $diagnostics;
+
     public function __construct(
         private Generator $generator,
-    ) {}
+    ) {
+        $this->diagnostics = new DiagnosticsCollector;
+    }
 
     /**
      * @return array<mixed, mixed>
      */
     public function __invoke(?GeneratorConfig $config = null): array
     {
+        $this->diagnostics = new DiagnosticsCollector;
+
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
         $store = config('scramble.cache.store');
         $keyBase = config('scramble.cache.key');
 
         if (! is_string($store) || ! is_string($keyBase)) {
-            return ($this->generator)($config);
+            return $this->generate($config);
         }
 
         $key = $keyBase.':'.$config->name;
@@ -29,6 +37,22 @@ class CacheableGenerator
             return $cached;
         }
 
-        return ($this->generator)($config);
+        return $this->generate($config);
+    }
+
+    public function diagnostics(): DiagnosticsCollector
+    {
+        return $this->diagnostics;
+    }
+
+    /**
+     * @return array<mixed, mixed>
+     */
+    private function generate(GeneratorConfig $config): array
+    {
+        $spec = ($this->generator)($config);
+        $this->diagnostics = $this->generator->diagnostics;
+
+        return $spec;
     }
 }

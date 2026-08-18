@@ -1,6 +1,6 @@
 @import "tailwindcss" source(none);
 
-@source "./**/*.{js,jsx}";
+@source "./**/*.{ts,tsx}";
 
 /*
  * Tailwind's @property registrations do not apply from a shadow tree. Keep its
@@ -11,6 +11,7 @@
     :host, *, ::before, ::after, ::backdrop {
         --tw-leading: initial;
         --tw-font-weight: initial;
+        --tw-border-style: solid;
         --tw-shadow: 0 0 #0000;
         --tw-shadow-color: initial;
         --tw-shadow-alpha: 100%;

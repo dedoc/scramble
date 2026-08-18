@@ -11,6 +11,7 @@ class DiagnosticsCollector
 {
     /**
      * @param  Collection<int, Diagnostic>  $diagnostics
+     * @param  ArrayObject<string, bool>  $seenRegistry
      */
     public function __construct(
         public Collection $diagnostics = new Collection,
@@ -80,5 +81,88 @@ class DiagnosticsCollector
     public function all(): Collection
     {
         return $this->diagnostics;
+    }
+
+    /**
+     * @return list<array{
+     *     key: string,
+     *     code: string,
+     *     severity: 'error'|'warning',
+     *     message: string,
+     *     tip: string|null,
+     *     details: list<array{0: string, 1: string}>,
+     *     context: array{
+     *         key: string,
+     *         type: 'route'|'class',
+     *         label: string,
+     *         method: string|null,
+     *         detail: string|null
+     *     }|null
+     * }>
+     */
+    public function toArray(): array
+    {
+        $serialized = [];
+
+        foreach ($this->diagnostics as $diagnostic) {
+            $serialized[] = [
+                'key' => $diagnostic->key(),
+                'code' => $diagnostic->code(),
+                'severity' => match ($diagnostic->severity()) {
+                    DiagnosticSeverity::Error => 'error',
+                    DiagnosticSeverity::Warning => 'warning',
+                },
+                'message' => $diagnostic->message(),
+                'tip' => $diagnostic->tip(),
+                'details' => $diagnostic->details(),
+                'context' => $this->serializeContext($diagnostic),
+            ];
+        }
+
+        return $serialized;
+    }
+
+    /**
+     * @return array{
+     *     key: string,
+     *     type: 'route'|'class',
+     *     label: string,
+     *     method: string|null,
+     *     detail: string|null
+     * }|null
+     */
+    private function serializeContext(Diagnostic $diagnostic): ?array
+    {
+        $context = $diagnostic->context();
+
+        if ($context instanceof Route) {
+            $method = collect($context->methods())->first(fn (string $method) => $method !== 'HEAD')
+                ?? $context->methods()[0]
+                ?? 'GET';
+            $uses = $context->getAction('uses');
+            $detail = is_string($uses)
+                ? collect(explode('@', $uses, 2))->map(fn (string $part) => class_basename($part))->implode('@')
+                : null;
+
+            return [
+                'key' => 'route:'.$method.':'.$context->uri().':'.$detail,
+                'type' => 'route',
+                'label' => '/'.ltrim($context->uri(), '/'),
+                'method' => $method,
+                'detail' => $detail,
+            ];
+        }
+
+        if ($context instanceof ClassContext) {
+            return [
+                'key' => 'class:'.$context->class,
+                'type' => 'class',
+                'label' => class_basename($context->class),
+                'method' => null,
+                'detail' => null,
+            ];
+        }
+
+        return null;
     }
 }

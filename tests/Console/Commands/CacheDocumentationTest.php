@@ -3,6 +3,8 @@
 use Dedoc\Scramble\CacheableGenerator;
 use Dedoc\Scramble\Console\Commands\CacheDocumentation;
 use Dedoc\Scramble\Console\Commands\ClearDocumentationCache;
+use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
+use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Cache;
@@ -30,7 +32,12 @@ it('returns cached documentation when cache is configured', function () {
         $expected,
     );
 
-    expect($cacheableGenerator($config))->toBe($expected);
+    $cacheableGenerator->diagnostics()->reportQuietly(
+        new GenericDiagnostic(DiagnosticSeverity::Error, 'Stale diagnostic')
+    );
+
+    expect($cacheableGenerator($config))->toBe($expected)
+        ->and($cacheableGenerator->diagnostics()->all())->toBeEmpty();
 });
 
 it('generates documentation on cache miss without storing', function () {
