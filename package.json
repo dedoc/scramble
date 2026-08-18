@@ -7,6 +7,13 @@
         "build": "vite build"
     },
     "devDependencies": {
+        "@tailwindcss/vite": "^4.3.3",
+        "@vitejs/plugin-react": "^6.0.5",
+        "tailwindcss": "^4.3.3",
         "vite": "^8.0.0"
+    },
+    "dependencies": {
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8"
     }
 }
