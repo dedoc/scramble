@@ -1,6 +1,13 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ErrorIcon, WarningIcon } from './DiagnosticIcons';
-import type { Diagnostic, DiagnosticContext, DiagnosticSeverity } from './types';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ErrorIcon, MarkdownIcon, TickIcon, WarningIcon } from './DiagnosticIcons';
+import type {
+    Diagnostic,
+    DiagnosticContext,
+    DiagnosticSeverity,
+    IndexedDiagnostic,
+    IssueDatum,
+} from './types';
+import { copyText, diagnosticsAsMarkdown, groupDiagnostics, issueData } from './utils';
 
 function cx(...classes: Array<string | false | null | undefined>) {
     return classes.filter(Boolean).join(' ');
@@ -8,37 +15,6 @@ function cx(...classes: Array<string | false | null | undefined>) {
 
 function issueLabel(count: number, singular: string) {
     return `${count} ${count === 1 ? singular : `${singular}s`}`;
-}
-
-interface IndexedDiagnostic {
-    diagnostic: Diagnostic;
-    index: number;
-}
-
-interface DiagnosticGroup {
-    context: DiagnosticContext | null;
-    diagnostics: IndexedDiagnostic[];
-}
-
-function groupDiagnostics(diagnostics: Diagnostic[]): DiagnosticGroup[] {
-    const groups = new Map<string, DiagnosticGroup>();
-
-    diagnostics.forEach((diagnostic, index) => {
-        const key = diagnostic.context?.key ?? 'general';
-        const group = groups.get(key) ?? {
-            context: diagnostic.context,
-            diagnostics: [],
-        };
-
-        group.diagnostics.push({ diagnostic, index });
-        groups.set(key, group);
-    });
-
-    const rank: Record<DiagnosticContext['type'], number> = { route: 0, class: 1 };
-
-    return Array.from(groups.values()).sort((a, b) => (
-        (a.context ? rank[a.context.type] : 2) - (b.context ? rank[b.context.type] : 2)
-    ));
 }
 
 interface ClassNameProps {
@@ -78,10 +54,32 @@ export function CloseButton({ className, onClose }: CloseButtonProps) {
     );
 }
 
-export function IssuesHeader({ className, onClose }: CloseButtonProps) {
+interface IssuesHeaderProps extends CloseButtonProps {
+    copied: boolean;
+    copyDisabled?: boolean;
+    onCopy: () => void;
+}
+
+export function IssuesHeader({ className, copied, copyDisabled, onClose, onCopy }: IssuesHeaderProps) {
     return (
-        <header className={cx('flex pt-3 pb-1 items-center justify-between px-4', className)}>
-            <span className="text-sm font-semibold text-gray-800">Issues</span>
+        <header className={cx('flex pt-2 pb-1 items-center justify-between px-4', className)}>
+            <div className="flex min-w-0 items-center gap-3">
+                <span className="text-sm font-semibold text-gray-800">Issues</span>
+                <button
+                    type="button"
+                    className={cx(
+                        `flex items-center gap-1.5 rounded text-xs text-gray-500 outline-none
+                        hover:cursor-pointer hover:text-gray-800 disabled:cursor-default disabled:opacity-40
+                        focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500`,
+                        copied && 'pointer-events-none',
+                    )}
+                    disabled={copyDisabled}
+                    onClick={onCopy}
+                >
+                    {copied ? <TickIcon /> : <MarkdownIcon />}
+                    <span aria-live="polite">{copied ? 'Copied!' : 'Copy as markdown'}</span>
+                </button>
+            </div>
             <CloseButton className="-mr-2.5" onClose={onClose} />
         </header>
     );
@@ -160,25 +158,6 @@ export function IssuesTabs({
 
 interface IssueItemProps extends ClassNameProps {
     diagnostic: Diagnostic;
-}
-
-interface IssueDatum {
-    label: string;
-    value: string;
-}
-
-const hiddenDatums: string[] = ['Expression'];
-
-function issueData(diagnostic: Diagnostic): IssueDatum[] {
-    const data: IssueDatum[] = diagnostic.details
-        .filter(([label]) => !hiddenDatums.includes(label))
-        .map(([label, value]) => ({ label, value }));
-
-    if (diagnostic.tip) {
-        data.push({ label: 'Tip', value: diagnostic.tip });
-    }
-
-    return data;
 }
 
 export function IssueDatumGrid({ className, data }: ClassNameProps & { data: IssueDatum[] }) {
@@ -265,6 +244,8 @@ interface IssuesViewProps extends ClassNameProps {
 
 export function IssuesView({ className, diagnostics, onClose }: IssuesViewProps) {
     const [activeSeverity, setActiveSeverity] = useState<IssueFilter>('all');
+    const [copied, setCopied] = useState(false);
+    const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const errorCount = diagnostics.filter(({ severity }) => severity === 'error').length;
     const warningCount = diagnostics.filter(({ severity }) => severity === 'warning').length;
     const visibleDiagnostics = useMemo(
@@ -274,6 +255,28 @@ export function IssuesView({ className, diagnostics, onClose }: IssuesViewProps)
         [activeSeverity, diagnostics],
     );
     const groups = useMemo(() => groupDiagnostics(visibleDiagnostics), [visibleDiagnostics]);
+    const copyAsMarkdown = async () => {
+        if (!await copyText(diagnosticsAsMarkdown(diagnostics))) {
+            return;
+        }
+
+        setCopied(true);
+
+        if (copiedTimer.current) {
+            clearTimeout(copiedTimer.current);
+        }
+
+        copiedTimer.current = setTimeout(() => {
+            setCopied(false);
+            copiedTimer.current = null;
+        }, 1000);
+    };
+
+    useEffect(() => () => {
+        if (copiedTimer.current) {
+            clearTimeout(copiedTimer.current);
+        }
+    }, []);
 
     useEffect(() => {
         const closeOnEscape = (event: KeyboardEvent) => {
@@ -296,7 +299,12 @@ export function IssuesView({ className, diagnostics, onClose }: IssuesViewProps)
                 className,
             )}
         >
-            <IssuesHeader onClose={onClose} />
+            <IssuesHeader
+                copied={copied}
+                copyDisabled={diagnostics.length === 0}
+                onClose={onClose}
+                onCopy={copyAsMarkdown}
+            />
             <IssuesTabs
                 activeSeverity={activeSeverity}
                 errorCount={errorCount}

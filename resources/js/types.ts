@@ -18,6 +18,21 @@ export interface Diagnostic {
     context: DiagnosticContext | null;
 }
 
+export interface IndexedDiagnostic {
+    diagnostic: Diagnostic;
+    index: number;
+}
+
+export interface DiagnosticGroup {
+    context: DiagnosticContext | null;
+    diagnostics: IndexedDiagnostic[];
+}
+
+export interface IssueDatum {
+    label: string;
+    value: string;
+}
+
 export interface DevToolsData {
     diagnostics: Diagnostic[];
 }
