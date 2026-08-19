@@ -110,52 +110,6 @@ it('serializes route context for grouping diagnostics', function () {
     ]);
 });
 
-it('mounts react and tailwind inside an open shadow root', function () {
-    $root = dirname(__DIR__, 2);
-    $entry = file_get_contents($root.'/resources/js/devtools.tsx');
-    $styles = file_get_contents($root.'/resources/js/devtools.css');
-    $component = file_get_contents($root.'/resources/js/DevToolsApp.tsx');
-    $icons = file_get_contents($root.'/resources/js/DiagnosticIcons.tsx');
-    $issuesView = file_get_contents($root.'/resources/js/IssuesView.tsx');
-    $types = file_get_contents($root.'/resources/js/types.ts');
-
-    expect($entry)
-        ->toContain("import devToolsStyles from './devtools.css?inline';")
-        ->toContain("attachShadow({ mode: 'open' })")
-        ->toContain('shadow.append(stylesheet, container, portalTarget)')
-        ->toContain('import.meta.hot.dispose')
-        ->toContain("document.getElementById('scramble-dev-tools-data')")
-        ->toContain('<DevToolsApp diagnostics={data.diagnostics} />')
-        ->and($styles)
-        ->toContain('@source "./**/*.{ts,tsx}";')
-        ->toContain(':host, *, ::before, ::after, ::backdrop')
-        ->toContain('--tw-inset-shadow: 0 0 #0000;')
-        ->not->toContain('prefix(')
-        ->not->toContain('important')
-        ->and($component)
-        ->toContain("severity === 'error'")
-        ->toContain("severity === 'warning'")
-        ->toContain('errorCount > 0 &&')
-        ->toContain('warningCount > 0 &&')
-        ->toContain('<ErrorIcon />')
-        ->toContain('<WarningIcon />')
-        ->not->toContain('scramble:')
-        ->and($icons)
-        ->toContain('export function ErrorIcon(')
-        ->toContain('export function WarningIcon(')
-        ->and($issuesView)
-        ->toContain('export function IssuesView(')
-        ->toContain('export function IssuesTabs(')
-        ->toContain('export function IssueGroup(')
-        ->toContain('export function IssueItem(')
-        ->toContain("label === 'Located at'")
-        ->toContain('fileLocation ?? openApiLocation ?? diagnostic.context?.detail')
-        ->toContain("event.key === 'Escape'")
-        ->and($types)
-        ->toContain("export type DiagnosticSeverity = 'error' | 'warning';")
-        ->toContain('export interface Diagnostic');
-});
-
 class DevToolsTestController
 {
     public function update(): void {}

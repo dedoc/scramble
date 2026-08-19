@@ -162,26 +162,60 @@ interface IssueItemProps extends ClassNameProps {
     diagnostic: Diagnostic;
 }
 
+interface IssueDatum {
+    label: string;
+    value: string;
+}
+
+const hiddenDatums: string[] = ['Expression'];
+
+function issueData(diagnostic: Diagnostic): IssueDatum[] {
+    const data: IssueDatum[] = diagnostic.details
+        .filter(([label]) => !hiddenDatums.includes(label))
+        .map(([label, value]) => ({ label, value }));
+
+    if (diagnostic.tip) {
+        data.push({ label: 'Tip', value: diagnostic.tip });
+    }
+
+    return data;
+}
+
+export function IssueDatumGrid({ className, data }: ClassNameProps & { data: IssueDatum[] }) {
+    if (data.length === 0) {
+        return null;
+    }
+
+    return (
+        <dl
+            className={cx(
+                'grid grid-cols-[62px_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs leading-4',
+                className,
+            )}
+        >
+            {data.map(({ label, value }, index) => (
+                <div key={`${label}:${index}`} className="contents">
+                    <dt className="w-[62px] text-gray-400">{label}</dt>
+                    <dd className="min-w-0 break-words text-gray-500">{value}</dd>
+                </div>
+            ))}
+        </dl>
+    );
+}
+
 export function IssueItem({ className, diagnostic }: IssueItemProps) {
-    const fileLocation = diagnostic.details.find(([label]) => label === 'Located at')?.[1];
-    const openApiLocation = diagnostic.details.find(([label]) => label === 'Found at')?.[1];
-    const detail = fileLocation ?? openApiLocation ?? diagnostic.context?.detail;
     const Icon = diagnostic.severity === 'error' ? ErrorIcon : WarningIcon;
 
     return (
-        <li className={cx('flex flex-col', className)}>
-            <div className="flex items-start gap-2">
-                <Icon className="mt-1 size-3 shrink-0" />
-                <span className="min-w-0 break-words text-[13px] leading-5 text-gray-800">
-                    {diagnostic.message}
+        <li className={cx('flex flex-col gap-1', className)}>
+            <div className="leading-[16px]">
+                <Icon className="size-3 shrink-0 inline-block mr-1 -translate-y-px" />
+                <span className="min-w-0 break-words text-[13px]  text-gray-800">
+                    <span className="text-gray-500">{diagnostic.code}</span> {diagnostic.message}
                 </span>
             </div>
 
-            <div className="break-words pl-5 text-xs leading-5 text-gray-500">
-                {detail
-                    ? `${diagnostic.code}\u00A0·\u00A0${detail}`
-                    : diagnostic.code}
-            </div>
+            <IssueDatumGrid data={issueData(diagnostic)} />
         </li>
     );
 }

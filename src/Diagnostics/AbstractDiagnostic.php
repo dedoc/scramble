@@ -87,12 +87,12 @@ abstract class AbstractDiagnostic implements Diagnostic
         $details = [];
 
         if ($this->openApiLocation) {
-            $details[] = ['Found at', $this->openApiLocation];
+            $details[] = ['Located at', $this->openApiLocation];
         }
 
         if ($this->codeLocation) {
             $path = str_replace(base_path().DIRECTORY_SEPARATOR, '', $this->codeLocation->file);
-            $details[] = ['Located at', $path.':'.$this->codeLocation->line];
+            $details[] = ['Source at', $path.':'.$this->codeLocation->line];
         }
 
         return $details;
