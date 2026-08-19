@@ -7,6 +7,20 @@ import { defineConfig } from 'vite';
 const dist = resolve(import.meta.dirname, 'dist');
 const hotFile = resolve(dist, 'hot');
 const removeHotFile = () => rmSync(hotFile, { force: true });
+type HotFileLifecycle = { registered: boolean };
+const globalWithHotFileLifecycle = globalThis as typeof globalThis & {
+    __scrambleHotFileLifecycle?: HotFileLifecycle;
+};
+const hotFileLifecycle = (globalWithHotFileLifecycle.__scrambleHotFileLifecycle ??= {
+    registered: false,
+});
+
+if (!hotFileLifecycle.registered) {
+    process.once('exit', removeHotFile);
+    process.once('SIGINT', () => process.exit(130));
+    process.once('SIGTERM', () => process.exit(143));
+    hotFileLifecycle.registered = true;
+}
 
 export default defineConfig(({ command }) => ({
     define: {
@@ -41,13 +55,6 @@ export default defineConfig(({ command }) => ({
                     mkdirSync(dist, { recursive: true });
                     writeFileSync(hotFile, localUrl);
                 });
-                server.httpServer?.once('close', removeHotFile);
-                process.once('exit', removeHotFile);
-                process.once('SIGINT', () => process.exit(130));
-                process.once('SIGTERM', () => process.exit(143));
-            },
-            closeBundle() {
-                removeHotFile();
             },
         },
     ],
