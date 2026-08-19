@@ -23,6 +23,7 @@ use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Generator\UniqueNameOptions;
 use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
+use Dedoc\Scramble\Support\InferExtensions\TransformsToResourceCollectionExtension;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\ProNudge\ProNudgeCollector;
 use Dedoc\Scramble\Support\ServerFactory;
@@ -69,6 +70,7 @@ class Generator
             ->configure()
             ->replaceExtensions([
                 new ModelExtension($this->diagnostics),
+                new TransformsToResourceCollectionExtension($this->diagnostics),
             ]);
     }
 
