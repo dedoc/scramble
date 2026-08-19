@@ -91,5 +91,5 @@ export function diagnosticsAsMarkdown(diagnostics: Diagnostic[]) {
         return [heading, ...issues].join('\n');
     });
 
-    return ['# Issues', ...sections].join('\n\n');
+    return ['# Issues', 'Scramble encountered these issues while generating the API documentation.', ...sections].join('\n\n');
 }

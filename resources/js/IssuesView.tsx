@@ -269,7 +269,7 @@ export function IssuesView({ className, diagnostics, onClose }: IssuesViewProps)
         copiedTimer.current = setTimeout(() => {
             setCopied(false);
             copiedTimer.current = null;
-        }, 1000);
+        }, 2000);
     };
 
     useEffect(() => () => {
