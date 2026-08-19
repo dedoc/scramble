@@ -31,13 +31,15 @@ it('renders the built entry without leaking its stylesheet into the document', f
     Route::get('_scramble/dev-tools/{file}', fn () => '')->name('scramble.dev-tools.asset');
     $diagnostics = new DiagnosticsCollector;
     $diagnostics->reportQuietly(new GenericDiagnostic(DiagnosticSeverity::Error, 'Broken documentation'));
+    $renderer = 'elements';
 
-    $html = view('scramble::dev-tools', compact('diagnostics'))->render();
+    $html = view('scramble::dev-tools', compact('diagnostics', 'renderer'))->render();
 
     expect($html)
         ->toContain('/_scramble/dev-tools/devtools.js')
         ->toContain('id="scramble-dev-tools-data"')
         ->toContain('"severity":"error"')
+        ->toContain('"renderer":"elements"')
         ->not->toContain('/_scramble/dev-tools/devtools.css')
         ->not->toContain('/@vite/client');
 });

@@ -1,3 +1,4 @@
+export type Renderer = 'elements' | 'scalar';
 export type DiagnosticSeverity = 'error' | 'warning';
 
 export interface DiagnosticContext {
@@ -35,4 +36,5 @@ export interface IssueDatum {
 
 export interface DevToolsData {
     diagnostics: Diagnostic[];
+    renderer: Renderer;
 }

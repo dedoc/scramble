@@ -1,13 +1,15 @@
 import { useCallback, useRef, useState } from 'react';
 import { ErrorIcon, WarningIcon } from './DiagnosticIcons';
 import { IssuesView } from './IssuesView';
+import type { RendererConfig } from './renderers';
 import type { Diagnostic } from './types';
 
 interface DevToolsProps {
     diagnostics: Diagnostic[];
+    renderer: RendererConfig;
 }
 
-export function DevToolsApp({ diagnostics }: DevToolsProps) {
+export function DevToolsApp({ diagnostics, renderer }: DevToolsProps) {
     const [issuesOpen, setIssuesOpen] = useState(false);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const errorCount = diagnostics.filter(({ severity }) => severity === 'error').length;
@@ -23,7 +25,7 @@ export function DevToolsApp({ diagnostics }: DevToolsProps) {
             className="fixed top-3 right-3 z-10 antialiased"
         >
             {issuesOpen ? (
-                <IssuesView diagnostics={diagnostics} onClose={closeIssues} />
+                <IssuesView diagnostics={diagnostics} onClose={closeIssues} onNavigate={renderer.navigateTo} />
             ) : (
                 <button
                     ref={triggerRef}

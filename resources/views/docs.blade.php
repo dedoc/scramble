@@ -9,7 +9,7 @@
     <script src="https://unpkg.com/@stoplight/elements@8.4.2/web-components.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements@8.4.2/styles.min.css">
 
-    @include('scramble::dev-tools')
+    @include('scramble::dev-tools', ['renderer' => 'elements'])
 
     <script>
         const originalFetch = window.fetch;

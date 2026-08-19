@@ -8,6 +8,7 @@ import type {
     IssueDatum,
 } from './types';
 import { copyText, diagnosticsAsMarkdown, groupDiagnostics, issueData } from './utils';
+import type { RendererNavigationKind } from './renderers';
 
 function cx(...classes: Array<string | false | null | undefined>) {
     return classes.filter(Boolean).join(' ');
@@ -202,23 +203,44 @@ export function IssueItem({ className, diagnostic }: IssueItemProps) {
 interface IssueGroupProps extends ClassNameProps {
     context: DiagnosticContext | null;
     diagnostics: IndexedDiagnostic[];
+    onNavigate?: (kind: RendererNavigationKind, id: string) => void;
 }
 
-export function IssueGroup({ className, context, diagnostics }: IssueGroupProps) {
+export function IssueGroup({ className, context, diagnostics, onNavigate }: IssueGroupProps) {
+    const navigationKind = context?.type === 'route' ? 'operation' : 'schema';
+    const navigationId = context?.type === 'route'
+        ? `${context.method} ${context.label}`
+        : context?.label;
+    const header = (
+        <>
+            <div className="flex min-w-0 items-center gap-2 font-mono text-[13px]">
+                {context?.method && (
+                    <span className="shrink-0 text-[#919FB4]">{context.method}</span>
+                )}
+                <span className="truncate font-medium text-gray-800">
+                    {context?.label ?? 'General'}
+                </span>
+            </div>
+
+            <span className="shrink-0 text-xs text-gray-500">{diagnostics.length}</span>
+        </>
+    );
+
     return (
         <section className={cx('flex flex-col gap-3 border-b border-gray-200 px-4 py-3.5 last:border-b-0', className)}>
-            <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2 font-mono text-[13px]">
-                    {context?.method && (
-                        <span className="shrink-0 text-[#919FB4]">{context.method}</span>
-                    )}
-                    <span className="truncate font-medium text-gray-800">
-                        {context?.label ?? 'General'}
-                    </span>
+            {onNavigate && navigationId ? (
+                <button
+                    type="button"
+                    onClick={() => onNavigate(navigationKind, navigationId)}
+                    className="-m-1 flex cursor-pointer items-center justify-between gap-3 rounded p-1 text-left outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-gray-500"
+                >
+                    {header}
+                </button>
+            ) : (
+                <div className="flex items-center justify-between gap-3">
+                    {header}
                 </div>
-
-                <span className="shrink-0 text-xs text-gray-500">{diagnostics.length}</span>
-            </div>
+            )}
 
             <ul className="flex flex-col gap-3.5">
                 {diagnostics.map(({ diagnostic, index }) => (
@@ -240,9 +262,10 @@ export function EmptyIssues({ className }: ClassNameProps) {
 interface IssuesViewProps extends ClassNameProps {
     diagnostics: Diagnostic[];
     onClose: () => void;
+    onNavigate?: (kind: RendererNavigationKind, id: string) => void;
 }
 
-export function IssuesView({ className, diagnostics, onClose }: IssuesViewProps) {
+export function IssuesView({ className, diagnostics, onClose, onNavigate }: IssuesViewProps) {
     const [activeSeverity, setActiveSeverity] = useState<IssueFilter>('all');
     const [copied, setCopied] = useState(false);
     const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -323,6 +346,7 @@ export function IssuesView({ className, diagnostics, onClose }: IssuesViewProps)
                             key={context?.key ?? 'general'}
                             context={context}
                             diagnostics={groupDiagnostics}
+                            onNavigate={onNavigate}
                         />
                     ))
                     : <EmptyIssues />}

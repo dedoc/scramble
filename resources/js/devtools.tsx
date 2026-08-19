@@ -3,11 +3,16 @@ import devToolsStyles from './devtools.css?inline';
 import { createRoot } from 'react-dom/client';
 import { DevToolsApp } from './DevToolsApp';
 import { PortalTargetProvider } from './Portal';
+import renderers from './renderers';
+import type { RendererConfig } from './renderers';
 import type { DevToolsData } from './types';
 
 const data: DevToolsData = JSON.parse(
-    document.getElementById('scramble-dev-tools-data')?.textContent ?? '{"diagnostics":[]}',
+    document.getElementById('scramble-dev-tools-data')?.textContent ?? '{"diagnostics":[],"renderer":"elements"}',
 );
+const renderer: RendererConfig = Object.hasOwn(renderers, data.renderer)
+    ? renderers[data.renderer as keyof typeof renderers]
+    : {};
 
 document.documentElement.dataset.scrambleDevTools = 'enabled';
 
@@ -29,7 +34,7 @@ const root = createRoot(container);
 
 root.render(
     <PortalTargetProvider target={portalTarget}>
-        <DevToolsApp diagnostics={data.diagnostics} />
+        <DevToolsApp diagnostics={data.diagnostics} renderer={renderer} />
     </PortalTargetProvider>,
 );
 

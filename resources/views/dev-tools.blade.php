@@ -1,6 +1,7 @@
 @if(\Dedoc\Scramble\Support\DevTools::enabled())
     <script type="application/json" id="scramble-dev-tools-data">@json([
         'diagnostics' => $diagnostics->toArray(),
+        'renderer' => $renderer,
     ])</script>
 
     @if($viteServerUrl = \Dedoc\Scramble\Support\DevTools::viteServerUrl())
