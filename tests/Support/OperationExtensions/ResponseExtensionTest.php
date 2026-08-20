@@ -119,3 +119,38 @@ class Resource_ResponseExtensionTest extends JsonResource
         return ['id' => 42];
     }
 }
+
+it('allows adding a comment right above the return statement to be used as the response description', function () {
+    $openApiDocument = generateForRoute(fn () => Route::get('api/test', ReturnCommentController_ResponseTest::class));
+
+    expect($responses = $openApiDocument['paths']['/test']['get']['responses'])
+        ->toHaveCount(1)
+        ->and($responses[200]['description'])
+        ->toBe('This description comes from a comment');
+});
+class ReturnCommentController_ResponseTest
+{
+    public function __invoke()
+    {
+        // This description comes from a comment
+        return something_unknown();
+    }
+}
+
+it('allows ignores a comment right above the return statement to be used as the response description if is disabled in configuration', function () {
+    config()->set('scramble.ignore_response_return_comments', true);
+    $openApiDocument = generateForRoute(fn () => Route::get('api/test', ReturnCommentWithOptionDisabledController_ResponseTest::class));
+
+    expect($responses = $openApiDocument['paths']['/test']['get']['responses'])
+        ->toHaveCount(1)
+        ->and($responses[200]['description'])
+        ->toBe('');
+});
+class ReturnCommentWithOptionDisabledController_ResponseTest
+{
+    public function __invoke()
+    {
+        // This description comes from a comment
+        return something_unknown();
+    }
+}
