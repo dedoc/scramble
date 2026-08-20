@@ -28,6 +28,7 @@ class GeneratorConfigTest extends TestCase
     protected function resolveApplicationConfiguration($app)
     {
         parent::resolveApplicationConfiguration($app);
+        $app['config']->set('scramble.dev_tools', false);
 
         TestingFeature::run(
             testCase: $this,
@@ -41,16 +42,10 @@ class GeneratorConfigTest extends TestCase
         /** @var RouteCollectionInterface $routes */
         $routes = app()->get(Router::class)->getRoutes();
 
-        $expectedRoutesCount = config('scramble.dev_tools') ? 3 : 2;
-
-        $this->assertCount($expectedRoutesCount, $this->getScrambleRoutes());
+        $this->assertCount(2, $this->getScrambleRoutes());
 
         $this->assertNotNull($routes->getByName('scramble.docs.ui'));
         $this->assertNotNull($routes->getByName('scramble.docs.document'));
-
-        if (config('scramble.dev_tools')) {
-            $this->assertNotNull($routes->getByName('scramble.dev-tools.asset'));
-        }
     }
 
     /** @test */
@@ -59,7 +54,7 @@ class GeneratorConfigTest extends TestCase
     {
         $routes = $this->getScrambleRoutes();
 
-        $this->assertCount(config('scramble.dev_tools') ? 1 : 0, $routes);
+        $this->assertCount(0, $routes);
     }
 
     /** @test */
@@ -68,7 +63,7 @@ class GeneratorConfigTest extends TestCase
     {
         $routes = $this->getScrambleRoutes();
 
-        $this->assertCount(config('scramble.dev_tools') ? 3 : 2, $routes);
+        $this->assertCount(2, $routes);
 
         /** @var Route|null $uiRoute */
         $uiRoute = collect($routes)->firstWhere('uri', 'documentation');
@@ -87,7 +82,7 @@ class GeneratorConfigTest extends TestCase
     #[WithProviders([RegistersNotExposedApi_GeneratorConfigTest::class])]
     public function registered_api_isnt_exposed_by_default()
     {
-        $this->assertCount(config('scramble.dev_tools') ? 1 : 0, $this->getScrambleRoutes());
+        $this->assertCount(0, $this->getScrambleRoutes());
     }
 
     /** @test */
@@ -96,7 +91,7 @@ class GeneratorConfigTest extends TestCase
     {
         $routes = $this->getScrambleRoutes();
 
-        $this->assertCount(config('scramble.dev_tools') ? 3 : 2, $routes);
+        $this->assertCount(2, $routes);
         $this->assertNotNull(
             collect($routes)->firstWhere('uri', 'docs/v2')
         );

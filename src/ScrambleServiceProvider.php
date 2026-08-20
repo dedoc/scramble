@@ -388,19 +388,14 @@ class ScrambleServiceProvider extends PackageServiceProvider
             fn ($middleware) => is_string($middleware),
         ));
 
-        $router->get('_scramble/dev-tools/{file}', function (string $file) {
-            abort_unless(in_array($file, DevTools::ASSETS, true), 404);
-
-            $path = DevTools::assetPath($file);
+        $router->get('_scramble/dev-tools/devtools.js', function () {
+            $path = DevTools::assetPath();
 
             abort_unless(is_file($path), 404);
 
             return response()->file($path, [
                 'Cache-Control' => 'no-store',
-                'Content-Type' => match ($file) {
-                    'devtools.js' => 'text/javascript; charset=UTF-8',
-                    'devtools.css' => 'text/css; charset=UTF-8',
-                },
+                'Content-Type' => 'text/javascript; charset=UTF-8',
             ]);
         })
             ->name('scramble.dev-tools.asset')

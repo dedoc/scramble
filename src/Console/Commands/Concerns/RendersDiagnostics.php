@@ -7,7 +7,6 @@ use Dedoc\Scramble\Console\Commands\Components\Code;
 use Dedoc\Scramble\Console\Commands\Components\StyledConsoleTextWrapper;
 use Dedoc\Scramble\Console\Commands\Components\TermsOfContentItem;
 use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
-use Dedoc\Scramble\Diagnostics\AbstractDiagnostic;
 use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Generator;
@@ -162,7 +161,11 @@ trait RendersDiagnostics
 
     private function renderDiagnostic(Diagnostic $diagnostic, int $i): void
     {
-        $message = $diagnostic->shortMessage();
+        $message = Str::replace(
+            'Dedoc\Scramble\Support\Generator\Types\\',
+            '',
+            $diagnostic->message(),
+        );
 
         $level = match ($diagnostic->severity()) {
             DiagnosticSeverity::Error => '<fg=red;options=bold>ERR</>',
@@ -250,8 +253,17 @@ trait RendersDiagnostics
 
     private function getRouteAction(?Route $route): ?string
     {
-        $action = AbstractDiagnostic::routeAction($route);
+        if (! $route || ! is_string($uses = $route->getAction('uses'))) {
+            return null;
+        }
 
-        return $action ? "<fg=gray>{$action}</>" : null;
+        if (count($parts = explode('@', $uses)) !== 2 || ! method_exists(...$parts)) {
+            return null;
+        }
+
+        [$class, $method] = $parts;
+        $class = Str::replace(['App\Http\Controllers\\', 'App\Http\\'], '', $class);
+
+        return "<fg=gray>{$class}@{$method}</>";
     }
 }

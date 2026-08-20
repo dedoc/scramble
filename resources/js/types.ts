@@ -34,12 +34,7 @@ export interface IssueDatum {
     value: string;
 }
 
-export interface ProNudge {
-    count: number;
-    description: string;
-}
-
-export type ProNudges = Record<string, ProNudge>;
+export type ProNudges = Record<string, string>;
 
 export interface DevToolsData {
     diagnostics: Diagnostic[];

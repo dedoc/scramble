@@ -18,10 +18,6 @@ interface Diagnostic
 
     public function message(): string;
 
-    public function shortMessage(): string;
-
-    public static function routeAction(?Route $route): ?string;
-
     public function context(): Route|ClassContext|null;
 
     public function codeLocation(): ?CodeLocation;

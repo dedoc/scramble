@@ -4,16 +4,14 @@ namespace Dedoc\Scramble\Support;
 
 class DevTools
 {
-    public const ASSETS = ['devtools.js', 'devtools.css'];
-
     public static function enabled(): bool
     {
         return (bool) config('scramble.dev_tools', config('app.debug', false));
     }
 
-    public static function assetPath(string $asset): string
+    public static function assetPath(): string
     {
-        return dirname(__DIR__, 2).'/dist/'.$asset;
+        return dirname(__DIR__, 2).'/dist/devtools.js';
     }
 
     public static function viteServerUrl(): ?string

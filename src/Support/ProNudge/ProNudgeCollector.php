@@ -33,7 +33,7 @@ class ProNudgeCollector
         return false;
     }
 
-    /** @return array<string, array{count: int, description: string}> */
+    /** @return array<string, mixed> */
     public function summaries(): array
     {
         $summaries = [];
@@ -45,10 +45,7 @@ class ProNudgeCollector
                 continue;
             }
 
-            $summaries[$signal->value] = [
-                'count' => $count,
-                'description' => $signal->description($count),
-            ];
+            $summaries[$signal->value] = $signal->description($count);
         }
 
         return $summaries;

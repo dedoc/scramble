@@ -6,12 +6,17 @@ use Dedoc\Scramble\Diagnostics\AbstractDiagnostic;
 use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
+use InvalidArgumentException;
 use ReflectionClass;
 
 class Md002MissingResourceDiagnostic extends AbstractDiagnostic
 {
     public static function forModel(string $modelClass): self
     {
+        if (! class_exists($modelClass)) {
+            throw new InvalidArgumentException("Model class [$modelClass] does not exist.");
+        }
+
         return new self(
             DiagnosticSeverity::Warning,
             "Cannot find resource class for model `$modelClass`",

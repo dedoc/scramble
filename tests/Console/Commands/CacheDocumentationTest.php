@@ -7,7 +7,10 @@ use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\ProNudge\ProNudgeSignal;
+use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Route;
 
 use function Pest\Laravel\artisan;
 
@@ -34,6 +37,10 @@ it('returns cached documentation when cache is configured', function () {
 
     $cacheableGenerator->diagnostics()->reportQuietly(
         new GenericDiagnostic(DiagnosticSeverity::Error, 'Stale diagnostic')
+    );
+    $cacheableGenerator->proNudge()->record(
+        ProNudgeSignal::QueryBuilder,
+        new RouteInfo(Route::get('/users', fn () => []), 'GET'),
     );
 
     expect($cacheableGenerator($config))->toBe($expected)

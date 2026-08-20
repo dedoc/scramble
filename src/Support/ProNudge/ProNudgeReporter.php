@@ -24,7 +24,9 @@ class ProNudgeReporter
         $lines = [];
 
         foreach ($this->collector->summaries() as $summary) {
-            $lines[] = '  • '.$summary['description'];
+            if (is_string($summary)) {
+                $lines[] = '  • '.$summary;
+            }
         }
 
         $command->getOutput()->block(implode("\n", [

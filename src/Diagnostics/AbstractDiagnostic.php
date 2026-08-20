@@ -6,7 +6,6 @@ use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
 use Dedoc\Scramble\Exceptions\BuildsDiagnostics;
 use Exception;
 use Illuminate\Routing\Route;
-use Illuminate\Support\Str;
 use Throwable;
 
 abstract class AbstractDiagnostic implements Diagnostic
@@ -39,32 +38,6 @@ abstract class AbstractDiagnostic implements Diagnostic
     public function message(): string
     {
         return rtrim($this->message, '.');
-    }
-
-    public function shortMessage(): string
-    {
-        return Str::replace(
-            'Dedoc\Scramble\Support\Generator\Types\\',
-            '',
-            $this->message(),
-        );
-    }
-
-    public static function routeAction(?Route $route): ?string
-    {
-        if (! $route || ! is_string($uses = $route->getAction('uses'))) {
-            return null;
-        }
-
-        if (count($parts = explode('@', $uses)) !== 2 || ! method_exists(...$parts)) {
-            return null;
-        }
-
-        [$class, $method] = $parts;
-
-        $class = Str::replace(['App\Http\Controllers\\', 'App\Http\\'], '', $class);
-
-        return "{$class}@{$method}";
     }
 
     public function context(): Route|ClassContext|null

@@ -1,5 +1,5 @@
 export type RendererNavigationKind = 'operation' | 'schema';
-export type RendererTheme = 'light' | 'dark';
+type RendererTheme = 'light' | 'dark';
 
 interface RendererThemeConfig {
     current: () => RendererTheme;

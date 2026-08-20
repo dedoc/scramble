@@ -14,7 +14,7 @@ export function ProNudgeCard({ className, proNudges }: ProNudgeCardProps) {
         return null;
     }
 
-    const summary = formatConjunction(nudges.map(({ description }) => description));
+    const summary = formatConjunction(nudges);
 
     return (
         <div

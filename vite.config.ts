@@ -62,7 +62,6 @@ export default defineConfig(({ command }) => ({
         outDir: dist,
         emptyOutDir: true,
         minify: 'oxc',
-        cssCodeSplit: true,
         rolldownOptions: {
             output: {
                 minify: {
@@ -74,13 +73,9 @@ export default defineConfig(({ command }) => ({
             },
         },
         lib: {
-            entry: [
-                resolve(import.meta.dirname, 'resources/js/devtools.tsx'),
-                resolve(import.meta.dirname, 'resources/js/devtools.css'),
-            ],
+            entry: resolve(import.meta.dirname, 'resources/js/devtools.tsx'),
             formats: ['es'],
-            fileName: (_, entryName) => `${entryName}.js`,
-            cssFileName: 'devtools',
+            fileName: 'devtools',
         },
     },
 }));

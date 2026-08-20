@@ -24,14 +24,8 @@ it('records unique endpoints per signal', function () {
         ->and($collector->count(ProNudgeSignal::QueryBuilder))->toBe(1)
         ->and($collector->count(ProNudgeSignal::LaravelDataRequest))->toBe(0)
         ->and($collector->summaries())->toBe([
-            'query_builder' => [
-                'count' => 1,
-                'description' => '1 endpoint uses Spatie Query Builder',
-            ],
-            'laravel_data_return' => [
-                'count' => 2,
-                'description' => '2 endpoints return Laravel Data objects',
-            ],
+            'query_builder' => '1 endpoint uses Spatie Query Builder',
+            'laravel_data_return' => '2 endpoints return Laravel Data objects',
         ])
         ->and($collector->hasAny())->toBeTrue();
 });

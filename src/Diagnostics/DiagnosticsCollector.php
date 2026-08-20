@@ -83,23 +83,7 @@ class DiagnosticsCollector
         return $this->diagnostics;
     }
 
-    /**
-     * @return list<array{
-     *     key: string,
-     *     code: string,
-     *     severity: 'error'|'warning',
-     *     message: string,
-     *     tip: string|null,
-     *     details: list<array{0: string, 1: string}>,
-     *     context: array{
-     *         key: string,
-     *         type: 'route'|'class',
-     *         label: string,
-     *         method: string|null,
-     *         detail: string|null
-     *     }|null
-     * }>
-     */
+    /** @return list<array<string, mixed>> */
     public function toArray(): array
     {
         $serialized = [];
@@ -112,7 +96,11 @@ class DiagnosticsCollector
                     DiagnosticSeverity::Error => 'error',
                     DiagnosticSeverity::Warning => 'warning',
                 },
-                'message' => $diagnostic->shortMessage(),
+                'message' => str_replace(
+                    'Dedoc\Scramble\Support\Generator\Types\\',
+                    '',
+                    $diagnostic->message(),
+                ),
                 'tip' => $diagnostic->tip(),
                 'details' => $diagnostic->details(),
                 'context' => $this->serializeContext($diagnostic),
@@ -122,15 +110,7 @@ class DiagnosticsCollector
         return $serialized;
     }
 
-    /**
-     * @return array{
-     *     key: string,
-     *     type: 'route'|'class',
-     *     label: string,
-     *     method: string|null,
-     *     detail: string|null
-     * }|null
-     */
+    /** @return array<string, mixed>|null */
     private function serializeContext(Diagnostic $diagnostic): ?array
     {
         $context = $diagnostic->context();
@@ -139,7 +119,7 @@ class DiagnosticsCollector
             $method = collect($context->methods())->first(fn (string $method) => $method !== 'HEAD')
                 ?? $context->methods()[0]
                 ?? 'GET';
-            $detail = $diagnostic::routeAction($context);
+            $detail = $this->routeAction($context);
 
             return [
                 'key' => 'route:'.$method.':'.$context->uri().':'.$detail,
@@ -161,5 +141,21 @@ class DiagnosticsCollector
         }
 
         return null;
+    }
+
+    private function routeAction(Route $route): ?string
+    {
+        if (! is_string($uses = $route->getAction('uses'))) {
+            return null;
+        }
+
+        if (count($parts = explode('@', $uses)) !== 2 || ! method_exists(...$parts)) {
+            return null;
+        }
+
+        [$class, $method] = $parts;
+        $class = str_replace(['App\Http\Controllers\\', 'App\Http\\'], '', $class);
+
+        return "{$class}@{$method}";
     }
 }

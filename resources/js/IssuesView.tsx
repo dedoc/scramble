@@ -28,7 +28,7 @@ interface CloseButtonProps extends ClassNameProps {
     onClose: () => void;
 }
 
-export function CloseButton({ className, onClose }: CloseButtonProps) {
+function CloseButton({ className, onClose }: CloseButtonProps) {
     return (
         <button
             type="button"
@@ -64,7 +64,7 @@ interface IssuesHeaderProps extends CloseButtonProps {
     onCopy: () => void;
 }
 
-export function IssuesHeader({ className, copied, copyDisabled, onClose, onCopy }: IssuesHeaderProps) {
+function IssuesHeader({ className, copied, copyDisabled, onClose, onCopy }: IssuesHeaderProps) {
     return (
         <header className={cx('flex pt-2 pb-1 items-center justify-between px-4', className)}>
             <div className="flex min-w-0 items-center gap-3">
@@ -96,7 +96,7 @@ interface IssueTabProps extends ClassNameProps {
     onClick: () => void;
 }
 
-export function IssueTab({ active, children, className, onClick }: IssueTabProps) {
+function IssueTab({ active, children, className, onClick }: IssueTabProps) {
     return (
         <button
             type="button"
@@ -129,7 +129,7 @@ interface IssuesTabsProps extends ClassNameProps {
     warningCount: number;
 }
 
-export function IssuesTabs({
+function IssuesTabs({
     activeSeverity,
     className,
     errorCount,
@@ -167,7 +167,7 @@ interface IssueItemProps extends ClassNameProps {
     diagnostic: Diagnostic;
 }
 
-export function IssueDatumGrid({ className, data }: ClassNameProps & { data: IssueDatum[] }) {
+function IssueDatumGrid({ className, data }: ClassNameProps & { data: IssueDatum[] }) {
     if (data.length === 0) {
         return null;
     }
@@ -189,7 +189,7 @@ export function IssueDatumGrid({ className, data }: ClassNameProps & { data: Iss
     );
 }
 
-export function IssueItem({ className, diagnostic }: IssueItemProps) {
+function IssueItem({ className, diagnostic }: IssueItemProps) {
     const Icon = diagnostic.severity === 'error' ? ErrorIcon : WarningIcon;
 
     return (
@@ -212,7 +212,7 @@ interface IssueGroupProps extends ClassNameProps {
     onNavigate?: (kind: RendererNavigationKind, id: string) => void;
 }
 
-export function IssueGroup({ className, context, diagnostics, onNavigate }: IssueGroupProps) {
+function IssueGroup({ className, context, diagnostics, onNavigate }: IssueGroupProps) {
     const navigationKind = context?.type === 'route' ? 'operation' : 'schema';
     const navigationId = context?.type === 'route'
         ? `${context.method} ${context.label}`
@@ -257,7 +257,7 @@ export function IssueGroup({ className, context, diagnostics, onNavigate }: Issu
     );
 }
 
-export function EmptyIssues({ className }: ClassNameProps) {
+function EmptyIssues({ className }: ClassNameProps) {
     return (
         <div className={cx('px-4 py-6 text-center text-[13px] text-neutral-500 dark:text-neutral-400', className)}>
             No issues found
