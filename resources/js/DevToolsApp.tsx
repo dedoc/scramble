@@ -36,10 +36,12 @@ export function DevToolsApp({ diagnostics, renderer }: DevToolsProps) {
                     className="
                         inline-flex h-8 cursor-pointer items-center gap-4 rounded-lg bg-white px-3
                         shadow-[0_1px_3px_rgba(0,0,0,0.08),0_2px_10px_rgba(0,0,0,0.08),0_0_2px_rgba(0,0,0,0.05)]
-                        outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500
+                        outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-500
+                        dark:bg-neutral-900 dark:shadow-none dark:inset-ring dark:inset-ring-white/10
+                        dark:focus-visible:outline-neutral-400
                     "
                 >
-                    <span className="text-[13px] font-normal leading-none text-gray-500">
+                    <span className="text-[13px] font-normal leading-none text-neutral-500 dark:text-neutral-400">
                         Scramble
                     </span>
 
@@ -47,7 +49,7 @@ export function DevToolsApp({ diagnostics, renderer }: DevToolsProps) {
                         <div className="flex items-center gap-1">
                             <ErrorIcon />
 
-                            <span className="text-[13px] font-normal leading-none text-gray-800">
+                            <span className="text-[13px] font-normal leading-none text-neutral-800 dark:text-neutral-100">
                                 {errorCount} {errorCount === 1 ? 'error' : 'errors'}
                             </span>
                         </div>
@@ -57,7 +59,7 @@ export function DevToolsApp({ diagnostics, renderer }: DevToolsProps) {
                         <div className="flex items-center gap-1">
                             <WarningIcon />
 
-                            <span className="text-[13px] font-normal leading-none text-gray-800">
+                            <span className="text-[13px] font-normal leading-none text-neutral-800 dark:text-neutral-100">
                                 {warningCount} {warningCount === 1 ? 'warning' : 'warnings'}
                             </span>
                         </div>

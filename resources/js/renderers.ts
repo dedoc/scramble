@@ -1,7 +1,14 @@
 export type RendererNavigationKind = 'operation' | 'schema';
+export type RendererTheme = 'light' | 'dark';
+
+interface RendererThemeConfig {
+    current: () => RendererTheme;
+    subscribe: (onChange: () => void) => () => void;
+}
 
 export interface RendererConfig {
     navigateTo?: (kind: RendererNavigationKind, id: string) => void;
+    theme: RendererThemeConfig;
 }
 
 interface ElementsApiElement extends HTMLElement {
@@ -33,14 +40,58 @@ function resolveOperationId(target: string) {
         .find((operationId): operationId is string => Boolean(operationId));
 }
 
+function observeAttribute(
+    element: Element,
+    attribute: string,
+    onChange: () => void,
+) {
+    const observer = new MutationObserver(onChange);
+
+    observer.observe(element, { attributes: true, attributeFilter: [attribute] });
+
+    return () => observer.disconnect();
+}
+
+const scalarColorModeKey = 'colorMode';
+
 export default {
     elements: {
+        theme: {
+            current: () => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light',
+            subscribe: (onChange) => observeAttribute(
+                document.documentElement,
+                'data-theme',
+                onChange,
+            ),
+        },
         navigateTo(kind, id) {
             const target = kind === 'operation' ? resolveOperationId(id) : id;
 
             if (target) {
                 window.location.hash = `#/${kind === 'operation' ? 'operations' : 'schemas'}/${target}`;
             }
+        },
+    },
+    scalar: {
+        theme: {
+            current: () => window.localStorage.getItem(scalarColorModeKey) === 'dark'
+                ? 'dark'
+                : 'light',
+            subscribe(onChange) {
+                const onStorage = (event: StorageEvent) => {
+                    if (event.key === scalarColorModeKey) {
+                        onChange();
+                    }
+                };
+                const stopObservingBody = observeAttribute(document.body, 'class', onChange);
+
+                window.addEventListener('storage', onStorage);
+
+                return () => {
+                    window.removeEventListener('storage', onStorage);
+                    stopObservingBody();
+                };
+            },
         },
     },
 } satisfies Record<string, RendererConfig>;

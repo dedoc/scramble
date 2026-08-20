@@ -36,7 +36,7 @@ export function MarkdownIcon({ className = 'h-3.5 w-[18px] shrink-0' }: Diagnost
     );
 }
 
-export function TickIcon({ className = 'h-3.5 w-[18px] shrink-0 text-teal-600' }: DiagnosticIconProps) {
+export function TickIcon({ className = 'h-3.5 w-[18px] shrink-0 text-teal-600 dark:text-teal-400' }: DiagnosticIconProps) {
     return (
         <svg
             width="20"
@@ -58,8 +58,8 @@ export function TickIcon({ className = 'h-3.5 w-[18px] shrink-0 text-teal-600' }
 }
 
 export function ErrorIcon({ className = 'size-3' }: DiagnosticIconProps) {
-    return <svg className={className} aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path fill-rule="evenodd" clip-rule="evenodd" d="M5.99922 10.8002C8.65019 10.8002 10.7992 8.65116 10.7992 6.0002C10.7992 3.34923 8.65019 1.2002 5.99922 1.2002C3.34825 1.2002 1.19922 3.34923 1.19922 6.0002C1.19922 8.65116 3.34825 10.8002 5.99922 10.8002ZM5.22348 4.37593C4.98917 4.14162 4.60927 4.14162 4.37495 4.37593C4.14064 4.61025 4.14064 4.99015 4.37495 5.22446L5.15069 6.0002L4.37495 6.77593C4.14064 7.01025 4.14064 7.39014 4.37495 7.62446C4.60927 7.85877 4.98917 7.85877 5.22348 7.62446L5.99922 6.84872L6.77496 7.62446C7.00927 7.85877 7.38917 7.85877 7.62348 7.62446C7.8578 7.39015 7.8578 7.01025 7.62348 6.77593L6.84775 6.0002L7.62348 5.22446C7.8578 4.99015 7.8578 4.61025 7.62348 4.37593C7.38917 4.14162 7.00927 4.14162 6.77496 4.37593L5.99922 5.15167L5.22348 4.37593Z" fill="#F43F5E"/>
+    return <svg className={cx('text-rose-500 dark:text-rose-400', className)} aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fillRule="evenodd" clipRule="evenodd" d="M5.99922 10.8002C8.65019 10.8002 10.7992 8.65116 10.7992 6.0002C10.7992 3.34923 8.65019 1.2002 5.99922 1.2002C3.34825 1.2002 1.19922 3.34923 1.19922 6.0002C1.19922 8.65116 3.34825 10.8002 5.99922 10.8002ZM5.22348 4.37593C4.98917 4.14162 4.60927 4.14162 4.37495 4.37593C4.14064 4.61025 4.14064 4.99015 4.37495 5.22446L5.15069 6.0002L4.37495 6.77593C4.14064 7.01025 4.14064 7.39014 4.37495 7.62446C4.60927 7.85877 4.98917 7.85877 5.22348 7.62446L5.99922 6.84872L6.77496 7.62446C7.00927 7.85877 7.38917 7.85877 7.62348 7.62446C7.8578 7.39015 7.8578 7.01025 7.62348 6.77593L6.84775 6.0002L7.62348 5.22446C7.8578 4.99015 7.8578 4.61025 7.62348 4.37593C7.38917 4.14162 7.00927 4.14162 6.77496 4.37593L5.99922 5.15167L5.22348 4.37593Z" fill="currentColor"/>
     </svg>
 }
 
@@ -67,7 +67,7 @@ export function WarningIcon({ className = 'h-[10px] w-3' }: DiagnosticIconProps)
     return (
         <svg
             viewBox="0 0 12 10"
-            className={cx('text-yellow-500', className)}
+            className={cx('text-yellow-500 dark:text-yellow-400', className)}
             fill="currentColor"
             aria-hidden="true"
         >

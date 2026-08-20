@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 
 @source "./**/*.{ts,tsx}";
+@custom-variant dark (&:where(.dark, .dark *));
 
 /*
  * Tailwind's @property registrations do not apply from a shadow tree. Keep its

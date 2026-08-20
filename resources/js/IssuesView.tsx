@@ -31,9 +31,10 @@ export function CloseButton({ className, onClose }: CloseButtonProps) {
         <button
             type="button"
             className={cx(
-                `flex size-7 items-center justify-center rounded text-gray-500
-                outline-none hover:cursor-pointer hover:text-gray-800
-                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500`,
+                `flex size-7 items-center justify-center rounded text-neutral-500
+                outline-none hover:cursor-pointer hover:text-neutral-800
+                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-500
+                dark:text-neutral-400 dark:hover:text-neutral-100 dark:focus-visible:outline-neutral-400`,
                 className,
             )}
             aria-label="Close issues"
@@ -65,13 +66,14 @@ export function IssuesHeader({ className, copied, copyDisabled, onClose, onCopy 
     return (
         <header className={cx('flex pt-2 pb-1 items-center justify-between px-4', className)}>
             <div className="flex min-w-0 items-center gap-3">
-                <span className="text-sm font-semibold text-gray-800">Issues</span>
+                <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">Issues</span>
                 <button
                     type="button"
                     className={cx(
-                        `flex items-center gap-1.5 rounded text-xs text-gray-500 outline-none
-                        hover:cursor-pointer hover:text-gray-800 disabled:cursor-default disabled:opacity-40
-                        focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500`,
+                        `flex items-center gap-1.5 rounded text-xs text-neutral-500 outline-none
+                        hover:cursor-pointer hover:text-neutral-800 disabled:cursor-default disabled:opacity-40
+                        focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-500
+                        dark:text-neutral-400 dark:hover:text-neutral-100 dark:focus-visible:outline-neutral-400`,
                         copied && 'pointer-events-none',
                     )}
                     disabled={copyDisabled}
@@ -101,10 +103,12 @@ export function IssueTab({ active, children, className, onClick }: IssueTabProps
             aria-controls="scramble-issues-panel"
             className={cx(
                 `relative flex items-center gap-1 p-2 text-xs leading-3.75 font-medium outline-none
-                focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gray-500`,
+                focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-neutral-500
+                dark:focus-visible:outline-neutral-400`,
                 active
-                    ? 'text-gray-900 after:absolute after:inset-x-0 after:-bottom-px after:h-px after:bg-gray-900'
-                    : 'text-gray-600 hover:cursor-pointer hover:text-gray-900',
+                    ? `text-neutral-900 after:absolute after:inset-x-0 after:-bottom-px after:h-px after:bg-neutral-900
+                    dark:text-neutral-100 dark:after:bg-neutral-100`
+                    : 'text-neutral-600 hover:cursor-pointer hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100',
                 className,
             )}
             onClick={onClick}
@@ -134,7 +138,7 @@ export function IssuesTabs({
         <div
             role="tablist"
             aria-label="Filter issues"
-            className={cx('flex items-end border-b border-gray-200 px-4', className)}
+            className={cx('flex items-end border-b border-neutral-200 px-4 dark:border-white/10', className)}
         >
             <IssueTab active={activeSeverity === 'all'} onClick={() => onChange('all')}>
                 All
@@ -175,8 +179,8 @@ export function IssueDatumGrid({ className, data }: ClassNameProps & { data: Iss
         >
             {data.map(({ label, value }, index) => (
                 <div key={`${label}:${index}`} className="contents">
-                    <dt className="w-[62px] text-gray-400">{label}</dt>
-                    <dd className="min-w-0 break-words text-gray-500">{value}</dd>
+                    <dt className="w-[62px] text-neutral-400 dark:text-neutral-500">{label}</dt>
+                    <dd className="min-w-0 break-words text-neutral-500 dark:text-neutral-400">{value}</dd>
                 </div>
             ))}
         </dl>
@@ -190,8 +194,8 @@ export function IssueItem({ className, diagnostic }: IssueItemProps) {
         <li className={cx('flex flex-col gap-1', className)}>
             <div className="leading-[16px]">
                 <Icon className="size-3 shrink-0 inline-block mr-1 -translate-y-px" />
-                <span className="min-w-0 break-words text-[13px]  text-gray-800">
-                    <span className="text-gray-500">{diagnostic.code}</span> {diagnostic.message}
+                <span className="min-w-0 break-words text-[13px] text-neutral-800 dark:text-neutral-100">
+                    <span className="text-neutral-500 dark:text-neutral-400">{diagnostic.code}</span> {diagnostic.message}
                 </span>
             </div>
 
@@ -215,24 +219,24 @@ export function IssueGroup({ className, context, diagnostics, onNavigate }: Issu
         <>
             <div className="flex min-w-0 items-center gap-2 font-mono text-[13px]">
                 {context?.method && (
-                    <span className="shrink-0 text-[#919FB4]">{context.method}</span>
+                    <span className="shrink-0 text-neutral-400">{context.method}</span>
                 )}
-                <span className="truncate font-medium text-gray-800">
+                <span className="truncate font-medium text-neutral-800 dark:text-neutral-100">
                     {context?.label ?? 'General'}
                 </span>
             </div>
 
-            <span className="shrink-0 text-xs text-gray-500">{diagnostics.length}</span>
+            <span className="shrink-0 text-xs text-neutral-500 dark:text-neutral-400">{diagnostics.length}</span>
         </>
     );
 
     return (
-        <section className={cx('flex flex-col gap-3 border-b border-gray-200 px-4 py-3.5 last:border-b-0', className)}>
+        <section className={cx('flex flex-col gap-3 border-b border-neutral-200 px-4 py-3.5 last:border-b-0 dark:border-white/10', className)}>
             {onNavigate && navigationId ? (
                 <button
                     type="button"
                     onClick={() => onNavigate(navigationKind, navigationId)}
-                    className="-m-1 flex cursor-pointer items-center justify-between gap-3 rounded p-1 text-left outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-gray-500"
+                    className="-m-1 flex cursor-pointer items-center justify-between gap-3 rounded p-1 text-left outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-neutral-500 dark:focus-visible:outline-neutral-400"
                 >
                     {header}
                 </button>
@@ -253,7 +257,7 @@ export function IssueGroup({ className, context, diagnostics, onNavigate }: Issu
 
 export function EmptyIssues({ className }: ClassNameProps) {
     return (
-        <div className={cx('px-4 py-6 text-center text-[13px] text-gray-500', className)}>
+        <div className={cx('px-4 py-6 text-center text-[13px] text-neutral-500 dark:text-neutral-400', className)}>
             No issues found
         </div>
     );
@@ -318,7 +322,8 @@ export function IssuesView({ className, diagnostics, onClose, onNavigate }: Issu
             aria-label="Scramble issues"
             className={cx(
                 `w-[360px] max-w-[calc(100vw-24px)] overflow-hidden rounded-lg bg-white
-                shadow-[0_1px_3px_rgba(0,0,0,0.08),0_2px_10px_rgba(0,0,0,0.08),0_0_2px_rgba(0,0,0,0.05)]`,
+                shadow-[0_1px_3px_rgba(0,0,0,0.08),0_2px_10px_rgba(0,0,0,0.08),0_0_2px_rgba(0,0,0,0.05)]
+                dark:bg-neutral-900 dark:shadow-none dark:inset-ring dark:inset-ring-white/10`,
                 className,
             )}
         >
