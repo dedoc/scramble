@@ -495,12 +495,15 @@ class TypeTransformer
                 );
         }
 
-        if ($docNode = $type->getAttribute('docNode')) {
+        $returnCommentsShouldBeIgnored = config('scramble.ignore_response_return_comments', false);
+
+        if (!$returnCommentsShouldBeIgnored && ($docNode = $type->getAttribute('docNode'))) {
             /** @var PhpDocNode $docNode */
             $description = (string) Str::of($docNode->getAttribute('summary') ?: '') // @phpstan-ignore argument.type
                 ->append("\n\n".($docNode->getAttribute('description') ?: '')) // @phpstan-ignore binaryOp.invalid
                 ->append("\n\n".$response->description)
                 ->trim();
+
             $response->description($description);
 
             $code = (int) (array_values($docNode->getTagsByName('@status'))[0]->value->value ?? $response->code ?? 200);
