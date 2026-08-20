@@ -3,6 +3,10 @@
 @source "./**/*.{ts,tsx}";
 @custom-variant dark (&:where(.dark, .dark *));
 
+@utility dev-tools-shadow {
+    box-shadow: 0 1px 3px rgb(0 0 0 / 8%), 0 2px 10px rgb(0 0 0 / 8%), 0 0 2px rgb(0 0 0 / 5%);
+}
+
 /*
  * Tailwind's @property registrations do not apply from a shadow tree. Keep its
  * non-inheriting utility state local by resetting the generated properties on

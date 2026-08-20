@@ -356,6 +356,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                         'spec' => $spec,
                         'config' => $config,
                         'diagnostics' => $generator->diagnostics(),
+                        'proNudge' => $generator->proNudge(),
                     ]);
                 })->middleware($generatorConfig->get('middleware', [RestrictedDocsAccess::class]));
             }

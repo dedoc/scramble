@@ -157,6 +157,7 @@ class Scramble
                 'spec' => $spec,
                 'config' => $config,
                 'diagnostics' => $generator->diagnostics(),
+                'proNudge' => $generator->proNudge(),
             ]);
         })
             ->middleware($config->get('middleware', [RestrictedDocsAccess::class]));

@@ -1,8 +1,13 @@
 @if(\Dedoc\Scramble\Support\DevTools::enabled())
-    <script type="application/json" id="scramble-dev-tools-data">@json([
-        'diagnostics' => $diagnostics->toArray(),
-        'renderer' => $renderer,
-    ])</script>
+    @php
+        $devToolsData = [
+            'diagnostics' => $diagnostics->toArray(),
+            'renderer' => $renderer,
+            'proNudges' => (object) (isset($proNudge) ? $proNudge->summaries() : []),
+        ];
+    @endphp
+
+    <script type="application/json" id="scramble-dev-tools-data">@json($devToolsData)</script>
 
     @if($viteServerUrl = \Dedoc\Scramble\Support\DevTools::viteServerUrl())
         <script type="module" src="{{ $viteServerUrl }}/@@vite/client"></script>

@@ -4,6 +4,9 @@ use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
 use Dedoc\Scramble\Support\DevTools;
+use Dedoc\Scramble\Support\ProNudge\ProNudgeCollector;
+use Dedoc\Scramble\Support\ProNudge\ProNudgeSignal;
+use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Compilers\BladeCompiler;
 
@@ -32,13 +35,29 @@ it('renders the built entry without leaking its stylesheet into the document', f
     $diagnostics = new DiagnosticsCollector;
     $diagnostics->reportQuietly(new GenericDiagnostic(DiagnosticSeverity::Error, 'Broken documentation'));
     $renderer = 'elements';
+    $proNudge = new ProNudgeCollector;
+    $proNudge->record(ProNudgeSignal::LaravelDataReturn, new RouteInfo(
+        Route::get('api/users', fn () => []),
+        'GET',
+    ));
+    $proNudge->record(ProNudgeSignal::LaravelDataRequest, new RouteInfo(
+        Route::post('api/users', fn () => []),
+        'POST',
+    ));
+    $proNudge->record(ProNudgeSignal::QueryBuilder, new RouteInfo(
+        Route::get('api/posts', fn () => []),
+        'GET',
+    ));
 
-    $html = view('scramble::dev-tools', compact('diagnostics', 'renderer'))->render();
+    $html = view('scramble::dev-tools', compact('diagnostics', 'renderer', 'proNudge'))->render();
 
     expect($html)
         ->toContain('/_scramble/dev-tools/devtools.js')
         ->toContain('id="scramble-dev-tools-data"')
         ->toContain('"severity":"error"')
+        ->toContain('"query_builder":{"count":1,"description":"1 endpoint uses Spatie Query Builder"}')
+        ->toContain('"laravel_data_return":{"count":1,"description":"1 endpoint returns Laravel Data objects"}')
+        ->toContain('"laravel_data_request":{"count":1,"description":"1 endpoint accepts Laravel Data objects"}')
         ->toContain('"renderer":"elements"')
         ->not->toContain('/_scramble/dev-tools/devtools.css')
         ->not->toContain('/@vite/client');
@@ -48,6 +67,18 @@ it('does not render assets when dev tools are disabled', function () {
     config()->set('scramble.dev_tools', false);
 
     expect(view('scramble::dev-tools')->render())->toBeEmpty();
+});
+
+it('serializes missing pro nudges as an empty object', function () {
+    config()->set('scramble.dev_tools', true);
+    Route::get('_scramble/dev-tools/{file}', fn () => '')->name('scramble.dev-tools.asset');
+
+    $html = view('scramble::dev-tools', [
+        'diagnostics' => new DiagnosticsCollector,
+        'renderer' => 'elements',
+    ])->render();
+
+    expect($html)->toContain('"proNudges":{}');
 });
 
 it('compiles the vite client URL as a literal path', function () {

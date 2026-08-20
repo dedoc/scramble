@@ -2,10 +2,59 @@ import type {
     Diagnostic,
     DiagnosticContext,
     DiagnosticGroup,
+    DiagnosticSeverity,
     IssueDatum,
+    ProNudges,
 } from './types';
 
 const hiddenDatums: string[] = ['Expression'];
+
+export function cx(...classes: Array<string | false | null | undefined>) {
+    return classes.filter(Boolean).join(' ');
+}
+
+export function issueLabel(count: number, singular: string) {
+    return `${count} ${count === 1 ? singular : `${singular}s`}`;
+}
+
+export function formatConjunction(items: string[]) {
+    if (items.length <= 1) {
+        return items[0] ?? '';
+    }
+
+    return `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`;
+}
+
+export function diagnosticCounts(diagnostics: Diagnostic[]): Record<DiagnosticSeverity, number> {
+    const counts: Record<DiagnosticSeverity, number> = { error: 0, warning: 0 };
+
+    diagnostics.forEach(({ severity }) => {
+        counts[severity] += 1;
+    });
+
+    return counts;
+}
+
+export function proNudgePitch(proNudges: ProNudges) {
+    const hasQueryBuilderNudge = Boolean(proNudges.query_builder);
+    const hasLaravelDataNudge = Boolean(
+        proNudges.laravel_data_return || proNudges.laravel_data_request,
+    );
+
+    if (hasQueryBuilderNudge && hasLaravelDataNudge) {
+        return 'Scramble PRO documents Laravel Data schemas and Query Builder filters, sorts, includes, and sparse fieldsets automatically.';
+    }
+
+    if (hasQueryBuilderNudge) {
+        return 'Scramble PRO documents Query Builder filters, sorts, includes, and sparse fieldsets automatically.';
+    }
+
+    if (hasLaravelDataNudge) {
+        return 'Scramble PRO documents Laravel Data request and response schemas automatically.';
+    }
+
+    return 'Scramble PRO documents these integrations automatically.';
+}
 
 export async function copyText(text: string) {
     if (navigator.clipboard?.writeText) {

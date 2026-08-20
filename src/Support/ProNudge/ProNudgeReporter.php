@@ -24,7 +24,7 @@ class ProNudgeReporter
         $lines = [];
 
         foreach ($this->collector->summaries() as $summary) {
-            $lines[] = '  • '.$summary['signal']->description($summary['count']);
+            $lines[] = '  • '.$summary['description'];
         }
 
         $command->getOutput()->block(implode("\n", [

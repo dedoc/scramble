@@ -33,9 +33,7 @@ class ProNudgeCollector
         return false;
     }
 
-    /**
-     * @return list<array{signal: ProNudgeSignal, count: int}>
-     */
+    /** @return array<string, array{count: int, description: string}> */
     public function summaries(): array
     {
         $summaries = [];
@@ -47,9 +45,9 @@ class ProNudgeCollector
                 continue;
             }
 
-            $summaries[] = [
-                'signal' => $signal,
+            $summaries[$signal->value] = [
                 'count' => $count,
+                'description' => $signal->description($count),
             ];
         }
 

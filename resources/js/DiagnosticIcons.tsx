@@ -1,6 +1,4 @@
-function cx(...classes: Array<string | undefined>) {
-    return classes.filter(Boolean).join(' ');
-}
+import { cx } from './utils';
 
 interface DiagnosticIconProps {
     className?: string;
@@ -76,6 +74,21 @@ export function WarningIcon({ className = 'h-[10px] w-3' }: DiagnosticIconProps)
                 d="M5.128.859a1 1 0 0 1 1.744 0l4.185 7.44A1 1 0 0 1 10.185 9.8h-8.37a1 1 0 0 1-.872-1.5L5.128.858ZM6.5 7.3a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0ZM6 2.5a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 1 0V3a.5.5 0 0 0-.5-.5Z"
                 clipRule="evenodd"
             />
+        </svg>
+    );
+}
+
+export function SparklesIcon({ className = 'size-4 shrink-0' }: DiagnosticIconProps) {
+    return (
+        <svg
+            viewBox="0 0 16 16"
+            className={className}
+            fill="currentColor"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <path d="M6.4 1.2a.6.6 0 0 1 1.2 0c0 2.04 1.56 3.6 3.6 3.6a.6.6 0 0 1 0 1.2C9.16 6 7.6 7.56 7.6 9.6a.6.6 0 0 1-1.2 0C6.4 7.56 4.84 6 2.8 6a.6.6 0 0 1 0-1.2c2.04 0 3.6-1.56 3.6-3.6Z" />
+            <path d="M12.1 9.4a.5.5 0 0 1 1 0c0 1.08.82 1.9 1.9 1.9a.5.5 0 0 1 0 1c-1.08 0-1.9.82-1.9 1.9a.5.5 0 0 1-1 0c0-1.08-.82-1.9-1.9-1.9a.5.5 0 0 1 0-1c1.08 0 1.9-.82 1.9-1.9Z" />
         </svg>
     );
 }

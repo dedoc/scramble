@@ -3,15 +3,19 @@
 namespace Dedoc\Scramble;
 
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+use Dedoc\Scramble\Support\ProNudge\ProNudgeCollector;
 
 class CacheableGenerator
 {
     private DiagnosticsCollector $diagnostics;
 
+    private ProNudgeCollector $proNudge;
+
     public function __construct(
         private Generator $generator,
     ) {
         $this->diagnostics = new DiagnosticsCollector;
+        $this->proNudge = new ProNudgeCollector;
     }
 
     /**
@@ -20,6 +24,7 @@ class CacheableGenerator
     public function __invoke(?GeneratorConfig $config = null): array
     {
         $this->diagnostics = new DiagnosticsCollector;
+        $this->proNudge = new ProNudgeCollector;
 
         $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
@@ -45,6 +50,11 @@ class CacheableGenerator
         return $this->diagnostics;
     }
 
+    public function proNudge(): ProNudgeCollector
+    {
+        return $this->proNudge;
+    }
+
     /**
      * @return array<mixed, mixed>
      */
@@ -52,6 +62,7 @@ class CacheableGenerator
     {
         $spec = ($this->generator)($config);
         $this->diagnostics = $this->generator->diagnostics;
+        $this->proNudge = $this->generator->proNudge;
 
         return $spec;
     }

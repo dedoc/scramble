@@ -1,22 +1,24 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ErrorIcon, MarkdownIcon, TickIcon, WarningIcon } from './DiagnosticIcons';
+import { ProNudgeCard } from './ProNudgeCard';
 import type {
     Diagnostic,
     DiagnosticContext,
     DiagnosticSeverity,
     IndexedDiagnostic,
     IssueDatum,
+    ProNudges,
 } from './types';
-import { copyText, diagnosticsAsMarkdown, groupDiagnostics, issueData } from './utils';
+import {
+    copyText,
+    cx,
+    diagnosticCounts,
+    diagnosticsAsMarkdown,
+    groupDiagnostics,
+    issueData,
+    issueLabel,
+} from './utils';
 import type { RendererNavigationKind } from './renderers';
-
-function cx(...classes: Array<string | false | null | undefined>) {
-    return classes.filter(Boolean).join(' ');
-}
-
-function issueLabel(count: number, singular: string) {
-    return `${count} ${count === 1 ? singular : `${singular}s`}`;
-}
 
 interface ClassNameProps {
     className?: string;
@@ -265,16 +267,22 @@ export function EmptyIssues({ className }: ClassNameProps) {
 
 interface IssuesViewProps extends ClassNameProps {
     diagnostics: Diagnostic[];
+    proNudges: ProNudges;
     onClose: () => void;
     onNavigate?: (kind: RendererNavigationKind, id: string) => void;
 }
 
-export function IssuesView({ className, diagnostics, onClose, onNavigate }: IssuesViewProps) {
+export function IssuesView({
+    className,
+    diagnostics,
+    proNudges,
+    onClose,
+    onNavigate,
+}: IssuesViewProps) {
     const [activeSeverity, setActiveSeverity] = useState<IssueFilter>('all');
     const [copied, setCopied] = useState(false);
     const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const errorCount = diagnostics.filter(({ severity }) => severity === 'error').length;
-    const warningCount = diagnostics.filter(({ severity }) => severity === 'warning').length;
+    const { error: errorCount, warning: warningCount } = diagnosticCounts(diagnostics);
     const visibleDiagnostics = useMemo(
         () => activeSeverity === 'all'
             ? diagnostics
@@ -318,44 +326,50 @@ export function IssuesView({ className, diagnostics, onClose, onNavigate }: Issu
     }, [onClose]);
 
     return (
-        <section
-            aria-label="Scramble issues"
+        <div
             className={cx(
-                `w-[360px] max-w-[calc(100vw-24px)] overflow-hidden rounded-lg bg-white
-                shadow-[0_1px_3px_rgba(0,0,0,0.08),0_2px_10px_rgba(0,0,0,0.08),0_0_2px_rgba(0,0,0,0.05)]
-                dark:bg-neutral-900 dark:shadow-none dark:inset-ring dark:inset-ring-white/10`,
+                'flex max-h-[calc(100dvh-24px)] w-[360px] max-w-[calc(100vw-24px)] flex-col gap-2',
                 className,
             )}
         >
-            <IssuesHeader
-                copied={copied}
-                copyDisabled={diagnostics.length === 0}
-                onClose={onClose}
-                onCopy={copyAsMarkdown}
-            />
-            <IssuesTabs
-                activeSeverity={activeSeverity}
-                errorCount={errorCount}
-                warningCount={warningCount}
-                onChange={setActiveSeverity}
-            />
-
-            <div
-                id="scramble-issues-panel"
-                role="tabpanel"
-                className="max-h-[min(560px,calc(100vh-89px))] overflow-y-auto"
+            <section
+                aria-label="Scramble issues"
+                className="flex min-h-0 flex-col overflow-hidden rounded-lg bg-white
+                    dev-tools-shadow
+                    dark:bg-neutral-900 dark:shadow-none dark:inset-ring dark:inset-ring-white/10"
             >
-                {groups.length > 0
-                    ? groups.map(({ context, diagnostics: groupDiagnostics }) => (
-                        <IssueGroup
-                            key={context?.key ?? 'general'}
-                            context={context}
-                            diagnostics={groupDiagnostics}
-                            onNavigate={onNavigate}
-                        />
-                    ))
-                    : <EmptyIssues />}
-            </div>
-        </section>
+                <IssuesHeader
+                    copied={copied}
+                    copyDisabled={diagnostics.length === 0}
+                    onClose={onClose}
+                    onCopy={copyAsMarkdown}
+                />
+                <IssuesTabs
+                    activeSeverity={activeSeverity}
+                    errorCount={errorCount}
+                    warningCount={warningCount}
+                    onChange={setActiveSeverity}
+                />
+
+                <div
+                    id="scramble-issues-panel"
+                    role="tabpanel"
+                    className="min-h-0 overscroll-contain overflow-y-auto"
+                >
+                    {groups.length > 0
+                        ? groups.map(({ context, diagnostics: groupDiagnostics }) => (
+                            <IssueGroup
+                                key={context?.key ?? 'general'}
+                                context={context}
+                                diagnostics={groupDiagnostics}
+                                onNavigate={onNavigate}
+                            />
+                        ))
+                        : <EmptyIssues />}
+                </div>
+            </section>
+
+            <ProNudgeCard proNudges={proNudges} />
+        </div>
     );
 }

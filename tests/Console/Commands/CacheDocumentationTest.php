@@ -37,7 +37,8 @@ it('returns cached documentation when cache is configured', function () {
     );
 
     expect($cacheableGenerator($config))->toBe($expected)
-        ->and($cacheableGenerator->diagnostics()->all())->toBeEmpty();
+        ->and($cacheableGenerator->diagnostics()->all())->toBeEmpty()
+        ->and($cacheableGenerator->proNudge()->hasAny())->toBeFalse();
 });
 
 it('generates documentation on cache miss without storing', function () {

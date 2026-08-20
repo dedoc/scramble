@@ -1,19 +1,21 @@
 import { useCallback, useRef, useState } from 'react';
-import { ErrorIcon, WarningIcon } from './DiagnosticIcons';
+import { ErrorIcon, SparklesIcon, WarningIcon } from './DiagnosticIcons';
 import { IssuesView } from './IssuesView';
 import type { RendererConfig } from './renderers';
-import type { Diagnostic } from './types';
+import type { Diagnostic, ProNudges } from './types';
+import { diagnosticCounts } from './utils';
 
 interface DevToolsProps {
     diagnostics: Diagnostic[];
+    proNudges: ProNudges;
     renderer: RendererConfig;
 }
 
-export function DevToolsApp({ diagnostics, renderer }: DevToolsProps) {
+export function DevToolsApp({ diagnostics, proNudges, renderer }: DevToolsProps) {
     const [issuesOpen, setIssuesOpen] = useState(false);
     const triggerRef = useRef<HTMLButtonElement>(null);
-    const errorCount = diagnostics.filter(({ severity }) => severity === 'error').length;
-    const warningCount = diagnostics.filter(({ severity }) => severity === 'warning').length;
+    const { error: errorCount, warning: warningCount } = diagnosticCounts(diagnostics);
+    const hasProNudges = Object.keys(proNudges).length > 0;
     const closeIssues = useCallback(() => {
         setIssuesOpen(false);
         requestAnimationFrame(() => triggerRef.current?.focus());
@@ -25,7 +27,12 @@ export function DevToolsApp({ diagnostics, renderer }: DevToolsProps) {
             className="fixed top-3 right-3 z-10 antialiased"
         >
             {issuesOpen ? (
-                <IssuesView diagnostics={diagnostics} onClose={closeIssues} onNavigate={renderer.navigateTo} />
+                <IssuesView
+                    diagnostics={diagnostics}
+                    proNudges={proNudges}
+                    onClose={closeIssues}
+                    onNavigate={renderer.navigateTo}
+                />
             ) : (
                 <button
                     ref={triggerRef}
@@ -35,15 +42,21 @@ export function DevToolsApp({ diagnostics, renderer }: DevToolsProps) {
                     onClick={() => setIssuesOpen(true)}
                     className="
                         inline-flex h-8 cursor-pointer items-center gap-4 rounded-lg bg-white px-3
-                        shadow-[0_1px_3px_rgba(0,0,0,0.08),0_2px_10px_rgba(0,0,0,0.08),0_0_2px_rgba(0,0,0,0.05)]
+                        dev-tools-shadow
                         outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-500
                         dark:bg-neutral-900 dark:shadow-none dark:inset-ring dark:inset-ring-white/10
                         dark:focus-visible:outline-neutral-400
                     "
                 >
-                    <span className="text-[13px] font-normal leading-none text-neutral-500 dark:text-neutral-400">
-                        Scramble
-                    </span>
+                    <div className="flex items-center gap-1">
+                        <span className="text-[13px] font-normal leading-none text-neutral-500 dark:text-neutral-400">
+                            Scramble
+                        </span>
+
+                        {hasProNudges && (
+                            <SparklesIcon className="size-4 shrink-0 text-neutral-300 dark:text-neutral-500" />
+                        )}
+                    </div>
 
                     {errorCount > 0 && (
                         <div className="flex items-center gap-1">

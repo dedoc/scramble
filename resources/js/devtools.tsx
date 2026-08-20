@@ -9,7 +9,7 @@ import type { DevToolsData } from './types';
 
 const data: DevToolsData = JSON.parse(
     document.getElementById('scramble-dev-tools-data')?.textContent
-        ?? '{"diagnostics":[],"renderer":"elements"}',
+        ?? '{"diagnostics":[],"proNudges":{},"renderer":"elements"}',
 );
 const renderer: RendererConfig = Object.hasOwn(renderers, data.renderer)
     ? renderers[data.renderer as keyof typeof renderers]
@@ -45,7 +45,11 @@ const root = createRoot(container);
 
 root.render(
     <PortalTargetProvider target={portalTarget}>
-        <DevToolsApp diagnostics={data.diagnostics} renderer={renderer} />
+        <DevToolsApp
+            diagnostics={data.diagnostics}
+            proNudges={data.proNudges ?? {}}
+            renderer={renderer}
+        />
     </PortalTargetProvider>,
 );
 
