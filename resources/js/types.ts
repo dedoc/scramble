@@ -34,10 +34,13 @@ export interface IssueDatum {
     value: string;
 }
 
-export type ProNudges = Record<string, string>;
+export interface ProNudge {
+    title: string;
+    description: string;
+}
 
 export interface DevToolsData {
     diagnostics: Diagnostic[];
-    proNudges: ProNudges;
+    proNudge: ProNudge | null;
     renderer: Renderer;
 }

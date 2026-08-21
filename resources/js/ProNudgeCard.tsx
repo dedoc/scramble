@@ -1,20 +1,16 @@
 import { SparklesIcon } from './DiagnosticIcons';
-import type { ProNudges } from './types';
-import { cx, formatConjunction, proNudgePitch } from './utils';
+import type { ProNudge } from './types';
+import { cx } from './utils';
 
 interface ProNudgeCardProps {
     className?: string;
-    proNudges: ProNudges;
+    proNudge: ProNudge | null;
 }
 
-export function ProNudgeCard({ className, proNudges }: ProNudgeCardProps) {
-    const nudges = Object.values(proNudges);
-
-    if (nudges.length === 0) {
+export function ProNudgeCard({ className, proNudge }: ProNudgeCardProps) {
+    if (!proNudge) {
         return null;
     }
-
-    const summary = formatConjunction(nudges);
 
     return (
         <div
@@ -27,11 +23,11 @@ export function ProNudgeCard({ className, proNudges }: ProNudgeCardProps) {
         >
             <p className="text-[13px] leading-[18px] font-medium text-gray-800 dark:text-neutral-100">
                 <SparklesIcon className="mr-1 inline-block size-4 -translate-y-px text-orange-400" />
-                {summary}
+                {proNudge.title}
             </p>
 
             <p className="mt-2 text-[13px] leading-[18px] text-gray-600 dark:text-neutral-300">
-                {proNudgePitch(proNudges)}
+                {proNudge.description}
             </p>
 
             <a

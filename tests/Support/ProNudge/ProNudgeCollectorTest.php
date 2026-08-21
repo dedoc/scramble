@@ -20,17 +20,13 @@ it('records unique endpoints per signal', function () {
     $collector->record(ProNudgeSignal::LaravelDataReturn, $otherRouteInfo);
     $collector->record(ProNudgeSignal::QueryBuilder, $routeInfo);
 
-    expect($collector->count(ProNudgeSignal::LaravelDataReturn))->toBe(2)
-        ->and($collector->count(ProNudgeSignal::QueryBuilder))->toBe(1)
-        ->and($collector->count(ProNudgeSignal::LaravelDataRequest))->toBe(0)
-        ->and($collector->summaries())->toBe([
-            'query_builder' => '1 endpoint uses Spatie Query Builder',
-            'laravel_data_return' => '2 endpoints return Laravel Data objects',
-        ])
-        ->and($collector->hasAny())->toBeTrue();
+    expect($collector->message())->toBe([
+        'title' => '1 endpoint uses Spatie Query Builder, and 2 endpoints return Laravel Data objects',
+        'description' => 'Scramble PRO will document these endpoints accurately.',
+    ]);
 });
 
-it('reports both packages with a combined pitch', function () {
+it('reports one title and description', function () {
     $collector = new ProNudgeCollector;
     $routeInfo = new RouteInfo(new Route('GET', 'users', ['uses' => 'UsersController@index']), 'GET');
 
@@ -45,17 +41,12 @@ it('reports both packages with a combined pitch', function () {
     $rendered = $output->fetch();
 
     expect($rendered)
-        ->toContain('Scramble detected:')
-        ->toContain('  • 1 endpoint uses Spatie Query Builder')
-        ->toContain('  • 1 endpoint returns Laravel Data objects')
-        ->toContain('  • 1 endpoint accepts Laravel Data objects')
-        ->toContain('Scramble PRO understands these packages and automatically documents:')
-        ->toContain('  • Query Builder filters, sorts, includes, and sparse fieldsets')
-        ->toContain('  • Laravel Data request and response schemas')
-        ->toContain('Learn more: '.ProNudgeReporter::PRO_URL);
+        ->toBe("1 endpoint uses Spatie Query Builder, 1 endpoint returns Laravel Data objects, and 1 endpoint accepts Laravel Data objects\nScramble PRO will document these endpoints accurately.\nLearn more: ".ProNudgeReporter::PRO_URL."\n")
+        ->not->toContain('Scramble detected:')
+        ->toContain('Learn more:');
 });
 
-it('reports a query builder only pitch', function () {
+it('reports a query builder only message', function () {
     $collector = new ProNudgeCollector;
     $routeInfo = new RouteInfo(new Route('GET', 'users', ['uses' => 'UsersController@index']), 'GET');
 
@@ -70,7 +61,7 @@ it('reports a query builder only pitch', function () {
         ->not->toContain('Laravel Data');
 });
 
-it('reports a laravel data only pitch', function () {
+it('reports a laravel data only message', function () {
     $collector = new ProNudgeCollector;
     $routeInfo = new RouteInfo(new Route('GET', 'users', ['uses' => 'UsersController@index']), 'GET');
 
@@ -82,7 +73,7 @@ it('reports a laravel data only pitch', function () {
 
     expect($output->fetch())
         ->toContain('Laravel Data')
-        ->toContain('Data objects.')
+        ->toBe("1 endpoint returns Laravel Data objects\nScramble PRO will document these endpoints accurately.\nLearn more: ".ProNudgeReporter::PRO_URL."\n")
         ->not->toContain('Query Builder');
 });
 
@@ -92,6 +83,7 @@ it('does not report when there are no signals', function () {
     (new ProNudgeReporter(new ProNudgeCollector))->report($command);
 
     expect($output->fetch())->toBe('');
+    expect((new ProNudgeCollector)->message())->toBeNull();
 });
 
 function makeProNudgeTestCommand(OutputInterface $output): Command

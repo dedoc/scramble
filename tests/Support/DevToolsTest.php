@@ -5,6 +5,7 @@ use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
 use Dedoc\Scramble\Diagnostics\RouteContext;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\DevTools;
 use Illuminate\Support\Facades\Route;
 
@@ -30,16 +31,16 @@ it('does not render assets when dev tools are disabled', function () {
     expect(view('scramble::dev-tools')->render())->toBeEmpty();
 });
 
-it('serializes missing pro nudges as an empty object', function () {
+it('serializes a missing pro nudge as null', function () {
     config()->set('scramble.dev_tools', true);
     Route::get('_scramble/dev-tools/devtools.js', fn () => '')->name('scramble.dev-tools.asset');
 
     $html = view('scramble::dev-tools', [
-        'generator' => app(CacheableGenerator::class),
+        'result' => app(CacheableGenerator::class)->generate(Scramble::getGeneratorConfig(Scramble::DEFAULT_API)),
         'renderer' => 'elements',
     ])->render();
 
-    expect($html)->toContain('"proNudges":{}');
+    expect($html)->toContain('"proNudge":null');
 });
 
 it('serializes diagnostics for the dev tools payload', function () {

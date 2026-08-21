@@ -6,7 +6,7 @@
         $devToolsData = [
             'diagnostics' => $result->diagnostics->toArray(),
             'renderer' => $renderer,
-            'proNudges' => (object) $result->proNudge->summaries(),
+            'proNudge' => $result->proNudge->message(),
         ];
     @endphp
 

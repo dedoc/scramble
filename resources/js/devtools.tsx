@@ -8,7 +8,7 @@ import type { DevToolsData } from './types';
 
 const data: DevToolsData = JSON.parse(
     document.getElementById('scramble-dev-tools-data')?.textContent
-        ?? '{"diagnostics":[],"proNudges":{},"renderer":"elements"}',
+        ?? '{"diagnostics":[],"proNudge":null,"renderer":"elements"}',
 );
 const renderer: RendererConfig = Object.hasOwn(renderers, data.renderer)
     ? renderers[data.renderer as keyof typeof renderers]
@@ -39,7 +39,7 @@ const root = createRoot(container);
 root.render(
     <DevToolsApp
         diagnostics={data.diagnostics}
-        proNudges={data.proNudges ?? {}}
+        proNudge={data.proNudge ?? null}
         renderer={renderer}
     />,
 );

@@ -2,20 +2,19 @@ import { useCallback, useRef, useState } from 'react';
 import { ErrorIcon, SparklesIcon, WarningIcon } from './DiagnosticIcons';
 import { IssuesView } from './IssuesView';
 import type { RendererConfig } from './renderers';
-import type { Diagnostic, ProNudges } from './types';
+import type { Diagnostic, ProNudge } from './types';
 import { diagnosticCounts } from './utils';
 
 interface DevToolsProps {
     diagnostics: Diagnostic[];
-    proNudges: ProNudges;
+    proNudge: ProNudge | null;
     renderer: RendererConfig;
 }
 
-export function DevToolsApp({ diagnostics, proNudges, renderer }: DevToolsProps) {
+export function DevToolsApp({ diagnostics, proNudge, renderer }: DevToolsProps) {
     const [issuesOpen, setIssuesOpen] = useState(false);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const { error: errorCount, warning: warningCount } = diagnosticCounts(diagnostics);
-    const hasProNudges = Object.keys(proNudges).length > 0;
     const closeIssues = useCallback(() => {
         setIssuesOpen(false);
         requestAnimationFrame(() => triggerRef.current?.focus());
@@ -29,7 +28,7 @@ export function DevToolsApp({ diagnostics, proNudges, renderer }: DevToolsProps)
             {issuesOpen ? (
                 <IssuesView
                     diagnostics={diagnostics}
-                    proNudges={proNudges}
+                    proNudge={proNudge}
                     onClose={closeIssues}
                     onNavigate={renderer.navigateTo}
                 />
@@ -53,7 +52,7 @@ export function DevToolsApp({ diagnostics, proNudges, renderer }: DevToolsProps)
                             Scramble
                         </span>
 
-                        {hasProNudges && (
+                        {proNudge && (
                             <SparklesIcon className="size-4 shrink-0 text-neutral-300 dark:text-neutral-500" />
                         )}
                     </div>

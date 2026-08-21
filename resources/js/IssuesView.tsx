@@ -7,7 +7,7 @@ import type {
     DiagnosticSeverity,
     IndexedDiagnostic,
     IssueDatum,
-    ProNudges,
+    ProNudge,
 } from './types';
 import {
     copyText,
@@ -267,7 +267,7 @@ function EmptyIssues({ className }: ClassNameProps) {
 
 interface IssuesViewProps extends ClassNameProps {
     diagnostics: Diagnostic[];
-    proNudges: ProNudges;
+    proNudge: ProNudge | null;
     onClose: () => void;
     onNavigate?: (kind: RendererNavigationKind, id: string) => void;
 }
@@ -275,7 +275,7 @@ interface IssuesViewProps extends ClassNameProps {
 export function IssuesView({
     className,
     diagnostics,
-    proNudges,
+    proNudge,
     onClose,
     onNavigate,
 }: IssuesViewProps) {
@@ -369,7 +369,7 @@ export function IssuesView({
                 </div>
             </section>
 
-            <ProNudgeCard proNudges={proNudges} />
+            <ProNudgeCard proNudge={proNudge} />
         </div>
     );
 }
