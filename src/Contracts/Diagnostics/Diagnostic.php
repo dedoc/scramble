@@ -23,6 +23,9 @@ interface Diagnostic
 
     public function tip(): ?string;
 
+    /** @return array<string, mixed> */
+    public function toArray(): array;
+
     /**
      * @return list<array{0: string, 1: string}>
      */

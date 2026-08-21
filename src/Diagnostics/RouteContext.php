@@ -37,4 +37,35 @@ class RouteContext
     {
         return $this->action ? explode('@', $this->action, 2)[0] : null;
     }
+
+    /** @return array<string, mixed> */
+    public function toArray(): array
+    {
+        $method = $this->primaryMethod();
+        $detail = $this->routeAction();
+
+        return [
+            'key' => 'route:'.$method.':'.$this->uri.':'.$detail,
+            'type' => 'route',
+            'label' => '/'.ltrim($this->uri, '/'),
+            'method' => $method,
+            'detail' => $detail,
+        ];
+    }
+
+    private function routeAction(): ?string
+    {
+        if (! $this->action) {
+            return null;
+        }
+
+        if (count($parts = explode('@', $this->action)) !== 2 || ! method_exists(...$parts)) {
+            return null;
+        }
+
+        [$class, $method] = $parts;
+        $class = str_replace(['App\\Http\\Controllers\\', 'App\\Http\\'], '', $class);
+
+        return "{$class}@{$method}";
+    }
 }

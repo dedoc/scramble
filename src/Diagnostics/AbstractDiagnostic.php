@@ -52,6 +52,24 @@ abstract class AbstractDiagnostic implements Diagnostic
         return $this->tip;
     }
 
+    /** @return array<string, mixed> */
+    public function toArray(): array
+    {
+        return [
+            'key' => $this->key(),
+            'code' => $this->code(),
+            'severity' => $this->severity->value,
+            'message' => str_replace(
+                'Dedoc\\Scramble\\Support\\Generator\\Types\\',
+                '',
+                $this->message(),
+            ),
+            'tip' => $this->tip(),
+            'details' => $this->details(),
+            'context' => $this->context?->toArray(),
+        ];
+    }
+
     public function details(): array
     {
         $details = [];

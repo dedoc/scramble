@@ -81,74 +81,8 @@ class DiagnosticsCollector
     /** @return list<array<string, mixed>> */
     public function toArray(): array
     {
-        $serialized = [];
-
-        foreach ($this->diagnostics as $diagnostic) {
-            $serialized[] = [
-                'key' => $diagnostic->key(),
-                'code' => $diagnostic->code(),
-                'severity' => match ($diagnostic->severity()) {
-                    DiagnosticSeverity::Error => 'error',
-                    DiagnosticSeverity::Warning => 'warning',
-                },
-                'message' => str_replace(
-                    'Dedoc\Scramble\Support\Generator\Types\\',
-                    '',
-                    $diagnostic->message(),
-                ),
-                'tip' => $diagnostic->tip(),
-                'details' => $diagnostic->details(),
-                'context' => $this->serializeContext($diagnostic),
-            ];
-        }
-
-        return $serialized;
-    }
-
-    /** @return array<string, mixed>|null */
-    private function serializeContext(Diagnostic $diagnostic): ?array
-    {
-        $context = $diagnostic->context();
-
-        if ($context instanceof RouteContext) {
-            $method = $context->primaryMethod();
-            $detail = $this->routeAction($context);
-
-            return [
-                'key' => 'route:'.$method.':'.$context->uri.':'.$detail,
-                'type' => 'route',
-                'label' => '/'.ltrim($context->uri, '/'),
-                'method' => $method,
-                'detail' => $detail,
-            ];
-        }
-
-        if ($context instanceof ClassContext) {
-            return [
-                'key' => 'class:'.$context->class,
-                'type' => 'class',
-                'label' => class_basename($context->class),
-                'method' => null,
-                'detail' => null,
-            ];
-        }
-
-        return null;
-    }
-
-    private function routeAction(RouteContext $route): ?string
-    {
-        if (! $uses = $route->action) {
-            return null;
-        }
-
-        if (count($parts = explode('@', $uses)) !== 2 || ! method_exists(...$parts)) {
-            return null;
-        }
-
-        [$class, $method] = $parts;
-        $class = str_replace(['App\Http\Controllers\\', 'App\Http\\'], '', $class);
-
-        return "{$class}@{$method}";
+        return array_values($this->diagnostics
+            ->map(fn (Diagnostic $diagnostic): array => $diagnostic->toArray())
+            ->all());
     }
 }
