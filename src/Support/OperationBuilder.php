@@ -24,7 +24,6 @@ class OperationBuilder
         OpenApiContext $context,
         Route $route,
         TypeTransformer $typeTransformer,
-        ProNudgeCollector $proNudge,
     ): array {
         $methods = array_map('strtolower', Arr::wrap(($context->config->operationMethodsResolver)($route)));
 
@@ -32,7 +31,7 @@ class OperationBuilder
         foreach ($methods as $method) {
             $routeInfo = new RouteInfo($route, $method);
 
-            $operation = $this->build($routeInfo, $context->openApi, $context->config, $typeTransformer, $proNudge);
+            $operation = $this->build($routeInfo, $context->openApi, $context->config, $typeTransformer, $context->proNudge);
 
             $operations[] = $operation;
         }

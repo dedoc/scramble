@@ -327,7 +327,7 @@ class Generator
     /** @return Operation[] */
     private function routeToOperations(OpenApiContext $context, Route $route, TypeTransformer $typeTransformer): array
     {
-        $operations = $this->operationBuilder->buildAll($context, $route, $typeTransformer, $context->proNudge);
+        $operations = $this->operationBuilder->buildAll($context, $route, $typeTransformer);
 
         foreach ($operations as $operation) {
             $this->ensureSchemaTypes($context, $route, $operation);
