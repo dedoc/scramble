@@ -6,10 +6,7 @@ use Dedoc\Scramble\Diagnostics\AbstractDiagnostic;
 use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
-use Dedoc\Scramble\Exceptions\InvalidSchema;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
-use Illuminate\Routing\Route;
-use Throwable;
 
 class Se001SchemaRuleFailedDiagnostic extends AbstractDiagnostic
 {
@@ -40,19 +37,13 @@ class Se001SchemaRuleFailedDiagnostic extends AbstractDiagnostic
         return 'SE001';
     }
 
-    public function toException(): Throwable
+    public function originFile(): ?string
     {
-        $exception = InvalidSchema::createForSchema(
-            $this->message,
-            $this->openApiLocation,
-            $this->originFile ?? $this->codeLocation?->file,
-            $this->codeLocation?->line,
-        );
+        return $this->originFile;
+    }
 
-        if ($this->context instanceof Route) {
-            $exception->setRoute($this->context);
-        }
-
-        return $exception;
+    public function openApiLocation(): string
+    {
+        return $this->openApiLocation ?? '';
     }
 }

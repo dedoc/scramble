@@ -66,7 +66,7 @@ class Generator
     public function generate(GeneratorConfig $config): GeneratorResult
     {
         $proNudge = new ProNudgeCollector;
-        $diagnostics = new DiagnosticsCollector(throwOnError: $this->throwExceptions);
+        $diagnostics = new DiagnosticsCollector;
 
         $this->configureInference($diagnostics);
 
@@ -368,7 +368,9 @@ class Generator
      */
     private function createSchemaEnforceTraverser(Route $route, OpenApiContext $context): array
     {
-        $traverser = new OpenApiTraverser([$visitor = new SchemaEnforceVisitor($context->diagnostics->forRoute($route))]);
+        $traverser = new OpenApiTraverser([$visitor = new SchemaEnforceVisitor(
+            $context->diagnostics->forRoute($route),
+        )]);
 
         return [$traverser, $visitor];
     }

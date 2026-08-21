@@ -50,12 +50,10 @@ class RequestBodyExtension implements OperationTransformer
         try {
             $rulesResults = collect($this->extractParameters($operation, $routeInfo));
         } catch (Throwable $exception) {
-            $this->diagnostics->reportQuietly(
-                $diagnostic = AbstractDiagnostic::fromThrowable($exception)
-            );
+            $this->diagnostics->report(AbstractDiagnostic::fromThrowable($exception));
 
             if (Scramble::shouldThrowOnError()) {
-                throw $diagnostic->toException();
+                throw $exception;
             }
 
             $description = $description->append('⚠️ Cannot generate request documentation: '.$exception->getMessage());

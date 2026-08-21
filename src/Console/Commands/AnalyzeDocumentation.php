@@ -22,14 +22,19 @@ class AnalyzeDocumentation extends Command
         $generator->setThrowExceptions(false);
         Scramble::throwOnError(false);
 
-        $generator(Scramble::getGeneratorConfig($this->option('api')));
+        $api = $this->option('api');
+        if (! is_string($api)) {
+            return self::FAILURE;
+        }
+
+        $result = $generator->generate(Scramble::getGeneratorConfig($api));
 
         $this->renderDiagnostics(
-            generator: $generator,
+            result: $result,
             successMessage: 'Everything is fine! Documentation is generated without any errors 🍻',
             issuesMessage: fn ($summary) => "Found {$summary}."
         );
 
-        return $this->getDiagnosticsBasedReturnCode($generator);
+        return $this->getDiagnosticsBasedReturnCode($result);
     }
 }

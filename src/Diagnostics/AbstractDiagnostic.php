@@ -4,8 +4,6 @@ namespace Dedoc\Scramble\Diagnostics;
 
 use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
 use Dedoc\Scramble\Exceptions\BuildsDiagnostics;
-use Exception;
-use Illuminate\Routing\Route;
 use Throwable;
 
 abstract class AbstractDiagnostic implements Diagnostic
@@ -13,11 +11,10 @@ abstract class AbstractDiagnostic implements Diagnostic
     public function __construct(
         protected DiagnosticSeverity $severity,
         protected string $message,
-        protected Route|ClassContext|null $context = null,
+        protected RouteContext|ClassContext|null $context = null,
         protected ?CodeLocation $codeLocation = null,
         protected ?string $openApiLocation = null,
         protected ?string $tip = null,
-        protected ?Throwable $originException = null,
     ) {}
 
     abstract public function code(): string;
@@ -40,7 +37,7 @@ abstract class AbstractDiagnostic implements Diagnostic
         return rtrim($this->message, '.');
     }
 
-    public function context(): Route|ClassContext|null
+    public function context(): RouteContext|ClassContext|null
     {
         return $this->context;
     }
@@ -82,24 +79,19 @@ abstract class AbstractDiagnostic implements Diagnostic
         ], fn ($part) => $part !== null && $part !== ''));
     }
 
-    public function withContext(Route|ClassContext|null $context): static
+    public function withContext(RouteContext|ClassContext|null $context): static
     {
         $this->context = $context;
 
         return $this;
     }
 
-    public function toException(): Throwable
-    {
-        return $this->originException ?? new Exception("[{$this->code()}] {$this->message()}");
-    }
-
     protected function contextKey(): string
     {
         $context = $this->context;
 
-        if ($context instanceof Route) {
-            return implode('|', $context->methods()).'.'.$context->uri();
+        if ($context instanceof RouteContext) {
+            return implode('|', $context->methods).'.'.$context->uri;
         }
 
         if ($context instanceof ClassContext) {
@@ -124,7 +116,6 @@ abstract class AbstractDiagnostic implements Diagnostic
             DiagnosticSeverity::Error,
             $throwable->getMessage(),
             codeLocation: CodeLocation::from($throwable->getFile(), $throwable->getLine()),
-            originException: $throwable,
         );
     }
 }

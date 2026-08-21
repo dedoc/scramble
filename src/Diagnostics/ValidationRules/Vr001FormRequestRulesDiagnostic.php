@@ -10,19 +10,23 @@ use Throwable;
 
 class Vr001FormRequestRulesDiagnostic extends AbstractDiagnostic
 {
+    private string $errorMessage;
+
     public static function fromThrowableAndReflection(Throwable $throwable, ReflectionClass $reflectionClass): self
     {
         $location = ($file = $throwable->getFile())
             ? CodeLocation::from($file, $throwable->getLine())
             : CodeLocation::fromReflection($reflectionClass);
 
-        return new self(
+        $diagnostic = new self(
             DiagnosticSeverity::Warning,
             class_basename($reflectionClass->getName()).'::rules() call failed',
             codeLocation: $location,
             tip: 'Scramble evaluates rules() outside the normal request lifecycle, so some values may be unavailable. Make such access safe when appropriate, for example: $this->user()?->company_id, $this->route(\'param\').',
-            originException: $throwable,
         );
+        $diagnostic->errorMessage = $throwable->getMessage();
+
+        return $diagnostic;
     }
 
     public function code(): string
@@ -34,7 +38,7 @@ class Vr001FormRequestRulesDiagnostic extends AbstractDiagnostic
     {
         return [
             ...parent::details(),
-            ['Message', $this->originException->getMessage()],
+            ['Message', $this->errorMessage],
         ];
     }
 }

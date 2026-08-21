@@ -4,6 +4,7 @@ use Dedoc\Scramble\CacheableGenerator;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
+use Dedoc\Scramble\Diagnostics\RouteContext;
 use Dedoc\Scramble\Support\DevTools;
 use Illuminate\Support\Facades\Route;
 
@@ -76,8 +77,9 @@ it('serializes route context for grouping diagnostics', function () {
     $diagnostics = new DiagnosticsCollector;
     $diagnostics->reportQuietly(
         (new GenericDiagnostic(DiagnosticSeverity::Warning, 'Incomplete documentation'))
-            ->withContext($route)
+            ->withContext(RouteContext::fromRoute($route))
     );
+    $diagnostics = unserialize(serialize($diagnostics));
 
     expect($diagnostics->toArray()[0]['context'])->toBe([
         'key' => 'route:PATCH:api/user/{user}:DevToolsTestController@update',
