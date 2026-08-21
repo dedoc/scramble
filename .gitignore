@@ -8,5 +8,6 @@ phpunit.xml
 testbench.yaml
 vendor
 node_modules
+/dist/hot
 *-test.json
 .phpunit.cache/

@@ -151,10 +151,16 @@ class Scramble
 
         return RouteFacade::get($path, function (CacheableGenerator $generator) use ($api) {
             $config = static::getGeneratorConfig($api);
+            $result = $generator->generate($config);
 
             return view($config->renderer()->view, [
-                'spec' => $generator($config),
+                /*
+                 * `spec` here is for backward compatibility in case there is a
+                 * stale published view that expects it to exist, will be removed in 1.0
+                 */
+                'spec' => $result->spec(),
                 'config' => $config,
+                'result' => $result,
             ]);
         })
             ->middleware($config->get('middleware', [RestrictedDocsAccess::class]));

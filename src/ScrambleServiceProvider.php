@@ -22,6 +22,7 @@ use Dedoc\Scramble\Infer\Extensions\InferExtension;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Dedoc\Scramble\Infer\Services\FileParser;
+use Dedoc\Scramble\Support\DevTools;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthenticationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\AuthorizationExceptionToResponseExtension;
 use Dedoc\Scramble\Support\ExceptionToResponseExtensions\HttpExceptionToResponseExtension;
@@ -336,6 +337,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
     private function registerRoutes(): void
     {
+        $this->registerDevToolsAssetsRoute();
+
         foreach (Scramble::getConfigurationsInstance()->all() as $api => $generatorConfig) {
             /** @var Router $router */
             $router = $this->app->get(Router::class);
@@ -347,10 +350,16 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                 $cb($router, function (CacheableGenerator $generator) use ($api) {
                     $config = Scramble::getGeneratorConfig($api);
+                    $result = $generator->generate($config);
 
                     return view($config->renderer()->view, [
-                        'spec' => $generator($config),
+                        /*
+                         * `spec` here is for backward compatibility in case there is a
+                         * stale published view that expects it to exist, will be removed in 1.0
+                         */
+                        'spec' => $result->spec(),
                         'config' => $config,
+                        'result' => $result,
                     ]);
                 })->middleware($generatorConfig->get('middleware', [RestrictedDocsAccess::class]));
             }
@@ -367,5 +376,32 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 })->middleware($generatorConfig->get('middleware', [RestrictedDocsAccess::class]));
             }
         }
+    }
+
+    private function registerDevToolsAssetsRoute(): void
+    {
+        if (! DevTools::enabled()) {
+            return;
+        }
+
+        /** @var Router $router */
+        $router = $this->app->get(Router::class);
+        $middleware = array_values(array_filter(
+            (array) config('scramble.middleware', [RestrictedDocsAccess::class]),
+            fn ($middleware) => is_string($middleware),
+        ));
+
+        $router->get('_scramble/dev-tools/devtools.js', function () {
+            $path = DevTools::assetPath();
+
+            abort_unless(is_file($path), 404);
+
+            return response()->file($path, [
+                'Cache-Control' => 'no-store',
+                'Content-Type' => 'text/javascript; charset=UTF-8',
+            ]);
+        })
+            ->name('scramble.dev-tools.asset')
+            ->middleware($middleware);
     }
 }

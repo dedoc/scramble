@@ -34,11 +34,4 @@ trait ManagesDocumentationCache
 
         return $apis;
     }
-
-    protected function cacheKey(string $api): string
-    {
-        $key = config('scramble.cache.key');
-
-        return (is_string($key) ? $key : '').':'.$api;
-    }
 }

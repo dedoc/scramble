@@ -3,7 +3,6 @@
 namespace Dedoc\Scramble\Diagnostics\ValidationRules;
 
 use Dedoc\Scramble\Diagnostics\AbstractDiagnostic;
-use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\FormRequestRulesEvaluator;
@@ -12,18 +11,20 @@ use Throwable;
 
 class Vr003AllEvaluatorsFailedDiagnostic extends AbstractDiagnostic
 {
-    /** @var array<string, Throwable> */
-    private array $exceptions;
+    /** @var array<string, string> */
+    private array $errors;
 
     public static function fromRulesEvaluationException(RulesEvaluationException $exception): self
     {
         $diagnostic = new self(
             DiagnosticSeverity::Error,
             'Cannot evaluate validation rules',
-            tip: 'Fix one of the warnings above. Scramble only needs one evaluation strategy to succeed in order to determine the validation rules.',
-            originException: $exception,
+            tip: 'Fix one of the errors above. Scramble only needs one evaluation strategy to succeed in order to determine the validation rules.',
         );
-        $diagnostic->exceptions = $exception->exceptions;
+        $diagnostic->errors = array_map(
+            fn (Throwable $exception) => $exception->getMessage(),
+            $exception->exceptions,
+        );
 
         return $diagnostic;
     }
@@ -42,16 +43,10 @@ class Vr003AllEvaluatorsFailedDiagnostic extends AbstractDiagnostic
 
         return [
             ...parent::details(),
-            ...collect($this->exceptions)
-                ->map(fn (Throwable $e, string $evaluator) => [$exceptionsNameMap[$evaluator] ?? class_basename($evaluator), $e->getMessage()])
+            ...collect($this->errors)
+                ->map(fn (string $message, string $evaluator) => [$exceptionsNameMap[$evaluator] ?? class_basename($evaluator), $message])
                 ->values()
                 ->all(),
         ];
-    }
-
-    public function toException(): Throwable
-    {
-        return RulesEvaluationException::fromExceptions($this->exceptions)
-            ->forClass($this->context instanceof ClassContext ? $this->context->class : null);
     }
 }

@@ -28,7 +28,8 @@ class ExportDocumentation extends Command
 
         $config = Scramble::getGeneratorConfig($api);
 
-        $specification = json_encode($generator($config), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $result = $generator->generate($config);
+        $specification = json_encode($result->spec(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
         /** @var string $filename */
         $filename = $path ?: $config->get('export_path') ?? 'api'.($api === 'default' ? '' : "-$api").'.json';
@@ -43,9 +44,9 @@ class ExportDocumentation extends Command
         $issuesMessage = fn ($summary) => "OpenAPI document exported to {$filename} with {$summary}. {$verboseSuffix}";
 
         if ($this->getOutput()->isVerbose()) {
-            $this->renderDiagnostics($generator, $successMessage, $issuesMessage);
+            $this->renderDiagnostics($result, $successMessage, $issuesMessage);
         } else {
-            $this->renderDiagnosticsSummary($generator, $successMessage, $issuesMessage);
+            $this->renderDiagnosticsSummary($result, $successMessage, $issuesMessage);
         }
     }
 }

@@ -3,8 +3,8 @@
 namespace Dedoc\Scramble;
 
 use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
-use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\Schema\Se001SchemaRuleFailedDiagnostic;
+use Dedoc\Scramble\Exceptions\InvalidSchema;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Illuminate\Support\Str;
 
@@ -23,11 +23,12 @@ class SchemaValidator
     }
 
     /**
-     * @return list<Diagnostic>
+     * @return array{list<Diagnostic>, ?InvalidSchema}
      */
     public function validate(OpenApiType $type, string $path): array
     {
         $diagnostics = [];
+        $exception = null;
 
         foreach ($this->rules as [$ruleCb, $errorMessageGetter, $ignorePaths, $throw]) {
             if (Str::is($ignorePaths, $path)) {
@@ -38,13 +39,24 @@ class SchemaValidator
                 continue;
             }
 
+            $message = value($errorMessageGetter, $type, $path);
+
             $diagnostics[] = Se001SchemaRuleFailedDiagnostic::forSchema(
-                message: value($errorMessageGetter, $type, $path),
+                message: $message,
                 jsonPointer: $path,
                 schema: $type,
-            )->withSeverity($throw ? DiagnosticSeverity::Error : DiagnosticSeverity::Warning);
+            );
+
+            if ($throw && ! $exception) {
+                $exception = InvalidSchema::createForSchema(
+                    $message,
+                    $path,
+                    $type->getAttribute('file'),
+                    $type->getAttribute('line'),
+                );
+            }
         }
 
-        return $diagnostics;
+        return [$diagnostics, $exception];
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Dedoc\Scramble\Diagnostics;
 
-enum DiagnosticSeverity
+enum DiagnosticSeverity: string
 {
-    case Error;
-    case Warning;
+    case Error = 'error';
+    case Warning = 'warning';
 }

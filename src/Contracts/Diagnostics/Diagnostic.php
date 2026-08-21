@@ -5,10 +5,13 @@ namespace Dedoc\Scramble\Contracts\Diagnostics;
 use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
-use Illuminate\Routing\Route;
-use Throwable;
+use Dedoc\Scramble\Diagnostics\RouteContext;
+use Illuminate\Contracts\Support\Arrayable;
 
-interface Diagnostic
+/**
+ * @extends Arrayable<string, mixed>
+ */
+interface Diagnostic extends Arrayable
 {
     public function key(): string;
 
@@ -18,7 +21,7 @@ interface Diagnostic
 
     public function message(): string;
 
-    public function context(): Route|ClassContext|null;
+    public function context(): RouteContext|ClassContext|null;
 
     public function codeLocation(): ?CodeLocation;
 
@@ -29,9 +32,7 @@ interface Diagnostic
      */
     public function details(): array;
 
-    public function withContext(Route|ClassContext|null $context): static;
+    public function withContext(RouteContext|ClassContext|null $context): static;
 
     public function shouldRenderCodeSnippet(): bool;
-
-    public function toException(): Throwable;
 }

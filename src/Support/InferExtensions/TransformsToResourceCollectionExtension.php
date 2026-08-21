@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\InferExtensions;
 
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+use Dedoc\Scramble\Diagnostics\Model\Md002MissingResourceDiagnostic;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
@@ -20,6 +22,10 @@ use Throwable;
 
 class TransformsToResourceCollectionExtension implements MethodReturnTypeExtension
 {
+    public function __construct(
+        private ?DiagnosticsCollector $diagnostics = null,
+    ) {}
+
     public function shouldHandle(ObjectType|string $type): bool
     {
         $type = is_string($type) ? $type : $type->name;
@@ -87,7 +93,12 @@ class TransformsToResourceCollectionExtension implements MethodReturnTypeExtensi
                 }
             }
         } catch (Throwable) {
+            return null;
         }
+
+        $this->diagnostics?->reportOnce(
+            Md002MissingResourceDiagnostic::forModel($modelClass),
+        );
 
         return null;
     }

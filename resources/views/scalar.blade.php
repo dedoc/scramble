@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{{ $config->get('ui.title') ?? config('app.name') . ' - API Docs' }}</title>
+    @include('scramble::dev-tools', ['renderer' => 'scalar'])
 </head>
 <body>
 <div id="app"></div>

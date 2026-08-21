@@ -11,6 +11,8 @@ class Vr002NodeRulesEvaluationDiagnostic extends AbstractDiagnostic
 {
     private string $source;
 
+    private string $errorMessage;
+
     public static function fromEvaluationFail(
         Throwable $throwable,
         string $source,
@@ -23,9 +25,9 @@ class Vr002NodeRulesEvaluationDiagnostic extends AbstractDiagnostic
             $message,
             codeLocation: $codeLocation,
             tip: $tip,
-            originException: $throwable,
         );
         $diagnostic->source = $source;
+        $diagnostic->errorMessage = $throwable->getMessage();
 
         return $diagnostic;
     }
@@ -57,7 +59,7 @@ class Vr002NodeRulesEvaluationDiagnostic extends AbstractDiagnostic
         return [
             ...parent::details(),
             ['Expression', $this->source],
-            ['Message', $this->originException->getMessage()],
+            ['Message', $this->errorMessage],
         ];
     }
 }

@@ -11,21 +11,17 @@ class DiagnosticsCollector
 {
     /**
      * @param  Collection<int, Diagnostic>  $diagnostics
+     * @param  ArrayObject<string, bool>  $seenRegistry
      */
     public function __construct(
         public Collection $diagnostics = new Collection,
-        public bool $throwOnError = false,
-        public Route|ClassContext|null $context = null,
+        public RouteContext|ClassContext|null $context = null,
         private ArrayObject $seenRegistry = new ArrayObject,
     ) {}
 
     public function report(Diagnostic $diagnostic): void
     {
-        $this->reportQuietly($diagnostic);
-
-        if ($this->throwOnError && $diagnostic->severity() === DiagnosticSeverity::Error) {
-            throw $diagnostic->toException();
-        }
+        $this->diagnostics->push($this->applyContext($diagnostic));
     }
 
     public function reportOnce(Diagnostic $diagnostic): void
@@ -45,17 +41,12 @@ class DiagnosticsCollector
 
     public function forRoute(Route $route): self
     {
-        return new self($this->diagnostics, $this->throwOnError, $route, $this->seenRegistry);
+        return new self($this->diagnostics, RouteContext::fromRoute($route), $this->seenRegistry);
     }
 
     public function forClass(string $class): self
     {
-        return new self($this->diagnostics, $this->throwOnError, new ClassContext($class), $this->seenRegistry);
-    }
-
-    public function reportQuietly(Diagnostic $diagnostic): void
-    {
-        $this->diagnostics->push($this->applyContext($diagnostic));
+        return new self($this->diagnostics, new ClassContext($class), $this->seenRegistry);
     }
 
     /** Prefer route over ClassContext when that class is this route's controller. */
@@ -64,9 +55,9 @@ class DiagnosticsCollector
         $existing = $diagnostic->context();
 
         if ($existing !== null && ! (
-            $this->context instanceof Route
+            $this->context instanceof RouteContext
             && $existing instanceof ClassContext
-            && ltrim($existing->class, '\\') === ltrim((string) $this->context->getControllerClass(), '\\')
+            && ltrim($existing->class, '\\') === ltrim((string) $this->context->controllerClass(), '\\')
         )) {
             return $diagnostic;
         }

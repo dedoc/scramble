@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\ProNudge;
 
 use Dedoc\Scramble\Support\RouteInfo;
+use Illuminate\Support\Str;
 
 /** @internal */
 class ProNudgeCollector
@@ -17,43 +18,25 @@ class ProNudgeCollector
         $this->signals[$signal->value][$this->endpointKey($routeInfo)] = true;
     }
 
-    public function count(ProNudgeSignal $signal): int
+    /** @return array{title: string, description: string}|null */
+    public function message(): ?array
     {
-        return count($this->signals[$signal->value] ?? []);
-    }
+        $title = '';
 
-    public function hasAny(): bool
-    {
         foreach (ProNudgeSignal::cases() as $signal) {
-            if ($this->count($signal) > 0) {
-                return true;
+            if (isset($this->signals[$signal->value])) {
+                $title .= ($title ? ', ' : '').$signal->description(count($this->signals[$signal->value]));
             }
         }
 
-        return false;
-    }
-
-    /**
-     * @return list<array{signal: ProNudgeSignal, count: int}>
-     */
-    public function summaries(): array
-    {
-        $summaries = [];
-
-        foreach (ProNudgeSignal::cases() as $signal) {
-            $count = $this->count($signal);
-
-            if ($count === 0) {
-                continue;
-            }
-
-            $summaries[] = [
-                'signal' => $signal,
-                'count' => $count,
-            ];
+        if (! $title) {
+            return null;
         }
 
-        return $summaries;
+        return [
+            'title' => Str::replaceLast(', ', ', and ', $title),
+            'description' => 'Scramble PRO will document these endpoints accurately.',
+        ];
     }
 
     private function endpointKey(RouteInfo $routeInfo): string

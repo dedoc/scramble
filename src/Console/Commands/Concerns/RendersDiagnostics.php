@@ -9,44 +9,41 @@ use Dedoc\Scramble\Console\Commands\Components\TermsOfContentItem;
 use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
 use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
-use Dedoc\Scramble\Generator;
+use Dedoc\Scramble\Diagnostics\RouteContext;
+use Dedoc\Scramble\GeneratorResult;
 use Dedoc\Scramble\Support\ProNudge\ProNudgeReporter;
-use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Terminal;
 
 trait RendersDiagnostics
 {
-    private function getDiagnosticsBasedReturnCode(Generator $generator): int
+    private function getDiagnosticsBasedReturnCode(GeneratorResult $result): int
     {
-        $errorCount = $generator->diagnostics
-            ->all()
+        $errorCount = $result->diagnostics()
             ->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)
             ->count();
 
         return $errorCount ? static::FAILURE : static::SUCCESS;
     }
 
-    private function renderDiagnostics(Generator $generator, string $successMessage, Closure $issuesMessage): void
+    private function renderDiagnostics(GeneratorResult $result, string $successMessage, Closure $issuesMessage): void
     {
-        $diagnostics = $generator->diagnostics->all();
-
         $i = 1;
-        $this->groupDiagnostics($diagnostics)->each(function (Collection $groupDiagnostics, string $groupKey) use (&$i) {
+        $this->groupDiagnostics($result->diagnostics())->each(function (Collection $groupDiagnostics, string $groupKey) use (&$i) {
             $this->renderDiagnosticsGroup($groupDiagnostics, $groupKey, $i);
         });
 
         $this->renderDiagnosticsSummary(
-            $generator,
+            $result,
             $successMessage,
             $issuesMessage,
         );
     }
 
-    private function renderDiagnosticsSummary(Generator $generator, string $successMessage, Closure $issuesMessage): void
+    private function renderDiagnosticsSummary(GeneratorResult $result, string $successMessage, Closure $issuesMessage): void
     {
-        $diagnostics = $generator->diagnostics->all();
+        $diagnostics = $result->diagnostics();
 
         $errorCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)->count();
         $warningCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Warning)->count();
@@ -58,7 +55,7 @@ trait RendersDiagnostics
 
         if ($errorCount > 0) {
             $this->warn('[ERROR] '.$issuesMessage($summary));
-            $this->renderProNudge($generator);
+            $this->renderProNudge($result);
 
             return;
         }
@@ -69,12 +66,12 @@ trait RendersDiagnostics
             $this->info($successMessage);
         }
 
-        $this->renderProNudge($generator);
+        $this->renderProNudge($result);
     }
 
-    private function renderProNudge(Generator $generator): void
+    private function renderProNudge(GeneratorResult $result): void
     {
-        (new ProNudgeReporter($generator->proNudge))->report($this);
+        (new ProNudgeReporter($result->proNudge()))->report($this);
     }
 
     /**
@@ -90,7 +87,7 @@ trait RendersDiagnostics
                 return 'class:'.$context->class;
             }
 
-            if ($context instanceof Route) {
+            if ($context instanceof RouteContext) {
                 return 'route:'.$this->getRouteKey($context);
             }
 
@@ -126,11 +123,11 @@ trait RendersDiagnostics
     private function renderRouteGroupHeader(Collection $diagnostics): void
     {
         $route = $diagnostics->first()?->context();
-        if (! $route instanceof Route) {
+        if (! $route instanceof RouteContext) {
             return;
         }
 
-        $method = implode('|', $route->methods());
+        $method = implode('|', $route->methods);
         $stats = $this->severityStats($diagnostics);
 
         $tocComponent = new TermsOfContentItem(
@@ -234,10 +231,10 @@ trait RendersDiagnostics
         ])->filter()->implode(', ');
     }
 
-    private function getRouteKey(Route $route): string
+    private function getRouteKey(RouteContext $route): string
     {
-        $method = implode('|', $route->methods());
-        $action = $route->getAction('uses');
+        $method = implode('|', $route->methods);
+        $action = $route->action;
 
         return "$method.$action";
     }
@@ -251,13 +248,9 @@ trait RendersDiagnostics
         };
     }
 
-    private function getRouteAction(?Route $route): ?string
+    private function getRouteAction(?RouteContext $route): ?string
     {
-        if (! $route || ! $uses = $route->getAction('uses')) {
-            return null;
-        }
-
-        if (! is_string($uses)) {
+        if (! $route || ! $uses = $route->action) {
             return null;
         }
 
@@ -266,9 +259,8 @@ trait RendersDiagnostics
         }
 
         [$class, $method] = $parts;
+        $class = Str::replace(['App\Http\Controllers\\', 'App\Http\\'], '', $class);
 
-        $eloquentClassName = Str::replace(['App\Http\Controllers\\', 'App\Http\\'], '', $class);
-
-        return "<fg=gray>{$eloquentClassName}@{$method}</>";
+        return "<fg=gray>{$class}@{$method}</>";
     }
 }

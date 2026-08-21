@@ -2,7 +2,9 @@
 
 namespace Dedoc\Scramble\Console\Commands;
 
+use Dedoc\Scramble\CacheableGenerator;
 use Dedoc\Scramble\Console\Commands\Concerns\ManagesDocumentationCache;
+use Dedoc\Scramble\Scramble;
 use Illuminate\Console\Command;
 
 class ClearDocumentationCache extends Command
@@ -21,13 +23,8 @@ class ClearDocumentationCache extends Command
             return self::SUCCESS;
         }
 
-        $store = config('scramble.cache.store');
-        if (! is_string($store)) {
-            return self::SUCCESS;
-        }
-
         foreach ($this->resolveApis() as $api) {
-            cache()->store($store)->forget($this->cacheKey($api));
+            CacheableGenerator::forget(Scramble::getGeneratorConfig($api));
 
             $this->info("OpenAPI document cache cleared for [{$api}] API.");
         }

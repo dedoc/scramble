@@ -17,6 +17,7 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
 
     public function __construct(
         private DiagnosticsCollector $diagnostics,
+        private bool $throwExceptions = true,
     ) {}
 
     public function popReferences()
@@ -43,8 +44,14 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
     {
         $pointer = implode('/', array_map(OpenApiTraverser::normalizeJsonPointerReferenceToken(...), $path));
 
-        foreach (Scramble::getSchemaValidator()->validate($object, $pointer) as $diagnostic) {
+        [$diagnostics, $exception] = Scramble::getSchemaValidator()->validate($object, $pointer);
+
+        foreach ($diagnostics as $diagnostic) {
             $this->diagnostics->report($diagnostic);
+        }
+
+        if ($this->throwExceptions && $exception) {
+            throw $exception;
         }
     }
 }

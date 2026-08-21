@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Diagnostics\Model\Md001PendingMigrationsDiagnostic;
+use Dedoc\Scramble\Diagnostics\Model\Md002MissingResourceDiagnostic;
 use Dedoc\Scramble\Infer\AutoResolvingArgumentTypeBag;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
@@ -454,7 +455,12 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
                 }
             }
         } catch (\Throwable) {
+            return null;
         }
+
+        $this->diagnostics?->reportOnce(
+            Md002MissingResourceDiagnostic::forModel($event->getInstance()->name),
+        );
 
         return null;
     }
