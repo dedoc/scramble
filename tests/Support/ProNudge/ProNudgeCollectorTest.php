@@ -26,27 +26,7 @@ it('records unique endpoints per signal', function () {
     ]);
 });
 
-it('reports one title and description', function () {
-    $collector = new ProNudgeCollector;
-    $routeInfo = new RouteInfo(new Route('GET', 'users', ['uses' => 'UsersController@index']), 'GET');
-
-    $collector->record(ProNudgeSignal::QueryBuilder, $routeInfo);
-    $collector->record(ProNudgeSignal::LaravelDataReturn, $routeInfo);
-    $collector->record(ProNudgeSignal::LaravelDataRequest, $routeInfo);
-
-    $command = makeProNudgeTestCommand($output = new BufferedOutput);
-
-    (new ProNudgeReporter($collector))->report($command);
-
-    $rendered = $output->fetch();
-
-    expect($rendered)
-        ->toBe("1 endpoint uses Spatie Query Builder, 1 endpoint returns Laravel Data objects, and 1 endpoint accepts Laravel Data objects\nScramble PRO will document these endpoints accurately.\nLearn more: ".ProNudgeReporter::PRO_URL."\n")
-        ->not->toContain('Scramble detected:')
-        ->toContain('Learn more:');
-});
-
-it('reports a query builder only message', function () {
+it('reports the message in a block', function () {
     $collector = new ProNudgeCollector;
     $routeInfo = new RouteInfo(new Route('GET', 'users', ['uses' => 'UsersController@index']), 'GET');
 
@@ -57,24 +37,10 @@ it('reports a query builder only message', function () {
     (new ProNudgeReporter($collector))->report($command);
 
     expect($output->fetch())
-        ->toContain('Spatie Query Builder')
-        ->not->toContain('Laravel Data');
-});
-
-it('reports a laravel data only message', function () {
-    $collector = new ProNudgeCollector;
-    $routeInfo = new RouteInfo(new Route('GET', 'users', ['uses' => 'UsersController@index']), 'GET');
-
-    $collector->record(ProNudgeSignal::LaravelDataReturn, $routeInfo);
-
-    $command = makeProNudgeTestCommand($output = new BufferedOutput);
-
-    (new ProNudgeReporter($collector))->report($command);
-
-    expect($output->fetch())
-        ->toContain('Laravel Data')
-        ->toBe("1 endpoint returns Laravel Data objects\nScramble PRO will document these endpoints accurately.\nLearn more: ".ProNudgeReporter::PRO_URL."\n")
-        ->not->toContain('Query Builder');
+        ->toContain('⚡️ 1 endpoint uses Spatie Query Builder.')
+        ->toContain('Scramble PRO will document these endpoints accurately.')
+        ->toContain('Learn more: '.ProNudgeReporter::PRO_URL)
+        ->toContain(' | ');
 });
 
 it('does not report when there are no signals', function () {

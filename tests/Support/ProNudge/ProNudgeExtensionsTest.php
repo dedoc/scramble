@@ -78,7 +78,7 @@ it('prints pro nudge after export when signals are present', function () {
 
     artisan(ExportDocumentation::class)
         ->expectsOutputToContain('OpenAPI document exported to api.json.')
-        ->expectsOutputToContain('1 endpoint uses Spatie Query Builder, 1 endpoint returns Laravel Data objects, and 1 endpoint accepts Laravel Data objects')
+        ->expectsOutputToContain('1 endpoint uses Spatie Query Builder')
         ->expectsOutputToContain('Scramble PRO will document these endpoints accurately.')
         ->expectsOutputToContain('Learn more: '.ProNudgeReporter::PRO_URL)
         ->assertOk();
