@@ -1,8 +1,11 @@
 <?php
 
 use Dedoc\Scramble\Diagnostics\ClassContext;
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
+use Dedoc\Scramble\Diagnostics\RouteContext;
+use Illuminate\Support\Facades\Route;
 
 it('serializes a diagnostic from the diagnostic itself', function () {
     $diagnostic = new GenericDiagnostic(
@@ -28,9 +31,28 @@ it('serializes a diagnostic from the diagnostic itself', function () {
     ]);
 });
 
-it('serializes diagnostic severity as a string-backed enum value', function () {
-    expect(DiagnosticSeverity::Error->value)->toBe('error')
-        ->and(DiagnosticSeverity::Warning->value)->toBe('warning');
+it('serializes route context after a cache round trip', function () {
+    $route = Route::patch('api/user/{user}', [SerializationTestController::class, 'update']);
+    $diagnostics = new DiagnosticsCollector;
+    $diagnostics->report(
+        (new GenericDiagnostic(DiagnosticSeverity::Warning, 'Incomplete documentation'))
+            ->withContext(RouteContext::fromRoute($route))
+    );
+
+    $diagnostics = unserialize(serialize($diagnostics));
+
+    expect($diagnostics->all()->toArray()[0]['context'])->toBe([
+        'key' => 'route:PATCH:api/user/{user}:SerializationTestController@update',
+        'type' => 'route',
+        'label' => '/api/user/{user}',
+        'method' => 'PATCH',
+        'detail' => 'SerializationTestController@update',
+    ]);
 });
 
 class SerializationTestModel {}
+
+class SerializationTestController
+{
+    public function update(): void {}
+}

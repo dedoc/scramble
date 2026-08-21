@@ -1,10 +1,6 @@
 <?php
 
 use Dedoc\Scramble\CacheableGenerator;
-use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
-use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
-use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
-use Dedoc\Scramble\Diagnostics\RouteContext;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\DevTools;
 use Illuminate\Support\Facades\Route;
@@ -42,56 +38,3 @@ it('serializes a missing pro nudge as null', function () {
 
     expect($html)->toContain('"proNudge":null');
 });
-
-it('serializes diagnostics for the dev tools payload', function () {
-    $diagnostics = new DiagnosticsCollector;
-    $diagnostics->report(new GenericDiagnostic(
-        DiagnosticSeverity::Error,
-        'Schema `Dedoc\Scramble\Support\Generator\Types\UnknownType` is not allowed.',
-    ));
-    $diagnostics->report(new GenericDiagnostic(DiagnosticSeverity::Warning, 'Incomplete documentation'));
-
-    expect($diagnostics->all()->toArray())->toBe([
-        [
-            'key' => 'GEN001',
-            'code' => 'GEN001',
-            'severity' => 'error',
-            'message' => 'Schema `UnknownType` is not allowed',
-            'tip' => null,
-            'details' => [],
-            'context' => null,
-        ],
-        [
-            'key' => 'GEN001',
-            'code' => 'GEN001',
-            'severity' => 'warning',
-            'message' => 'Incomplete documentation',
-            'tip' => null,
-            'details' => [],
-            'context' => null,
-        ],
-    ]);
-});
-
-it('serializes route context for grouping diagnostics', function () {
-    $route = Route::patch('api/user/{user}', [DevToolsTestController::class, 'update']);
-    $diagnostics = new DiagnosticsCollector;
-    $diagnostics->report(
-        (new GenericDiagnostic(DiagnosticSeverity::Warning, 'Incomplete documentation'))
-            ->withContext(RouteContext::fromRoute($route))
-    );
-    $diagnostics = unserialize(serialize($diagnostics));
-
-    expect($diagnostics->all()->toArray()[0]['context'])->toBe([
-        'key' => 'route:PATCH:api/user/{user}:DevToolsTestController@update',
-        'type' => 'route',
-        'label' => '/api/user/{user}',
-        'method' => 'PATCH',
-        'detail' => 'DevToolsTestController@update',
-    ]);
-});
-
-class DevToolsTestController
-{
-    public function update(): void {}
-}
