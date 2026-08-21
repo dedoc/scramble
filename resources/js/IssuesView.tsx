@@ -62,28 +62,38 @@ interface IssuesHeaderProps extends CloseButtonProps {
     copied: boolean;
     copyDisabled?: boolean;
     onCopy: () => void;
+    showCopy?: boolean;
 }
 
-function IssuesHeader({ className, copied, copyDisabled, onClose, onCopy }: IssuesHeaderProps) {
+function IssuesHeader({
+    className,
+    copied,
+    copyDisabled,
+    onClose,
+    onCopy,
+    showCopy = true,
+}: IssuesHeaderProps) {
     return (
         <header className={cx('flex pt-2 pb-1 items-center justify-between px-4', className)}>
             <div className="flex min-w-0 items-center gap-3">
                 <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">Issues</span>
-                <button
-                    type="button"
-                    className={cx(
-                        `flex items-center gap-1.5 rounded text-xs text-neutral-500 outline-none
-                        hover:cursor-pointer hover:text-neutral-800 disabled:cursor-default disabled:opacity-40
-                        focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-500
-                        dark:text-neutral-400 dark:hover:text-neutral-100 dark:focus-visible:outline-neutral-400`,
-                        copied && 'pointer-events-none',
-                    )}
-                    disabled={copyDisabled}
-                    onClick={onCopy}
-                >
-                    {copied ? <TickIcon /> : <MarkdownIcon />}
-                    <span aria-live="polite">{copied ? 'Copied!' : 'Copy as markdown'}</span>
-                </button>
+                {showCopy && (
+                    <button
+                        type="button"
+                        className={cx(
+                            `flex items-center gap-1.5 rounded text-xs text-neutral-500 outline-none
+                            hover:cursor-pointer hover:text-neutral-800 disabled:cursor-default disabled:opacity-40
+                            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-500
+                            dark:text-neutral-400 dark:hover:text-neutral-100 dark:focus-visible:outline-neutral-400`,
+                            copied && 'pointer-events-none',
+                        )}
+                        disabled={copyDisabled}
+                        onClick={onCopy}
+                    >
+                        {copied ? <TickIcon /> : <MarkdownIcon />}
+                        <span aria-live="polite">{copied ? 'Copied!' : 'Copy as markdown'}</span>
+                    </button>
+                )}
             </div>
             <CloseButton className="-mr-2.5" onClose={onClose} />
         </header>
@@ -259,8 +269,17 @@ function IssueGroup({ className, context, diagnostics, onNavigate }: IssueGroupP
 
 function EmptyIssues({ className }: ClassNameProps) {
     return (
-        <div className={cx('px-4 py-6 text-center text-[13px] text-neutral-500 dark:text-neutral-400', className)}>
-            No issues found
+        <div className={cx('flex flex-col items-center gap-3 px-6 pt-4 pb-12 text-center', className)}>
+            <TickIcon className="size-5 shrink-0 fill-emerald-500 dark:fill-emerald-400" />
+
+            <div className="flex flex-col items-center gap-1">
+                <p className="text-base font-medium text-neutral-800 dark:text-neutral-100 sm:text-sm">
+                    All clear
+                </p>
+                <p className="max-w-[32ch] text-pretty text-base text-neutral-500 dark:text-neutral-400 sm:text-sm">
+                    Nice! Your API documentation was generated without any issues.
+                </p>
+            </div>
         </div>
     );
 }
@@ -343,13 +362,16 @@ export function IssuesView({
                     copyDisabled={diagnostics.length === 0}
                     onClose={onClose}
                     onCopy={copyAsMarkdown}
+                    showCopy={diagnostics.length > 0}
                 />
-                <IssuesTabs
-                    activeSeverity={activeSeverity}
-                    errorCount={errorCount}
-                    warningCount={warningCount}
-                    onChange={setActiveSeverity}
-                />
+                {diagnostics.length > 0 && (
+                    <IssuesTabs
+                        activeSeverity={activeSeverity}
+                        errorCount={errorCount}
+                        warningCount={warningCount}
+                        onChange={setActiveSeverity}
+                    />
+                )}
 
                 <div
                     id="scramble-issues-panel"

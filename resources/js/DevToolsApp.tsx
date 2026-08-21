@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { ErrorIcon, SparklesIcon, WarningIcon } from './DiagnosticIcons';
+import { ErrorIcon, SparklesIcon, TickIcon, WarningIcon } from './DiagnosticIcons';
 import { IssuesView } from './IssuesView';
 import type { RendererConfig } from './renderers';
 import type { Diagnostic, ProNudge } from './types';
@@ -47,7 +47,11 @@ export function DevToolsApp({ diagnostics, proNudge, renderer }: DevToolsProps) 
                         dark:focus-visible:outline-neutral-400
                     "
                 >
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
+                        {errorCount === 0 && (
+                            <TickIcon className="size-4 shrink-0 fill-emerald-500 dark:fill-emerald-400" />
+                        )}
+
                         <span className="text-[13px] font-normal leading-none text-neutral-500 dark:text-neutral-400">
                             Scramble
                         </span>

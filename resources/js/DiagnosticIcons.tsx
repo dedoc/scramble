@@ -34,7 +34,7 @@ export function MarkdownIcon({ className = 'h-3.5 w-[18px] shrink-0' }: Diagnost
     );
 }
 
-export function TickIcon({ className = 'h-3.5 w-[18px] shrink-0 text-teal-600 dark:text-teal-400' }: DiagnosticIconProps) {
+export function TickIcon({ className = 'size-4 shrink-0 fill-teal-600 dark:fill-teal-400' }: DiagnosticIconProps) {
     return (
         <svg
             width="20"
@@ -49,7 +49,6 @@ export function TickIcon({ className = 'h-3.5 w-[18px] shrink-0 text-teal-600 da
                 fillRule="evenodd"
                 clipRule="evenodd"
                 d="M16.7071 5.29289C17.0976 5.68342 17.0976 6.31658 16.7071 6.70711L8.70711 14.7071C8.31658 15.0976 7.68342 15.0976 7.29289 14.7071L3.29289 10.7071C2.90237 10.3166 2.90237 9.68342 3.29289 9.29289C3.68342 8.90237 4.31658 8.90237 4.70711 9.29289L8 12.5858L15.2929 5.29289C15.6834 4.90237 16.3166 4.90237 16.7071 5.29289Z"
-                fill="currentColor"
             />
         </svg>
     );
