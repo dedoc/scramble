@@ -276,7 +276,7 @@ function EmptyIssues({ className }: ClassNameProps) {
                 <p className="text-base font-medium text-neutral-800 dark:text-neutral-100 sm:text-sm">
                     All clear
                 </p>
-                <p className="max-w-[32ch] text-pretty text-base text-neutral-500 dark:text-neutral-400 sm:text-sm">
+                <p className="max-w-[32ch] text-pretty text-[0.8125rem] text-neutral-500 dark:text-neutral-400">
                     Nice! Your API documentation was generated without any issues.
                 </p>
             </div>

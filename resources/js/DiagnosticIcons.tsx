@@ -91,3 +91,18 @@ export function SparklesIcon({ className = 'size-4 shrink-0' }: DiagnosticIconPr
         </svg>
     );
 }
+
+export function InfoIcon({ className = 'size-4 shrink-0' }: DiagnosticIconProps) {
+    return (
+        <svg
+            viewBox="0 0 16 16"
+            className={className}
+            fill="none"
+            strokeWidth="1.5"
+            aria-hidden="true"
+        >
+            <circle cx="8" cy="8" r="6.25" />
+            <path strokeLinecap="round" d="M8 7.25v3.5M8 5.25h.01" />
+        </svg>
+    );
+}
