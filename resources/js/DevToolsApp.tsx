@@ -40,7 +40,7 @@ export function DevToolsApp({ diagnostics, proNudge, renderer }: DevToolsProps) 
                     aria-controls="scramble-issues-panel"
                     onClick={() => setIssuesOpen(true)}
                     className="
-                        inline-flex h-8 cursor-pointer items-center gap-4 rounded-lg bg-white px-3
+                        inline-flex h-8 cursor-pointer items-center gap-2.5 rounded-lg bg-white px-3
                         dev-tools-shadow
                         outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-500
                         dark:bg-neutral-900 dark:shadow-none dark:inset-ring dark:inset-ring-white/10
