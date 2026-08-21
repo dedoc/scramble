@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\OpenApiVisitor;
 
 use Dedoc\Scramble\AbstractOpenApiVisitor;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
-use Dedoc\Scramble\Exceptions\InvalidSchema;
 use Dedoc\Scramble\OpenApiTraverser;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Reference;
