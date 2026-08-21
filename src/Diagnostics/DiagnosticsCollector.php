@@ -21,7 +21,7 @@ class DiagnosticsCollector
 
     public function report(Diagnostic $diagnostic): void
     {
-        $this->reportQuietly($diagnostic);
+        $this->diagnostics->push($this->applyContext($diagnostic));
     }
 
     public function reportOnce(Diagnostic $diagnostic): void
@@ -49,11 +49,6 @@ class DiagnosticsCollector
         return new self($this->diagnostics, new ClassContext($class), $this->seenRegistry);
     }
 
-    public function reportQuietly(Diagnostic $diagnostic): void
-    {
-        $this->diagnostics->push($this->applyContext($diagnostic));
-    }
-
     /** Prefer route over ClassContext when that class is this route's controller. */
     private function applyContext(Diagnostic $diagnostic): Diagnostic
     {
@@ -76,13 +71,5 @@ class DiagnosticsCollector
     public function all(): Collection
     {
         return $this->diagnostics;
-    }
-
-    /** @return list<array<string, mixed>> */
-    public function toArray(): array
-    {
-        return array_values($this->diagnostics
-            ->map(fn (Diagnostic $diagnostic): array => $diagnostic->toArray())
-            ->all());
     }
 }

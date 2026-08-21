@@ -23,11 +23,12 @@ class SchemaValidator
     }
 
     /**
-     * @return list<Diagnostic>
+     * @return array{list<Diagnostic>, ?InvalidSchema}
      */
     public function validate(OpenApiType $type, string $path): array
     {
         $diagnostics = [];
+        $exception = null;
 
         foreach ($this->rules as [$ruleCb, $errorMessageGetter, $ignorePaths, $throw]) {
             if (Str::is($ignorePaths, $path)) {
@@ -46,8 +47,8 @@ class SchemaValidator
                 schema: $type,
             );
 
-            if ($throw) {
-                InvalidSchema::createForSchema(
+            if ($throw && ! $exception) {
+                $exception = InvalidSchema::createForSchema(
                     $message,
                     $path,
                     $type->getAttribute('file'),
@@ -56,6 +57,6 @@ class SchemaValidator
             }
         }
 
-        return $diagnostics;
+        return [$diagnostics, $exception];
     }
 }

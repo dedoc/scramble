@@ -102,7 +102,7 @@ it('prints diagnostics and then pro nudge when analyzing documentation', functio
 it('exports documentation and then prints pro nudge', function () {
     Scramble::routes(fn (Route $r) => str_starts_with($r->uri, 'api/pro-nudge'));
     Scramble::configure()->withDocumentTransformers(function (OpenApi $_, OpenApiContext $context) {
-        $context->diagnostics->reportQuietly(new GenericDiagnostic(DiagnosticSeverity::Error, 'Test diagnostic error'));
+        $context->diagnostics->report(new GenericDiagnostic(DiagnosticSeverity::Error, 'Test diagnostic error'));
     });
 
     RouteFacade::get('api/pro-nudge/data-return', [ProNudge_DataReturn_Controller::class, 'index']);

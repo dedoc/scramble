@@ -25,7 +25,6 @@ use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\InferExtensions\TransformsToResourceCollectionExtension;
 use Dedoc\Scramble\Support\OperationBuilder;
-use Dedoc\Scramble\Support\ProNudge\ProNudgeCollector;
 use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
@@ -43,8 +42,7 @@ class Generator
 
     public function __construct(
         private OperationBuilder $operationBuilder,
-    ) {
-    }
+    ) {}
 
     public function setThrowExceptions(bool $throwExceptions): static
     {
@@ -65,11 +63,6 @@ class Generator
 
     public function generate(GeneratorConfig $config): GeneratorResult
     {
-        $proNudge = new ProNudgeCollector;
-        $diagnostics = new DiagnosticsCollector;
-
-        $this->configureInference($diagnostics);
-
         $routes = $this->getRoutes($config);
         $config = $this->configureSecurityStrategy($routes, $config);
 
@@ -77,9 +70,8 @@ class Generator
         $context = new OpenApiContext(
             $openApi,
             $config,
-            diagnostics: $diagnostics,
-            proNudge: $proNudge,
         );
+        $this->configureInference($context->diagnostics);
         $typeTransformer = $this->buildTypeTransformer($context);
 
         $operations = $this->generateOperations($context, $typeTransformer);
@@ -94,7 +86,7 @@ class Generator
 
         $this->applyDocumentTransformers($context, $typeTransformer);
 
-        return new GeneratorResult($openApi, $diagnostics, $proNudge);
+        return new GeneratorResult($openApi, $context->diagnostics->all(), $context->proNudge);
     }
 
     public function __invoke(?GeneratorConfig $config = null)
@@ -370,6 +362,7 @@ class Generator
     {
         $traverser = new OpenApiTraverser([$visitor = new SchemaEnforceVisitor(
             $context->diagnostics->forRoute($route),
+            $this->throwExceptions,
         )]);
 
         return [$traverser, $visitor];

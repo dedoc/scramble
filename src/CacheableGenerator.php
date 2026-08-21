@@ -30,7 +30,7 @@ class CacheableGenerator
     private function getCachedResult(GeneratorConfig $config): ?GeneratorResult
     {
         $store = config('scramble.cache.store');
-        $key = static::cacheKey($config);
+        $key = self::cacheKey($config);
 
         // @todo move to constructor so self cannot be created without them?
         if (! is_string($store) || ! is_string($key)) {
@@ -42,27 +42,16 @@ class CacheableGenerator
 
     private function getValidCachedResult(string $store, string $key): ?GeneratorResult
     {
-        if (! $cachedPayload = cache()->store($store)->get($key)) {
+        if (cache()->store($store)->get(self::versionKey($key)) !== static::CACHE_VERSION) {
             return null;
         }
 
-        if (! is_array($cachedPayload)) {
+        if (! $cachedResult = cache()->store($store)->get($key)) {
             return null;
         }
 
-        if (
-            ! array_key_exists('_version', $cachedPayload)
-            || ! array_key_exists('payload', $cachedPayload)
-        ) {
-            return null;
-        }
-
-        if ($cachedPayload['_version'] !== static::CACHE_VERSION) {
-            return null;
-        }
-
-        return $cachedPayload['payload'] instanceof GeneratorResult
-            ? $cachedPayload['payload']
+        return $cachedResult instanceof GeneratorResult
+            ? $cachedResult
             : null;
     }
 
@@ -72,13 +61,14 @@ class CacheableGenerator
     public static function store(GeneratorConfig $config, GeneratorResult $result): void
     {
         $store = config('scramble.cache.store');
-        $key = static::cacheKey($config);
+        $key = self::cacheKey($config);
 
         if (! is_string($store) || ! is_string($key)) {
             return;
         }
 
-        cache()->store($store)->forever($key, static::prepareCachePayload($result));
+        cache()->store($store)->forever($key, $result);
+        cache()->store($store)->forever(self::versionKey($key), static::CACHE_VERSION);
     }
 
     /**
@@ -87,12 +77,13 @@ class CacheableGenerator
     public static function forget(GeneratorConfig $config): void
     {
         $store = config('scramble.cache.store');
-        $key = static::cacheKey($config);
+        $key = self::cacheKey($config);
 
         if (! is_string($store) || ! is_string($key)) {
             return;
         }
 
+        cache()->store($store)->forget(self::versionKey($key));
         cache()->store($store)->forget($key);
     }
 
@@ -109,14 +100,8 @@ class CacheableGenerator
         return $key;
     }
 
-    /**
-     * @return array{version: integer, payload: GeneratorResult}
-     */
-    private static function prepareCachePayload(GeneratorResult $result): array
+    private static function versionKey(string $key): string
     {
-        return [
-            '_version' => static::CACHE_VERSION,
-            'payload' => $result,
-        ];
+        return $key.':_version';
     }
 }

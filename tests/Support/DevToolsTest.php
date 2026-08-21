@@ -45,13 +45,13 @@ it('serializes a missing pro nudge as null', function () {
 
 it('serializes diagnostics for the dev tools payload', function () {
     $diagnostics = new DiagnosticsCollector;
-    $diagnostics->reportQuietly(new GenericDiagnostic(
+    $diagnostics->report(new GenericDiagnostic(
         DiagnosticSeverity::Error,
         'Schema `Dedoc\Scramble\Support\Generator\Types\UnknownType` is not allowed.',
     ));
-    $diagnostics->reportQuietly(new GenericDiagnostic(DiagnosticSeverity::Warning, 'Incomplete documentation'));
+    $diagnostics->report(new GenericDiagnostic(DiagnosticSeverity::Warning, 'Incomplete documentation'));
 
-    expect($diagnostics->toArray())->toBe([
+    expect($diagnostics->all()->toArray())->toBe([
         [
             'key' => 'GEN001',
             'code' => 'GEN001',
@@ -76,13 +76,13 @@ it('serializes diagnostics for the dev tools payload', function () {
 it('serializes route context for grouping diagnostics', function () {
     $route = Route::patch('api/user/{user}', [DevToolsTestController::class, 'update']);
     $diagnostics = new DiagnosticsCollector;
-    $diagnostics->reportQuietly(
+    $diagnostics->report(
         (new GenericDiagnostic(DiagnosticSeverity::Warning, 'Incomplete documentation'))
             ->withContext(RouteContext::fromRoute($route))
     );
     $diagnostics = unserialize(serialize($diagnostics));
 
-    expect($diagnostics->toArray()[0]['context'])->toBe([
+    expect($diagnostics->all()->toArray()[0]['context'])->toBe([
         'key' => 'route:PATCH:api/user/{user}:DevToolsTestController@update',
         'type' => 'route',
         'label' => '/api/user/{user}',

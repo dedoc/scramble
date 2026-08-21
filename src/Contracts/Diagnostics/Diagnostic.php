@@ -6,8 +6,12 @@ use Dedoc\Scramble\Diagnostics\ClassContext;
 use Dedoc\Scramble\Diagnostics\CodeLocation;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\RouteContext;
+use Illuminate\Contracts\Support\Arrayable;
 
-interface Diagnostic
+/**
+ * @extends Arrayable<string, mixed>
+ */
+interface Diagnostic extends Arrayable
 {
     public function key(): string;
 
@@ -22,9 +26,6 @@ interface Diagnostic
     public function codeLocation(): ?CodeLocation;
 
     public function tip(): ?string;
-
-    /** @return array<string, mixed> */
-    public function toArray(): array;
 
     /**
      * @return list<array{0: string, 1: string}>

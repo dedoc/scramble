@@ -6,6 +6,7 @@ use Dedoc\Scramble\Console\Commands\ClearDocumentationCache;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
 use Dedoc\Scramble\Generator;
+use Dedoc\Scramble\GeneratorResult;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\ProNudge\ProNudgeSignal;
 use Dedoc\Scramble\Support\RouteInfo;
@@ -28,24 +29,23 @@ it('returns cached documentation when cache is configured', function () {
     $cacheableGenerator = app(CacheableGenerator::class);
     $config = Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
-    $expected = $generator($config);
-
-    Cache::store('array')->forever(
-        'scramble.openapi.test:'.Scramble::DEFAULT_API,
-        $expected,
+    $expected = $generator->generate($config);
+    $expected->diagnostics->push(
+        new GenericDiagnostic(DiagnosticSeverity::Error, 'Cached diagnostic')
     );
-
-    $cacheableGenerator->diagnostics()->reportQuietly(
-        new GenericDiagnostic(DiagnosticSeverity::Error, 'Stale diagnostic')
-    );
-    $cacheableGenerator->proNudge()->record(
+    $expected->proNudge->record(
         ProNudgeSignal::QueryBuilder,
         new RouteInfo(Route::get('/users', fn () => []), 'GET'),
     );
 
-    expect($cacheableGenerator($config))->toBe($expected)
-        ->and($cacheableGenerator->diagnostics()->all())->toBeEmpty()
-        ->and($cacheableGenerator->proNudge()->hasAny())->toBeFalse();
+    CacheableGenerator::store($config, $expected);
+
+    $actual = $cacheableGenerator->generate($config);
+
+    expect($actual)->toBe($expected)
+        ->and($cacheableGenerator($config))->toBe($expected->openApi->toArray())
+        ->and($actual->diagnostics)->toHaveCount(1)
+        ->and($actual->proNudge->message())->not->toBeNull();
 });
 
 it('generates documentation on cache miss without storing', function () {
@@ -85,21 +85,29 @@ it('caches documentation for all apis by default', function () {
 it('caches documentation using scramble:cache command', function () {
     $generator = app(Generator::class);
     $config = Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
-    $expected = $generator($config);
+    $expected = $generator->generate($config);
 
     artisan(CacheDocumentation::class, ['--api' => [Scramble::DEFAULT_API]])->assertOk();
 
-    expect(Cache::store('array')->get('scramble.openapi.test:'.Scramble::DEFAULT_API))->toBe($expected);
+    $cached = Cache::store('array')->get('scramble.openapi.test:'.Scramble::DEFAULT_API);
+
+    expect($cached)->toBeInstanceOf(GeneratorResult::class)
+        ->and(Cache::store('array')->get('scramble.openapi.test:'.Scramble::DEFAULT_API.':_version'))
+        ->toBe(CacheableGenerator::CACHE_VERSION)
+        ->and($cached->openApi->toArray())->toBe($expected->openApi->toArray());
 });
 
 it('clears documentation cache using scramble:clear command', function () {
     Cache::store('array')->forever('scramble.openapi.test:'.Scramble::DEFAULT_API, ['openapi' => '3.1.0']);
+    Cache::store('array')->forever('scramble.openapi.test:'.Scramble::DEFAULT_API.':_version', CacheableGenerator::CACHE_VERSION);
 
-    expect(Cache::store('array')->has('scramble.openapi.test:'.Scramble::DEFAULT_API))->toBeTrue();
+    expect(Cache::store('array')->has('scramble.openapi.test:'.Scramble::DEFAULT_API))->toBeTrue()
+        ->and(Cache::store('array')->has('scramble.openapi.test:'.Scramble::DEFAULT_API.':_version'))->toBeTrue();
 
     artisan(ClearDocumentationCache::class, ['--api' => [Scramble::DEFAULT_API]])->assertOk();
 
-    expect(Cache::store('array')->has('scramble.openapi.test:'.Scramble::DEFAULT_API))->toBeFalse();
+    expect(Cache::store('array')->has('scramble.openapi.test:'.Scramble::DEFAULT_API))->toBeFalse()
+        ->and(Cache::store('array')->has('scramble.openapi.test:'.Scramble::DEFAULT_API.':_version'))->toBeFalse();
 });
 
 it('clears documentation cache for all apis by default', function () {
@@ -110,12 +118,16 @@ it('clears documentation cache for all apis by default', function () {
     ]);
 
     Cache::store('array')->forever('scramble.openapi.test:'.Scramble::DEFAULT_API, ['openapi' => '3.1.0']);
+    Cache::store('array')->forever('scramble.openapi.test:'.Scramble::DEFAULT_API.':_version', CacheableGenerator::CACHE_VERSION);
     Cache::store('array')->forever("scramble.openapi.test:{$api}", ['openapi' => '3.1.0']);
+    Cache::store('array')->forever("scramble.openapi.test:{$api}:_version", CacheableGenerator::CACHE_VERSION);
 
     artisan(ClearDocumentationCache::class)->assertOk();
 
     expect(Cache::store('array')->has('scramble.openapi.test:'.Scramble::DEFAULT_API))->toBeFalse()
-        ->and(Cache::store('array')->has("scramble.openapi.test:{$api}"))->toBeFalse();
+        ->and(Cache::store('array')->has('scramble.openapi.test:'.Scramble::DEFAULT_API.':_version'))->toBeFalse()
+        ->and(Cache::store('array')->has("scramble.openapi.test:{$api}"))->toBeFalse()
+        ->and(Cache::store('array')->has("scramble.openapi.test:{$api}:_version"))->toBeFalse();
 });
 
 it('returns early when cache store is not configured', function () {
