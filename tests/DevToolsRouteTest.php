@@ -6,7 +6,7 @@ trait EnablesDevToolsRoute
     {
         parent::getEnvironmentSetUp($app);
 
-        $app['config']->set('scramble.dev_tools', true);
+        $app['config']->set('scramble.dev_tools.enabled', true);
         $app['config']->set('scramble.middleware', []);
     }
 }

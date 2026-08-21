@@ -6,7 +6,7 @@ class DevTools
 {
     public static function enabled(): bool
     {
-        return (bool) config('scramble.dev_tools', config('app.debug', false));
+        return (bool) config('scramble.dev_tools.enabled');
     }
 
     public static function assetPath(): string

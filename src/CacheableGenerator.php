@@ -32,7 +32,6 @@ class CacheableGenerator
         $store = config('scramble.cache.store');
         $key = self::cacheKey($config);
 
-        // @todo move to constructor so self cannot be created without them?
         if (! is_string($store) || ! is_string($key)) {
             return null;
         }

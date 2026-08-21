@@ -61,7 +61,9 @@ return [
      * Load Scramble's development tools on documentation pages. An explicit
      * SCRAMBLE_DEV_TOOLS value takes precedence over APP_DEBUG.
      */
-    'dev_tools' => env('SCRAMBLE_DEV_TOOLS', env('APP_DEBUG', false)),
+    'dev_tools' => [
+        'enabled' => env('SCRAMBLE_DEV_TOOLS', env('APP_DEBUG', false)),
+    ],
 
     'renderer' => 'elements',
 

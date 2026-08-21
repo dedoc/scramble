@@ -28,7 +28,7 @@ class GeneratorConfigTest extends TestCase
     protected function resolveApplicationConfiguration($app)
     {
         parent::resolveApplicationConfiguration($app);
-        $app['config']->set('scramble.dev_tools', false);
+        $app['config']->set('scramble.dev_tools.enabled', false);
 
         TestingFeature::run(
             testCase: $this,
