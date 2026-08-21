@@ -26,7 +26,7 @@ it('collects laravel data return type signals', function () {
 
     $result = app(Generator::class)->generate(Scramble::getGeneratorConfig(Scramble::DEFAULT_API));
 
-    expect($result->proNudge->message()['title'])->toBe('1 endpoint returns Laravel Data objects');
+    expect($result->proNudge()->message()['title'])->toBe('1 endpoint returns Laravel Data objects');
 });
 
 it('collects laravel data request body signals', function () {
@@ -37,7 +37,7 @@ it('collects laravel data request body signals', function () {
 
     $result = app(Generator::class)->generate(Scramble::getGeneratorConfig(Scramble::DEFAULT_API));
 
-    expect($result->proNudge->message()['title'])->toBe('1 endpoint accepts Laravel Data objects');
+    expect($result->proNudge()->message()['title'])->toBe('1 endpoint accepts Laravel Data objects');
 });
 
 it('collects query builder usage signals', function () {
@@ -48,7 +48,7 @@ it('collects query builder usage signals', function () {
 
     $result = app(Generator::class)->generate(Scramble::getGeneratorConfig(Scramble::DEFAULT_API));
 
-    expect($result->proNudge->message()['title'])->toBe('1 endpoint uses Spatie Query Builder');
+    expect($result->proNudge()->message()['title'])->toBe('1 endpoint uses Spatie Query Builder');
 });
 
 it('resets pro nudge collector between generator runs', function () {
@@ -59,12 +59,12 @@ it('resets pro nudge collector between generator runs', function () {
     $generator = app(Generator::class);
     $result = $generator->generate(Scramble::getGeneratorConfig(Scramble::DEFAULT_API));
 
-    expect($result->proNudge->message()['title'])->toBe('1 endpoint returns Laravel Data objects');
+    expect($result->proNudge()->message()['title'])->toBe('1 endpoint returns Laravel Data objects');
 
     Scramble::routes(fn (Route $r) => false);
     $result = $generator->generate(Scramble::getGeneratorConfig(Scramble::DEFAULT_API));
 
-    expect($result->proNudge->message())->toBeNull();
+    expect($result->proNudge()->message())->toBeNull();
 });
 
 it('prints pro nudge after export when signals are present', function () {

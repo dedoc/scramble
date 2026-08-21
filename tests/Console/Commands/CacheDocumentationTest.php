@@ -7,6 +7,7 @@ use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\GeneratorResult;
+use Dedoc\Scramble\OldGeneratorResult;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\ProNudge\ProNudgeSignal;
 use Dedoc\Scramble\Support\RouteInfo;
@@ -30,10 +31,10 @@ it('returns cached documentation when cache is configured', function () {
     $config = Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
 
     $expected = $generator->generate($config);
-    $expected->diagnostics->push(
+    $expected->diagnostics()->push(
         new GenericDiagnostic(DiagnosticSeverity::Error, 'Cached diagnostic')
     );
-    $expected->proNudge->record(
+    $expected->proNudge()->record(
         ProNudgeSignal::QueryBuilder,
         new RouteInfo(Route::get('/users', fn () => []), 'GET'),
     );
@@ -43,9 +44,27 @@ it('returns cached documentation when cache is configured', function () {
     $actual = $cacheableGenerator->generate($config);
 
     expect($actual)->toBe($expected)
-        ->and($cacheableGenerator($config))->toBe($expected->openApi->toArray())
-        ->and($actual->diagnostics)->toHaveCount(1)
-        ->and($actual->proNudge->message())->not->toBeNull();
+        ->and($cacheableGenerator($config))->toBe($expected->spec())
+        ->and($actual->diagnostics())->toHaveCount(1)
+        ->and($actual->proNudge()->message())->not->toBeNull();
+});
+
+it('returns documentation cached by an older Scramble version', function () {
+    $cacheableGenerator = app(CacheableGenerator::class);
+    $config = Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
+    $oldSpec = ['openapi' => '3.1.0'];
+
+    Cache::store('array')->forever('scramble.openapi.test:'.Scramble::DEFAULT_API, $oldSpec);
+
+    $actual = $cacheableGenerator->generate($config);
+
+    expect($actual)->toBeInstanceOf(OldGeneratorResult::class)
+        ->and($actual->spec())->toBe($oldSpec)
+        ->and($cacheableGenerator($config))->toBe($oldSpec)
+        ->and($actual->diagnostics())->toHaveCount(1)
+        ->and($actual->diagnostics()->sole()->severity())->toBe(DiagnosticSeverity::Warning)
+        ->and($actual->diagnostics()->sole()->message())->toContain('php artisan scramble:cache')
+        ->and($actual->proNudge()->message())->toBeNull();
 });
 
 it('generates documentation on cache miss without storing', function () {
@@ -94,7 +113,7 @@ it('caches documentation using scramble:cache command', function () {
     expect($cached)->toBeInstanceOf(GeneratorResult::class)
         ->and(Cache::store('array')->get('scramble.openapi.test:'.Scramble::DEFAULT_API.':_version'))
         ->toBe(CacheableGenerator::CACHE_VERSION)
-        ->and($cached->openApi->toArray())->toBe($expected->openApi->toArray());
+        ->and($cached->spec())->toBe($expected->spec());
 });
 
 it('clears documentation cache using scramble:clear command', function () {

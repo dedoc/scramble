@@ -158,7 +158,7 @@ class Scramble
                  * `spec` here is for backward compatibility in case there is a
                  * stale published view that expects it to exist, will be removed in 1.0
                  */
-                'spec' => $result->openApi->toArray(),
+                'spec' => $result->spec(),
                 'config' => $config,
                 'result' => $result,
             ]);

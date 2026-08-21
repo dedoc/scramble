@@ -15,4 +15,21 @@ class GeneratorResult
         public Collection $diagnostics,
         public ProNudgeCollector $proNudge,
     ) {}
+
+    /** @return array<mixed, mixed> */
+    public function spec(): array
+    {
+        return $this->openApi->toArray();
+    }
+
+    /** @return Collection<int, Diagnostic> */
+    public function diagnostics(): Collection
+    {
+        return $this->diagnostics;
+    }
+
+    public function proNudge(): ProNudgeCollector
+    {
+        return $this->proNudge;
+    }
 }

@@ -20,7 +20,7 @@ trait RendersDiagnostics
 {
     private function getDiagnosticsBasedReturnCode(GeneratorResult $result): int
     {
-        $errorCount = $result->diagnostics
+        $errorCount = $result->diagnostics()
             ->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)
             ->count();
 
@@ -30,7 +30,7 @@ trait RendersDiagnostics
     private function renderDiagnostics(GeneratorResult $result, string $successMessage, Closure $issuesMessage): void
     {
         $i = 1;
-        $this->groupDiagnostics($result->diagnostics)->each(function (Collection $groupDiagnostics, string $groupKey) use (&$i) {
+        $this->groupDiagnostics($result->diagnostics())->each(function (Collection $groupDiagnostics, string $groupKey) use (&$i) {
             $this->renderDiagnosticsGroup($groupDiagnostics, $groupKey, $i);
         });
 
@@ -43,7 +43,7 @@ trait RendersDiagnostics
 
     private function renderDiagnosticsSummary(GeneratorResult $result, string $successMessage, Closure $issuesMessage): void
     {
-        $diagnostics = $result->diagnostics;
+        $diagnostics = $result->diagnostics();
 
         $errorCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Error)->count();
         $warningCount = $diagnostics->filter(fn (Diagnostic $d) => $d->severity() === DiagnosticSeverity::Warning)->count();
@@ -71,7 +71,7 @@ trait RendersDiagnostics
 
     private function renderProNudge(GeneratorResult $result): void
     {
-        (new ProNudgeReporter($result->proNudge))->report($this);
+        (new ProNudgeReporter($result->proNudge()))->report($this);
     }
 
     /**

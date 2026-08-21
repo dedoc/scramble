@@ -4,9 +4,9 @@
 @if(\Dedoc\Scramble\Support\DevTools::enabled())
     @php
         $devToolsData = [
-            'diagnostics' => $result->diagnostics->toArray(),
+            'diagnostics' => $result->diagnostics()->toArray(),
             'renderer' => $renderer,
-            'proNudge' => $result->proNudge->message(),
+            'proNudge' => $result->proNudge()->message(),
         ];
     @endphp
 

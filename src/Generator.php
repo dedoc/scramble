@@ -93,8 +93,7 @@ class Generator
     {
         return $this
             ->generate($config ?? Scramble::getGeneratorConfig(Scramble::DEFAULT_API))
-            ->openApi
-            ->toArray();
+            ->spec();
     }
 
     private function generateOperations(OpenApiContext $context, TypeTransformer $typeTransformer): Collection

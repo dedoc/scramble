@@ -10,12 +10,12 @@ class CacheableGenerator
         private Generator $generator,
     ) {}
 
+    /** @return array<mixed, mixed> */
     public function __invoke(?GeneratorConfig $config = null): array
     {
         return $this
             ->generate($config ?? Scramble::getGeneratorConfig(Scramble::DEFAULT_API))
-            ->openApi
-            ->toArray();
+            ->spec();
     }
 
     public function generate(GeneratorConfig $config): GeneratorResult
@@ -41,11 +41,22 @@ class CacheableGenerator
 
     private function getValidCachedResult(string $store, string $key): ?GeneratorResult
     {
+        $cachedResult = rescue(
+            fn () => cache()->store($store)->get($key),
+            report: false,
+        );
+
+        // Older Scramble versions cached the specification array directly and
+        // did not store a version. Keep serving it so upgrades remain seamless.
+        if (is_array($cachedResult)) {
+            return new OldGeneratorResult($cachedResult);
+        }
+
         if (cache()->store($store)->get(self::versionKey($key)) !== static::CACHE_VERSION) {
             return null;
         }
 
-        if (! $cachedResult = cache()->store($store)->get($key)) {
+        if (! $cachedResult) {
             return null;
         }
 
