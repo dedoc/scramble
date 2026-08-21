@@ -1,5 +1,6 @@
 <?php
 
+use Dedoc\Scramble\CacheableGenerator;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
@@ -33,7 +34,7 @@ it('serializes missing pro nudges as an empty object', function () {
     Route::get('_scramble/dev-tools/devtools.js', fn () => '')->name('scramble.dev-tools.asset');
 
     $html = view('scramble::dev-tools', [
-        'diagnostics' => new DiagnosticsCollector,
+        'generator' => app(CacheableGenerator::class),
         'renderer' => 'elements',
     ])->render();
 

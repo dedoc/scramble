@@ -39,16 +39,11 @@ use Throwable;
 
 class Generator
 {
-    public ProNudgeCollector $proNudge;
-
-    public DiagnosticsCollector $diagnostics;
-
     protected bool $throwExceptions = true;
 
     public function __construct(
         private OperationBuilder $operationBuilder,
     ) {
-        $this->resetContext();
     }
 
     public function setThrowExceptions(bool $throwExceptions): static
@@ -58,34 +53,33 @@ class Generator
         return $this;
     }
 
-    private function resetContext(): void
-    {
-        $this->proNudge = new ProNudgeCollector;
-        $this->diagnostics = new DiagnosticsCollector(throwOnError: $this->throwExceptions);
-    }
-
-    private function configureInference(): void
+    private function configureInference(DiagnosticsCollector $diagnostics): void
     {
         Scramble::infer()
             ->configure()
             ->replaceExtensions([
-                new ModelExtension($this->diagnostics),
-                new TransformsToResourceCollectionExtension($this->diagnostics),
+                new ModelExtension($diagnostics),
+                new TransformsToResourceCollectionExtension($diagnostics),
             ]);
     }
 
-    public function __invoke(?GeneratorConfig $config = null)
+    public function generate(GeneratorConfig $config): GeneratorResult
     {
-        $this->resetContext();
-        $this->configureInference();
+        $proNudge = new ProNudgeCollector;
+        $diagnostics = new DiagnosticsCollector(throwOnError: $this->throwExceptions);
 
-        $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
+        $this->configureInference($diagnostics);
 
         $routes = $this->getRoutes($config);
         $config = $this->configureSecurityStrategy($routes, $config);
 
         $openApi = $this->makeOpenApi($config);
-        $context = new OpenApiContext($openApi, $config, diagnostics: $this->diagnostics);
+        $context = new OpenApiContext(
+            $openApi,
+            $config,
+            diagnostics: $diagnostics,
+            proNudge: $proNudge,
+        );
         $typeTransformer = $this->buildTypeTransformer($context);
 
         $operations = $this->generateOperations($context, $typeTransformer);
@@ -100,7 +94,15 @@ class Generator
 
         $this->applyDocumentTransformers($context, $typeTransformer);
 
-        return $openApi->toArray();
+        return new GeneratorResult($openApi, $diagnostics, $proNudge);
+    }
+
+    public function __invoke(?GeneratorConfig $config = null)
+    {
+        return $this
+            ->generate($config ?? Scramble::getGeneratorConfig(Scramble::DEFAULT_API))
+            ->openApi
+            ->toArray();
     }
 
     private function generateOperations(OpenApiContext $context, TypeTransformer $typeTransformer): Collection
@@ -333,7 +335,7 @@ class Generator
     /** @return Operation[] */
     private function routeToOperations(OpenApiContext $context, Route $route, TypeTransformer $typeTransformer): array
     {
-        $operations = $this->operationBuilder->buildAll($context, $route, $typeTransformer, $this->proNudge);
+        $operations = $this->operationBuilder->buildAll($context, $route, $typeTransformer, $context->proNudge);
 
         foreach ($operations as $operation) {
             $this->ensureSchemaTypes($context, $route, $operation);

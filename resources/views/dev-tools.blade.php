@@ -1,9 +1,12 @@
+@php
+/** @var \Dedoc\Scramble\GeneratorResult $result */
+@endphp
 @if(\Dedoc\Scramble\Support\DevTools::enabled())
     @php
         $devToolsData = [
-            'diagnostics' => $diagnostics->toArray(),
+            'diagnostics' => $result->diagnostics->toArray(),
             'renderer' => $renderer,
-            'proNudges' => (object) (isset($proNudge) ? $proNudge->summaries() : []),
+            'proNudges' => (object) $result->proNudge->summaries(),
         ];
     @endphp
 

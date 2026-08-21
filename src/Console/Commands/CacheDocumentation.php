@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Console\Commands;
 
+use Dedoc\Scramble\CacheableGenerator;
 use Dedoc\Scramble\Console\Commands\Concerns\ManagesDocumentationCache;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
@@ -31,10 +32,7 @@ class CacheDocumentation extends Command
         foreach ($this->resolveApis() as $api) {
             $config = Scramble::getGeneratorConfig($api);
 
-            cache()->store($store)->forever(
-                $this->cacheKey($api),
-                $generator($config),
-            );
+            CacheableGenerator::store($config, $generator->generate($config));
 
             $this->info("OpenAPI document cached for [{$api}] API.");
         }
