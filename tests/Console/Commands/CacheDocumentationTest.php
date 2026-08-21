@@ -9,6 +9,7 @@ use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\GeneratorResult;
 use Dedoc\Scramble\OldGeneratorResult;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\ProNudge\ProNudgeSignal;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\Facades\Cache;
@@ -45,6 +46,7 @@ it('returns cached documentation when cache is configured', function () {
 
     expect($actual)->toBe($expected)
         ->and($cacheableGenerator($config))->toBe($expected->spec())
+        ->and($actual->openApi())->toBe($expected->openApi())
         ->and($actual->diagnostics())->toHaveCount(1)
         ->and($actual->proNudge()->message())->not->toBeNull();
 });
@@ -60,6 +62,8 @@ it('returns documentation cached by an older Scramble version', function () {
 
     expect($actual)->toBeInstanceOf(OldGeneratorResult::class)
         ->and($actual->spec())->toBe($oldSpec)
+        ->and($actual->openApi())->toBeInstanceOf(OpenApi::class)
+        ->and($actual->openApi()->version)->toBe('3.1.0')
         ->and($cacheableGenerator($config))->toBe($oldSpec)
         ->and($actual->diagnostics())->toHaveCount(1)
         ->and($actual->diagnostics()->sole()->severity())->toBe(DiagnosticSeverity::Warning)

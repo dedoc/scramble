@@ -19,7 +19,12 @@ class GeneratorResult
     /** @return array<mixed, mixed> */
     public function spec(): array
     {
-        return $this->openApi->toArray();
+        return $this->openApi()->toArray();
+    }
+
+    public function openApi(): OpenApi
+    {
+        return $this->openApi;
     }
 
     /** @return Collection<int, Diagnostic> */

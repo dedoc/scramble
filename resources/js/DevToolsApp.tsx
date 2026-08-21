@@ -48,7 +48,7 @@ export function DevToolsApp({ diagnostics, proNudge, renderer }: DevToolsProps) 
                     "
                 >
                     <div className="flex items-center gap-1.5">
-                        {errorCount === 0 && (
+                        {errorCount === 0 && warningCount === 0 && (
                             <TickIcon className="size-4 shrink-0 fill-emerald-500 dark:fill-emerald-400" />
                         )}
 

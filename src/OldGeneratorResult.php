@@ -5,6 +5,7 @@ namespace Dedoc\Scramble;
 use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
 use Dedoc\Scramble\Diagnostics\DiagnosticSeverity;
 use Dedoc\Scramble\Diagnostics\GenericDiagnostic;
+use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\ProNudge\ProNudgeCollector;
 use Illuminate\Support\Collection;
 
@@ -26,6 +27,11 @@ class OldGeneratorResult extends GeneratorResult
     public function spec(): array
     {
         return $this->oldSpec;
+    }
+
+    public function openApi(): OpenApi
+    {
+        return new OpenApi('3.1.0');
     }
 
     public function diagnostics(): Collection
