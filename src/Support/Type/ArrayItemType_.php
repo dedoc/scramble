@@ -20,6 +20,9 @@ class ArrayItemType_ extends AbstractType
         return ['value'];
     }
 
+    /**
+     * @phpstan-assert-if-true null|int $this->key
+     */
     public function isNumericKey()
     {
         return $this->key === null || is_numeric($this->key);
@@ -32,6 +35,6 @@ class ArrayItemType_ extends AbstractType
 
     public function toString(): string
     {
-        return '';
+        return '<ArrayItemType_>{'.$this->key.': '.$this->value->toString().'}';
     }
 }

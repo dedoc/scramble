@@ -1,4 +1,0 @@
--
-    name: channels
-    in: query
-    schema: { type: object, properties: { publisher: { type: object, properties: { id: { type: integer } } } } }

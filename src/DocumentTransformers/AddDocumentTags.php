@@ -26,28 +26,19 @@ class AddDocumentTags implements DocumentTransformer
     {
         /** @var Collection<string, Tag> $tags */
         $tags = $groupsAttributes->reduce(function (Collection $acc, ReflectionAttribute $attribute) {
-            $arguments = $attribute->getArguments();
+            $group = $attribute->newInstance();
 
-            $name = $arguments['name'] ?? $arguments[0] ?? null;
+            $name = $group->name;
 
             if (! $name) {
                 return $acc;
             }
 
-            $description = $arguments['description'] ?? $arguments[1] ?? null;
-            $weight = $arguments['weight'] ?? $arguments[2] ?? null;
-            $parent = $arguments['parent'] ?? $arguments[3] ?? null;
-            $summary = $arguments['summary'] ?? $arguments[4] ?? null;
-            $kind = $arguments['kind'] ?? $arguments[5] ?? null;
-            $externalDocsUrl = $arguments['externalDocsUrl'] ?? $arguments[6] ?? null;
-            $externalDocsDescription = $arguments['externalDocsDescription'] ?? $arguments[7] ?? null;
-
-            // Use combination of name + parent as unique key to allow same tag name
-            // under different parents (hierarchical groups)
-            $tagKey = $parent ? "{$parent}/{$name}" : $name;
+            $description = $group->description;
+            $weight = $group->weight !== PHP_INT_MAX ? $group->weight : null;
 
             /** @var Tag $tag */
-            $tag = $acc->get($tagKey, new Tag($name));
+            $tag = $acc->get($name, new Tag($name));
 
             if ($description !== null && $tag->description === null) {
                 $tag->description = $description;
@@ -57,44 +48,47 @@ class AddDocumentTags implements DocumentTransformer
                 $tag->setAttribute('weight', $weight);
             }
 
-            if ($parent !== null && $tag->parent === null) {
-                $tag->parent = $parent;
+            if ($group->parent !== null && $tag->parent === null) {
+                $tag->parent = $group->parent;
             }
 
-            if ($summary !== null && $tag->summary === null) {
-                $tag->summary = $summary;
+            if ($group->summary !== null && $tag->summary === null) {
+                $tag->summary = $group->summary;
             }
 
-            if ($kind !== null && $tag->kind === null) {
-                $tag->kind = $kind;
+            if ($group->kind !== null && $tag->kind === null) {
+                $tag->kind = $group->kind;
             }
 
-            if ($externalDocsUrl !== null && $tag->externalDocs === null) {
+            if ($group->externalDocsUrl !== null && $tag->externalDocs === null) {
                 $tag->externalDocs = new ExternalDocumentation(
-                    url: $externalDocsUrl,
-                    description: $externalDocsDescription,
+                    url: $group->externalDocsUrl,
+                    description: $group->externalDocsDescription,
                 );
             }
 
-            $acc->offsetSet($tagKey, $tag);
+            $acc->offsetSet($name, $tag);
 
             return $acc;
         }, collect());
 
-        // Auto-create any missing parent tags referenced by child tags
-        $parentNames = $tags->filter(fn (Tag $tag) => $tag->parent !== null)
-            ->map(fn (Tag $tag) => $tag->parent)
-            ->unique()
-            ->values();
-
-        $existingTagNames = $tags->map(fn (Tag $tag) => $tag->name)->values();
-
-        foreach ($parentNames as $parentName) {
-            if (! $existingTagNames->contains($parentName)) {
-                $tags->offsetSet($parentName, new Tag($parentName));
-            }
-        }
+        $this->addMissingParentTags($tags);
 
         return $tags->sortBy(fn (Tag $t) => $t->getAttribute('weight', INF))->values()->all();
+    }
+
+    /**
+     * A tag naming a parent nothing declares would leave the document invalid: the
+     * spec requires the named parent to exist in the API description.
+     *
+     * @param  Collection<string, Tag>  $tags
+     */
+    private function addMissingParentTags(Collection $tags): void
+    {
+        $tags->pluck('parent')
+            ->filter()
+            ->unique()
+            ->reject(fn (string $parent): bool => $tags->has($parent))
+            ->each(fn (string $parent) => $tags->offsetSet($parent, new Tag($parent)));
     }
 }

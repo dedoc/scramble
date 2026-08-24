@@ -1,5 +1,6 @@
 <?php
 
+use Dedoc\Scramble\Attributes\SchemaName;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
@@ -31,10 +32,37 @@ it('correctly documents when annotated', function () {
     $extension = new CursorPaginatorTypeToSchema($infer, $transformer, $this->components, $this->context);
 
     expect($extension->shouldHandle($type))->toBeTrue();
-    expect($extension->toResponse($type)->toArray())->toMatchSnapshot();
+    expect($extension->toResponse($type)->toArray())->toMatchJsonSnapshot();
 });
 
 class CursorPaginatorTypeToSchemaTest_Resource extends JsonResource
+{
+    public function toArray(Request $request)
+    {
+        return ['id' => 1];
+    }
+}
+
+it('uses SchemaName attribute value in response description', function () {
+    $type = new Generic(CursorPaginator::class, [
+        new ObjectType(CursorPaginatorTypeToSchemaTest_ResourceWithSchemaName::class),
+    ]);
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
+        JsonResourceTypeToSchema::class,
+        CursorPaginatorTypeToSchema::class,
+    ]);
+    $extension = new CursorPaginatorTypeToSchema($infer, $transformer, $this->components, $this->context);
+
+    $response = $extension->toResponse($type)->toArray();
+
+    expect($response['description'])
+        ->toBe('Paginated set of `CursorPaginatorSchemaName`')
+        ->and($response['content']['application/json']['schema']['properties']['data']['items']['$ref'] ?? null)
+        ->toBe('#/components/schemas/CursorPaginatorSchemaName');
+});
+#[SchemaName('CursorPaginatorSchemaName')]
+class CursorPaginatorTypeToSchemaTest_ResourceWithSchemaName extends JsonResource
 {
     public function toArray(Request $request)
     {

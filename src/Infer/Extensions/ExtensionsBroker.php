@@ -42,7 +42,10 @@ class ExtensionsBroker
      */
     private array $priorities = [];
 
-    public function __construct(public readonly array $extensions = [])
+    /**
+     * @param  InferExtension[]  $extensions
+     */
+    public function __construct(public array $extensions = [])
     {
         $this->buildExtensions();
     }
@@ -52,7 +55,27 @@ class ExtensionsBroker
      */
     public function priority(array $priority): self
     {
-        $this->priorities = array_merge($this->priorities, $priority);
+        $this->priorities = array_values(array_unique(array_merge($this->priorities, $priority)));
+
+        $this->buildExtensions();
+
+        return $this;
+    }
+
+    /**
+     * @param  InferExtension[]  $extensions
+     */
+    public function replaceExtensions(array $extensions): self
+    {
+        $byClass = [];
+        foreach ($extensions as $extension) {
+            $byClass[$extension::class] = $extension;
+        }
+
+        $this->extensions = array_map(
+            fn (InferExtension $extension) => $byClass[$extension::class] ?? $extension,
+            $this->extensions,
+        );
 
         $this->buildExtensions();
 

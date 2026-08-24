@@ -3,6 +3,8 @@
 use Dedoc\Scramble\Infer\Analyzer\ClassAnalyzer;
 use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder;
+use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
+use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
@@ -10,11 +12,18 @@ use Dedoc\Scramble\Support\Type\AbstractType;
 use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
+use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\Union;
+use Dedoc\Scramble\Tests\Files\SampleUserModel;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 beforeEach(function () {
     $this->index = app(Index::class);
@@ -51,6 +60,277 @@ it('infers new calls on child class', function (string $method, string $expected
     ['newStaticCall', 'Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar<string(foo)>'],
     ['newParentCall', 'Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo'],
 ]);
+
+/*
+ * Method calls
+ */
+it('support method calls on unions', function () {
+    $union = Union::wrap([
+        new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class),
+        new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo::class),
+    ]);
+
+    $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new MethodCallReferenceType(
+        $union,
+        'someMethod',
+        []
+    ));
+
+    expect($result->toString())->toBe('string(bar)|string(foo)');
+});
+
+it('support method calls on unions with null', function () {
+    $union = Union::wrap([
+        new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class),
+        new NullType,
+    ]);
+
+    $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new MethodCallReferenceType(
+        $union,
+        'someMethod',
+        []
+    ));
+
+    expect($result->toString())->toBe('string(bar)');
+});
+
+it('resolves a captured method call only once across closures', function () {
+    $counter = new CountingMethodExtension_ReferenceTypeResolverTest;
+    $callbacks = implode(",\n", array_fill(0, 100, '            fn () => $computed'));
+
+    $result = analyzeFile(<<<PHP
+<?php
+
+class ComputeService_ReferenceTypeResolverTest
+{
+    public function compute(): int
+    {
+        return 42;
+    }
+}
+
+class Consumer_ReferenceTypeResolverTest
+{
+    public function callbacks(): array
+    {
+        \$computed = (new ComputeService_ReferenceTypeResolverTest)->compute();
+
+        return [
+{$callbacks}
+        ];
+    }
+}
+PHP, [$counter]);
+
+    expect($result->getClassDefinition('Consumer_ReferenceTypeResolverTest'))
+        ->not->toBeNull()
+        ->and($counter->computeTypeResolutions)->toBe(1);
+});
+
+class CountingMethodExtension_ReferenceTypeResolverTest implements MethodReturnTypeExtension
+{
+    public int $computeTypeResolutions = 0;
+
+    public function shouldHandle(ObjectType $type): bool
+    {
+        return $type->name === 'ComputeService_ReferenceTypeResolverTest';
+    }
+
+    public function getMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        if ($event->name === 'compute') {
+            $this->computeTypeResolutions++;
+        }
+
+        return null;
+    }
+}
+
+it('prunes union members when method does not exist on known class', function () {
+    $type = getStatementType(
+        '(new '.ReferenceTypeResolverUnionServiceTest::class.'())->get(true)->orderBy("name")'
+    );
+
+    expect($type->toString())->toBe(
+        'Illuminate\Database\Eloquent\Builder<'.SampleUserModel::class.'>'
+    );
+})->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
+
+it('infers paginator type through union service builder chain', function () {
+    $type = getStatementType(
+        '(new '.ReferenceTypeResolverUnionServiceTest::class.'())->get(true)->orderBy("name")->paginate(4)'
+    );
+
+    expect($type->toString())->toBe(
+        'Illuminate\Pagination\LengthAwarePaginator<int, '.SampleUserModel::class.'>'
+    );
+})->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
+
+it('supports nullsafe method call', function () {
+    $result = analyzeFile(<<<'EOD'
+<?php
+
+class Foo {
+    public function foo () {
+        return 42;
+    }
+}
+EOD);
+
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new GlobalScope($result->index),
+            new MethodCallReferenceType(
+                Union::wrap([
+                    new ObjectType('Foo'),
+                    new NullType,
+                ]),
+                'foo',
+                [],
+                isNullsafe: true,
+            )
+        );
+
+    expect($type->toString())->toBe('int(42)|null');
+});
+
+it('supports deep nullsafe call chain', function () {
+    $result = analyzeFile(<<<'EOD'
+<?php
+
+class Foo {
+    public function slf () {
+        return $this;
+    }
+    public function foo () {
+        return 42;
+    }
+}
+EOD);
+
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new GlobalScope($result->index),
+            // $obj?->slf()->slf()->foo()
+            new MethodCallReferenceType(
+                new MethodCallReferenceType(
+                    new MethodCallReferenceType(
+                        Union::wrap([
+                            new ObjectType('Foo'),
+                            new NullType,
+                        ]),
+                        'slf',
+                        [],
+                        isNullsafe: true,
+                    ),
+                    'slf',
+                    [],
+                ),
+                'foo',
+                [],
+            )
+        );
+
+    expect($type->toString())->toBe('int(42)|null');
+});
+
+it('supports deep nullsafe call chain when callee is not nullable for sure', function () {
+    $result = analyzeFile(<<<'EOD'
+<?php
+
+class Foo {
+    public function slf () {
+        return $this;
+    }
+    public function foo () {
+        return 42;
+    }
+}
+EOD);
+
+    $type = ReferenceTypeResolver::getInstance()
+        ->resolve(
+            new GlobalScope($result->index),
+            // $obj?->slf()->slf()->foo()
+            new MethodCallReferenceType(
+                new MethodCallReferenceType(
+                    new MethodCallReferenceType(
+                        new ObjectType('Foo'),
+                        'slf',
+                        [],
+                        isNullsafe: true,
+                    ),
+                    'slf',
+                    [],
+                ),
+                'foo',
+                [],
+            )
+        );
+
+    expect($type->toString())->toBe('int(42)');
+});
+
+class ReferenceTypeResolverUnionServiceTest
+{
+    /**
+     * @return (Builder<SampleUserModel>|EloquentCollection<int, SampleUserModel>)
+     */
+    public function get(bool $toBuilder): Builder|EloquentCollection
+    {
+        $query = SampleUserModel::query();
+
+        return $toBuilder ? $query : $query->get();
+    }
+}
+
+/*
+ * Callable calls
+ */
+it('support callable calls on unions with non-callable member', function () {
+    $union = Union::wrap([
+        new FunctionType('_', returnType: new LiteralStringType('foo')),
+        new \Dedoc\Scramble\Support\Type\IntegerType,
+    ]);
+
+    $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new CallableCallReferenceType(
+        $union,
+        []
+    ));
+
+    expect($result->toString())->toBe('string(foo)');
+});
+
+/*
+ * Property fetches
+ */
+it('support property fetches on unions with null', function () {
+    $union = Union::wrap([
+        new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class),
+        new NullType,
+    ]);
+
+    $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new PropertyFetchReferenceType(
+        $union,
+        'prop',
+    ));
+
+    expect($result->toString())->toBe('string');
+});
+
+it('support property fetches on unions with int', function () {
+    $union = Union::wrap([
+        new ObjectType(\Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Bar::class),
+        new \Dedoc\Scramble\Support\Type\IntegerType,
+    ]);
+
+    $result = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new PropertyFetchReferenceType(
+        $union,
+        'prop',
+    ));
+
+    expect($result->toString())->toBe('string');
+});
 
 /*
  * Static method calls (should work the same for both static and non-static methods)
@@ -183,6 +463,11 @@ it('allows overriding types accepted by another type', function () {
     );
 
     $def = new FunctionLikeDefinition($functionType);
+
+    FunctionLikeAstDefinitionBuilder::resolveFunctionParameterDefaults(
+        new GlobalScope,
+        $def,
+    );
 
     FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences(
         new GlobalScope,

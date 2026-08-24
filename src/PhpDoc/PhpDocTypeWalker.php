@@ -9,6 +9,7 @@ use PHPStan\PhpDocParser\Ast\Type\ArrayTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IntersectionTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\NullableTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 
@@ -56,6 +57,12 @@ class PhpDocTypeWalker
         }
 
         if ($type instanceof ArrayTypeNode) {
+            $callVisitors($type, 'enter');
+            static::traverse($type->type, $visitors);
+            $callVisitors($type, 'leave');
+        }
+
+        if ($type instanceof NullableTypeNode) {
             $callVisitors($type, 'enter');
             static::traverse($type->type, $visitors);
             $callVisitors($type, 'leave');

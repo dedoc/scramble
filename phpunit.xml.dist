@@ -5,12 +5,12 @@
       <directory>tests</directory>
     </testsuite>
   </testsuites>
-  <coverage>
-    <report>
-      <html outputDirectory="build/coverage"/>
-      <text outputFile="build/coverage.txt"/>
-    </report>
-  </coverage>
+<!--  <coverage>-->
+<!--    <report>-->
+<!--      <html outputDirectory="build/coverage"/>-->
+<!--      <text outputFile="build/coverage.txt"/>-->
+<!--    </report>-->
+<!--  </coverage>-->
   <logging>
     <junit outputFile="build/report.junit.xml"/>
   </logging>

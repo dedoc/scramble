@@ -58,6 +58,6 @@ class AnalysisResult
             ]),
         );
 
-        return (new ReferenceTypeResolver($this->index))->resolve($scope, $unresolvedType);
+        return (new ReferenceTypeResolver($this->index))->resolve($scope, $unresolvedType)->setOriginal($unresolvedType);
     }
 }

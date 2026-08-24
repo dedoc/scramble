@@ -167,7 +167,7 @@ class FunctionLikeHandler implements CreatesScope
 
         if (
             $callToParentConstruct
-            && $parentFqn
+            && $parentFqn // @phpstan-ignore booleanAnd.rightAlwaysTrue
             && ($parentDefinition = $scope->index->getClass($parentFqn))
             && ($parentConstructorDefinition = $parentDefinition->getMethodDefinition('__construct'))
         ) {

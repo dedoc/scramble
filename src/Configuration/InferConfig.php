@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Configuration;
 
 use Dedoc\Scramble\Infer\Configuration\ClassLike;
 use Dedoc\Scramble\Infer\Configuration\DefinitionMatcher;
+use Dedoc\Scramble\Infer\Context;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
@@ -86,5 +87,12 @@ class InferConfig
         }
 
         return ! Str::contains($path, DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR);
+    }
+
+    public function replaceExtensions(array $inferExtensions): self
+    {
+        Context::getInstance()->extensionsBroker->replaceExtensions($inferExtensions);
+
+        return $this;
     }
 }

@@ -13,7 +13,7 @@ class FunctionLikeDefinition
 
     public bool $referencesResolved = false;
 
-    private ?Generic $selfOutType;
+    public ?Generic $selfOutType;
 
     /**
      * @param  array<string, Type>  $argumentsDefaults  A map where the key is arg name and value is a default type.

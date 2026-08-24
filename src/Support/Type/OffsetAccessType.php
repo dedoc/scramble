@@ -18,7 +18,11 @@ class OffsetAccessType extends AbstractType implements LateResolvingType
 
     public function resolve(): Type
     {
-        return $this->type->getOffsetValueType($this->offset);
+        $type = $this->type->getOffsetValueType($this->offset);
+
+        return TypeHelper::mayBeUndefinedInCoalesce($this->type)
+            ? TypeHelper::markMayBeUndefinedInCoalesce($type)
+            : $type;
     }
 
     public function isResolvable(): bool

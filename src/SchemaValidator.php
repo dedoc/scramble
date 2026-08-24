@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble;
 
+use Dedoc\Scramble\Contracts\Diagnostics\Diagnostic;
+use Dedoc\Scramble\Diagnostics\Schema\Se001SchemaRuleFailedDiagnostic;
 use Dedoc\Scramble\Exceptions\InvalidSchema;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Illuminate\Support\Str;
@@ -9,7 +11,7 @@ use Illuminate\Support\Str;
 class SchemaValidator
 {
     /**
-     * @param  array<int, array{callable(OpenApiType): bool, string}>  $rules
+     * @param  array<int, array{callable(OpenApiType, string): bool, (callable(OpenApiType, string): string)|string, array<string>, bool}>  $rules
      */
     public function __construct(
         private array $rules,
@@ -21,13 +23,12 @@ class SchemaValidator
     }
 
     /**
-     * @return InvalidSchema[]
-     *
-     * @throws InvalidSchema
+     * @return array{list<Diagnostic>, ?InvalidSchema}
      */
     public function validate(OpenApiType $type, string $path): array
     {
-        $exceptions = [];
+        $diagnostics = [];
+        $exception = null;
 
         foreach ($this->rules as [$ruleCb, $errorMessageGetter, $ignorePaths, $throw]) {
             if (Str::is($ignorePaths, $path)) {
@@ -38,14 +39,24 @@ class SchemaValidator
                 continue;
             }
 
-            throw_if(
-                $throw,
-                $exception = InvalidSchema::createForSchema(value($errorMessageGetter, $type, $path), $path, $type),
+            $message = value($errorMessageGetter, $type, $path);
+
+            $diagnostics[] = Se001SchemaRuleFailedDiagnostic::forSchema(
+                message: $message,
+                jsonPointer: $path,
+                schema: $type,
             );
 
-            $exceptions[] = $exception;
+            if ($throw && ! $exception) {
+                $exception = InvalidSchema::createForSchema(
+                    $message,
+                    $path,
+                    $type->getAttribute('file'),
+                    $type->getAttribute('line'),
+                );
+            }
         }
 
-        return $exceptions;
+        return [$diagnostics, $exception];
     }
 }

@@ -4,6 +4,9 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
+use Dedoc\Scramble\Diagnostics\Model\Md001PendingMigrationsDiagnostic;
+use Dedoc\Scramble\Diagnostics\Model\Md002MissingResourceDiagnostic;
 use Dedoc\Scramble\Infer\AutoResolvingArgumentTypeBag;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
@@ -11,12 +14,16 @@ use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
 use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\InferExtensions\Concerns\ExtractsLiteralArrayKeys;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\AbstractType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
+use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
 use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
@@ -25,21 +32,30 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use ReflectionClass;
 use Throwable;
 
 class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension, StaticMethodReturnTypeExtension
 {
-    private static $cache;
+    use ExtractsLiteralArrayKeys;
+
+    /** @var array<string, mixed> */
+    private array $cache = [];
+
+    public function __construct(
+        private ?DiagnosticsCollector $diagnostics = null,
+    ) {}
 
     public function shouldHandle(ObjectType|string $type): bool
     {
@@ -59,29 +75,67 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     public function getPropertyType(PropertyFetchEvent $event): ?Type
     {
+        $propertyType = $event->getDefinition()
+            ?->getPropertyDefinition($event->getName())
+            ?->type;
+
+        $annotatedType = $propertyType?->getAttribute('source') === 'phpDoc'
+            ? $propertyType
+            : null;
+
         if (! $this->hasProperty($event->getInstance(), $event->getName())) {
-            return null;
+            return $annotatedType;
         }
 
         $info = $this->getModelInfo($event->getInstance());
 
         if ($attribute = $info->get('attributes')->get($event->getName())) {
-            $baseType = $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '')
+            $baseType = $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '', $event->scope)
                 ?? $this->getAttributeTypeFromDbColumnType($attribute['type'], $attribute['driver'])
                 ?? new UnknownType("Virtual attribute ({$attribute['name']}) type inference not supported.");
 
-            if ($attribute['nullable']) {
-                return Union::wrap([$baseType, new NullType]);
-            }
+            $inferredType = $attribute['nullable']
+                ? Union::wrap([$baseType, new NullType])
+                : $baseType;
 
-            return $baseType;
+            return $this->refineAnnotatedType($annotatedType, $inferredType);
         }
 
         if ($relation = $info->get('relations')->get($event->getName())) {
-            return $this->getRelationType($relation);
+            $inferredType = $this->getRelationType($relation);
+
+            return $this->refineAnnotatedType($annotatedType, $inferredType);
         }
 
         throw new \LogicException('Should not happen');
+    }
+
+    private function refineAnnotatedType(?Type $annotatedType, Type $inferredType): Type
+    {
+        if (! $annotatedType?->accepts($inferredType)) {
+            return $annotatedType ?? $inferredType;
+        }
+
+        if (! $annotatedType instanceof Union) {
+            return $inferredType;
+        }
+
+        $inferredTypes = $inferredType instanceof Union
+            ? $inferredType->types
+            : [$inferredType];
+
+        $refinedTypes = collect($annotatedType->types)
+            ->flatMap(function (Type $annotatedMember) use ($inferredTypes) {
+                $acceptedInferredTypes = array_filter(
+                    $inferredTypes,
+                    fn (Type $inferredMember) => $annotatedMember->accepts($inferredMember),
+                );
+
+                return $acceptedInferredTypes ?: [$annotatedMember];
+            })
+            ->all();
+
+        return Union::wrap($refinedTypes)->mergeAttributes($annotatedType->attributes());
     }
 
     /**
@@ -114,20 +168,25 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         return new StringType;
     }
 
-    /**
-     * @todo Add support for custom castables.
-     */
-    private function getAttributeTypeFromEloquentCasts(string $cast): ?AbstractType
+    private function getAttributeTypeFromEloquentCasts(string $cast, Scope $scope): ?Type
     {
         if ($cast && enum_exists($cast)) {
             return new ObjectType($cast);
         }
 
         $castAsType = Str::before($cast, ':');
+        if ($castAsType === '') {
+            return null;
+        }
+
         $castAsParameters = str($cast)->after("{$castAsType}:")->explode(',');
 
-        if (Str::startsWith($castAsType, 'encrypted:')) {
+        if (Str::startsWith($cast, 'encrypted:')) {
             $castAsType = $castAsParameters->first(); // array, collection, json, object
+
+            if (! is_string($castAsType)) {
+                return null;
+            }
         }
 
         return match ($castAsType) {
@@ -144,8 +203,18 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             ]),
             'date', 'datetime', 'custom_datetime' => $this->addDateFormatForCast(new ObjectType(Carbon::class), $castAsParameters),
             'immutable_date', 'immutable_datetime', 'immutable_custom_datetime' => $this->addDateFormatForCast(new ObjectType(CarbonImmutable::class), $castAsParameters),
-            default => null,
+            default => $this->getAttributeTypeFromCustomCast($castAsType, $scope),
         };
+    }
+
+    private function getAttributeTypeFromCustomCast(string $cast, Scope $scope): ?Type
+    {
+        $returnType = $scope->index
+            ->getClass($cast)
+            ?->getMethod('get')
+            ?->getReturnType();
+
+        return $returnType?->clone();
     }
 
     /**
@@ -165,16 +234,17 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         return $type;
     }
 
-    private function getRelationType(array $relation)
+    private function getRelationType(array $relation): Type
     {
         if ($isManyRelation = Str::contains($relation['type'], 'Many')) {
-            return new Generic(
-                \Illuminate\Database\Eloquent\Collection::class,
-                [new IntegerType, new ObjectType($relation['related'])]
-            );
+            return ModelCollectionTypeResolver::resolve(new ObjectType($relation['related']));
         }
 
-        return new ObjectType($relation['related']);
+        $relatedModelType = new ObjectType($relation['related']);
+
+        return ($relation['nullable'] ?? false)
+            ? Union::wrap([$relatedModelType, new NullType])
+            : $relatedModelType;
     }
 
     protected function getToArrayMethodReturnType(MethodCallEvent $event): ?Type
@@ -234,18 +304,204 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         );
     }
 
+    protected function getOnlyMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        if ($this->getRealHasAttributesMethodDefinitionClassName($event, 'only') !== Model::class) {
+            return null;
+        }
+
+        $keyTypes = $this->extractKeyTypesFromEvent($event, 'attributes', 0);
+
+        if ($keyTypes === null) {
+            return null;
+        }
+
+        $items = [];
+
+        foreach ($keyTypes as $keyType) {
+            if (! $literalKey = $this->getLiteralKey($keyType)) {
+                return null;
+            }
+
+            $propertyType = $this->getPropertyType(
+                new PropertyFetchEvent($event->getInstance(), (string) $literalKey, $event->scope),
+            );
+
+            if (! $propertyType) {
+                return null;
+            }
+
+            $items[] = new ArrayItemType_(
+                key: $literalKey,
+                value: $propertyType,
+            );
+        }
+
+        return new KeyedArrayType($items);
+    }
+
+    protected function getExceptMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        if ($this->getRealHasAttributesMethodDefinitionClassName($event, 'except') !== Model::class) {
+            return null;
+        }
+
+        $keyTypes = $this->extractKeyTypesFromEvent($event, 'attributes', 0);
+
+        if ($keyTypes === null) {
+            return null;
+        }
+
+        if (! $attributesType = $this->getModelAttributesArrayType($event)) {
+            return null;
+        }
+
+        return $this->unsetKeysFromType($attributesType, $keyTypes);
+    }
+
+    protected function getModelAttributesArrayType(MethodCallEvent $event): ?KeyedArrayType
+    {
+        $items = $this->getModelInfo($event->getInstance())
+            ->get('attributes', collect())
+            ->map(function ($_, $name) use ($event) {
+                $propertyType = $this->getPropertyType(
+                    new PropertyFetchEvent($event->getInstance(), $name, $event->scope),
+                );
+
+                if (! $propertyType) {
+                    return null;
+                }
+
+                return new ArrayItemType_($name, $propertyType);
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        if (! count($items)) {
+            return null;
+        }
+
+        return new KeyedArrayType($items);
+    }
+
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         return match ($event->getName()) {
             'toArray' => $this->getToArrayMethodReturnType($event),
+            'relationLoaded' => $this->getRelationLoadedMethodReturnType($event),
             'getOriginal' => $this->getGetOriginalMethodReturnType($event),
+            'only' => $this->getOnlyMethodReturnType($event),
+            'except' => $this->getExceptMethodReturnType($event),
+            'resolveResourceFromAttribute' => $this->getResolveResourceFromAttributeMethodReturnType($event),
+            'guessResource' => $this->getGuessResourceMethodReturnType($event),
+            'toResource' => $this->getToResourceMethodReturnType($event),
             default => $this->maybeProxyMethodCallToBuilder($event),
         };
     }
 
+    protected function getRelationLoadedMethodReturnType(MethodCallEvent $event): BooleanType
+    {
+        $type = new BooleanType;
+        $relation = $event->getArg('key', 0);
+
+        if ($relation instanceof LiteralString) {
+            $type->setAttribute('conditionalRelation', $relation->getValue());
+        }
+
+        return $type;
+    }
+
+    protected function getToResourceMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        $resourceClassArg = $event->getArg('resourceClass', 0);
+
+        if ($resourceClassArg instanceof LiteralString) {
+            return $this->makeResource($resourceClassArg->getValue(), $event->getInstance());
+        }
+
+        return $this->getGuessResourceMethodReturnType($event);
+    }
+
+    protected function makeResource(string $resourceClass, ObjectType $model): ?ObjectType
+    {
+        $resource = ReferenceTypeResolver::getInstance()
+            ->resolve(
+                new GlobalScope,
+                new StaticMethodCallReferenceType($resourceClass, 'make', [$model])
+            );
+
+        if (! $resource instanceof ObjectType) {
+            return null;
+        }
+
+        return $resource;
+    }
+
+    protected function getGuessResourceMethodReturnType(MethodCallEvent $event): ?Type
+    {
+        $resourceClass = $this->resolveResourceFromAttribute($event->getInstance()->name);
+
+        if (is_string($resourceClass) && class_exists($resourceClass)) {
+            return $this->makeResource($resourceClass, $event->getInstance());
+        }
+
+        try {
+            /** @var array<string> $candidates */
+            $candidates = $event->getInstance()->name::guessResourceName();
+            foreach ($candidates as $candidate) {
+                if (is_string($candidate) && class_exists($candidate)) { // @phpstan-ignore function.alreadyNarrowedType
+                    return $this->makeResource($candidate, $event->getInstance());
+                }
+            }
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $this->diagnostics?->reportOnce(
+            Md002MissingResourceDiagnostic::forModel($event->getInstance()->name),
+        );
+
+        return null;
+    }
+
+    protected function getResolveResourceFromAttributeMethodReturnType(MethodCallEvent $event): Type
+    {
+        $result = $this->resolveResourceFromAttribute($event->getInstance()->name);
+
+        return $result ? new LiteralStringType($result) : new NullType;
+    }
+
+    protected function resolveResourceFromAttribute(string $modelClassName): ?string
+    {
+        if (! class_exists(UseResource::class)) {
+            return null;
+        }
+
+        if (! class_exists($modelClassName)) {
+            return null;
+        }
+
+        $attributes = (new ReflectionClass($modelClassName))->getAttributes(UseResource::class);
+
+        return $attributes !== []
+            ? $attributes[0]->newInstance()->class
+            : null;
+    }
+
     public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
     {
-        return $this->maybeProxyMethodCallToBuilder($event);
+        return match ($event->name) {
+            'all' => ReferenceTypeResolver::getInstance()->resolve(
+                $event->scope,
+                new MethodCallReferenceType(
+                    $this->getBuilderType($event, $event->callee),
+                    'get',
+                    [],
+                ),
+            ),
+            default => $this->maybeProxyMethodCallToBuilder($event),
+        };
     }
 
     private function maybeProxyMethodCallToBuilder(MethodCallEvent|StaticMethodCallEvent $event): ?Type
@@ -259,7 +515,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         }
 
         $referenceCall = new MethodCallReferenceType(
-            new Generic(Builder::class, [new ObjectType($definition->name)]),
+            $this->getBuilderType($event, $definition->name),
             $event->getName(),
             $event->arguments instanceof AutoResolvingArgumentTypeBag ? $event->arguments->allUnresolved() : $event->arguments->all(),
         );
@@ -267,9 +523,28 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         return ReferenceTypeResolver::getInstance()->resolve($event->scope, $referenceCall);
     }
 
+    private function getBuilderType(MethodCallEvent|StaticMethodCallEvent $event, string $modelClass): Type
+    {
+        return ReferenceTypeResolver::getInstance()->resolve(
+            $event->scope,
+            new StaticMethodCallReferenceType($modelClass, 'query', []),
+        );
+    }
+
     private function getModelInfo(ObjectType $type)
     {
-        return static::$cache[$type->name] ??= (new ModelInfo($type->name))->handle();
+        $info = $this->cache[$type->name] ??= (new ModelInfo($type->name))->handle();
+
+        if ($info->get('table_missing')) {
+            $this->diagnostics?->reportOnce(
+                Md001PendingMigrationsDiagnostic::forModel(
+                    $info->get('class'),
+                    $info->get('instance')->getTable(),
+                ),
+            );
+        }
+
+        return $info;
     }
 
     private function getProtectedValue($obj, $name)
@@ -286,10 +561,15 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
      */
     private function getRealToArrayMethodDefinitionClassName(MethodCallEvent $event)
     {
+        return $this->getRealHasAttributesMethodDefinitionClassName($event, 'toArray');
+    }
+
+    private function getRealHasAttributesMethodDefinitionClassName(MethodCallEvent $event, string $method): ?string
+    {
         $className = $event->methodDefiningClassName ?: $event->getInstance()->name;
 
         try {
-            $reflectionMethod = new \ReflectionMethod($className, 'toArray');
+            $reflectionMethod = new \ReflectionMethod($className, $method);
 
             return $reflectionMethod->getDeclaringClass()->getName();
         } catch (Throwable) {

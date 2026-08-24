@@ -1,7 +1,9 @@
 <?php
 
+use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\PhpDoc;
+use Dedoc\Scramble\Tests\Files\Status;
 
 function getPhpTypeFromDoc_Copy(string $phpDoc)
 {
@@ -18,6 +20,24 @@ it('parses php doc into type correctly', function (string $phpDocType, string $e
 })->with([
     ['/** @var Foo */', 'Foo'],
     ['/** @var Foo<Bar, Baz> */', 'Foo<Bar, Baz>'],
+]);
+
+it('parses nullable types', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    ['/** @var ?string */', 'string|null'],
+]);
+
+it('resolves nullable enum types', function (string $phpDocType, string $expectedTypeString) {
+    $docNode = PhpDoc::parse($phpDocType, FileNameResolver::createForFile(__FILE__));
+    $varNode = $docNode->getVarTagValues()[0];
+
+    expect(PhpDocTypeHelper::toType($varNode->type)->toString())
+        ->toBe($expectedTypeString);
+})->with([
+    ['/** @var ?Status */', Status::class.'|null'],
 ]);
 
 it('parses tuple', function (string $phpDocType, string $expectedTypeString) {
@@ -63,10 +83,67 @@ it('parses integers', function (string $phpDocType, string $expectedTypeString) 
     ['/** @var int<10, min> */', 'int'],
 ]);
 
+it('parses strings', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    ['/** @var string */', 'string'],
+    ['/** @var non-empty-string */', 'string'],
+    ['/** @var callable-string */', 'string'],
+    ['/** @var numeric-string */', 'string'],
+    ['/** @var non-falsy-string */', 'string'],
+    ['/** @var truthy-string */', 'string'],
+    ['/** @var literal-string */', 'string'],
+    ['/** @var lowercase-string */', 'string'],
+    ['/** @var uppercase-string */', 'string'],
+    ['/** @var non-empty-lowercase-string */', 'string'],
+    ['/** @var non-empty-uppercase-string */', 'string'],
+    ['/** @var non-empty-literal-string */', 'string'],
+]);
+
 it('parses unions', function (string $phpDocType, string $expectedTypeString) {
     expect(
         getPhpTypeFromDoc_Copy($phpDocType)->toString()
     )->toBe($expectedTypeString);
 })->with([
     ["/** @var 'idle'|'charging'|'discharging'|null */", 'string(idle)|string(charging)|string(discharging)|null'],
+]);
+
+it('normalizes legacy Collection|T[] phpdoc idiom', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    [
+        '/** @var \Illuminate\Support\Collection|\App\Models\Event[] */',
+        '\Illuminate\Support\Collection<int, \App\Models\Event>',
+    ],
+    [
+        '/** @var \Illuminate\Database\Eloquent\Collection|\App\Models\Event[] */',
+        '\Illuminate\Database\Eloquent\Collection<int, \App\Models\Event>',
+    ],
+    [
+        '/** @var \Illuminate\Support\Collection|\App\Models\Event[]|null */',
+        '\Illuminate\Support\Collection<int, \App\Models\Event>|null',
+    ],
+    [
+        '/** @var \Illuminate\Support\Collection|array<\App\Models\Event> */',
+        '\Illuminate\Support\Collection<int, \App\Models\Event>',
+    ],
+    // Already generic — leave alone
+    [
+        '/** @var \Illuminate\Support\Collection<int, \App\Models\Event>|\App\Models\Event[] */',
+        '\Illuminate\Support\Collection<int, \App\Models\Event>|array<\App\Models\Event>',
+    ],
+    // Bare array without item type — leave alone
+    [
+        '/** @var \Illuminate\Support\Collection|array */',
+        '\Illuminate\Support\Collection|array<mixed>',
+    ],
+    // Ambiguous: multiple collections — leave alone
+    [
+        '/** @var \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection|\App\Models\Event[] */',
+        '\Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection|array<\App\Models\Event>',
+    ],
 ]);

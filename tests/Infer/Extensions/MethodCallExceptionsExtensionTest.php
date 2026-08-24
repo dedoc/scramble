@@ -1,7 +1,6 @@
 <?php
 
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
-use Dedoc\Scramble\Infer\Extensions\ExtensionsBroker;
 use Dedoc\Scramble\Infer\Extensions\MethodCallExceptionsExtension;
 use Dedoc\Scramble\Support\Type\ObjectType;
 
@@ -26,12 +25,7 @@ it('infers exceptions from method call using method call exceptions extension', 
         }
     };
 
-    app()->singleton(
-        ExtensionsBroker::class,
-        fn () => new ExtensionsBroker([$extension]),
-    );
-
-    $fnType = analyzeClass(MethodCallExceptionsExtensionTest_Service::class)
+    $fnType = analyzeClass(MethodCallExceptionsExtensionTest_Service::class, [$extension])
         ->getClassDefinition(MethodCallExceptionsExtensionTest_Service::class)
         ->getMethodDefinition('foo', withSideEffects: true)
         ->type;
@@ -55,12 +49,7 @@ it('does not add exceptions when extension should not handle the type', function
         }
     };
 
-    app()->singleton(
-        ExtensionsBroker::class,
-        fn () => new ExtensionsBroker([$extension]),
-    );
-
-    $fnType = analyzeClass(MethodCallExceptionsExtensionTest_NoHandleTest::class)
+    $fnType = analyzeClass(MethodCallExceptionsExtensionTest_NoHandleTest::class, [$extension])
         ->getClassDefinition(MethodCallExceptionsExtensionTest_NoHandleTest::class)
         ->getMethodDefinition('foo')
         ->type;

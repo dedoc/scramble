@@ -67,7 +67,7 @@ class Scramble
      *
      * @deprecated
      */
-    public static function extendOpenApi(callable $openApiExtender)
+    public static function extendOpenApi(callable $openApiExtender): void
     {
         static::afterOpenApiGenerated($openApiExtender);
     }
@@ -75,12 +75,12 @@ class Scramble
     /**
      * Update Open API document before finally rendering it.
      */
-    public static function afterOpenApiGenerated(callable $afterOpenApiGenerated)
+    public static function afterOpenApiGenerated(callable $afterOpenApiGenerated): void
     {
         static::configure()->withDocumentTransformers($afterOpenApiGenerated);
     }
 
-    public static function routes(callable $routeResolver)
+    public static function routes(callable $routeResolver): void
     {
         static::configure()->routes($routeResolver);
     }
@@ -106,7 +106,7 @@ class Scramble
      *
      * @param  callable(RouteInfo, Operation): string[]  $tagResolver
      */
-    public static function resolveTagsUsing(callable $tagResolver)
+    public static function resolveTagsUsing(callable $tagResolver): void
     {
         static::$tagResolver = $tagResolver;
     }
@@ -115,18 +115,18 @@ class Scramble
      * @param  bool  $throw  When `true` documentation won't be generated in case of the error. When `false`,
      *                       documentation will be generated but errors will be available in `scramble:analyze` command.
      */
-    public static function enforceSchema(callable $cb, string|callable $errorMessageGetter, array $ignorePaths = [], bool $throw = true)
+    public static function enforceSchema(callable $cb, string|callable $errorMessageGetter, array $ignorePaths = [], bool $throw = true): void
     {
         static::$enforceSchemaRules[] = [$cb, $errorMessageGetter, $ignorePaths, $throw];
     }
 
-    public static function preventSchema(string|array $schemaTypes, array $ignorePaths = [], bool $throw = true)
+    public static function preventSchema(string|array $schemaTypes, array $ignorePaths = [], bool $throw = true): void
     {
         $forbiddenSchemas = Arr::wrap($schemaTypes);
 
         static::enforceSchema(
             fn ($schema, $path) => ! in_array($schema::class, $forbiddenSchemas),
-            fn ($schema) => 'Schema ['.$schema::class.'] is not allowed.',
+            fn ($schema) => 'Schema `'.$schema::class.'` is not allowed',
             $ignorePaths,
             $throw,
         );
@@ -149,12 +149,18 @@ class Scramble
     {
         $config = static::getGeneratorConfig($api);
 
-        return RouteFacade::get($path, function (Generator $generator) use ($api) {
+        return RouteFacade::get($path, function (CacheableGenerator $generator) use ($api) {
             $config = static::getGeneratorConfig($api);
+            $result = $generator->generate($config);
 
-            return view('scramble::docs', [
-                'spec' => $generator($config),
+            return view($config->renderer()->view, [
+                /*
+                 * `spec` here is for backward compatibility in case there is a
+                 * stale published view that expects it to exist, will be removed in 1.0
+                 */
+                'spec' => $result->spec(),
                 'config' => $config,
+                'result' => $result,
             ]);
         })
             ->middleware($config->get('middleware', [RestrictedDocsAccess::class]));
@@ -164,7 +170,7 @@ class Scramble
     {
         $config = static::getGeneratorConfig($api);
 
-        return RouteFacade::get($path, function (Generator $generator) use ($api) {
+        return RouteFacade::get($path, function (CacheableGenerator $generator) use ($api) {
             $config = static::getGeneratorConfig($api);
 
             return response()->json($generator($config), options: JSON_PRETTY_PRINT);
@@ -188,6 +194,10 @@ class Scramble
         return app(GeneratorConfigCollection::class);
     }
 
+    /**
+     * When true, failures during operation building (e.g. rules evaluation) abort generation.
+     * Independent of Generator::setThrowExceptions() (schema-enforcement failures).
+     */
     public static function throwOnError(bool $throw = true): void
     {
         static::$throwOnError = $throw;

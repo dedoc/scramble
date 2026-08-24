@@ -6,7 +6,7 @@ class StringType extends AbstractType
 {
     public function isSame(Type $type)
     {
-        return $type instanceof static;
+        return $type::class === static::class;
     }
 
     public function toString(): string

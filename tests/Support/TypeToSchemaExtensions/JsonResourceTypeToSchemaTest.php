@@ -31,7 +31,7 @@ it('supports call to method', function () {
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
-    expect($extension->toSchema($type)->toArray())->toBe([
+    expect($extension->toSchema($type)->resolve()->toArray())->toBe([
         'type' => 'object',
         'properties' => [
             'res_int' => ['type' => 'integer'],
@@ -41,6 +41,36 @@ it('supports call to method', function () {
     ]);
 });
 
+it('removes null from nullable resource properties using null coalescing operator', function () {
+    $type = new Generic(JsonResourceTypeToSchemaTest_WithNullableName::class, [new UnknownType]);
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
+        JsonResourceTypeToSchema::class,
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
+
+    expect($extension->toSchema($type)->resolve()->toArray())->toBe([
+        'type' => 'object',
+        'properties' => [
+            'name' => ['type' => 'string'],
+        ],
+        'required' => ['name'],
+    ]);
+});
+
+/**
+ * @property JsonResourceTypeToSchemaTest_User $resource
+ */
+class JsonResourceTypeToSchemaTest_WithNullableName extends JsonResource
+{
+    public function toArray(Request $request)
+    {
+        return [
+            'name' => (mt_rand() ? $this->name : null) ?? '',
+        ];
+    }
+}
+
 it('supports parent toArray class', function (string $className, array $expectedSchemaArray) {
     $type = new Generic($className, [new UnknownType]);
 
@@ -49,7 +79,7 @@ it('supports parent toArray class', function (string $className, array $expected
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
-    expect($extension->toSchema($type)->toArray())->toBe($expectedSchemaArray);
+    expect($extension->toSchema($type)->resolve()->toArray())->toBe($expectedSchemaArray);
 })->with([
     [JsonResourceTypeToSchemaTest_NestedSample::class, [
         'type' => 'object',
@@ -222,7 +252,7 @@ it('handles default in json api resource', function () {
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
-    expect($extension->toSchema($type)->toArray())->toBe([
+    expect($extension->toSchema($type)->resolve()->toArray())->toBe([
         'type' => 'object',
         'properties' => [
             'foo' => [
@@ -243,6 +273,71 @@ class JsonResourceTypeToSchemaTest_WithDefault extends JsonResource
              */
             'foo' => $this->resource->foo,
         ];
+    }
+}
+
+it('keeps collection union properties required while flattening nested missing values', function () {
+    $type = new Generic(JsonResourceTypeToSchemaTest_WithCollectionUnionMissingValue::class, [new UnknownType]);
+
+    $extension = new JsonResourceTypeToSchema($this->infer, $this->transformer, $this->context->openApi->components, $this->context);
+
+    expect($extension->toSchema($type)->resolve()->toArray())->toEqual([
+        'type' => 'object',
+        'properties' => [
+            'planned_matches' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'event' => [
+                            'type' => 'array',
+                            'items' => (object) [],
+                        ],
+                    ],
+                ],
+            ],
+            'eloquent_planned_matches' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'event' => [
+                            'type' => 'array',
+                            'items' => (object) [],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        'required' => ['planned_matches', 'eloquent_planned_matches'],
+    ]);
+});
+class JsonResourceTypeToSchemaTest_WithCollectionUnionMissingValue extends JsonResource
+{
+    public function toArray(Request $request)
+    {
+        return [
+            'planned_matches' => unknown()
+                ? $this->supportPlannedMatches()
+                : $this->eloquentPlannedMatches(),
+            'eloquent_planned_matches' => $this->eloquentPlannedMatches(),
+        ];
+    }
+
+    /**
+     * @scramble-return \Illuminate\Support\Collection<int, array{event: array<mixed>|\Illuminate\Http\Resources\MissingValue}>
+     */
+    private function supportPlannedMatches()
+    {
+        return new \Illuminate\Support\Collection;
+    }
+
+    /**
+     * @scramble-return \Illuminate\Database\Eloquent\Collection<int, array{event: array<mixed>|\Illuminate\Http\Resources\MissingValue}>
+     */
+    private function eloquentPlannedMatches()
+    {
+        return new \Illuminate\Database\Eloquent\Collection;
     }
 }
 
@@ -300,6 +395,26 @@ it('handles supports custom schema name', function () {
         ]);
 })->skip();
 class JsonResourceTypeToSchemaTest_CustomSchemaTest
+{
+    public function index()
+    {
+        return new JsonResourceTypeToSchemaTest_WithCustomName;
+    }
+}
+
+it('uses SchemaName attribute value in response description', function () {
+    $openApiDocument = generateForRoute(function () {
+        return Route::get('api/test', [JsonResourceTypeToSchemaTest_CustomSchemaNameController::class, 'index']);
+    });
+
+    $response = $openApiDocument['paths']['/test']['get']['responses'][200];
+
+    expect($response['description'])
+        ->toBe('`CustomName`')
+        ->and($response['content']['application/json']['schema']['properties']['data']['$ref'] ?? null)
+        ->toBe('#/components/schemas/CustomName');
+});
+class JsonResourceTypeToSchemaTest_CustomSchemaNameController
 {
     public function index()
     {

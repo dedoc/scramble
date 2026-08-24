@@ -39,7 +39,7 @@ class FunctionLikeDeclarationPhpDocDefinitionBuilder implements FunctionLikeDefi
         }
 
         foreach ($phpDoc->getParamTagValues() as $paramTagValue) {
-            $name = Str::replaceFirst('$    ', '', $paramTagValue->parameterName);
+            $name = Str::replaceFirst('$', '', $paramTagValue->parameterName);
             if (! array_key_exists($name, $definition->type->arguments)) {
                 continue;
             }

@@ -36,7 +36,7 @@ class PhpDocSchemaTransformer
         }
 
         if ($examples = ExamplesExtractor::make($docNode)->extract(preferString: $type instanceof StringType)) {
-            $type->example($examples[0]);
+            $type->examples($examples);
         }
 
         if ($default = ExamplesExtractor::make($docNode, '@default')->extract(preferString: $type instanceof StringType)) {

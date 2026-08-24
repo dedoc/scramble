@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Configuration;
 
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\AttributesParametersExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\FormRequestParametersExtractor;
+use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\JsonApiResourceParametersExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\MethodCallsParametersExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\ParameterExtractor;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\PathParametersExtractor;
@@ -69,6 +70,7 @@ class ParametersExtractors
             PathParametersExtractor::class,
             FormRequestParametersExtractor::class,
             ValidateCallParametersExtractor::class,
+            JsonApiResourceParametersExtractor::class,
         ];
 
         $defaultAppends = [

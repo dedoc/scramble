@@ -15,6 +15,7 @@ use Dedoc\Scramble\Support\Type\RecursiveTemplateSolver;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 
 class TemplateTypesSolver
@@ -138,7 +139,15 @@ class TemplateTypesSolver
             ? ($definition->type->arguments[$nameOrPosition] ?? null)
             : (array_values($definition->type->arguments)[$nameOrPosition] ?? null);
 
-        // @todo: this will not work when parameter annotated as union
+        // @todo
+        // This is an entire area for improvement:
+        // 1) what if multiple callables are there,
+        // 2) parameter structure MAY be complex! It is not really specific to function - it may be keyed array,
+        // etc - we still may need to contextualize things
+        // if parameter typed is union, we pick just the first function (this is far from accurate in case it is union of multiple functions (1)!)
+        $correspondingParameterType = collect($correspondingParameterType instanceof Union ? $correspondingParameterType->types : [$correspondingParameterType])
+            ->first(fn ($t) => $t instanceof FunctionType);
+
         if (! $correspondingParameterType instanceof FunctionType) {
             return $argument;
         }
@@ -150,17 +159,31 @@ class TemplateTypesSolver
         foreach ($argument->arguments as $name => $arg) {
             $i++;
 
-            if (! $arg instanceof TemplateType || $arg->is instanceof ObjectType) {
+            if (! $arg instanceof TemplateType) {
                 continue;
             }
 
-            $argShouldBeReplaced = ! $arg->is || $arg->is instanceof ArrayType;
+            /** @var Type|null $inferredTypeForReplacement */
+            $inferredTypeForReplacement = $correspondingParameterType->arguments[$i] ?? null;
+            if (! $inferredTypeForReplacement) {
+                continue;
+            }
 
-            $param = $argShouldBeReplaced
-                ? $correspondingParameterType->arguments[$i] ?? null
-                : $arg->is;
+            // Allow replacing object/array-typed params when the call-site context provides a compatible,
+            // more specific type (e.g. Collection<ConcreteFoo>), instead of always keeping the user's type.
+            $inferredConcreteTypeForReplacement = $inferredTypeForReplacement instanceof TemplateType && array_key_exists($inferredTypeForReplacement->name, $templates)
+                ? $templates[$inferredTypeForReplacement->name]
+                : null;
 
-            if (! $param) {
+            $argShouldBeReplaced = ! $arg->is
+                || $arg->is instanceof ArrayType
+                || $arg->is instanceof ObjectType && (
+                    $inferredConcreteTypeForReplacement?->accepts($arg->is) || $inferredTypeForReplacement->accepts($arg->is)
+                );
+
+            $param = $argShouldBeReplaced ? $inferredTypeForReplacement : $arg->is;
+
+            if (! $param) { // @phpstan-ignore booleanNot.alwaysFalse
                 continue;
             }
 

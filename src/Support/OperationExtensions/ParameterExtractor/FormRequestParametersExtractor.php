@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
+use Dedoc\Scramble\Attributes\SchemaName;
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\OperationExtensions\RequestBodyExtension;
@@ -30,6 +32,7 @@ class FormRequestParametersExtractor implements ParameterExtractor
     public function __construct(
         private PrettyPrinter $printer,
         private TypeTransformer $openApiTransformer,
+        private DiagnosticsCollector $diagnostics,
     ) {}
 
     public function handle(RouteInfo $routeInfo, array $parameterExtractionResults): array
@@ -111,15 +114,18 @@ class FormRequestParametersExtractor implements ParameterExtractor
     {
         $classReflector = Infer\Reflector\ClassReflector::make($requestClassName);
 
-        $phpDocReflector = SchemaClassDocReflector::createFromDocString($classReflector->getReflection()->getDocComment() ?: '');
+        $reflection = $classReflector->getReflection();
 
+        $phpDocReflector = SchemaClassDocReflector::createFromDocString($reflection->getDocComment() ?: '');
+
+        $schemaNameAttr = ($reflection->getAttributes(SchemaName::class)[0] ?? null)?->newInstance();
         $schemaName = ($phpDocReflector->getTagValue('@ignoreSchema')->value ?? null) !== null
             ? null
-            : $phpDocReflector->getSchemaName($requestClassName);
+            : ($schemaNameAttr ? ($schemaNameAttr->input ?? $schemaNameAttr->name) : $phpDocReflector->getSchemaName($requestClassName));
 
         return new ParametersExtractionResult(
             parameters: $this->makeParameters(
-                rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->method))->handle(),
+                rules: (new ComposedFormRequestRulesEvaluator($this->printer, $classReflector, $routeInfo->method, $this->diagnostics->forClass($requestClassName), $routeInfo))->handle(),
                 typeTransformer: $this->openApiTransformer,
                 rulesDocsRetriever: new TypeBasedRulesDocumentationRetriever(
                     $routeInfo->getScope(),
@@ -131,6 +137,7 @@ class FormRequestParametersExtractor implements ParameterExtractor
             ),
             schemaName: $schemaName,
             description: $phpDocReflector->getDescription(),
+            sourceClass: $requestClassName,
         );
     }
 }

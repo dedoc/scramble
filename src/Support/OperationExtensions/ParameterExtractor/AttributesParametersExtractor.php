@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor;
 
 use Dedoc\Scramble\Attributes\Example;
+use Dedoc\Scramble\Attributes\IgnoreParam;
 use Dedoc\Scramble\Attributes\MissingValue;
 use Dedoc\Scramble\Attributes\Parameter as ParameterAttribute;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
@@ -18,6 +19,8 @@ use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use ReflectionAttribute;
 use ReflectionClass;
 
+use function DeepCopy\deep_copy;
+
 class AttributesParametersExtractor implements ParameterExtractor
 {
     public function __construct(
@@ -30,21 +33,74 @@ class AttributesParametersExtractor implements ParameterExtractor
             return $parameterExtractionResults;
         }
 
+        $ignoredParameters = collect($reflectionAction->getAttributes(IgnoreParam::class, ReflectionAttribute::IS_INSTANCEOF))
+            ->values()
+            ->map(fn (ReflectionAttribute $ra) => $ra->newInstance())
+            ->all();
+
         $parameters = collect($reflectionAction->getAttributes(ParameterAttribute::class, ReflectionAttribute::IS_INSTANCEOF))
             ->values()
             ->map(fn (ReflectionAttribute $ra) => $this->createParameter($parameterExtractionResults, $ra->newInstance(), $ra->getArguments()))
+            ->reject(fn (Parameter $p) => $this->shouldIgnoreParameter($p, $ignoredParameters))
             ->all();
 
         $extractedAttributes = collect($parameters)->map(fn ($p) => "$p->name.$p->in")->all();
-
         foreach ($parameterExtractionResults as $automaticallyExtractedParameters) {
+            $this->addParametersFromClassAttributes($automaticallyExtractedParameters);
+
+            // Named results map to a reusable component schema. Stripping fields from them would corrupt
+            // that shared schema for every other operation that references the same FormRequest.
+            // Action-level attributes are appended as a separate schemaless result instead,
+            // so RequestBodyExtension composes them as an allOf overlay on top of the intact $ref.
+            if ($automaticallyExtractedParameters->schemaName) {
+                continue;
+            }
+
             $automaticallyExtractedParameters->parameters = collect($automaticallyExtractedParameters->parameters)
+                ->reject(fn (Parameter $p) => $this->shouldIgnoreParameter($p, $ignoredParameters))
                 ->filter(fn (Parameter $p) => ! in_array("$p->name.$p->in", $extractedAttributes))
                 ->values()
                 ->all();
         }
 
         return [...$parameterExtractionResults, new ParametersExtractionResult($parameters)];
+    }
+
+    private function addParametersFromClassAttributes(ParametersExtractionResult $parameterExtractionResult): void
+    {
+        if (! $parameterExtractionResult->sourceClass || ! class_exists($parameterExtractionResult->sourceClass)) {
+            return;
+        }
+
+        $reflection = new ReflectionClass($parameterExtractionResult->sourceClass);
+
+        $ignoredParameters = collect($reflection->getAttributes(IgnoreParam::class, ReflectionAttribute::IS_INSTANCEOF))
+            ->values()
+            ->map(fn (ReflectionAttribute $ra) => $ra->newInstance())
+            ->all();
+
+        if ($ignoredParameters) {
+            $parameterExtractionResult->parameters = collect($parameterExtractionResult->parameters)
+                ->reject(fn (Parameter $p) => $this->shouldIgnoreParameter($p, $ignoredParameters))
+                ->values()
+                ->all();
+        }
+
+        $attrs = collect($reflection->getAttributes(ParameterAttribute::class, ReflectionAttribute::IS_INSTANCEOF))
+            ->values()
+            ->map(fn (ReflectionAttribute $ra) => $this->createParameter([$parameterExtractionResult], $ra->newInstance(), $ra->getArguments()))
+            ->reject(fn (Parameter $p) => $this->shouldIgnoreParameter($p, $ignoredParameters))
+            ->keyBy(fn (Parameter $p) => "$p->name.$p->in")
+            ->all();
+
+        if (empty($attrs)) {
+            return;
+        }
+
+        $parameterExtractionResult->parameters = collect($parameterExtractionResult->parameters)
+            ->map(fn (Parameter $p) => $attrs["$p->name.$p->in"] ?? $p)
+            ->values()
+            ->all();
     }
 
     /**
@@ -62,7 +118,7 @@ class AttributesParametersExtractor implements ParameterExtractor
             return $attributeParameter;
         }
 
-        $parameter = clone $inferredParameter;
+        $parameter = deep_copy($inferredParameter);
 
         $namedAttributes = $this->createNamedAttributes($attribute::class, $attributeArguments);
 
@@ -183,5 +239,27 @@ class AttributesParametersExtractor implements ParameterExtractor
                 return [$name => $value];
             })
             ->all();
+    }
+
+    /**
+     * @param  IgnoreParam[]  $ignoredParameters
+     */
+    private function shouldIgnoreParameter(Parameter $parameter, array $ignoredParameters): bool
+    {
+        foreach ($ignoredParameters as $ignoredParameter) {
+            if ($ignoredParameter->name !== $parameter->name) {
+                continue;
+            }
+
+            if ($ignoredParameter->in) {
+                return $ignoredParameter->in === $parameter->in;
+            }
+
+            if (in_array($parameter->in, ['body', 'query'], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Tests\Support\TypeToSchemaExtensions;
 
+use Dedoc\Scramble\Attributes\SchemaName;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
@@ -43,6 +44,32 @@ class Foo_ArrayableToSchemaTest implements Arrayable
     {
         return [
             'id' => 42,
+        ];
+    }
+}
+
+it('uses SchemaName attribute value in response description', function () {
+    $infer = app(Infer::class);
+    $transformer = new TypeTransformer($infer, $this->context, [
+        ArrayableToSchema::class,
+    ]);
+    $extension = new ArrayableToSchema($infer, $transformer, $this->components, $this->context);
+
+    $response = $extension->toResponse(new ObjectType(SchemaName_ArrayableToSchemaTest::class))->toArray();
+
+    expect($response['description'])
+        ->toBe('`CustomArrayable`')
+        ->and($response['content']['application/json']['schema']['$ref'] ?? null)
+        ->toBe('#/components/schemas/CustomArrayable');
+});
+
+#[SchemaName('CustomArrayable')]
+class SchemaName_ArrayableToSchemaTest implements Arrayable
+{
+    public function toArray()
+    {
+        return [
+            'id' => 1,
         ];
     }
 }

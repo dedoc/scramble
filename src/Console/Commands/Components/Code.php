@@ -10,12 +10,22 @@ class Code implements Component
     public function __construct(
         public string $filePath,
         public int $line,
+        public int $linesBefore = 2,
+        public int $linesAfter = 2,
     ) {}
 
     public function render(OutputStyle $style): void
     {
-        $code = (new Highlighter)->highlight(file_get_contents($this->filePath), $this->line);
+        $style->writeln($this->highlight());
+    }
 
-        $style->writeln($code);
+    public function highlight(): string
+    {
+        return rtrim((new Highlighter)->getCodeSnippet(
+            file_get_contents($this->filePath),
+            $this->line,
+            $this->linesBefore,
+            $this->linesAfter,
+        ));
     }
 }

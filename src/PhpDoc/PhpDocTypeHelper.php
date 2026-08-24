@@ -21,8 +21,10 @@ use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Support\Collection;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprFloatNode;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprIntegerNode;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprStringNode;
@@ -35,14 +37,30 @@ use PHPStan\PhpDocParser\Ast\Type\ConstTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IntersectionTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\NullableTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\ThisTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 
 class PhpDocTypeHelper
 {
-    public static function toType(TypeNode $type)
+    public static function toType(TypeNode $type): Type
     {
+        $result = self::toTypeWithoutAttributes($type);
+        $result->setAttribute('source', 'phpDoc');
+
+        return $result;
+    }
+
+    private static function toTypeWithoutAttributes(TypeNode $type): Type
+    {
+        if ($type instanceof NullableTypeNode) {
+            return new Union([
+                self::toType($type->type),
+                new NullType,
+            ]);
+        }
+
         if ($type instanceof GenericTypeNode && $type->type->name === 'int') {
             return self::handleGenericInteger($type->genericTypes);
         }
@@ -123,10 +141,10 @@ class PhpDocTypeHelper
         }
 
         if ($type instanceof UnionTypeNode) {
-            return new Union(array_map(
+            return self::normalizeLaravelCollectionArrayUnion(new Union(array_map(
                 fn ($t) => static::toType($t),
                 $type->types,
-            ));
+            )));
         }
 
         if ($type instanceof ConstTypeNode) {
@@ -157,9 +175,70 @@ class PhpDocTypeHelper
         return new UnknownType('Unknown phpDoc type ['.$type.']');
     }
 
+    /**
+     * Rewrites the legacy Laravel/PhpStorm idiom `Collection|T[]` (and Eloquent
+     * Collection equivalents) into `Collection<int, T>`. Optionally keeps other
+     * union members such as `null`.
+     */
+    private static function normalizeLaravelCollectionArrayUnion(Union $union): Type
+    {
+        $collectionTypes = [];
+        $arrayTypes = [];
+        $otherTypes = [];
+
+        foreach ($union->types as $type) {
+            if (
+                $type instanceof ObjectType
+                && ! $type instanceof Generic
+                && $type->isInstanceOf(Collection::class)
+            ) {
+                $collectionTypes[] = $type;
+
+                continue;
+            }
+
+            if (
+                $type instanceof ArrayType
+                && $type->key instanceof IntegerType
+                && ! $type->value instanceof MixedType
+            ) {
+                $arrayTypes[] = $type;
+
+                continue;
+            }
+
+            $otherTypes[] = $type;
+        }
+
+        if (count($collectionTypes) !== 1 || count($arrayTypes) !== 1) {
+            return $union;
+        }
+
+        return Union::wrap([
+            new Generic($collectionTypes[0]->name, [
+                new IntegerType,
+                $arrayTypes[0]->value,
+            ]),
+            ...$otherTypes,
+        ]);
+    }
+
     private static function handleIdentifierNode(IdentifierTypeNode $type)
     {
-        if ($type->name === 'string') {
+        if (in_array($type->name, [
+            'string',
+            'non-empty-string',
+            'callable-string',
+            'numeric-string',
+            'non-falsy-string',
+            'truthy-string',
+            'literal-string',
+            'lowercase-string',
+            'uppercase-string',
+            'non-empty-lowercase-string',
+            'non-empty-uppercase-string',
+            'non-empty-literal-string',
+        ])) {
             return new StringType;
         }
         if (in_array($type->name, ['float', 'double'])) {
@@ -253,15 +332,13 @@ class PhpDocTypeHelper
             return new IntegerType;
         }
 
-        $min = match (true) {
-            $genericTypes[0] instanceof ConstTypeNode => $genericTypes[0]->constExpr->value, // @phpstan-ignore property.notFound
-            $genericTypes[0] instanceof IdentifierTypeNode => null,
-        };
+        $min = $genericTypes[0] instanceof ConstTypeNode
+            ? (int) $genericTypes[0]->constExpr->value
+            : null;
 
-        $max = match (true) {
-            $genericTypes[1] instanceof ConstTypeNode => $genericTypes[1]->constExpr->value, // @phpstan-ignore property.notFound
-            $genericTypes[1] instanceof IdentifierTypeNode => null,
-        };
+        $max = $genericTypes[1] instanceof ConstTypeNode
+            ? (int) $genericTypes[1]->constExpr->value
+            : null;
 
         return new IntegerRangeType(
             min: $min,

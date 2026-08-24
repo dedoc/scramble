@@ -2,15 +2,13 @@
 
 namespace Dedoc\Scramble\Support\InferExtensions;
 
+use Dedoc\Scramble\Support\InferExtensions\Concerns\GuessesMimeTypeFromFileType;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\Type;
-use Dedoc\Scramble\Support\Type\TypeWalker;
-use Dedoc\Scramble\Support\Type\Union;
-use League\MimeTypeDetection\ExtensionMimeTypeDetector;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
@@ -20,6 +18,8 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  */
 class BinaryFileResponseTypeFactory
 {
+    use GuessesMimeTypeFromFileType;
+
     public function __construct(
         public Type $file,
         public Type $name = new NullType,
@@ -46,22 +46,11 @@ class BinaryFileResponseTypeFactory
     {
         $mimeType = 'application/octet-stream';
 
-        if ($fileMime = $this->guessMimeTypeFromFile()) {
+        if ($fileMime = $this->guessMimeTypeFromFileType($this->file)) {
             $mimeType = $fileMime;
         }
 
         return $mimeType;
-    }
-
-    private function guessMimeTypeFromFile(): ?string
-    {
-        $fileName = $this->guessFileNameFromType($this->file);
-
-        if ($fileName && class_exists(ExtensionMimeTypeDetector::class)) {
-            return (new ExtensionMimeTypeDetector)->detectMimeTypeFromPath($fileName);
-        }
-
-        return null;
     }
 
     private function guessContentDisposition(): ?string
@@ -76,31 +65,6 @@ class BinaryFileResponseTypeFactory
             $this->guessFileNameFromType($this->file),
             $this->guessFileNameFromType($this->name),
         );
-    }
-
-    private function guessFileNameFromType(Type $fileArgumentType): ?string
-    {
-        $stringLiterals = (new TypeWalker)->findAll(
-            Union::wrap(...array_filter([$fileArgumentType->getOriginal(), $fileArgumentType])),
-            fn (Type $t) => $t instanceof LiteralStringType,
-        );
-
-        foreach (array_reverse($stringLiterals) as $stringLiteral) {
-            if (! $stringLiteral instanceof LiteralStringType) {
-                continue;
-            }
-
-            if ($this->isFileName($stringLiteral->value)) {
-                return $stringLiteral->value;
-            }
-        }
-
-        return null;
-    }
-
-    private function isFileName(string $str): bool
-    {
-        return (bool) preg_match('/^.*\.[^.]+$/', $str);
     }
 
     private function getContentDispositionAttachmentHeader(?string $fileName, ?string $overridingFileName): string

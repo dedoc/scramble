@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\ResponseExtractor;
 
 use BackedEnum;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 use ReflectionClass;
@@ -16,8 +17,6 @@ use UnitEnum;
  */
 class ModelInfo
 {
-    public static array $cache = [];
-
     protected $relationMethods = [
         'hasMany',
         'hasManyThrough',
@@ -33,7 +32,7 @@ class ModelInfo
     ];
 
     public function __construct(
-        private string $class
+        private string $class,
     ) {}
 
     public function handle()
@@ -47,17 +46,21 @@ class ModelInfo
                 'class' => $class,
                 'attributes' => collect(),
                 'relations' => collect(),
+                'table_missing' => false,
             ]);
         }
 
         /** @var Model $model */
         $model = app()->make($class);
 
+        $tableMissing = ! $model->getConnection()->getSchemaBuilder()->hasTable($model->getTable());
+
         return $this->displayJson(
             $model,
             $class,
-            $this->getAttributes($model),
+            $this->getAttributes($model, $tableMissing),
             $this->getRelations($model),
+            $tableMissing,
         );
     }
 
@@ -67,11 +70,16 @@ class ModelInfo
      * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return \Illuminate\Support\Collection
      */
-    protected function getAttributes($model)
+    protected function getAttributes($model, bool $tableMissing = false)
     {
+        if ($tableMissing) {
+            return $this->getVirtualAttributes($model, []);
+        }
+
         $connection = $model->getConnection();
         $schema = $connection->getSchemaBuilder();
         $table = $model->getTable();
+
         $columns = $schema->getColumns($table);
         $indexes = $schema->getIndexes($table);
 
@@ -200,6 +208,7 @@ class ModelInfo
                     'name' => $method->getName(),
                     'type' => Str::afterLast(get_class($relation), '\\'),
                     'related' => get_class($relation->getRelated()),
+                    'nullable' => $this->relationIsNullable($relation),
                 ];
             })
             ->filter()
@@ -208,15 +217,65 @@ class ModelInfo
     }
 
     /**
+     * @param  Relation<Model, Model, mixed>  $relation
+     */
+    private function relationIsNullable(Relation $relation): bool
+    {
+        if (Str::contains(class_basename($relation), 'Many')) {
+            return false;
+        }
+
+        if (method_exists($relation, 'withDefault') && $this->getProtectedValue($relation, 'withDefault')) {
+            return false;
+        }
+
+        if (! method_exists($relation, 'getForeignKeyName')) {
+            return false;
+        }
+
+        $foreignKeyModel = $relation instanceof BelongsTo
+            ? $relation->getParent()
+            : $relation->getRelated();
+
+        $foreignKeyName = $relation->getForeignKeyName();
+        $foreignKeys = is_array($foreignKeyName) ? $foreignKeyName : [$foreignKeyName];
+
+        if (! collect($foreignKeys)->every(fn ($foreignKey) => is_string($foreignKey))) {
+            return false;
+        }
+
+        $columns = collect($foreignKeyModel->getConnection()->getSchemaBuilder()->getColumns($foreignKeyModel->getTable()));
+
+        foreach ($foreignKeys as $foreignKey) {
+            $column = $columns->firstWhere('name', Str::afterLast($foreignKey, '.'));
+
+            if (! ($column['nullable'] ?? false)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function getProtectedValue(object $object, string $name): mixed
+    {
+        $properties = (array) $object;
+        $prefix = chr(0).'*'.chr(0);
+
+        return $properties[$prefix.$name] ?? null;
+    }
+
+    /**
      * Render the model information as JSON.
      */
-    protected function displayJson($model, $class, $attributes, $relations)
+    protected function displayJson($model, $class, $attributes, $relations, bool $tableMissing = false)
     {
         return collect([
             'instance' => $model,
             'class' => $class,
             'attributes' => $attributes,
             'relations' => $relations,
+            'table_missing' => $tableMissing,
         ]);
     }
 

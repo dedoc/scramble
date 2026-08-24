@@ -1,0 +1,6 @@
+{
+    "preset": "laravel",
+    "rules": {
+        "fully_qualified_strict_types": false
+    }
+}

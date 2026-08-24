@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Type\RecursiveTemplateSolver;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 
 class TemplatesMap
@@ -17,6 +18,9 @@ class TemplatesMap
 
     /** @var array<string, Type> */
     public array $additional = [];
+
+    /** @var array<string, Type> */
+    private array $cache = [];
 
     /**
      * @param  TemplateType[]  $templates
@@ -43,6 +47,11 @@ class TemplatesMap
 
     public function get(string $name, Type $defaultType = new UnknownType): Type
     {
+        return $this->cache[$name] ??= $this->doGet($name, $defaultType);
+    }
+
+    private function doGet(string $name, Type $defaultType = new UnknownType): Type
+    {
         if ($name === self::ARGUMENTS) {
             return new KeyedArrayType(collect($this->arguments->all())->map(fn ($t, $k) => new ArrayItemType_($k, $t))->all());
         }
@@ -58,6 +67,7 @@ class TemplatesMap
             return null;
         }
 
+        $inferredTypes = [];
         foreach (array_values($this->parameters) as $i => $parameterType) {
             if (! $this->hasTemplateIn($parameterType, $template)) {
                 continue;
@@ -68,11 +78,11 @@ class TemplatesMap
             $argumentType = $this->arguments->get($name, $i, $this->defaults[$name] ?? null) ?: new UnknownType;
 
             if ($inferredType = $this->inferTemplate($template, $parameterType, $argumentType)) {
-                return $inferredType;
+                $inferredTypes[] = $inferredType;
             }
         }
 
-        return null;
+        return count($inferredTypes) ? Union::wrap($inferredTypes) : null;
     }
 
     private function hasTemplateIn(Type $parameterType, TemplateType $templateType): bool

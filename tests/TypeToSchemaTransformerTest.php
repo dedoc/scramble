@@ -3,7 +3,11 @@
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\Types\IntegerType as OpenApiIntegerType;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
+use Dedoc\Scramble\Support\Generator\Types\StringType as OpenApiStringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
@@ -18,12 +22,11 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\CarbonInterfaceToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Illuminate\Http\Resources\Json\JsonResource;
-
-use function Spatie\Snapshots\assertMatchesSnapshot;
 
 beforeEach(function () {
     $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
@@ -83,7 +86,7 @@ it('transforms nullable unions', function ($type, $openApiArrayed) {
         new LiteralStringType('charging'),
         new LiteralStringType('discharging'),
         new NullType,
-    ]), ['type' => ['string', 'null'], 'enum' => ['idle', 'charging', 'discharging']]],
+    ]), ['type' => ['string', 'null'], 'enum' => ['idle', 'charging', 'discharging', null]]],
 ]);
 
 it('gets json resource type', function () {
@@ -92,7 +95,7 @@ it('gets json resource type', function () {
 
     $type = new ObjectType(ComplexTypeHandlersTest_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
 });
 
 it('gets enum with values type', function () {
@@ -245,7 +248,7 @@ it('gets json resource type with nested merges', function () {
 
     $type = new ObjectType(ComplexTypeHandlersWithNestedTest_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
 });
 
 it('gets json resource type with when', function () {
@@ -254,7 +257,23 @@ it('gets json resource type with when', function () {
 
     $type = new ObjectType(ComplexTypeHandlersWithWhen_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
+});
+
+it('keeps a when value optional when its array item has a var annotation', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
+
+    $schema = $extension
+        ->toSchema(new ObjectType(ComplexTypeHandlersWithAnnotatedWhen_SampleType::class))
+        ->resolve()
+        ->toArray();
+
+    expect($schema['properties'])->toBe([
+        'required_prop' => ['type' => 'integer'],
+        'conditional_prop' => ['type' => 'boolean'],
+    ])->and($schema['required'] ?? [])
+        ->toBe(['required_prop']);
 });
 
 it('gets json resource type with when loaded', function () {
@@ -266,7 +285,26 @@ it('gets json resource type with when loaded', function () {
 
     $type = new ObjectType(ComplexTypeHandlersWithWhenLoaded_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
+});
+
+it('keeps resources made from nullable loaded relations nullable', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
+        JsonResourceTypeToSchema::class,
+    ]);
+    $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
+
+    $schema = $extension
+        ->toSchema(new ObjectType(ComplexTypeHandlersWithNullableWhenLoaded_SampleType::class))
+        ->resolve()
+        ->toArray();
+
+    expect($schema['properties']['submitted_by'])->toBe([
+        'anyOf' => [
+            ['$ref' => '#/components/schemas/ComplexTypeHandlersWithWhen_SampleType'],
+            ['type' => 'null'],
+        ],
+    ])->and($schema['required'] ?? [])->not->toContain('submitted_by');
 });
 
 it('gets json resource type with when counted', function () {
@@ -278,7 +316,87 @@ it('gets json resource type with when counted', function () {
 
     $type = new ObjectType(ComplexTypeHandlersWithWhenCounted_SampleType::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
+});
+
+it('getOrCreateSchemaReference creates schema on first call', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    $reference = ClassBasedReference::create('schemas', GetOrCreateSchemaReferenceTest_SampleType::class, $this->context->openApi->components);
+
+    $factoryCalls = 0;
+    $result = $transformer->getOrCreateSchemaReference($reference, function () use (&$factoryCalls) {
+        $factoryCalls++;
+
+        return (new OpenApiObjectType)
+            ->addProperty('id', new OpenApiIntegerType)
+            ->setRequired(['id']);
+    });
+
+    expect($factoryCalls)->toBe(1)
+        ->and($result->toArray())->toBe([
+            '$ref' => '#/components/schemas/GetOrCreateSchemaReferenceTest_SampleType',
+        ])
+        ->and($this->context->openApi->components->getSchema(GetOrCreateSchemaReferenceTest_SampleType::class)->toArray())->toBe([
+            'type' => 'object',
+            'properties' => [
+                'id' => ['type' => 'integer'],
+            ],
+            'required' => ['id'],
+        ]);
+});
+
+it('getOrCreateSchemaReference reuses existing reference without calling factory again', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    $reference = ClassBasedReference::create('schemas', GetOrCreateSchemaReferenceTest_SampleType::class, $this->context->openApi->components);
+
+    $factoryCalls = 0;
+    $schemaFactory = function () use (&$factoryCalls) {
+        $factoryCalls++;
+
+        return (new OpenApiObjectType)
+            ->addProperty('id', new OpenApiIntegerType)
+            ->setRequired(['id']);
+    };
+
+    $transformer->getOrCreateSchemaReference($reference, $schemaFactory);
+
+    $secondReference = ClassBasedReference::create('schemas', GetOrCreateSchemaReferenceTest_SampleType::class, $this->context->openApi->components);
+    $result = $transformer->getOrCreateSchemaReference($secondReference, function () use (&$factoryCalls) {
+        $factoryCalls++;
+
+        return (new OpenApiObjectType)
+            ->addProperty('name', new OpenApiStringType)
+            ->setRequired(['name']);
+    });
+
+    expect($factoryCalls)->toBe(1)
+        ->and($result->toArray())->toBe([
+            '$ref' => '#/components/schemas/GetOrCreateSchemaReferenceTest_SampleType',
+        ])
+        ->and($this->context->openApi->components->getSchema(GetOrCreateSchemaReferenceTest_SampleType::class)->toArray()['properties'])
+        ->toHaveKey('id')
+        ->not->toHaveKey('name');
+});
+
+it('getOrCreateSchemaReference removes schema when factory returns null', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    $reference = ClassBasedReference::create('schemas', GetOrCreateSchemaReferenceTest_EmptyType::class, $this->context->openApi->components);
+
+    $result = $transformer->getOrCreateSchemaReference($reference, fn () => null);
+
+    expect($result->toArray())->toBe([
+        '$ref' => '#/components/schemas/GetOrCreateSchemaReferenceTest_EmptyType',
+    ])
+        ->and($this->context->openApi->components->hasSchema(GetOrCreateSchemaReferenceTest_EmptyType::class))->toBeFalse();
 });
 
 it('gets json resource type reference', function () {
@@ -319,17 +437,54 @@ it('infers date column when casted to date', function () {
         'format' => 'date',
     ]);
 });
+
+it('preserves cast date formats through compatible model property annotations', function () {
+    $transformer = new TypeTransformer(app(Infer::class), $this->context, [CarbonInterfaceToSchema::class, JsonResourceTypeToSchema::class]);
+
+    $transformer->transform(new ObjectType(InferTypesTest_JsonResourceWithAnnotatedCarbonAttributes::class));
+
+    $properties = $this->context->openApi->components->getSchema(InferTypesTest_JsonResourceWithAnnotatedCarbonAttributes::class)->toArray()['properties'];
+
+    expect($properties['date'])->toBe([
+        'type' => 'string',
+        'format' => 'date',
+    ])->and($properties['nullable_date'])->toBe([
+        'type' => ['string', 'null'],
+        'format' => 'date',
+    ]);
+});
+
+/**
+ * @property \Carbon\Carbon $body
+ * @property \Carbon\Carbon|null $title
+ */
 class SamplePostWithDateApprovedAtModel extends \Illuminate\Database\Eloquent\Model
 {
     protected $table = 'posts';
 
     protected $casts = [
+        'body' => 'datetime:Y-m-d',
+        'title' => 'datetime:Y-m-d',
         'approved_at' => 'datetime:Y-m-d',
     ];
 }
 
+/**
+ * @property SamplePostWithDateApprovedAtModel $resource
+ */
+class InferTypesTest_JsonResourceWithAnnotatedCarbonAttributes extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'date' => $this->resource->body,
+            'nullable_date' => $this->resource->title,
+        ];
+    }
+}
+
 it('infers date column directly referenced in json as date-time', function () {
-    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [CarbonInterfaceToSchema::class, JsonResourceTypeToSchema::class]);
 
     $type = new ObjectType(InferTypesTest_JsonResourceWithCarbonAttribute::class);
 
@@ -410,8 +565,22 @@ it('supports @deprecated tag in api resource', function () {
     ]);
 });
 
-it('supports simple comments descriptions in api resource', function () {
+it('excludes properties with @hidden annotation from api resource schema', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(ApiResourceTest_ResourceWithHidden::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/ApiResourceTest_ResourceWithHidden',
+    ]);
+
+    $properties = $this->context->openApi->components->getSchema(ApiResourceTest_ResourceWithHidden::class)->toArray()['properties'];
+    expect($properties)->toHaveKey('visible')
+        ->and($properties)->not->toHaveKey('secret');
+});
+
+it('supports simple comments descriptions in api resource', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [CarbonInterfaceToSchema::class, JsonResourceTypeToSchema::class]);
 
     $type = new ObjectType(ApiResourceTest_ResourceWithSimpleDescription::class);
 
@@ -532,6 +701,10 @@ it('supports integers', function () {
         ]);
 });
 
+class GetOrCreateSchemaReferenceTest_SampleType {}
+
+class GetOrCreateSchemaReferenceTest_EmptyType {}
+
 class ComplexTypeHandlersTest_SampleType extends JsonResource
 {
     public function toArray($request)
@@ -586,6 +759,34 @@ class ComplexTypeHandlersWithWhen_SampleType extends JsonResource
     }
 }
 
+/**
+ * @property ComplexTypeHandlersWithAnnotatedWhen_Dto $resource
+ */
+class ComplexTypeHandlersWithAnnotatedWhen_SampleType extends JsonResource
+{
+    public function toArray($request)
+    {
+        /** @var array{prop_1: int, prop_2?: bool} $props */
+        $props = $this->resource->props;
+
+        return [
+            /** @var int */
+            'required_prop' => $props['prop_1'],
+            /** @var bool */
+            'conditional_prop' => $this->when(
+                array_key_exists('prop_2', $props),
+                fn () => $props['prop_2'],
+            ),
+        ];
+    }
+}
+
+class ComplexTypeHandlersWithAnnotatedWhen_Dto
+{
+    /** @var array<string, mixed> */
+    public array $props;
+}
+
 class ComplexTypeHandlersWithWhenLoaded_SampleType extends JsonResource
 {
     public function toArray($request)
@@ -601,6 +802,34 @@ class ComplexTypeHandlersWithWhenLoaded_SampleType extends JsonResource
             'bar_nullable' => $this->whenLoaded('bar', fn () => 's', null),
         ];
     }
+}
+
+/**
+ * @property ComplexTypeHandlersWithNullableRelationModel $resource
+ */
+class ComplexTypeHandlersWithNullableWhenLoaded_SampleType extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'submitted_by' => ComplexTypeHandlersWithWhen_SampleType::make($this->whenLoaded('submittedBy')),
+        ];
+    }
+}
+
+class ComplexTypeHandlersWithNullableRelationModel extends \Illuminate\Database\Eloquent\Model
+{
+    protected $table = 'relation_nullability_models';
+
+    public function submittedBy()
+    {
+        return $this->belongsTo(ComplexTypeHandlersWithSubmitterModel::class, 'nullable_owner_id');
+    }
+}
+
+class ComplexTypeHandlersWithSubmitterModel extends \Illuminate\Database\Eloquent\Model
+{
+    protected $table = 'relation_nullability_owners';
 }
 
 class ComplexTypeHandlersWithWhenCounted_SampleType extends JsonResource
@@ -698,6 +927,23 @@ class ApiResourceTest_ResourceWithDeprecated extends JsonResource
              * @deprecated Use new_field instead.
              */
             'old_field_with_description' => $this->title,
+        ];
+    }
+}
+
+/**
+ * @property SamplePostModel $resource
+ */
+class ApiResourceTest_ResourceWithHidden extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'visible' => $this->id,
+            /**
+             * @hidden
+             */
+            'secret' => $this->title,
         ];
     }
 }

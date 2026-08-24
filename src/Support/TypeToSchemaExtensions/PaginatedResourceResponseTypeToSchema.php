@@ -9,8 +9,8 @@ use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
+use Dedoc\Scramble\Support\JsonResource\JsonResourceVariantMatcher;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -21,14 +21,8 @@ use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Dedoc\Scramble\Support\TypeManagers\CursorPaginatorTypeManager;
-use Dedoc\Scramble\Support\TypeManagers\LengthAwarePaginatorTypeManager;
-use Dedoc\Scramble\Support\TypeManagers\PaginatorTypeManager;
 use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\Resources\Json\PaginatedResourceResponse;
-use Illuminate\Pagination\CursorPaginator;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
 use LogicException;
 
 class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
@@ -50,12 +44,12 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
 
         return $this
             ->makeResponse($resourceType)
-            ->setDescription($this->getPaginatedDescription($type))
             ->setContent('application/json', Schema::fromType($this->wrap(
                 $this->wrapper($this->getCollectingClassType($type)),
                 $this->getCollectionSchema($type),
                 $this->getMergedAdditionalSchema($type),
-            )));
+            )))
+            ->setDescription($this->getPaginatedDescription($type));
     }
 
     private function getCollectionSchema(Generic $type): OpenApiType
@@ -133,18 +127,16 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
     {
         $normalizedPaginatorType = $this->getPaginatorType($type);
 
-        $typeManager = match ($normalizedPaginatorType->name) {
-            Paginator::class => new PaginatorTypeManager,
-            CursorPaginator::class => new CursorPaginatorTypeManager,
-            LengthAwarePaginator::class => new LengthAwarePaginatorTypeManager,
-            default => null,
-        };
+        $paginatorArray = ReferenceTypeResolver::getInstance()
+            ->resolve(new GlobalScope, new MethodCallReferenceType(
+                $normalizedPaginatorType,
+                'toArray',
+                []
+            ));
 
-        if (! $typeManager) {
-            return new KeyedArrayType;
-        }
-
-        return $typeManager->getToArrayType(new ArrayType($normalizedPaginatorType->templateTypes[1]));
+        return $paginatorArray instanceof KeyedArrayType
+            ? $paginatorArray
+            : new KeyedArrayType;
     }
 
     protected function getDefaultPaginationInformationArray(Generic $type): KeyedArrayType
@@ -179,7 +171,20 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
             return 'Paginated set';
         }
 
-        return 'Paginated set of `'.$this->openApiContext->references->schemas->uniqueName($collectedType->name).'`';
+        return 'Paginated set of `'.$this->getReferenceUniqueName($collectedType).'`';
+    }
+
+    private function getReferenceUniqueName(ObjectType $type): string
+    {
+        $fullName = (new JsonResourceVariantMatcher(
+            $this->infer->index,
+            $this->openApiContext->config->eagerLoadAnalysis(),
+        ))
+            ->match($type)
+            ?->reference($this->components)
+            ->fullName ?: $type->name;
+
+        return $this->openApiContext->references->schemas->uniqueName($fullName);
     }
 
     private function getCollectingClassType(Generic $type): Generic|UnknownType

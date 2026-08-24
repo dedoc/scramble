@@ -12,8 +12,6 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResourceCollectionTypeToSchema;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
-use function Spatie\Snapshots\assertMatchesSnapshot;
-
 beforeEach(function () {
     $this->components = new Components;
     $this->context = new OpenApiContext((new OpenApi('3.1.0'))->setComponents($this->components), new GeneratorConfig);
@@ -32,7 +30,7 @@ test('transforms collection with toArray only', function () {
 
     $type = new ObjectType(UserCollection_One::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
 });
 class UserCollection_One extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
@@ -60,7 +58,7 @@ test('transforms collection with toArray and with', function () {
 
     $type = new ObjectType(UserCollection_Two::class);
 
-    assertMatchesSnapshot($extension->toSchema($type)->toArray());
+    assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
 });
 class UserCollection_Two extends \Illuminate\Http\Resources\Json\ResourceCollection
 {
@@ -236,6 +234,21 @@ class UserCollection_Eight extends \Illuminate\Http\Resources\Json\ResourceColle
         unset($default['links']['prev'], $default['links']['next']);
         unset($default['meta']);
 
+        return $default;
+    }
+}
+
+test('transforms collection with paginationInformation with array annotation', function () {
+    $type = getStatementType('new '.UserCollection_Nine::class.'('.\Dedoc\Scramble\Tests\Files\SampleUserModel::class.'::paginate())');
+
+    assertMatchesSnapshot($this->transformer->toResponse($type)->toArray());
+});
+class UserCollection_Nine extends \Illuminate\Http\Resources\Json\ResourceCollection
+{
+    public $collects = UserResource::class;
+
+    public function paginationInformation($request, $paginated, $default): array
+    {
         return $default;
     }
 }

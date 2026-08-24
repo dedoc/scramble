@@ -16,5 +16,6 @@ class ParametersExtractionResult
         public array $parameters,
         public ?string $schemaName = null,
         public ?string $description = null,
+        public ?string $sourceClass = null,
     ) {}
 }

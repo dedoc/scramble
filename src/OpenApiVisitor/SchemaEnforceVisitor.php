@@ -3,13 +3,11 @@
 namespace Dedoc\Scramble\OpenApiVisitor;
 
 use Dedoc\Scramble\AbstractOpenApiVisitor;
-use Dedoc\Scramble\Exceptions\InvalidSchema;
-use Dedoc\Scramble\Exceptions\RouteAware;
+use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\OpenApiTraverser;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Types\Type;
-use Illuminate\Routing\Route;
 
 class SchemaEnforceVisitor extends AbstractOpenApiVisitor
 {
@@ -18,9 +16,8 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
     protected static array $handledReferences = [];
 
     public function __construct(
-        private Route $route,
+        private DiagnosticsCollector $diagnostics,
         private bool $throwExceptions = true,
-        protected array &$exceptions = [],
     ) {}
 
     public function popReferences()
@@ -28,7 +25,7 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
         return tap($this->operationReferences, fn () => $this->operationReferences = []);
     }
 
-    public function enter($object, array $path = [])
+    public function enter($object, array $path = []): void
     {
         if ($object instanceof Reference) {
             if (array_key_exists($object->fullName, static::$handledReferences)) {
@@ -43,28 +40,18 @@ class SchemaEnforceVisitor extends AbstractOpenApiVisitor
         }
     }
 
-    protected function validateSchema($object, $path)
+    protected function validateSchema($object, $path): void
     {
-        $exceptions = [];
-        try {
-            $exceptions = Scramble::getSchemaValidator()->validate(
-                $object,
-                implode('/', array_map(OpenApiTraverser::normalizeJsonPointerReferenceToken(...), $path)),
-            );
-        } catch (InvalidSchema $e) {
-            $e->setRoute($this->route);
+        $pointer = implode('/', array_map(OpenApiTraverser::normalizeJsonPointerReferenceToken(...), $path));
 
-            if ($this->throwExceptions) {
-                throw $e;
-            }
+        [$diagnostics, $exception] = Scramble::getSchemaValidator()->validate($object, $pointer);
 
-            $this->exceptions[] = $e;
+        foreach ($diagnostics as $diagnostic) {
+            $this->diagnostics->report($diagnostic);
         }
-        foreach ($exceptions as $exception) {
-            if ($exception instanceof RouteAware) {
-                $exception->setRoute($this->route);
-            }
+
+        if ($this->throwExceptions && $exception) {
+            throw $exception;
         }
-        $this->exceptions = array_merge($this->exceptions, $exceptions);
     }
 }
