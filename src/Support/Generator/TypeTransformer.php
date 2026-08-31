@@ -21,6 +21,7 @@ use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Helpers\ExamplesExtractor;
+use Dedoc\Scramble\Support\Measure;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
@@ -536,7 +537,16 @@ class TypeTransformer
                     continue;
                 }
 
-                if ($response = $extension->toResponse($type)) {
+                $measureName = 'response.type_transformers.'.Measure::nameFor($extension);
+                Measure::start($measureName);
+
+                try {
+                    $response = $extension->toResponse($type);
+                } finally {
+                    Measure::end($measureName);
+                }
+
+                if ($response) {
                     return $response;
                 }
             }

@@ -22,6 +22,7 @@ use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Infer\UnresolvableArgumentTypeBag;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
+use Dedoc\Scramble\Support\Measure;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -139,47 +140,57 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
 
     private function analyzeMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, MethodCall|NullsafeMethodCall $methodCall): void
     {
-        // 1. ensure method call should be handled
-        /*
-         * Only explicit method calls are supported. So the following is supported:
-         *    $this->foo()
-         * But when the expression is in place, we skip analysis:
-         *     $this->{$var}()
-         */
-        $this->applyExceptionsFromMethodCall($methodDefinition, $fnScope, $methodCall);
+        Measure::start('method_calls');
 
-        if (! $methodCall->name instanceof Identifier) {
-            return;
+        try {
+            // 1. ensure method call should be handled
+            /*
+             * Only explicit method calls are supported. So the following is supported:
+             *    $this->foo()
+             * But when the expression is in place, we skip analysis:
+             *     $this->{$var}()
+             */
+            $this->applyExceptionsFromMethodCall($methodDefinition, $fnScope, $methodCall);
+
+            if (! $methodCall->name instanceof Identifier) {
+                return;
+            }
+
+            // 2. get called method definition and if not yet analyzed, analyze shallowly (PHPDoc, type hints)
+
+            // get shallow method definition (get shallow callee type, get the shallow definition)
+            $calleeType = (new ShallowTypeResolver($this->shallowIndex))->resolve($fnScope, $fnScope->getType($methodCall->var));
+            if ($calleeType instanceof TemplateType && $calleeType->is) {
+                $calleeType = $calleeType->is;
+            }
+            if (! $calleeType instanceof ObjectType) {
+                return;
+            }
+
+            if ($calleeType->name !== '') {
+                Measure::record('method_calls', [$calleeType->name, $methodCall->name->name]);
+            }
+
+            $definition = $this->shallowIndex->getClass($calleeType->name);
+            if (! $definition) {
+                return;
+            }
+
+            $shallowMethodDefinition = $definition->getMethod($methodCall->name->name);
+            if (! $shallowMethodDefinition) {
+                return;
+            }
+
+            $this->applySideEffectsFromCall(new SideEffectCallEvent(
+                definition: $methodDefinition,
+                calledDefinition: $shallowMethodDefinition,
+                node: $methodCall,
+                scope: $fnScope,
+                arguments: new UnresolvableArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
+            ));
+        } finally {
+            Measure::end('method_calls');
         }
-
-        // 2. get called method definition and if not yet analyzed, analyze shallowly (PHPDoc, type hints)
-
-        // get shallow method definition (get shallow callee type, get the shallow definition)
-        $calleeType = (new ShallowTypeResolver($this->shallowIndex))->resolve($fnScope, $fnScope->getType($methodCall->var));
-        if ($calleeType instanceof TemplateType && $calleeType->is) {
-            $calleeType = $calleeType->is;
-        }
-        if (! $calleeType instanceof ObjectType) {
-            return;
-        }
-
-        $definition = $this->shallowIndex->getClass($calleeType->name);
-        if (! $definition) {
-            return;
-        }
-
-        $shallowMethodDefinition = $definition->getMethod($methodCall->name->name);
-        if (! $shallowMethodDefinition) {
-            return;
-        }
-
-        $this->applySideEffectsFromCall(new SideEffectCallEvent(
-            definition: $methodDefinition,
-            calledDefinition: $shallowMethodDefinition,
-            node: $methodCall,
-            scope: $fnScope,
-            arguments: new UnresolvableArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
-        ));
     }
 
     private function applyExceptionsFromMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, MethodCall|NullsafeMethodCall $methodCall): void
@@ -216,36 +227,44 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
 
     private function analyzeStaticMethodCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, StaticCall $methodCall): void
     {
-        if (! $methodCall->name instanceof Identifier) {
-            return;
-        }
+        Measure::start('method_calls');
 
-        if (! $methodCall->class instanceof Name) {
-            return;
-        }
+        try {
+            if (! $methodCall->name instanceof Identifier) {
+                return;
+            }
 
-        $class = ReferenceTypeResolver::resolveClassName($fnScope, $methodCall->class->name);
-        if (! $class) {
-            return;
-        }
+            if (! $methodCall->class instanceof Name) {
+                return;
+            }
 
-        $definition = $this->shallowIndex->getClass($class);
-        if (! $definition) {
-            return;
-        }
+            $class = ReferenceTypeResolver::resolveClassName($fnScope, $methodCall->class->name);
+            if (! $class) {
+                return;
+            }
 
-        $shallowMethodDefinition = $definition->getMethod($methodCall->name->name);
-        if (! $shallowMethodDefinition) {
-            return;
-        }
+            Measure::record('method_calls', [$class, $methodCall->name->name]);
 
-        $this->applySideEffectsFromCall(new SideEffectCallEvent(
-            definition: $methodDefinition,
-            calledDefinition: $shallowMethodDefinition,
-            node: $methodCall,
-            scope: $fnScope,
-            arguments: new UnresolvableArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
-        ));
+            $definition = $this->shallowIndex->getClass($class);
+            if (! $definition) {
+                return;
+            }
+
+            $shallowMethodDefinition = $definition->getMethod($methodCall->name->name);
+            if (! $shallowMethodDefinition) {
+                return;
+            }
+
+            $this->applySideEffectsFromCall(new SideEffectCallEvent(
+                definition: $methodDefinition,
+                calledDefinition: $shallowMethodDefinition,
+                node: $methodCall,
+                scope: $fnScope,
+                arguments: new UnresolvableArgumentTypeBag($fnScope->getArgsTypes($methodCall->args)),
+            ));
+        } finally {
+            Measure::end('method_calls');
+        }
     }
 
     private function analyzeFuncCall(FunctionLikeDefinition $methodDefinition, Scope $fnScope, FuncCall $call): void

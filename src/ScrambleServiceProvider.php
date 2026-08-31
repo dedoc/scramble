@@ -9,6 +9,8 @@ use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\CacheDocumentation;
 use Dedoc\Scramble\Console\Commands\ClearDocumentationCache;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
+use Dedoc\Scramble\Console\Commands\MeasureDocumentation;
+use Dedoc\Scramble\Console\Commands\MeasureTypeInference;
 use Dedoc\Scramble\DocumentTransformers\AddDocumentTags;
 use Dedoc\Scramble\DocumentTransformers\CleanupUnusedResponseReferencesTransformer;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
@@ -114,6 +116,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->name('scramble')
             ->hasConfigFile()
             ->hasCommand(ExportDocumentation::class)
+            ->hasCommand(MeasureDocumentation::class)
+            ->hasCommand(MeasureTypeInference::class)
             ->hasCommand(AnalyzeDocumentation::class)
             ->hasCommand(CacheDocumentation::class)
             ->hasCommand(ClearDocumentationCache::class)

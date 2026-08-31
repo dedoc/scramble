@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\JsonResource\JsonResourceVariantMatcher;
+use Dedoc\Scramble\Support\Measure;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
@@ -42,14 +43,37 @@ class PaginatedResourceResponseTypeToSchema extends ResourceResponseTypeToSchema
     {
         $resourceType = $this->getResourceType($type);
 
-        return $this
-            ->makeResponse($resourceType)
-            ->setContent('application/json', Schema::fromType($this->wrap(
+        Measure::start('response.paginated.base_response');
+
+        try {
+            $response = $this->makeResponse($resourceType);
+        } finally {
+            Measure::end('response.paginated.base_response');
+        }
+
+        Measure::start('response.paginated.schema');
+
+        try {
+            $schema = $this->wrap(
                 $this->wrapper($this->getCollectingClassType($type)),
                 $this->getCollectionSchema($type),
                 $this->getMergedAdditionalSchema($type),
-            )))
-            ->setDescription($this->getPaginatedDescription($type));
+            );
+        } finally {
+            Measure::end('response.paginated.schema');
+        }
+
+        Measure::start('response.paginated.description');
+
+        try {
+            $description = $this->getPaginatedDescription($type);
+        } finally {
+            Measure::end('response.paginated.description');
+        }
+
+        return $response
+            ->setContent('application/json', Schema::fromType($schema))
+            ->setDescription($description);
     }
 
     private function getCollectionSchema(Generic $type): OpenApiType

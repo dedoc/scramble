@@ -16,6 +16,7 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
+use Dedoc\Scramble\Support\Measure;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -252,12 +253,20 @@ class ClassDefinition implements ClassDefinitionContract
             return null;
         }
 
-        $definition = (new FunctionLikeReflectionDefinitionBuilder(
-            $name,
-            $methodReflection,
-            collect($this->templateTypes)->keyBy->name
-                ->merge($this->getMethodContextTemplates($methodReflection)),
-        ))->build();
+        $measurement = 'methods.'.Measure::sourceFromFile($methodReflection->getFileName());
+        Measure::record($measurement, [$methodReflection->class, $methodReflection->name]);
+        Measure::start($measurement);
+
+        try {
+            $definition = (new FunctionLikeReflectionDefinitionBuilder(
+                $name,
+                $methodReflection,
+                collect($this->templateTypes)->keyBy->name
+                    ->merge($this->getMethodContextTemplates($methodReflection)),
+            ))->build();
+        } finally {
+            Measure::end($measurement);
+        }
 
         return $this->methods[$name] = $definition;
     }
@@ -273,10 +282,18 @@ class ClassDefinition implements ClassDefinitionContract
         bool $withSideEffects = false,
     ): ?FunctionLikeDefinition {
         if (! $methodDefinition->isFullyAnalyzed()) {
-            $this->methods[$name] = (new MethodAnalyzer(
-                $scope->index,
-                $this,
-            ))->analyze($methodDefinition, $indexBuilders, $withSideEffects);
+            $measurement = $this->methodMeasurement($methodDefinition);
+            Measure::record($measurement, [$methodDefinition->definingClassName ?: $this->name, $name]);
+            Measure::start($measurement);
+
+            try {
+                $this->methods[$name] = (new MethodAnalyzer(
+                    $scope->index,
+                    $this,
+                ))->analyze($methodDefinition, $indexBuilders, $withSideEffects);
+            } finally {
+                Measure::end($measurement);
+            }
         }
 
         if (! $this->methods[$name]) { // @phpstan-ignore booleanNot.alwaysFalse
@@ -284,27 +301,41 @@ class ClassDefinition implements ClassDefinitionContract
         }
 
         if (! $this->methods[$name]->referencesResolved) {
-            $methodScope = new Scope(
-                $scope->index,
-                new NodeTypesResolver,
-                new ScopeContext($this, $methodDefinition),
-                new FileNameResolver(
-                    class_exists($this->name)
-                        ? ClassReflector::make($this->name)->getNameContext()
-                        : tap(new NameContext(new Throwing), fn (NameContext $nc) => $nc->startNamespace()),
-                ),
-            );
+            $measurement = $this->methodMeasurement($methodDefinition);
+            Measure::start($measurement);
 
-            FunctionLikeAstDefinitionBuilder::resolveFunctionParameterDefaults($methodScope, $this->methods[$name]);
+            try {
+                $methodScope = new Scope(
+                    $scope->index,
+                    new NodeTypesResolver,
+                    new ScopeContext($this, $methodDefinition),
+                    new FileNameResolver(
+                        class_exists($this->name)
+                            ? ClassReflector::make($this->name)->getNameContext()
+                            : tap(new NameContext(new Throwing), fn (NameContext $nc) => $nc->startNamespace()),
+                    ),
+                );
 
-            FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences($methodScope, $this->methods[$name]);
+                FunctionLikeAstDefinitionBuilder::resolveFunctionParameterDefaults($methodScope, $this->methods[$name]);
 
-            FunctionLikeAstDefinitionBuilder::resolveFunctionExceptions($methodScope, $this->methods[$name]);
+                FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences($methodScope, $this->methods[$name]);
 
-            $this->methods[$name]->referencesResolved = true;
+                FunctionLikeAstDefinitionBuilder::resolveFunctionExceptions($methodScope, $this->methods[$name]);
+
+                $this->methods[$name]->referencesResolved = true;
+            } finally {
+                Measure::end($measurement);
+            }
         }
 
         return $this->methods[$name];
+    }
+
+    private function methodMeasurement(FunctionLikeDefinition $methodDefinition): string
+    {
+        return 'methods.'.Measure::sourceFromFile(
+            (new \ReflectionClass($methodDefinition->definingClassName ?: $this->name))->getFileName(),
+        );
     }
 
     /**

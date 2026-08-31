@@ -182,20 +182,26 @@ class RouteInfo
             return $this->actionDefinition;
         }
 
-        $scopeCollector = new ScopeCollector;
+        Measure::start('types');
 
-        $this->actionDefinition = $this->getActionReflector()->getFunctionLikeDefinition(
-            indexBuilders: [
-                new RequestParametersBuilder($this->requestParametersFromCalls),
-                $scopeCollector,
-                ...$this->indexBuildingBroker->indexBuilders,
-            ],
-            withSideEffects: true,
-        );
+        try {
+            $scopeCollector = new ScopeCollector;
 
-        $this->scope = $scopeCollector->getScope($this->actionDefinition);
+            $this->actionDefinition = $this->getActionReflector()->getFunctionLikeDefinition(
+                indexBuilders: [
+                    new RequestParametersBuilder($this->requestParametersFromCalls),
+                    $scopeCollector,
+                    ...$this->indexBuildingBroker->indexBuilders,
+                ],
+                withSideEffects: true,
+            );
 
-        return $this->actionDefinition;
+            $this->scope = $scopeCollector->getScope($this->actionDefinition);
+
+            return $this->actionDefinition;
+        } finally {
+            Measure::end('types');
+        }
     }
 
     public function getActionType(): ?FunctionType

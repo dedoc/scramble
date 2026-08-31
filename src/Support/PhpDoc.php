@@ -37,40 +37,76 @@ class PhpDoc
 
     public static function parse(string $docComment, ?FileNameResolver $nameResolver = null): PhpDocNode
     {
-        $docComment = Str::replace(['@body'], '@var', $docComment);
+        Measure::start('phpdoc');
 
-        [$lexer, $phpDocParser] = static::getTokenizerAndParser();
+        try {
+            $docComment = Str::replace(['@body'], '@var', $docComment);
 
-        $tokens = new TokenIterator($lexer->tokenize($docComment));
+            Measure::start('phpdoc.parser_setup');
 
-        /** @var PhpDocNode $node */
-        $node = $phpDocParser->parse($tokens);
-
-        static::addSummaryAttributes($node);
-
-        if ($nameResolver) {
-            $tagValues = [
-                ...$node->getParamTagValues(),
-                ...$node->getMixinTagValues(),
-                ...$node->getExtendsTagValues(),
-                ...$node->getUsesTagValues(),
-                ...$node->getReturnTagValues(),
-                ...$node->getReturnTagValues('@response'),
-                ...$node->getReturnTagValues('@scramble-return'),
-                ...$node->getVarTagValues(),
-                ...$node->getThrowsTagValues(),
-                ...$node->getPropertyTagValues(),
-                ...$node->getPropertyReadTagValues(),
-            ];
-
-            foreach ($tagValues as $tagValue) {
-                PhpDocTypeWalker::traverse($tagValue->type, [
-                    new ResolveFqnPhpDocTypeVisitor($nameResolver),
-                ]);
+            try {
+                [$lexer, $phpDocParser] = static::getTokenizerAndParser();
+            } finally {
+                Measure::end('phpdoc.parser_setup');
             }
-        }
 
-        return $node;
+            Measure::start('phpdoc.tokenize');
+
+            try {
+                $tokens = new TokenIterator($lexer->tokenize($docComment));
+            } finally {
+                Measure::end('phpdoc.tokenize');
+            }
+
+            Measure::start('phpdoc.ast');
+
+            try {
+                /** @var PhpDocNode $node */
+                $node = $phpDocParser->parse($tokens);
+            } finally {
+                Measure::end('phpdoc.ast');
+            }
+
+            Measure::start('phpdoc.summary');
+
+            try {
+                static::addSummaryAttributes($node);
+            } finally {
+                Measure::end('phpdoc.summary');
+            }
+
+            if ($nameResolver) {
+                Measure::start('phpdoc.resolve_fqns');
+
+                try {
+                    $tagValues = [
+                        ...$node->getParamTagValues(),
+                        ...$node->getMixinTagValues(),
+                        ...$node->getExtendsTagValues(),
+                        ...$node->getUsesTagValues(),
+                        ...$node->getReturnTagValues(),
+                        ...$node->getReturnTagValues('@response'),
+                        ...$node->getReturnTagValues('@scramble-return'),
+                        ...$node->getVarTagValues(),
+                        ...$node->getThrowsTagValues(),
+                        ...$node->getPropertyTagValues(),
+                        ...$node->getPropertyReadTagValues(),
+                    ];
+
+                    foreach ($tagValues as $tagValue) {
+                        PhpDocTypeWalker::traverse($tagValue->type, [
+                            new ResolveFqnPhpDocTypeVisitor($nameResolver),
+                        ]);
+                    }
+                } finally {
+                    Measure::end('phpdoc.resolve_fqns');
+                }
+            }
+
+            return $node;
+        } finally {
+            Measure::end('phpdoc');
+        }
     }
 
     public static function addSummaryAttributes(PhpDocNode $phpDoc)

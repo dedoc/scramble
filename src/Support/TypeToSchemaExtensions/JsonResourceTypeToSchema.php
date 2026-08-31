@@ -16,6 +16,7 @@ use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Helpers\JsonResourceHelper;
 use Dedoc\Scramble\Support\JsonResource\JsonResourceVariantMatcher;
+use Dedoc\Scramble\Support\Measure;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -61,15 +62,23 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
     {
         $type = $this->normalizeType($type);
 
-        JsonResourceHelper::reportUnknownModelDiagnostic(
-            $this->openApiContext->diagnostics,
-            $this->infer->analyzeClass($type->name),
-        );
+        Measure::start('types');
+        Measure::start('response.resource.analyze_to_array');
 
-        $array = ReferenceTypeResolver::getInstance()->resolve(
-            new GlobalScope,
-            new MethodCallReferenceType($type, 'toArray', arguments: []),
-        );
+        try {
+            JsonResourceHelper::reportUnknownModelDiagnostic(
+                $this->openApiContext->diagnostics,
+                $this->infer->analyzeClass($type->name),
+            );
+
+            $array = ReferenceTypeResolver::getInstance()->resolve(
+                new GlobalScope,
+                new MethodCallReferenceType($type, 'toArray', arguments: []),
+            );
+        } finally {
+            Measure::end('response.resource.analyze_to_array');
+            Measure::end('types');
+        }
 
         if (! $array instanceof KeyedArrayType) {
             return $this->openApiTransformer->getOrCreateSchemaReference(
@@ -78,19 +87,31 @@ class JsonResourceTypeToSchema extends TypeToSchemaExtension
             );
         }
 
-        $variant = $this->variantMatcher->match($type);
+        Measure::start('response.resource.schema_reference');
 
-        $reference = $this->openApiTransformer->getOrCreateSchemaReference(
-            $variant->isAnonymous() ? $this->defaultReference($type) : $variant->reference($this->components),
-            fn () => $this->openApiTransformer->transform($this->flatten($variant->filterReferencableFields($array))),
-        );
+        try {
+            $variant = $this->variantMatcher->match($type);
 
-        $loadedFields = $variant->filterLoadedFields($array);
+            $reference = $this->openApiTransformer->getOrCreateSchemaReference(
+                $variant->isAnonymous() ? $this->defaultReference($type) : $variant->reference($this->components),
+                fn () => $this->openApiTransformer->transform($this->flatten($variant->filterReferencableFields($array))),
+            );
+        } finally {
+            Measure::end('response.resource.schema_reference');
+        }
 
-        return $this->allOf([
-            $reference,
-            $this->loadedFieldsOverlay($variant->isAnonymous(), $loadedFields),
-        ]);
+        Measure::start('response.resource.loaded_fields');
+
+        try {
+            $loadedFields = $variant->filterLoadedFields($array);
+
+            return $this->allOf([
+                $reference,
+                $this->loadedFieldsOverlay($variant->isAnonymous(), $loadedFields),
+            ]);
+        } finally {
+            Measure::end('response.resource.loaded_fields');
+        }
     }
 
     private function loadedFieldsOverlay(bool $isAnonymous, KeyedArrayType $loadedFields): ?OpenApiType

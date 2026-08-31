@@ -16,6 +16,7 @@ use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\JsonResource\JsonResourceVariantMatcher;
+use Dedoc\Scramble\Support\Measure;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
@@ -66,14 +67,37 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
             throw new LogicException('ResourceResponse data is expected to be an object');
         }
 
-        return $this
-            ->makeResponse($resource)
-            ->setContent('application/json', Schema::fromType($this->wrap(
+        Measure::start('response.resource.base_response');
+
+        try {
+            $response = $this->makeResponse($resource);
+        } finally {
+            Measure::end('response.resource.base_response');
+        }
+
+        Measure::start('response.resource.schema');
+
+        try {
+            $schema = $this->wrap(
                 $this->wrapper($resource),
                 $this->openApiTransformer->transform($resource),
                 $this->getMergedAdditionalSchema($resource),
-            )))
-            ->setDescription($this->getDescription($resource));
+            );
+        } finally {
+            Measure::end('response.resource.schema');
+        }
+
+        Measure::start('response.resource.description');
+
+        try {
+            $description = $this->getDescription($resource);
+        } finally {
+            Measure::end('response.resource.description');
+        }
+
+        return $response
+            ->setContent('application/json', Schema::fromType($schema))
+            ->setDescription($description);
     }
 
     protected function getDescription(ObjectType $resourceType): string
@@ -167,34 +191,40 @@ class ResourceResponseTypeToSchema extends TypeToSchemaExtension
 
     protected function makeBaseResponseType(ObjectType $resourceType): Generic
     {
-        $definition = $this->infer->analyzeClass($resourceType->name);
+        Measure::start('types');
 
-        $responseType = new Generic(JsonResponse::class, [new UnknownType, new LiteralIntegerType(200), new KeyedArrayType]);
+        try {
+            $definition = $this->infer->analyzeClass($resourceType->name);
 
-        $methodDefinition = $definition->getMethod('withResponse');
-        if (! $methodDefinition instanceof Infer\Definition\FunctionLikeAstDefinition) {
-            return $responseType;
+            $responseType = new Generic(JsonResponse::class, [new UnknownType, new LiteralIntegerType(200), new KeyedArrayType]);
+
+            $methodDefinition = $definition->getMethod('withResponse');
+            if (! $methodDefinition instanceof Infer\Definition\FunctionLikeAstDefinition) {
+                return $responseType;
+            }
+
+            $responseParameterName = array_keys($methodDefinition->type->arguments)[1] ?? null;
+            if (! is_string($responseParameterName)) {
+                return $responseType;
+            }
+
+            $flow = $methodDefinition->getFlowContainer();
+
+            $responseFinalType = Union::wrap(...array_map(
+                fn (FlowNode $n) => $flow
+                    ->withEntryBindings([$responseParameterName => $responseType])
+                    ->getTypeAt(new Variable($responseParameterName), $n),
+                $flow->getReachableNodes(fn (FlowNode $n) => $n instanceof Infer\Flow\TerminateNode),
+            ));
+
+            $responseFinalType = ReferenceTypeResolver::getInstance()->resolve($methodDefinition->getScope(), $responseFinalType);
+
+            return $responseFinalType instanceof Generic && $responseFinalType->isInstanceOf(JsonResponse::class)
+                ? $responseFinalType
+                : $responseType;
+        } finally {
+            Measure::end('types');
         }
-
-        $responseParameterName = array_keys($methodDefinition->type->arguments)[1] ?? null;
-        if (! is_string($responseParameterName)) {
-            return $responseType;
-        }
-
-        $flow = $methodDefinition->getFlowContainer();
-
-        $responseFinalType = Union::wrap(...array_map(
-            fn (FlowNode $n) => $flow
-                ->withEntryBindings([$responseParameterName => $responseType])
-                ->getTypeAt(new Variable($responseParameterName), $n),
-            $flow->getReachableNodes(fn (FlowNode $n) => $n instanceof Infer\Flow\TerminateNode),
-        ));
-
-        $responseFinalType = ReferenceTypeResolver::getInstance()->resolve($methodDefinition->getScope(), $responseFinalType);
-
-        return $responseFinalType instanceof Generic && $responseFinalType->isInstanceOf(JsonResponse::class)
-            ? $responseFinalType
-            : $responseType;
     }
 
     protected function wrap(?string $wrapKey, OpenApiType $data, ?OpenApiType $additional): OpenApiType

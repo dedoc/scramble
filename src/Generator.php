@@ -24,6 +24,7 @@ use Dedoc\Scramble\Support\Generator\UniqueNameOptions;
 use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\InferExtensions\TransformsToResourceCollectionExtension;
+use Dedoc\Scramble\Support\Measure;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
@@ -188,27 +189,34 @@ class Generator
 
     private function applyDocumentTransformers(OpenApiContext $context, TypeTransformer $typeTransformer): void
     {
-        foreach ($context->config->documentTransformers->all() as $openApiTransformer) {
-            $openApiTransformer = is_callable($openApiTransformer)
-                ? $openApiTransformer
-                : ContainerUtils::makeContextable($openApiTransformer, [
-                    TypeTransformer::class => $typeTransformer,
-                ]);
+        foreach ($context->config->documentTransformers->all() as $documentTransformer) {
+            $measurement = 'document_transformers.'.Measure::nameFor($documentTransformer);
+            Measure::start($measurement);
 
-            if (is_callable($openApiTransformer)) {
-                $openApiTransformer($context->openApi, $context);
+            try {
+                $openApiTransformer = is_callable($documentTransformer)
+                    ? $documentTransformer
+                    : ContainerUtils::makeContextable($documentTransformer, [
+                        TypeTransformer::class => $typeTransformer,
+                    ]);
 
-                continue;
+                if (is_callable($openApiTransformer)) {
+                    $openApiTransformer($context->openApi, $context);
+
+                    continue;
+                }
+
+                if ($openApiTransformer instanceof DocumentTransformer) {
+                    $openApiTransformer->handle($context->openApi, $context);
+
+                    continue;
+                }
+
+                // @phpstan-ignore deadCode.unreachable
+                throw new InvalidArgumentException('(callable(OpenApi, OpenApiContext): void)|DocumentTransformer type for document transformer expected, received '.$openApiTransformer::class);
+            } finally {
+                Measure::end($measurement);
             }
-
-            if ($openApiTransformer instanceof DocumentTransformer) {
-                $openApiTransformer->handle($context->openApi, $context);
-
-                continue;
-            }
-
-            // @phpstan-ignore deadCode.unreachable
-            throw new InvalidArgumentException('(callable(OpenApi, OpenApiContext): void)|DocumentTransformer type for document transformer expected, received '.$openApiTransformer::class);
         }
     }
 
@@ -217,67 +225,73 @@ class Generator
      */
     private function getRoutes(GeneratorConfig $config): Collection
     {
-        return collect(RouteFacade::getRoutes())
-            ->pipe(function (Collection $c) {
-                $onlyRoutes = $c->filter(function (Route $route) {
+        Measure::start('routes');
 
-                    if (! is_string($route->getAction('controller'))) {
+        try {
+            return collect(RouteFacade::getRoutes())
+                ->pipe(function (Collection $c) {
+                    $onlyRoutes = $c->filter(function (Route $route) {
+
+                        if (! is_string($route->getAction('controller'))) {
+                            return false;
+                        }
+
+                        if (! is_string($route->getAction('uses'))) {
+                            return false;
+                        }
+
+                        try {
+                            $reflection = new ReflectionMethod(...explode('@', $route->getAction('uses')));
+
+                            if (str_contains($reflection->getDocComment() ?: '', '@only-docs')) {
+                                return true;
+                            }
+                        } catch (Throwable) {
+                        }
+
                         return false;
-                    }
+                    });
 
+                    return $onlyRoutes->count() ? $onlyRoutes : $c;
+                })
+                ->filter(function (Route $route) {
+                    return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
+                })
+                ->filter($config->routes())
+                ->filter(function (Route $route) use ($config) {
                     if (! is_string($route->getAction('uses'))) {
-                        return false;
+                        return true;
                     }
 
                     try {
                         $reflection = new ReflectionMethod(...explode('@', $route->getAction('uses')));
-
-                        if (str_contains($reflection->getDocComment() ?: '', '@only-docs')) {
-                            return true;
-                        }
-                    } catch (Throwable) {
-                    }
-
-                    return false;
-                });
-
-                return $onlyRoutes->count() ? $onlyRoutes : $c;
-            })
-            ->filter(function (Route $route) {
-                return ! ($name = $route->getAction('as')) || ! Str::startsWith($name, 'scramble');
-            })
-            ->filter($config->routes())
-            ->filter(function (Route $route) use ($config) {
-                if (! is_string($route->getAction('uses'))) {
-                    return true;
-                }
-
-                try {
-                    $reflection = new ReflectionMethod(...explode('@', $route->getAction('uses')));
-                } catch (ReflectionException) {
-                    /*
+                    } catch (ReflectionException) {
+                        /*
                      * If route is registered but route method doesn't exist, it will not be included
                      * in the resulting documentation.
                      */
-                    return false;
-                }
+                        return false;
+                    }
 
-                if (count($reflection->getAttributes(ExcludeRouteFromDocs::class))) {
-                    return false;
-                }
+                    if (count($reflection->getAttributes(ExcludeRouteFromDocs::class))) {
+                        return false;
+                    }
 
-                if (count($reflection->getDeclaringClass()->getAttributes(ExcludeAllRoutesFromDocs::class))) {
-                    return false;
-                }
+                    if (count($reflection->getDeclaringClass()->getAttributes(ExcludeAllRoutesFromDocs::class))) {
+                        return false;
+                    }
 
-                $apiNames = $this->getApiAttributeNames($reflection);
-                if ($apiNames !== null && ! in_array($config->name, $apiNames, true)) {
-                    return false;
-                }
+                    $apiNames = $this->getApiAttributeNames($reflection);
+                    if ($apiNames !== null && ! in_array($config->name, $apiNames, true)) {
+                        return false;
+                    }
 
-                return true;
-            })
-            ->values();
+                    return true;
+                })
+                ->values();
+        } finally {
+            Measure::end('routes');
+        }
     }
 
     /**

@@ -13,6 +13,7 @@ use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Generator\ClassBasedReference;
 use Dedoc\Scramble\Support\Generator\Reference;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
+use Dedoc\Scramble\Support\Measure;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -80,21 +81,27 @@ class PlainObjectToSchema extends TypeToSchemaExtension
 
     private function getFreshSerializedType(ObjectType $type): ?Type
     {
-        $definition = $this->infer->index->getClass($type->name);
+        Measure::start('types');
 
-        if (! $definition) {
+        try {
+            $definition = $this->infer->index->getClass($type->name);
+
+            if (! $definition) {
+                return null;
+            }
+
+            if ($jsonSerializableType = $this->getJsonSerializableType($definition, $type)) {
+                return $jsonSerializableType;
+            }
+
+            if ($publicPropertiesType = $this->getSerializedPublicPropertiesType($definition, $type)) {
+                return $publicPropertiesType;
+            }
+
             return null;
+        } finally {
+            Measure::end('types');
         }
-
-        if ($jsonSerializableType = $this->getJsonSerializableType($definition, $type)) {
-            return $jsonSerializableType;
-        }
-
-        if ($publicPropertiesType = $this->getSerializedPublicPropertiesType($definition, $type)) {
-            return $publicPropertiesType;
-        }
-
-        return null;
     }
 
     private function getJsonSerializableType(ClassDefinition $definition, ObjectType $type): ?Type

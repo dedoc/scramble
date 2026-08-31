@@ -12,6 +12,7 @@ use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiSchema;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\Measure;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Contracts\Support\Arrayable;
@@ -41,9 +42,15 @@ class ArrayableToSchema extends TypeToSchemaExtension
      */
     public function toSchema(Type $type): OpenApiSchema
     {
-        $this->infer->analyzeClass($type->name);
+        Measure::start('types');
 
-        $toArrayReturnType = $type->getMethodReturnType('toArray');
+        try {
+            $this->infer->analyzeClass($type->name);
+
+            $toArrayReturnType = $type->getMethodReturnType('toArray');
+        } finally {
+            Measure::end('types');
+        }
 
         return $this->openApiTransformer->transform($toArrayReturnType);
     }

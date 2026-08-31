@@ -62,7 +62,7 @@ class GeneratorConfig
         $this->operationMethodsResolver = $operationMethodsResolver ?: fn (Route $r) => $r->methods()[0];
     }
 
-    public function config(array $config)
+    public function config(array $config): static
     {
         $this->config = $config;
         $this->resolvedApiPath = null;
@@ -120,7 +120,7 @@ class GeneratorConfig
         return $this;
     }
 
-    private function defaultRoutesFilter(Route $route)
+    private function defaultRoutesFilter(Route $route): bool
     {
         $expectedDomain = $this->get('api_domain');
 
@@ -271,7 +271,7 @@ class GeneratorConfig
     /**
      * @param  (callable(ServerVariables): void)|array<string, ServerVariable>  $variables
      */
-    public function withServerVariables(callable|array $variables)
+    public function withServerVariables(callable|array $variables): static
     {
         if (is_callable($variables)) {
             $variables($this->serverVariables);

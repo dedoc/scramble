@@ -9,6 +9,7 @@ use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeReflectionDefinitionBuilder;
 use Dedoc\Scramble\Infer\DefinitionBuilders\ShallowClassReflectionDefinitionBuilder;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Measure;
 use ReflectionClass;
 use ReflectionException;
 
@@ -41,11 +42,19 @@ class Index implements IndexContract
             return null;
         }
 
-        if (! Scramble::infer()->config->shouldAnalyzeAst($className)) {
-            return $this->classesDefinitions[$className] = (new ShallowClassReflectionDefinitionBuilder($this, $reflection))->build();
-        }
+        $measurement = 'classes.'.Measure::sourceFromFile($reflection->getFileName());
+        Measure::record($measurement, $reflection->getName());
+        Measure::start($measurement);
 
-        return (new ClassAnalyzer($this))->analyze($className);
+        try {
+            if (! Scramble::infer()->config->shouldAnalyzeAst($className)) {
+                return $this->classesDefinitions[$className] = (new ShallowClassReflectionDefinitionBuilder($this, $reflection))->build();
+            }
+
+            return (new ClassAnalyzer($this))->analyze($className);
+        } finally {
+            Measure::end($measurement);
+        }
     }
 
     public function registerClassDefinition(ClassDefinition $classDefinition): void

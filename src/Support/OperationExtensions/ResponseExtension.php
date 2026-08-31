@@ -16,6 +16,7 @@ use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
 use Dedoc\Scramble\Support\JsonResource\AppliesWithRelationsAttributes;
+use Dedoc\Scramble\Support\Measure;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
@@ -30,16 +31,34 @@ class ResponseExtension extends OperationExtension
     {
         $inferredResponses = $this->collectInferredResponses($routeInfo);
 
-        $responses = $this->applyResponsesAttributes($inferredResponses, $routeInfo);
+        Measure::start('response.attributes');
 
-        $responses = $this->applyIgnoreResponseAttributes($responses, $routeInfo);
+        try {
+            $responses = $this->applyResponsesAttributes($inferredResponses, $routeInfo);
+        } finally {
+            Measure::end('response.attributes');
+        }
 
-        foreach ($responses as $response) {
-            if (in_array($routeInfo->method, static::HTTP_METHODS_WITHOUT_RESPONSE_BODY)) {
-                $response = $this->removeContentFromResponse($response);
+        Measure::start('response.ignore_attributes');
+
+        try {
+            $responses = $this->applyIgnoreResponseAttributes($responses, $routeInfo);
+        } finally {
+            Measure::end('response.ignore_attributes');
+        }
+
+        Measure::start('response.attach');
+
+        try {
+            foreach ($responses as $response) {
+                if (in_array($routeInfo->method, static::HTTP_METHODS_WITHOUT_RESPONSE_BODY)) {
+                    $response = $this->removeContentFromResponse($response);
+                }
+
+                $operation->addResponse($response);
             }
-
-            $operation->addResponse($response);
+        } finally {
+            Measure::end('response.attach');
         }
     }
 
@@ -48,7 +67,27 @@ class ResponseExtension extends OperationExtension
      */
     private function collectInferredResponses(RouteInfo $routeInfo): Collection
     {
-        $returnType = $routeInfo->getReturnType();
+        Measure::start('types');
+
+        try {
+            Measure::start('response.return_type');
+
+            try {
+                $returnType = $routeInfo->getReturnType();
+            } finally {
+                Measure::end('response.return_type');
+            }
+
+            Measure::start('response.exceptions');
+
+            try {
+                $exceptions = $routeInfo->getActionType()?->exceptions ?? [];
+            } finally {
+                Measure::end('response.exceptions');
+            }
+        } finally {
+            Measure::end('types');
+        }
 
         if (! $returnType) {
             return collect();
@@ -58,37 +97,64 @@ class ResponseExtension extends OperationExtension
             ? $returnType->types
             : [$returnType];
 
-        $responses = collect($returnTypes)
-            ->map(fn (Type $returnType) => $this->applyResponseTypeModifyingAttributes($returnType, $routeInfo))
-            ->merge($routeInfo->getActionType()->exceptions ?? [])
-            ->map(function (Type $type) use ($routeInfo) {
-                /*
+        Measure::start('response.prepare_types');
+
+        try {
+            $types = collect($returnTypes)
+                ->map(fn (Type $returnType) => $this->applyResponseTypeModifyingAttributes($returnType, $routeInfo))
+                ->merge($exceptions)
+                ->map(function (Type $type) use ($routeInfo) {
+                    /*
                  * Any inline comments on the entire response type that are not originating in the controller,
                  * should not leak to the resulting documentation.
                  */
-                $docSource = $type->getAttribute('docNode')?->getAttribute('sourceClass');
+                    $docSource = $type->getAttribute('docNode')?->getAttribute('sourceClass');
 
-                if ($docSource && ($docSource !== $routeInfo->className())) {
-                    $type->setAttribute('docNode', null);
-                }
+                    if ($docSource && ($docSource !== $routeInfo->className())) {
+                        $type->setAttribute('docNode', null);
+                    }
 
-                return $type;
-            })
-            ->map($this->openApiTransformer->toResponse(...))
-            ->filter()
-            ->unique(fn ($response) => ($response instanceof Response ? $response->code : 'ref').':'.json_encode($response->toArray()))
-            ->values();
+                    return $type;
+                });
+        } finally {
+            Measure::end('response.prepare_types');
+        }
 
-        [$responses, $references] = $responses->partition(fn ($r) => $r instanceof Response)->all();
-        /** @var Collection<int, Response> $responses */
-        /** @var Collection<int, Reference> $references */
+        Measure::start('response.to_openapi');
 
-        return $responses
-            ->groupBy('code')
-            ->map($this->mergeResponses(...))
-            ->values()
-            ->concat($references)
-            ->values();
+        try {
+            $responses = $types->map($this->openApiTransformer->toResponse(...));
+        } finally {
+            Measure::end('response.to_openapi');
+        }
+
+        Measure::start('response.deduplicate');
+
+        try {
+            $responses = $responses
+                ->filter()
+                ->unique(fn ($response) => ($response instanceof Response ? $response->code : 'ref').':'.json_encode($response->toArray()))
+                ->values();
+        } finally {
+            Measure::end('response.deduplicate');
+        }
+
+        Measure::start('response.merge');
+
+        try {
+            [$responses, $references] = $responses->partition(fn ($r) => $r instanceof Response)->all();
+            /** @var Collection<int, Response> $responses */
+            /** @var Collection<int, Reference> $references */
+
+            return $responses
+                ->groupBy('code')
+                ->map($this->mergeResponses(...))
+                ->values()
+                ->concat($references)
+                ->values();
+        } finally {
+            Measure::end('response.merge');
+        }
     }
 
     private function applyResponseTypeModifyingAttributes(Type $returnType, RouteInfo $routeInfo): Type

@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\Parameter;
+use Dedoc\Scramble\Support\Measure;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
@@ -27,7 +28,15 @@ class ErrorResponsesExtension extends OperationExtension
 {
     public function handle(Operation $operation, RouteInfo $routeInfo)
     {
-        if (! $methodType = $routeInfo->getActionType()) {
+        Measure::start('types');
+
+        try {
+            $methodType = $routeInfo->getActionType();
+        } finally {
+            Measure::end('types');
+        }
+
+        if (! $methodType) {
             return;
         }
 
@@ -95,41 +104,47 @@ class ErrorResponsesExtension extends OperationExtension
 
     private function attachCustomRequestExceptions(FunctionType $methodType)
     {
-        if (! $formRequest = collect($methodType->arguments)->first(fn (Type $arg) => $arg->isInstanceOf(FormRequest::class))) {
-            return;
-        }
+        Measure::start('types');
 
-        $formRequest = $formRequest instanceof ObjectType
-            ? $formRequest
-            : ($formRequest instanceof TemplateType ? $formRequest->is : null);
+        try {
+            if (! $formRequest = collect($methodType->arguments)->first(fn (Type $arg) => $arg->isInstanceOf(FormRequest::class))) {
+                return;
+            }
 
-        if (! $formRequest) {
-            return;
-        }
+            $formRequest = $formRequest instanceof ObjectType
+                ? $formRequest
+                : ($formRequest instanceof TemplateType ? $formRequest->is : null);
 
-        $formRequest = $this->infer->analyzeClass($formRequest->name);
+            if (! $formRequest) {
+                return;
+            }
 
-        if (
-            $formRequest->hasMethodDefinition('rules')
-            || $formRequest->hasMethodDefinition('after')
-        ) {
-            $methodType->exceptions = [
-                ...$methodType->exceptions,
-                new ObjectType(ValidationException::class),
-            ];
-        }
+            $formRequest = $this->infer->analyzeClass($formRequest->name);
 
-        if ($formRequest->hasMethodDefinition('authorize')) {
-            $authorizeReturnType = $formRequest->getMethodCallType('authorize');
             if (
-                (! $authorizeReturnType instanceof LiteralBooleanType)
-                || $authorizeReturnType->value !== true
+                $formRequest->hasMethodDefinition('rules')
+                || $formRequest->hasMethodDefinition('after')
             ) {
                 $methodType->exceptions = [
                     ...$methodType->exceptions,
-                    new ObjectType(AuthorizationException::class),
+                    new ObjectType(ValidationException::class),
                 ];
             }
+
+            if ($formRequest->hasMethodDefinition('authorize')) {
+                $authorizeReturnType = $formRequest->getMethodCallType('authorize');
+                if (
+                    (! $authorizeReturnType instanceof LiteralBooleanType)
+                    || $authorizeReturnType->value !== true
+                ) {
+                    $methodType->exceptions = [
+                        ...$methodType->exceptions,
+                        new ObjectType(AuthorizationException::class),
+                    ];
+                }
+            }
+        } finally {
+            Measure::end('types');
         }
     }
 }
