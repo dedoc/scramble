@@ -10,6 +10,7 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
+use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Str;
 
@@ -84,10 +85,35 @@ class JsonResourceHelper
         $modelName = (string) Str::of(Str::of($jsonResourceClassName)->explode('\\')->last())->replace('Resource', '')->singular();
 
         $modelClass = 'App\\Models\\'.$modelName;
-        if (! class_exists($modelClass)) {
+        if (! class_exists($modelClass) || ! self::modelUsesResource($modelClass, $jsonResourceClassName)) {
             return null;
         }
 
         return $modelClass;
+    }
+
+    /**
+     * @param  class-string  $modelClass
+     */
+    private static function modelUsesResource(string $modelClass, string $jsonResourceClass): bool
+    {
+        try {
+            $attribute = class_exists(UseResource::class)
+                ? (new \ReflectionClass($modelClass))->getAttributes(UseResource::class)[0] ?? null
+                : null;
+
+            if ($attribute?->newInstance()->class === $jsonResourceClass) {
+                return true;
+            }
+
+            $resourceClass = (string) Str::of($modelClass)->replaceFirst('\\Models\\', '\\Http\\Resources\\');
+            $resourceClasses = method_exists($modelClass, 'guessResourceName')
+                ? $modelClass::guessResourceName()
+                : [$resourceClass.'Resource', $resourceClass];
+
+            return in_array($jsonResourceClass, $resourceClasses, strict: true);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }
