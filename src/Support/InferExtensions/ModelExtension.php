@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\InferExtensions;
 
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Diagnostics\Model\Md001PendingMigrationsDiagnostic;
 use Dedoc\Scramble\Diagnostics\Model\Md002MissingResourceDiagnostic;
@@ -112,11 +113,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     private function refineAnnotatedType(?Type $annotatedType, Type $inferredType): Type
     {
-        if (! $annotatedType?->accepts($inferredType)) {
-            return $annotatedType ?? $inferredType;
-        }
-
-        if (! $annotatedType instanceof Union) {
+        if (! $annotatedType) {
             return $inferredType;
         }
 
@@ -124,18 +121,39 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             ? $inferredType->types
             : [$inferredType];
 
-        $refinedTypes = collect($annotatedType->types)
-            ->flatMap(function (Type $annotatedMember) use ($inferredTypes) {
-                $acceptedInferredTypes = array_filter(
-                    $inferredTypes,
-                    fn (Type $inferredMember) => $annotatedMember->accepts($inferredMember),
-                );
+        if (! $annotatedType instanceof Union) {
+            return $this->addInferredCarbonFormat($annotatedType, $inferredTypes);
+        }
 
-                return $acceptedInferredTypes ?: [$annotatedMember];
-            })
-            ->all();
+        $refinedTypes = array_map(
+            fn (Type $annotatedMember) => $this->addInferredCarbonFormat($annotatedMember, $inferredTypes),
+            $annotatedType->types,
+        );
 
         return Union::wrap($refinedTypes)->mergeAttributes($annotatedType->attributes());
+    }
+
+    /**
+     * @param  Type[]  $inferredTypes
+     */
+    private function addInferredCarbonFormat(Type $annotatedType, array $inferredTypes): Type
+    {
+        if (! $annotatedType->isInstanceOf(CarbonInterface::class)) {
+            return $annotatedType;
+        }
+
+        $format = collect($inferredTypes)
+            ->first(fn (Type $type) => $type->isInstanceOf(CarbonInterface::class) && $type->hasAttribute('format'))
+            ?->getAttribute('format');
+
+        if (! is_string($format)) {
+            return $annotatedType;
+        }
+
+        $refinedType = $annotatedType->clone();
+        $refinedType->setAttribute('format', $format);
+
+        return $refinedType;
     }
 
     /**
