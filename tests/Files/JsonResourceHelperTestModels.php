@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Model;
 
-class ReverseLookupTest_User extends Model {}
+class ReverseLookupTest_User extends Model
+{
+    protected $table = 'users';
+}
 
-#[UseResource(\Vendor\Package\Http\Resources\ReverseLookupTest_AttributedResource::class)]
-class ReverseLookupTest_Attributed extends Model {}
+class ReverseLookupTest_Plain extends Model {}
