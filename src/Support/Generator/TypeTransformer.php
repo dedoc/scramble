@@ -495,21 +495,31 @@ class TypeTransformer
                 );
         }
 
-        $returnCommentsShouldBeIgnored = config('scramble.ignore_response_return_comments', false);
-
-        if (!$returnCommentsShouldBeIgnored && ($docNode = $type->getAttribute('docNode'))) {
+        if (
+            ($docNode = $type->getAttribute('docNode'))
+            && (
+                $docNode->getTagsByName('@description')
+                || $docNode->getTagsByName('@status')
+                || $docNode->getAttribute('hasBodyTag')
+            )
+        ) {
             /** @var PhpDocNode $docNode */
-            $description = (string) Str::of($docNode->getAttribute('summary') ?: '') // @phpstan-ignore argument.type
-                ->append("\n\n".($docNode->getAttribute('description') ?: '')) // @phpstan-ignore binaryOp.invalid
-                ->append("\n\n".$response->description)
-                ->trim();
+            $descriptionTag = array_values($docNode->getTagsByName('@description'))[0] ?? null;
+            $description = $descriptionTag
+                ? trim((string) $descriptionTag->value)
+                : (string) Str::of($docNode->getAttribute('summary') ?: '') // @phpstan-ignore argument.type
+                    ->append("\n\n".($docNode->getAttribute('description') ?: '')) // @phpstan-ignore binaryOp.invalid
+                    ->trim();
 
-            $response->description($description);
+            if ($descriptionTag || $description !== '') {
+                $response->setDescription(Str::replace('$0', $response->description, $description));
+            }
 
-            $code = (int) (array_values($docNode->getTagsByName('@status'))[0]->value->value ?? $response->code ?? 200);
-            $response->code = $code;
+            if ($statusTag = array_values($docNode->getTagsByName('@status'))[0] ?? null) {
+                $response->code = (int) $statusTag->value->value;
+            }
 
-            if ($varType = $docNode->getVarTagValues()[0]->type ?? null) {
+            if ($docNode->getAttribute('hasBodyTag') && ($varType = $docNode->getVarTagValues()[0]->type ?? null)) {
                 $type = PhpDocTypeHelper::toType($varType);
 
                 $typeResponse = $this->toResponse($type);
