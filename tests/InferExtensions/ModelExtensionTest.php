@@ -89,14 +89,19 @@ class ModelExtensionTest_ModelWithLegacyCollectionProperty extends SamplePostMod
 
 class ModelExtensionTest_OverriddenUser extends Model {}
 
-it('refines a compatible PHPDoc union with the inferred model attribute type', function () {
+it('adds an inferred Carbon format to a PHPDoc union', function () {
     $this->infer->analyzeClass(ModelExtensionTest_ModelWithAnnotatedDate::class);
 
     $propertyType = (new ObjectType(ModelExtensionTest_ModelWithAnnotatedDate::class))
         ->getPropertyType('title');
+    $carbonType = (new TypeWalker)->first(
+        $propertyType,
+        fn ($type) => $type->isInstanceOf(Carbon::class),
+    );
 
     expect($propertyType->toString())->toBe(Carbon::class.'|null')
-        ->and($propertyType->getAttribute('source'))->toBe('phpDoc');
+        ->and($propertyType->getAttribute('source'))->toBe('phpDoc')
+        ->and($carbonType?->getAttribute('format'))->toBe('date');
 });
 
 /** @property Carbon|null $title */
@@ -105,6 +110,44 @@ class ModelExtensionTest_ModelWithAnnotatedDate extends SamplePostModel
     protected $casts = [
         'title' => 'datetime:Y-m-d',
     ];
+}
+
+it('preserves detailed PHPDoc array types when database metadata is available', function () {
+    $expectedPropertyTypes = [
+        'settings' => 'array<string, mixed>|null',
+        'body' => 'array<list{int, int}>',
+    ];
+
+    foreach ([
+        ModelExtensionTest_ModelWithAnnotatedArraysAndMissingTable::class,
+        ModelExtensionTest_ModelWithAnnotatedArrays::class,
+    ] as $modelClass) {
+        $this->infer->analyzeClass($modelClass);
+
+        $modelType = new ObjectType($modelClass);
+
+        expect([
+            'settings' => $modelType->getPropertyType('settings')->toString(),
+            'body' => $modelType->getPropertyType('body')->toString(),
+        ])->toBe($expectedPropertyTypes);
+    }
+});
+
+/**
+ * @property array<string, mixed>|null $settings
+ * @property list<array{int, int}> $body
+ */
+class ModelExtensionTest_ModelWithAnnotatedArrays extends SamplePostModel
+{
+    protected $casts = [
+        'settings' => 'array',
+        'body' => 'array',
+    ];
+}
+
+class ModelExtensionTest_ModelWithAnnotatedArraysAndMissingTable extends ModelExtensionTest_ModelWithAnnotatedArrays
+{
+    protected $table = 'model_extension_test_missing_table';
 }
 
 it('adds toArray method type the model class without defined toArray class', function () {
