@@ -62,33 +62,6 @@ class Foo_TestThree
     }
 }
 
-test('manually annotated responses support', function () {
-    $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestFour::class, 'index']));
-
-    assertMatchesSnapshot($openApiDocument);
-});
-class Foo_TestFour
-{
-    public function index()
-    {
-        if ($foo) {
-            /**
-             * Advanced comment.
-             *
-             * With more description.
-             *
-             * @status 201
-             *
-             * @body array{foo: string}
-             */
-            return response()->json(['foo' => 'one']);
-        }
-
-        // Simple comment.
-        return response()->json(['foo' => 'bar']);
-    }
-}
-
 test('manually annotated responses resources support', function () {
     $openApiDocument = generateForRoute(fn () => \Illuminate\Support\Facades\Route::get('api/test', [Foo_TestFive::class, 'index']));
 

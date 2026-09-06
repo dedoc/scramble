@@ -69,7 +69,8 @@ class RouteResponseTypeRetriever
                 return false;
             }
 
-            return (bool) ($docNode->getVarTagValues()[0]->type ?? null);
+            return $docNode->getAttribute('hasBodyTag')
+                && (bool) ($docNode->getVarTagValues()[0]->type ?? null);
         });
 
         if ($someReturnTypeHasBodyAnnotation) {

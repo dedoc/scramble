@@ -476,18 +476,31 @@ class TypeTransformer
                 );
         }
 
-        if ($docNode = $type->getAttribute('docNode')) {
+        if (
+            ($docNode = $type->getAttribute('docNode'))
+            && (
+                $docNode->getTagsByName('@description')
+                || $docNode->getTagsByName('@status')
+                || $docNode->getAttribute('hasBodyTag')
+            )
+        ) {
             /** @var PhpDocNode $docNode */
-            $description = (string) Str::of($docNode->getAttribute('summary') ?: '') // @phpstan-ignore argument.type
-                ->append("\n\n".($docNode->getAttribute('description') ?: '')) // @phpstan-ignore binaryOp.invalid
-                ->append("\n\n".$response->description)
-                ->trim();
-            $response->description($description);
+            $descriptionTag = array_values($docNode->getTagsByName('@description'))[0] ?? null;
+            $description = $descriptionTag
+                ? trim((string) $descriptionTag->value)
+                : (string) Str::of($docNode->getAttribute('summary') ?: '') // @phpstan-ignore argument.type
+                    ->append("\n\n".($docNode->getAttribute('description') ?: '')) // @phpstan-ignore binaryOp.invalid
+                    ->trim();
 
-            $code = (int) (array_values($docNode->getTagsByName('@status'))[0]->value->value ?? $response->code ?? 200);
-            $response->code = $code;
+            if ($descriptionTag || $description !== '') {
+                $response->setDescription(Str::replace('$0', $response->description, $description));
+            }
 
-            if ($varType = $docNode->getVarTagValues()[0]->type ?? null) {
+            if ($statusTag = array_values($docNode->getTagsByName('@status'))[0] ?? null) {
+                $response->code = (int) $statusTag->value->value;
+            }
+
+            if ($docNode->getAttribute('hasBodyTag') && ($varType = $docNode->getVarTagValues()[0]->type ?? null)) {
                 $type = PhpDocTypeHelper::toType($varType);
 
                 $typeResponse = $this->toResponse($type);
