@@ -4,6 +4,7 @@ use Carbon\Carbon;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -631,8 +632,9 @@ it('uses custom query builder type from newEloquentBuilder', function () {
 });
 
 it('preserves custom query builder type when query is overridden', function () {
-    expect(getStatementType(ModelWithOverriddenQuery_ModelExtensionTest::class.'::query()->published()->count()')->toString())
-        ->toBe('int<0, max>');
+    // Laravel versions infer count() as either int or the more precise non-negative-int.
+    expect(getStatementType(ModelWithOverriddenQuery_ModelExtensionTest::class.'::query()->published()->count()'))
+        ->toBeInstanceOf(IntegerType::class);
 });
 
 class ModelWithOverriddenQuery_ModelExtensionTest extends Model
