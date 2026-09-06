@@ -4,6 +4,7 @@ use Carbon\Carbon;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -629,6 +630,27 @@ it('uses custom query builder type from newEloquentBuilder', function () {
         ->and(getStatementType(ModelWithCustomBuilder_ModelExtensionTest::class.'::published()')->toString())
         ->toBe(FooBuilder_ModelExtensionTest::class.'<'.ModelWithCustomBuilder_ModelExtensionTest::class.'>');
 });
+
+it('preserves custom query builder type when query is overridden', function () {
+    // Laravel versions infer count() as either int or the more precise non-negative-int.
+    expect(getStatementType(ModelWithOverriddenQuery_ModelExtensionTest::class.'::query()->published()->count()'))
+        ->toBeInstanceOf(IntegerType::class);
+});
+
+class ModelWithOverriddenQuery_ModelExtensionTest extends Model
+{
+    /** @return FooBuilder_ModelExtensionTest<static> */
+    public static function query(): FooBuilder_ModelExtensionTest
+    {
+        return parent::query();
+    }
+
+    /** @return FooBuilder_ModelExtensionTest<static> */
+    public function newEloquentBuilder($query): FooBuilder_ModelExtensionTest
+    {
+        return new FooBuilder_ModelExtensionTest($query);
+    }
+}
 
 it('preserves custom query builder generics for self-returning methods', function () {
     expect(getStatementType(ModelWithCustomBuilder_ModelExtensionTest::class.'::query()->visibleTo(new '.SampleUserModel::class.'())')->toString())

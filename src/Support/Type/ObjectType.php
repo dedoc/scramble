@@ -132,6 +132,11 @@ class ObjectType extends AbstractType
         return is_a($otherType->name, $this->name, true);
     }
 
+    public function acceptedBy(Type $otherType): bool
+    {
+        return $otherType->accepts($this);
+    }
+
     public function toString(): string
     {
         return $this->name;
