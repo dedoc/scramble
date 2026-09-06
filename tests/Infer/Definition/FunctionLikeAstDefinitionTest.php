@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Tests\Infer\Definition;
 
 use Dedoc\Scramble\Infer\Reflector\MethodReflector;
+use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Tests\TestUtils;
 
 test('prefers return declaration type if inferred is not compatible', function () {
@@ -28,6 +29,18 @@ test('prefers scramble-return type even if inferred is concrete', function () {
 
     expect($def->getReturnType()->toString())->toBe('int');
 });
+
+test('checks object acceptance using represented class hierarchy', function () {
+    $builder = new ObjectType(Builder_FunctionLikeAstDefinitionTest::class);
+    $customBuilder = new ObjectType(CustomBuilder_FunctionLikeAstDefinitionTest::class);
+
+    expect($customBuilder->acceptedBy($builder))->toBeTrue()
+        ->and($builder->acceptedBy($customBuilder))->toBeFalse();
+});
+
+class Builder_FunctionLikeAstDefinitionTest {}
+
+class CustomBuilder_FunctionLikeAstDefinitionTest extends Builder_FunctionLikeAstDefinitionTest {}
 
 class Foo_FunctionLikeAstDefinitionTest
 {
