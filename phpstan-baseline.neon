@@ -2524,18 +2524,6 @@ parameters:
 			path: src/Support/Generator/ServerVariable.php
 
 		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\ArrayType\:\:setAdditionalItems\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Types/ArrayType.php
-
-		-
-			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\ArrayType\:\:setAdditionalItems\(\) has parameter \$additionalItems with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/Support/Generator/Types/ArrayType.php
-
-		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\ArrayType\:\:setItems\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -2586,12 +2574,6 @@ parameters:
 		-
 			message: '#^Method Dedoc\\Scramble\\Support\\Generator\\Types\\ArrayType\:\:toArray\(\) has no return type specified\.$#'
 			identifier: missingType.return
-			count: 1
-			path: src/Support/Generator/Types/ArrayType.php
-
-		-
-			message: '#^Property Dedoc\\Scramble\\Support\\Generator\\Types\\ArrayType\:\:\$additionalItems has no type specified\.$#'
-			identifier: missingType.property
 			count: 1
 			path: src/Support/Generator/Types/ArrayType.php
 

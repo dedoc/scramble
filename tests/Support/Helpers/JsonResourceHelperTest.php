@@ -50,7 +50,6 @@ it('documents a reflection-only package resource instead of an unrelated applica
             ],
             'minItems' => 1,
             'maxItems' => 1,
-            'additionalItems' => false,
         ],
     ]);
 });
