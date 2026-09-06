@@ -597,6 +597,7 @@ class TypeTransformer
 
             if ($item->shouldUnpack) {
                 $this->applySpread($item, $hidden, $propertyTypes, $stringPropertyKeys, $additionalPropertiesTypes, $hasUnknownNumericKeys);
+
                 continue;
             }
 
@@ -606,6 +607,7 @@ class TypeTransformer
                 if (! $hidden) {
                     $additionalPropertiesTypes[] = $item->value;
                 }
+
                 continue;
             }
 
