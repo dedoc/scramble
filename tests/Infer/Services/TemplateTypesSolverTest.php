@@ -62,7 +62,7 @@ it('accepts this parameter', function () {
         ->resolve(
             new GlobalScope,
             new MethodCallReferenceType($type, 'callCallback', [
-                getStatementType('fn ($d) => $d->getT()')->getOriginal(),
+                getUnresolvedStatementType('fn ($d) => $d->getT()'),
             ])
         );
 

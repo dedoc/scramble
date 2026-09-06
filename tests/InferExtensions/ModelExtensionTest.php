@@ -637,6 +637,11 @@ it('preserves custom query builder type when query is overridden', function () {
         ->toBeInstanceOf(IntegerType::class);
 });
 
+it('preserves count type when the query is cloned', function () {
+    expect(getStatementType('(clone '.ModelWithOverriddenQuery_ModelExtensionTest::class.'::query())->count()'))
+        ->toBeInstanceOf(IntegerType::class);
+});
+
 class ModelWithOverriddenQuery_ModelExtensionTest extends Model
 {
     /** @return FooBuilder_ModelExtensionTest<static> */

@@ -239,6 +239,11 @@ function getStatementType(string $statement, array $extensions = []): ?Type
     return analyzeFile('<?php', $extensions)->getExpressionType($statement);
 }
 
+function getUnresolvedStatementType(string $statement, array $extensions = []): ?Type
+{
+    return analyzeFile('<?php', $extensions)->getUnresolvedExpressionType($statement);
+}
+
 function getVariableTypeAfter(string $body, string $var, ?ReferenceTypeResolver $referenceTypeResolver = null): Type
 {
     $index = app(Index::class);
@@ -263,8 +268,7 @@ function getVariableTypeAfter(string $body, string $var, ?ReferenceTypeResolver 
     );
 
     return ($referenceTypeResolver ?? new ReferenceTypeResolver($index))
-        ->resolve($scope, $unresolvedType)
-        ->setOriginal($unresolvedType);
+        ->resolve($scope, $unresolvedType);
 }
 
 dataset('extendableTemplateTypes', [

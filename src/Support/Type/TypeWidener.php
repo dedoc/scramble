@@ -92,7 +92,7 @@ class TypeWidener
 
         // string|'wow' -> string
         if (
-            ($a instanceof StringType && ! $a instanceof LiteralStringType)
+            $a::class === StringType::class
             && $b instanceof LiteralStringType
         ) {
             return new StringType;
