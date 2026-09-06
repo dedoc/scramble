@@ -204,7 +204,7 @@ class ReferenceTypeResolver
         return $traverser
             ->traverse($type)
             ->mergeAttributes($attributes)
-            ->setOriginal($originalType);
+            ->setOriginal($originalType); // @phpstan-ignore method.deprecated
     }
 
     private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type): Type

@@ -43,10 +43,15 @@ interface Type
     public function getMethodDefinition(string $methodName, Scope $scope = new GlobalScope): ?FunctionLikeDefinition;
 
     /**
+     * @deprecated Will be removed in the next BC-containing release.
+     *
      * @return $this
      */
     public function setOriginal(?Type $original): self;
 
+    /**
+     * @deprecated Will be removed in the next BC-containing release.
+     */
     public function getOriginal(): ?Type;
 
     public function widen(): Type;

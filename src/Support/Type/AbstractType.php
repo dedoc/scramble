@@ -10,19 +10,29 @@ abstract class AbstractType implements Type
 {
     use TypeAttributes;
 
+    /**
+     * @deprecated Will be removed in the next BC-containing release.
+     */
     public ?Type $original = null;
 
-    /** @return $this */
+    /**
+     * @deprecated Will be removed in the next BC-containing release.
+     *
+     * @return $this
+     */
     public function setOriginal(?Type $original): self
     {
-        $this->original = $original;
+        $this->original = $original; // @phpstan-ignore property.deprecated
 
         return $this;
     }
 
+    /**
+     * @deprecated Will be removed in the next BC-containing release.
+     */
     public function getOriginal(): ?Type
     {
-        return $this->original;
+        return $this->original; // @phpstan-ignore property.deprecated
     }
 
     public function nodes(): array
