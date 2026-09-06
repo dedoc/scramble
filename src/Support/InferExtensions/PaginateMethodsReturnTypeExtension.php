@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
+use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
@@ -63,6 +64,7 @@ class PaginateMethodsReturnTypeExtension implements AnyMethodReturnTypeExtension
         }
 
         $shouldBeHandled = $event->getInstance() instanceof UnknownType
+            || $event->getInstance() instanceof MixedType
             || $this->isQueryLike($event->getInstance())
             || $this->isQueryLikeClass($event->getDefinition()?->getMethodDefinition($event->name)->definingClassName ?? '');
 

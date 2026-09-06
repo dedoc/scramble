@@ -28,3 +28,20 @@ it('guesses paginate type', function (string $expression, string $expectedTypeSt
     [SampleUserModel::class.'::query()->simplePaginate()', Paginator::class.'<int, '.SampleUserModel::class.'>'],
     [SampleUserModel::class.'::search("foo")->simplePaginate()', Paginator::class.'<int, '.SampleUserModel::class.'>'],
 ])->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
+
+it('guesses paginate type from a loosely typed listing source', function (string $expression) {
+    $result = analyzeFile(<<<'EOD'
+<?php
+function listing_PaginatorReturnTypeExtensionTest (): mixed {
+    return unknown();
+}
+EOD, [
+        new PaginateMethodsReturnTypeExtension,
+    ]);
+
+    expect($result->getExpressionType($expression)->toString())
+        ->toBe(LengthAwarePaginator::class.'<int, unknown>');
+})->with([
+    'listing_PaginatorReturnTypeExtensionTest()->paginate()',
+    '(clone listing_PaginatorReturnTypeExtensionTest())->paginate()',
+]);
