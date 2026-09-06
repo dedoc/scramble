@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Throwable;
@@ -92,12 +93,10 @@ class BinaryOpType extends AbstractType implements LateResolvingType
             }
         }
 
-        $leftIsInt = $left instanceof IntegerType;
-        $rightIsInt = $right instanceof IntegerType;
-        $leftIsFloat = $left instanceof FloatType;
-        $rightIsFloat = $right instanceof FloatType;
+        $leftNumeric = $this->numericOperand($left);
+        $rightNumeric = $this->numericOperand($right);
 
-        if (! ($leftIsInt || $leftIsFloat) || ! ($rightIsInt || $rightIsFloat)) {
+        if ($leftNumeric === null || $rightNumeric === null) {
             return new UnknownType;
         }
 
@@ -105,19 +104,59 @@ class BinaryOpType extends AbstractType implements LateResolvingType
             return new IntegerType;
         }
 
+        $eitherIsFloat = $leftNumeric === 'float' || $rightNumeric === 'float';
+        $bothAreInt = $leftNumeric === 'int' && $rightNumeric === 'int';
+
         if ($this->operator === '/' || $this->operator === '**') {
-            if ($leftIsInt && $rightIsInt) {
-                return Union::wrap([new IntegerType, new FloatType]);
-            }
+            return $eitherIsFloat
+                ? new FloatType
+                : $this->intOrFloat();
+        }
 
+        if ($eitherIsFloat) {
             return new FloatType;
         }
 
-        if ($leftIsFloat || $rightIsFloat) {
-            return new FloatType;
+        if ($bothAreInt) {
+            return new IntegerType;
         }
 
-        return new IntegerType;
+        return $this->intOrFloat();
+    }
+
+    /**
+     * Numeric kind of an operand assuming the operation succeeds.
+     *
+     * @return 'int'|'float'|'number'|null
+     */
+    private function numericOperand(Type $type): ?string
+    {
+        if ($type instanceof IntegerType || $type instanceof BooleanType || $type instanceof NullType) {
+            return 'int';
+        }
+
+        if ($type instanceof FloatType) {
+            return 'float';
+        }
+
+        if (
+            $type instanceof ArrayType
+            || $type instanceof KeyedArrayType
+            || $type instanceof ObjectType
+            || $type instanceof FunctionLikeType
+            || $type instanceof VoidType
+            || $type instanceof NeverType
+            || $type instanceof MissingType
+        ) {
+            return null;
+        }
+
+        return 'number';
+    }
+
+    private function intOrFloat(): Type
+    {
+        return Union::wrap([new IntegerType, new FloatType]);
     }
 
     private function applyOperator(int|float $left, int|float $right): int|float|null
@@ -145,6 +184,14 @@ class BinaryOpType extends AbstractType implements LateResolvingType
 
         if ($type instanceof LiteralFloatType) {
             return $type->value;
+        }
+
+        if ($type instanceof LiteralBooleanType) {
+            return $type->value ? 1 : 0;
+        }
+
+        if ($type instanceof NullType) {
+            return 0;
         }
 
         return null;
