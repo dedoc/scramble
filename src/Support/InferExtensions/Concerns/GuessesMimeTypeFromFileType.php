@@ -5,7 +5,6 @@ namespace Dedoc\Scramble\Support\InferExtensions\Concerns;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
-use Dedoc\Scramble\Support\Type\Union;
 use League\MimeTypeDetection\ExtensionMimeTypeDetector;
 
 trait GuessesMimeTypeFromFileType
@@ -24,7 +23,7 @@ trait GuessesMimeTypeFromFileType
     protected function guessFileNameFromType(Type $fileType): ?string
     {
         $stringLiterals = (new TypeWalker)->findAll(
-            Union::wrap(...array_filter([$fileType->getOriginal(), $fileType])),
+            $fileType,
             fn (Type $type) => $type instanceof LiteralStringType,
         );
 

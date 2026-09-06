@@ -221,6 +221,10 @@ it('infers Storage response MIME type from file arguments', function (string $ex
         Storage::class."::download(\$path, 'report.pdf')",
         'application/pdf',
     ],
+    'concatenated name' => [
+        Storage::class."::download(\$path, 'export_'.now()->format('Ymd').'.xlsx')",
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ],
 ]);
 
 it('prefers an explicit Storage response content type over the file extension', function () {

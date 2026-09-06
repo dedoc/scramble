@@ -13,6 +13,7 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
+use Dedoc\Scramble\Support\Type\Type;
 use PhpParser;
 use PhpParser\Node;
 use PhpParser\NodeTraverser;
@@ -34,6 +35,23 @@ class AnalysisResult
 
     public function getExpressionType(string $code)
     {
+        [$scope, $unresolvedType] = $this->inferAssignedExpression($code);
+
+        return (new ReferenceTypeResolver($this->index))->resolve($scope, $unresolvedType);
+    }
+
+    public function getUnresolvedExpressionType(string $code)
+    {
+        [, $unresolvedType] = $this->inferAssignedExpression($code);
+
+        return $unresolvedType;
+    }
+
+    /**
+     * @return array{0: Scope, 1: Type}
+     */
+    private function inferAssignedExpression(string $code): array
+    {
         $code = '<?php $a = '.$code.';';
 
         $fileAst = (new PhpParser\ParserFactory)->createForHostVersion()->parse($code);
@@ -52,12 +70,13 @@ class AnalysisResult
         ));
         $traverser->traverse($fileAst);
 
-        $unresolvedType = $scope->getType(
-            new Node\Expr\Variable('a', [
-                'startLine' => INF,
-            ]),
-        );
-
-        return (new ReferenceTypeResolver($this->index))->resolve($scope, $unresolvedType)->setOriginal($unresolvedType);
+        return [
+            $scope,
+            $scope->getType(
+                new Node\Expr\Variable('a', [
+                    'startLine' => INF,
+                ]),
+            ),
+        ];
     }
 }

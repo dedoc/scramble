@@ -352,6 +352,15 @@ class TypeHelper
         {
             public int $count = 0;
 
+            public function enter(Type $type): Type|int|null
+            {
+                if ($type instanceof ConcatenatedStringType) {
+                    return TypeVisitor::DONT_TRAVERSE_CHILDREN;
+                }
+
+                return null;
+            }
+
             public function leave(Type $type): ?Type
             {
                 if (

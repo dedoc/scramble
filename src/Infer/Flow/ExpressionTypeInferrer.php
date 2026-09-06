@@ -12,6 +12,7 @@ use Dedoc\Scramble\Infer\SimpleTypeGetters\ConstFetchTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ScalarTypeGetter;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
+use Dedoc\Scramble\Support\Type\BinaryOpType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\CoalesceType;
@@ -96,6 +97,18 @@ class ExpressionTypeInferrer
             || $expr instanceof Expr\BinaryOp\GreaterOrEqual
             || $expr instanceof Expr\BinaryOp\Smaller
             || $expr instanceof Expr\BinaryOp\SmallerOrEqual => new BooleanType,
+            $expr instanceof Expr\BinaryOp\Plus
+            || $expr instanceof Expr\BinaryOp\Minus
+            || $expr instanceof Expr\BinaryOp\Mul
+            || $expr instanceof Expr\BinaryOp\Div
+            || $expr instanceof Expr\BinaryOp\Mod
+            || $expr instanceof Expr\BinaryOp\Pow
+            || $expr instanceof Expr\BinaryOp\Concat => new BinaryOpType(
+                $this->infer($expr->left, $variableTypeGetter),
+                $this->infer($expr->right, $variableTypeGetter),
+                $expr->getOperatorSigil(),
+            ),
+            $expr instanceof Expr\Clone_ => $this->infer($expr->expr, $variableTypeGetter),
             $expr instanceof Expr\BooleanNot => (new BooleanNotTypeGetter)($expr),
             default => null,
         };
