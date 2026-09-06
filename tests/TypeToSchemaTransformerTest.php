@@ -106,6 +106,26 @@ it('transforms simple types', function ($type, $openApiArrayed) {
         ],
     ]],
     [new KeyedArrayType([
+        new ArrayItemType_('note', new LiteralStringType('flat')),
+        new ArrayItemType_(
+            key: null,
+            value: new ArrayType(value: new IntegerType, key: new StringType),
+            shouldUnpack: true,
+        ),
+    ]), [
+        'type' => 'object',
+        'properties' => [
+            'note' => [
+                'anyOf' => [
+                    ['type' => 'string', 'const' => 'flat'],
+                    ['type' => 'integer'],
+                ],
+            ],
+        ],
+        'required' => ['note'],
+        'additionalProperties' => ['type' => 'integer'],
+    ]],
+    [new KeyedArrayType([
         new ArrayItemType_(null, new IntegerType),
         new ArrayItemType_(null, new IntegerType),
         new ArrayItemType_(null, new IntegerType),

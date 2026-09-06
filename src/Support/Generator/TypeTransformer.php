@@ -232,72 +232,7 @@ class TypeTransformer
                     )
                 );
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType) {
-            $openApiType = new ObjectType;
-            $requiredKeys = [];
-            $additionalPropertiesTypes = [];
-            $nextNumericKey = null;
-            $hasUnknownNumericKeys = false;
-
-            $props = collect($type->items)
-                ->mapWithKeys(function (ArrayItemType_ $item) use (&$requiredKeys, &$additionalPropertiesTypes, &$nextNumericKey, &$hasUnknownNumericKeys) {
-                    $isHidden = $this->isHiddenArrayItem($item);
-                    $itemValue = $item->value instanceof TemplateType && $item->value->is
-                        ? $item->value->is
-                        : $item->value;
-
-                    if ($item->shouldUnpack) {
-                        $hasUnknownNumericKeys = $hasUnknownNumericKeys
-                            || ! $itemValue instanceof \Dedoc\Scramble\Support\Type\ArrayType
-                            || ! $itemValue->key instanceof \Dedoc\Scramble\Support\Type\StringType;
-
-                        if (! $isHidden) {
-                            $additionalPropertiesTypes[] = $itemValue instanceof \Dedoc\Scramble\Support\Type\ArrayType
-                                ? $itemValue->value
-                                : new \Dedoc\Scramble\Support\Type\MixedType;
-                        }
-
-                        return [];
-                    }
-
-                    $key = $item->key;
-
-                    if ($key === null) {
-                        if ($item->keyType || $hasUnknownNumericKeys) {
-                            if (! $isHidden) {
-                                $additionalPropertiesTypes[] = $item->value;
-                            }
-
-                            return [];
-                        }
-
-                        $key = $nextNumericKey ?? 0;
-                        $nextNumericKey = $key + 1;
-                    } elseif (is_int($key) && ($nextNumericKey === null || $key >= $nextNumericKey)) {
-                        $nextNumericKey = $key + 1;
-                    }
-
-                    if ($isHidden) {
-                        return [];
-                    }
-
-                    if (! $item->isOptional) {
-                        $requiredKeys[] = (string) $key;
-                    }
-
-                    return [
-                        (string) $key => $this->transform($item),
-                    ];
-                });
-
-            $openApiType->properties = $props->all();
-
-            $openApiType->setRequired($requiredKeys);
-
-            if ($additionalPropertiesTypes) {
-                $openApiType->additionalProperties(
-                    $this->transform(Union::wrap($additionalPropertiesTypes))
-                );
-            }
+            $openApiType = $this->transformKeyedArrayType($type);
         } elseif (
             $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
         ) {
@@ -645,6 +580,121 @@ class TypeTransformer
                 TypeHelper::countKnownTypes($phpDoc) === TypeHelper::countKnownTypes($inferred)
                 && $phpDoc->accepts($inferred)
             );
+    }
+
+    private function transformKeyedArrayType(\Dedoc\Scramble\Support\Type\KeyedArrayType $type): OpenApiType
+    {
+        /** @var array<string, Type[]> $propertyTypes */
+        $propertyTypes = [];
+        $stringPropertyKeys = [];
+        $requiredKeys = [];
+        $additionalPropertiesTypes = [];
+        $nextNumericKey = null;
+        $hasUnknownNumericKeys = false;
+
+        foreach ($type->items as $item) {
+            $hidden = $this->isHiddenArrayItem($item);
+
+            if ($item->shouldUnpack) {
+                $this->applySpread($item, $hidden, $propertyTypes, $stringPropertyKeys, $additionalPropertiesTypes, $hasUnknownNumericKeys);
+                continue;
+            }
+
+            $key = $this->nextItemKey($item, $nextNumericKey, $hasUnknownNumericKeys);
+
+            if ($key === null) {
+                if (! $hidden) {
+                    $additionalPropertiesTypes[] = $item->value;
+                }
+                continue;
+            }
+
+            // Hidden items still consume numeric keys (above), then leave the schema.
+            if ($hidden) {
+                continue;
+            }
+
+            $key = (string) $key;
+            $propertyTypes[$key] = [$item];
+            if (! $item->isOptional) {
+                $requiredKeys[] = $key;
+            }
+            if (is_string($item->key)) {
+                $stringPropertyKeys[$key] = $key;
+            }
+        }
+
+        $openApiType = new ObjectType;
+        $openApiType->properties = array_map(
+            fn (array $types) => $this->transform(Union::wrap($types)),
+            $propertyTypes,
+        );
+        $openApiType->setRequired($requiredKeys);
+
+        if ($additionalPropertiesTypes) {
+            $openApiType->additionalProperties(
+                $this->transform(Union::wrap($additionalPropertiesTypes))
+            );
+        }
+
+        return $openApiType;
+    }
+
+    /**
+     * @param  array<string, Type[]>  $propertyTypes
+     * @param  array<string, string>  $stringPropertyKeys
+     * @param  Type[]  $additionalPropertiesTypes
+     */
+    private function applySpread(
+        ArrayItemType_ $item,
+        bool $hidden,
+        array &$propertyTypes,
+        array $stringPropertyKeys,
+        array &$additionalPropertiesTypes,
+        bool &$hasUnknownNumericKeys,
+    ): void {
+        $itemValue = $item->value instanceof TemplateType && $item->value->is
+            ? $item->value->is
+            : $item->value;
+        $spread = $itemValue instanceof \Dedoc\Scramble\Support\Type\ArrayType ? $itemValue : null;
+
+        $hasUnknownNumericKeys = $hasUnknownNumericKeys
+            || ! $spread?->key instanceof \Dedoc\Scramble\Support\Type\StringType;
+
+        if ($hidden) {
+            return;
+        }
+
+        $additionalPropertyType = $spread?->value ?? new \Dedoc\Scramble\Support\Type\MixedType;
+        $additionalPropertiesTypes[] = $additionalPropertyType;
+
+        if (! $spread?->key instanceof \Dedoc\Scramble\Support\Type\IntegerType) {
+            foreach ($stringPropertyKeys as $key) {
+                $propertyTypes[$key][] = $additionalPropertyType;
+            }
+        }
+    }
+
+    private function nextItemKey(ArrayItemType_ $item, ?int &$nextNumericKey, bool $hasUnknownNumericKeys): string|int|null
+    {
+        $key = $item->key;
+
+        if ($key === null) {
+            if ($item->keyType || $hasUnknownNumericKeys) {
+                return null;
+            }
+
+            $key = $nextNumericKey ?? 0;
+            $nextNumericKey = $key + 1;
+
+            return $key;
+        }
+
+        if (is_int($key) && ($nextNumericKey === null || $key >= $nextNumericKey)) {
+            $nextNumericKey = $key + 1;
+        }
+
+        return $key;
     }
 
     private function isHiddenArrayItem(ArrayItemType_ $item): bool
