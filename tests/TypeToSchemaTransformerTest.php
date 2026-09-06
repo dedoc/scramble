@@ -70,7 +70,6 @@ it('transforms simple types', function ($type, $openApiArrayed) {
         ],
         'minItems' => 3,
         'maxItems' => 3,
-        'additionalItems' => false,
     ]],
 ]);
 

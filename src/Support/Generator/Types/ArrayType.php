@@ -14,8 +14,6 @@ class ArrayType extends Type
 
     public $maxItems = null;
 
-    public $additionalItems = null;
-
     public ?bool $uniqueItems = null;
 
     public function __construct()
@@ -68,13 +66,6 @@ class ArrayType extends Type
         return $this;
     }
 
-    public function setAdditionalItems($additionalItems)
-    {
-        $this->additionalItems = $additionalItems;
-
-        return $this;
-    }
-
     public function setUniqueItems(bool $uniqueItems): static
     {
         $this->uniqueItems = $uniqueItems;
@@ -98,7 +89,6 @@ class ArrayType extends Type
             array_filter([
                 'minItems' => $this->minItems,
                 'maxItems' => $this->maxItems,
-                'additionalItems' => $this->additionalItems,
                 'uniqueItems' => $this->uniqueItems,
             ], fn ($v) => $v !== null)
         );

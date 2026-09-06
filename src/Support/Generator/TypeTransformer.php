@@ -222,7 +222,6 @@ class TypeTransformer
             && $type->isList
         ) {
             $visibleItems = collect($type->items)->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))->values()->all();
-            /** @see https://stackoverflow.com/questions/57464633/how-to-define-a-json-array-with-concrete-item-definition-for-every-index-i-e-a */
             $openApiType = (new ArrayType)
                 ->setMin(count($visibleItems))
                 ->setMax(count($visibleItems))
@@ -231,8 +230,7 @@ class TypeTransformer
                         fn ($item) => $this->transform($item->value),
                         $visibleItems
                     )
-                )
-                ->setAdditionalItems(false);
+                );
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType) {
             $openApiType = new ObjectType;
             $requiredKeys = [];
