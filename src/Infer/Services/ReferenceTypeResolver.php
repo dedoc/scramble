@@ -899,6 +899,17 @@ class ReferenceTypeResolver
         if ($calledOnType) {
             $returnType = $this->finalizeSelf($returnType, $calledOnType);
 
+            /*
+             * Native `self` is ObjectType('self'), not SelfType. Bind only the top-level return token
+             * to the receiver so self-out can specialize that Generic. Walking nested `self`/`static`
+             * would rewrite collection templates and late-static returns.
+             */
+            if ($returnType instanceof ObjectType && $returnType->name === StaticReference::SELF) {
+                $returnType = $calledOnType instanceof Generic
+                    ? clone $calledOnType
+                    : $calledOnType;
+            }
+
             $arguments = $arguments->map(fn ($argType) => $this->finalizeSelfForCallableArguments($argType, $calledOnType));
         }
 
