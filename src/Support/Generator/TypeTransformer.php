@@ -350,7 +350,13 @@ class TypeTransformer
 
                 // Removing duplicated schemas before making a resulting AnyOf type.
                 $uniqueItems = collect($items)->unique(fn ($i) => json_encode($i->toArray()))->values()->all();
-                $openApiType = count($uniqueItems) === 1 ? $uniqueItems[0] : (new AnyOf)->setItems($uniqueItems);
+                $nonNullUniqueItems = array_values(array_filter($uniqueItems, fn ($i) => ! $i instanceof NullType));
+
+                if (count($uniqueItems) === 2 && count($nonNullUniqueItems) === 1) {
+                    $openApiType = $nonNullUniqueItems[0]->nullable(true);
+                } else {
+                    $openApiType = count($uniqueItems) === 1 ? $uniqueItems[0] : (new AnyOf)->setItems($uniqueItems);
+                }
             }
         } elseif ($type instanceof LiteralStringType) {
             $openApiType = (new StringType)->const($type->value);
