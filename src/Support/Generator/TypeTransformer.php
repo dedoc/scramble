@@ -234,22 +234,70 @@ class TypeTransformer
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType) {
             $openApiType = new ObjectType;
             $requiredKeys = [];
+            $additionalPropertiesTypes = [];
+            $nextNumericKey = null;
+            $hasUnknownNumericKeys = false;
 
             $props = collect($type->items)
-                ->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))
-                ->mapWithKeys(function (ArrayItemType_ $item) use (&$requiredKeys) {
+                ->mapWithKeys(function (ArrayItemType_ $item) use (&$requiredKeys, &$additionalPropertiesTypes, &$nextNumericKey, &$hasUnknownNumericKeys) {
+                    $isHidden = $this->isHiddenArrayItem($item);
+                    $itemValue = $item->value instanceof TemplateType && $item->value->is
+                        ? $item->value->is
+                        : $item->value;
+
+                    if ($item->shouldUnpack) {
+                        $hasUnknownNumericKeys = $hasUnknownNumericKeys
+                            || ! $itemValue instanceof \Dedoc\Scramble\Support\Type\ArrayType
+                            || ! $itemValue->key instanceof \Dedoc\Scramble\Support\Type\StringType;
+
+                        if (! $isHidden) {
+                            $additionalPropertiesTypes[] = $itemValue instanceof \Dedoc\Scramble\Support\Type\ArrayType
+                                ? $itemValue->value
+                                : new \Dedoc\Scramble\Support\Type\MixedType;
+                        }
+
+                        return [];
+                    }
+
+                    $key = $item->key;
+
+                    if ($key === null) {
+                        if ($item->keyType || $hasUnknownNumericKeys) {
+                            if (! $isHidden) {
+                                $additionalPropertiesTypes[] = $item->value;
+                            }
+
+                            return [];
+                        }
+
+                        $key = $nextNumericKey ?? 0;
+                        $nextNumericKey = $key + 1;
+                    } elseif (is_int($key) && ($nextNumericKey === null || $key >= $nextNumericKey)) {
+                        $nextNumericKey = $key + 1;
+                    }
+
+                    if ($isHidden) {
+                        return [];
+                    }
+
                     if (! $item->isOptional) {
-                        $requiredKeys[] = $item->key;
+                        $requiredKeys[] = (string) $key;
                     }
 
                     return [
-                        (string) $item->key => $this->transform($item),
+                        (string) $key => $this->transform($item),
                     ];
                 });
 
             $openApiType->properties = $props->all();
 
             $openApiType->setRequired($requiredKeys);
+
+            if ($additionalPropertiesTypes) {
+                $openApiType->additionalProperties(
+                    $this->transform(Union::wrap($additionalPropertiesTypes))
+                );
+            }
         } elseif (
             $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
         ) {

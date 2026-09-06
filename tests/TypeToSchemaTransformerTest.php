@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Generator\Types\IntegerType as OpenApiIntegerType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType as OpenApiStringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
@@ -58,6 +59,53 @@ it('transforms simple types', function ($type, $openApiArrayed) {
         'required' => ['key'],
     ]],
     [new KeyedArrayType([
+        new ArrayItemType_(
+            key: null,
+            value: new ArrayType(value: new MixedType),
+            shouldUnpack: true,
+        ),
+        new ArrayItemType_('note', new LiteralStringType('flat')),
+    ]), [
+        'type' => 'object',
+        'properties' => [
+            'note' => ['type' => 'string', 'const' => 'flat'],
+        ],
+        'required' => ['note'],
+        'additionalProperties' => (object) [],
+    ]],
+    [new KeyedArrayType([
+        new ArrayItemType_('note', new LiteralStringType('flat')),
+        new ArrayItemType_(null, new IntegerType),
+    ]), [
+        'type' => 'object',
+        'properties' => [
+            'note' => ['type' => 'string', 'const' => 'flat'],
+            '0' => ['type' => 'integer'],
+        ],
+        'required' => ['note', '0'],
+    ]],
+    [new KeyedArrayType([
+        new ArrayItemType_('note', new LiteralStringType('flat')),
+        new ArrayItemType_(
+            key: null,
+            value: new ArrayType(value: new StringType),
+            shouldUnpack: true,
+        ),
+        new ArrayItemType_(null, new IntegerType),
+    ]), [
+        'type' => 'object',
+        'properties' => [
+            'note' => ['type' => 'string', 'const' => 'flat'],
+        ],
+        'required' => ['note'],
+        'additionalProperties' => [
+            'anyOf' => [
+                ['type' => 'string'],
+                ['type' => 'integer'],
+            ],
+        ],
+    ]],
+    [new KeyedArrayType([
         new ArrayItemType_(null, new IntegerType),
         new ArrayItemType_(null, new IntegerType),
         new ArrayItemType_(null, new IntegerType),
@@ -87,6 +135,30 @@ it('transforms nullable unions', function ($type, $openApiArrayed) {
         new NullType,
     ]), ['type' => ['string', 'null'], 'enum' => ['idle', 'charging', 'discharging', null]]],
 ]);
+
+it('accounts for hidden items when assigning implicit numeric keys', function () {
+    $hiddenItem = new ArrayItemType_(null, new IntegerType);
+    $hiddenItem->setAttribute('docNode', PhpDoc::parse('/** @hidden */'));
+
+    $type = new KeyedArrayType([
+        new ArrayItemType_('note', new LiteralStringType('flat')),
+        $hiddenItem,
+        new ArrayItemType_(null, new StringType),
+    ]);
+
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        'type' => 'object',
+        'properties' => [
+            'note' => ['type' => 'string', 'const' => 'flat'],
+            1 => ['type' => 'string'],
+        ],
+        'required' => ['note', '1'],
+    ]);
+});
 
 it('gets json resource type', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);

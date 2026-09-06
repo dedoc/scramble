@@ -1,5 +1,9 @@
 <?php
 
+use Dedoc\Scramble\GeneratorConfig;
+use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 
 it('infers keyed array shape type', function () {
@@ -67,4 +71,36 @@ EOD)->getClassDefinition('Foo');
 
     expect($type->methods['foo']->type->toString())
         ->toBe('(): array{test1: string(test1), test2: string(test2), test3: string(test3)}');
+});
+
+it('transforms a non-literal array spread as additional properties', function () {
+    $class = analyzeFile(<<<'EOD'
+<?php
+class Foo {
+    public function foo(array $payload): array
+    {
+        return [
+            ...$payload,
+            'note' => 'flat',
+        ];
+    }
+}
+EOD)->getClassDefinition('Foo');
+
+    $transformer = app(TypeTransformer::class, [
+        'context' => new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig),
+    ]);
+
+    expect($transformer->transform($class->methods['foo']->type->returnType)->toArray())
+        ->toEqual([
+            'type' => 'object',
+            'properties' => [
+                'note' => [
+                    'type' => 'string',
+                    'const' => 'flat',
+                ],
+            ],
+            'required' => ['note'],
+            'additionalProperties' => (object) [],
+        ]);
 });
