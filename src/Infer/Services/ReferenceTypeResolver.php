@@ -58,6 +58,8 @@ class ReferenceTypeResolver
 
     public function resolve(Scope $scope, Type $type): Type
     {
+        $originalType = $type;
+
         $resolvedType = RecursionGuard::run(
             $type,
             fn () => (new TypeWalker)->map($type, fn (Type $t) => $this->doResolve($t, $type, $scope)),
@@ -65,7 +67,7 @@ class ReferenceTypeResolver
         );
 
         // Type finalization: removing duplicates from union, unpacking array items (inside `replace`), calling resolving extensions.
-        return $this->finalizeType($resolvedType);
+        return $this->finalizeType($resolvedType, $originalType);
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type
@@ -189,7 +191,7 @@ class ReferenceTypeResolver
         });
     }
 
-    private function finalizeType(Type $type): Type
+    private function finalizeType(Type $type, Type $originalType): Type
     {
         $attributes = $type->attributes();
 
@@ -201,7 +203,8 @@ class ReferenceTypeResolver
 
         return $traverser
             ->traverse($type)
-            ->mergeAttributes($attributes);
+            ->mergeAttributes($attributes)
+            ->setOriginal($originalType);
     }
 
     private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type): Type
