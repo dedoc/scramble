@@ -156,6 +156,20 @@ it('transforms nullable unions', function ($type, $openApiArrayed) {
     ]), ['type' => ['string', 'null'], 'enum' => ['idle', 'charging', 'discharging', null]]],
 ]);
 
+it('documents a union of string, concatenated string, and null as a nullable string', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(NullableConcatenatedName_Resource::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/NullableConcatenatedName_Resource',
+    ]);
+
+    expect($this->context->openApi->components->getSchema(NullableConcatenatedName_Resource::class)->toArray()['properties']['name'])->toBe([
+        'type' => ['string', 'null'],
+    ]);
+});
+
 it('accounts for hidden items when assigning implicit numeric keys', function () {
     $hiddenItem = new ArrayItemType_(null, new IntegerType);
     $hiddenItem->setAttribute('docNode', PhpDoc::parse('/** @hidden */'));
@@ -1124,4 +1138,39 @@ enum InvalidEnumValues: string
     case PLUS = '+';
     case MINUS = '-';
     case ONE = '1';
+}
+
+class NullableConcatenatedName_Resource extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'name' => $this->getName($this->resource),
+        ];
+    }
+
+    private function getName($model)
+    {
+        if ($model instanceof NullableConcatenatedName_Named) {
+            return $model->name;
+        }
+
+        if ($model instanceof NullableConcatenatedName_Pair) {
+            return $model->left->name.' / '.$model->right->name;
+        }
+
+        return null;
+    }
+}
+
+class NullableConcatenatedName_Named
+{
+    public string $name;
+}
+
+class NullableConcatenatedName_Pair
+{
+    public NullableConcatenatedName_Named $left;
+
+    public NullableConcatenatedName_Named $right;
 }
