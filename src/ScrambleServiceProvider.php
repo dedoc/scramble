@@ -76,6 +76,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\BinaryFileResponseToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CarbonInterfaceToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\CursorPaginatorTypeToSchema;
+use Dedoc\Scramble\Support\TypeToSchemaExtensions\DiscriminatedObjectToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EloquentCollectionToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonApiAnonymousCollectionTypeToSchema;
@@ -245,6 +246,10 @@ class ScrambleServiceProvider extends PackageServiceProvider
                 $extensions,
                 fn ($e) => is_a($e, TypeToSchemaExtension::class, true),
             ));
+
+            // Resolved after the user extensions, so an explicit `#[Discriminator]` attribute wins over
+            // the extension that would otherwise document the class.
+            $typesToSchemaExtensions[] = DiscriminatedObjectToSchema::class;
 
             $exceptionToResponseExtensions = array_values(array_filter(
                 $extensions,
