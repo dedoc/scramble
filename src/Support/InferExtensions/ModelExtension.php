@@ -46,11 +46,9 @@ use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use ReflectionClass;
-use ReflectionNamedType;
 use Throwable;
 
 class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension, StaticMethodReturnTypeExtension
@@ -59,6 +57,9 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     /** @var array<string, mixed> */
     private array $cache = [];
+
+    /** @var array<string, Collection<string, mixed>> */
+    private array $castsCache = [];
 
     public function __construct(
         private ?DiagnosticsCollector $diagnostics = null,
@@ -94,18 +95,27 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             ? $propertyType
             : null;
 
-        if ($annotatedType && $this->isRelationMethod($event->getInstance()->name, $event->getName())) {
-            return $annotatedType;
+        if ($annotatedType) {
+            return $this->refineAnnotatedTypeFromCasts($annotatedType, $event);
+        }
+
+        /*
+         * A property the model really declares is resolved from the class definition rather than from the
+         * schema, Eloquent's own internals such as `relations` among them. There is nothing to introspect
+         * for those, as a declared property shadows the magic attribute access a column would go through.
+         */
+        if (property_exists($event->getInstance()->name, $event->getName())) {
+            return null;
         }
 
         if (! $this->hasProperty($event->getInstance(), $event->getName())) {
-            return $annotatedType;
+            return null;
         }
 
         $info = $this->getModelInfo($event->getInstance());
 
         if ($attribute = $info->get('attributes')->get($event->getName())) {
-            $inferredType = $this->getVirtualAttributeType($attribute['cast'] ?? '', $info->get('class'), $attribute['name'], $event->scope)
+            return $this->getVirtualAttributeType($attribute['cast'] ?? '', $info->get('class'), $attribute['name'], $event->scope)
                 ?? $this->wrapNullable(
                     $attribute['nullable'] ?? false,
                     $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '', $event->scope)
@@ -113,13 +123,10 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
                         ?? new UnknownType("Virtual attribute ({$attribute['name']}) type inference not supported."),
                 );
 
-            return $this->refineAnnotatedType($annotatedType, $inferredType);
         }
 
         if ($relation = $info->get('relations')->get($event->getName())) {
-            $inferredType = $this->getRelationType($relation);
-
-            return $this->refineAnnotatedType($annotatedType, $inferredType);
+            return $this->getRelationType($relation);
         }
 
         throw new \LogicException('Should not happen');
@@ -231,36 +238,34 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
     }
 
     /**
-     * A relation is documented with the type of the related model, so an annotated relation needs no
-     * database introspection: the annotation already carries everything the schema would tell us, the
-     * nullability of the relation included. Only a declared return type is accepted as the signal here,
-     * as establishing it in any other way would need the very database this check exists to avoid.
+     * An annotation is the more specific source of truth for a property, so the schema has nothing to add
+     * to it: the one thing that can still refine an annotation is the Eloquent casts, and those are
+     * declared on the model itself. Leaving the schema unread here is what keeps a fully annotated model
+     * documentable without a database at all.
      */
-    private function isRelationMethod(string $modelClassName, string $name): bool
+    private function refineAnnotatedTypeFromCasts(Type $annotatedType, PropertyFetchEvent $event): Type
     {
-        if (! class_exists($modelClassName)) {
-            return false;
-        }
+        $cast = $this->getModelCasts($event->getInstance())->get($event->getName());
 
-        $reflection = new ReflectionClass($modelClassName);
+        $inferredType = is_string($cast)
+            ? $this->getAttributeTypeFromEloquentCasts($cast, $event->scope)
+            : null;
 
-        if (! $reflection->hasMethod($name)) {
-            return false;
-        }
-
-        $returnType = $reflection->getMethod($name)->getReturnType();
-
-        return $returnType instanceof ReflectionNamedType
-            && ! $returnType->isBuiltin()
-            && is_a($returnType->getName(), Relation::class, true);
+        return $inferredType
+            ? $this->refineAnnotatedType($annotatedType, $inferredType)
+            : $annotatedType;
     }
 
-    private function refineAnnotatedType(?Type $annotatedType, Type $inferredType): Type
+    /**
+     * @return Collection<string, mixed>
+     */
+    private function getModelCasts(ObjectType $type): Collection
     {
-        if (! $annotatedType) {
-            return $inferredType;
-        }
+        return $this->castsCache[$type->name] ??= (new ModelInfo($type->name))->getCasts();
+    }
 
+    private function refineAnnotatedType(Type $annotatedType, Type $inferredType): Type
+    {
         return (new TypeRefiner)->refine($annotatedType, $inferredType);
     }
 
