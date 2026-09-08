@@ -122,7 +122,6 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
                         ?? $this->getAttributeTypeFromDbColumnType($attribute['type'], $attribute['driver'])
                         ?? new UnknownType("Virtual attribute ({$attribute['name']}) type inference not supported."),
                 );
-
         }
 
         if ($relation = $info->get('relations')->get($event->getName())) {
@@ -253,7 +252,7 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
         return $inferredType
             ? $this->refineAnnotatedType($annotatedType, $inferredType)
-            : $annotatedType;
+            : $annotatedType->clone();
     }
 
     /**

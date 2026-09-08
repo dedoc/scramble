@@ -10,6 +10,8 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
+use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
@@ -985,6 +987,7 @@ it('reads the schema for a property that is not annotated', function () {
 /**
  * @property string $title
  * @property Carbon|null $approved_at
+ * @property Carbon|null $custom_at
  * @property-read RelationNullabilityOwner_ModelExtensionTest|null $owner
  */
 class ModelExtensionTest_AnnotatedModel extends Model
@@ -1031,3 +1034,21 @@ class ModelExtensionTest_ModelOnUnreachableConnection extends Model
         return $this->belongsTo(RelationNullabilityOwner_ModelExtensionTest::class, 'required_owner_id');
     }
 }
+
+it('hands out a copy of an annotated property type', function () {
+    $this->infer->analyzeClass(ModelExtensionTest_AnnotatedModel::class);
+
+    $object = new ObjectType(ModelExtensionTest_AnnotatedModel::class);
+
+    /*
+     * Callers such as the toArray() inference replace types in place, so an annotated property type has to
+     * be handed out as a copy. Sharing the definition's own instance would let one analysed method rewrite
+     * the model's documented types for every later caller.
+     */
+    (new TypeWalker)->replace(
+        $object->getPropertyType('custom_at'),
+        fn (Type $type) => $type->isInstanceOf(Carbon::class) ? new StringType : null,
+    );
+
+    expect($object->getPropertyType('custom_at')->toString())->toBe(Carbon::class.'|null');
+});
