@@ -64,9 +64,11 @@ class AnyOf extends Type
                 $types = $types->reject(fn ($type) => $type === 'integer');
             }
 
+            $types = $types->values();
+
             return [
                 ...$parentArray,
-                'type' => $types->values()->all(),
+                'type' => $types->count() === 1 ? $types->first() : $types->all(),
             ];
         }
 

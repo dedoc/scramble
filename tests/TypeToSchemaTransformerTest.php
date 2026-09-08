@@ -179,6 +179,19 @@ it('treats an unconstrained array as a plain type in a union', function () {
     ]);
 });
 
+it('unwraps a collapsed union containing one resulting type', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect($transformer->transform(new Union([
+        new IntegerType,
+        new FloatType,
+    ]))->toArray())->toBe([
+        'type' => 'number',
+    ]);
+});
+
 it('keeps anyOf when a union schema contains constraints besides type', function () {
     $transformer = app()->make(TypeTransformer::class, [
         'context' => $this->context,
