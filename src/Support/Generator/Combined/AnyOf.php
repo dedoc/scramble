@@ -34,12 +34,27 @@ class AnyOf extends Type
 
         unset($parentArray['type']);
 
+        $items = array_map(
+            fn ($item) => $item->toArray(),
+            $this->items,
+        );
+
+        if (count($items) > 1 && collect($items)->every(
+            fn ($item) => array_keys($item) === ['type'] && (is_string($item['type']) || is_array($item['type']))
+        )) {
+            return [
+                ...$parentArray,
+                'type' => collect($items)
+                    ->flatMap(fn ($item) => (array) $item['type'])
+                    ->unique()
+                    ->values()
+                    ->all(),
+            ];
+        }
+
         return [
             ...$parentArray,
-            'anyOf' => array_map(
-                fn ($item) => $item->toArray(),
-                $this->items,
-            ),
+            'anyOf' => $items,
         ];
     }
 

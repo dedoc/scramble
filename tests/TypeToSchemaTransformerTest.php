@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
+use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
@@ -98,12 +99,7 @@ it('transforms simple types', function ($type, $openApiArrayed) {
             'note' => ['type' => 'string', 'const' => 'flat'],
         ],
         'required' => ['note'],
-        'additionalProperties' => [
-            'anyOf' => [
-                ['type' => 'string'],
-                ['type' => 'integer'],
-            ],
-        ],
+        'additionalProperties' => ['type' => ['string', 'integer']],
     ]],
     [new KeyedArrayType([
         new ArrayItemType_('note', new LiteralStringType('flat')),
@@ -155,6 +151,36 @@ it('transforms nullable unions', function ($type, $openApiArrayed) {
         new NullType,
     ]), ['type' => ['string', 'null'], 'enum' => ['idle', 'charging', 'discharging', null]]],
 ]);
+
+it('transforms unions containing only type constraints into a type array', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect($transformer->transform(new Union([
+        new IntegerType,
+        new FloatType,
+        new StringType,
+    ]))->toArray())->toBe([
+        'type' => ['integer', 'number', 'string'],
+    ]);
+});
+
+it('keeps anyOf when a union schema contains constraints besides type', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect($transformer->transform(new Union([
+        new LiteralStringType('pending'),
+        new IntegerType,
+    ]))->toArray())->toBe([
+        'anyOf' => [
+            ['type' => 'integer'],
+            ['type' => 'string', 'enum' => ['pending']],
+        ],
+    ]);
+});
 
 it('documents a union of string, concatenated string, and null as a nullable string', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);

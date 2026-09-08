@@ -115,10 +115,7 @@ it('determines default route key type for union', function () {
 
     expect($openApiDocument['paths']['/test/{user}']['get']['parameters'][0]['schema'])
         ->toBe([
-            'anyOf' => [
-                ['type' => 'string'],
-                ['type' => 'integer'],
-            ],
+            'type' => ['string', 'integer'],
         ]);
 });
 class UnionKey_RequestEssentialsExtensionTest_Controller
