@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -20,7 +21,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
@@ -932,3 +936,86 @@ it('uses custom collection type from newCollection for all', function () {
     expect($type->toString())
         ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
 });
+
+it('resolves an annotated relation without querying the database', function () {
+    $this->infer->analyzeClass(ModelExtensionTest_ModelWithAnnotatedRelation::class);
+
+    $queries = [];
+    DB::listen(function (QueryExecuted $query) use (&$queries) {
+        $queries[] = $query->sql;
+    });
+
+    $propertyType = (new ObjectType(ModelExtensionTest_ModelWithAnnotatedRelation::class))
+        ->getPropertyType('annotatedOwner');
+
+    expect($propertyType->toString())->toBe(RelationNullabilityOwner_ModelExtensionTest::class.'|null')
+        ->and($queries)->toBe([]);
+});
+
+it('falls back to the database for a relation without a declared return type', function () {
+    $this->infer->analyzeClass(ModelExtensionTest_ModelWithAnnotatedRelation::class);
+
+    $queries = [];
+    DB::listen(function (QueryExecuted $query) use (&$queries) {
+        $queries[] = $query->sql;
+    });
+
+    (new ObjectType(ModelExtensionTest_ModelWithAnnotatedRelation::class))
+        ->getPropertyType('undeclaredOwner');
+
+    expect($queries)->not->toBe([]);
+});
+
+/**
+ * @property-read RelationNullabilityOwner_ModelExtensionTest|null $annotatedOwner
+ * @property-read RelationNullabilityOwner_ModelExtensionTest|null $undeclaredOwner
+ */
+class ModelExtensionTest_ModelWithAnnotatedRelation extends Model
+{
+    protected $table = 'relation_nullability_models';
+
+    public function annotatedOwner(): BelongsTo
+    {
+        return $this->belongsTo(RelationNullabilityOwner_ModelExtensionTest::class, 'required_owner_id');
+    }
+
+    public function undeclaredOwner()
+    {
+        return $this->belongsTo(RelationNullabilityOwner_ModelExtensionTest::class, 'required_owner_id');
+    }
+}
+
+it('documents a model from its annotations when the database is unreachable', function () {
+    config()->set('database.connections.unreachable', [
+        'driver' => 'sqlite',
+        'database' => __DIR__.'/no-such-directory/database.sqlite',
+    ]);
+
+    $this->infer->analyzeClass(ModelExtensionTest_ModelOnUnreachableConnection::class);
+
+    $info = (new ModelInfo(ModelExtensionTest_ModelOnUnreachableConnection::class))->handle();
+
+    expect($info->get('table_missing'))->toBeTrue();
+
+    $object = new ObjectType(ModelExtensionTest_ModelOnUnreachableConnection::class);
+
+    expect($object->getPropertyType('title')->toString())->toBe('string')
+        ->and($object->getPropertyType('owner')->toString())
+        ->toBe(RelationNullabilityOwner_ModelExtensionTest::class.'|null');
+});
+
+/**
+ * @property string $title
+ * @property-read RelationNullabilityOwner_ModelExtensionTest|null $owner
+ */
+class ModelExtensionTest_ModelOnUnreachableConnection extends Model
+{
+    protected $connection = 'unreachable';
+
+    protected $table = 'relation_nullability_models';
+
+    public function owner()
+    {
+        return $this->belongsTo(RelationNullabilityOwner_ModelExtensionTest::class, 'required_owner_id');
+    }
+}

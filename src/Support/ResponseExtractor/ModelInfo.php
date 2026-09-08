@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
+use PDOException;
 use ReflectionClass;
 use ReflectionMethod;
 use SplFileObject;
@@ -56,7 +57,7 @@ class ModelInfo
         /** @var Model $model */
         $model = app()->make($class);
 
-        $tableMissing = ! $model->getConnection()->getSchemaBuilder()->hasTable($model->getTable());
+        $tableMissing = $this->tableIsMissing($model);
 
         return $this->displayJson(
             $model,
@@ -65,6 +66,20 @@ class ModelInfo
             $this->getRelations($model),
             $tableMissing,
         );
+    }
+
+    /**
+     * An unreachable database is treated the same way as a table that is yet to be created: the schema
+     * simply cannot be read, so the documentation gets built from the annotations and casts alone. This
+     * keeps the documentation generatable in environments without a database, such as CI.
+     */
+    private function tableIsMissing(Model $model): bool
+    {
+        try {
+            return ! $model->getConnection()->getSchemaBuilder()->hasTable($model->getTable());
+        } catch (PDOException) {
+            return true;
+        }
     }
 
     /**
@@ -251,7 +266,11 @@ class ModelInfo
             return false;
         }
 
-        $columns = collect($foreignKeyModel->getConnection()->getSchemaBuilder()->getColumns($foreignKeyModel->getTable()));
+        try {
+            $columns = collect($foreignKeyModel->getConnection()->getSchemaBuilder()->getColumns($foreignKeyModel->getTable()));
+        } catch (PDOException) {
+            return false;
+        }
 
         foreach ($foreignKeys as $foreignKey) {
             $column = $columns->firstWhere('name', Str::afterLast($foreignKey, '.'));
