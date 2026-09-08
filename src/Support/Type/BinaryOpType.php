@@ -66,6 +66,10 @@ class BinaryOpType extends AbstractType implements LateResolvingType
             return ConcatenatedStringType::fromParts([$left, $right]);
         }
 
+        if ($this->operator === '+') {
+            return $this->evaluateAddition($left, $right);
+        }
+
         return $this->evaluateArithmetic($left, $right);
     }
 
@@ -79,6 +83,31 @@ class BinaryOpType extends AbstractType implements LateResolvingType
     }
 
     private function evaluateArithmetic(Type $left, Type $right): Type
+    {
+        return $this->evaluateNumericArithmetic($left, $right) ?: new UnknownType;
+    }
+
+    private function evaluateAddition(Type $left, Type $right): Type
+    {
+        $results = [];
+
+        if ($numericResult = $this->evaluateNumericArithmetic($left, $right)) {
+            array_push(
+                $results,
+                ...($numericResult instanceof Union ? $numericResult->types : [$numericResult]),
+            );
+        }
+
+        if ($this->canBeArray($left) && $this->canBeArray($right)) {
+            $results[] = new ArrayType;
+        }
+
+        return count($results)
+            ? Union::wrap($results)
+            : new NeverType;
+    }
+
+    private function evaluateNumericArithmetic(Type $left, Type $right): ?Type
     {
         $leftNumber = $this->literalNumber($left);
         $rightNumber = $this->literalNumber($right);
@@ -97,7 +126,7 @@ class BinaryOpType extends AbstractType implements LateResolvingType
         $rightNumeric = $this->numericOperand($right);
 
         if ($leftNumeric === null || $rightNumeric === null) {
-            return new UnknownType;
+            return null;
         }
 
         if ($this->operator === '%') {
@@ -122,6 +151,15 @@ class BinaryOpType extends AbstractType implements LateResolvingType
         }
 
         return $this->intOrFloat();
+    }
+
+    private function canBeArray(Type $type): bool
+    {
+        return $type instanceof ArrayType
+            || $type instanceof KeyedArrayType
+            || $type instanceof UnknownType
+            || $type instanceof MixedType
+            || ($type instanceof TemplateType && $this->canBeArray($type->is ?: new MixedType));
     }
 
     /**
