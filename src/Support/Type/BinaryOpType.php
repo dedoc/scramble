@@ -70,7 +70,7 @@ class BinaryOpType extends AbstractType implements LateResolvingType
             return $this->evaluateAddition($left, $right);
         }
 
-        return $this->evaluateArithmetic($left, $right);
+        return $this->evaluateNumericArithmetic($left, $right) ?: new NeverType;
     }
 
     private function unwrap(Type $type): Type
@@ -80,11 +80,6 @@ class BinaryOpType extends AbstractType implements LateResolvingType
         }
 
         return $type;
-    }
-
-    private function evaluateArithmetic(Type $left, Type $right): Type
-    {
-        return $this->evaluateNumericArithmetic($left, $right) ?: new UnknownType;
     }
 
     private function evaluateAddition(Type $left, Type $right): Type
