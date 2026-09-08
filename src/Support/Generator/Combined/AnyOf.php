@@ -39,16 +39,34 @@ class AnyOf extends Type
             $this->items,
         );
 
+        $items = array_map(function ($item) {
+            if (
+                is_array($item)
+                && array_keys($item) === ['type', 'items']
+                && $item['type'] === 'array'
+                && is_object($item['items'])
+                && (array) $item['items'] === []
+            ) {
+                return ['type' => 'array'];
+            }
+
+            return $item;
+        }, $items);
+
         if (count($items) > 1 && collect($items)->every(
-            fn ($item) => array_keys($item) === ['type'] && (is_string($item['type']) || is_array($item['type']))
+            fn ($item) => is_array($item) && array_keys($item) === ['type'] && (is_string($item['type']) || is_array($item['type']))
         )) {
+            $types = collect($items)
+                ->flatMap(fn ($item) => (array) $item['type'])
+                ->unique();
+
+            if ($types->contains('number')) {
+                $types = $types->reject(fn ($type) => $type === 'integer');
+            }
+
             return [
                 ...$parentArray,
-                'type' => collect($items)
-                    ->flatMap(fn ($item) => (array) $item['type'])
-                    ->unique()
-                    ->values()
-                    ->all(),
+                'type' => $types->values()->all(),
             ];
         }
 
