@@ -68,6 +68,35 @@ EOD;
         ->toBe('array{foo: string(bar)}');
 });
 
+it('infers arithmetic of int-returning method calls in array items', function () {
+    $code = <<<'EOD'
+<?php
+class Foo {
+    public function price(): int
+    {
+        return 100;
+    }
+    public function fee(): int
+    {
+        return 5;
+    }
+    public function toArray(): array
+    {
+        return [
+            'price' => $this->price(),
+            'fee' => $this->fee(),
+            'total' => $this->price() + $this->fee(),
+        ];
+    }
+}
+EOD;
+
+    $result = analyzeFile($code);
+
+    expect($result->getClassDefinition('Foo')->getMethodCallType('toArray')->toString())
+        ->toBe('array{price: int(100), fee: int(5), total: int(105)}');
+});
+
 /*
  * When int, float, bool, return type annotated, there is no point in using types from return
  * as there is no more useful information about the function can be extracted.

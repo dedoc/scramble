@@ -204,7 +204,7 @@ class ReferenceTypeResolver
         return $traverser
             ->traverse($type)
             ->mergeAttributes($attributes)
-            ->setOriginal($originalType);
+            ->setOriginal($originalType); // @phpstan-ignore method.deprecated
     }
 
     private function resolveConstFetchReferenceType(Scope $scope, ConstFetchReferenceType $type): Type
@@ -239,8 +239,8 @@ class ReferenceTypeResolver
                 ? $this->index->getClass($calleeType->name)
                 : null;
 
-            if (! ($calleeType instanceof TemplateType) && $returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
-                instance: $calleeType,
+            if ($returnType = Context::getInstance()->extensionsBroker->getAnyMethodReturnType(new AnyMethodCallEvent(
+                instance: $calleeType instanceof TemplateType ? ($calleeType->is ?: new MixedType) : $calleeType,
                 name: $type->methodName,
                 scope: $scope,
                 arguments: $arguments,
@@ -898,6 +898,17 @@ class ReferenceTypeResolver
          */
         if ($calledOnType) {
             $returnType = $this->finalizeSelf($returnType, $calledOnType);
+
+            /*
+             * Native `self` is ObjectType('self'), not SelfType. Bind only the top-level return token
+             * to the receiver so self-out can specialize that Generic. Walking nested `self`/`static`
+             * would rewrite collection templates and late-static returns.
+             */
+            if ($returnType instanceof ObjectType && $returnType->name === StaticReference::SELF) {
+                $returnType = $calledOnType instanceof Generic
+                    ? clone $calledOnType
+                    : $calledOnType;
+            }
 
             $arguments = $arguments->map(fn ($argType) => $this->finalizeSelfForCallableArguments($argType, $calledOnType));
         }

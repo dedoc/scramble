@@ -37,6 +37,8 @@ class PhpDoc
 
     public static function parse(string $docComment, ?FileNameResolver $nameResolver = null): PhpDocNode
     {
+        $hasBodyTag = (bool) preg_match('/(^|\s)@body(?=\s|$)/', $docComment);
+
         $docComment = Str::replace(['@body'], '@var', $docComment);
 
         [$lexer, $phpDocParser] = static::getTokenizerAndParser();
@@ -45,6 +47,8 @@ class PhpDoc
 
         /** @var PhpDocNode $node */
         $node = $phpDocParser->parse($tokens);
+
+        $node->setAttribute('hasBodyTag', $hasBodyTag);
 
         static::addSummaryAttributes($node);
 

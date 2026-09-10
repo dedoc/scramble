@@ -222,7 +222,6 @@ class TypeTransformer
             && $type->isList
         ) {
             $visibleItems = collect($type->items)->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))->values()->all();
-            /** @see https://stackoverflow.com/questions/57464633/how-to-define-a-json-array-with-concrete-item-definition-for-every-index-i-e-a */
             $openApiType = (new ArrayType)
                 ->setMin(count($visibleItems))
                 ->setMax(count($visibleItems))
@@ -231,27 +230,9 @@ class TypeTransformer
                         fn ($item) => $this->transform($item->value),
                         $visibleItems
                     )
-                )
-                ->setAdditionalItems(false);
+                );
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType) {
-            $openApiType = new ObjectType;
-            $requiredKeys = [];
-
-            $props = collect($type->items)
-                ->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))
-                ->mapWithKeys(function (ArrayItemType_ $item) use (&$requiredKeys) {
-                    if (! $item->isOptional) {
-                        $requiredKeys[] = $item->key;
-                    }
-
-                    return [
-                        (string) $item->key => $this->transform($item),
-                    ];
-                });
-
-            $openApiType->properties = $props->all();
-
-            $openApiType->setRequired($requiredKeys);
+            $openApiType = $this->transformKeyedArrayType($type);
         } elseif (
             $type instanceof \Dedoc\Scramble\Support\Type\ArrayType
         ) {
@@ -369,7 +350,13 @@ class TypeTransformer
 
                 // Removing duplicated schemas before making a resulting AnyOf type.
                 $uniqueItems = collect($items)->unique(fn ($i) => json_encode($i->toArray()))->values()->all();
-                $openApiType = count($uniqueItems) === 1 ? $uniqueItems[0] : (new AnyOf)->setItems($uniqueItems);
+                $nonNullUniqueItems = array_values(array_filter($uniqueItems, fn ($i) => ! $i instanceof NullType));
+
+                if (count($uniqueItems) === 2 && count($nonNullUniqueItems) === 1) {
+                    $openApiType = $nonNullUniqueItems[0]->nullable(true);
+                } else {
+                    $openApiType = count($uniqueItems) === 1 ? $uniqueItems[0] : (new AnyOf)->setItems($uniqueItems);
+                }
             }
         } elseif ($type instanceof LiteralStringType) {
             $openApiType = (new StringType)->const($type->value);
@@ -495,18 +482,31 @@ class TypeTransformer
                 );
         }
 
-        if ($docNode = $type->getAttribute('docNode')) {
+        if (
+            ($docNode = $type->getAttribute('docNode'))
+            && (
+                $docNode->getTagsByName('@description')
+                || $docNode->getTagsByName('@status')
+                || $docNode->getAttribute('hasBodyTag')
+            )
+        ) {
             /** @var PhpDocNode $docNode */
-            $description = (string) Str::of($docNode->getAttribute('summary') ?: '') // @phpstan-ignore argument.type
-                ->append("\n\n".($docNode->getAttribute('description') ?: '')) // @phpstan-ignore binaryOp.invalid
-                ->append("\n\n".$response->description)
-                ->trim();
-            $response->description($description);
+            $descriptionTag = array_values($docNode->getTagsByName('@description'))[0] ?? null;
+            $description = $descriptionTag
+                ? trim((string) $descriptionTag->value)
+                : (string) Str::of($docNode->getAttribute('summary') ?: '') // @phpstan-ignore argument.type
+                    ->append("\n\n".($docNode->getAttribute('description') ?: '')) // @phpstan-ignore binaryOp.invalid
+                    ->trim();
 
-            $code = (int) (array_values($docNode->getTagsByName('@status'))[0]->value->value ?? $response->code ?? 200);
-            $response->code = $code;
+            if ($descriptionTag || $description !== '') {
+                $response->setDescription(Str::replace('$0', $response->description, $description));
+            }
 
-            if ($varType = $docNode->getVarTagValues()[0]->type ?? null) {
+            if ($statusTag = array_values($docNode->getTagsByName('@status'))[0] ?? null) {
+                $response->code = (int) $statusTag->value->value;
+            }
+
+            if ($docNode->getAttribute('hasBodyTag') && ($varType = $docNode->getVarTagValues()[0]->type ?? null)) {
                 $type = PhpDocTypeHelper::toType($varType);
 
                 $typeResponse = $this->toResponse($type);
@@ -599,6 +599,123 @@ class TypeTransformer
                 TypeHelper::countKnownTypes($phpDoc) === TypeHelper::countKnownTypes($inferred)
                 && $phpDoc->accepts($inferred)
             );
+    }
+
+    private function transformKeyedArrayType(\Dedoc\Scramble\Support\Type\KeyedArrayType $type): OpenApiType
+    {
+        /** @var array<string, Type[]> $propertyTypes */
+        $propertyTypes = [];
+        $stringPropertyKeys = [];
+        $requiredKeys = [];
+        $additionalPropertiesTypes = [];
+        $nextNumericKey = null;
+        $hasUnknownNumericKeys = false;
+
+        foreach ($type->items as $item) {
+            $hidden = $this->isHiddenArrayItem($item);
+
+            if ($item->shouldUnpack) {
+                $this->applySpread($item, $hidden, $propertyTypes, $stringPropertyKeys, $additionalPropertiesTypes, $hasUnknownNumericKeys);
+
+                continue;
+            }
+
+            $key = $this->nextItemKey($item, $nextNumericKey, $hasUnknownNumericKeys);
+
+            if ($key === null) {
+                if (! $hidden) {
+                    $additionalPropertiesTypes[] = $item->value;
+                }
+
+                continue;
+            }
+
+            // Hidden items still consume numeric keys (above), then leave the schema.
+            if ($hidden) {
+                continue;
+            }
+
+            $key = (string) $key;
+            $propertyTypes[$key] = [$item];
+            if (! $item->isOptional) {
+                $requiredKeys[] = $key;
+            }
+            if (is_string($item->key)) {
+                $stringPropertyKeys[$key] = $key;
+            }
+        }
+
+        $openApiType = new ObjectType;
+        $openApiType->properties = array_map(
+            fn (array $types) => $this->transform(Union::wrap($types)),
+            $propertyTypes,
+        );
+        $openApiType->setRequired($requiredKeys);
+
+        if ($additionalPropertiesTypes) {
+            $openApiType->additionalProperties(
+                $this->transform(Union::wrap($additionalPropertiesTypes))
+            );
+        }
+
+        return $openApiType;
+    }
+
+    /**
+     * @param  array<string, Type[]>  $propertyTypes
+     * @param  array<string, string>  $stringPropertyKeys
+     * @param  Type[]  $additionalPropertiesTypes
+     */
+    private function applySpread(
+        ArrayItemType_ $item,
+        bool $hidden,
+        array &$propertyTypes,
+        array $stringPropertyKeys,
+        array &$additionalPropertiesTypes,
+        bool &$hasUnknownNumericKeys,
+    ): void {
+        $itemValue = $item->value instanceof TemplateType && $item->value->is
+            ? $item->value->is
+            : $item->value;
+        $spread = $itemValue instanceof \Dedoc\Scramble\Support\Type\ArrayType ? $itemValue : null;
+
+        $hasUnknownNumericKeys = $hasUnknownNumericKeys
+            || ! $spread?->key instanceof \Dedoc\Scramble\Support\Type\StringType;
+
+        if ($hidden) {
+            return;
+        }
+
+        $additionalPropertyType = $spread?->value ?? new \Dedoc\Scramble\Support\Type\MixedType;
+        $additionalPropertiesTypes[] = $additionalPropertyType;
+
+        if (! $spread?->key instanceof \Dedoc\Scramble\Support\Type\IntegerType) {
+            foreach ($stringPropertyKeys as $key) {
+                $propertyTypes[$key][] = $additionalPropertyType;
+            }
+        }
+    }
+
+    private function nextItemKey(ArrayItemType_ $item, ?int &$nextNumericKey, bool $hasUnknownNumericKeys): string|int|null
+    {
+        $key = $item->key;
+
+        if ($key === null) {
+            if ($item->keyType || $hasUnknownNumericKeys) {
+                return null;
+            }
+
+            $key = $nextNumericKey ?? 0;
+            $nextNumericKey = $key + 1;
+
+            return $key;
+        }
+
+        if (is_int($key) && ($nextNumericKey === null || $key >= $nextNumericKey)) {
+            $nextNumericKey = $key + 1;
+        }
+
+        return $key;
     }
 
     private function isHiddenArrayItem(ArrayItemType_ $item): bool

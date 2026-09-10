@@ -288,6 +288,10 @@ class TypeHelper
 
     public static function createTypeFromReflectionType(ReflectionType $reflectionType, bool $handleNullable = true)
     {
+        if ($reflectionType instanceof ReflectionNamedType && $reflectionType->getName() === 'mixed') {
+            return new MixedType;
+        }
+
         if ($reflectionType->allowsNull() && $handleNullable) {
             return Union::wrap([
                 new NullType,
@@ -351,6 +355,15 @@ class TypeHelper
         $counterVisitor = new class extends AbstractTypeVisitor
         {
             public int $count = 0;
+
+            public function enter(Type $type): Type|int|null
+            {
+                if ($type instanceof ConcatenatedStringType) {
+                    return TypeVisitor::DONT_TRAVERSE_CHILDREN;
+                }
+
+                return null;
+            }
 
             public function leave(Type $type): ?Type
             {

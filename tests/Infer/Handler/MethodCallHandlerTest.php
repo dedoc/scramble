@@ -96,3 +96,25 @@ PHP,
     expect($valueType->toString())->toBe(RepeatedPredicate_MethodCallHandlerTest::class)
         ->and($resolver->potentialTypeResolutions)->toBe(1);
 });
+
+it('applies self-out from a native self setter chained on new', function () {
+    $envelope = Envelope_SelfReturningSetterTest::class;
+    $token = Token_SelfReturningSetterTest::class;
+
+    expect(getStatementType("(new {$envelope})->withToken(new {$token})")->toString())
+        ->toBe("{$envelope}<{$token}>");
+});
+
+class Token_SelfReturningSetterTest {}
+
+class Envelope_SelfReturningSetterTest
+{
+    private string $token;
+
+    public function withToken(string $token): self
+    {
+        $this->token = $token;
+
+        return $this;
+    }
+}

@@ -16,7 +16,7 @@ class UnionNormalizingTypeVisitor extends AbstractTypeVisitor
         }
 
         return TypeHelper::mergeTypes(...$type->types)
-            ->setOriginal($type->getOriginal())
+            ->setOriginal($type->getOriginal()) // @phpstan-ignore method.deprecated, method.deprecated
             ->mergeAttributes($type->attributes())
             ->widen();
     }

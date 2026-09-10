@@ -4,6 +4,7 @@ use Carbon\Carbon;
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -89,14 +90,19 @@ class ModelExtensionTest_ModelWithLegacyCollectionProperty extends SamplePostMod
 
 class ModelExtensionTest_OverriddenUser extends Model {}
 
-it('refines a compatible PHPDoc union with the inferred model attribute type', function () {
+it('adds an inferred Carbon format to a PHPDoc union', function () {
     $this->infer->analyzeClass(ModelExtensionTest_ModelWithAnnotatedDate::class);
 
     $propertyType = (new ObjectType(ModelExtensionTest_ModelWithAnnotatedDate::class))
         ->getPropertyType('title');
+    $carbonType = (new TypeWalker)->first(
+        $propertyType,
+        fn ($type) => $type->isInstanceOf(Carbon::class),
+    );
 
     expect($propertyType->toString())->toBe(Carbon::class.'|null')
-        ->and($propertyType->getAttribute('source'))->toBe('phpDoc');
+        ->and($propertyType->getAttribute('source'))->toBe('phpDoc')
+        ->and($carbonType?->getAttribute('format'))->toBe('date');
 });
 
 /** @property Carbon|null $title */
@@ -105,6 +111,44 @@ class ModelExtensionTest_ModelWithAnnotatedDate extends SamplePostModel
     protected $casts = [
         'title' => 'datetime:Y-m-d',
     ];
+}
+
+it('preserves detailed PHPDoc array types when database metadata is available', function () {
+    $expectedPropertyTypes = [
+        'settings' => 'array<string, mixed>|null',
+        'body' => 'array<list{int, int}>',
+    ];
+
+    foreach ([
+        ModelExtensionTest_ModelWithAnnotatedArraysAndMissingTable::class,
+        ModelExtensionTest_ModelWithAnnotatedArrays::class,
+    ] as $modelClass) {
+        $this->infer->analyzeClass($modelClass);
+
+        $modelType = new ObjectType($modelClass);
+
+        expect([
+            'settings' => $modelType->getPropertyType('settings')->toString(),
+            'body' => $modelType->getPropertyType('body')->toString(),
+        ])->toBe($expectedPropertyTypes);
+    }
+});
+
+/**
+ * @property array<string, mixed>|null $settings
+ * @property list<array{int, int}> $body
+ */
+class ModelExtensionTest_ModelWithAnnotatedArrays extends SamplePostModel
+{
+    protected $casts = [
+        'settings' => 'array',
+        'body' => 'array',
+    ];
+}
+
+class ModelExtensionTest_ModelWithAnnotatedArraysAndMissingTable extends ModelExtensionTest_ModelWithAnnotatedArrays
+{
+    protected $table = 'model_extension_test_missing_table';
 }
 
 it('adds toArray method type the model class without defined toArray class', function () {
@@ -586,6 +630,32 @@ it('uses custom query builder type from newEloquentBuilder', function () {
         ->and(getStatementType(ModelWithCustomBuilder_ModelExtensionTest::class.'::published()')->toString())
         ->toBe(FooBuilder_ModelExtensionTest::class.'<'.ModelWithCustomBuilder_ModelExtensionTest::class.'>');
 });
+
+it('preserves custom query builder type when query is overridden', function () {
+    // Laravel versions infer count() as either int or the more precise non-negative-int.
+    expect(getStatementType(ModelWithOverriddenQuery_ModelExtensionTest::class.'::query()->published()->count()'))
+        ->toBeInstanceOf(IntegerType::class);
+});
+
+it('preserves count type when the query is cloned', function () {
+    expect(getStatementType('(clone '.ModelWithOverriddenQuery_ModelExtensionTest::class.'::query())->count()'))
+        ->toBeInstanceOf(IntegerType::class);
+});
+
+class ModelWithOverriddenQuery_ModelExtensionTest extends Model
+{
+    /** @return FooBuilder_ModelExtensionTest<static> */
+    public static function query(): FooBuilder_ModelExtensionTest
+    {
+        return parent::query();
+    }
+
+    /** @return FooBuilder_ModelExtensionTest<static> */
+    public function newEloquentBuilder($query): FooBuilder_ModelExtensionTest
+    {
+        return new FooBuilder_ModelExtensionTest($query);
+    }
+}
 
 it('preserves custom query builder generics for self-returning methods', function () {
     expect(getStatementType(ModelWithCustomBuilder_ModelExtensionTest::class.'::query()->visibleTo(new '.SampleUserModel::class.'())')->toString())

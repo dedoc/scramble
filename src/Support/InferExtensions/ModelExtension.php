@@ -17,6 +17,7 @@ use Dedoc\Scramble\Infer\Extensions\StaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Infer\Services\TypeRefiner;
 use Dedoc\Scramble\Support\InferExtensions\Concerns\ExtractsLiteralArrayKeys;
 use Dedoc\Scramble\Support\ResponseExtractor\ModelInfo;
 use Dedoc\Scramble\Support\Type\AbstractType;
@@ -112,30 +113,11 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     private function refineAnnotatedType(?Type $annotatedType, Type $inferredType): Type
     {
-        if (! $annotatedType?->accepts($inferredType)) {
-            return $annotatedType ?? $inferredType;
-        }
-
-        if (! $annotatedType instanceof Union) {
+        if (! $annotatedType) {
             return $inferredType;
         }
 
-        $inferredTypes = $inferredType instanceof Union
-            ? $inferredType->types
-            : [$inferredType];
-
-        $refinedTypes = collect($annotatedType->types)
-            ->flatMap(function (Type $annotatedMember) use ($inferredTypes) {
-                $acceptedInferredTypes = array_filter(
-                    $inferredTypes,
-                    fn (Type $inferredMember) => $annotatedMember->accepts($inferredMember),
-                );
-
-                return $acceptedInferredTypes ?: [$annotatedMember];
-            })
-            ->all();
-
-        return Union::wrap($refinedTypes)->mergeAttributes($annotatedType->attributes());
+        return (new TypeRefiner)->refine($annotatedType, $inferredType);
     }
 
     /**

@@ -9,7 +9,7 @@ use ReflectionMethod;
 test('builds the definition for is_null', function () {
     $def = (new FunctionLikeReflectionDefinitionBuilder('is_null'))->build();
 
-    expect($def->type->toString())->toBe('(null|mixed): boolean');
+    expect($def->type->toString())->toBe('(mixed): boolean');
 });
 
 test('builds the definition for phpstan-this-out', function () {

@@ -81,13 +81,14 @@ class JsonResourceHelper
             }
         }
 
-        $modelName = (string) Str::of(Str::of($jsonResourceClassName)->explode('\\')->last())->replace('Resource', '')->singular();
-
-        $modelClass = 'App\\Models\\'.$modelName;
-        if (! class_exists($modelClass)) {
+        if (! Str::contains($jsonResourceClassName, '\\Http\\Resources\\')) {
             return null;
         }
 
-        return $modelClass;
+        $modelClass = (string) Str::of($jsonResourceClassName)
+            ->replaceFirst('\\Http\\Resources\\', '\\Models\\')
+            ->replaceEnd('Resource', '');
+
+        return class_exists($modelClass) ? $modelClass : null;
     }
 }

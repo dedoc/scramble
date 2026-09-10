@@ -9,9 +9,11 @@ use Dedoc\Scramble\Support\Generator\Types\IntegerType as OpenApiIntegerType;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType as OpenApiStringType;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
+use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
@@ -58,6 +60,68 @@ it('transforms simple types', function ($type, $openApiArrayed) {
         'required' => ['key'],
     ]],
     [new KeyedArrayType([
+        new ArrayItemType_(
+            key: null,
+            value: new ArrayType(value: new MixedType),
+            shouldUnpack: true,
+        ),
+        new ArrayItemType_('note', new LiteralStringType('flat')),
+    ]), [
+        'type' => 'object',
+        'properties' => [
+            'note' => ['type' => 'string', 'const' => 'flat'],
+        ],
+        'required' => ['note'],
+        'additionalProperties' => (object) [],
+    ]],
+    [new KeyedArrayType([
+        new ArrayItemType_('note', new LiteralStringType('flat')),
+        new ArrayItemType_(null, new IntegerType),
+    ]), [
+        'type' => 'object',
+        'properties' => [
+            'note' => ['type' => 'string', 'const' => 'flat'],
+            '0' => ['type' => 'integer'],
+        ],
+        'required' => ['note', '0'],
+    ]],
+    [new KeyedArrayType([
+        new ArrayItemType_('note', new LiteralStringType('flat')),
+        new ArrayItemType_(
+            key: null,
+            value: new ArrayType(value: new StringType),
+            shouldUnpack: true,
+        ),
+        new ArrayItemType_(null, new IntegerType),
+    ]), [
+        'type' => 'object',
+        'properties' => [
+            'note' => ['type' => 'string', 'const' => 'flat'],
+        ],
+        'required' => ['note'],
+        'additionalProperties' => ['type' => ['string', 'integer']],
+    ]],
+    [new KeyedArrayType([
+        new ArrayItemType_('note', new LiteralStringType('flat')),
+        new ArrayItemType_(
+            key: null,
+            value: new ArrayType(value: new IntegerType, key: new StringType),
+            shouldUnpack: true,
+        ),
+    ]), [
+        'type' => 'object',
+        'properties' => [
+            'note' => [
+                'anyOf' => [
+                    ['type' => 'string', 'const' => 'flat'],
+                    ['type' => 'integer'],
+                ],
+            ],
+        ],
+        'required' => ['note'],
+        'additionalProperties' => ['type' => 'integer'],
+    ]],
+    [new KeyedArrayType([
         new ArrayItemType_(null, new IntegerType),
         new ArrayItemType_(null, new IntegerType),
         new ArrayItemType_(null, new IntegerType),
@@ -70,7 +134,6 @@ it('transforms simple types', function ($type, $openApiArrayed) {
         ],
         'minItems' => 3,
         'maxItems' => 3,
-        'additionalItems' => false,
     ]],
 ]);
 
@@ -88,6 +151,100 @@ it('transforms nullable unions', function ($type, $openApiArrayed) {
         new NullType,
     ]), ['type' => ['string', 'null'], 'enum' => ['idle', 'charging', 'discharging', null]]],
 ]);
+
+it('transforms unions containing only type constraints into a type array', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect($transformer->transform(new Union([
+        new IntegerType,
+        new FloatType,
+        new StringType,
+    ]))->toArray())->toBe([
+        'type' => ['number', 'string'],
+    ]);
+});
+
+it('treats an unconstrained array as a plain type in a union', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect($transformer->transform(new Union([
+        new ArrayType(value: new MixedType),
+        new StringType,
+    ]))->toArray())->toBe([
+        'type' => ['array', 'string'],
+    ]);
+});
+
+it('unwraps a collapsed union containing one resulting type', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect($transformer->transform(new Union([
+        new IntegerType,
+        new FloatType,
+    ]))->toArray())->toBe([
+        'type' => 'number',
+    ]);
+});
+
+it('keeps anyOf when a union schema contains constraints besides type', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect($transformer->transform(new Union([
+        new LiteralStringType('pending'),
+        new IntegerType,
+    ]))->toArray())->toBe([
+        'anyOf' => [
+            ['type' => 'integer'],
+            ['type' => 'string', 'enum' => ['pending']],
+        ],
+    ]);
+});
+
+it('documents a union of string, concatenated string, and null as a nullable string', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+
+    $type = new ObjectType(NullableConcatenatedName_Resource::class);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        '$ref' => '#/components/schemas/NullableConcatenatedName_Resource',
+    ]);
+
+    expect($this->context->openApi->components->getSchema(NullableConcatenatedName_Resource::class)->toArray()['properties']['name'])->toBe([
+        'type' => ['string', 'null'],
+    ]);
+});
+
+it('accounts for hidden items when assigning implicit numeric keys', function () {
+    $hiddenItem = new ArrayItemType_(null, new IntegerType);
+    $hiddenItem->setAttribute('docNode', PhpDoc::parse('/** @hidden */'));
+
+    $type = new KeyedArrayType([
+        new ArrayItemType_('note', new LiteralStringType('flat')),
+        $hiddenItem,
+        new ArrayItemType_(null, new StringType),
+    ]);
+
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        'type' => 'object',
+        'properties' => [
+            'note' => ['type' => 'string', 'const' => 'flat'],
+            1 => ['type' => 'string'],
+        ],
+        'required' => ['note', '1'],
+    ]);
+});
 
 it('gets json resource type', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
@@ -1033,4 +1190,39 @@ enum InvalidEnumValues: string
     case PLUS = '+';
     case MINUS = '-';
     case ONE = '1';
+}
+
+class NullableConcatenatedName_Resource extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'name' => $this->getName($this->resource),
+        ];
+    }
+
+    private function getName($model)
+    {
+        if ($model instanceof NullableConcatenatedName_Named) {
+            return $model->name;
+        }
+
+        if ($model instanceof NullableConcatenatedName_Pair) {
+            return $model->left->name.' / '.$model->right->name;
+        }
+
+        return null;
+    }
+}
+
+class NullableConcatenatedName_Named
+{
+    public string $name;
+}
+
+class NullableConcatenatedName_Pair
+{
+    public NullableConcatenatedName_Named $left;
+
+    public NullableConcatenatedName_Named $right;
 }
