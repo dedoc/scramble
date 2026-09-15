@@ -46,19 +46,21 @@ By default, Scramble documents routes under `api`. Configure `scramble.api_path`
 
 Enable `Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy` in `scramble.security_strategy` to derive bearer authentication from `auth` and `auth:*` middleware. Configure a custom strategy for other authentication conventions.
 
-## Check generated documentation
+## Verify changed endpoints
 
-After changing API-related code, run the analyzer to identify generation problems:
+For every created or updated endpoint, temporarily add `@only-docs` to its controller method:
 
-```shell
-php artisan scramble:analyze --fail-on-unknown
+```php
+/** @only-docs */
 ```
 
-Use verbose export to generate the OpenAPI document and inspect diagnostics:
+Export that endpoint to a temporary file:
 
 ```shell
-php artisan scramble:export -v --fail-on-unknown
+php artisan scramble:export --path=/tmp/scramble-openapi.json --fail-on-unknown
 ```
+
+Read the JSON and check the method, path, inputs, status codes, and response schemas. Fix clear omissions caused by the changed code, then export once more. If dynamic behavior still cannot be documented truthfully, report the exact limitation and stop. Do not invent documentation to force completeness. Remove `@only-docs`.
 
 ## Extend Scramble
 
@@ -67,4 +69,3 @@ Scramble allows extending expression type inference, validation rules documentat
 ## Scramble PRO
 
 Scramble PRO provides support for `spatie/laravel-data`, `spatie/laravel-query-builder`, `timacdonald/json-api`, `spatie/laravel-json-api-paginate`, and `lorisleiva/laravel-actions`. Treat PRO notices for these packages as incomplete documentation: surface that to the user and do not add attributes unless they choose the separately maintained fallback.
-
