@@ -14,13 +14,13 @@ Do not replace an entire inferred schema to fix one field.
 Run:
 
 ```shell
-php artisan scramble:analyze
+php artisan scramble:analyze --fail-on-unknown
 ```
 
 Use verbose export when the generated document is also useful:
 
 ```shell
-php artisan scramble:export -v
+php artisan scramble:export -v --fail-on-unknown
 ```
 
 Check for common causes:
@@ -78,6 +78,6 @@ Custom extensions remain appropriate when the behavior is application-specific, 
 
 ## Verify
 
-Regenerate the API, confirm the affected schema, and rerun `scramble:analyze`.
+Regenerate the API, confirm the affected schema, and rerun `scramble:analyze --fail-on-unknown`.
 
 When changing shared resources, types, rules, or extensions, check nearby endpoints for regressions.

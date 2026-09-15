@@ -1,9 +1,12 @@
 <?php
 
+use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route as RouteFacade;
 
 use function Pest\Laravel\artisan;
 
@@ -79,3 +82,31 @@ it('should export the documentation of the API specified by the --api option wit
         '--api' => $api,
     ])->assertOk();
 });
+
+it('fails export on unknown schemas without throwing', function () {
+    Scramble::routes(fn (Route $route) => $route->uri === 'api/unknown');
+    RouteFacade::get('api/unknown', [UnknownSchemaController::class, 'show']);
+
+    File::shouldReceive('put')->once();
+
+    artisan(ExportDocumentation::class, ['--fail-on-unknown' => true])
+        ->expectsOutputToContain('with 1 error')
+        ->assertFailed();
+});
+
+it('fails analysis on unknown schemas without throwing', function () {
+    Scramble::routes(fn (Route $route) => $route->uri === 'api/unknown');
+    RouteFacade::get('api/unknown', [UnknownSchemaController::class, 'show']);
+
+    artisan(AnalyzeDocumentation::class, ['--fail-on-unknown' => true])
+        ->expectsOutputToContain('Schema `UnknownType` is not allowed')
+        ->assertFailed();
+});
+
+class UnknownSchemaController
+{
+    public function show()
+    {
+        return unknown_value();
+    }
+}
