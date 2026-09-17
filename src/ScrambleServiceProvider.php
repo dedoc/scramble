@@ -9,6 +9,7 @@ use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\CacheDocumentation;
 use Dedoc\Scramble\Console\Commands\ClearDocumentationCache;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
+use Dedoc\Scramble\Contracts\RouteProvider as RouteProviderContract;
 use Dedoc\Scramble\DocumentTransformers\AddDocumentTags;
 use Dedoc\Scramble\DocumentTransformers\CleanupUnusedResponseReferencesTransformer;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
@@ -68,7 +69,6 @@ use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\ProNudge\Extensions\LaravelDataRequestBodyNudgeExtractor;
 use Dedoc\Scramble\Support\ProNudge\Extensions\LaravelDataReturnTypeNudgeExtension;
 use Dedoc\Scramble\Support\ProNudge\Extensions\QueryBuilderUsageNudgeExtension;
-use Dedoc\Scramble\Support\RouteProviders\DefaultRouteProvider;
 use Dedoc\Scramble\Support\RouteProviders\RouteProvider;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -106,7 +106,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 {
     /** @var array<class-string, class-string> */
     public $bindings = [
-        RouteProvider::class => DefaultRouteProvider::class,
+        RouteProviderContract::class => RouteProvider::class,
     ];
 
     public $singletons = [

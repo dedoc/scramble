@@ -2,10 +2,10 @@
 
 namespace Dedoc\Scramble\Console\Commands\Concerns;
 
+use Dedoc\Scramble\Contracts\RouteProvider;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Support\OperationBuilder;
 use Dedoc\Scramble\Support\RouteProviders\FilterableRouteProvider;
-use Dedoc\Scramble\Support\RouteProviders\RouteProvider;
 use Illuminate\Routing\Route;
 
 trait CreatesGenerator

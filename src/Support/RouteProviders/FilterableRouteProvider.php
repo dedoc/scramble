@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\RouteProviders;
 
 use Closure;
+use Dedoc\Scramble\Contracts\RouteProvider;
 use Dedoc\Scramble\GeneratorConfig;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;

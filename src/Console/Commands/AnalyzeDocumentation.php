@@ -40,7 +40,7 @@ class AnalyzeDocumentation extends Command
 
         $this->renderDiagnostics(
             result: $result,
-            successMessage: 'Everything is fine! Documentation is generated without any errors 🍻',
+            successMessage: null,
             issuesMessage: fn ($summary) => "Found {$summary}."
         );
 

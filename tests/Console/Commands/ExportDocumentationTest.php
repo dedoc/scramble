@@ -5,8 +5,12 @@ use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route as RouteFacade;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Tester\CommandTester;
 
 use function Pest\Laravel\artisan;
 
@@ -56,6 +60,53 @@ it('filters exported documentation by comma-separated route names', function () 
     artisan(ExportDocumentation::class, [
         '--routes' => 'route-filter.a, route-filter.c',
     ])->assertOk();
+});
+
+it('exports only JSON with a trailing newline to stdout', function () {
+    RouteFacade::get('api/stdout', [RouteFilterController::class, 'a'])->name('stdout');
+    File::shouldReceive('put')->never();
+
+    $result = (new CommandTester(Artisan::all()['scramble:export']))->run([
+        '--stdout' => true,
+        '--routes' => 'stdout',
+    ]);
+
+    expect($result->statusCode)->toBe(Command::SUCCESS)
+        ->and($result->getOutput())->toEndWith(PHP_EOL)
+        ->and(json_decode($result->getOutput(), true)['paths'])->toHaveKey('/stdout')
+        ->and($result->getErrorOutput())->toBe('');
+});
+
+it('writes stdout export diagnostics to stderr', function () {
+    RouteFacade::get('api/stdout-unknown', [UnknownSchemaController::class, 'show'])->name('stdout-unknown');
+    File::shouldReceive('put')->never();
+
+    $tester = new CommandTester(Artisan::all()['scramble:export']);
+    $tester->setVerbosity(OutputInterface::VERBOSITY_VERBOSE);
+
+    $result = $tester->run([
+        '--stdout' => true,
+        '--routes' => 'stdout-unknown',
+        '--fail-on-unknown' => true,
+    ]);
+
+    expect($result->statusCode)->toBe(Command::FAILURE)
+        ->and(json_decode($result->getOutput(), true))->toBeArray()
+        ->and($result->getOutput())->not->toContain('UnknownType')
+        ->and($result->getErrorOutput())->toContain('Schema `UnknownType` is not allowed');
+});
+
+it('does not allow stdout and path options together', function () {
+    File::shouldReceive('put')->never();
+
+    $result = (new CommandTester(Artisan::all()['scramble:export']))->run([
+        '--stdout' => true,
+        '--path' => 'api-test.json',
+    ]);
+
+    expect($result->statusCode)->toBe(Command::INVALID)
+        ->and($result->getOutput())->toBe('')
+        ->and($result->getErrorOutput())->toContain('The --stdout and --path options cannot be used together.');
 });
 
 it('should export the documentation of the API specified by the --api option', function () {
@@ -129,6 +180,18 @@ it('filters analyzed documentation by route name', function () {
         '--routes' => 'route-filter.known',
         '--fail-on-unknown' => true,
     ])->assertOk();
+});
+
+it('does not print a success message when analysis finds no diagnostics', function () {
+    RouteFacade::get('api/analyze-success', [RouteFilterController::class, 'a'])->name('analyze-success');
+
+    $result = (new CommandTester(Artisan::all()['scramble:analyze']))->run([
+        '--routes' => 'analyze-success',
+    ]);
+
+    expect($result->statusCode)->toBe(Command::SUCCESS)
+        ->and($result->getOutput())->toBe('')
+        ->and($result->getErrorOutput())->toBe('');
 });
 
 class RouteFilterController

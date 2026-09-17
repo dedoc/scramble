@@ -48,19 +48,19 @@ Enable `Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy` in 
 
 ## Verify changed endpoints
 
-For every created or updated endpoint, temporarily add `@only-docs` to its controller method:
-
-```php
-/** @only-docs */
-```
-
-Export that endpoint to a temporary file:
+Analyze created or updated endpoints by passing their route names to `--routes`. Pass multiple names as a comma-separated list:
 
 ```shell
-php artisan scramble:export --path=/tmp/scramble-openapi.json --fail-on-unknown
+php artisan scramble:analyze --routes=users.show,users.update --fail-on-unknown
 ```
 
-Read the JSON and check the method, path, inputs, status codes, and response schemas. Fix clear omissions caused by the changed code, then export once more. If dynamic behavior still cannot be documented truthfully, report the exact limitation and stop. Do not invent documentation to force completeness. Remove `@only-docs`.
+Review every diagnostic and fix clear omissions caused by the changed code. Then export the selected routes to stdout:
+
+```shell
+php artisan scramble:export --routes=users.show,users.update --stdout --fail-on-unknown
+```
+
+Read the JSON and check the method, path, inputs, status codes, and response schemas. Repeat analysis and export after fixes. If dynamic behavior still cannot be documented truthfully, report the exact limitation and stop. Do not invent documentation to force completeness.
 
 ## Extend Scramble
 

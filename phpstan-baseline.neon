@@ -427,40 +427,16 @@ parameters:
 			path: src/Generator.php
 
 		-
-			message: '#^Parameter \#1 \$haystack of static method Illuminate\\Support\\Str\:\:startsWith\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/RouteProviders/DefaultRouteProvider.php
-
-		-
 			message: '#^Parameter \#1 \$key of method Illuminate\\Support\\Collection\<TKey of \(int\|string\),TValue\>\:\:every\(\) expects \(callable\(Dedoc\\Scramble\\Support\\Generator\\Operation, int\|string\)\: bool\)\|Dedoc\\Scramble\\Support\\Generator\\Operation\|string, Closure\(Dedoc\\Scramble\\Support\\Generator\\Operation\)\: int\<0, max\> given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Generator.php
 
 		-
-			message: '#^Parameter \#1 \$value of function collect expects Illuminate\\Contracts\\Support\\Arrayable\<\(int\|string\), mixed\>\|iterable\<\(int\|string\), mixed\>\|null, Illuminate\\Routing\\RouteCollectionInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/RouteProviders/DefaultRouteProvider.php
-
-		-
 			message: '#^Part \$action \(mixed\) of encapsed string cannot be cast to string\.$#'
 			identifier: encapsedStringPart.nonString
 			count: 2
 			path: src/Generator.php
-
-		-
-			message: '#^Unable to resolve the template type TKey in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Support/RouteProviders/DefaultRouteProvider.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: src/Support/RouteProviders/DefaultRouteProvider.php
 
 		-
 			message: '#^Method Dedoc\\Scramble\\GeneratorConfig\:\:__construct\(\) has parameter \$config with no value type specified in iterable type array\.$#'
