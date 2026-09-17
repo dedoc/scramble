@@ -67,7 +67,7 @@ class Generator
         $this->configureInference($context->diagnostics);
         $typeTransformer = $this->buildTypeTransformer($context);
 
-        $operations = $this->generateOperations($context, $typeTransformer);
+        $operations = $this->generateOperations($routes, $context, $typeTransformer);
 
         $this->setUniqueOperationId($operations);
         $operations->each(fn (Operation $operation) => $openApi->addPath(
@@ -89,9 +89,12 @@ class Generator
             ->spec();
     }
 
-    private function generateOperations(OpenApiContext $context, TypeTransformer $typeTransformer): Collection
+    /**
+     * @param  Collection<int, Route>  $routes
+     */
+    private function generateOperations(Collection $routes, OpenApiContext $context, TypeTransformer $typeTransformer): Collection
     {
-        return $this->routeProvider->get($context->config)
+        return $routes
             ->flatMap(function (Route $route, int $index) use ($context, $typeTransformer) {
                 try {
                     $operations = $this->routeToOperations($context, $route, $typeTransformer);
