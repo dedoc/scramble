@@ -1,10 +1,12 @@
 <?php
 
-namespace Dedoc\Scramble;
+namespace Dedoc\Scramble\Support\RouteProviders;
 
 use Dedoc\Scramble\Attributes\Api;
 use Dedoc\Scramble\Attributes\ExcludeAllRoutesFromDocs;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
+use Dedoc\Scramble\GeneratorConfig;
+use Dedoc\Scramble\Scramble;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
@@ -17,7 +19,7 @@ use Throwable;
 /**
  * @internal
  */
-class RouteProvider
+class DefaultRouteProvider implements RouteProvider
 {
     /**
      * @return Collection<int, Route>

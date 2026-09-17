@@ -40,6 +40,24 @@ it('should export the documentation to the path specified by the --path option',
     ])->assertOk();
 });
 
+it('filters exported documentation by comma-separated route names', function () {
+    RouteFacade::get('api/route-filter-a', [RouteFilterController::class, 'a'])->name('route-filter.a');
+    RouteFacade::get('api/route-filter-b', [RouteFilterController::class, 'b'])->name('route-filter.b');
+    RouteFacade::get('api/route-filter-c', [RouteFilterController::class, 'c'])->name('route-filter.c');
+
+    File::shouldReceive('put')
+        ->once()
+        ->with('api.json', \Mockery::on(function (string $specification) {
+            $paths = array_keys(json_decode($specification, true)['paths']);
+
+            return $paths === ['/route-filter-a', '/route-filter-c'];
+        }));
+
+    artisan(ExportDocumentation::class, [
+        '--routes' => 'route-filter.a, route-filter.c',
+    ])->assertOk();
+});
+
 it('should export the documentation of the API specified by the --api option', function () {
     $api = 'v2';
     $exportPath = 'scramble/api-v2.json';
@@ -102,6 +120,34 @@ it('fails analysis on unknown schemas without throwing', function () {
         ->expectsOutputToContain('Schema `UnknownType` is not allowed')
         ->assertFailed();
 });
+
+it('filters analyzed documentation by route name', function () {
+    RouteFacade::get('api/route-filter-known', [RouteFilterController::class, 'a'])->name('route-filter.known');
+    RouteFacade::get('api/route-filter-unknown', [UnknownSchemaController::class, 'show'])->name('route-filter.unknown');
+
+    artisan(AnalyzeDocumentation::class, [
+        '--routes' => 'route-filter.known',
+        '--fail-on-unknown' => true,
+    ])->assertOk();
+});
+
+class RouteFilterController
+{
+    public function a()
+    {
+        return ['a' => true];
+    }
+
+    public function b()
+    {
+        return ['b' => true];
+    }
+
+    public function c()
+    {
+        return ['c' => true];
+    }
+}
 
 class UnknownSchemaController
 {

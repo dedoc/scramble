@@ -22,6 +22,7 @@ use Dedoc\Scramble\Support\Generator\UniqueNamesOptionsCollection;
 use Dedoc\Scramble\Support\InferExtensions\ModelExtension;
 use Dedoc\Scramble\Support\InferExtensions\TransformsToResourceCollectionExtension;
 use Dedoc\Scramble\Support\OperationBuilder;
+use Dedoc\Scramble\Support\RouteProviders\RouteProvider;
 use Dedoc\Scramble\Support\ServerFactory;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;

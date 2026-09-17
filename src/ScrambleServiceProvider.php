@@ -68,6 +68,8 @@ use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\ProNudge\Extensions\LaravelDataRequestBodyNudgeExtractor;
 use Dedoc\Scramble\Support\ProNudge\Extensions\LaravelDataReturnTypeNudgeExtension;
 use Dedoc\Scramble\Support\ProNudge\Extensions\QueryBuilderUsageNudgeExtension;
+use Dedoc\Scramble\Support\RouteProviders\DefaultRouteProvider;
+use Dedoc\Scramble\Support\RouteProviders\RouteProvider;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\VoidType;
@@ -102,6 +104,11 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class ScrambleServiceProvider extends PackageServiceProvider
 {
+    /** @var array<class-string, class-string> */
+    public $bindings = [
+        RouteProvider::class => DefaultRouteProvider::class,
+    ];
+
     public $singletons = [
         PrettyPrinter::class => PrettyPrinter\Standard::class,
         GeneratorConfigCollection::class => GeneratorConfigCollection::class,
