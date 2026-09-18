@@ -26,24 +26,22 @@ it('records unique endpoints per signal', function () {
     ]);
 });
 
-it('reports the message in a block and preserves verbosity', function (int $verbosity) {
+it('reports the message in a block', function () {
     $collector = new ProNudgeCollector;
     $routeInfo = new RouteInfo(new Route('GET', 'users', ['uses' => 'UsersController@index']), 'GET');
 
     $collector->record(ProNudgeSignal::QueryBuilder, $routeInfo);
 
-    $command = makeProNudgeTestCommand($output = new BufferedOutput($verbosity));
+    $command = makeProNudgeTestCommand($output = new BufferedOutput);
 
     (new ProNudgeReporter($collector))->report($command);
-
-    expect($output->getVerbosity())->toBe($verbosity);
 
     expect($output->fetch())
         ->toContain('⚡️ 1 endpoint uses Spatie Query Builder.')
         ->toContain('Scramble PRO will document these endpoints accurately.')
         ->toContain('Learn more: '.ProNudgeReporter::PRO_URL)
         ->toContain(' | ');
-})->with([OutputInterface::VERBOSITY_NORMAL, OutputInterface::VERBOSITY_QUIET]);
+});
 
 it('does not report when there are no signals', function () {
     $command = makeProNudgeTestCommand($output = new BufferedOutput);

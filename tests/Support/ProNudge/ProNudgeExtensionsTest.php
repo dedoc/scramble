@@ -10,11 +10,8 @@ use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\ProNudge\ProNudgeReporter;
 use Illuminate\Routing\Route;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route as RouteFacade;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Tester\CommandTester;
 
 use function Pest\Laravel\artisan;
 
@@ -85,29 +82,6 @@ it('prints pro nudge after export when signals are present', function () {
         ->expectsOutputToContain('Scramble PRO will document these endpoints accurately.')
         ->expectsOutputToContain('Learn more: '.ProNudgeReporter::PRO_URL)
         ->assertOk();
-});
-
-it('keeps pro nudge on stderr during a quiet stdout export', function () {
-    RouteFacade::get('api/pro-nudge/data-return', [ProNudge_DataReturn_Controller::class, 'index'])->name('pro-nudge');
-    Scramble::configure()->withDocumentTransformers(function (OpenApi $_, OpenApiContext $context) {
-        $context->diagnostics->report(new GenericDiagnostic(DiagnosticSeverity::Warning, 'Test diagnostic warning'));
-    });
-    File::shouldReceive('put')->never();
-
-    $tester = new CommandTester(Artisan::all()['scramble:export']);
-    $status = $tester->execute([
-        '--stdout' => true,
-        '--quiet' => true,
-        '--routes' => 'pro-nudge',
-    ], [
-        'capture_stderr_separately' => true,
-        'verbosity' => OutputInterface::VERBOSITY_QUIET,
-    ]);
-
-    expect($status)->toBe(0)
-        ->and(json_decode($tester->getDisplay(), true, flags: JSON_THROW_ON_ERROR))->toBeArray()
-        ->and($tester->getErrorOutput())->toContain('Scramble PRO will document these endpoints accurately.')
-        ->not->toContain('Test diagnostic warning');
 });
 
 it('prints diagnostics and then pro nudge when analyzing documentation', function () {

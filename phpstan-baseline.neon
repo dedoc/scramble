@@ -265,12 +265,6 @@ parameters:
 			path: src/Console/Commands/ExportDocumentation.php
 
 		-
-			message: '#^Parameter \#2 \$contents of static method Illuminate\\Support\\Facades\\File\:\:put\(\) expects string, string\|false given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Console/Commands/ExportDocumentation.php
-
-		-
 			message: '#^Part \$api \(array\|bool\|float\|int\|string\|null\) of encapsed string cannot be cast to string\.$#'
 			identifier: encapsedStringPart.nonString
 			count: 1

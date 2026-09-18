@@ -92,6 +92,7 @@ class Generator
 
     /**
      * @param  Collection<int, Route>  $routes
+     * @return Collection<int, Operation>
      */
     private function generateOperations(Collection $routes, OpenApiContext $context, TypeTransformer $typeTransformer): Collection
     {
