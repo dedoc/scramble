@@ -54,6 +54,9 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
     /** @var array<string, mixed> */
     private array $cache = [];
 
+    /** @var array<string, Collection<string, mixed>> */
+    private array $castsCache = [];
+
     public function __construct(
         private ?DiagnosticsCollector $diagnostics = null,
     ) {}
@@ -84,8 +87,21 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             ? $propertyType
             : null;
 
+        if ($annotatedType) {
+            return $this->refineAnnotatedTypeFromCasts($annotatedType, $event);
+        }
+
+        /*
+         * A property the model really declares is resolved from the class definition rather than from the
+         * schema, Eloquent's own internals such as `relations` among them. There is nothing to introspect
+         * for those, as a declared property shadows the magic attribute access a column would go through.
+         */
+        if (property_exists($event->getInstance()->name, $event->getName())) {
+            return null;
+        }
+
         if (! $this->hasProperty($event->getInstance(), $event->getName())) {
-            return $annotatedType;
+            return null;
         }
 
         $info = $this->getModelInfo($event->getInstance());
@@ -95,28 +111,47 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
                 ?? $this->getAttributeTypeFromDbColumnType($attribute['type'], $attribute['driver'])
                 ?? new UnknownType("Virtual attribute ({$attribute['name']}) type inference not supported.");
 
-            $inferredType = $attribute['nullable']
+            return $attribute['nullable']
                 ? Union::wrap([$baseType, new NullType])
                 : $baseType;
-
-            return $this->refineAnnotatedType($annotatedType, $inferredType);
         }
 
         if ($relation = $info->get('relations')->get($event->getName())) {
-            $inferredType = $this->getRelationType($relation);
-
-            return $this->refineAnnotatedType($annotatedType, $inferredType);
+            return $this->getRelationType($relation);
         }
 
         throw new \LogicException('Should not happen');
     }
 
-    private function refineAnnotatedType(?Type $annotatedType, Type $inferredType): Type
+    /**
+     * An annotation is the more specific source of truth for a property, so the schema has nothing to add
+     * to it: the one thing that can still refine an annotation is the Eloquent casts, and those are
+     * declared on the model itself. Leaving the schema unread here is what keeps a fully annotated model
+     * documentable without a database at all.
+     */
+    private function refineAnnotatedTypeFromCasts(Type $annotatedType, PropertyFetchEvent $event): Type
     {
-        if (! $annotatedType) {
-            return $inferredType;
-        }
+        $cast = $this->getModelCasts($event->getInstance())->get($event->getName());
 
+        $inferredType = is_string($cast)
+            ? $this->getAttributeTypeFromEloquentCasts($cast, $event->scope)
+            : null;
+
+        return $inferredType
+            ? $this->refineAnnotatedType($annotatedType, $inferredType)
+            : $annotatedType->clone();
+    }
+
+    /**
+     * @return Collection<string, mixed>
+     */
+    private function getModelCasts(ObjectType $type): Collection
+    {
+        return $this->castsCache[$type->name] ??= (new ModelInfo($type->name))->getCasts();
+    }
+
+    private function refineAnnotatedType(Type $annotatedType, Type $inferredType): Type
+    {
         return (new TypeRefiner)->refine($annotatedType, $inferredType);
     }
 

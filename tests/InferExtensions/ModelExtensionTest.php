@@ -10,6 +10,8 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
+use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Dedoc\Scramble\Tests\Files\SampleUserModel;
@@ -19,7 +21,9 @@ use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
@@ -680,4 +684,120 @@ it('uses custom collection type from newCollection for all', function () {
 
     expect($type->toString())
         ->toBe(FooCollection_ModelExtensionTest::class.'<int, '.Foo_ModelExtensionTest::class.'>');
+});
+
+it('resolves annotated properties without querying the database', function () {
+    $this->infer->analyzeClass(ModelExtensionTest_AnnotatedModel::class);
+
+    $queries = [];
+    DB::listen(function (QueryExecuted $query) use (&$queries) {
+        $queries[] = $query->sql;
+    });
+
+    $object = new ObjectType(ModelExtensionTest_AnnotatedModel::class);
+
+    expect($object->getPropertyType('title')->toString())->toBe('string')
+        ->and($object->getPropertyType('owner')->toString())
+        ->toBe(RelationNullabilityOwner_ModelExtensionTest::class.'|null')
+        ->and($queries)->toBe([]);
+});
+
+it('still refines an annotated property with the Eloquent casts', function () {
+    $this->infer->analyzeClass(ModelExtensionTest_AnnotatedModel::class);
+
+    $queries = [];
+    DB::listen(function (QueryExecuted $query) use (&$queries) {
+        $queries[] = $query->sql;
+    });
+
+    $propertyType = (new ObjectType(ModelExtensionTest_AnnotatedModel::class))
+        ->getPropertyType('approved_at');
+
+    $carbonType = (new TypeWalker)->first($propertyType, fn ($type) => $type->isInstanceOf(Carbon::class));
+
+    expect($propertyType->toString())->toBe(Carbon::class.'|null')
+        ->and($carbonType?->getAttribute('format'))->toBe('date')
+        ->and($queries)->toBe([]);
+});
+
+it('reads the schema for a property that is not annotated', function () {
+    $this->infer->analyzeClass(ModelExtensionTest_AnnotatedModel::class);
+
+    $queries = [];
+    DB::listen(function (QueryExecuted $query) use (&$queries) {
+        $queries[] = $query->sql;
+    });
+
+    (new ObjectType(ModelExtensionTest_AnnotatedModel::class))->getPropertyType('nullable_owner_id');
+
+    expect($queries)->not->toBe([]);
+});
+
+/**
+ * @property string $title
+ * @property Carbon|null $approved_at
+ * @property Carbon|null $custom_at
+ * @property-read RelationNullabilityOwner_ModelExtensionTest|null $owner
+ */
+class ModelExtensionTest_AnnotatedModel extends Model
+{
+    protected $table = 'relation_nullability_models';
+
+    protected $casts = [
+        'approved_at' => 'datetime:Y-m-d',
+    ];
+
+    public function owner()
+    {
+        return $this->belongsTo(RelationNullabilityOwner_ModelExtensionTest::class, 'required_owner_id');
+    }
+}
+
+it('documents a model on an unreachable connection from its annotations', function () {
+    config()->set('database.connections.unreachable', [
+        'driver' => 'sqlite',
+        'database' => __DIR__.'/no-such-directory/database.sqlite',
+    ]);
+
+    $this->infer->analyzeClass(ModelExtensionTest_ModelOnUnreachableConnection::class);
+
+    $object = new ObjectType(ModelExtensionTest_ModelOnUnreachableConnection::class);
+
+    expect($object->getPropertyType('title')->toString())->toBe('string')
+        ->and($object->getPropertyType('owner')->toString())
+        ->toBe(RelationNullabilityOwner_ModelExtensionTest::class.'|null');
+});
+
+/**
+ * @property string $title
+ * @property-read RelationNullabilityOwner_ModelExtensionTest|null $owner
+ */
+class ModelExtensionTest_ModelOnUnreachableConnection extends Model
+{
+    protected $connection = 'unreachable';
+
+    protected $table = 'relation_nullability_models';
+
+    public function owner()
+    {
+        return $this->belongsTo(RelationNullabilityOwner_ModelExtensionTest::class, 'required_owner_id');
+    }
+}
+
+it('hands out a copy of an annotated property type', function () {
+    $this->infer->analyzeClass(ModelExtensionTest_AnnotatedModel::class);
+
+    $object = new ObjectType(ModelExtensionTest_AnnotatedModel::class);
+
+    /*
+     * Callers such as the toArray() inference replace types in place, so an annotated property type has to
+     * be handed out as a copy. Sharing the definition's own instance would let one analysed method rewrite
+     * the model's documented types for every later caller.
+     */
+    (new TypeWalker)->replace(
+        $object->getPropertyType('custom_at'),
+        fn (Type $type) => $type->isInstanceOf(Carbon::class) ? new StringType : null,
+    );
+
+    expect($object->getPropertyType('custom_at')->toString())->toBe(Carbon::class.'|null');
 });
