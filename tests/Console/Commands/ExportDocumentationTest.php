@@ -66,15 +66,44 @@ it('exports only JSON with a trailing newline to stdout', function () {
     RouteFacade::get('api/stdout', [RouteFilterController::class, 'a'])->name('stdout');
     File::shouldReceive('put')->never();
 
-    $result = (new CommandTester(Artisan::all()['scramble:export']))->run([
+    $tester = new CommandTester(Artisan::all()['scramble:export']);
+    $status = $tester->execute([
         '--stdout' => true,
         '--routes' => 'stdout',
+    ], ['capture_stderr_separately' => true]);
+
+    expect($status)->toBe(Command::SUCCESS)
+        ->and($tester->getDisplay())->toEndWith(PHP_EOL)
+        ->and(json_decode($tester->getDisplay(), true)['paths'])->toHaveKey('/stdout')
+        ->and($tester->getErrorOutput())->toBe('');
+});
+
+it('preserves console formatting tags in stdout JSON', function (bool $decorated) {
+    $description = '<info>Important</info> <fg=red>example</> <comment>Note</comment>';
+    Scramble::configure()->useConfig(['info' => ['description' => $description]]);
+    File::shouldReceive('put')->never();
+
+    $tester = new CommandTester(Artisan::all()['scramble:export']);
+    $status = $tester->execute(['--stdout' => true], [
+        'capture_stderr_separately' => true,
+        'decorated' => $decorated,
     ]);
 
-    expect($result->statusCode)->toBe(Command::SUCCESS)
-        ->and($result->getOutput())->toEndWith(PHP_EOL)
-        ->and(json_decode($result->getOutput(), true)['paths'])->toHaveKey('/stdout')
-        ->and($result->getErrorOutput())->toBe('');
+    expect($status)->toBe(Command::SUCCESS)
+        ->and(json_decode($tester->getDisplay(), true, flags: JSON_THROW_ON_ERROR)['info']['description'])
+        ->toBe($description)
+        ->and($tester->getErrorOutput())->toBe('');
+})->with([false, true]);
+
+it('throws on JSON encoding failures without emitting a document', function () {
+    Scramble::configure()->useConfig(['info' => ['description' => "\xB1"]]);
+    File::shouldReceive('put')->never();
+
+    $tester = new CommandTester(Artisan::all()['scramble:export']);
+    expect(fn () => $tester->execute(['--stdout' => true], ['capture_stderr_separately' => true]))
+        ->toThrow(JsonException::class);
+
+    expect($tester->getDisplay())->toBe('');
 });
 
 it('writes stdout export diagnostics to stderr', function () {
@@ -82,31 +111,64 @@ it('writes stdout export diagnostics to stderr', function () {
     File::shouldReceive('put')->never();
 
     $tester = new CommandTester(Artisan::all()['scramble:export']);
-    $tester->setVerbosity(OutputInterface::VERBOSITY_VERBOSE);
 
-    $result = $tester->run([
+    $status = $tester->execute([
         '--stdout' => true,
         '--routes' => 'stdout-unknown',
         '--fail-on-unknown' => true,
+    ], [
+        'capture_stderr_separately' => true,
     ]);
 
-    expect($result->statusCode)->toBe(Command::FAILURE)
-        ->and(json_decode($result->getOutput(), true))->toBeArray()
-        ->and($result->getOutput())->not->toContain('UnknownType')
-        ->and($result->getErrorOutput())->toContain('Schema `UnknownType` is not allowed');
+    expect($status)->toBe(Command::FAILURE)
+        ->and(json_decode($tester->getDisplay(), true))->toBeArray()
+        ->and($tester->getDisplay())->not->toContain('UnknownType')
+        ->and($tester->getErrorOutput())->toContain('Schema `UnknownType` is not allowed');
 });
+
+it('suppresses diagnostics in quiet mode while preserving the export and exit code', function (bool $stdout) {
+    RouteFacade::get('api/quiet-unknown', [UnknownSchemaController::class, 'show'])->name('quiet-unknown');
+
+    if ($stdout) {
+        File::shouldReceive('put')->never();
+    } else {
+        File::shouldReceive('put')->once();
+    }
+
+    $tester = new CommandTester(Artisan::all()['scramble:export']);
+    $status = $tester->execute([
+        '--stdout' => $stdout,
+        '--quiet' => true,
+        '--routes' => 'quiet-unknown',
+        '--fail-on-unknown' => true,
+    ], [
+        'capture_stderr_separately' => true,
+        'verbosity' => OutputInterface::VERBOSITY_QUIET,
+    ]);
+
+    expect($status)->toBe(Command::FAILURE)
+        ->and($tester->getErrorOutput())->toBe('');
+
+    if ($stdout) {
+        expect(json_decode($tester->getDisplay(), true, flags: JSON_THROW_ON_ERROR)['paths'])
+            ->toHaveKey('/quiet-unknown');
+    } else {
+        expect($tester->getDisplay())->toBe('');
+    }
+})->with([false, true]);
 
 it('does not allow stdout and path options together', function () {
     File::shouldReceive('put')->never();
 
-    $result = (new CommandTester(Artisan::all()['scramble:export']))->run([
+    $tester = new CommandTester(Artisan::all()['scramble:export']);
+    $status = $tester->execute([
         '--stdout' => true,
         '--path' => 'api-test.json',
-    ]);
+    ], ['capture_stderr_separately' => true]);
 
-    expect($result->statusCode)->toBe(Command::INVALID)
-        ->and($result->getOutput())->toBe('')
-        ->and($result->getErrorOutput())->toContain('The --stdout and --path options cannot be used together.');
+    expect($status)->toBe(Command::INVALID)
+        ->and($tester->getDisplay())->toBe('')
+        ->and($tester->getErrorOutput())->toContain('The --stdout and --path options cannot be used together.');
 });
 
 it('should export the documentation of the API specified by the --api option', function () {
@@ -159,6 +221,7 @@ it('fails export on unknown schemas without throwing', function () {
     File::shouldReceive('put')->once();
 
     artisan(ExportDocumentation::class, ['--fail-on-unknown' => true])
+        ->expectsOutputToContain('Schema `UnknownType` is not allowed')
         ->expectsOutputToContain('with 1 error')
         ->assertFailed();
 });
@@ -185,13 +248,14 @@ it('filters analyzed documentation by route name', function () {
 it('does not print a success message when analysis finds no diagnostics', function () {
     RouteFacade::get('api/analyze-success', [RouteFilterController::class, 'a'])->name('analyze-success');
 
-    $result = (new CommandTester(Artisan::all()['scramble:analyze']))->run([
+    $tester = new CommandTester(Artisan::all()['scramble:analyze']);
+    $status = $tester->execute([
         '--routes' => 'analyze-success',
-    ]);
+    ], ['capture_stderr_separately' => true]);
 
-    expect($result->statusCode)->toBe(Command::SUCCESS)
-        ->and($result->getOutput())->toBe('')
-        ->and($result->getErrorOutput())->toBe('');
+    expect($status)->toBe(Command::SUCCESS)
+        ->and($tester->getDisplay())->toBe('')
+        ->and($tester->getErrorOutput())->toBe('');
 });
 
 class RouteFilterController

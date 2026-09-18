@@ -48,19 +48,31 @@ Enable `Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy` in 
 
 ## Verify changed endpoints
 
-Analyze created or updated endpoints by passing their route names to `--routes`. Pass multiple names as a comma-separated list:
-
-```shell
-php artisan scramble:analyze --routes=users.show,users.update --fail-on-unknown
-```
-
-Review every diagnostic and fix clear omissions caused by the changed code. Then export the selected routes to stdout:
+For individual endpoints, export the selected routes to stdout. `--routes` accepts exact route names, with multiple names separated by commas:
 
 ```shell
 php artisan scramble:export --routes=users.show,users.update --stdout --fail-on-unknown
 ```
 
-Read the JSON and check the method, path, inputs, status codes, and response schemas. Repeat analysis and export after fixes. If dynamic behavior still cannot be documented truthfully, report the exact limitation and stop. Do not invent documentation to force completeness.
+Read stdout as OpenAPI JSON and stderr as diagnostics and PRO notices; keep the streams separate and inspect both. Omit `--quiet` so diagnostic context is retained. With `--fail-on-unknown`, a nonzero exit code can accompany usable JSON: inspect the document and diagnostics rather than discarding the output.
+
+Check the method, path, inputs, status codes, and response schemas. Review every diagnostic and fix clear omissions caused by the changed code, then repeat the scoped export. There is no need to run analysis separately when export already supplies the required diagnostics. If dynamic behavior still cannot be documented truthfully, report the exact limitation and stop. Do not invent documentation to force completeness.
+
+## Document the entire API
+
+Full API documents can be several megabytes. Start with diagnostics without loading the entire specification into context:
+
+```shell
+php artisan scramble:analyze --fail-on-unknown
+```
+
+Inspect and update endpoints in manageable batches using scoped stdout exports as above. Analysis identifies generation issues; it does not replace reviewing the generated schemas. After fixes, rerun analysis across the API. When the complete document is needed, save it to the intended artifact path:
+
+```shell
+php artisan scramble:export --path=api.json --fail-on-unknown
+```
+
+Inspect selected paths and their referenced components from the file as needed instead of reading the entire JSON into context. File export also prints full diagnostics, so it can serve as the final validation when producing the artifact. Do not combine `--path` with `--stdout`. For a non-default API, pass `--api=NAME` consistently to analysis and export.
 
 ## Extend Scramble
 

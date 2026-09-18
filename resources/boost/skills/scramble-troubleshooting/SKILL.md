@@ -11,17 +11,21 @@ Do not replace an entire inferred schema to fix one field.
 
 ## Diagnose
 
-Run:
+For an issue affecting known endpoints, inspect their generated specification and diagnostics together:
+
+```shell
+php artisan scramble:export --stdout --routes=users.show,users.update --fail-on-unknown
+```
+
+`--routes` selects exact route names, separated by commas. Read stdout as OpenAPI JSON and stderr as diagnostics and PRO notices; keep both streams available without mixing them. Full diagnostics are shown by default. Omit `--quiet` to retain diagnostic context. A nonzero exit code with `--fail-on-unknown` can still accompany usable JSON; inspect both outputs.
+
+For API-wide issues or when the affected routes are not yet known, start with diagnostics only:
 
 ```shell
 php artisan scramble:analyze --fail-on-unknown
 ```
 
-Use verbose export when the generated document is also useful:
-
-```shell
-php artisan scramble:export -v --fail-on-unknown
-```
+Then inspect affected routes through scoped stdout exports. Entire API specifications can be several megabytes: when the complete document is needed, use `scramble:export --path=api.json --fail-on-unknown` and inspect selected paths and referenced components from the file. Do not combine `--path` with `--stdout`. Use `--api=NAME` consistently for a non-default API.
 
 Check for common causes:
 
@@ -78,6 +82,6 @@ Custom extensions remain appropriate when the behavior is application-specific, 
 
 ## Verify
 
-Regenerate the API, confirm the affected schema, and rerun `scramble:analyze --fail-on-unknown`.
+Repeat the scoped stdout export and confirm the affected schema and diagnostics. For API-wide work, finish with `scramble:analyze --fail-on-unknown`, or a full file export with `--fail-on-unknown` when producing the complete artifact; export already includes diagnostics.
 
 When changing shared resources, types, rules, or extensions, check nearby endpoints for regressions.
