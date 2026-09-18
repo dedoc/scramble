@@ -4,6 +4,7 @@ use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
+use Illuminate\Console\OutputStyle;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
@@ -13,6 +14,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 
 use function Pest\Laravel\artisan;
+
+// Laravel 10 keeps PendingCommand's mocked output binding between tests.
+beforeEach(fn () => app()->offsetUnset(OutputStyle::class));
 
 it('should export the documentation', function () {
     $generator = app(Generator::class);
