@@ -4,6 +4,8 @@ namespace Dedoc\Scramble\Support\Generator;
 
 class OpenApi
 {
+    use WithExtensions;
+
     public string $version;
 
     public InfoObject $info;
@@ -125,6 +127,8 @@ class OpenApi
         if (count($serializedComponents = $this->components->toArray())) {
             $result['components'] = $serializedComponents;
         }
+
+        $result = array_merge($result, $this->extensionPropertiesToArray());
 
         return $result;
     }

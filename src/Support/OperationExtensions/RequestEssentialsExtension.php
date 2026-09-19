@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Support\OperationExtensions;
 
 use Dedoc\Scramble\Attributes\Endpoint;
 use Dedoc\Scramble\Attributes\Group;
+use Dedoc\Scramble\Attributes\Tag as TagAttribute;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\Infer;
@@ -218,6 +219,28 @@ class RequestEssentialsExtension extends OperationExtension
     /**
      * @return ReflectionAttribute<Group>[]
      */
+    /**
+     * Collects `Tag` attributes, which declare a tag without claiming the endpoint.
+     *
+     * A parent tag holds no endpoints of its own, so nothing would otherwise carry
+     * its description into the document.
+     */
+    private function collectDeclaredTags(RouteInfo $routeInfo): void
+    {
+        $reflection = $routeInfo->reflectionAction();
+
+        $attributes = [
+            ...($reflection?->getAttributes(TagAttribute::class, ReflectionAttribute::IS_INSTANCEOF) ?? []),
+            ...($reflection instanceof ReflectionMethod
+                ? $reflection->getDeclaringClass()->getAttributes(TagAttribute::class, ReflectionAttribute::IS_INSTANCEOF)
+                : []),
+        ];
+
+        foreach ($attributes as $attribute) {
+            $this->openApiContext->tags->push($attribute);
+        }
+    }
+
     private function getTagsAnnotatedByGroups(RouteInfo $routeInfo): array
     {
         $reflection = $routeInfo->reflectionAction();
@@ -234,6 +257,8 @@ class RequestEssentialsExtension extends OperationExtension
 
     private function attachTagsToOpenApi(RouteInfo $routeInfo): void
     {
+        $this->collectDeclaredTags($routeInfo);
+
         if (! $groups = $this->getTagsAnnotatedByGroups($routeInfo)) {
             return;
         }
