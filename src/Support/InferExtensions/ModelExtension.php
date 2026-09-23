@@ -26,6 +26,7 @@ use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
 use Dedoc\Scramble\Support\Type\FloatType;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
@@ -33,6 +34,7 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -41,6 +43,7 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Attributes\UseResource;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -91,11 +94,15 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         $info = $this->getModelInfo($event->getInstance());
 
         if ($attribute = $info->get('attributes')->get($event->getName())) {
-            $baseType = $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '', $event->scope)
+            $getterType = ($attribute['cast'] ?? null) === 'attribute'
+                ? $this->getAttributeGetterType($info->get('class'), $attribute['name'], $event->scope)
+                : null;
+
+            $baseType = $getterType ?? $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '', $event->scope)
                 ?? $this->getAttributeTypeFromDbColumnType($attribute['type'], $attribute['driver'])
                 ?? new UnknownType("Virtual attribute ({$attribute['name']}) type inference not supported.");
 
-            $inferredType = $attribute['nullable']
+            $inferredType = $attribute['nullable'] && ! $getterType
                 ? Union::wrap([$baseType, new NullType])
                 : $baseType;
 
@@ -118,6 +125,30 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         }
 
         return (new TypeRefiner)->refine($annotatedType, $inferredType);
+    }
+
+    private function getAttributeGetterType(string $modelClass, string $name, Scope $scope): ?Type
+    {
+        $type = $scope->index->getClass($modelClass)?->getMethod(Str::camel($name))?->getReturnType();
+
+        dd($type->toString());
+
+
+        for ($type = $scope->index->getClass($modelClass)?->getMethod(Str::camel($name))?->getReturnType(); $type; $type = $type instanceof MethodCallReferenceType ? $type->callee : $type->getOriginal()) { // @phpstan-ignore method.deprecated
+            if (! ($type instanceof StaticMethodCallReferenceType && $type->callee === Attribute::class && in_array($type->methodName, ['make', 'get'], true))
+                && ! ($type instanceof NewCallReferenceType && $type->name === Attribute::class)) {
+                continue;
+            }
+
+            $getter = $type->arguments['get'] ?? $type->arguments[0] ?? null;
+            $inferred = $getter instanceof FunctionType
+                ? ReferenceTypeResolver::getInstance()->resolve($scope, $getter->declaredReturnType ?? $getter->getReturnType())
+                : null;
+
+            return $inferred instanceof UnknownType ? null : $inferred;
+        }
+
+        return null;
     }
 
     /**
