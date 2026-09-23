@@ -17,6 +17,7 @@ use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -264,6 +265,112 @@ it('uses custom cast get PHPDoc return type for model attributes', function () {
     expect($object->getPropertyType('body')->toString())
         ->toBe('array<string, '.ModelExtensionTest_CustomCastValue::class.'>');
 });
+
+it('uses the getter return type for an Attribute accessor', function (string $attribute, string $expectedType) {
+    $this->infer->analyzeClass(ModelExtensionTest_ModelWithAttributeAccessor::class);
+
+    $object = new ObjectType(ModelExtensionTest_ModelWithAttributeAccessor::class);
+
+    expect($object->getPropertyType($attribute)->toString())->toBe($expectedType);
+})->with([
+//    'sqid getter with declared string return' => ['sqid', 'string'],
+//    'getter overrides nullable column' => ['settings', 'string'],
+//    'getter infers object return' => ['custom_value', ModelExtensionTest_CustomCastValue::class],
+//    'Laravel scalar transform' => ['first_name', 'string'],
+//    'Laravel value object' => ['address', ModelExtensionTest_Address::class],
+//    'Laravel direct Attribute constructor' => ['is_admin', 'string(yes)'],
+//    'Koel boolean getter with caching' => ['has_custom_avatar', 'boolean'],
+//    'Koel nullable getter with caching' => ['thumbnail', 'null|string'],
+//    'phpVMS nullable object getter' => ['avatar', 'null|'.ModelExtensionTest_File::class],
+    'phpVMS untyped attributes array getter' => ['timezone_alias', 'TAttributes[string(timezone)]'],
+//    'Passport typed array getter' => ['redirect_uris', 'array<mixed>'],
+//    'Passport setter only attribute' => ['secret', 'unknown'],
+]);
+
+class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
+{
+    protected function sqid(): Attribute
+    {
+        return Attribute::make(get: fn (): string => 'post-sqid');
+    }
+
+    protected function settings(): Attribute
+    {
+        return Attribute::make(get: fn (): string => 'settings');
+    }
+
+    protected function customValue(): Attribute
+    {
+        return Attribute::make(get: fn () => new ModelExtensionTest_CustomCastValue);
+    }
+
+    protected function firstName(): Attribute
+    {
+        return Attribute::make(get: fn (string $value) => ucfirst($value));
+    }
+
+    protected function address(): Attribute
+    {
+        return Attribute::make(get: fn (mixed $value, array $attributes) => new ModelExtensionTest_Address);
+    }
+
+    protected function isAdmin(): Attribute
+    {
+        return new Attribute(get: fn () => 'yes');
+    }
+
+    protected function hasCustomAvatar(): Attribute
+    {
+        return Attribute::get(fn () => (bool) $this->getRawOriginal('avatar'))->shouldCache();
+    }
+
+    protected function thumbnail(): Attribute
+    {
+        return Attribute::get(function (): ?string {
+            if (! $this->cover) {
+                return null;
+            }
+
+            return sprintf('%s_thumb.jpg', $this->cover);
+        })->shouldCache();
+    }
+
+    protected function avatar(): Attribute
+    {
+        return Attribute::make(get: function (mixed $value): ?ModelExtensionTest_File {
+            if (! $value) {
+                return null;
+            }
+
+            return new ModelExtensionTest_File;
+        });
+    }
+
+    protected function timezoneAlias(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($_, $attributes) => $attributes['timezone'],
+            set: fn ($value): array => ['timezone' => $value],
+        );
+    }
+
+    protected function redirectUris(): Attribute
+    {
+        return Attribute::make(get: fn (?string $value, array $attributes): array => match (true) {
+            ! empty($value) => json_decode($value, true),
+            default => [],
+        });
+    }
+
+    protected function secret(): Attribute
+    {
+        return Attribute::make(set: fn (?string $value): ?string => $value);
+    }
+}
+
+class ModelExtensionTest_Address {}
+
+class ModelExtensionTest_File {}
 
 class ModelExtensionTest_CustomCastModel extends SamplePostModel
 {

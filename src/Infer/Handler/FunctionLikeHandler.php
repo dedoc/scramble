@@ -10,6 +10,7 @@ use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\TypeHelper;
+use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
 use PhpParser\Node;
 use PhpParser\Node\FunctionLike;
@@ -54,11 +55,13 @@ class FunctionLikeHandler implements CreatesScope
         $fnDefinition
             ->setAstNode($node)
             ->setScope($scope)
-            ->setDeclarationDefinition($this->buildDeclarationDefinition($node, $scope));
+            ->setDeclarationDefinition($declaration = $this->buildDeclarationDefinition($node, $scope));
 
         $fnDefinition->isFullyAnalyzed = true;
 
         if ($node instanceof Node\Expr\ArrowFunction || $node instanceof Node\Expr\Closure) {
+            $declaredReturnType = $declaration->getReturnType();
+            $fnType->declaredReturnType = $declaredReturnType instanceof UnknownType ? null : $declaredReturnType;
             $scope->setType($node, $fnType);
         }
 

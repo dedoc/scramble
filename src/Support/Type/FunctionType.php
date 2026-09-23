@@ -12,6 +12,8 @@ class FunctionType extends AbstractType implements FunctionLikeType
 
     public Type $returnType;
 
+    public ?Type $declaredReturnType = null;
+
     public array $templates = [];
 
     /**
@@ -33,7 +35,7 @@ class FunctionType extends AbstractType implements FunctionLikeType
 
     public function nodes(): array
     {
-        return ['returnType', 'arguments'];
+        return ['returnType', 'arguments', ...($this->declaredReturnType ? ['declaredReturnType'] : [])];
     }
 
     public function setReturnType(Type $type): self

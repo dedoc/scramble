@@ -61,6 +61,32 @@ it('infers new calls on child class', function (string $method, string $expected
     ['newParentCall', 'Dedoc\Scramble\Tests\Infer\Services\StaticCallsClasses\Foo'],
 ]);
 
+it('preserves constructor generics through a static factory and late static binding', function (string $class) {
+    $type = getStatementType($class.'::make("hello")');
+
+    expect($type->toString())->toBe($class.'<string(hello)>');
+})->with([
+    StaticFactory_ReferenceTypeResolverTest::class,
+    ChildStaticFactory_ReferenceTypeResolverTest::class,
+]);
+
+class StaticFactory_ReferenceTypeResolverTest
+{
+    public $value;
+
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
+
+    public static function make($value): static
+    {
+        return new static($value);
+    }
+}
+
+class ChildStaticFactory_ReferenceTypeResolverTest extends StaticFactory_ReferenceTypeResolverTest {}
+
 /*
  * Method calls
  */
