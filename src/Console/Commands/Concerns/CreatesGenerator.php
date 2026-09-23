@@ -10,7 +10,15 @@ use Illuminate\Routing\Route;
 
 trait CreatesGenerator
 {
-    private function createGenerator(): Generator
+    private function createGenerator(?RouteProvider $routeProvider = null): Generator
+    {
+        return new Generator(
+            app(OperationBuilder::class),
+            $routeProvider ?? $this->createRouteProvider(),
+        );
+    }
+
+    private function createRouteProvider(): FilterableRouteProvider
     {
         $routes = $this->option('routes');
         $routeNames = is_string($routes)
@@ -20,12 +28,9 @@ trait CreatesGenerator
             ))
             : [];
 
-        return new Generator(
-            app(OperationBuilder::class),
-            new FilterableRouteProvider(
-                app(RouteProvider::class),
-                fn (Route $route) => $routeNames === [] || in_array($route->getName(), $routeNames, true),
-            ),
+        return new FilterableRouteProvider(
+            app(RouteProvider::class),
+            fn (Route $route) => $routeNames === [] || in_array($route->getName(), $routeNames, true),
         );
     }
 }

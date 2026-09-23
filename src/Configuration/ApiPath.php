@@ -12,8 +12,8 @@ class ApiPath
      * @param  list<string>  $excludes
      */
     private function __construct(
-        private readonly array $includes,
-        private readonly array $excludes,
+        public readonly array $includes,
+        public readonly array $excludes,
     ) {}
 
     /**

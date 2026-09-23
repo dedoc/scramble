@@ -249,17 +249,50 @@ it('filters analyzed documentation by route name', function () {
     ])->assertOk();
 });
 
-it('does not print a success message when analysis finds no diagnostics', function () {
+it('prints the matched route count and default selection rule', function () {
     RouteFacade::get('api/analyze-success', [RouteFilterController::class, 'a'])->name('analyze-success');
 
-    $tester = new CommandTester(Artisan::all()['scramble:analyze']);
-    $status = $tester->execute([
-        '--routes' => 'analyze-success',
-    ], ['capture_stderr_separately' => true]);
+    artisan(AnalyzeDocumentation::class, ['--routes' => 'analyze-success'])
+        ->expectsOutputToContain('Matched 1 route for API [default], producing 1 OpenAPI operation.')
+        ->expectsOutputToContain('Include paths: api')
+        ->expectsOutputToContain('Route names: analyze-success')
+        ->assertOk();
+});
 
-    expect($status)->toBe(Command::SUCCESS)
-        ->and($tester->getDisplay())->toBe('')
-        ->and($tester->getErrorOutput())->toBe('');
+it('can fail analysis when no routes match', function (bool $failOnEmpty, int $expectedStatus) {
+    artisan(AnalyzeDocumentation::class, [
+        '--routes' => 'missing-route',
+        '--fail-on-empty' => $failOnEmpty,
+    ])
+        ->expectsOutputToContain('No routes matched API [default].')
+        ->assertExitCode($expectedStatus);
+})->with([
+    'allowed' => [false, Command::SUCCESS],
+    'failed' => [true, Command::FAILURE],
+]);
+
+it('identifies custom route selection in analysis output', function () {
+    Scramble::routes(fn (Route $route) => $route->uri === 'custom/analyze');
+
+    artisan(AnalyzeDocumentation::class, ['--routes' => 'missing-route'])
+        ->expectsOutputToContain('custom matcher registered with `routes()` at '.__FILE__.':')
+        ->expectsOutputToContain('Route names: missing-route')
+        ->assertOk();
+});
+
+it('prints configured include, exclude, and domain selection rules', function () {
+    Scramble::configure()->useConfig([
+        'api_path' => [
+            'include' => ['api', 'public/*'],
+            'exclude' => 'api/internal',
+        ],
+        'api_domain' => 'api.example.com',
+    ]);
+    artisan(AnalyzeDocumentation::class)
+        ->expectsOutputToContain('Include paths: api, public/*')
+        ->expectsOutputToContain('Exclude paths: api/internal')
+        ->expectsOutputToContain('Domain: api.example.com')
+        ->assertOk();
 });
 
 class RouteFilterController

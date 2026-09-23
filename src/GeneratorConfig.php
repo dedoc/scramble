@@ -83,6 +83,11 @@ class GeneratorConfig
         return $this;
     }
 
+    public function routeResolver(): ?Closure
+    {
+        return $this->routeResolver;
+    }
+
     public function renderer(): RendererConfig
     {
         if (Arr::has($this->config, 'ui.logo')) {

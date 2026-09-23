@@ -29,7 +29,53 @@ php artisan vendor:publish --tag=scramble-config
 
 By default, Scramble documents routes under `api`. Configure `scramble.api_path` or use `Scramble::routes()` when the application's API routes use a different structure.
 
+After adding Scramble, determine whether the application already has routes intended for API documentation. When it does, verify route selection before investigating generated schemas:
+
+```shell
+php artisan scramble:analyze --fail-on-empty --fail-on-unknown
+```
+
+For a named API, add `--api=NAME`. Analysis reports the matched count and any requested `--routes` names, but does not list the actual matches. If routes match, verify at least one expected method/path using the export workflow below. If no routes match, inspect the application's routes, selected API, `api_path`, `api_domain`, custom route matcher, API attributes, and exclusions. Update the narrowest appropriate route-selection configuration and repeat analysis. Do not broaden `api_path` to include web routes merely to make the command pass.
+
+When the application has no API routes yet, run analysis without asserting that routes exist:
+
+```shell
+php artisan scramble:analyze --fail-on-unknown
+```
+
+Zero matched routes is expected in this case. Do not add routes, publish configuration, or broaden route matching merely to remove the warning. Use `--fail-on-empty` once the application has routes that should be documented; it checks that the generated document has at least one path, not that any particular route was selected.
+
 `Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy` defaults to documenting bearer authentication for `auth` and `auth:*` middleware. Enable it in `scramble.security_strategy` only when that mapping matches the API. Middleware names alone do not establish bearer authentication: inspect the guards and actual client authentication. Customize the scheme or strategy for other conventions. Keep it disabled when existing manual security configuration already handles authentication, unless deliberately migrating that configuration.
+
+## Configuring Scramble in code
+
+Scramble can be configured without publishing its configuration by using `Scramble::configure()`, which returns the selected API's `GeneratorConfig`. Its mutating methods are chainable; when configuring several related settings for the same API, prefer a single configuration chain.
+
+## Multiple APIs
+
+`Scramble::registerApi()` clones the default API's current programmatic configuration. Configure shared behavior, such as route matching and transformers, before registering additional APIs. Then apply API-specific configuration to the `GeneratorConfig` returned by `registerApi()`.
+
+Changes made to the default API after another API is registered do not propagate to the registered API. UI and document routes are not inherited. The registered API's configuration array is built from `config('scramble')` merged with the configuration passed to `registerApi()`.
+
+When adding several transformers of the same kind in one place, prefer passing them as an array. Repeated `with*()` calls are valid and append in order; check the individual method signature because not every `with*()` method accepts the same argument types.
+
+## Route configuration
+
+By default, Scramble selects routes using `scramble.api_path` and `scramble.api_domain`. Use the config's `routes()` method when the application requires a custom selection predicate.
+
+A custom matcher replaces the default path-and-domain selection logic. However, `api_path` and `api_domain` may still affect generated paths and server URLs, so do not treat those settings as globally unused when `routes()` is configured.
+
+## Server configuration
+
+When setting custom OpenAPI server URLs, omit the trailing slash. Operation paths begin with `/`, so a trailing slash can produce an incorrect double slash for the root operation.
+
+Good:
+
+`https://api.example.com`
+
+Bad:
+
+`https://api.example.com/`
 
 ## Verify changed endpoints
 
@@ -58,6 +104,8 @@ Full API documents can be several megabytes. Start with diagnostics without load
 ```shell
 php artisan scramble:analyze --fail-on-unknown
 ```
+
+Add `--fail-on-empty` when the selected API has routes that should be documented. For a named API, add `--api=NAME`.
 
 Inspect endpoints in manageable batches using the workflow above. When the complete document is needed, save it to the intended artifact path (or a temporary path for inspection):
 
