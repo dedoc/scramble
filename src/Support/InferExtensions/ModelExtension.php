@@ -133,7 +133,6 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
         dd($type->toString());
 
-
         for ($type = $scope->index->getClass($modelClass)?->getMethod(Str::camel($name))?->getReturnType(); $type; $type = $type instanceof MethodCallReferenceType ? $type->callee : $type->getOriginal()) { // @phpstan-ignore method.deprecated
             if (! ($type instanceof StaticMethodCallReferenceType && $type->callee === Attribute::class && in_array($type->methodName, ['make', 'get'], true))
                 && ! ($type instanceof NewCallReferenceType && $type->name === Attribute::class)) {
