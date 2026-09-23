@@ -35,6 +35,7 @@ use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -129,25 +130,25 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     private function getAttributeGetterType(string $modelClass, string $name, Scope $scope): ?Type
     {
-        $type = $scope->index->getClass($modelClass)?->getMethod(Str::camel($name))?->getReturnType();
+        $type = $scope->index->getClass($modelClass)
+            ?->getMethod(Str::camel($name))
+            ?->getReturnType();
 
-        dd($type->toString());
-
-        for ($type = $scope->index->getClass($modelClass)?->getMethod(Str::camel($name))?->getReturnType(); $type; $type = $type instanceof MethodCallReferenceType ? $type->callee : $type->getOriginal()) { // @phpstan-ignore method.deprecated
-            if (! ($type instanceof StaticMethodCallReferenceType && $type->callee === Attribute::class && in_array($type->methodName, ['make', 'get'], true))
-                && ! ($type instanceof NewCallReferenceType && $type->name === Attribute::class)) {
-                continue;
-            }
-
-            $getter = $type->arguments['get'] ?? $type->arguments[0] ?? null;
-            $inferred = $getter instanceof FunctionType
-                ? ReferenceTypeResolver::getInstance()->resolve($scope, $getter->declaredReturnType ?? $getter->getReturnType())
-                : null;
-
-            return $inferred instanceof UnknownType ? null : $inferred;
+        if (! $type || ! $type->isInstanceOf(Attribute::class)) {
+            return null;
         }
 
-        return null;
+        $getterType = ReferenceTypeResolver::getInstance()
+            ->resolve(
+                new GlobalScope,
+                new PropertyFetchReferenceType($type, 'get'),
+            );
+
+        if (! $getterType instanceof FunctionType) {
+            return null;
+        }
+
+        return $getterType->getReturnType();
     }
 
     /**
