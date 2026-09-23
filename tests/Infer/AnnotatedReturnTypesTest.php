@@ -1,9 +1,11 @@
 <?php
 
+use Dedoc\Scramble\Infer\Scope\GlobalScope;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 
-it('preserves a closure declared return type alongside its inferred return', function (string $expression, ?string $declared, string $inferred) {
+it('stamps a closure declared return without selecting over inferred during the ast pass', function (string $expression, ?string $declared, string $inferred) {
     $type = getUnresolvedStatementType($expression);
 
     expect($type)->toBeInstanceOf(FunctionType::class)
@@ -16,7 +18,21 @@ it('preserves a closure declared return type alongside its inferred return', fun
     'untyped arrow function' => ["fn () => 'post-sqid'", null, 'string(post-sqid)'],
 ]);
 
-it('preserves a declared getter return type inside an inferred Attribute call', function () {
+it('selects a closure return when the function type is resolved', function (string $expression, string $selected) {
+    $type = getUnresolvedStatementType($expression);
+
+    $resolved = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, $type);
+
+    expect($resolved)->toBeInstanceOf(FunctionType::class)
+        ->and($resolved->getReturnType()->toString())->toBe($selected);
+})->with([
+    'typed arrow function keeps a compatible inferred literal' => ["fn (): string => 'post-sqid'", 'string(post-sqid)'],
+    'declared array keeps a compatible inferred list' => ['fn (): array => []', 'list{}'],
+    'declared array wins over an incompatible inferred type' => ['fn (): array => unk()', 'array<mixed>'],
+    'untyped arrow function uses the inferred return' => ["fn () => 'post-sqid'", 'string(post-sqid)'],
+]);
+
+it('stamps a declared getter return inside an unresolved Attribute call', function () {
     $call = getUnresolvedStatementType("\\Illuminate\\Database\\Eloquent\\Casts\\Attribute::make(get: fn (): string => 'post-sqid')");
 
     expect($call)->toBeInstanceOf(StaticMethodCallReferenceType::class)

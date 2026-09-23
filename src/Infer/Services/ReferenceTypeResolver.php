@@ -81,6 +81,7 @@ class ReferenceTypeResolver
             PropertyFetchReferenceType::class => $this->resolvePropertyFetchReferenceType($scope, $t),
             PropertyAssignReferenceType::class => $this->resolvePropertyAssignReferenceType($scope, $t),
             PotentialMethodMutatingCallType::class => $this->resolvePotentialMethodMutatingCallType($scope, $t),
+            FunctionType::class => $this->resolveFunctionType($scope, $t),
             default => null,
         };
 
@@ -93,6 +94,33 @@ class ReferenceTypeResolver
         }
 
         return $this->withNullsafeShortCircuitType($t, $resolved, $scope);
+    }
+
+    private function resolveFunctionType(Scope $scope, FunctionType $type): FunctionType
+    {
+        $resolved = clone $type;
+
+        foreach ($resolved->arguments as $name => $argument) {
+            $resolved->arguments[$name] = $this->resolve($scope, $argument);
+        }
+
+        $inferred = $this->resolve($scope, $type->getReturnType());
+        $declared = $type->declaredReturnType;
+
+        if (
+            $inferred->getAttribute('fromScrambleReturn') !== true
+            && $declared
+            && ! $declared instanceof UnknownType
+            && ! $inferred instanceof TemplateType
+            && ! $declared->accepts($inferred)
+            && ! $inferred->acceptedBy($declared)
+        ) {
+            $inferred = $declared;
+        }
+
+        $resolved->setReturnType($inferred);
+
+        return $resolved;
     }
 
     private function withNullsafeShortCircuitType(Type $original, Type $resolved, Scope $scope): Type

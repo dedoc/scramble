@@ -273,18 +273,18 @@ it('uses the getter return type for an Attribute accessor', function (string $at
 
     expect($object->getPropertyType($attribute)->toString())->toBe($expectedType);
 })->with([
-    //    'sqid getter with declared string return' => ['sqid', 'string'],
-    //    'getter overrides nullable column' => ['settings', 'string'],
-    //    'getter infers object return' => ['custom_value', ModelExtensionTest_CustomCastValue::class],
-    //    'Laravel scalar transform' => ['first_name', 'string'],
-    //    'Laravel value object' => ['address', ModelExtensionTest_Address::class],
-    //    'Laravel direct Attribute constructor' => ['is_admin', 'string(yes)'],
-    //    'Koel boolean getter with caching' => ['has_custom_avatar', 'boolean'],
-    //    'Koel nullable getter with caching' => ['thumbnail', 'null|string'],
-    //    'phpVMS nullable object getter' => ['avatar', 'null|'.ModelExtensionTest_File::class],
+        'sqid getter with declared string return' => ['sqid', 'string'],
+        'getter overrides nullable column' => ['settings', 'string'],
+        'getter infers object return' => ['custom_value', ModelExtensionTest_CustomCastValue::class],
+        'Laravel scalar transform' => ['first_name', 'string'],
+        'Laravel value object' => ['address', ModelExtensionTest_Address::class],
+        'Laravel direct Attribute constructor' => ['is_admin', 'string(yes)'],
+        'Koel boolean getter with caching' => ['has_custom_avatar', 'boolean'],
+        'Koel nullable getter with caching' => ['thumbnail', 'null|string'],
+        'phpVMS nullable object getter' => ['avatar', 'null|'.ModelExtensionTest_File::class],
     'phpVMS untyped attributes array getter' => ['timezone_alias', 'TAttributes[string(timezone)]'],
-    //    'Passport typed array getter' => ['redirect_uris', 'array<mixed>'],
-    //    'Passport setter only attribute' => ['secret', 'unknown'],
+        'Passport typed array getter' => ['redirect_uris', 'array<mixed>'],
+        'Passport setter only attribute' => ['secret', 'unknown'],
 ]);
 
 class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
@@ -296,7 +296,7 @@ class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
 
     protected function settings(): Attribute
     {
-        return Attribute::make(get: fn (): string => 'settings');
+        return Attribute::make(get: fn (): string => some_settings());
     }
 
     protected function customValue(): Attribute
