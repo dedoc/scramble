@@ -8,8 +8,15 @@ use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeDeclarationAstDefinition
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeDeclarationPhpDocDefinitionBuilder;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\StaticReference;
+use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplateType;
+use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
+use Dedoc\Scramble\Support\Type\TypeWalker;
+use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Support\Str;
 use PhpParser\Node;
 use PhpParser\Node\FunctionLike;
@@ -54,11 +61,15 @@ class FunctionLikeHandler implements CreatesScope
         $fnDefinition
             ->setAstNode($node)
             ->setScope($scope)
-            ->setDeclarationDefinition($this->buildDeclarationDefinition($node, $scope));
+            ->setDeclarationDefinition($declaration = $this->buildDeclarationDefinition($node, $scope));
 
         $fnDefinition->isFullyAnalyzed = true;
 
         if ($node instanceof Node\Expr\ArrowFunction || $node instanceof Node\Expr\Closure) {
+            $declaredReturnType = $declaration->getReturnType();
+            $fnType->declaredReturnType = $declaredReturnType instanceof UnknownType
+                ? null
+                : $this->bindClosureLateStaticReturnType($declaredReturnType, $scope);
             $scope->setType($node, $fnType);
         }
 
@@ -224,6 +235,27 @@ class FunctionLikeHandler implements CreatesScope
             ->toArray();
 
         return array_merge($assignPropertiesToThisNodes, $promotedProperties);
+    }
+
+    private function bindClosureLateStaticReturnType(Type $type, Scope $scope): Type
+    {
+        if (! $className = $scope->context->classDefinition?->name) {
+            return $type;
+        }
+
+        return (new TypeWalker)->map($type, function (Type $t) use ($className) {
+            if (! $t instanceof ObjectType || ! in_array($t->name, [StaticReference::STATIC, StaticReference::SELF], true)) {
+                return $t;
+            }
+
+            if ($t instanceof Generic) {
+                $t->name = $className;
+
+                return $t;
+            }
+
+            return new SelfType($className);
+        });
     }
 
     private function buildDeclarationDefinition(FunctionLike $node, Scope $scope): FunctionLikeDefinition

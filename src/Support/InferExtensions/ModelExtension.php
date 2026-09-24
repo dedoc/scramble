@@ -26,13 +26,16 @@ use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralString;
 use Dedoc\Scramble\Support\Type\FloatType;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\TemplateType;
@@ -41,6 +44,7 @@ use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Database\Eloquent\Attributes\UseResource;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -91,11 +95,16 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         $info = $this->getModelInfo($event->getInstance());
 
         if ($attribute = $info->get('attributes')->get($event->getName())) {
-            $baseType = $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '', $event->scope)
+            $getterType = ($attribute['cast'] ?? null) === 'attribute'
+                ? $this->getAttributeGetterType($info->get('class'), $attribute['name'], $event->scope)
+                : null;
+
+            $baseType = $getterType
+                ?? $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '', $event->scope)
                 ?? $this->getAttributeTypeFromDbColumnType($attribute['type'], $attribute['driver'])
                 ?? new UnknownType("Virtual attribute ({$attribute['name']}) type inference not supported.");
 
-            $inferredType = $attribute['nullable']
+            $inferredType = $attribute['nullable'] && ! $getterType
                 ? Union::wrap([$baseType, new NullType])
                 : $baseType;
 
@@ -111,6 +120,27 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         throw new \LogicException('Should not happen');
     }
 
+    private function getRawAttributesType(ObjectType $model): KeyedArrayType
+    {
+        /** @var Collection<int, array> $attributes */
+        $attributes = $this->getModelInfo($model)->get('attributes');
+
+        $items = $attributes
+            ->filter(fn (array $attr) => $attr['type'] !== null)
+            ->map(function (array $attr) {
+                $type = $this->getAttributeTypeFromDbColumnType($attr['type'], $attr['driver']);
+
+                return new ArrayItemType_(
+                    key: $attr['name'],
+                    value: $attr['nullable'] ? Union::wrap([$type, new NullType]) : $type,
+                );
+            })
+            ->values()
+            ->all();
+
+        return new KeyedArrayType($items);
+    }
+
     private function refineAnnotatedType(?Type $annotatedType, Type $inferredType): Type
     {
         if (! $annotatedType) {
@@ -118,6 +148,48 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         }
 
         return (new TypeRefiner)->refine($annotatedType, $inferredType);
+    }
+
+    private function getAttributeGetterType(string $modelClass, string $name, Scope $scope): ?Type
+    {
+        $type = $scope->index->getClass($modelClass)
+            ?->getMethod(Str::camel($name))
+            ?->getReturnType();
+
+        if (! $type || ! $type->isInstanceOf(Attribute::class)) {
+            return null;
+        }
+
+        $resolver = ReferenceTypeResolver::getInstance();
+
+        $getterType = $resolver
+            ->resolve(
+                new GlobalScope,
+                new PropertyFetchReferenceType($type, 'get'),
+            );
+
+        if (! $getterType instanceof FunctionType) {
+            return null;
+        }
+
+        $modelAttributes = $this->getRawAttributesType(new ObjectType($modelClass));
+
+        $valueType = array_search(
+            $name,
+            array_map(fn (ArrayItemType_ $item) => $item->key, $modelAttributes->items),
+            strict: true,
+        ) !== false
+            ? $modelAttributes->getOffsetValueType(new LiteralStringType($name))
+            : new NullType;
+
+        return $resolver
+            ->resolve(
+                new GlobalScope,
+                new CallableCallReferenceType(
+                    $getterType,
+                    [$valueType, $modelAttributes],
+                )
+            );
     }
 
     /**
@@ -334,20 +406,20 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             return null;
         }
 
-        if (! $attributesType = $this->getModelAttributesArrayType($event)) {
+        if (! $attributesType = $this->getModelAttributesArrayType($event->getInstance(), $event->scope)) {
             return null;
         }
 
         return $this->unsetKeysFromType($attributesType, $keyTypes);
     }
 
-    protected function getModelAttributesArrayType(MethodCallEvent $event): ?KeyedArrayType
+    protected function getModelAttributesArrayType(ObjectType $instance, Scope $scope): ?KeyedArrayType
     {
-        $items = $this->getModelInfo($event->getInstance())
+        $items = $this->getModelInfo($instance)
             ->get('attributes', collect())
-            ->map(function ($_, $name) use ($event) {
+            ->map(function ($_, $name) use ($instance, $scope) {
                 $propertyType = $this->getPropertyType(
-                    new PropertyFetchEvent($event->getInstance(), $name, $event->scope),
+                    new PropertyFetchEvent($instance, $name, $scope),
                 );
 
                 if (! $propertyType) {

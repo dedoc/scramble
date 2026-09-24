@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -264,6 +265,241 @@ it('uses custom cast get PHPDoc return type for model attributes', function () {
     expect($object->getPropertyType('body')->toString())
         ->toBe('array<string, '.ModelExtensionTest_CustomCastValue::class.'>');
 });
+
+it('uses the getter return type for an Attribute accessor', function (string $attribute, string $expectedType) {
+    $this->infer->analyzeClass(ModelExtensionTest_ModelWithAttributeAccessor::class);
+
+    $object = new ObjectType(ModelExtensionTest_ModelWithAttributeAccessor::class);
+
+    expect($object->getPropertyType($attribute)->toString())->toBe($expectedType);
+})->with([
+    'sqid getter with declared string return' => ['sqid', 'string(post-sqid)'],
+    'getter overrides nullable column' => ['settings', 'string'],
+    'getter infers object return' => ['custom_value', ModelExtensionTest_CustomCastValue::class],
+    'Laravel scalar transform' => ['first_name', 'string'],
+    'Laravel value object' => ['address', ModelExtensionTest_Address::class],
+    'Laravel direct Attribute constructor' => ['is_admin', 'string(yes)'],
+    'Koel boolean getter with caching' => ['has_custom_avatar', 'boolean'],
+    'Koel nullable getter with caching' => ['thumbnail', 'string|null'],
+    'phpVMS nullable object getter' => ['avatar', ModelExtensionTest_File::class.'|null'],
+    'phpVMS untyped attributes array getter' => ['user_id_alias', 'int'],
+    'phpVMS untyped attributes value getter' => ['user_id', 'array{user_id: int}'],
+    'Passport typed array getter' => ['redirect_uris', 'array<mixed>'],
+    'Passport setter only attribute' => ['secret', 'unknown'],
+    'nullable column in the raw attributes bag' => ['raw_settings', 'string|null'],
+    'virtual accessor missing key is null' => ['virtual_value', 'null'],
+    'cyclic $this attribute reads' => ['cyclic_a', 'unknown'],
+    'getter calling a model method' => ['from_model_method', 'string(post-label)'],
+]);
+
+it('uses the getter return type for a getXAttribute accessor', function (string $attribute, string $expectedType) {
+    $this->infer->analyzeClass(ModelExtensionTest_ModelWithLegacyAccessor::class);
+
+    $object = new ObjectType(ModelExtensionTest_ModelWithLegacyAccessor::class);
+
+    expect($object->getPropertyType($attribute)->toString())->toBe($expectedType);
+})->with([
+    'Laravel docs is_admin from attributes bag' => ['is_admin', 'boolean'],
+    'Laravel framework password mask' => ['password', 'string(******)'],
+    'Jetstream profile photo URL' => ['profile_photo_url', 'string'],
+    'Spatie media extension' => ['extension', 'string'],
+    'Monica decrypted nullable secret' => ['settings', 'string|null'],
+    'Akaunting status label match' => ['status_label', 'string(status-draft)|string(status-success)'],
+    'Akaunting attachment false or stored value' => ['body', 'boolean(false)|string'],
+    'Akaunting sent_at from another attribute' => ['sent_at', Carbon::class.'|null'],
+    'Akaunting line actions list' => ['line_actions', 'list{array{title: string(edit), icon: string(edit)}}'],
+]);
+
+class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
+{
+    protected function sqid(): Attribute
+    {
+        return Attribute::make(get: fn (): string => 'post-sqid');
+    }
+
+    protected function settings(): Attribute
+    {
+        return Attribute::make(get: fn (): string => some_settings());
+    }
+
+    protected function customValue(): Attribute
+    {
+        return Attribute::make(get: fn () => new ModelExtensionTest_CustomCastValue);
+    }
+
+    protected function firstName(): Attribute
+    {
+        return Attribute::make(get: fn (string $value) => ucfirst($value));
+    }
+
+    protected function address(): Attribute
+    {
+        return Attribute::make(get: fn (mixed $value, array $attributes) => new ModelExtensionTest_Address);
+    }
+
+    protected function isAdmin(): Attribute
+    {
+        return new Attribute(get: fn () => 'yes');
+    }
+
+    protected function hasCustomAvatar(): Attribute
+    {
+        return Attribute::get(fn () => (bool) $this->getRawOriginal('avatar'))->shouldCache();
+    }
+
+    protected function thumbnail(): Attribute
+    {
+        return Attribute::get(function (): ?string {
+            if (! $this->cover) {
+                return null;
+            }
+
+            return sprintf('%s_thumb.jpg', $this->cover);
+        })->shouldCache();
+    }
+
+    protected function avatar(): Attribute
+    {
+        return Attribute::make(get: function (mixed $value): ?ModelExtensionTest_File {
+            if (! $value) {
+                return null;
+            }
+
+            return new ModelExtensionTest_File;
+        });
+    }
+
+    protected function userIdAlias(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($_, $attributes) => $attributes['user_id'],
+            set: fn ($value): array => ['user_id' => $value],
+        );
+    }
+
+    protected function userId(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($userId) => ['user_id' => $userId],
+        );
+    }
+
+    protected function redirectUris(): Attribute
+    {
+        return Attribute::make(get: fn (?string $value, array $attributes): array => match (true) {
+            ! empty($value) => json_decode($value, true),
+            default => [],
+        });
+    }
+
+    protected function secret(): Attribute
+    {
+        return Attribute::make(set: fn (?string $value): ?string => $value);
+    }
+
+    protected function rawSettings(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($_, $attributes) => $attributes['settings'],
+        );
+    }
+
+    protected function virtualValue(): Attribute
+    {
+        return Attribute::make(get: fn ($value) => $value);
+    }
+
+    protected function cyclicA(): Attribute
+    {
+        return Attribute::make(get: fn () => $this->cyclic_b);
+    }
+
+    protected function cyclicB(): Attribute
+    {
+        return Attribute::make(get: fn () => $this->cyclic_a);
+    }
+
+    protected function fromModelMethod(): Attribute
+    {
+        return Attribute::make(get: fn () => $this->label());
+    }
+
+    public function label(): string
+    {
+        return 'post-label';
+    }
+}
+
+class ModelExtensionTest_ModelWithLegacyAccessor extends SamplePostModel
+{
+    public function getIsAdminAttribute()
+    {
+        return $this->attributes['status'] === 'published';
+    }
+
+    public function getPasswordAttribute()
+    {
+        return '******';
+    }
+
+    public function getProfilePhotoUrlAttribute()
+    {
+        return $this->title
+            ? '/storage/'.$this->title
+            : $this->defaultProfilePhotoUrl();
+    }
+
+    public function getExtensionAttribute(): string
+    {
+        return pathinfo($this->title, PATHINFO_EXTENSION);
+    }
+
+    public function getSettingsAttribute($value): ?string
+    {
+        return is_null($value) ? null : decrypt($value);
+    }
+
+    public function getStatusLabelAttribute()
+    {
+        return match ($this->attributes['status'] ?? '') {
+            'published' => 'status-success',
+            default => 'status-draft',
+        };
+    }
+
+    public function getBodyAttribute($value = null)
+    {
+        if (empty($value)) {
+            return false;
+        }
+
+        return $value;
+    }
+
+    public function getSentAtAttribute(?string $value = null)
+    {
+        return $this->approved_at;
+    }
+
+    public function getLineActionsAttribute()
+    {
+        return [
+            [
+                'title' => 'edit',
+                'icon' => 'edit',
+            ],
+        ];
+    }
+
+    protected function defaultProfilePhotoUrl()
+    {
+        return 'https://ui-avatars.com/api/?name=Post';
+    }
+}
+
+class ModelExtensionTest_Address {}
+
+class ModelExtensionTest_File {}
 
 class ModelExtensionTest_CustomCastModel extends SamplePostModel
 {
