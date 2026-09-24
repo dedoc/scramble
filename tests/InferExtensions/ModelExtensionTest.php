@@ -273,19 +273,19 @@ it('uses the getter return type for an Attribute accessor', function (string $at
 
     expect($object->getPropertyType($attribute)->toString())->toBe($expectedType);
 })->with([
-//    'sqid getter with declared string return' => ['sqid', 'string(post-sqid)'],
-//    'getter overrides nullable column' => ['settings', 'string'],
-//    'getter infers object return' => ['custom_value', ModelExtensionTest_CustomCastValue::class],
-//    'Laravel scalar transform' => ['first_name', 'string'],
-//    'Laravel value object' => ['address', ModelExtensionTest_Address::class],
-//    'Laravel direct Attribute constructor' => ['is_admin', 'string(yes)'],
-//    'Koel boolean getter with caching' => ['has_custom_avatar', 'boolean'],
-//    'Koel nullable getter with caching' => ['thumbnail', 'string|null'],
-//    'phpVMS nullable object getter' => ['avatar', ModelExtensionTest_File::class.'|null'],
+    //    'sqid getter with declared string return' => ['sqid', 'string(post-sqid)'],
+    //    'getter overrides nullable column' => ['settings', 'string'],
+    //    'getter infers object return' => ['custom_value', ModelExtensionTest_CustomCastValue::class],
+    //    'Laravel scalar transform' => ['first_name', 'string'],
+    //    'Laravel value object' => ['address', ModelExtensionTest_Address::class],
+    //    'Laravel direct Attribute constructor' => ['is_admin', 'string(yes)'],
+    //    'Koel boolean getter with caching' => ['has_custom_avatar', 'boolean'],
+    //    'Koel nullable getter with caching' => ['thumbnail', 'string|null'],
+    //    'phpVMS nullable object getter' => ['avatar', ModelExtensionTest_File::class.'|null'],
     'phpVMS untyped attributes array getter' => ['read_time_alias', 'int'],
-//    'phpVMS untyped attributes value getter' => ['read_time_value_alias', 'int'],
-//    'Passport typed array getter' => ['redirect_uris', 'array<mixed>'],
-//    'Passport setter only attribute' => ['secret', 'unknown'],
+    //    'phpVMS untyped attributes value getter' => ['read_time_value_alias', 'int'],
+    //    'Passport typed array getter' => ['redirect_uris', 'array<mixed>'],
+    //    'Passport setter only attribute' => ['secret', 'unknown'],
 ]);
 
 class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
