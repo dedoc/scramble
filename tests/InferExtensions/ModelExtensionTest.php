@@ -292,6 +292,24 @@ it('uses the getter return type for an Attribute accessor', function (string $at
     'getter calling a model method' => ['from_model_method', 'string(post-label)'],
 ]);
 
+it('uses the getter return type for a getXAttribute accessor', function (string $attribute, string $expectedType) {
+    $this->infer->analyzeClass(ModelExtensionTest_ModelWithLegacyAccessor::class);
+
+    $object = new ObjectType(ModelExtensionTest_ModelWithLegacyAccessor::class);
+
+    expect($object->getPropertyType($attribute)->toString())->toBe($expectedType);
+})->with([
+    'Laravel docs is_admin from attributes bag' => ['is_admin', 'boolean'],
+    'Laravel framework password mask' => ['password', 'string(******)'],
+    'Jetstream profile photo URL' => ['profile_photo_url', 'string'],
+    'Spatie media extension' => ['extension', 'string'],
+    'Monica decrypted nullable secret' => ['settings', 'string|null'],
+    'Akaunting status label match' => ['status_label', 'string(status-draft)|string(status-success)'],
+    'Akaunting attachment false or stored value' => ['body', 'boolean(false)|string'],
+    'Akaunting sent_at from another attribute' => ['sent_at', Carbon::class.'|null'],
+    'Akaunting line actions list' => ['line_actions', 'list{array{title: string(edit), icon: string(edit)}}'],
+]);
+
 class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
 {
     protected function sqid(): Attribute
@@ -409,6 +427,73 @@ class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
     public function label(): string
     {
         return 'post-label';
+    }
+}
+
+class ModelExtensionTest_ModelWithLegacyAccessor extends SamplePostModel
+{
+    public function getIsAdminAttribute()
+    {
+        return $this->attributes['status'] === 'published';
+    }
+
+    public function getPasswordAttribute()
+    {
+        return '******';
+    }
+
+    public function getProfilePhotoUrlAttribute()
+    {
+        return $this->title
+            ? '/storage/'.$this->title
+            : $this->defaultProfilePhotoUrl();
+    }
+
+    public function getExtensionAttribute(): string
+    {
+        return pathinfo($this->title, PATHINFO_EXTENSION);
+    }
+
+    public function getSettingsAttribute($value): ?string
+    {
+        return is_null($value) ? null : decrypt($value);
+    }
+
+    public function getStatusLabelAttribute()
+    {
+        return match ($this->attributes['status'] ?? '') {
+            'published' => 'status-success',
+            default => 'status-draft',
+        };
+    }
+
+    public function getBodyAttribute($value = null)
+    {
+        if (empty($value)) {
+            return false;
+        }
+
+        return $value;
+    }
+
+    public function getSentAtAttribute(?string $value = null)
+    {
+        return $this->approved_at;
+    }
+
+    public function getLineActionsAttribute()
+    {
+        return [
+            [
+                'title' => 'edit',
+                'icon' => 'edit',
+            ],
+        ];
+    }
+
+    protected function defaultProfilePhotoUrl()
+    {
+        return 'https://ui-avatars.com/api/?name=Post';
     }
 }
 

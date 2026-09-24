@@ -41,6 +41,25 @@ it('stamps a declared getter return inside an unresolved Attribute call', functi
         ->and($getter->getReturnType()->toString())->toBe('string(post-sqid)');
 });
 
+it('binds a closure static declared return to the lexical class', function () {
+    $return = analyzeFile(<<<'EOD'
+<?php
+class ClosureStatic_AnnotatedReturnTypesTest
+{
+    public function fn()
+    {
+        return fn (): static => $this;
+    }
+}
+EOD)->getClassDefinition('ClosureStatic_AnnotatedReturnTypesTest')
+        ->getMethodDefinition('fn')
+        ->getInferredReturnType();
+
+    expect($return)->toBeInstanceOf(FunctionType::class)
+        ->and($return->declaredReturnType?->toString())->toBe('self')
+        ->and($return->getReturnType()->toString())->toBe('self');
+});
+
 it('generates function type with generic correctly', function (string $returnAnnotation, string $returnExpression, string $expectedInferredReturnTypeString) {
     $definition = analyzeFile(<<<"EOD"
 <?php
