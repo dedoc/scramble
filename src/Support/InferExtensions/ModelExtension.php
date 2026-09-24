@@ -127,10 +127,14 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
         $items = $attributes
             ->filter(fn (array $attr) => $attr['type'] !== null)
-            ->map(fn (array $attr) => new ArrayItemType_(
-                key: $attr['name'],
-                value: $this->getAttributeTypeFromDbColumnType($attr['type'], $attr['driver']),
-            ))
+            ->map(function (array $attr) {
+                $type = $this->getAttributeTypeFromDbColumnType($attr['type'], $attr['driver']);
+
+                return new ArrayItemType_(
+                    key: $attr['name'],
+                    value: $attr['nullable'] ? Union::wrap([$type, new NullType]) : $type,
+                );
+            })
             ->values()
             ->all();
 
@@ -168,23 +172,22 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             return null;
         }
 
-        // @todo fix possible infinite loop - in a way Laravel handles it
-        $modelAttributes = $this->getRawAttributesType(
-            new ObjectType($modelClass), // @todo fix, preserve model type in callee
-        );
+        $modelAttributes = $this->getRawAttributesType(new ObjectType($modelClass));
+
+        $valueType = array_search(
+            $name,
+            array_map(fn (ArrayItemType_ $item) => $item->key, $modelAttributes->items),
+            strict: true,
+        ) !== false
+            ? $modelAttributes->getOffsetValueType(new LiteralStringType($name))
+            : new NullType;
 
         return $resolver
             ->resolve(
                 new GlobalScope,
                 new CallableCallReferenceType(
                     $getterType,
-                    [
-                        $resolver->resolve(
-                            new GlobalScope,
-                            $modelAttributes->getOffsetValueType(new LiteralStringType($name)),
-                        ),
-                        $modelAttributes,
-                    ]
+                    [$valueType, $modelAttributes],
                 )
             );
     }

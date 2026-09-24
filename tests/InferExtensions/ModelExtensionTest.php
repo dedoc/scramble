@@ -286,6 +286,10 @@ it('uses the getter return type for an Attribute accessor', function (string $at
     'phpVMS untyped attributes value getter' => ['user_id', 'array{user_id: int}'],
     'Passport typed array getter' => ['redirect_uris', 'array<mixed>'],
     'Passport setter only attribute' => ['secret', 'unknown'],
+    'nullable column in the raw attributes bag' => ['raw_settings', 'string|null'],
+    'virtual accessor missing key is null' => ['virtual_value', 'null'],
+    'cyclic $this attribute reads' => ['cyclic_a', 'unknown'],
+    'getter calling a model method' => ['from_model_method', 'string(post-label)'],
 ]);
 
 class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
@@ -373,6 +377,38 @@ class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
     protected function secret(): Attribute
     {
         return Attribute::make(set: fn (?string $value): ?string => $value);
+    }
+
+    protected function rawSettings(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($_, $attributes) => $attributes['settings'],
+        );
+    }
+
+    protected function virtualValue(): Attribute
+    {
+        return Attribute::make(get: fn ($value) => $value);
+    }
+
+    protected function cyclicA(): Attribute
+    {
+        return Attribute::make(get: fn () => $this->cyclic_b);
+    }
+
+    protected function cyclicB(): Attribute
+    {
+        return Attribute::make(get: fn () => $this->cyclic_a);
+    }
+
+    protected function fromModelMethod(): Attribute
+    {
+        return Attribute::make(get: fn () => $this->label());
+    }
+
+    public function label(): string
+    {
+        return 'post-label';
     }
 }
 
