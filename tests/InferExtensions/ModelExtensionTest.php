@@ -281,7 +281,7 @@ it('uses the getter return type for an Attribute accessor', function (string $at
     'Laravel direct Attribute constructor' => ['is_admin', 'string(yes)'],
     'Koel boolean getter with caching' => ['has_custom_avatar', 'boolean'],
     'Koel nullable getter with caching' => ['thumbnail', 'string|null'],
-    'phpVMS nullable object getter' => ['avatar', ModelExtensionTest_File::class . '|null'],
+    'phpVMS nullable object getter' => ['avatar', ModelExtensionTest_File::class.'|null'],
     'phpVMS untyped attributes array getter' => ['user_id_alias', 'int'],
     'phpVMS untyped attributes value getter' => ['user_id', 'array{user_id: int}'],
     'Passport typed array getter' => ['redirect_uris', 'array<mixed>'],
