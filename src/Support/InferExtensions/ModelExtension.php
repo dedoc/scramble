@@ -33,6 +33,7 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
@@ -146,6 +147,23 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         if (! $getterType instanceof FunctionType) {
             return null;
         }
+
+        // @todo fix possible infinite loop - in a way Laravel handles it
+        $modelAttributes = $this->getModelAttributesArrayType(
+            new ObjectType($modelClass), // @todo fix, preserve model type in callee
+            new GlobalScope,
+        );
+
+        dd($modelAttributes);
+
+        return ReferenceTypeResolver::getInstance()
+            ->resolve(
+                new GlobalScope,
+                new CallableCallReferenceType(
+                    $getterType,
+                    []
+                )
+            );
 
         return $getterType->getReturnType();
     }
@@ -364,20 +382,20 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             return null;
         }
 
-        if (! $attributesType = $this->getModelAttributesArrayType($event)) {
+        if (! $attributesType = $this->getModelAttributesArrayType($event->getInstance(), $event->scope)) {
             return null;
         }
 
         return $this->unsetKeysFromType($attributesType, $keyTypes);
     }
 
-    protected function getModelAttributesArrayType(MethodCallEvent $event): ?KeyedArrayType
+    protected function getModelAttributesArrayType(ObjectType $instance, Scope $scope): ?KeyedArrayType
     {
-        $items = $this->getModelInfo($event->getInstance())
+        $items = $this->getModelInfo($instance)
             ->get('attributes', collect())
-            ->map(function ($_, $name) use ($event) {
+            ->map(function ($_, $name) use ($instance, $scope) {
                 $propertyType = $this->getPropertyType(
-                    new PropertyFetchEvent($event->getInstance(), $name, $event->scope),
+                    new PropertyFetchEvent($instance, $name, $scope),
                 );
 
                 if (! $propertyType) {
