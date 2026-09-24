@@ -33,6 +33,7 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\OffsetAccessType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
@@ -99,7 +100,8 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
                 ? $this->getAttributeGetterType($info->get('class'), $attribute['name'], $event->scope)
                 : null;
 
-            $baseType = $getterType ?? $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '', $event->scope)
+            $baseType = $getterType
+                ?? $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '', $event->scope)
                 ?? $this->getAttributeTypeFromDbColumnType($attribute['type'], $attribute['driver'])
                 ?? new UnknownType("Virtual attribute ({$attribute['name']}) type inference not supported.");
 
@@ -117,6 +119,23 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         }
 
         throw new \LogicException('Should not happen');
+    }
+
+    private function getRawAttributesType(ObjectType $model): KeyedArrayType
+    {
+        /** @var Collection<int, array> $attributes */
+        $attributes = $this->getModelInfo($model)->get('attributes');
+
+        $items = $attributes
+            ->filter(fn (array $attr) => $attr['type'] !== null)
+            ->map(fn (array $attr) => new ArrayItemType_(
+                key: $attr['name'],
+                value: $this->getAttributeTypeFromDbColumnType($attr['type'], $attr['driver']),
+            ))
+            ->values()
+            ->all();
+
+        return new KeyedArrayType($items);
     }
 
     private function refineAnnotatedType(?Type $annotatedType, Type $inferredType): Type
@@ -138,7 +157,9 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
             return null;
         }
 
-        $getterType = ReferenceTypeResolver::getInstance()
+        $resolver = ReferenceTypeResolver::getInstance();
+
+        $getterType = $resolver
             ->resolve(
                 new GlobalScope,
                 new PropertyFetchReferenceType($type, 'get'),
@@ -149,23 +170,24 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         }
 
         // @todo fix possible infinite loop - in a way Laravel handles it
-        $modelAttributes = $this->getModelAttributesArrayType(
+        $modelAttributes = $this->getRawAttributesType(
             new ObjectType($modelClass), // @todo fix, preserve model type in callee
-            new GlobalScope,
         );
 
-        dd($modelAttributes);
-
-        return ReferenceTypeResolver::getInstance()
+        return $resolver
             ->resolve(
                 new GlobalScope,
                 new CallableCallReferenceType(
                     $getterType,
-                    []
+                    [
+                        $resolver->resolve(
+                            new GlobalScope,
+                            $modelAttributes->getOffsetValueType(new LiteralStringType($name)),
+                        ),
+                        $modelAttributes,
+                    ]
                 )
             );
-
-        return $getterType->getReturnType();
     }
 
     /**

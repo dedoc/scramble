@@ -273,19 +273,19 @@ it('uses the getter return type for an Attribute accessor', function (string $at
 
     expect($object->getPropertyType($attribute)->toString())->toBe($expectedType);
 })->with([
-    //    'sqid getter with declared string return' => ['sqid', 'string(post-sqid)'],
-    //    'getter overrides nullable column' => ['settings', 'string'],
-    //    'getter infers object return' => ['custom_value', ModelExtensionTest_CustomCastValue::class],
-    //    'Laravel scalar transform' => ['first_name', 'string'],
-    //    'Laravel value object' => ['address', ModelExtensionTest_Address::class],
-    //    'Laravel direct Attribute constructor' => ['is_admin', 'string(yes)'],
-    //    'Koel boolean getter with caching' => ['has_custom_avatar', 'boolean'],
-    //    'Koel nullable getter with caching' => ['thumbnail', 'string|null'],
-    //    'phpVMS nullable object getter' => ['avatar', ModelExtensionTest_File::class.'|null'],
-    'phpVMS untyped attributes array getter' => ['read_time_alias', 'int'],
-    //    'phpVMS untyped attributes value getter' => ['read_time_value_alias', 'int'],
-    //    'Passport typed array getter' => ['redirect_uris', 'array<mixed>'],
-    //    'Passport setter only attribute' => ['secret', 'unknown'],
+    'sqid getter with declared string return' => ['sqid', 'string(post-sqid)'],
+    'getter overrides nullable column' => ['settings', 'string'],
+    'getter infers object return' => ['custom_value', ModelExtensionTest_CustomCastValue::class],
+    'Laravel scalar transform' => ['first_name', 'string'],
+    'Laravel value object' => ['address', ModelExtensionTest_Address::class],
+    'Laravel direct Attribute constructor' => ['is_admin', 'string(yes)'],
+    'Koel boolean getter with caching' => ['has_custom_avatar', 'boolean'],
+    'Koel nullable getter with caching' => ['thumbnail', 'string|null'],
+    'phpVMS nullable object getter' => ['avatar', ModelExtensionTest_File::class . '|null'],
+    'phpVMS untyped attributes array getter' => ['user_id_alias', 'int'],
+    'phpVMS untyped attributes value getter' => ['user_id', 'array{user_id: int}'],
+    'Passport typed array getter' => ['redirect_uris', 'array<mixed>'],
+    'Passport setter only attribute' => ['secret', 'unknown'],
 ]);
 
 class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
@@ -347,18 +347,18 @@ class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
         });
     }
 
-    protected function readTimeAlias(): Attribute
+    protected function userIdAlias(): Attribute
     {
         return Attribute::make(
-            get: fn ($_, $attributes) => $attributes['read_time'],
-            set: fn ($value): array => ['read_time' => $value],
+            get: fn ($_, $attributes) => $attributes['user_id'],
+            set: fn ($value): array => ['user_id' => $value],
         );
     }
 
-    protected function readTimeValueAlias(): Attribute
+    protected function userId(): Attribute
     {
         return Attribute::make(
-            get: fn ($readTime) => $readTime,
+            get: fn ($userId) => ['user_id' => $userId],
         );
     }
 
