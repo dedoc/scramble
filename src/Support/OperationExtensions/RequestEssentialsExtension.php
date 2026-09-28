@@ -43,7 +43,9 @@ class RequestEssentialsExtension extends OperationExtension
      */
     private function getDefaultTags(Operation $operation, RouteInfo $routeInfo): array
     {
-        $defaultName = (string) Str::of(class_basename($routeInfo->className()))->replace('Controller', '');
+        $defaultName = $routeInfo->isClassBased()
+            ? (string) Str::of(class_basename($routeInfo->className()))->replace('Controller', '')
+            : null;
 
         if ($groupAttrsInstances = $this->getTagsAnnotatedByGroups($routeInfo)) {
             $attributeInstance = $groupAttrsInstances[0]->newInstance();
@@ -200,8 +202,8 @@ class RequestEssentialsExtension extends OperationExtension
                 return null;
             })(),
             unique: collect(explode('\\', Str::endsWith($routeClassName, 'Controller') ? Str::replaceLast('Controller', '', $routeClassName) : $routeClassName))
-                ->filter()
                 ->push($routeInfo->methodName())
+                ->filter()
                 ->map(function ($part) {
                     if ($part === Str::upper($part)) {
                         return Str::lower($part);
