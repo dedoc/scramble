@@ -5,6 +5,9 @@ namespace Dedoc\Scramble\Infer\Definition;
 use Dedoc\Scramble\Infer\Flow\Nodes;
 use Dedoc\Scramble\Infer\FlowBuilder;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -104,6 +107,13 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
 
         if (! $returnDeclarationType = $this->getDeclarationDefinition()?->getReturnType()) {
             return $inferredReturnType;
+        }
+
+        if ($returnDeclarationType instanceof ObjectType
+            && $returnDeclarationType->name === StaticReference::STATIC
+            && $inferredReturnType instanceof Generic
+            && $inferredReturnType->name === $this->definingClassName) {
+            return tap($inferredReturnType->clone(), fn (Generic $type) => $type->name = StaticReference::STATIC);
         }
 
         return $this->prefersInferredReturnType($returnDeclarationType, $inferredReturnType)

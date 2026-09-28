@@ -96,6 +96,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\StreamedResponseToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\VoidTypeToSchema;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Routing\Router;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter;
@@ -313,6 +314,12 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->withDocumentTransformers([
                 AddDocumentTags::class,
                 CleanupUnusedResponseReferencesTransformer::class,
+            ]);
+
+        Scramble::infer()
+            ->configure()
+            ->buildDefinitionsUsingAstFor([
+                Attribute::class,
             ]);
 
         if (Scramble::$defaultRoutesIgnored) {
