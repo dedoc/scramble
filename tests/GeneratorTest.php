@@ -42,8 +42,8 @@ it('analyzes a closure route without deprecations', function () {
 });
 
 it('generates documentation for a route-cached closure', function () {
-    // Mutating registered application's routes so in route provider we get routes with serializable closures.
-    // This is just the imitation of `route:cache` command, but without complex setup needed in package.
+    // Mutating registered application's routes so in route provider we get routes with serialized closures.
+    // This is just the imitation of `route:cache` command, but without complex setup needed to test it in the package.
     foreach (RouteFacade::getRoutes()->getRoutes() as $route) {
         $route->prepareForSerialization();
     }
