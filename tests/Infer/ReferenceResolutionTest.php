@@ -657,6 +657,7 @@ class Bar {
 }
 class Foo {
     public function bar(): Bar { return new Bar; }
+    public function where(): static { return \$this; }
 }
 class Baz {
     public function build(Foo \$foo) {
@@ -671,4 +672,5 @@ EOD)->getExpressionType('(new Baz)->build(new Foo)');
     'two calls deep' => ['$foo->bar()->method{i}();'],
     'three calls deep' => ['$foo->bar()->self()->method{i}();'],
     'inside a condition' => ['if ($foo->bar()->method{i}()) { $x = {i}; }'],
+    'fluent calls' => ['$foo->where()->where();'],
 ]);
