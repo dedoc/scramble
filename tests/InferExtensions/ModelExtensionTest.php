@@ -436,7 +436,7 @@ it('uses the getter return type for a getXAttribute accessor', function (string 
     'Monica decrypted nullable secret' => ['settings', 'null|string'],
     'Akaunting status label match' => ['status_label', 'string(status-success)|string(status-draft)'],
     'Akaunting attachment false or stored value' => ['body', 'string|boolean(false)'],
-    'Akaunting sent_at from another attribute' => ['sent_at', Carbon::class . '|null'],
+    'Akaunting sent_at from another attribute' => ['sent_at', Carbon::class.'|null'],
     'Akaunting line actions list' => ['line_actions', 'list{array{title: string(edit), icon: string(edit)}}'],
 ]);
 
