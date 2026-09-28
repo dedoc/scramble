@@ -641,11 +641,11 @@ it('resolves WithProperties phpdoc type', function () {
         ->and($resolvedType->propertyTypes['bar']->toString())->toBe('string(wow)');
 });
 
-it('resolves many chained method calls on the same variable in linear time', function () {
+it('resolves many chained method calls on the same variable in linear time', function (string $call) {
     // Each `$foo->bar()->...` call records a new state of `$foo` that references the previous state both as its
     // subject and through its callee, so resolving every state twice made this exponential in the number of calls.
     $calls = implode("\n", array_map(
-        fn (int $i) => "        \$foo->bar()->method{$i}();",
+        fn (int $i) => '        '.str_replace('{i}', (string) $i, $call),
         range(1, 40),
     ));
 
@@ -653,6 +653,7 @@ it('resolves many chained method calls on the same variable in linear time', fun
 <?php
 class Bar {
     public function name(): string { return 'name'; }
+    public function self(): static { return \$this; }
 }
 class Foo {
     public function bar(): Bar { return new Bar; }
@@ -666,4 +667,8 @@ $calls
 EOD)->getExpressionType('(new Baz)->build(new Foo)');
 
     expect($type->toString())->toBe('string(name)');
-});
+})->with([
+    'two calls deep' => ['$foo->bar()->method{i}();'],
+    'three calls deep' => ['$foo->bar()->self()->method{i}();'],
+    'inside a condition' => ['if ($foo->bar()->method{i}()) { $x = {i}; }'],
+]);
