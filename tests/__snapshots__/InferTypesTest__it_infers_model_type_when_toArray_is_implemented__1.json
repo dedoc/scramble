@@ -11,7 +11,8 @@
             }
         },
         "read_time": {
-            "type": "string"
+            "type": "integer",
+            "const": 123
         },
         "user": {
             "$ref": "#/components/schemas/SampleUserModel"

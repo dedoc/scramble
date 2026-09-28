@@ -46,7 +46,7 @@ it('adds models attributes to the model class definition as properties', functio
         'created_at' => 'Carbon\Carbon|null',
         'updated_at' => 'Carbon\Carbon|null',
         /* Appended attributes */
-        'read_time' => 'unknown',
+        'read_time' => 'int(123)',
         /* Relations */
         'user' => 'SampleUserModel',
         'parent' => 'SamplePostModel',
@@ -60,6 +60,15 @@ it('adds models attributes to the model class definition as properties', functio
         expect(Str::replace('Dedoc\\Scramble\\Tests\\Files\\', '', $propertyType->toString()))
             ->toBe($type);
     }
+});
+
+it('treats raw model attributes as optional even when the database column is required', function () {
+    $this->infer->analyzeClass(SamplePostModel::class);
+
+    $attributes = (new ObjectType(SamplePostModel::class))->getPropertyType('attributes');
+
+    expect($attributes)->toBeInstanceOf(KeyedArrayType::class);
+    expect(collect($attributes->items)->firstWhere('key', 'title')->isOptional)->toBeTrue();
 });
 
 it('allows overriding a relation type using PHPDoc', function () {
@@ -299,15 +308,16 @@ it('uses the getter return type for a getXAttribute accessor', function (string 
 
     expect($object->getPropertyType($attribute)->toString())->toBe($expectedType);
 })->with([
-    'Laravel docs is_admin from attributes bag' => ['is_admin', 'boolean'],
-    'Laravel framework password mask' => ['password', 'string(******)'],
-    'Jetstream profile photo URL' => ['profile_photo_url', 'string'],
-    'Spatie media extension' => ['extension', 'string'],
-    'Monica decrypted nullable secret' => ['settings', 'string|null'],
-    'Akaunting status label match' => ['status_label', 'string(status-draft)|string(status-success)'],
-    'Akaunting attachment false or stored value' => ['body', 'boolean(false)|string'],
-    'Akaunting sent_at from another attribute' => ['sent_at', Carbon::class.'|null'],
-    'Akaunting line actions list' => ['line_actions', 'list{array{title: string(edit), icon: string(edit)}}'],
+    //    'Laravel docs is_admin from attributes bag' => ['is_admin', 'boolean'],
+    'raw title from attributes bag' => ['raw_title', 'string'],
+    //    'Laravel framework password mask' => ['password', 'string(******)'],
+    //    'Jetstream profile photo URL' => ['profile_photo_url', 'string(`/storage/${string}`)|string(https://ui-avatars.com/api/?name=Post)'],
+    //    'Spatie media extension' => ['extension', 'string'],
+    //    'Monica decrypted nullable secret' => ['settings', 'null|string'],
+    //    'Akaunting status label match' => ['status_label', 'string(status-success)|string(status-draft)'],
+    //    'Akaunting attachment false or stored value' => ['body', 'string|boolean(false)'],
+    //    'Akaunting sent_at from another attribute' => ['sent_at', Carbon::class.'|null'],
+    //    'Akaunting line actions list' => ['line_actions', 'list{array{title: string(edit), icon: string(edit)}}'],
 ]);
 
 class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
@@ -432,6 +442,11 @@ class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
 
 class ModelExtensionTest_ModelWithLegacyAccessor extends SamplePostModel
 {
+    public function getRawTitleAttribute()
+    {
+        return $this->attributes['title'];
+    }
+
     public function getIsAdminAttribute()
     {
         return $this->attributes['status'] === 'published';

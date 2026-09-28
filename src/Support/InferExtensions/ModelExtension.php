@@ -80,6 +80,10 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
 
     public function getPropertyType(PropertyFetchEvent $event): ?Type
     {
+        if ($event->name === 'attributes') {
+            return $this->getRawAttributesType($event->getInstance());
+        }
+
         $propertyType = $event->getDefinition()
             ?->getPropertyDefinition($event->getName())
             ?->type;
@@ -95,18 +99,13 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         $info = $this->getModelInfo($event->getInstance());
 
         if ($attribute = $info->get('attributes')->get($event->getName())) {
-            $getterType = ($attribute['cast'] ?? null) === 'attribute'
-                ? $this->getAttributeGetterType($info->get('class'), $attribute['name'], $event->scope)
-                : null;
-
-            $baseType = $getterType
-                ?? $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '', $event->scope)
-                ?? $this->getAttributeTypeFromDbColumnType($attribute['type'], $attribute['driver'])
-                ?? new UnknownType("Virtual attribute ({$attribute['name']}) type inference not supported.");
-
-            $inferredType = $attribute['nullable'] && ! $getterType
-                ? Union::wrap([$baseType, new NullType])
-                : $baseType;
+            $inferredType = $this->getVirtualAttributeType($attribute['cast'] ?? '', $info->get('class'), $attribute['name'], $event->scope)
+                ?? $this->wrapNullable(
+                    $attribute['nullable'] ?? false,
+                    $this->getAttributeTypeFromEloquentCasts($attribute['cast'] ?? '', $event->scope)
+                        ?? $this->getAttributeTypeFromDbColumnType($attribute['type'], $attribute['driver'])
+                        ?? new UnknownType("Virtual attribute ({$attribute['name']}) type inference not supported."),
+                );
 
             return $this->refineAnnotatedType($annotatedType, $inferredType);
         }
@@ -120,34 +119,13 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
         throw new \LogicException('Should not happen');
     }
 
-    private function getRawAttributesType(ObjectType $model): KeyedArrayType
+    private function getVirtualAttributeType(string $cast, string $modelClass, string $name, Scope $scope): ?Type
     {
-        /** @var Collection<int, array> $attributes */
-        $attributes = $this->getModelInfo($model)->get('attributes');
-
-        $items = $attributes
-            ->filter(fn (array $attr) => $attr['type'] !== null)
-            ->map(function (array $attr) {
-                $type = $this->getAttributeTypeFromDbColumnType($attr['type'], $attr['driver']);
-
-                return new ArrayItemType_(
-                    key: $attr['name'],
-                    value: $attr['nullable'] ? Union::wrap([$type, new NullType]) : $type,
-                );
-            })
-            ->values()
-            ->all();
-
-        return new KeyedArrayType($items);
-    }
-
-    private function refineAnnotatedType(?Type $annotatedType, Type $inferredType): Type
-    {
-        if (! $annotatedType) {
-            return $inferredType;
-        }
-
-        return (new TypeRefiner)->refine($annotatedType, $inferredType);
+        return match ($cast) {
+            'attribute' => $this->getAttributeGetterType($modelClass, $name, $scope),
+            'accessor' => $this->getAttributeAccessorType($modelClass, $name, $scope),
+            default => null,
+        };
     }
 
     private function getAttributeGetterType(string $modelClass, string $name, Scope $scope): ?Type
@@ -190,6 +168,69 @@ class ModelExtension implements MethodReturnTypeExtension, PropertyTypeExtension
                     [$valueType, $modelAttributes],
                 )
             );
+    }
+
+    private function getAttributeAccessorType(string $modelClass, string $name, Scope $scope): ?Type
+    {
+        $method = 'get'.Str::studly($name).'Attribute';
+
+        if (! $scope->index->getClass($modelClass)?->getMethod($method)) {
+            return null;
+        }
+
+        $modelAttributes = $this->getRawAttributesType(new ObjectType($modelClass));
+        $valueType = array_search(
+            $name,
+            array_map(fn (ArrayItemType_ $item) => $item->key, $modelAttributes->items),
+            strict: true,
+        ) !== false
+            ? $modelAttributes->getOffsetValueType(new LiteralStringType($name))
+            : new NullType;
+
+        return ReferenceTypeResolver::getInstance()->resolve(
+            new GlobalScope,
+            new MethodCallReferenceType(
+                new ObjectType($modelClass),
+                $method,
+                [$valueType],
+            ),
+        );
+    }
+
+    private function getRawAttributesType(ObjectType $model): KeyedArrayType
+    {
+        /** @var Collection<string, array{name: string, type: string|null, driver: string|null, nullable: bool|null}> $attributes */
+        $attributes = $this->getModelInfo($model)->get('attributes');
+
+        $items = [];
+
+        foreach ($attributes as $attr) {
+            if (! $type = $this->getAttributeTypeFromDbColumnType($attr['type'], $attr['driver'])) {
+                continue;
+            }
+
+            $items[] = new ArrayItemType_(
+                key: $attr['name'],
+                value: $attr['nullable'] ? Union::wrap([$type, new NullType]) : $type,
+                isOptional: true,
+            );
+        }
+
+        return new KeyedArrayType($items);
+    }
+
+    private function wrapNullable(bool $nullable, Type $type): Type
+    {
+        return $nullable ? Union::wrap([$type, new NullType]) : $type;
+    }
+
+    private function refineAnnotatedType(?Type $annotatedType, Type $inferredType): Type
+    {
+        if (! $annotatedType) {
+            return $inferredType;
+        }
+
+        return (new TypeRefiner)->refine($annotatedType, $inferredType);
     }
 
     /**
