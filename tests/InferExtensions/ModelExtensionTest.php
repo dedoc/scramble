@@ -301,25 +301,6 @@ it('uses the getter return type for an Attribute accessor', function (string $at
     'getter calling a model method' => ['from_model_method', 'string(post-label)'],
 ]);
 
-it('uses the getter return type for a getXAttribute accessor', function (string $attribute, string $expectedType) {
-    $this->infer->analyzeClass(ModelExtensionTest_ModelWithLegacyAccessor::class);
-
-    $object = new ObjectType(ModelExtensionTest_ModelWithLegacyAccessor::class);
-
-    expect($object->getPropertyType($attribute)->toString())->toBe($expectedType);
-})->with([
-    //    'Laravel docs is_admin from attributes bag' => ['is_admin', 'boolean'],
-    'raw title from attributes bag' => ['raw_title', 'string'],
-    //    'Laravel framework password mask' => ['password', 'string(******)'],
-    //    'Jetstream profile photo URL' => ['profile_photo_url', 'string(`/storage/${string}`)|string(https://ui-avatars.com/api/?name=Post)'],
-    //    'Spatie media extension' => ['extension', 'string'],
-    //    'Monica decrypted nullable secret' => ['settings', 'null|string'],
-    //    'Akaunting status label match' => ['status_label', 'string(status-success)|string(status-draft)'],
-    //    'Akaunting attachment false or stored value' => ['body', 'string|boolean(false)'],
-    //    'Akaunting sent_at from another attribute' => ['sent_at', Carbon::class.'|null'],
-    //    'Akaunting line actions list' => ['line_actions', 'list{array{title: string(edit), icon: string(edit)}}'],
-]);
-
 class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
 {
     protected function sqid(): Attribute
@@ -439,6 +420,25 @@ class ModelExtensionTest_ModelWithAttributeAccessor extends SamplePostModel
         return 'post-label';
     }
 }
+
+it('uses the getter return type for a getXAttribute accessor', function (string $attribute, string $expectedType) {
+    $this->infer->analyzeClass(ModelExtensionTest_ModelWithLegacyAccessor::class);
+
+    $object = new ObjectType(ModelExtensionTest_ModelWithLegacyAccessor::class);
+
+    expect($object->getPropertyType($attribute)->toString())->toBe($expectedType);
+})->with([
+    'Laravel docs is_admin from attributes bag' => ['is_admin', 'boolean'],
+    'raw title from attributes bag' => ['raw_title', 'string'],
+    'Laravel framework password mask' => ['password', 'string(******)'],
+    'Jetstream profile photo URL' => ['profile_photo_url', 'string(`/storage/${string}`)|string(https://ui-avatars.com/api/?name=Post)'],
+    'Spatie media extension' => ['extension', 'string'],
+    'Monica decrypted nullable secret' => ['settings', 'null|string'],
+    'Akaunting status label match' => ['status_label', 'string(status-success)|string(status-draft)'],
+    'Akaunting attachment false or stored value' => ['body', 'string|boolean(false)'],
+    'Akaunting sent_at from another attribute' => ['sent_at', Carbon::class . '|null'],
+    'Akaunting line actions list' => ['line_actions', 'list{array{title: string(edit), icon: string(edit)}}'],
+]);
 
 class ModelExtensionTest_ModelWithLegacyAccessor extends SamplePostModel
 {
