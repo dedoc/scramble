@@ -199,6 +199,7 @@ class ReferenceTypeResolver
             new KeyedArrayUnpackingTypeVisitor,
             new LateTypeResolvingTypeVisitor,
             new UnionNormalizingTypeVisitor,
+            new FunctionReturnTypeSelectingVisitor,
         ]);
 
         return $traverser

@@ -69,6 +69,12 @@ it(
     ['$a % 2', 'int'],
     ['(int) $a * 2', 'int'],
     ['(float) $a * 2', 'float'],
+    ['min((int) $a, 30) / 30', 'int|float'],
+    ['1 - []', 'never'],
+    ['1 * []', 'never'],
+    ['1 / []', 'never'],
+    ['1 % []', 'never'],
+    ['1 ** []', 'never'],
 ]);
 
 it(

@@ -12,6 +12,12 @@ class FunctionType extends AbstractType implements FunctionLikeType
 
     public Type $returnType;
 
+    /**
+     * Native or phpdoc return from the AST pass. Not a type-graph node, so
+     * resolution still walks `$returnType` (the inferred body, including references).
+     */
+    public ?Type $declaredReturnType = null;
+
     public array $templates = [];
 
     /**

@@ -288,6 +288,10 @@ class TypeHelper
 
     public static function createTypeFromReflectionType(ReflectionType $reflectionType, bool $handleNullable = true)
     {
+        if ($reflectionType instanceof ReflectionNamedType && $reflectionType->getName() === 'mixed') {
+            return new MixedType;
+        }
+
         if ($reflectionType->allowsNull() && $handleNullable) {
             return Union::wrap([
                 new NullType,

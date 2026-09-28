@@ -9,6 +9,7 @@ use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
 use Dedoc\Scramble\Console\Commands\CacheDocumentation;
 use Dedoc\Scramble\Console\Commands\ClearDocumentationCache;
 use Dedoc\Scramble\Console\Commands\ExportDocumentation;
+use Dedoc\Scramble\Contracts\RouteProvider as RouteProviderContract;
 use Dedoc\Scramble\DocumentTransformers\AddDocumentTags;
 use Dedoc\Scramble\DocumentTransformers\CleanupUnusedResponseReferencesTransformer;
 use Dedoc\Scramble\Extensions\ExceptionToResponseExtension;
@@ -68,6 +69,7 @@ use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\ProNudge\Extensions\LaravelDataRequestBodyNudgeExtractor;
 use Dedoc\Scramble\Support\ProNudge\Extensions\LaravelDataReturnTypeNudgeExtension;
 use Dedoc\Scramble\Support\ProNudge\Extensions\QueryBuilderUsageNudgeExtension;
+use Dedoc\Scramble\Support\RouteProviders\RouteProvider;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\VoidType;
@@ -94,6 +96,7 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\ResponseTypeToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\StreamedResponseToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\VoidTypeToSchema;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Routing\Router;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter;
@@ -102,6 +105,11 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class ScrambleServiceProvider extends PackageServiceProvider
 {
+    /** @var array<class-string, class-string> */
+    public $bindings = [
+        RouteProviderContract::class => RouteProvider::class,
+    ];
+
     public $singletons = [
         PrettyPrinter::class => PrettyPrinter\Standard::class,
         GeneratorConfigCollection::class => GeneratorConfigCollection::class,
@@ -306,6 +314,12 @@ class ScrambleServiceProvider extends PackageServiceProvider
             ->withDocumentTransformers([
                 AddDocumentTags::class,
                 CleanupUnusedResponseReferencesTransformer::class,
+            ]);
+
+        Scramble::infer()
+            ->configure()
+            ->buildDefinitionsUsingAstFor([
+                Attribute::class,
             ]);
 
         if (Scramble::$defaultRoutesIgnored) {

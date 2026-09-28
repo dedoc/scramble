@@ -162,7 +162,33 @@ it('transforms unions containing only type constraints into a type array', funct
         new FloatType,
         new StringType,
     ]))->toArray())->toBe([
-        'type' => ['integer', 'number', 'string'],
+        'type' => ['number', 'string'],
+    ]);
+});
+
+it('treats an unconstrained array as a plain type in a union', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect($transformer->transform(new Union([
+        new ArrayType(value: new MixedType),
+        new StringType,
+    ]))->toArray())->toBe([
+        'type' => ['array', 'string'],
+    ]);
+});
+
+it('unwraps a collapsed union containing one resulting type', function () {
+    $transformer = app()->make(TypeTransformer::class, [
+        'context' => $this->context,
+    ]);
+
+    expect($transformer->transform(new Union([
+        new IntegerType,
+        new FloatType,
+    ]))->toArray())->toBe([
+        'type' => 'number',
     ]);
 });
 

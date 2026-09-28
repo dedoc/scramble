@@ -27,7 +27,7 @@ trait RendersDiagnostics
         return $errorCount ? static::FAILURE : static::SUCCESS;
     }
 
-    private function renderDiagnostics(GeneratorResult $result, string $successMessage, Closure $issuesMessage): void
+    private function renderDiagnostics(GeneratorResult $result, ?string $successMessage, Closure $issuesMessage): void
     {
         $i = 1;
         $this->groupDiagnostics($result->diagnostics())->each(function (Collection $groupDiagnostics, string $groupKey) use (&$i) {
@@ -41,7 +41,7 @@ trait RendersDiagnostics
         );
     }
 
-    private function renderDiagnosticsSummary(GeneratorResult $result, string $successMessage, Closure $issuesMessage): void
+    private function renderDiagnosticsSummary(GeneratorResult $result, ?string $successMessage, Closure $issuesMessage): void
     {
         $diagnostics = $result->diagnostics();
 
@@ -62,7 +62,7 @@ trait RendersDiagnostics
 
         if ($warningCount > 0) {
             $this->warn('[WARNING] '.$issuesMessage($summary));
-        } else {
+        } elseif ($successMessage !== null) {
             $this->info($successMessage);
         }
 

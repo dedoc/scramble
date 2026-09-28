@@ -85,6 +85,7 @@ class PhpDoc
             ->implode("\n");
 
         $text = Str::of($text)
+            ->replace("\r\n", "\n")
             ->trim()
             ->explode("\n\n", 2);
 
