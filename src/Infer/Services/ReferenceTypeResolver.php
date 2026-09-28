@@ -47,6 +47,9 @@ use Dedoc\Scramble\Support\Type\VoidType;
 
 class ReferenceTypeResolver
 {
+    /** @var \WeakMap<Scope, \WeakMap<Type, Type>>|null */
+    private ?\WeakMap $resolvedTypes = null;
+
     public function __construct(
         private Index $index,
     ) {}
@@ -58,16 +61,36 @@ class ReferenceTypeResolver
 
     public function resolve(Scope $scope, Type $type): Type
     {
-        $originalType = $type;
+        // A variable's state after a call on it references its previous state twice: as the subject, and through the
+        // callee (`$r->a()->b()`). Resolving each type once per outermost call keeps a chain of N such calls linear
+        // instead of exponential.
+        $isOutermostCall = $this->resolvedTypes === null;
+        $this->resolvedTypes ??= new \WeakMap;
 
-        $resolvedType = RecursionGuard::run(
-            $type,
-            fn () => (new TypeWalker)->map($type, fn (Type $t) => $this->doResolve($t, $type, $scope)),
-            onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
-        );
+        /** @var \WeakMap<Type, Type> $resolvedInScope */
+        $resolvedInScope = $this->resolvedTypes[$scope] ?? new \WeakMap;
+        $this->resolvedTypes[$scope] = $resolvedInScope;
 
-        // Type finalization: removing duplicates from union, unpacking array items (inside `replace`), calling resolving extensions.
-        return $this->finalizeType($resolvedType, $originalType);
+        if ($alreadyResolved = $resolvedInScope[$type] ?? null) {
+            return $alreadyResolved;
+        }
+
+        try {
+            $originalType = $type;
+
+            $resolvedType = RecursionGuard::run(
+                $type,
+                fn () => (new TypeWalker)->map($type, fn (Type $t) => $this->doResolve($t, $type, $scope)),
+                onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
+            );
+
+            // Type finalization: removing duplicates from union, unpacking array items (inside `replace`), calling resolving extensions.
+            return $resolvedInScope[$type] = $this->finalizeType($resolvedType, $originalType);
+        } finally {
+            if ($isOutermostCall) {
+                $this->resolvedTypes = null;
+            }
+        }
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type

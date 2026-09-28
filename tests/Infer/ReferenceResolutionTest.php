@@ -640,3 +640,30 @@ it('resolves WithProperties phpdoc type', function () {
         ->and($resolvedType->propertyTypes['foo']->toString())->toBe('int')
         ->and($resolvedType->propertyTypes['bar']->toString())->toBe('string(wow)');
 });
+
+it('resolves many chained method calls on the same variable in linear time', function () {
+    // Each `$foo->bar()->...` call records a new state of `$foo` that references the previous state both as its
+    // subject and through its callee, so resolving every state twice made this exponential in the number of calls.
+    $calls = implode("\n", array_map(
+        fn (int $i) => "        \$foo->bar()->method{$i}();",
+        range(1, 40),
+    ));
+
+    $type = analyzeFile(<<<EOD
+<?php
+class Bar {
+    public function name(): string { return 'name'; }
+}
+class Foo {
+    public function bar(): Bar { return new Bar; }
+}
+class Baz {
+    public function build(Foo \$foo) {
+$calls
+        return \$foo->bar()->name();
+    }
+}
+EOD)->getExpressionType('(new Baz)->build(new Foo)');
+
+    expect($type->toString())->toBe('string(name)');
+});
