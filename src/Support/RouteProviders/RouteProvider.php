@@ -30,12 +30,7 @@ class RouteProvider implements RouteProviderContract
         return collect(RouteFacade::getRoutes()->getRoutes())
             ->pipe(function (Collection $c) {
                 $onlyRoutes = $c->filter(function (Route $route) {
-
-                    if (! is_string($route->getAction('controller'))) {
-                        return false;
-                    }
-
-                    if (! is_string($route->getAction('uses'))) {
+                    if (! $route->getControllerClass()) {
                         return false;
                     }
 
@@ -58,7 +53,7 @@ class RouteProvider implements RouteProviderContract
             })
             ->filter($config->routes())
             ->filter(function (Route $route) use ($config) {
-                if (! is_string($route->getAction('uses'))) {
+                if (! $route->getControllerClass()) {
                     return true;
                 }
 

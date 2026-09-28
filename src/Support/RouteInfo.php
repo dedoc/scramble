@@ -12,6 +12,7 @@ use Dedoc\Scramble\Support\IndexBuilders\ScopeCollector;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\InferredParameter;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Illuminate\Routing\Route;
+use Illuminate\Routing\RouteAction;
 use Laravel\SerializableClosure\Support\ReflectionClosure;
 use LogicException;
 use PhpParser\Node\FunctionLike;
@@ -52,7 +53,7 @@ class RouteInfo
 
     public function isClassBased(): bool
     {
-        return is_string($this->route->getAction('uses'));
+        return is_string($this->route->getAction('uses')) && ! $this->isSerializedClosure();
     }
 
     public function className(): ?string
@@ -169,11 +170,13 @@ class RouteInfo
             return MethodReflector::make(...explode('@', $this->route->getAction('uses')));
         }
 
-        if ($this->route->getAction('uses') instanceof Closure) {
-            return ClosureReflector::make($this->route->getAction('uses'));
+        $callable = $this->route->getAction('uses');
+
+        if ($this->isSerializedClosure()) {
+            $callable = unserialize($callable)->getClosure();
         }
 
-        throw new LogicException('Cannot determine the action reflector');
+        return ClosureReflector::make($callable);
     }
 
     public function getActionDefinition(): ?Infer\Definition\FunctionLikeDefinition
@@ -201,6 +204,11 @@ class RouteInfo
     public function getActionType(): ?FunctionType
     {
         return $this->getActionDefinition()?->type;
+    }
+
+    protected function isSerializedClosure(): bool
+    {
+        return RouteAction::containsSerializedClosure($this->route->action);
     }
 
     /**
