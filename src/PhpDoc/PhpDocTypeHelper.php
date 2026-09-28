@@ -153,7 +153,7 @@ class PhpDocTypeHelper
             }
 
             if ($type->constExpr instanceof ConstExprIntegerNode) {
-                return new LiteralIntegerType($type->constExpr->value);
+                return new LiteralIntegerType(self::parseIntegerLiteral($type->constExpr->value));
             }
 
             if ($type->constExpr instanceof ConstExprFloatNode) {
@@ -300,6 +300,26 @@ class PhpDocTypeHelper
     }
 
     /**
+     * The PHPDoc parser keeps an integer literal as written, so `0x1F`, `0b101`, `0o17` and `017` arrive as strings
+     * that PHP does not convert to the integer they denote.
+     */
+    private static function parseIntegerLiteral(string $literal): int
+    {
+        $isNegative = str_starts_with($literal, '-');
+        $digits = ltrim($literal, '+-');
+
+        $value = match (true) {
+            str_starts_with(strtolower($digits), '0x') => hexdec(substr($digits, 2)),
+            str_starts_with(strtolower($digits), '0b') => bindec(substr($digits, 2)),
+            str_starts_with(strtolower($digits), '0o') => octdec(substr($digits, 2)),
+            strlen($digits) > 1 && $digits[0] === '0' => octdec(substr($digits, 1)),
+            default => (int) $digits,
+        };
+
+        return $isNegative ? -(int) $value : (int) $value;
+    }
+
+    /**
      * @param  TypeNode[]  $genericTypes
      */
     private static function handleGenericInteger(array $genericTypes): IntegerType
@@ -333,11 +353,11 @@ class PhpDocTypeHelper
         }
 
         $min = $genericTypes[0] instanceof ConstTypeNode
-            ? (int) $genericTypes[0]->constExpr->value
+            ? self::parseIntegerLiteral($genericTypes[0]->constExpr->value)
             : null;
 
         $max = $genericTypes[1] instanceof ConstTypeNode
-            ? (int) $genericTypes[1]->constExpr->value
+            ? self::parseIntegerLiteral($genericTypes[1]->constExpr->value)
             : null;
 
         return new IntegerRangeType(

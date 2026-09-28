@@ -81,6 +81,25 @@ it('parses integers', function (string $phpDocType, string $expectedTypeString) 
     ['/** @var int<min, 10> */', 'int<min, 10>'],
     ['/** @var int<max, 10> */', 'int'],
     ['/** @var int<10, min> */', 'int'],
+    ['/** @var int<0x10, 0xFF> */', 'int<16, 255>'],
+    ['/** @var int<-0b11, 0o17> */', 'int<-3, 15>'],
+]);
+
+it('parses integer literals in every notation', function (string $phpDocType, string $expectedTypeString) {
+    expect(
+        getPhpTypeFromDoc_Copy($phpDocType)->toString()
+    )->toBe($expectedTypeString);
+})->with([
+    'decimal' => ['/** @var 42 */', 'int(42)'],
+    'negative decimal' => ['/** @var -42 */', 'int(-42)'],
+    'with separators' => ['/** @var 1_000 */', 'int(1000)'],
+    'hexadecimal' => ['/** @var 0x1F */', 'int(31)'],
+    'negative hexadecimal' => ['/** @var -0x1F */', 'int(-31)'],
+    'binary' => ['/** @var 0b101 */', 'int(5)'],
+    'octal' => ['/** @var 0o17 */', 'int(15)'],
+    'legacy octal' => ['/** @var 017 */', 'int(15)'],
+    'zero' => ['/** @var 0 */', 'int(0)'],
+    'union of flags' => ['/** @var 0x01|0x02 */', 'int(1)|int(2)'],
 ]);
 
 it('parses strings', function (string $phpDocType, string $expectedTypeString) {
