@@ -99,12 +99,28 @@ class ValidateCallParametersExtractor implements ParameterExtractor
                     && count($node->args) >= 2
                     && $node->class instanceof Node\Name && is_a($node->class->toString(), \Illuminate\Support\Facades\Validator::class, true)
                     && $node->name instanceof Node\Identifier && $node->name->name === 'make'
-                    && $node->args[0]->value instanceof Node\Expr\MethodCall && is_a($this->getPossibleParamType($methodNode, $node->args[0]->value->var), Request::class, true)
+                    && $node->args[0]->value instanceof Node\Expr\MethodCall
+                    && ($requestVariable = $this->getMethodCallChainRoot($node->args[0]->value)) instanceof Node\Expr\Variable
+                    && is_a($this->getPossibleParamType($methodNode, $requestVariable), Request::class, true)
             );
             $validationRules = $callToValidate->args[1] ?? null;
         }
 
         return [$callToValidate, $validationRules];
+    }
+
+    /**
+     * Returns the expression a method call chain starts from: `$request` for `$request->json()->all()`.
+     */
+    private function getMethodCallChainRoot(Node\Expr\MethodCall $call): Node\Expr
+    {
+        $var = $call->var;
+
+        while ($var instanceof Node\Expr\MethodCall) {
+            $var = $var->var;
+        }
+
+        return $var;
     }
 
     private function getPossibleParamType(FunctionLike $methodNode, Node\Expr\Variable $node): ?string

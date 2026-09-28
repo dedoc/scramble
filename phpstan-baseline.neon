@@ -3178,12 +3178,6 @@ parameters:
 			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
 
 		-
-			message: '#^Parameter \#2 \$node of method Dedoc\\Scramble\\Support\\OperationExtensions\\ParameterExtractor\\ValidateCallParametersExtractor\:\:getPossibleParamType\(\) expects PhpParser\\Node\\Expr\\Variable, PhpParser\\Node\\Expr given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Support/OperationExtensions/ParameterExtractor/ValidateCallParametersExtractor.php
-
-		-
 			message: '#^Possibly invalid array key type PhpParser\\Node\\Expr\|string\.$#'
 			identifier: array.invalidKey
 			count: 1
