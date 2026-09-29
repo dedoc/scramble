@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Configuration;
 
+use Composer\Autoload\ClassLoader;
 use Dedoc\Scramble\Infer\Configuration\ClassLike;
 use Dedoc\Scramble\Infer\Configuration\DefinitionMatcher;
 use Dedoc\Scramble\Infer\Context;
@@ -86,7 +87,32 @@ class InferConfig
             return true; // Keep in mind the internal classes are analyzed via AST analyzer
         }
 
-        return ! Str::contains($path, DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR);
+        if (Str::contains($path, DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR)) {
+            return false;
+        }
+
+        foreach ($this->vendorDirectories() as $vendorDirectory) {
+            if (Str::startsWith($path, $vendorDirectory.DIRECTORY_SEPARATOR)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The vendor directories of the registered Composer autoloaders, which differ from `vendor`
+     * when a project sets Composer's `vendor-dir`.
+     *
+     * @return string[]
+     */
+    protected function vendorDirectories(): array
+    {
+        if (! class_exists(ClassLoader::class)) {
+            return [];
+        }
+
+        return array_keys(ClassLoader::getRegisteredLoaders());
     }
 
     public function replaceExtensions(array $inferExtensions): self
