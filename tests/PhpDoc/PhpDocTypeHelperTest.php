@@ -1,5 +1,6 @@
 <?php
 
+use Composer\InstalledVersions;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\PhpDoc\PhpDocTypeHelper;
 use Dedoc\Scramble\Support\PhpDoc;
@@ -85,7 +86,6 @@ it('parses integers', function (string $phpDocType, string $expectedTypeString) 
     ['/** @var int<-0b11, 0o17> */', 'int<-3, 15>'],
     ['/** @var 42 */', 'int(42)'],
     ['/** @var -42 */', 'int(-42)'],
-    ['/** @var 1_000 */', 'int(1000)'],
     ['/** @var 0x1F */', 'int(31)'],
     ['/** @var -0x1F */', 'int(-31)'],
     ['/** @var 0x7FFFFFFFFFFFFFFF */', 'int(9223372036854775807)'],
@@ -100,6 +100,13 @@ it('parses integers', function (string $phpDocType, string $expectedTypeString) 
     ['/** @var 0 */', 'int(0)'],
     ['/** @var 0x01|0x02 */', 'int(1)|int(2)'],
 ]);
+
+it('parses integers with digit separators', function () {
+    expect(getPhpTypeFromDoc_Copy('/** @var 1_000 */')->toString())->toBe('int(1000)');
+})->skip(
+    fn () => version_compare(InstalledVersions::getVersion('phpstan/phpdoc-parser') ?? '0', '1.21.0', '<'),
+    'phpdoc-parser reads digit separators since 1.21.0',
+);
 
 it('parses strings', function (string $phpDocType, string $expectedTypeString) {
     expect(
