@@ -153,7 +153,10 @@ class PhpDocTypeHelper
             }
 
             if ($type->constExpr instanceof ConstExprIntegerNode) {
-                return new LiteralIntegerType(self::parseIntegerLiteral($type->constExpr->value));
+                $literal = $type->constExpr->value;
+
+                return self::parseHexLiteralType($literal)
+                    ?? new LiteralIntegerType(self::parseIntegerLiteral($literal));
             }
 
             if ($type->constExpr instanceof ConstExprFloatNode) {
@@ -317,6 +320,30 @@ class PhpDocTypeHelper
         };
 
         return $isNegative ? -(int) $value : (int) $value;
+    }
+
+    private static function parseHexLiteralType(string $literal): ?IntegerType
+    {
+        $isNegative = str_starts_with($literal, '-');
+        $digits = ltrim($literal, '+-');
+
+        if (! str_starts_with(strtolower($digits), '0x')) {
+            return null;
+        }
+
+        $hexDigits = ltrim(strtolower(substr($digits, 2)), '0');
+        $limit = $isNegative ? dechex(PHP_INT_MIN) : dechex(PHP_INT_MAX);
+
+        if (strlen($hexDigits) > strlen($limit)
+            || (strlen($hexDigits) === strlen($limit) && strcmp($hexDigits, $limit) > 0)) {
+            return new IntegerType;
+        }
+
+        if ($isNegative && $hexDigits === $limit) {
+            return new LiteralIntegerType(PHP_INT_MIN);
+        }
+
+        return new LiteralIntegerType(self::parseIntegerLiteral($literal));
     }
 
     /**
