@@ -20,6 +20,26 @@ it('returns key as literal when translation is missing', function () {
     expect($type->toString())->toBe('string(missing.key)');
 });
 
+it('resolves __ type as keyed array when translation is an array', function () {
+    app('translator')->addLines(['messages.labels' => ['name' => 'Name', 'email' => 'E-mail']], 'en');
+
+    $type = getStatementType("__('messages.labels')", [
+        app(TranslationReturnTypeExtension::class),
+    ]);
+
+    expect($type->toString())->toBe('array{name: string(Name), email: string(E-mail)}');
+});
+
+it('resolves __ type as list when translation is a list', function () {
+    app('translator')->addLines(['messages.steps' => ['First', 'Second']], 'en');
+
+    $type = getStatementType("__('messages.steps')", [
+        app(TranslationReturnTypeExtension::class),
+    ]);
+
+    expect($type->toString())->toBe('list{string(First), string(Second)}');
+});
+
 it('infers __ type as string when replace array is passed', function () {
     $type = getStatementType("__('Hello :name', ['name' => 'John'])", [
         app(TranslationReturnTypeExtension::class),
