@@ -694,9 +694,6 @@ class ReferenceTypeResolver
         $members = $type instanceof Union ? $type->types : [$type];
 
         foreach ($members as $member) {
-            //            if (! $member->getAttribute('isThis')) {
-            //                return false;
-            //            }
             if ($member instanceof SelfType) {
                 continue;
             }
@@ -711,7 +708,6 @@ class ReferenceTypeResolver
             ], true)) {
                 return false;
             }
-
         }
 
         return true;
