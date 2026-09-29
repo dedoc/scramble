@@ -74,6 +74,31 @@ PHP,
     expect($archiveType->toString())->toBe(Archive_MethodCallHandlerTest::class);
 });
 
+it('keeps the type of a variable after a chained call on an object it returns', function (string $statements, string $expectedType) {
+    $type = analyzeFile(<<<EOD
+<?php
+class Shelf {
+    public function item(): Item { return new Item; }
+    public function label(): string { return 'label'; }
+}
+class Item {
+    public function isReady(): bool { return true; }
+}
+class Baz {
+    public function build(Shelf \$shelf) {
+$statements
+    }
+}
+EOD)->getExpressionType('(new Baz)->build(new Shelf)');
+
+    expect($type->toString())->toBe($expectedType);
+})->with([
+    'result discarded' => ["\$shelf->item()->isReady();\nreturn \$shelf;", 'Shelf'],
+    'result assigned' => ["\$ready = \$shelf->item()->isReady();\nreturn \$shelf;", 'Shelf'],
+    'result in a condition' => ["if (\$shelf->item()->isReady()) {}\nreturn \$shelf;", 'Shelf'],
+    'method called afterwards' => ["\$shelf->item()->isReady();\nreturn \$shelf->label();", 'string(label)'],
+]);
+
 it('resolves repeated non-mutating calls on the same variable without expanding the call history', function () {
     Scramble::infer()->configure()->buildDefinitionsUsingReflectionFor([
         RepeatedPredicate_MethodCallHandlerTest::class,

@@ -635,7 +635,9 @@ class ReferenceTypeResolver
                     ? $this->normalizeResolvedCallee($resolvedSubject)
                     : $this->resolveAndNormalizeCallee($scope, $t->callee);
 
-                if (! $this->isMutatingSelfMethod($scope, $resolvedCallee, $t->methodName)) {
+                // A call in the middle of the chain keeps the chain on the subject only when it returns the subject
+                // itself. A self-out type is not enough: methods analyzed from source always have one.
+                if (! $this->isSelfReturningMethodCall($scope, $resolvedCallee, $t->methodName)) {
                     break;
                 }
 
@@ -682,6 +684,31 @@ class ReferenceTypeResolver
             $selfOut = $method->getSelfOutType();
 
             if (! $selfOut && ! $this->isSelfReturningMethod($method->getReturnType())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function isSelfReturningMethodCall(Scope $scope, Type $type, string $methodName): bool
+    {
+        $members = $type instanceof Union ? $type->types : [$type];
+
+        if ($members === []) {
+            return false;
+        }
+
+        foreach ($members as $member) {
+            if (! $member instanceof ObjectType) {
+                return false;
+            }
+
+            if (! $method = $member->getMethodDefinition($methodName, $scope)) {
+                return false;
+            }
+
+            if (! $this->isSelfReturningMethod($method->getReturnType())) {
                 return false;
             }
         }
