@@ -33,7 +33,7 @@ class TranslatedStringType extends StringType implements LateResolvingType
             $locale = config('app.locale');
             $translator = tap(clone app('translator'), fn (Translator $t) => $t->setLocale(is_string($locale) ? $locale : 'en'));
 
-            return new LiteralStringType($translator->get($this->key->value));
+            return TypeHelper::createTypeFromValue($translator->get($this->key->value));
         }
 
         return $this->key;
