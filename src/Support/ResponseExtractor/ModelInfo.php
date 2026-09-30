@@ -39,8 +39,7 @@ class ModelInfo
     {
         $class = $this->qualifyModel($this->class);
 
-        $reflectionClass = new ReflectionClass($class);
-        if (! $reflectionClass->isInstantiable()) {
+        if (! $model = $this->newModelInstance()) {
             return collect([
                 'instance' => null,
                 'class' => $class,
@@ -49,9 +48,6 @@ class ModelInfo
                 'table_missing' => false,
             ]);
         }
-
-        /** @var Model $model */
-        $model = app()->make($class);
 
         $tableMissing = ! $model->getConnection()->getSchemaBuilder()->hasTable($model->getTable());
 
@@ -62,6 +58,31 @@ class ModelInfo
             $this->getRelations($model),
             $tableMissing,
         );
+    }
+
+    /**
+     * The Eloquent casts are declared on the model itself, so unlike the rest of the model information
+     * they can be read without touching the schema.
+     *
+     * @return \Illuminate\Support\Collection<string, mixed>
+     */
+    public function getCasts()
+    {
+        return ($model = $this->newModelInstance())
+            ? $this->getCastsWithDates($model)
+            : collect();
+    }
+
+    private function newModelInstance(): ?Model
+    {
+        $class = $this->qualifyModel($this->class);
+
+        if (! (new ReflectionClass($class))->isInstantiable()) {
+            return null;
+        }
+
+        /** @var Model */
+        return app()->make($class);
     }
 
     /**
