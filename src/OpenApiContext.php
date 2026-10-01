@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble;
 
 use Dedoc\Scramble\Attributes\Group;
+use Dedoc\Scramble\Attributes\Tag;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\ProNudge\ProNudgeCollector;
@@ -19,6 +20,10 @@ class OpenApiContext
          * @var Collection<int, ReflectionAttribute<Group>>
          */
         public Collection $groups = new Collection,
+        /**
+         * @var Collection<int, ReflectionAttribute<Tag>>
+         */
+        public Collection $tags = new Collection,
         public DiagnosticsCollector $diagnostics = new DiagnosticsCollector,
         public ProNudgeCollector $proNudge = new ProNudgeCollector,
     ) {}
