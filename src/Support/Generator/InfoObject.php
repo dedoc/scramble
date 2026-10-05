@@ -2,13 +2,27 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class InfoObject
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use JsonSerializable;
+
+class InfoObject implements JsonSerializable, OpenApiSerializable
 {
+    use WithAttributes;
+    use WithExtensions;
+
     public string $title;
 
     public string $version;
 
     public string $description = '';
+
+    public ?string $summary = null;
+
+    public ?string $termsOfService = null;
+
+    public ?Contact $contact = null;
+
+    public ?License $license = null;
 
     public function __construct(string $title, string $version = '0.0.1')
     {
@@ -35,12 +49,72 @@ class InfoObject
         return $this;
     }
 
-    public function toArray()
+    public function summary(?string $summary): self
     {
-        return array_filter([
+        $this->summary = $summary;
+
+        return $this;
+    }
+
+    public function termsOfService(?string $termsOfService): self
+    {
+        $this->termsOfService = $termsOfService;
+
+        return $this;
+    }
+
+    public function contact(?Contact $contact): self
+    {
+        $this->contact = $contact;
+
+        return $this;
+    }
+
+    public function license(?License $license): self
+    {
+        $this->license = $license;
+
+        return $this;
+    }
+
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): array
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): array
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
+     */
+    private function serialize(callable $serializeItem): array
+    {
+        $result = array_filter([
             'title' => $this->title,
             'version' => $this->version,
-            'description' => $this->description,
-        ]);
+            'description' => $this->description ?: null,
+            'summary' => $this->summary,
+            'termsOfService' => $this->termsOfService,
+            'contact' => $this->contact ? $serializeItem($this->contact) : null,
+            'license' => $this->license ? $serializeItem($this->license) : null,
+        ], fn ($value) => $value !== null);
+
+        return array_merge($result, $this->extensionPropertiesToArray());
     }
 }

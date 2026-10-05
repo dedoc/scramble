@@ -2,7 +2,10 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class OpenApi
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use JsonSerializable;
+
+class OpenApi implements JsonSerializable, OpenApiSerializable
 {
     public string $version;
 
@@ -10,17 +13,24 @@ class OpenApi
 
     public Components $components;
 
+    public ?string $jsonSchemaDialect = null;
+
     /** @var Server[] */
     public array $servers = [];
 
     /** @var Path[] */
     public array $paths = [];
 
+    /** @var array<string, Path|Reference> */
+    public array $webhooks = [];
+
     /** @var SecurityRequirement[]|null */
     public ?array $security = [];
 
     /** @var Tag[] */
     public array $tags = [];
+
+    public ?ExternalDocumentation $externalDocs = null;
 
     public function __construct(string $version)
     {
@@ -81,30 +91,88 @@ class OpenApi
         return $this;
     }
 
+    public function jsonSchemaDialect(?string $jsonSchemaDialect): self
+    {
+        $this->jsonSchemaDialect = $jsonSchemaDialect;
+
+        return $this;
+    }
+
+    /**
+     * @param  array<string, Path|Reference>  $webhooks
+     */
+    public function webhooks(array $webhooks): self
+    {
+        $this->webhooks = $webhooks;
+
+        return $this;
+    }
+
+    public function addWebhook(string $name, Path|Reference $webhook): self
+    {
+        $this->webhooks[$name] = $webhook;
+
+        return $this;
+    }
+
+    public function externalDocs(?ExternalDocumentation $externalDocs): self
+    {
+        $this->externalDocs = $externalDocs;
+
+        return $this;
+    }
+
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
     public function toArray()
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
+     */
+    private function serialize(callable $serializeItem): mixed
     {
         $result = [
             'openapi' => $this->version,
-            'info' => $this->info->toArray(),
+            'info' => $serializeItem($this->info),
         ];
+
+        if ($this->jsonSchemaDialect !== null) {
+            $result['jsonSchemaDialect'] = $this->jsonSchemaDialect;
+        }
 
         if (count($this->servers)) {
             $result['servers'] = array_map(
-                fn (Server $s) => $s->toArray(),
+                $serializeItem,
                 $this->servers,
             );
         }
 
         if (count($this->tags)) {
             $result['tags'] = array_map(
-                fn (Tag $s) => $s->toArray(),
+                $serializeItem,
                 $this->tags,
             );
         }
 
         if ($this->security) {
             $result['security'] = array_map(
-                fn (SecurityRequirement $sr) => $sr->toArray(),
+                $serializeItem,
                 $this->security,
             );
         }
@@ -115,15 +183,23 @@ class OpenApi
             foreach ($this->paths as $pathBuilder) {
                 $paths['/'.$pathBuilder->path] = array_merge(
                     $paths['/'.$pathBuilder->path] ?? [],
-                    $pathBuilder->toArray(),
+                    $serializeItem($pathBuilder),
                 );
             }
 
             $result['paths'] = $paths;
         }
 
-        if (count($serializedComponents = $this->components->toArray())) {
+        if (count($this->webhooks)) {
+            $result['webhooks'] = array_map($serializeItem, $this->webhooks);
+        }
+
+        if (count($serializedComponents = $serializeItem($this->components))) {
             $result['components'] = $serializedComponents;
+        }
+
+        if ($this->externalDocs !== null) {
+            $result['externalDocs'] = $serializeItem($this->externalDocs);
         }
 
         return $result;
