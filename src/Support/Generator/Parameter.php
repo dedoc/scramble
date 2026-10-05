@@ -80,14 +80,7 @@ class Parameter implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
-    public function setSchema(?Schema $schema): self
-    {
-        $this->schema = $schema;
-
-        return $this;
-    }
-
-    public function setSchemaReference(?Reference $schema): self
+    public function setSchema(Schema|Reference|null $schema): self
     {
         $this->schema = $schema;
 
