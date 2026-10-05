@@ -2,7 +2,10 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class Header
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use JsonSerializable;
+
+class Header implements JsonSerializable, OpenApiSerializable
 {
     use WithAttributes;
     use WithExtensions;
@@ -18,6 +21,8 @@ class Header
         public array $examples = [],
         /** @var array<string, MediaType> */
         public array $content = [],
+        /** @var 'simple'|null */
+        public ?string $style = null,
     ) {}
 
     /**
@@ -56,6 +61,17 @@ class Header
     public function setExplode(?bool $explode): self
     {
         $this->explode = $explode;
+
+        return $this;
+    }
+
+    /**
+     * @param  'simple'|null  $style
+     * @return $this
+     */
+    public function setStyle(?string $style): self
+    {
+        $this->style = $style;
 
         return $this;
     }
@@ -142,31 +158,53 @@ class Header
         return $this;
     }
 
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
+    public function toArray(): array
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
     /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
      * @return array<string, mixed>
      */
-    public function toArray(): array
+    private function serialize(callable $serializeItem): array
     {
         $result = array_filter([
             'description' => $this->description,
             'required' => $this->required,
             'deprecated' => $this->deprecated,
             'explode' => $this->explode,
+            'style' => $this->style,
         ], fn ($value) => $value !== null);
 
         if ($this->schema) {
-            $result['schema'] = $this->schema->toArray();
+            $result['schema'] = $serializeItem($this->schema);
         }
 
         $examples = [];
         foreach ($this->examples as $key => $example) {
-            $serializedExample = $example->toArray();
+            $serializedExample = $serializeItem($example);
             if ($serializedExample) {
                 $examples[$key] = $serializedExample;
             }
         }
 
-        $content = array_map(fn ($mt) => $mt->toArray(), $this->content);
+        $content = array_map($serializeItem, $this->content);
 
         return array_merge(
             $result,

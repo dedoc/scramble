@@ -16,21 +16,21 @@ class License implements JsonSerializable, OpenApiSerializable
         public ?string $url = null,
     ) {}
 
-    public function name(string $name): self
+    public function setName(string $name): self
     {
         $this->name = $name;
 
         return $this;
     }
 
-    public function identifier(?string $identifier): self
+    public function setIdentifier(?string $identifier): self
     {
         $this->identifier = $identifier;
 
         return $this;
     }
 
-    public function url(?string $url): self
+    public function setUrl(?string $url): self
     {
         $this->url = $url;
 

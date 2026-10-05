@@ -7,6 +7,8 @@ use JsonSerializable;
 
 class OpenApi implements JsonSerializable, OpenApiSerializable
 {
+    use WithExtensions;
+
     public string $version;
 
     public InfoObject $info;
@@ -91,7 +93,7 @@ class OpenApi implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
-    public function jsonSchemaDialect(?string $jsonSchemaDialect): self
+    public function setJsonSchemaDialect(?string $jsonSchemaDialect): self
     {
         $this->jsonSchemaDialect = $jsonSchemaDialect;
 
@@ -101,7 +103,7 @@ class OpenApi implements JsonSerializable, OpenApiSerializable
     /**
      * @param  array<string, Path|Reference>  $webhooks
      */
-    public function webhooks(array $webhooks): self
+    public function setWebhooks(array $webhooks): self
     {
         $this->webhooks = $webhooks;
 
@@ -115,7 +117,7 @@ class OpenApi implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
-    public function externalDocs(?ExternalDocumentation $externalDocs): self
+    public function setExternalDocs(?ExternalDocumentation $externalDocs): self
     {
         $this->externalDocs = $externalDocs;
 
@@ -202,6 +204,6 @@ class OpenApi implements JsonSerializable, OpenApiSerializable
             $result['externalDocs'] = $serializeItem($this->externalDocs);
         }
 
-        return $result;
+        return array_merge($result, $this->extensionPropertiesToArray());
     }
 }

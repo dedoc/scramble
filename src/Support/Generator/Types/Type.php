@@ -2,11 +2,16 @@
 
 namespace Dedoc\Scramble\Support\Generator\Types;
 
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use Dedoc\Scramble\Support\Generator\Discriminator;
+use Dedoc\Scramble\Support\Generator\ExternalDocumentation;
 use Dedoc\Scramble\Support\Generator\MissingValue;
 use Dedoc\Scramble\Support\Generator\WithAttributes;
 use Dedoc\Scramble\Support\Generator\WithExtensions;
+use Dedoc\Scramble\Support\Generator\Xml;
+use JsonSerializable;
 
-abstract class Type
+abstract class Type implements JsonSerializable, OpenApiSerializable
 {
     use WithAttributes;
     use WithExtensions;
@@ -44,6 +49,12 @@ abstract class Type
     public bool $deprecated = false;
 
     public ?string $pattern = null;
+
+    public ?Discriminator $discriminator = null;
+
+    public ?Xml $xml = null;
+
+    public ?ExternalDocumentation $externalDocs = null;
 
     public function __construct(string $type)
     {
@@ -115,6 +126,9 @@ abstract class Type
         $this->nullable = $fromType->nullable;
         $this->deprecated = $fromType->deprecated;
         $this->pattern = $fromType->pattern;
+        $this->discriminator = $fromType->discriminator;
+        $this->xml = $fromType->xml;
+        $this->externalDocs = $fromType->externalDocs;
 
         return $this;
     }
@@ -122,44 +136,6 @@ abstract class Type
     public function resolve()
     {
         return $this;
-    }
-
-    public function toArray()
-    {
-        $enum = $this->enum;
-        $const = ! is_null($this->const) ? $this->const : null;
-
-        if ($this->nullable && $const !== null) {
-            $enum = [$const, null];
-            $const = null;
-        }
-
-        if ($this->nullable && count($enum) && ! in_array(null, $enum, true)) {
-            $enum = [...$enum, null];
-        }
-
-        return array_merge(
-            array_filter([
-                'type' => $this->nullable ? [$this->type, 'null'] : $this->type,
-                'format' => $this->format,
-                'contentMediaType' => $this->contentMediaType,
-                'contentEncoding' => $this->contentEncoding,
-                'description' => $this->description,
-                'deprecated' => $this->deprecated,
-                'pattern' => $this->pattern,
-                'enum' => count($enum) ? $enum : null,
-                'const' => $const,
-            ]),
-            $this->default instanceof MissingValue ? [] : ['default' => $this->default],
-            count(
-                $examples = collect($this->examples)
-                    ->prepend($this->example) // @phpstan-ignore property.deprecated
-                    ->reject(fn ($example) => $example instanceof MissingValue)
-                    ->values()
-                    ->toArray()
-            ) ? ['examples' => $examples] : [],
-            $this->extensionPropertiesToArray(),
-        );
     }
 
     /**
@@ -242,5 +218,90 @@ abstract class Type
         $this->pattern = $pattern;
 
         return $this;
+    }
+
+    public function setDiscriminator(?Discriminator $discriminator): self
+    {
+        $this->discriminator = $discriminator;
+
+        return $this;
+    }
+
+    public function setXml(?Xml $xml): self
+    {
+        $this->xml = $xml;
+
+        return $this;
+    }
+
+    public function setExternalDocs(?ExternalDocumentation $externalDocs): self
+    {
+        $this->externalDocs = $externalDocs;
+
+        return $this;
+    }
+
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
+    public function toArray()
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
+     */
+    private function serialize(callable $serializeItem): array
+    {
+        $enum = $this->enum;
+        $const = ! is_null($this->const) ? $this->const : null;
+
+        if ($this->nullable && $const !== null) {
+            $enum = [$const, null];
+            $const = null;
+        }
+
+        if ($this->nullable && count($enum) && ! in_array(null, $enum, true)) {
+            $enum = [...$enum, null];
+        }
+
+        return array_merge(
+            array_filter([
+                'type' => $this->nullable ? [$this->type, 'null'] : $this->type,
+                'format' => $this->format,
+                'contentMediaType' => $this->contentMediaType,
+                'contentEncoding' => $this->contentEncoding,
+                'description' => $this->description,
+                'deprecated' => $this->deprecated,
+                'pattern' => $this->pattern,
+                'enum' => count($enum) ? $enum : null,
+                'const' => $const,
+            ]),
+            $this->default instanceof MissingValue ? [] : ['default' => $this->default],
+            count(
+                $examples = collect($this->examples)
+                    ->prepend($this->example) // @phpstan-ignore property.deprecated
+                    ->reject(fn ($example) => $example instanceof MissingValue)
+                    ->values()
+                    ->toArray()
+            ) ? ['examples' => $examples] : [],
+            $this->discriminator !== null ? ['discriminator' => $serializeItem($this->discriminator)] : [],
+            $this->xml !== null ? ['xml' => $serializeItem($this->xml)] : [],
+            $this->externalDocs !== null ? ['externalDocs' => $serializeItem($this->externalDocs)] : [],
+            $this->extensionPropertiesToArray(),
+        );
     }
 }

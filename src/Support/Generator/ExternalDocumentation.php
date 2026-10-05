@@ -15,14 +15,14 @@ class ExternalDocumentation implements JsonSerializable, OpenApiSerializable
         public ?string $description = null,
     ) {}
 
-    public function url(string $url): self
+    public function setUrl(string $url): self
     {
         $this->url = $url;
 
         return $this;
     }
 
-    public function description(?string $description): self
+    public function setDescription(?string $description): self
     {
         $this->description = $description;
 

@@ -134,7 +134,7 @@ class Operation implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
-    public function externalDocs(?ExternalDocumentation $externalDocs): self
+    public function setExternalDocs(?ExternalDocumentation $externalDocs): self
     {
         $this->externalDocs = $externalDocs;
 

@@ -49,28 +49,28 @@ class InfoObject implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
-    public function summary(?string $summary): self
+    public function setSummary(?string $summary): self
     {
         $this->summary = $summary;
 
         return $this;
     }
 
-    public function termsOfService(?string $termsOfService): self
+    public function setTermsOfService(?string $termsOfService): self
     {
         $this->termsOfService = $termsOfService;
 
         return $this;
     }
 
-    public function contact(?Contact $contact): self
+    public function setContact(?Contact $contact): self
     {
         $this->contact = $contact;
 
         return $this;
     }
 
-    public function license(?License $license): self
+    public function setLicense(?License $license): self
     {
         $this->license = $license;
 

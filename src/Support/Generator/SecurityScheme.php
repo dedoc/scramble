@@ -2,13 +2,17 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\ApiKeySecurityScheme;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\HttpSecurityScheme;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\Oauth2SecurityScheme;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\OpenIdConnectUrlSecurityScheme;
+use JsonSerializable;
 
-class SecurityScheme
+class SecurityScheme implements JsonSerializable, OpenApiSerializable
 {
+    use WithExtensions;
+
     public string $type;
 
     public string $description = '';
@@ -68,11 +72,34 @@ class SecurityScheme
         return $this;
     }
 
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
     public function toArray()
     {
-        return array_filter([
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
+     */
+    private function serialize(callable $serializeItem): mixed
+    {
+        return array_merge(array_filter([
             'type' => $this->type,
             'description' => $this->description,
-        ]);
+        ]), $this->extensionPropertiesToArray());
     }
 }

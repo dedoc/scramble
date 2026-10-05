@@ -2,7 +2,10 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class Response
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use JsonSerializable;
+
+class Response implements JsonSerializable, OpenApiSerializable
 {
     use WithAttributes;
     use WithExtensions;
@@ -123,27 +126,6 @@ class Response
         return $this;
     }
 
-    public function toArray()
-    {
-        $result = [
-            'description' => $this->description,
-        ];
-
-        if (count($this->content)) {
-            $result['content'] = array_map(fn ($c) => ['schema' => $c->toArray()], $this->content);
-        }
-
-        $headers = array_map(fn ($header) => $header->toArray(), $this->headers);
-        $links = array_map(fn ($link) => $link->toArray(), $this->links);
-
-        return array_merge(
-            $result,
-            $headers ? ['headers' => $headers] : [],
-            $links ? ['links' => $links] : [],
-            $this->extensionPropertiesToArray(),
-        );
-    }
-
     public function getContent(string $mediaType)
     {
         return $this->content[$mediaType];
@@ -155,5 +137,49 @@ class Response
     public function description(string $string)
     {
         return $this->setDescription($string);
+    }
+
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
+    public function toArray()
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
+     */
+    private function serialize(callable $serializeItem): mixed
+    {
+        $result = [
+            'description' => $this->description,
+        ];
+
+        if (count($this->content)) {
+            $result['content'] = array_map(fn (OpenApiSerializable $item) => ['schema' => $serializeItem($item)], $this->content);
+        }
+
+        $headers = array_map($serializeItem, $this->headers);
+        $links = array_map($serializeItem, $this->links);
+
+        return array_merge(
+            $result,
+            $headers ? ['headers' => $headers] : [],
+            $links ? ['links' => $links] : [],
+            $this->extensionPropertiesToArray(),
+        );
     }
 }

@@ -2,7 +2,10 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class Encoding
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use JsonSerializable;
+
+class Encoding implements JsonSerializable, OpenApiSerializable
 {
     use WithAttributes;
     use WithExtensions;
@@ -87,10 +90,33 @@ class Encoding
         return $this;
     }
 
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
     /**
      * @return array<string, mixed>
      */
     public function toArray(): array
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
+     */
+    private function serialize(callable $serializeItem): mixed
     {
         $result = array_filter([
             'contentType' => $this->contentType,
@@ -99,7 +125,7 @@ class Encoding
             'allowReserved' => $this->allowReserved,
         ], fn ($value) => $value !== null);
 
-        $headers = array_map(fn ($h) => $h->toArray(), $this->headers);
+        $headers = array_map($serializeItem, $this->headers);
 
         return array_merge(
             $result,

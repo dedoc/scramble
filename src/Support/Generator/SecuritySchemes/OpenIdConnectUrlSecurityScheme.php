@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator\SecuritySchemes;
 
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 
 class OpenIdConnectUrlSecurityScheme extends SecurityScheme
@@ -15,9 +16,22 @@ class OpenIdConnectUrlSecurityScheme extends SecurityScheme
         $this->openIdConnectUrl = $openIdConnectUrl;
     }
 
-    public function toArray()
+    public function serializeAs31(): mixed
     {
-        return array_merge(parent::toArray(), [
+        return $this->serialize(parent::serializeAs31(), fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(parent::serializeAs32(), fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
+     */
+    private function serialize(array $parentArray, callable $serializeItem): mixed
+    {
+        return array_merge($parentArray, [
             'openIdConnectUrl' => $this->openIdConnectUrl,
         ]);
     }

@@ -16,21 +16,21 @@ class Contact implements JsonSerializable, OpenApiSerializable
         public ?string $email = null,
     ) {}
 
-    public function name(?string $name): self
+    public function setName(?string $name): self
     {
         $this->name = $name;
 
         return $this;
     }
 
-    public function url(?string $url): self
+    public function setUrl(?string $url): self
     {
         $this->url = $url;
 
         return $this;
     }
 
-    public function email(?string $email): self
+    public function setEmail(?string $email): self
     {
         $this->email = $email;
 

@@ -2,12 +2,17 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class RequestBodyObject
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use JsonSerializable;
+
+class RequestBodyObject implements JsonSerializable, OpenApiSerializable
 {
+    use WithExtensions;
+
     public string $description = '';
 
-    /** @var array<string, Schema> */
-    public array $content;
+    /** @var array<string, Schema|Reference> */
+    public array $content = [];
 
     /**
      * Determines if the request body is required in the request.
@@ -40,7 +45,30 @@ class RequestBodyObject
         return $this;
     }
 
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
     public function toArray()
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
+     */
+    private function serialize(callable $serializeItem): mixed
     {
         $result = array_filter([
             'description' => $this->description,
@@ -50,12 +78,12 @@ class RequestBodyObject
         $content = [];
         foreach ($this->content as $mediaType => $schema) {
             $content[$mediaType] = [
-                'schema' => $schema->toArray(),
+                'schema' => $serializeItem($schema),
             ];
         }
 
         $result['content'] = $content;
 
-        return $result;
+        return array_merge($result, $this->extensionPropertiesToArray());
     }
 }

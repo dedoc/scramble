@@ -2,8 +2,14 @@
 
 namespace Dedoc\Scramble\Support\Generator\SecuritySchemes;
 
-class OAuthFlow
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use Dedoc\Scramble\Support\Generator\WithExtensions;
+use JsonSerializable;
+
+class OAuthFlow implements JsonSerializable, OpenApiSerializable
 {
+    use WithExtensions;
+
     public string $authorizationUrl = '';
 
     public string $tokenUrl = '';
@@ -41,7 +47,30 @@ class OAuthFlow
         return $this;
     }
 
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
     public function toArray()
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
+     */
+    private function serialize(callable $serializeItem): mixed
     {
         return [
             ...array_filter([
@@ -51,6 +80,7 @@ class OAuthFlow
             ]),
             // Never filter 'scopes' as it is allowed to be empty. If empty it must be an object
             'scopes' => empty($this->scopes) ? new \stdClass : $this->scopes,
+            ...$this->extensionPropertiesToArray(),
         ];
     }
 }

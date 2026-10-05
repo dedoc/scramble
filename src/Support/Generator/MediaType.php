@@ -2,7 +2,10 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class MediaType
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use JsonSerializable;
+
+class MediaType implements JsonSerializable, OpenApiSerializable
 {
     use WithAttributes;
     use WithExtensions;
@@ -98,26 +101,49 @@ class MediaType
         return $this;
     }
 
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
     /**
      * @return array<string, mixed>
      */
     public function toArray(): array
     {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
+     */
+    private function serialize(callable $serializeItem): mixed
+    {
         $result = [];
 
         if ($this->schema) {
-            $result['schema'] = $this->schema->toArray();
+            $result['schema'] = $serializeItem($this->schema);
         }
 
         $examples = [];
         foreach ($this->examples as $key => $example) {
-            $serializedExample = $example->toArray();
+            $serializedExample = $serializeItem($example);
             if ($serializedExample) {
                 $examples[$key] = $serializedExample;
             }
         }
 
-        $encoding = array_map(fn ($e) => $e->toArray(), $this->encoding);
+        $encoding = array_map($serializeItem, $this->encoding);
 
         return array_merge(
             $result,

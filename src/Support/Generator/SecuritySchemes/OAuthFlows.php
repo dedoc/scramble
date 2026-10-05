@@ -2,8 +2,14 @@
 
 namespace Dedoc\Scramble\Support\Generator\SecuritySchemes;
 
-class OAuthFlows
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use Dedoc\Scramble\Support\Generator\WithExtensions;
+use JsonSerializable;
+
+class OAuthFlows implements JsonSerializable, OpenApiSerializable
 {
+    use WithExtensions;
+
     public ?OAuthFlow $implicit = null;
 
     public ?OAuthFlow $password = null;
@@ -40,16 +46,39 @@ class OAuthFlows
         return $this;
     }
 
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
     public function toArray()
     {
-        return array_map(
-            fn ($f) => $f->toArray(),
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
+     */
+    private function serialize(callable $serializeItem): mixed
+    {
+        return array_merge(array_map(
+            $serializeItem,
             array_filter([
                 'implicit' => $this->implicit,
                 'password' => $this->password,
                 'clientCredentials' => $this->clientCredentials,
                 'authorizationCode' => $this->authorizationCode,
             ])
-        );
+        ), $this->extensionPropertiesToArray());
     }
 }

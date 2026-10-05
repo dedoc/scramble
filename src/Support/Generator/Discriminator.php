@@ -5,20 +5,37 @@ namespace Dedoc\Scramble\Support\Generator;
 use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use JsonSerializable;
 
-class Tag implements JsonSerializable, OpenApiSerializable
+class Discriminator implements JsonSerializable, OpenApiSerializable
 {
     use WithAttributes;
     use WithExtensions;
 
     public function __construct(
-        public string $name,
-        public ?string $description = null,
-        public ?ExternalDocumentation $externalDocs = null,
+        public string $propertyName,
+        /** @var array<string, string> */
+        public array $mapping = [],
     ) {}
 
-    public function setExternalDocs(?ExternalDocumentation $externalDocs): self
+    public function setPropertyName(string $propertyName): self
     {
-        $this->externalDocs = $externalDocs;
+        $this->propertyName = $propertyName;
+
+        return $this;
+    }
+
+    /**
+     * @param  array<string, string>  $mapping
+     */
+    public function setMapping(array $mapping): self
+    {
+        $this->mapping = $mapping;
+
+        return $this;
+    }
+
+    public function addMapping(string $value, string $schema): self
+    {
+        $this->mapping[$value] = $schema;
 
         return $this;
     }
@@ -28,7 +45,7 @@ class Tag implements JsonSerializable, OpenApiSerializable
         return $this->toArray();
     }
 
-    public function toArray(): mixed
+    public function toArray(): array
     {
         return $this->serializeAs31();
     }
@@ -48,17 +65,9 @@ class Tag implements JsonSerializable, OpenApiSerializable
      */
     private function serialize(callable $serializeItem): array
     {
-        $result = array_filter([
-            'name' => $this->name,
-            'description' => $this->description,
-        ]);
-
-        if ($this->externalDocs) {
-            $result['externalDocs'] = $serializeItem($this->externalDocs);
-        }
-
         return array_merge(
-            $result,
+            ['propertyName' => $this->propertyName],
+            $this->mapping ? ['mapping' => (object) $this->mapping] : [],
             $this->extensionPropertiesToArray(),
         );
     }

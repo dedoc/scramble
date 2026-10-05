@@ -11,11 +11,16 @@ class Responses implements JsonSerializable, OpenApiSerializable
     use WithExtensions;
 
     public function __construct(
-        /** @var array<string, Response|Reference> */
+        /** @var (Response|Reference)[] */
         public array $responses = []
     ) {}
 
     public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
+    public function toArray(): mixed
     {
         return $this->serializeAs31();
     }

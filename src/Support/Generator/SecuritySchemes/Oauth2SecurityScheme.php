@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator\SecuritySchemes;
 
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 
 class Oauth2SecurityScheme extends SecurityScheme
@@ -32,10 +33,23 @@ class Oauth2SecurityScheme extends SecurityScheme
         });
     }
 
-    public function toArray()
+    public function serializeAs31(): mixed
     {
-        return array_merge(parent::toArray(), [
-            'flows' => $this->oAuthFlows->toArray(),
+        return $this->serialize(parent::serializeAs31(), fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(parent::serializeAs32(), fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
+     */
+    private function serialize(array $parentArray, callable $serializeItem): mixed
+    {
+        return array_merge($parentArray, [
+            'flows' => $serializeItem($this->oAuthFlows),
         ]);
     }
 }

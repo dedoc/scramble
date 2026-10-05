@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Generator\Types;
 
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+
 class ArrayType extends Type
 {
     /** @var Type */
@@ -73,18 +75,31 @@ class ArrayType extends Type
         return $this;
     }
 
-    public function toArray()
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(parent::serializeAs31(), fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(parent::serializeAs32(), fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param callable(OpenApiSerializable): mixed $serializeItem
+     */
+    private function serialize(array $parentArray, callable $serializeItem): mixed
     {
         $shouldOmitItems = $this->items->getAttribute('missing')
             && count($this->prefixItems);
 
         return array_merge(
-            parent::toArray(),
+            $parentArray,
             $shouldOmitItems ? [] : [
-                'items' => $this->items->toArray(),
+                'items' => $serializeItem($this->items),
             ],
             $this->prefixItems ? [
-                'prefixItems' => array_map(fn ($item) => $item->toArray(), $this->prefixItems),
+                'prefixItems' => array_map($serializeItem, $this->prefixItems),
             ] : [],
             array_filter([
                 'minItems' => $this->minItems,
