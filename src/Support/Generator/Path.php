@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use JsonSerializable;
 
@@ -22,6 +23,13 @@ class Path implements JsonSerializable, OpenApiSerializable
 
     /** @var array<string, Operation> */
     public array $operations = [];
+
+    /**
+     * OAS 3.2.0+. Keys preserve the HTTP method's request capitalization.
+     *
+     * @var array<string, Operation>
+     */
+    public array $additionalOperations = [];
 
     /** @var Server[] */
     public array $servers = [];
@@ -52,6 +60,33 @@ class Path implements JsonSerializable, OpenApiSerializable
     public function addOperation(Operation $operationBuilder)
     {
         $this->operations[$operationBuilder->method] = $operationBuilder;
+
+        return $this;
+    }
+
+    /**
+     * @param  array<string, Operation>  $additionalOperations
+     * @return $this
+     */
+    public function setAdditionalOperations(array $additionalOperations): self
+    {
+        $this->additionalOperations = $additionalOperations;
+
+        return $this;
+    }
+
+    /** @return $this */
+    public function addAdditionalOperation(string $method, Operation $operation): self
+    {
+        $this->additionalOperations[$method] = $operation;
+
+        return $this;
+    }
+
+    /** @return $this */
+    public function removeAdditionalOperation(string $method): self
+    {
+        unset($this->additionalOperations[$method]);
 
         return $this;
     }
@@ -112,18 +147,18 @@ class Path implements JsonSerializable, OpenApiSerializable
 
     public function serializeAs31(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+        return $this->serialize(OpenApiVersion::V31, fn (OpenApiSerializable $item) => $item->serializeAs31());
     }
 
     public function serializeAs32(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+        return $this->serialize(OpenApiVersion::V32, fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
 
     /**
      * @param  callable(OpenApiSerializable): mixed  $serializeItem
      */
-    private function serialize(callable $serializeItem): mixed
+    private function serialize(OpenApiVersion $version, callable $serializeItem): mixed
     {
         $result = array_filter([
             '$ref' => $this->ref,
@@ -133,6 +168,10 @@ class Path implements JsonSerializable, OpenApiSerializable
 
         foreach ($this->operations as $method => $operation) {
             $result[$method] = $serializeItem($operation);
+        }
+
+        if ($version === OpenApiVersion::V32 && count($this->additionalOperations)) {
+            $result['additionalOperations'] = array_map($serializeItem, $this->additionalOperations);
         }
 
         if (count($this->servers)) {

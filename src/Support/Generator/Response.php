@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use JsonSerializable;
@@ -15,13 +16,16 @@ class Response implements JsonSerializable, OpenApiSerializable
 
     /**
      * Entries added through setContent() retain their Schema or Reference value;
-     * entries added through addContent() contain a MediaType. Use getContent()
+     * entries added through addContent() contain a MediaType or a local media-type reference. Use getContent()
      * to retrieve the schema regardless of how the entry was added, and
      * getMediaType() to retrieve the MediaType object.
      *
      * @var array<string, MediaType|Schema|Reference>
      */
     public array $content = [];
+
+    /** OAS 3.2.0+ */
+    public ?string $summary = null;
 
     public string $description = '';
 
@@ -58,6 +62,14 @@ class Response implements JsonSerializable, OpenApiSerializable
     public function setDescription(string $string): self
     {
         $this->description = $string;
+
+        return $this;
+    }
+
+    /** @return $this */
+    public function setSummary(?string $summary): self
+    {
+        $this->summary = $summary;
 
         return $this;
     }
@@ -145,7 +157,7 @@ class Response implements JsonSerializable, OpenApiSerializable
     /**
      * @return $this
      */
-    public function addContent(string $type, MediaType $mediaType): self
+    public function addContent(string $type, MediaType|Reference $mediaType): self
     {
         $this->content[$type] = $mediaType;
 
@@ -153,7 +165,7 @@ class Response implements JsonSerializable, OpenApiSerializable
     }
 
     /**
-     * Returns the stored MediaType, or a new temporary wrapper for a Schema or Reference.
+     * Returns the stored MediaType or its reference, or a new temporary wrapper for a schema.
      * The wrapper shares the original schema object, but replacing its schema or changing
      * its media type metadata does not update this response.
      *
@@ -161,11 +173,15 @@ class Response implements JsonSerializable, OpenApiSerializable
      * its schema. This method will then remain as a deprecated forwarding alias
      * during the migration period.
      */
-    public function getMediaType(string $mediaType): MediaType
+    public function getMediaType(string $mediaType): MediaType|Reference
     {
         $content = $this->content[$mediaType];
 
         if ($content instanceof MediaType) {
+            return $content;
+        }
+
+        if ($content instanceof Reference && $content->referenceType === 'mediaTypes') {
             return $content;
         }
 
@@ -192,28 +208,29 @@ class Response implements JsonSerializable, OpenApiSerializable
 
     public function serializeAs31(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+        return $this->serialize(OpenApiVersion::V31, fn (OpenApiSerializable $item) => $item->serializeAs31());
     }
 
     public function serializeAs32(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+        return $this->serialize(OpenApiVersion::V32, fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
 
     /**
      * @param  callable(OpenApiSerializable): mixed  $serializeItem
      */
-    private function serialize(callable $serializeItem): mixed
+    private function serialize(OpenApiVersion $version, callable $serializeItem): mixed
     {
         $result = [
             'description' => $this->description,
         ];
 
-        if (count($this->content)) {
-            $result['content'] = array_map(
-                fn (OpenApiSerializable $item) => $serializeItem($item instanceof MediaType ? $item : new MediaType(schema: $this->wrapSchema($item))),
-                $this->content,
-            );
+        if ($version === OpenApiVersion::V32 && $this->summary !== null) {
+            $result['summary'] = $this->summary;
+        }
+
+        foreach ($this->content as $type => $content) {
+            $result['content'][$type] = $serializeItem($this->getMediaType($type));
         }
 
         $headers = array_map($serializeItem, $this->headers);

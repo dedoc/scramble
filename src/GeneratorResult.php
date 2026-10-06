@@ -17,7 +17,7 @@ class GeneratorResult
         public GeneratorConfig $config,
     ) {}
 
-    /** @return array<static, mixed> */
+    /** @return array<string, mixed> */
     public function spec(): array
     {
         $openApi = $this->openApi();

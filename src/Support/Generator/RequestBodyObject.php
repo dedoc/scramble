@@ -13,7 +13,7 @@ class RequestBodyObject implements JsonSerializable, OpenApiSerializable
 
     /**
      * Entries added through setContent() retain their Schema or Reference value;
-     * entries added through addContent() contain a MediaType.
+     * entries added through addContent() contain a MediaType or a local media-type reference.
      *
      * @var array<string, MediaType|Schema|Reference>
      */
@@ -54,17 +54,25 @@ class RequestBodyObject implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
-    public function getContent(string $mediaType): MediaType
+    public function getContent(string $mediaType): MediaType|Reference
     {
         $content = $this->content[$mediaType];
 
-        return $content instanceof MediaType ? $content : new MediaType(schema: $content);
+        if ($content instanceof MediaType) {
+            return $content;
+        }
+
+        if ($content instanceof Reference && $content->referenceType === 'mediaTypes') {
+            return $content;
+        }
+
+        return new MediaType(schema: $content);
     }
 
     /**
      * @return $this
      */
-    public function addContent(string $type, MediaType $mediaType): self
+    public function addContent(string $type, MediaType|Reference $mediaType): self
     {
         $this->content[$type] = $mediaType;
 
@@ -101,12 +109,11 @@ class RequestBodyObject implements JsonSerializable, OpenApiSerializable
             'required' => $this->required,
         ]);
 
-        $content = array_map(
-            fn (OpenApiSerializable $item) => $serializeItem($item instanceof MediaType ? $item : new MediaType(schema: $item)),
-            $this->content,
-        );
+        $result['content'] = [];
 
-        $result['content'] = $content;
+        foreach ($this->content as $type => $content) {
+            $result['content'][$type] = $serializeItem($this->getContent($type));
+        }
 
         return array_merge($result, $this->extensionPropertiesToArray());
     }
