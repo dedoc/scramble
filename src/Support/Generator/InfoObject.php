@@ -85,7 +85,7 @@ class InfoObject implements JsonSerializable, OpenApiSerializable
     /**
      * @return array<string, mixed>
      */
-    public function toArray(): array
+    public function toArray()
     {
         return $this->serializeAs31();
     }

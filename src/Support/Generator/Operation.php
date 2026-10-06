@@ -48,12 +48,14 @@ class Operation implements JsonSerializable, OpenApiSerializable
         $this->method = $method;
     }
 
-    public static function make(string $method): self
+    /** @return self */
+    public static function make(string $method)
     {
         return new self($method);
     }
 
-    public function addRequestBodyObject(RequestBodyObject|Reference $requestBodyObject): self
+    /** @return $this */
+    public function addRequestBodyObject(RequestBodyObject|Reference $requestBodyObject)
     {
         $this->requestBodyObject = $requestBodyObject;
 
@@ -62,8 +64,9 @@ class Operation implements JsonSerializable, OpenApiSerializable
 
     /**
      * @param  Server[]  $servers
+     * @return $this
      */
-    public function servers(array $servers): self
+    public function servers(array $servers)
     {
         $this->servers = $servers;
 
@@ -72,8 +75,9 @@ class Operation implements JsonSerializable, OpenApiSerializable
 
     /**
      * @param  Response|Reference  $response
+     * @return $this
      */
-    public function addResponse($response): self
+    public function addResponse($response)
     {
         $this->responses[] = $response;
 
@@ -87,7 +91,8 @@ class Operation implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
-    public function addSecurity($security): self
+    /** @return $this */
+    public function addSecurity($security)
     {
         if ($security === []) {
             $security = new SecurityRequirement([]);
@@ -99,35 +104,40 @@ class Operation implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
-    public function setOperationId(?string $operationId): self
+    /** @return $this */
+    public function setOperationId(?string $operationId)
     {
         $this->operationId = $operationId;
 
         return $this;
     }
 
-    public function setMethod(string $method): self
+    /** @return $this */
+    public function setMethod(string $method)
     {
         $this->method = $method;
 
         return $this;
     }
 
-    public function setPath(string $path): self
+    /** @return $this */
+    public function setPath(string $path)
     {
         $this->path = $path;
 
         return $this;
     }
 
-    public function summary(string $summary): self
+    /** @return $this */
+    public function summary(string $summary)
     {
         $this->summary = $summary;
 
         return $this;
     }
 
-    public function description(string $description): self
+    /** @return $this */
+    public function description(string $description)
     {
         $this->description = $description;
 
@@ -141,21 +151,24 @@ class Operation implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
-    public function deprecated(bool $deprecated): self
+    /** @return $this */
+    public function deprecated(bool $deprecated)
     {
         $this->deprecated = $deprecated;
 
         return $this;
     }
 
-    public function setTags(array $tags): self
+    /** @return $this */
+    public function setTags(array $tags)
     {
         $this->tags = array_map(fn ($t) => (string) $t, $tags);
 
         return $this;
     }
 
-    public function addParameters(array $parameters): self
+    /** @return $this */
+    public function addParameters(array $parameters)
     {
         $this->parameters = array_merge($this->parameters, $parameters);
 

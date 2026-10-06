@@ -24,13 +24,14 @@ class RequestBodyObject implements JsonSerializable, OpenApiSerializable
      */
     public bool $required = false;
 
-    public static function make(): self
+    /** @return self */
+    public static function make()
     {
         return new self;
     }
 
     /** @return $this */
-    public function setContent(string $type, Schema|Reference $schema): self
+    public function setContent(string $type, Schema|Reference $schema)
     {
         $this->content[$type] = $schema;
 
@@ -38,7 +39,7 @@ class RequestBodyObject implements JsonSerializable, OpenApiSerializable
     }
 
     /** @return $this */
-    public function required(bool $required = true): self
+    public function required(bool $required = true)
     {
         $this->required = $required;
 
@@ -46,7 +47,7 @@ class RequestBodyObject implements JsonSerializable, OpenApiSerializable
     }
 
     /** @return $this */
-    public function description(string $string): self
+    public function description(string $string)
     {
         $this->description = $string;
 

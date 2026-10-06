@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\Generator;
 
 use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use Dedoc\Scramble\Support\Generator\Types\Type;
 use JsonSerializable;
 
 class Response implements JsonSerializable, OpenApiSerializable
@@ -35,7 +36,8 @@ class Response implements JsonSerializable, OpenApiSerializable
         $this->code = $code;
     }
 
-    public static function make(int|string|null $code): self
+    /** @return self */
+    public static function make(int|string|null $code)
     {
         return new self($code);
     }
@@ -163,11 +165,11 @@ class Response implements JsonSerializable, OpenApiSerializable
     {
         $content = $this->content[$mediaType];
 
-        if ($content instanceof Schema || $content instanceof Reference) {
-            return new MediaType(schema: $content);
+        if ($content instanceof MediaType) {
+            return $content;
         }
 
-        return $content;
+        return new MediaType(schema: $this->wrapSchema($content));
     }
 
     /**
@@ -209,7 +211,7 @@ class Response implements JsonSerializable, OpenApiSerializable
 
         if (count($this->content)) {
             $result['content'] = array_map(
-                fn (OpenApiSerializable $item) => $serializeItem($item instanceof MediaType ? $item : new MediaType(schema: $item)),
+                fn (OpenApiSerializable $item) => $serializeItem($item instanceof MediaType ? $item : new MediaType(schema: $this->wrapSchema($item))),
                 $this->content,
             );
         }
@@ -223,5 +225,14 @@ class Response implements JsonSerializable, OpenApiSerializable
             $links ? ['links' => $links] : [],
             $this->extensionPropertiesToArray(),
         );
+    }
+
+    private function wrapSchema(Schema|Type|Reference $item): Schema|Reference
+    {
+        if ($item instanceof Schema || $item instanceof Reference) {
+            return $item;
+        }
+
+        return Schema::fromType($item);
     }
 }
