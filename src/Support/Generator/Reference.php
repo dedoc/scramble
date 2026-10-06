@@ -140,7 +140,7 @@ class Reference extends Type implements JsonSerializable, OpenApiSerializable
     }
 
     /**
-     * @param callable(OpenApiSerializable): mixed $serializeItem
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
      */
     private function serialize(array $parentArray, callable $serializeItem): array
     {

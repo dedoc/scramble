@@ -44,7 +44,7 @@ class Oauth2SecurityScheme extends SecurityScheme
     }
 
     /**
-     * @param callable(OpenApiSerializable): mixed $serializeItem
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
      */
     private function serialize(array $parentArray, callable $serializeItem): mixed
     {

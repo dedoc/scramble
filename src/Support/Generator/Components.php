@@ -135,7 +135,7 @@ class Components implements JsonSerializable, OpenApiSerializable
     }
 
     /**
-     * @param callable(OpenApiSerializable): mixed $serializeItem
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
      */
     private function serialize(callable $serializeItem): mixed
     {

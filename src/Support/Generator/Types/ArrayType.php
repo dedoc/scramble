@@ -86,7 +86,7 @@ class ArrayType extends Type
     }
 
     /**
-     * @param callable(OpenApiSerializable): mixed $serializeItem
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
      */
     private function serialize(array $parentArray, callable $serializeItem): mixed
     {

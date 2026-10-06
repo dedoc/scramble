@@ -179,7 +179,7 @@ class Header implements JsonSerializable, OpenApiSerializable
     }
 
     /**
-     * @param callable(OpenApiSerializable): mixed $serializeItem
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
      * @return array<string, mixed>
      */
     private function serialize(callable $serializeItem): array
