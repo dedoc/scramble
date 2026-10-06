@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use JsonSerializable;
 
@@ -9,6 +10,10 @@ class OpenApi implements JsonSerializable, OpenApiSerializable
 {
     use WithExtensions;
 
+    /** OAS 3.2.0+ */
+    public ?string $self = null;
+
+    /** @deprecated Version is picked by serializer */
     public string $version;
 
     public InfoObject $info;
@@ -34,13 +39,13 @@ class OpenApi implements JsonSerializable, OpenApiSerializable
 
     public ?ExternalDocumentation $externalDocs = null;
 
-    public function __construct(string $version)
+    public function __construct(string $version = '')
     {
-        $this->version = $version;
+        $this->version = '';
         $this->components = new Components;
     }
 
-    public static function make(string $version)
+    public static function make(string $version = '')
     {
         return new self($version);
     }
@@ -93,6 +98,13 @@ class OpenApi implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
+    public function setSelf(?string $self): self
+    {
+        $this->self = $self;
+
+        return $this;
+    }
+
     public function setJsonSchemaDialect(?string $jsonSchemaDialect): self
     {
         $this->jsonSchemaDialect = $jsonSchemaDialect;
@@ -134,25 +146,29 @@ class OpenApi implements JsonSerializable, OpenApiSerializable
         return $this->serializeAs31();
     }
 
-    public function serializeAs31(): mixed
+    public function serializeAs31(): array
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+        return $this->serialize(OpenApiVersion::V31, '3.1.2', fn (OpenApiSerializable $item) => $item->serializeAs31());
     }
 
-    public function serializeAs32(): mixed
+    public function serializeAs32(): array
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+        return $this->serialize(OpenApiVersion::V32, '3.2.0', fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
 
     /**
      * @param  callable(OpenApiSerializable): mixed  $serializeItem
      */
-    private function serialize(callable $serializeItem): mixed
+    private function serialize(OpenApiVersion $version, string $openApiVersion, callable $serializeItem): array
     {
         $result = [
-            'openapi' => $this->version,
+            'openapi' => $openApiVersion,
             'info' => $serializeItem($this->info),
         ];
+
+        if ($version >= OpenApiVersion::V32 && $this->self) {
+            $result['$self'] = $this->self;
+        }
 
         if ($this->jsonSchemaDialect !== null) {
             $result['jsonSchemaDialect'] = $this->jsonSchemaDialect;

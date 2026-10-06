@@ -273,6 +273,11 @@ class GeneratorConfig
             && is_a($reflection->getParameters()[0]->getType()->getName(), DocumentTransformers::class, true);
     }
 
+    public function openApiVersion(): OpenApiVersion
+    {
+        return $this->get('openapi_version', OpenApiVersion::V31);
+    }
+
     /**
      * @param  (callable(ServerVariables): void)|array<string, ServerVariable>  $variables
      */

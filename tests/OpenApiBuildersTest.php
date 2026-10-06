@@ -1,10 +1,44 @@
 <?php
 
+use Dedoc\Scramble\OpenApiVersion;
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityRequirement;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\OAuthFlow;
+
+function serializeAsVersion(OpenApiSerializable $object, OpenApiVersion $version)
+{
+    return match ($version) {
+        OpenApiVersion::V31 => $object->serializeAs31(),
+        OpenApiVersion::V32 => $object->serializeAs32(),
+    };
+}
+
+it('serializes an openapi object for the target version', function (OpenApiVersion $version, array $expected) {
+    $openApi = (new OpenApi)
+        ->setInfo(InfoObject::make('API')->setVersion('0.0.1'))
+        ->setSelf('https://example.com/openapi.json');
+
+    expect(serializeAsVersion($openApi, $version))->toBe($expected);
+})->with([
+    [
+        OpenApiVersion::V31,
+        [
+            'openapi' => '3.1.2',
+            'info' => ['title' => 'API', 'version' => '0.0.1'],
+        ],
+    ],
+    [
+        OpenApiVersion::V32,
+        [
+            'openapi' => '3.2.0',
+            'info' => ['title' => 'API', 'version' => '0.0.1'],
+            '$self' => 'https://example.com/openapi.json',
+        ],
+    ],
+]);
 
 it('builds security scheme', function () {
     $openApi = (new OpenApi('3.1.0'))

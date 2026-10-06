@@ -80,7 +80,7 @@ class Generator
 
         $this->applyDocumentTransformers($context, $typeTransformer);
 
-        return new GeneratorResult($openApi, $context->diagnostics->all(), $context->proNudge);
+        return new GeneratorResult($openApi, $context->diagnostics->all(), $context->proNudge, $config);
     }
 
     public function __invoke(?GeneratorConfig $config = null)
@@ -161,7 +161,7 @@ class Generator
 
     private function makeOpenApi(GeneratorConfig $config)
     {
-        $openApi = OpenApi::make('3.1.0')
+        $openApi = OpenApi::make()
             ->setComponents(new Components)
             ->setInfo(
                 InfoObject::make($config->get('ui.title', $default = config('app.name')) ?: $default)

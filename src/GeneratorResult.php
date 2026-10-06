@@ -14,12 +14,18 @@ class GeneratorResult
         /** @var Collection<int, Diagnostic> */
         public Collection $diagnostics,
         public ProNudgeCollector $proNudge,
+        public GeneratorConfig $config,
     ) {}
 
-    /** @return array<mixed, mixed> */
+    /** @return array<static, mixed> */
     public function spec(): array
     {
-        return $this->openApi()->toArray();
+        $openApi = $this->openApi();
+
+        return match ($this->config->openApiVersion()) {
+            OpenApiVersion::V31 => $openApi->serializeAs31(),
+            OpenApiVersion::V32 => $openApi->serializeAs32(),
+        };
     }
 
     public function openApi(): OpenApi

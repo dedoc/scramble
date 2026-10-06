@@ -41,6 +41,11 @@ return [
         'store' => 'file',
     ],
 
+    /*
+     * OpenAPI version of the resulting document.
+     */
+    'openapi_version' => \Dedoc\Scramble\OpenApiVersion::V31,
+
     'info' => [
         /*
          * API version.
