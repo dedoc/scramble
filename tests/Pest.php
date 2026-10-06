@@ -11,7 +11,9 @@ use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\TypeInferer;
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
+use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Tests\TestCase;
 use Dedoc\Scramble\Tests\Utils\AnalysisResult;
@@ -33,6 +35,14 @@ class JsonSnapshotDriver extends \Spatie\Snapshots\Drivers\JsonDriver
             is_string($actual) ? $actual : json_encode($actual, JSON_THROW_ON_ERROR),
         );
     }
+}
+
+function serializeAsVersion(OpenApiSerializable $object, OpenApiVersion $version)
+{
+    return match ($version) {
+        OpenApiVersion::V31 => $object->serializeAs31(),
+        OpenApiVersion::V32 => $object->serializeAs32(),
+    };
 }
 
 function assertMatchesSnapshot(mixed $actual): void
