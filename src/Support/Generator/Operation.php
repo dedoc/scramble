@@ -210,7 +210,7 @@ class Operation implements JsonSerializable, OpenApiSerializable
             'security' => $this->security !== null
                 ? array_map($serializeItem, $this->security)
                 : null,
-            'servers' => array_map($serializeItem, $this->servers),
+            'servers' => array_map($serializeItem, array_values($this->servers)),
         ], fn ($value, $key) => $key === 'security'
             ? $value !== null
             : (bool) $value,

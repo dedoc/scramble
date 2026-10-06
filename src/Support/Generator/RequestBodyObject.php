@@ -11,7 +11,12 @@ class RequestBodyObject implements JsonSerializable, OpenApiSerializable
 
     public string $description = '';
 
-    /** @var array<string, Schema|Reference> */
+    /**
+     * Entries added through setContent() retain their Schema or Reference value;
+     * entries added through addContent() contain a MediaType.
+     *
+     * @var array<string, MediaType|Schema|Reference>
+     */
     public array $content = [];
 
     /**
@@ -19,28 +24,48 @@ class RequestBodyObject implements JsonSerializable, OpenApiSerializable
      */
     public bool $required = false;
 
-    public static function make()
+    public static function make(): self
     {
         return new self;
     }
 
-    public function setContent(string $type, Schema|Reference $schema)
+    /** @return $this */
+    public function setContent(string $type, Schema|Reference $schema): self
     {
         $this->content[$type] = $schema;
 
         return $this;
     }
 
-    public function required(bool $required = true)
+    /** @return $this */
+    public function required(bool $required = true): self
     {
         $this->required = $required;
 
         return $this;
     }
 
-    public function description(string $string)
+    /** @return $this */
+    public function description(string $string): self
     {
         $this->description = $string;
+
+        return $this;
+    }
+
+    public function getContent(string $mediaType): MediaType
+    {
+        $content = $this->content[$mediaType];
+
+        return $content instanceof MediaType ? $content : new MediaType(schema: $content);
+    }
+
+    /**
+     * @return $this
+     */
+    public function addContent(string $type, MediaType $mediaType): self
+    {
+        $this->content[$type] = $mediaType;
 
         return $this;
     }
@@ -75,12 +100,10 @@ class RequestBodyObject implements JsonSerializable, OpenApiSerializable
             'required' => $this->required,
         ]);
 
-        $content = [];
-        foreach ($this->content as $mediaType => $schema) {
-            $content[$mediaType] = [
-                'schema' => $serializeItem($schema),
-            ];
-        }
+        $content = array_map(
+            fn (OpenApiSerializable $item) => $serializeItem($item instanceof MediaType ? $item : new MediaType(schema: $item)),
+            $this->content,
+        );
 
         $result['content'] = $content;
 

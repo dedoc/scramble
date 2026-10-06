@@ -12,7 +12,14 @@ class Response implements JsonSerializable, OpenApiSerializable
 
     public int|string|null $code = null;
 
-    /** @var array<string, Schema|Reference> */
+    /**
+     * Entries added through setContent() retain their Schema or Reference value;
+     * entries added through addContent() contain a MediaType. Use getContent()
+     * to retrieve the schema regardless of how the entry was added, and
+     * getMediaType() to retrieve the MediaType object.
+     *
+     * @var array<string, MediaType|Schema|Reference>
+     */
     public array $content = [];
 
     public string $description = '';
@@ -28,7 +35,7 @@ class Response implements JsonSerializable, OpenApiSerializable
         $this->code = $code;
     }
 
-    public static function make(int|string|null $code)
+    public static function make(int|string|null $code): self
     {
         return new self($code);
     }
@@ -128,7 +135,39 @@ class Response implements JsonSerializable, OpenApiSerializable
 
     public function getContent(string $mediaType)
     {
-        return $this->content[$mediaType];
+        $content = $this->content[$mediaType];
+
+        return $content instanceof MediaType ? $content->schema : $content;
+    }
+
+    /**
+     * @return $this
+     */
+    public function addContent(string $type, MediaType $mediaType): self
+    {
+        $this->content[$type] = $mediaType;
+
+        return $this;
+    }
+
+    /**
+     * Returns the stored MediaType, or a new temporary wrapper for a Schema or Reference.
+     * The wrapper shares the original schema object, but replacing its schema or changing
+     * its media type metadata does not update this response.
+     *
+     * In a future breaking release, getContent() will return the MediaType instead of
+     * its schema. This method will then remain as a deprecated forwarding alias
+     * during the migration period.
+     */
+    public function getMediaType(string $mediaType): MediaType
+    {
+        $content = $this->content[$mediaType];
+
+        if ($content instanceof Schema || $content instanceof Reference) {
+            return new MediaType(schema: $content);
+        }
+
+        return $content;
     }
 
     /**
@@ -169,7 +208,10 @@ class Response implements JsonSerializable, OpenApiSerializable
         ];
 
         if (count($this->content)) {
-            $result['content'] = array_map(fn (OpenApiSerializable $item) => ['schema' => $serializeItem($item)], $this->content);
+            $result['content'] = array_map(
+                fn (OpenApiSerializable $item) => $serializeItem($item instanceof MediaType ? $item : new MediaType(schema: $item)),
+                $this->content,
+            );
         }
 
         $headers = array_map($serializeItem, $this->headers);
