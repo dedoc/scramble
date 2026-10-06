@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\Generator;
 
 use Dedoc\Scramble\Exceptions\OpenApiReferenceTargetNotFoundException;
+use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -46,6 +47,13 @@ class Components implements JsonSerializable, OpenApiSerializable
 
     /** @var array<string, Path|Reference> */
     public array $pathItems = [];
+
+    /**
+     * OAS 3.2.0+
+     *
+     * @var array<string, MediaType|Reference>
+     */
+    public array $mediaTypes = [];
 
     // @todo: figure out how to solve the problem of duplicating resource names better
     public array $tempNames = [];
@@ -114,6 +122,27 @@ class Components implements JsonSerializable, OpenApiSerializable
         return $this->add(new Reference('pathItems', $name, $this), $pathItem);
     }
 
+    /**
+     * @param  array<string, MediaType|Reference>  $mediaTypes
+     * @return $this
+     */
+    public function setMediaTypes(array $mediaTypes): self
+    {
+        $this->mediaTypes = $mediaTypes;
+
+        return $this;
+    }
+
+    public function addMediaType(string $name, MediaType|Reference $mediaType): Reference
+    {
+        return $this->add(new Reference('mediaTypes', $name, $this), $mediaType);
+    }
+
+    public function removeMediaType(string $name): void
+    {
+        unset($this->mediaTypes[$name]);
+    }
+
     public function jsonSerialize(): mixed
     {
         return $this->toArray();
@@ -126,18 +155,18 @@ class Components implements JsonSerializable, OpenApiSerializable
 
     public function serializeAs31(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+        return $this->serialize(OpenApiVersion::V31, fn (OpenApiSerializable $item) => $item->serializeAs31());
     }
 
     public function serializeAs32(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+        return $this->serialize(OpenApiVersion::V32, fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
 
     /**
      * @param  callable(OpenApiSerializable): mixed  $serializeItem
      */
-    private function serialize(callable $serializeItem): mixed
+    private function serialize(OpenApiVersion $version, callable $serializeItem): mixed
     {
         $result = [];
 
@@ -164,7 +193,13 @@ class Components implements JsonSerializable, OpenApiSerializable
                 ->toArray();
         }
 
-        foreach (['responses', 'parameters', 'examples', 'requestBodies', 'headers', 'links', 'callbacks', 'pathItems'] as $type) {
+        $types = ['responses', 'parameters', 'examples', 'requestBodies', 'headers', 'links', 'callbacks', 'pathItems'];
+
+        if ($version === OpenApiVersion::V32) {
+            $types[] = 'mediaTypes';
+        }
+
+        foreach ($types as $type) {
             if (! count($this->{$type})) {
                 continue;
             }
@@ -270,6 +305,7 @@ class Components implements JsonSerializable, OpenApiSerializable
             'links' => Link::class,
             'callbacks' => Callback::class,
             'pathItems' => Path::class,
+            'mediaTypes' => MediaType::class,
         ];
 
         if (! in_array($reference->referenceType, $referenceTypes = array_keys($references))) {
