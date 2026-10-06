@@ -106,10 +106,7 @@ class MediaType implements JsonSerializable, OpenApiSerializable
         return $this->toArray();
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function toArray(): array
+    public function toArray(): mixed
     {
         return $this->serializeAs31();
     }
@@ -145,12 +142,14 @@ class MediaType implements JsonSerializable, OpenApiSerializable
 
         $encoding = array_map($serializeItem, $this->encoding);
 
-        return array_merge(
+        $result = array_merge(
             $result,
             $this->example instanceof MissingValue ? [] : ['example' => $this->example],
             $examples ? ['examples' => $examples] : [],
             $encoding ? ['encoding' => $encoding] : [],
             $this->extensionPropertiesToArray(),
         );
+
+        return $result ?: (object) [];
     }
 }

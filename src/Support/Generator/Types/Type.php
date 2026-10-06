@@ -41,8 +41,8 @@ abstract class Type implements JsonSerializable, OpenApiSerializable
 
     public array $enum = [];
 
-    /** @var scalar|null */
-    public $const = null;
+    /** @var scalar|null|MissingValue */
+    public $const;
 
     public bool $nullable = false;
 
@@ -61,6 +61,7 @@ abstract class Type implements JsonSerializable, OpenApiSerializable
         $this->type = $type;
         $this->example = new MissingValue; // @phpstan-ignore property.deprecated
         $this->default = new MissingValue;
+        $this->const = new MissingValue;
     }
 
     public function clone(): static
@@ -159,7 +160,7 @@ abstract class Type implements JsonSerializable, OpenApiSerializable
     }
 
     /**
-     * @param  scalar  $const
+     * @param  scalar|null|MissingValue  $const
      * @return $this
      */
     public function const($const): self
@@ -267,11 +268,11 @@ abstract class Type implements JsonSerializable, OpenApiSerializable
     private function serialize(callable $serializeItem): array
     {
         $enum = $this->enum;
-        $const = ! is_null($this->const) ? $this->const : null;
+        $const = $this->const;
 
-        if ($this->nullable && $const !== null) {
+        if ($this->nullable && ! $const instanceof MissingValue && $const !== null) {
             $enum = [$const, null];
-            $const = null;
+            $const = new MissingValue;
         }
 
         if ($this->nullable && count($enum) && ! in_array(null, $enum, true)) {
@@ -288,8 +289,8 @@ abstract class Type implements JsonSerializable, OpenApiSerializable
                 'deprecated' => $this->deprecated,
                 'pattern' => $this->pattern,
                 'enum' => count($enum) ? $enum : null,
-                'const' => $const,
             ]),
+            $const instanceof MissingValue ? [] : ['const' => $const],
             $this->default instanceof MissingValue ? [] : ['default' => $this->default],
             count(
                 $examples = collect($this->examples)

@@ -93,10 +93,6 @@ class Schema implements JsonSerializable, OpenApiSerializable
             'title' => $this->title,
         ]));
 
-        if (empty($result)) {
-            return (object) [];
-        }
-
-        return $result;
+        return $result ?: (object) [];
     }
 }

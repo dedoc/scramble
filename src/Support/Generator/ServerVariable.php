@@ -54,11 +54,10 @@ class ServerVariable implements JsonSerializable, OpenApiSerializable
      */
     private function serialize(callable $serializeItem): mixed
     {
-        $result = array_filter([
-            'default' => $this->default,
+        $result = array_merge(['default' => $this->default], array_filter([
             'enum' => $this->enum && count($this->enum) ? $this->enum : null,
             'description' => $this->description,
-        ]);
+        ]));
 
         return array_merge(
             $result,
