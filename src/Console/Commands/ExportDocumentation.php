@@ -56,7 +56,7 @@ class ExportDocumentation extends Command
         $result = $generator->generate($config);
 
         $specification = json_encode(
-            $result->spec(),
+            $result->spec($config->openApiVersion()),
             JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR,
         );
 

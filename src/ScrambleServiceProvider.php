@@ -371,7 +371,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                          * `spec` here is for backward compatibility in case there is a
                          * stale published view that expects it to exist, will be removed in 1.0
                          */
-                        'spec' => $result->spec(),
+                        'spec' => $result->spec($config->openApiVersion()),
                         'config' => $config,
                         'result' => $result,
                     ]);

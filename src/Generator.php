@@ -80,14 +80,16 @@ class Generator
 
         $this->applyDocumentTransformers($context, $typeTransformer);
 
-        return new GeneratorResult($openApi, $context->diagnostics->all(), $context->proNudge, $config);
+        return new GeneratorResult($openApi, $context->diagnostics->all(), $context->proNudge);
     }
 
     public function __invoke(?GeneratorConfig $config = null)
     {
+        $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
+
         return $this
-            ->generate($config ?? Scramble::getGeneratorConfig(Scramble::DEFAULT_API))
-            ->spec();
+            ->generate($config)
+            ->spec($config->openApiVersion());
     }
 
     /**
