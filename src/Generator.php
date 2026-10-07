@@ -244,6 +244,10 @@ class Generator
 
         /** @var Reference $ref */
         foreach ($references as $ref) {
+            if ($ref->uri !== null) {
+                continue;
+            }
+
             if ($resolvedType = $ref->resolve()) {
                 $traverser->traverse($resolvedType, ['', 'components', $ref->referenceType, $ref->getUniqueName()]);
             }
