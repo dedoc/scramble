@@ -16,6 +16,7 @@ use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Contracts\SecurityDocumentationStrategy;
 use Dedoc\Scramble\Enums\JsonApiArraySerialization;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
+use Dedoc\Scramble\Support\Generator\Tag;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
@@ -24,8 +25,13 @@ use InvalidArgumentException;
 use ReflectionFunction;
 use ReflectionNamedType;
 
+use function DeepCopy\deep_copy;
+
 class GeneratorConfig
 {
+    /** @var list<Tag> */
+    public array $tags = [];
+
     /**
      * @var (Closure(Router, mixed): Route)|string|null
      */
@@ -175,6 +181,7 @@ class GeneratorConfig
         );
 
         $clone->eagerLoadAnalysis = $this->eagerLoadAnalysis;
+        $clone->tags = deep_copy($this->tags);
 
         return $clone;
     }
@@ -271,6 +278,19 @@ class GeneratorConfig
         return count($reflection->getParameters()) === 1
             && $reflection->getParameters()[0]->getType() instanceof ReflectionNamedType
             && is_a($reflection->getParameters()[0]->getType()->getName(), DocumentTransformers::class, true);
+    }
+
+    /**
+     * Defines document tags, replacing any previously configured tags.
+     * Explicit metadata takes precedence over metadata inferred from groups.
+     *
+     * @param  list<Tag>  $tags
+     */
+    public function withTags(array $tags): static
+    {
+        $this->tags = $tags;
+
+        return $this;
     }
 
     public function openApiVersion(): OpenApiVersion
