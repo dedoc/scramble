@@ -56,7 +56,7 @@ it('serializes an openapi object with a server for the target version', function
     [
         OpenApiVersion::V32,
         [
-            'openapi' => '3.2.0',
+            'openapi' => '3.2.1',
             'info' => ['title' => 'API', 'version' => '0.0.1'],
             'servers' => [[
                 'url' => 'https://api.example.com',

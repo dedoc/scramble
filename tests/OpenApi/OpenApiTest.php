@@ -5,6 +5,8 @@ namespace Dedoc\Scramble\Tests\OpenApi;
 use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Support\Generator\InfoObject;
 use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\Path;
 
 it('serializes an openapi object for the target version', function (OpenApiVersion $version, array $expected) {
     $openApi = (new OpenApi)
@@ -23,9 +25,26 @@ it('serializes an openapi object for the target version', function (OpenApiVersi
     [
         OpenApiVersion::V32,
         [
-            'openapi' => '3.2.0',
+            'openapi' => '3.2.1',
             'info' => ['title' => 'API', 'version' => '0.0.1'],
             '$self' => 'https://example.com/openapi.json',
         ],
     ],
+]);
+
+it('serializes empty path items while merging duplicate paths', function (OpenApiVersion $version, string $expected) {
+    $openApi = (new OpenApi)
+        ->setInfo(InfoObject::make('API')->setVersion('0.0.1'))
+        ->addPath(new Path('hidden'))
+        ->addPath(new Path('pets'))
+        ->addPath((new Path('pets'))->addOperation(Operation::make('get')->summary('List pets')))
+        ->addPath(new Path('pets'))
+        ->addPath((new Path('pets'))->addOperation(Operation::make('post')->summary('Create pet')));
+
+    $document = serializeAsVersion($openApi, $version);
+
+    expect(json_encode($document['paths'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES))->toBe($expected);
+})->with([
+    [OpenApiVersion::V31, '{"/hidden":{},"/pets":{"get":{"summary":"List pets"},"post":{"summary":"Create pet"}}}'],
+    [OpenApiVersion::V32, '{"/hidden":{},"/pets":{"get":{"summary":"List pets"},"post":{"summary":"Create pet"}}}'],
 ]);

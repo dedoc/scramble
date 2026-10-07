@@ -46,7 +46,7 @@ class Parameter implements JsonSerializable, OpenApiSerializable
 
     public Schema|Reference|null $schema = null;
 
-    /** @var array<string, MediaType> */
+    /** @var array<string, MediaType|Reference> */
     public array $content = [];
 
     public function __construct(string $name, string $in)
@@ -95,7 +95,8 @@ class Parameter implements JsonSerializable, OpenApiSerializable
     }
 
     /**
-     * @param  array<string, MediaType>  $content
+     * @param  array<string, MediaType|Reference>  $content
+     * @return $this
      */
     public function setContent(array $content): self
     {
@@ -104,7 +105,8 @@ class Parameter implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
-    public function addContent(string $key, MediaType $mediaType): self
+    /** @return $this */
+    public function addContent(string $key, MediaType|Reference $mediaType): self
     {
         $this->content[$key] = $mediaType;
 

@@ -19,7 +19,7 @@ class Header implements JsonSerializable, OpenApiSerializable
         public mixed $example = new MissingValue,
         /** @var array<string, Example|Reference> */
         public array $examples = [],
-        /** @var array<string, MediaType> */
+        /** @var array<string, MediaType|Reference> */
         public array $content = [],
         /** @var 'simple'|null */
         public ?string $style = null,
@@ -108,7 +108,7 @@ class Header implements JsonSerializable, OpenApiSerializable
     }
 
     /**
-     * @param  array<string, MediaType>  $content
+     * @param  array<string, MediaType|Reference>  $content
      * @return $this
      */
     public function setContent(array $content): self
@@ -121,7 +121,7 @@ class Header implements JsonSerializable, OpenApiSerializable
     /**
      * @return $this
      */
-    public function addContent(string $key, MediaType $mediaType): self
+    public function addContent(string $key, MediaType|Reference $mediaType): self
     {
         $this->content[$key] = $mediaType;
 
