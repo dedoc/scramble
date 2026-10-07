@@ -199,10 +199,18 @@ class OpenApi implements JsonSerializable, OpenApiSerializable
             $paths = [];
 
             foreach ($this->paths as $pathBuilder) {
-                $paths['/'.$pathBuilder->path] = array_merge(
-                    (array) ($paths['/'.$pathBuilder->path] ?? []),
-                    (array) $serializeItem($pathBuilder),
-                ) ?: (object) [];
+                $path = '/'.$pathBuilder->path;
+                $existingPath = (array) ($paths[$path] ?? []);
+                $serializedPath = (array) $serializeItem($pathBuilder);
+
+                if (isset($existingPath['additionalOperations'], $serializedPath['additionalOperations'])) {
+                    $serializedPath['additionalOperations'] = array_replace(
+                        $existingPath['additionalOperations'],
+                        $serializedPath['additionalOperations'],
+                    );
+                }
+
+                $paths[$path] = array_merge($existingPath, $serializedPath) ?: (object) [];
             }
 
             $result['paths'] = $paths;

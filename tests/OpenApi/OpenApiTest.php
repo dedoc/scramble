@@ -48,3 +48,31 @@ it('serializes empty path items while merging duplicate paths', function (OpenAp
     [OpenApiVersion::V3_1, '{"/hidden":{},"/pets":{"get":{"summary":"List pets"},"post":{"summary":"Create pet"}}}'],
     [OpenApiVersion::V3_2, '{"/hidden":{},"/pets":{"get":{"summary":"List pets"},"post":{"summary":"Create pet"}}}'],
 ]);
+
+it('preserves additional operations when merging duplicate paths', function () {
+    $openApi = (new OpenApi)
+        ->addPath((new Path('files'))->addAdditionalOperation('COPY', Operation::make('COPY')->summary('Copy file')))
+        ->addPath((new Path('files'))->addAdditionalOperation('MOVE', Operation::make('MOVE')->summary('Move file')));
+
+    expect($openApi->serializeAs32()['paths']['/files'])->toBe([
+        'additionalOperations' => [
+            'COPY' => ['summary' => 'Copy file'],
+            'MOVE' => ['summary' => 'Move file'],
+        ],
+    ]);
+});
+
+it('uses the last additional operation for a duplicate method when merging paths', function () {
+    $openApi = (new OpenApi)
+        ->addPath((new Path('files'))
+            ->addAdditionalOperation('COPY', Operation::make('COPY')->summary('Original copy'))
+            ->addAdditionalOperation('MOVE', Operation::make('MOVE')->summary('Move file')))
+        ->addPath((new Path('files'))->addAdditionalOperation('COPY', Operation::make('COPY')->summary('Updated copy')));
+
+    expect($openApi->serializeAs32()['paths']['/files'])->toBe([
+        'additionalOperations' => [
+            'COPY' => ['summary' => 'Updated copy'],
+            'MOVE' => ['summary' => 'Move file'],
+        ],
+    ]);
+});
