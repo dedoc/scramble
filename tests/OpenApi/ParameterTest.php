@@ -13,12 +13,12 @@ it('serializes parameter content with a media type reference for the target vers
 
     expect(serializeAsVersion($parameter, $version))->toBe($expected);
 })->with([
-    [OpenApiVersion::V31, [
+    [OpenApiVersion::V3_1, [
         'name' => 'filter',
         'in' => 'query',
         'content' => ['application/json' => ['example' => ['active' => true]]],
     ]],
-    [OpenApiVersion::V32, [
+    [OpenApiVersion::V3_2, [
         'name' => 'filter',
         'in' => 'query',
         'content' => ['application/json' => ['$ref' => '#/components/mediaTypes/Filter']],

@@ -132,12 +132,12 @@ class Reference extends Type implements JsonSerializable, OpenApiSerializable
 
     public function serializeAs31(): mixed
     {
-        return $this->serialize(OpenApiVersion::V31, parent::serializeAs31(), fn (OpenApiSerializable $item) => $item->serializeAs31());
+        return $this->serialize(OpenApiVersion::V3_1, parent::serializeAs31(), fn (OpenApiSerializable $item) => $item->serializeAs31());
     }
 
     public function serializeAs32(): mixed
     {
-        return $this->serialize(OpenApiVersion::V32, parent::serializeAs32(), fn (OpenApiSerializable $item) => $item->serializeAs32());
+        return $this->serialize(OpenApiVersion::V3_2, parent::serializeAs32(), fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
 
     /**
@@ -146,7 +146,7 @@ class Reference extends Type implements JsonSerializable, OpenApiSerializable
     private function serialize(OpenApiVersion $version, array $parentArray, callable $serializeItem): mixed
     {
         // OpenAPI 3.1 requires inline Media Type Objects because reusable media types were introduced in 3.2.
-        if ($version === OpenApiVersion::V31 && $this->referenceType === 'mediaTypes') {
+        if ($version === OpenApiVersion::V3_1 && $this->referenceType === 'mediaTypes') {
             return $serializeItem($this->resolve());
         }
 

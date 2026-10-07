@@ -13,10 +13,10 @@ it('serializes header content with a media type reference for the target version
 
     expect(serializeAsVersion($header, $version))->toBe($expected);
 })->with([
-    [OpenApiVersion::V31, [
+    [OpenApiVersion::V3_1, [
         'content' => ['application/json' => ['example' => ['revision' => 1]]],
     ]],
-    [OpenApiVersion::V32, [
+    [OpenApiVersion::V3_2, [
         'content' => ['application/json' => ['$ref' => '#/components/mediaTypes/Metadata']],
     ]],
 ]);

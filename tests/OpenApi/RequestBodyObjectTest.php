@@ -19,14 +19,14 @@ it('serializes a request body with a media type reference for the target version
     expect(serializeAsVersion($requestBody, $version))->toBe($expected);
 })->with([
     [
-        OpenApiVersion::V31,
+        OpenApiVersion::V3_1,
         [
             'required' => true,
             'content' => ['application/json' => ['example' => ['id' => 1]]],
         ],
     ],
     [
-        OpenApiVersion::V32,
+        OpenApiVersion::V3_2,
         [
             'required' => true,
             'content' => ['application/json' => ['$ref' => '#/components/mediaTypes/Payload']],
@@ -46,4 +46,4 @@ it('serializes URI references as schema references', function (OpenApiVersion $v
             'application/xml' => ['schema' => ['$ref' => 'https://example.com/definitions.json#/Payload']],
         ],
     ]);
-})->with([OpenApiVersion::V31, OpenApiVersion::V32]);
+})->with([OpenApiVersion::V3_1, OpenApiVersion::V3_2]);

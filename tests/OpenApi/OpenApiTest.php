@@ -16,14 +16,14 @@ it('serializes an openapi object for the target version', function (OpenApiVersi
     expect(serializeAsVersion($openApi, $version))->toBe($expected);
 })->with([
     [
-        OpenApiVersion::V31,
+        OpenApiVersion::V3_1,
         [
             'openapi' => '3.1.2',
             'info' => ['title' => 'API', 'version' => '0.0.1'],
         ],
     ],
     [
-        OpenApiVersion::V32,
+        OpenApiVersion::V3_2,
         [
             'openapi' => '3.2.1',
             'info' => ['title' => 'API', 'version' => '0.0.1'],
@@ -45,6 +45,6 @@ it('serializes empty path items while merging duplicate paths', function (OpenAp
 
     expect(json_encode($document['paths'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES))->toBe($expected);
 })->with([
-    [OpenApiVersion::V31, '{"/hidden":{},"/pets":{"get":{"summary":"List pets"},"post":{"summary":"Create pet"}}}'],
-    [OpenApiVersion::V32, '{"/hidden":{},"/pets":{"get":{"summary":"List pets"},"post":{"summary":"Create pet"}}}'],
+    [OpenApiVersion::V3_1, '{"/hidden":{},"/pets":{"get":{"summary":"List pets"},"post":{"summary":"Create pet"}}}'],
+    [OpenApiVersion::V3_2, '{"/hidden":{},"/pets":{"get":{"summary":"List pets"},"post":{"summary":"Create pet"}}}'],
 ]);

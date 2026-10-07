@@ -40,8 +40,8 @@ class JsonSnapshotDriver extends \Spatie\Snapshots\Drivers\JsonDriver
 function serializeAsVersion(OpenApiSerializable $object, OpenApiVersion $version)
 {
     return match ($version) {
-        OpenApiVersion::V31 => $object->serializeAs31(),
-        OpenApiVersion::V32 => $object->serializeAs32(),
+        OpenApiVersion::V3_1 => $object->serializeAs31(),
+        OpenApiVersion::V3_2 => $object->serializeAs32(),
     };
 }
 

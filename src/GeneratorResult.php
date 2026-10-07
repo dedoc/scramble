@@ -23,8 +23,8 @@ class GeneratorResult
         $openApi = $this->openApi();
 
         return match ($this->config->openApiVersion()) {
-            OpenApiVersion::V31 => $openApi->serializeAs31(),
-            OpenApiVersion::V32 => $openApi->serializeAs32(),
+            OpenApiVersion::V3_1 => $openApi->serializeAs31(),
+            OpenApiVersion::V3_2 => $openApi->serializeAs32(),
         };
     }
 

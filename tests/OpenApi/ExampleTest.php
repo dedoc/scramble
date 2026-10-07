@@ -12,8 +12,8 @@ it('serializes data and serialized examples for the target version', function (O
 
     expect(serializeAsVersion($example, $version))->toBe($expected);
 })->with([
-    [OpenApiVersion::V31, ['summary' => 'Repeated query parameter']],
-    [OpenApiVersion::V32, [
+    [OpenApiVersion::V3_1, ['summary' => 'Repeated query parameter']],
+    [OpenApiVersion::V3_2, [
         'summary' => 'Repeated query parameter',
         'dataValue' => ['hello world', 'goodbye'],
         'serializedValue' => 'tags=hello%20world&tags=goodbye',
@@ -25,6 +25,6 @@ it('preserves explicit null data and empty serialized examples for the target ve
 
     expect(serializeAsVersion($example, $version))->toBe($expected);
 })->with([
-    [OpenApiVersion::V31, []],
-    [OpenApiVersion::V32, ['dataValue' => null, 'serializedValue' => '']],
+    [OpenApiVersion::V3_1, []],
+    [OpenApiVersion::V3_2, ['dataValue' => null, 'serializedValue' => '']],
 ]);

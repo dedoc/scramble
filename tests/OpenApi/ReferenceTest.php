@@ -15,8 +15,8 @@ it('serializes a media type reference for the target version', function (OpenApi
 
     expect(serializeAsVersion($reference, $version))->toBe($expected);
 })->with([
-    [OpenApiVersion::V31, ['example' => ['id' => 1]]],
-    [OpenApiVersion::V32, ['$ref' => '#/components/mediaTypes/Payload']],
+    [OpenApiVersion::V3_1, ['example' => ['id' => 1]]],
+    [OpenApiVersion::V3_2, ['$ref' => '#/components/mediaTypes/Payload']],
 ]);
 
 it('inlines an empty media type as an object in 3.1', function () {

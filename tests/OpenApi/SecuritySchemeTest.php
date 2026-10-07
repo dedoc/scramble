@@ -20,7 +20,7 @@ it('serializes an oauth2 scheme with a device flow for the target version', func
 
     expect(serializeAsVersion($scheme, $version))->toBe($expected);
 })->with([
-    [OpenApiVersion::V31, [
+    [OpenApiVersion::V3_1, [
         'type' => 'oauth2',
         'flows' => [
             'clientCredentials' => [
@@ -29,7 +29,7 @@ it('serializes an oauth2 scheme with a device flow for the target version', func
             ],
         ],
     ]],
-    [OpenApiVersion::V32, [
+    [OpenApiVersion::V3_2, [
         'type' => 'oauth2',
         'deprecated' => false,
         'oauth2MetadataUrl' => 'https://auth.example.com/.well-known/oauth-authorization-server',

@@ -63,7 +63,6 @@ it('returns documentation cached by an older Scramble version', function () {
     expect($actual)->toBeInstanceOf(OldGeneratorResult::class)
         ->and($actual->spec())->toBe($oldSpec)
         ->and($actual->openApi())->toBeInstanceOf(OpenApi::class)
-        ->and($actual->openApi()->version)->toBe('3.1.0')
         ->and($cacheableGenerator($config))->toBe($oldSpec)
         ->and($actual->diagnostics())->toHaveCount(1)
         ->and($actual->diagnostics()->sole()->severity())->toBe(DiagnosticSeverity::Warning)

@@ -19,8 +19,8 @@ it('serializes nested encodings for the target version', function (OpenApiVersio
 
     expect(serializeAsVersion($encoding, $version))->toBe($expected);
 })->with([
-    [OpenApiVersion::V31, ['contentType' => 'multipart/form-data']],
-    [OpenApiVersion::V32, [
+    [OpenApiVersion::V3_1, ['contentType' => 'multipart/form-data']],
+    [OpenApiVersion::V3_2, [
         'contentType' => 'multipart/form-data',
         'encoding' => [
             'attachments' => [
@@ -42,6 +42,6 @@ it('serializes empty positional encodings as objects', function (OpenApiVersion 
 
     expect(json_encode(serializeAsVersion($mediaType, $version), JSON_THROW_ON_ERROR))->toBe($expected);
 })->with([
-    [OpenApiVersion::V31, '{}'],
-    [OpenApiVersion::V32, '{"prefixEncoding":[{}],"itemEncoding":{}}'],
+    [OpenApiVersion::V3_1, '{}'],
+    [OpenApiVersion::V3_2, '{"prefixEncoding":[{}],"itemEncoding":{}}'],
 ]);

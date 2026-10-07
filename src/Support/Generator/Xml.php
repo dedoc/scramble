@@ -82,12 +82,12 @@ class Xml implements JsonSerializable, OpenApiSerializable
 
     public function serializeAs31(): mixed
     {
-        return $this->serialize(OpenApiVersion::V31, fn (OpenApiSerializable $item) => $item->serializeAs31());
+        return $this->serialize(OpenApiVersion::V3_1, fn (OpenApiSerializable $item) => $item->serializeAs31());
     }
 
     public function serializeAs32(): mixed
     {
-        return $this->serialize(OpenApiVersion::V32, fn (OpenApiSerializable $item) => $item->serializeAs32());
+        return $this->serialize(OpenApiVersion::V3_2, fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
 
     /**
@@ -95,7 +95,7 @@ class Xml implements JsonSerializable, OpenApiSerializable
      */
     private function serialize(OpenApiVersion $version, callable $serializeItem): mixed
     {
-        $hasNodeType = $version === OpenApiVersion::V32 && $this->nodeType !== null;
+        $hasNodeType = $version === OpenApiVersion::V3_2 && $this->nodeType !== null;
 
         $result = array_merge(
             array_filter([

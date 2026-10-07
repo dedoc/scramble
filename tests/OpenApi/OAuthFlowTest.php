@@ -12,11 +12,11 @@ it('serializes a device authorization url for the target version', function (Ope
 
     expect(serializeAsVersion($flow, $version))->toEqual($expected);
 })->with([
-    [OpenApiVersion::V31, [
+    [OpenApiVersion::V3_1, [
         'tokenUrl' => 'https://auth.example.com/token',
         'scopes' => (object) [],
     ]],
-    [OpenApiVersion::V32, [
+    [OpenApiVersion::V3_2, [
         'tokenUrl' => 'https://auth.example.com/token',
         'deviceAuthorizationUrl' => 'https://auth.example.com/device',
         'scopes' => (object) [],

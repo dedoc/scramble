@@ -176,12 +176,12 @@ class MediaType implements JsonSerializable, OpenApiSerializable
 
     public function serializeAs31(): mixed
     {
-        return $this->serialize(OpenApiVersion::V31, fn (OpenApiSerializable $item) => $item->serializeAs31());
+        return $this->serialize(OpenApiVersion::V3_1, fn (OpenApiSerializable $item) => $item->serializeAs31());
     }
 
     public function serializeAs32(): mixed
     {
-        return $this->serialize(OpenApiVersion::V32, fn (OpenApiSerializable $item) => $item->serializeAs32());
+        return $this->serialize(OpenApiVersion::V3_2, fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
 
     /**
@@ -195,7 +195,7 @@ class MediaType implements JsonSerializable, OpenApiSerializable
             $result['schema'] = $serializeItem($this->schema);
         }
 
-        if ($version === OpenApiVersion::V32 && $this->itemSchema !== null) {
+        if ($version === OpenApiVersion::V3_2 && $this->itemSchema !== null) {
             $result['itemSchema'] = $serializeItem($this->itemSchema);
         }
 
@@ -216,7 +216,7 @@ class MediaType implements JsonSerializable, OpenApiSerializable
             $encoding ? ['encoding' => $encoding] : [],
         );
 
-        if ($version === OpenApiVersion::V32) {
+        if ($version === OpenApiVersion::V3_2) {
             if ($this->prefixEncoding) {
                 $result['prefixEncoding'] = array_values(array_map($serializeItem, $this->prefixEncoding));
             }

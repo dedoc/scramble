@@ -72,12 +72,12 @@ class Tag implements JsonSerializable, OpenApiSerializable
 
     public function serializeAs31(): mixed
     {
-        return $this->serialize(OpenApiVersion::V31, fn (OpenApiSerializable $item) => $item->serializeAs31());
+        return $this->serialize(OpenApiVersion::V3_1, fn (OpenApiSerializable $item) => $item->serializeAs31());
     }
 
     public function serializeAs32(): mixed
     {
-        return $this->serialize(OpenApiVersion::V32, fn (OpenApiSerializable $item) => $item->serializeAs32());
+        return $this->serialize(OpenApiVersion::V3_2, fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
 
     /**
@@ -94,7 +94,7 @@ class Tag implements JsonSerializable, OpenApiSerializable
             $result['externalDocs'] = $serializeItem($this->externalDocs);
         }
 
-        if ($version === OpenApiVersion::V32) {
+        if ($version === OpenApiVersion::V3_2) {
             $result = array_merge($result, array_filter([
                 'summary' => $this->summary,
                 'parent' => $this->parent,

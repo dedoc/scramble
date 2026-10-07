@@ -15,14 +15,14 @@ it('serializes a server for the target version', function (OpenApiVersion $versi
     expect(serializeAsVersion($server, $version))->toBe($expected);
 })->with([
     [
-        OpenApiVersion::V31,
+        OpenApiVersion::V3_1,
         [
             'url' => 'https://api.example.com',
             'description' => 'Production environment',
         ],
     ],
     [
-        OpenApiVersion::V32,
+        OpenApiVersion::V3_2,
         [
             'url' => 'https://api.example.com',
             'description' => 'Production environment',
@@ -43,7 +43,7 @@ it('serializes an openapi object with a server for the target version', function
     expect(serializeAsVersion($openApi, $version))->toBe($expected);
 })->with([
     [
-        OpenApiVersion::V31,
+        OpenApiVersion::V3_1,
         [
             'openapi' => '3.1.2',
             'info' => ['title' => 'API', 'version' => '0.0.1'],
@@ -54,7 +54,7 @@ it('serializes an openapi object with a server for the target version', function
         ],
     ],
     [
-        OpenApiVersion::V32,
+        OpenApiVersion::V3_2,
         [
             'openapi' => '3.2.1',
             'info' => ['title' => 'API', 'version' => '0.0.1'],

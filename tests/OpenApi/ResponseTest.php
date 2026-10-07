@@ -20,14 +20,14 @@ it('serializes a response with a summary and media type reference for the target
     expect(serializeAsVersion($response, $version))->toBe($expected);
 })->with([
     [
-        OpenApiVersion::V31,
+        OpenApiVersion::V3_1,
         [
             'description' => 'The requested payload',
             'content' => ['application/json' => ['example' => ['id' => 1]]],
         ],
     ],
     [
-        OpenApiVersion::V32,
+        OpenApiVersion::V3_2,
         [
             'description' => 'The requested payload',
             'summary' => 'Payload returned',
@@ -49,4 +49,4 @@ it('serializes URI references as schema references', function (OpenApiVersion $v
             'application/xml' => ['schema' => ['$ref' => 'https://example.com/definitions.json#/Payload']],
         ],
     ]);
-})->with([OpenApiVersion::V31, OpenApiVersion::V32]);
+})->with([OpenApiVersion::V3_1, OpenApiVersion::V3_2]);

@@ -20,8 +20,8 @@ it('serializes a media type with positional encoding for the target version', fu
 
     expect(serializeAsVersion($mediaType, $version))->toBe($expected);
 })->with([
-    [OpenApiVersion::V31, ['example' => ['metadata', 'image']]],
-    [OpenApiVersion::V32, [
+    [OpenApiVersion::V3_1, ['example' => ['metadata', 'image']]],
+    [OpenApiVersion::V3_2, [
         'itemSchema' => ['type' => 'string'],
         'example' => ['metadata', 'image'],
         'prefixEncoding' => [

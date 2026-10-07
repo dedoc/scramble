@@ -275,7 +275,7 @@ class GeneratorConfig
 
     public function openApiVersion(): OpenApiVersion
     {
-        return $this->get('openapi_version', OpenApiVersion::V31);
+        return $this->get('openapi_version', OpenApiVersion::V3_1);
     }
 
     /**

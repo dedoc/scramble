@@ -13,11 +13,11 @@ it('serializes a tag for the target version', function (OpenApiVersion $version,
 
     expect(serializeAsVersion($tag, $version))->toBe($expected);
 })->with([
-    [OpenApiVersion::V31, [
+    [OpenApiVersion::V3_1, [
         'name' => 'partner',
         'description' => 'Operations available to partners',
     ]],
-    [OpenApiVersion::V32, [
+    [OpenApiVersion::V3_2, [
         'name' => 'partner',
         'description' => 'Operations available to partners',
         'summary' => 'Partner',

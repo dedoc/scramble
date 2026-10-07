@@ -15,9 +15,9 @@ it('serializes reusable media types for the target version', function (OpenApiVe
 
     expect(serializeAsVersion($components, $version))->toBe($expected);
 })->with([
-    [OpenApiVersion::V31, []],
+    [OpenApiVersion::V3_1, []],
     [
-        OpenApiVersion::V32,
+        OpenApiVersion::V3_2,
         [
             'mediaTypes' => [
                 'Payload' => ['example' => ['id' => 1]],

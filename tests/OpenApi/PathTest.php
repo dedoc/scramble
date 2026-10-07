@@ -20,11 +20,11 @@ it('serializes additional operations for the target version', function (OpenApiV
     expect(serializeAsVersion($path, $version))->toBe($expected);
 })->with([
     [
-        OpenApiVersion::V31,
+        OpenApiVersion::V3_1,
         ['get' => ['summary' => 'Read file']],
     ],
     [
-        OpenApiVersion::V32,
+        OpenApiVersion::V3_2,
         [
             'get' => ['summary' => 'Read file'],
             'additionalOperations' => [

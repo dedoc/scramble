@@ -11,11 +11,11 @@ it('serializes a discriminator for the target version', function (OpenApiVersion
 
     expect(serializeAsVersion($discriminator, $version))->toEqual($expected);
 })->with([
-    [OpenApiVersion::V31, [
+    [OpenApiVersion::V3_1, [
         'propertyName' => 'petType',
         'mapping' => (object) ['dog' => '#/components/schemas/Dog'],
     ]],
-    [OpenApiVersion::V32, [
+    [OpenApiVersion::V3_2, [
         'propertyName' => 'petType',
         'mapping' => (object) ['dog' => '#/components/schemas/Dog'],
         'defaultMapping' => '#/components/schemas/OtherPet',
