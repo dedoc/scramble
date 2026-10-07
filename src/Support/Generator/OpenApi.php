@@ -153,7 +153,7 @@ class OpenApi implements JsonSerializable, OpenApiSerializable
 
     public function serializeAs32(): array
     {
-        return $this->serialize(OpenApiVersion::V32, '3.2.0', fn (OpenApiSerializable $item) => $item->serializeAs32());
+        return $this->serialize(OpenApiVersion::V32, '3.2.1', fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
 
     /**
