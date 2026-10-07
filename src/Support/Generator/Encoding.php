@@ -183,10 +183,7 @@ class Encoding implements JsonSerializable, OpenApiSerializable
         return $this->toArray();
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function toArray(): array
+    public function toArray(): mixed
     {
         return $this->serializeAs31();
     }
@@ -234,9 +231,11 @@ class Encoding implements JsonSerializable, OpenApiSerializable
             }
         }
 
-        return array_merge(
+        $result = array_merge(
             $result,
             $this->extensionPropertiesToArray(),
         );
+
+        return $result ?: (object) [];
     }
 }

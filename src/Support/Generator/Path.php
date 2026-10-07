@@ -182,6 +182,8 @@ class Path implements JsonSerializable, OpenApiSerializable
             $result['parameters'] = array_map($serializeItem, $this->parameters);
         }
 
-        return array_merge($result, $this->extensionPropertiesToArray());
+        $result = array_merge($result, $this->extensionPropertiesToArray());
+
+        return $result ?: (object) [];
     }
 }

@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\Tests\OpenApi;
 
 use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Support\Generator\Encoding;
+use Dedoc\Scramble\Support\Generator\MediaType;
 
 it('serializes nested encodings for the target version', function (OpenApiVersion $version, array $expected) {
     $encoding = (new Encoding(contentType: 'multipart/form-data'))
@@ -32,4 +33,15 @@ it('serializes nested encodings for the target version', function (OpenApiVersio
             ],
         ],
     ]],
+]);
+
+it('serializes empty positional encodings as objects', function (OpenApiVersion $version, string $expected) {
+    $mediaType = (new MediaType)
+        ->setPrefixEncoding([new Encoding])
+        ->setItemEncoding(new Encoding);
+
+    expect(json_encode(serializeAsVersion($mediaType, $version), JSON_THROW_ON_ERROR))->toBe($expected);
+})->with([
+    [OpenApiVersion::V31, '{}'],
+    [OpenApiVersion::V32, '{"prefixEncoding":[{}],"itemEncoding":{}}'],
 ]);

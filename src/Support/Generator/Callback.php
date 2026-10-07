@@ -26,20 +26,17 @@ class Callback implements JsonSerializable, OpenApiSerializable
         return $this->toArray();
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function toArray(): array
+    public function toArray(): mixed
     {
         return $this->serializeAs31();
     }
 
-    public function serializeAs31(): array
+    public function serializeAs31(): mixed
     {
         return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
     }
 
-    public function serializeAs32(): array
+    public function serializeAs32(): mixed
     {
         return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
@@ -47,11 +44,13 @@ class Callback implements JsonSerializable, OpenApiSerializable
     /**
      * @param  callable(OpenApiSerializable): mixed  $serializeItem
      */
-    private function serialize(callable $serializeItem): array
+    private function serialize(callable $serializeItem): mixed
     {
-        return array_replace(
+        $result = array_replace(
             array_map($serializeItem, $this->paths),
             $this->extensionPropertiesToArray(),
         );
+
+        return $result ?: (object) [];
     }
 }
