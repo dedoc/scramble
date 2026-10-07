@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use JsonSerializable;
 
@@ -17,6 +18,20 @@ class Encoding implements JsonSerializable, OpenApiSerializable
         public ?string $style = null,
         public ?bool $explode = null,
         public ?bool $allowReserved = null,
+        /**
+         * OAS 3.2.0+
+         *
+         * @var array<string, Encoding>
+         */
+        public array $encoding = [],
+        /**
+         * OAS 3.2.0+
+         *
+         * @var list<Encoding>
+         */
+        public array $prefixEncoding = [],
+        /** OAS 3.2.0+ */
+        public ?Encoding $itemEncoding = null,
     ) {}
 
     /**
@@ -90,6 +105,79 @@ class Encoding implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
+    /**
+     * @param  array<string, Encoding>  $encoding
+     * @return $this
+     */
+    public function setEncoding(array $encoding): self
+    {
+        $this->encoding = $encoding;
+
+        return $this;
+    }
+
+    /**
+     * @param  list<Encoding>  $prefixEncoding
+     * @return $this
+     */
+    public function setPrefixEncoding(array $prefixEncoding): self
+    {
+        $this->prefixEncoding = array_values($prefixEncoding);
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setItemEncoding(?Encoding $itemEncoding): self
+    {
+        $this->itemEncoding = $itemEncoding;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function addEncoding(string $key, Encoding $encoding): self
+    {
+        $this->encoding[$key] = $encoding;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function addPrefixEncoding(Encoding $encoding): self
+    {
+        $this->prefixEncoding[] = $encoding;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function removeEncoding(string $key): self
+    {
+        unset($this->encoding[$key]);
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function removePrefixEncoding(int $index): self
+    {
+        unset($this->prefixEncoding[$index]);
+        $this->prefixEncoding = array_values($this->prefixEncoding);
+
+        return $this;
+    }
+
     public function jsonSerialize(): mixed
     {
         return $this->toArray();
@@ -105,18 +193,18 @@ class Encoding implements JsonSerializable, OpenApiSerializable
 
     public function serializeAs31(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+        return $this->serialize(OpenApiVersion::V31, fn (OpenApiSerializable $item) => $item->serializeAs31());
     }
 
     public function serializeAs32(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+        return $this->serialize(OpenApiVersion::V32, fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
 
     /**
      * @param  callable(OpenApiSerializable): mixed  $serializeItem
      */
-    private function serialize(callable $serializeItem): mixed
+    private function serialize(OpenApiVersion $version, callable $serializeItem): mixed
     {
         $result = array_filter([
             'contentType' => $this->contentType,
@@ -127,9 +215,27 @@ class Encoding implements JsonSerializable, OpenApiSerializable
 
         $headers = array_map($serializeItem, $this->headers);
 
-        return array_merge(
+        $result = array_merge(
             $result,
             $headers ? ['headers' => $headers] : [],
+        );
+
+        if ($version === OpenApiVersion::V32) {
+            if ($this->encoding) {
+                $result['encoding'] = array_map($serializeItem, $this->encoding);
+            }
+
+            if ($this->prefixEncoding) {
+                $result['prefixEncoding'] = array_values(array_map($serializeItem, $this->prefixEncoding));
+            }
+
+            if ($this->itemEncoding !== null) {
+                $result['itemEncoding'] = $serializeItem($this->itemEncoding);
+            }
+        }
+
+        return array_merge(
+            $result,
             $this->extensionPropertiesToArray(),
         );
     }

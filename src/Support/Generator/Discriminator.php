@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use JsonSerializable;
 
@@ -14,6 +15,8 @@ class Discriminator implements JsonSerializable, OpenApiSerializable
         public string $propertyName,
         /** @var array<string, string> */
         public array $mapping = [],
+        /** OAS 3.2.0+ */
+        public ?string $defaultMapping = null,
     ) {}
 
     public function setPropertyName(string $propertyName): self
@@ -40,6 +43,16 @@ class Discriminator implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
+    /**
+     * @return $this
+     */
+    public function setDefaultMapping(?string $defaultMapping): self
+    {
+        $this->defaultMapping = $defaultMapping;
+
+        return $this;
+    }
+
     public function jsonSerialize(): mixed
     {
         return $this->toArray();
@@ -52,22 +65,25 @@ class Discriminator implements JsonSerializable, OpenApiSerializable
 
     public function serializeAs31(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+        return $this->serialize(OpenApiVersion::V31, fn (OpenApiSerializable $item) => $item->serializeAs31());
     }
 
     public function serializeAs32(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+        return $this->serialize(OpenApiVersion::V32, fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
 
     /**
      * @param  callable(OpenApiSerializable): mixed  $serializeItem
      */
-    private function serialize(callable $serializeItem): array
+    private function serialize(OpenApiVersion $version, callable $serializeItem): array
     {
         return array_merge(
             ['propertyName' => $this->propertyName],
             $this->mapping ? ['mapping' => (object) $this->mapping] : [],
+            $version === OpenApiVersion::V32 && $this->defaultMapping !== null
+                ? ['defaultMapping' => $this->defaultMapping]
+                : [],
             $this->extensionPropertiesToArray(),
         );
     }
