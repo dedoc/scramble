@@ -16,10 +16,15 @@ class GeneratorResult
         public ProNudgeCollector $proNudge,
     ) {}
 
-    /** @return array<mixed, mixed> */
-    public function spec(): array
+    /** @return array<string, mixed> */
+    public function spec(OpenApiVersion $version = OpenApiVersion::V3_1): array
     {
-        return $this->openApi()->toArray();
+        $openApi = $this->openApi();
+
+        return match ($version) {
+            OpenApiVersion::V3_1 => $openApi->serializeAs31(),
+            OpenApiVersion::V3_2 => $openApi->serializeAs32(),
+        };
     }
 
     public function openApi(): OpenApi

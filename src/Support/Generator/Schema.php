@@ -2,12 +2,14 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use Illuminate\Support\Collection;
+use JsonSerializable;
 
-class Schema
+class Schema implements JsonSerializable, OpenApiSerializable
 {
     public Type $type;
 
@@ -26,25 +28,6 @@ class Schema
         $this->type = $type;
 
         return $this;
-    }
-
-    public function toArray()
-    {
-        $typeArray = $this->type->toArray();
-
-        if ($typeArray instanceof \stdClass) { // mixed
-            $typeArray = [];
-        }
-
-        $result = array_merge($typeArray, array_filter([
-            'title' => $this->title,
-        ]));
-
-        if (empty($result)) {
-            return (object) [];
-        }
-
-        return $result;
     }
 
     public static function createFromParameters(array $parameters)
@@ -73,5 +56,43 @@ class Schema
         $this->title = $title;
 
         return $this;
+    }
+
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
+    public function toArray()
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
+     */
+    private function serialize(callable $serializeItem): mixed
+    {
+        $typeArray = $serializeItem($this->type);
+
+        if ($typeArray instanceof \stdClass) { // mixed
+            $typeArray = [];
+        }
+
+        $result = array_merge($typeArray, array_filter([
+            'title' => $this->title,
+        ]));
+
+        return $result ?: (object) [];
     }
 }

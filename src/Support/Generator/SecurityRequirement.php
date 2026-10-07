@@ -2,7 +2,10 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class SecurityRequirement
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use JsonSerializable;
+
+class SecurityRequirement implements JsonSerializable, OpenApiSerializable
 {
     /**
      * @var array<string, string[]>
@@ -18,7 +21,30 @@ class SecurityRequirement
         }
     }
 
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
     public function toArray()
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
+     */
+    private function serialize(callable $serializeItem): mixed
     {
         return count($this->items) ? $this->items : (object) [];
     }

@@ -2,7 +2,10 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class Parameter
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use JsonSerializable;
+
+class Parameter implements JsonSerializable, OpenApiSerializable
 {
     use WithAttributes;
     use WithExtensions;
@@ -39,7 +42,12 @@ class Parameter
 
     public bool $allowEmptyValue = false;
 
-    public ?Schema $schema = null;
+    public bool $allowReserved = false;
+
+    public Schema|Reference|null $schema = null;
+
+    /** @var array<string, MediaType|Reference> */
+    public array $content = [];
 
     public function __construct(string $name, string $in)
     {
@@ -58,43 +66,6 @@ class Parameter
         return new static($name, $in);
     }
 
-    public function toArray(): array
-    {
-        $result = array_filter([
-            'name' => $this->name,
-            'in' => $this->in,
-            'required' => $this->required,
-            'description' => $this->description,
-            'deprecated' => $this->deprecated,
-            'allowEmptyValue' => $this->allowEmptyValue,
-            'style' => $this->style,
-        ]);
-
-        if ($this->schema) {
-            $result['schema'] = $this->schema->toArray();
-        }
-
-        $examples = [];
-        if ($this->examples) {
-            foreach ($this->examples as $key => $example) {
-                $serializedExample = $example->toArray();
-                if ($serializedExample) {
-                    $examples[$key] = $serializedExample;
-                }
-            }
-        }
-
-        return array_merge(
-            $result,
-            $this->example instanceof MissingValue ? [] : ['example' => $this->example],
-            ! is_null($this->explode) ? [
-                'explode' => $this->explode,
-            ] : [],
-            $examples ? ['examples' => $examples] : [],
-            $this->extensionPropertiesToArray(),
-        );
-    }
-
     public function required(bool $required)
     {
         $this->required = $required;
@@ -109,9 +80,35 @@ class Parameter
         return $this;
     }
 
-    public function setSchema(?Schema $schema): self
+    public function setSchema(Schema|Reference|null $schema): self
     {
         $this->schema = $schema;
+
+        return $this;
+    }
+
+    public function setAllowReserved(bool $allowReserved): self
+    {
+        $this->allowReserved = $allowReserved;
+
+        return $this;
+    }
+
+    /**
+     * @param  array<string, MediaType|Reference>  $content
+     * @return $this
+     */
+    public function setContent(array $content): self
+    {
+        $this->content = $content;
+
+        return $this;
+    }
+
+    /** @return $this */
+    public function addContent(string $key, MediaType|Reference $mediaType): self
+    {
+        $this->content[$key] = $mediaType;
 
         return $this;
     }
@@ -156,5 +153,67 @@ class Parameter
         $this->style = $style;
 
         return $this;
+    }
+
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
+    public function toArray(): array
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
+     */
+    private function serialize(callable $serializeItem): array
+    {
+        $result = array_filter([
+            'name' => $this->name,
+            'in' => $this->in,
+            'required' => $this->required,
+            'description' => $this->description,
+            'deprecated' => $this->deprecated,
+            'allowEmptyValue' => $this->allowEmptyValue,
+            'allowReserved' => $this->allowReserved,
+            'style' => $this->style,
+        ]);
+
+        if ($this->schema) {
+            $result['schema'] = $serializeItem($this->schema);
+        }
+
+        $examples = [];
+        if ($this->examples) {
+            foreach ($this->examples as $key => $example) {
+                $serializedExample = $serializeItem($example);
+                if ($serializedExample) {
+                    $examples[$key] = $serializedExample;
+                }
+            }
+        }
+
+        return array_merge(
+            $result,
+            $this->example instanceof MissingValue ? [] : ['example' => $this->example],
+            ! is_null($this->explode) ? [
+                'explode' => $this->explode,
+            ] : [],
+            $examples ? ['examples' => $examples] : [],
+            $this->content ? ['content' => array_map($serializeItem, $this->content)] : [],
+            $this->extensionPropertiesToArray(),
+        );
     }
 }

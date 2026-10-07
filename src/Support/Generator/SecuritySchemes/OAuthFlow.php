@@ -2,9 +2,19 @@
 
 namespace Dedoc\Scramble\Support\Generator\SecuritySchemes;
 
-class OAuthFlow
+use Dedoc\Scramble\OpenApiVersion;
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use Dedoc\Scramble\Support\Generator\WithExtensions;
+use JsonSerializable;
+
+class OAuthFlow implements JsonSerializable, OpenApiSerializable
 {
+    use WithExtensions;
+
     public string $authorizationUrl = '';
+
+    /** OAS 3.2.0+ */
+    public ?string $deviceAuthorizationUrl = null;
 
     public string $tokenUrl = '';
 
@@ -16,6 +26,14 @@ class OAuthFlow
     public function authorizationUrl(string $authorizationUrl): OAuthFlow
     {
         $this->authorizationUrl = $authorizationUrl;
+
+        return $this;
+    }
+
+    /** @return $this */
+    public function deviceAuthorizationUrl(?string $deviceAuthorizationUrl): self
+    {
+        $this->deviceAuthorizationUrl = $deviceAuthorizationUrl;
 
         return $this;
     }
@@ -41,7 +59,30 @@ class OAuthFlow
         return $this;
     }
 
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
     public function toArray()
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(OpenApiVersion::V3_1, fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(OpenApiVersion::V3_2, fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
+     */
+    private function serialize(OpenApiVersion $version, callable $serializeItem): mixed
     {
         return [
             ...array_filter([
@@ -49,8 +90,12 @@ class OAuthFlow
                 'tokenUrl' => $this->tokenUrl,
                 'refreshUrl' => $this->refreshUrl,
             ]),
+            ...($version === OpenApiVersion::V3_2 && $this->deviceAuthorizationUrl !== null
+                ? ['deviceAuthorizationUrl' => $this->deviceAuthorizationUrl]
+                : []),
             // Never filter 'scopes' as it is allowed to be empty. If empty it must be an object
             'scopes' => empty($this->scopes) ? new \stdClass : $this->scopes,
+            ...$this->extensionPropertiesToArray(),
         ];
     }
 }

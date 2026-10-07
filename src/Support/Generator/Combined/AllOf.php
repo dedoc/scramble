@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator\Combined;
 
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\Generator\Types\Type;
 use InvalidArgumentException;
@@ -28,21 +29,6 @@ class AllOf extends Type
         return $clone;
     }
 
-    public function toArray()
-    {
-        $parentArray = parent::toArray();
-
-        unset($parentArray['type']);
-
-        return [
-            ...$parentArray,
-            'allOf' => array_map(
-                fn ($item) => $item->toArray(),
-                $this->items,
-            ),
-        ];
-    }
-
     public function setItems($items)
     {
         if (collect($items)->contains(fn ($item) => ! $item instanceof Type)) {
@@ -52,5 +38,31 @@ class AllOf extends Type
         $this->items = $items;
 
         return $this;
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(parent::serializeAs31(), fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(parent::serializeAs32(), fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
+     */
+    private function serialize(array $parentArray, callable $serializeItem): mixed
+    {
+        unset($parentArray['type']);
+
+        return [
+            ...$parentArray,
+            'allOf' => array_map(
+                $serializeItem,
+                $this->items,
+            ),
+        ];
     }
 }

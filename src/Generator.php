@@ -85,9 +85,11 @@ class Generator
 
     public function __invoke(?GeneratorConfig $config = null)
     {
+        $config ??= Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
+
         return $this
-            ->generate($config ?? Scramble::getGeneratorConfig(Scramble::DEFAULT_API))
-            ->spec();
+            ->generate($config)
+            ->spec($config->openApiVersion());
     }
 
     /**
@@ -161,7 +163,7 @@ class Generator
 
     private function makeOpenApi(GeneratorConfig $config)
     {
-        $openApi = OpenApi::make('3.1.0')
+        $openApi = OpenApi::make()
             ->setComponents(new Components)
             ->setInfo(
                 InfoObject::make($config->get('ui.title', $default = config('app.name')) ?: $default)
@@ -242,6 +244,10 @@ class Generator
 
         /** @var Reference $ref */
         foreach ($references as $ref) {
+            if ($ref->uri !== null) {
+                continue;
+            }
+
             if ($resolvedType = $ref->resolve()) {
                 $traverser->traverse($resolvedType, ['', 'components', $ref->referenceType, $ref->getUniqueName()]);
             }

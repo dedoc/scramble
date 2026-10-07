@@ -24,7 +24,7 @@ class OldGeneratorResult extends GeneratorResult
         private array $oldSpec,
     ) {}
 
-    public function spec(): array
+    public function spec(OpenApiVersion $version = OpenApiVersion::V3_1): array
     {
         return $this->oldSpec;
     }

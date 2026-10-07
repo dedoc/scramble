@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Generator\Types;
 
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+
 class NumberType extends Type
 {
     public $min = null;
@@ -27,9 +29,22 @@ class NumberType extends Type
         return $this;
     }
 
-    public function toArray()
+    public function serializeAs31(): mixed
     {
-        return array_merge(parent::toArray(), array_filter([
+        return $this->serialize(parent::serializeAs31(), fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(parent::serializeAs32(), fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
+     */
+    private function serialize(array $parentArray, callable $serializeItem): mixed
+    {
+        return array_merge($parentArray, array_filter([
             'minimum' => $this->min,
             'maximum' => $this->max,
         ], fn ($v) => $v !== null));

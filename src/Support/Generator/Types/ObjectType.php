@@ -2,6 +2,8 @@
 
 namespace Dedoc\Scramble\Support\Generator\Types;
 
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+
 class ObjectType extends Type
 {
     /** @var array<string, Type|null> */
@@ -66,14 +68,34 @@ class ObjectType extends Type
         return $this;
     }
 
-    public function toArray()
+    public function additionalProperties(Type $type)
     {
-        $result = parent::toArray();
+        $this->additionalProperties = $type;
+
+        return $this;
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(parent::serializeAs31(), fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(parent::serializeAs32(), fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
+     */
+    private function serialize(array $parentArray, callable $serializeItem): mixed
+    {
+        $result = $parentArray;
 
         if (count($this->properties)) {
             $properties = [];
             foreach ($this->properties as $name => $property) {
-                $properties[$name] = $property ? $property->toArray() : ['type' => 'string'];
+                $properties[$name] = $property ? $serializeItem($property) : ['type' => 'string'];
             }
             $result['properties'] = $properties;
         }
@@ -83,16 +105,9 @@ class ObjectType extends Type
         }
 
         if ($this->additionalProperties) {
-            $result['additionalProperties'] = $this->additionalProperties->toArray();
+            $result['additionalProperties'] = $serializeItem($this->additionalProperties);
         }
 
         return $result;
-    }
-
-    public function additionalProperties(Type $type)
-    {
-        $this->additionalProperties = $type;
-
-        return $this;
     }
 }

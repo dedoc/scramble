@@ -2,7 +2,10 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class Link
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use JsonSerializable;
+
+class Link implements JsonSerializable, OpenApiSerializable
 {
     use WithAttributes;
     use WithExtensions;
@@ -88,10 +91,33 @@ class Link
         return $this;
     }
 
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
     /**
      * @return array<string, mixed>
      */
     public function toArray(): array
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
+     */
+    private function serialize(callable $serializeItem): mixed
     {
         $result = array_filter([
             'operationRef' => $this->operationRef,
@@ -100,7 +126,7 @@ class Link
         ], fn ($value) => $value !== null);
 
         if ($this->server) {
-            $result['server'] = $this->server->toArray();
+            $result['server'] = $serializeItem($this->server);
         }
 
         if ($this->parameters) {

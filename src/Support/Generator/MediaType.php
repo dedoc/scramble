@@ -2,7 +2,11 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class MediaType
+use Dedoc\Scramble\OpenApiVersion;
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use JsonSerializable;
+
+class MediaType implements JsonSerializable, OpenApiSerializable
 {
     use WithAttributes;
     use WithExtensions;
@@ -14,6 +18,16 @@ class MediaType
         public array $examples = [],
         /** @var array<string, Encoding> */
         public array $encoding = [],
+        /** OAS 3.2.0+ */
+        public Schema|Reference|null $itemSchema = null,
+        /**
+         * OAS 3.2.0+
+         *
+         * @var list<Encoding>
+         */
+        public array $prefixEncoding = [],
+        /** OAS 3.2.0+ */
+        public ?Encoding $itemEncoding = null,
     ) {}
 
     /**
@@ -22,6 +36,16 @@ class MediaType
     public function setSchema(Schema|Reference|null $schema): self
     {
         $this->schema = $schema;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setItemSchema(Schema|Reference|null $itemSchema): self
+    {
+        $this->itemSchema = $itemSchema;
 
         return $this;
     }
@@ -59,6 +83,27 @@ class MediaType
     }
 
     /**
+     * @param  list<Encoding>  $prefixEncoding
+     * @return $this
+     */
+    public function setPrefixEncoding(array $prefixEncoding): self
+    {
+        $this->prefixEncoding = array_values($prefixEncoding);
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setItemEncoding(?Encoding $itemEncoding): self
+    {
+        $this->itemEncoding = $itemEncoding;
+
+        return $this;
+    }
+
+    /**
      * @return $this
      */
     public function addExample(string $key, Example|Reference $example): self
@@ -74,6 +119,16 @@ class MediaType
     public function addEncoding(string $key, Encoding $encoding): self
     {
         $this->encoding[$key] = $encoding;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function addPrefixEncoding(Encoding $encoding): self
+    {
+        $this->prefixEncoding[] = $encoding;
 
         return $this;
     }
@@ -99,32 +154,83 @@ class MediaType
     }
 
     /**
-     * @return array<string, mixed>
+     * @return $this
      */
-    public function toArray(): array
+    public function removePrefixEncoding(int $index): self
+    {
+        unset($this->prefixEncoding[$index]);
+        $this->prefixEncoding = array_values($this->prefixEncoding);
+
+        return $this;
+    }
+
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
+    public function toArray(): mixed
+    {
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(OpenApiVersion::V3_1, fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(OpenApiVersion::V3_2, fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
+     */
+    private function serialize(OpenApiVersion $version, callable $serializeItem): mixed
     {
         $result = [];
 
         if ($this->schema) {
-            $result['schema'] = $this->schema->toArray();
+            $result['schema'] = $serializeItem($this->schema);
+        }
+
+        if ($version === OpenApiVersion::V3_2 && $this->itemSchema !== null) {
+            $result['itemSchema'] = $serializeItem($this->itemSchema);
         }
 
         $examples = [];
         foreach ($this->examples as $key => $example) {
-            $serializedExample = $example->toArray();
+            $serializedExample = $serializeItem($example);
             if ($serializedExample) {
                 $examples[$key] = $serializedExample;
             }
         }
 
-        $encoding = array_map(fn ($e) => $e->toArray(), $this->encoding);
+        $encoding = array_map($serializeItem, $this->encoding);
 
-        return array_merge(
+        $result = array_merge(
             $result,
             $this->example instanceof MissingValue ? [] : ['example' => $this->example],
             $examples ? ['examples' => $examples] : [],
             $encoding ? ['encoding' => $encoding] : [],
+        );
+
+        if ($version === OpenApiVersion::V3_2) {
+            if ($this->prefixEncoding) {
+                $result['prefixEncoding'] = array_values(array_map($serializeItem, $this->prefixEncoding));
+            }
+
+            if ($this->itemEncoding !== null) {
+                $result['itemEncoding'] = $serializeItem($this->itemEncoding);
+            }
+        }
+
+        $result = array_merge(
+            $result,
             $this->extensionPropertiesToArray(),
         );
+
+        return $result ?: (object) [];
     }
 }

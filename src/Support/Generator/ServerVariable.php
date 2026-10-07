@@ -2,7 +2,10 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
-class ServerVariable
+use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
+use JsonSerializable;
+
+class ServerVariable implements JsonSerializable, OpenApiSerializable
 {
     use WithExtensions;
 
@@ -26,13 +29,35 @@ class ServerVariable
         return new self($default, $enum, $description);
     }
 
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
+    }
+
     public function toArray()
     {
-        $result = array_filter([
-            'default' => $this->default,
+        return $this->serializeAs31();
+    }
+
+    public function serializeAs31(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+    }
+
+    public function serializeAs32(): mixed
+    {
+        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+    }
+
+    /**
+     * @param  callable(OpenApiSerializable): mixed  $serializeItem
+     */
+    private function serialize(callable $serializeItem): mixed
+    {
+        $result = array_merge(['default' => $this->default], array_filter([
             'enum' => $this->enum && count($this->enum) ? $this->enum : null,
             'description' => $this->description,
-        ]);
+        ]));
 
         return array_merge(
             $result,
