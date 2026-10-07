@@ -51,6 +51,7 @@ it('serializes empty path items while merging duplicate paths', function (OpenAp
 
 it('preserves additional operations when merging duplicate paths', function () {
     $openApi = (new OpenApi)
+        ->setInfo(InfoObject::make('API')->setVersion('0.0.1'))
         ->addPath((new Path('files'))->addAdditionalOperation('COPY', Operation::make('COPY')->summary('Copy file')))
         ->addPath((new Path('files'))->addAdditionalOperation('MOVE', Operation::make('MOVE')->summary('Move file')));
 
@@ -64,6 +65,7 @@ it('preserves additional operations when merging duplicate paths', function () {
 
 it('uses the last additional operation for a duplicate method when merging paths', function () {
     $openApi = (new OpenApi)
+        ->setInfo(InfoObject::make('API')->setVersion('0.0.1'))
         ->addPath((new Path('files'))
             ->addAdditionalOperation('COPY', Operation::make('COPY')->summary('Original copy'))
             ->addAdditionalOperation('MOVE', Operation::make('MOVE')->summary('Move file')))
