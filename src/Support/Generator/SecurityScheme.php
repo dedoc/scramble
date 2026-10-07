@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator;
 
+use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\ApiKeySecurityScheme;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\HttpSecurityScheme;
@@ -20,6 +21,12 @@ class SecurityScheme implements JsonSerializable, OpenApiSerializable
     public string $schemeName = 'scheme';
 
     public bool $default = false;
+
+    /** OAS 3.2.0+ */
+    public ?bool $deprecated = null;
+
+    /** OAS 3.2.0+ */
+    public ?string $oauth2MetadataUrl = null;
 
     public function __construct(string $type)
     {
@@ -65,6 +72,22 @@ class SecurityScheme implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
+    /** @return $this */
+    public function setDeprecated(?bool $deprecated): self
+    {
+        $this->deprecated = $deprecated;
+
+        return $this;
+    }
+
+    /** @return $this */
+    public function setOauth2MetadataUrl(?string $oauth2MetadataUrl): self
+    {
+        $this->oauth2MetadataUrl = $oauth2MetadataUrl;
+
+        return $this;
+    }
+
     public function default(): self
     {
         $this->default = true;
@@ -84,22 +107,31 @@ class SecurityScheme implements JsonSerializable, OpenApiSerializable
 
     public function serializeAs31(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+        return $this->serialize(OpenApiVersion::V31, fn (OpenApiSerializable $item) => $item->serializeAs31());
     }
 
     public function serializeAs32(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+        return $this->serialize(OpenApiVersion::V32, fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
 
     /**
      * @param  callable(OpenApiSerializable): mixed  $serializeItem
      */
-    private function serialize(callable $serializeItem): mixed
+    private function serialize(OpenApiVersion $version, callable $serializeItem): mixed
     {
-        return array_merge(array_filter([
+        $result = array_filter([
             'type' => $this->type,
             'description' => $this->description,
-        ]), $this->extensionPropertiesToArray());
+        ]);
+
+        if ($version === OpenApiVersion::V32) {
+            $result = array_merge($result, array_filter([
+                'deprecated' => $this->deprecated,
+                'oauth2MetadataUrl' => $this->oauth2MetadataUrl,
+            ], fn ($value) => $value !== null));
+        }
+
+        return array_merge($result, $this->extensionPropertiesToArray());
     }
 }

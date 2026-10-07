@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\Generator\SecuritySchemes;
 
+use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use Dedoc\Scramble\Support\Generator\WithExtensions;
 use JsonSerializable;
@@ -17,6 +18,9 @@ class OAuthFlows implements JsonSerializable, OpenApiSerializable
     public ?OAuthFlow $clientCredentials = null;
 
     public ?OAuthFlow $authorizationCode = null;
+
+    /** OAS 3.2.0+ */
+    public ?OAuthFlow $deviceAuthorization = null;
 
     public function implicit(?OAuthFlow $flow): OAuthFlows
     {
@@ -46,6 +50,14 @@ class OAuthFlows implements JsonSerializable, OpenApiSerializable
         return $this;
     }
 
+    /** @return $this */
+    public function deviceAuthorization(?OAuthFlow $flow): self
+    {
+        $this->deviceAuthorization = $flow;
+
+        return $this;
+    }
+
     public function jsonSerialize(): mixed
     {
         return $this->toArray();
@@ -58,18 +70,18 @@ class OAuthFlows implements JsonSerializable, OpenApiSerializable
 
     public function serializeAs31(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs31());
+        return $this->serialize(OpenApiVersion::V31, fn (OpenApiSerializable $item) => $item->serializeAs31());
     }
 
     public function serializeAs32(): mixed
     {
-        return $this->serialize(fn (OpenApiSerializable $item) => $item->serializeAs32());
+        return $this->serialize(OpenApiVersion::V32, fn (OpenApiSerializable $item) => $item->serializeAs32());
     }
 
     /**
      * @param  callable(OpenApiSerializable): mixed  $serializeItem
      */
-    private function serialize(callable $serializeItem): mixed
+    private function serialize(OpenApiVersion $version, callable $serializeItem): mixed
     {
         return array_merge(array_map(
             $serializeItem,
@@ -78,6 +90,7 @@ class OAuthFlows implements JsonSerializable, OpenApiSerializable
                 'password' => $this->password,
                 'clientCredentials' => $this->clientCredentials,
                 'authorizationCode' => $this->authorizationCode,
+                'deviceAuthorization' => $version === OpenApiVersion::V32 ? $this->deviceAuthorization : null,
             ])
         ), $this->extensionPropertiesToArray());
     }
