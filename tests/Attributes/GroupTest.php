@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Tests\Attributes;
 use Attribute;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Generator;
+use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
@@ -186,5 +187,79 @@ class GroupTest_A5_Controller
 class GroupTest_B5_Controller
 {
     #[GroupTest_OrdersGroup]
+    public function __invoke() {}
+}
+
+it('orders child tags by weight and creates their shared parent once', function () {
+    config(['scramble.openapi_version' => OpenApiVersion::V3_2]);
+    Scramble::configure()->useConfig(config('scramble'));
+    RouteFacade::get('api/profiles', GroupTest_Profiles_Controller::class);
+    RouteFacade::get('api/users', GroupTest_Users_Controller::class);
+    RouteFacade::get('api/ungrouped', GroupTest_Ungrouped_Controller::class);
+
+    Scramble::routes(fn (Route $r) => in_array($r->uri, ['api/users', 'api/profiles', 'api/ungrouped']));
+
+    $openApiDoc = app()->make(Generator::class)();
+
+    expect($openApiDoc['tags'])->toBe([
+        ['name' => 'users', 'parent' => 'User Management'],
+        ['name' => 'profiles', 'parent' => 'User Management'],
+        ['name' => 'ungrouped'],
+        ['name' => 'User Management'],
+    ])->and($openApiDoc)->not->toHaveKey('x-tagGroups');
+});
+#[Group(name: 'users', parent: 'User Management', weight: 1)]
+class GroupTest_Users_Controller
+{
+    public function __invoke() {}
+}
+#[Group(name: 'profiles', parent: 'User Management', weight: 2)]
+class GroupTest_Profiles_Controller
+{
+    public function __invoke() {}
+}
+#[Group(name: 'ungrouped')]
+class GroupTest_Ungrouped_Controller
+{
+    public function __invoke() {}
+}
+
+it('maps group metadata to document tags', function (string $controller, array $expected) {
+    config(['scramble.openapi_version' => OpenApiVersion::V3_2]);
+
+    $openApiDoc = generateForRoute(fn () => RouteFacade::get('api/documented', $controller));
+
+    expect($openApiDoc['tags'])->toBe([$expected]);
+})->with([
+    'all metadata' => [
+        GroupTest_Metadata_Controller::class,
+        [
+            'name' => 'Documented',
+            'description' => 'Full description',
+            'externalDocs' => ['description' => 'More info', 'url' => 'https://example.com/docs'],
+            'summary' => 'Short summary',
+            'kind' => 'nav',
+        ],
+    ],
+    'external documentation URL only' => [
+        GroupTest_ExternalDocsUrl_Controller::class,
+        ['name' => 'UrlOnly', 'externalDocs' => ['url' => 'https://example.com/docs']],
+    ],
+]);
+#[Group(
+    name: 'Documented',
+    description: 'Full description',
+    summary: 'Short summary',
+    kind: 'nav',
+    externalDocsUrl: 'https://example.com/docs',
+    externalDocsDescription: 'More info',
+)]
+class GroupTest_Metadata_Controller
+{
+    public function __invoke() {}
+}
+#[Group(name: 'UrlOnly', externalDocsUrl: 'https://example.com/docs')]
+class GroupTest_ExternalDocsUrl_Controller
+{
     public function __invoke() {}
 }
