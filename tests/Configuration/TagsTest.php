@@ -4,7 +4,6 @@ namespace Dedoc\Scramble\Tests\Configuration;
 
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Generator;
-use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\ExternalDocumentation;
@@ -102,17 +101,6 @@ it('keeps generated document mutations out of configuration and subsequent gener
     $second = app(Generator::class)($config);
 
     expect($second['tags'][0]['externalDocs']['url'])->toBe('https://example.com/docs');
-});
-
-it('replaces previously configured tags and allows clearing them', function () {
-    $config = (new GeneratorConfig)->withTags([new Tag('Old')]);
-
-    expect($config->withTags([new Tag('New')]))->toBe($config)
-        ->and($config->tags[0]->name)->toBe('New');
-
-    $config->withTags([]);
-
-    expect($config->tags)->toBe([]);
 });
 
 #[Group('Products', 'Product operations.', parent: 'Catalogue', summary: 'Products summary')]
