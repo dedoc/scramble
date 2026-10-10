@@ -33,18 +33,35 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
         );
         $returnNode = $returnNodeStatement?->expr ?? null;
 
+        $formRequestDiagnostics = new DiagnosticsCollector;
+        $nodeDiagnostics = new DiagnosticsCollector;
+
         $evaluators = [
-            new FormRequestRulesEvaluator($this->classReflector, $this->method, $this->diagnostics),
-            new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className, $rulesMethod->getFunctionLikeDefinition()->getScope(), $this->diagnostics, $this->routeInfo),
+            [new FormRequestRulesEvaluator($this->classReflector, $this->method, $formRequestDiagnostics), $formRequestDiagnostics],
+            [new NodeRulesEvaluator($this->printer, $rulesMethodNode, $returnNode, $this->method, $this->classReflector->className, $rulesMethod->getFunctionLikeDefinition()->getScope(), $nodeDiagnostics, $this->routeInfo), $nodeDiagnostics],
         ];
 
         $exceptions = [];
 
-        foreach ($evaluators as $evaluator) {
+        foreach ($evaluators as [$evaluator, $diagnostics]) {
             try {
-                return $evaluator->handle();
+                $rules = $evaluator->handle();
             } catch (\Throwable $e) {
                 $exceptions[$evaluator::class] = $e;
+
+                continue;
+            }
+
+            foreach ($diagnostics->all() as $diagnostic) {
+                $this->diagnostics->reportOnce($diagnostic);
+            }
+
+            return $rules;
+        }
+
+        foreach ($evaluators as [, $diagnostics]) {
+            foreach ($diagnostics->all() as $diagnostic) {
+                $this->diagnostics->reportOnce($diagnostic);
             }
         }
 
