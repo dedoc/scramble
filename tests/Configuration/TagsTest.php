@@ -81,6 +81,27 @@ it('accepts a parent declared centrally when missing parents must not be created
     expect(collect($document['tags'])->pluck('name')->all())->toBe(['Catalogue', 'Products']);
 });
 
+it('names every tag whose parent is missing, configured or from a group', function () {
+    Scramble::configure()->withTags([
+        new Tag('Help', parent: 'Support'),
+    ], createMissingParents: false);
+
+    generateForRoute(fn () => Route::get('api/products', TagsTest_ProductsController::class));
+})->throws(MissingParentTagException::class, '[Help] names parent [Support], [Products] names parent [Catalogue]');
+
+it('accepts a group of endpoints as parent when missing parents must not be created', function () {
+    Route::get('api/catalogue', TagsTest_CatalogueController::class);
+    Route::get('api/products', TagsTest_ProductsController::class);
+
+    $config = Scramble::configure()->useConfig(config('scramble'))
+        ->routes(fn ($route) => in_array($route->uri, ['api/catalogue', 'api/products'], true))
+        ->withTags([], createMissingParents: false);
+
+    $document = app(Generator::class)($config);
+
+    expect(collect($document['tags'])->pluck('name')->sort()->values()->all())->toBe(['Catalogue', 'Products']);
+});
+
 it('passes on whether missing parents may be created to other APIs', function () {
     Scramble::configure()->withTags([], createMissingParents: false);
 
@@ -128,6 +149,12 @@ it('keeps generated document mutations out of configuration and subsequent gener
 
 #[Group('Products', 'Product operations.', parent: 'Catalogue', summary: 'Products summary')]
 class TagsTest_ProductsController
+{
+    public function __invoke() {}
+}
+
+#[Group('Catalogue', 'Everything available for purchase.')]
+class TagsTest_CatalogueController
 {
     public function __invoke() {}
 }
