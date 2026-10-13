@@ -4,24 +4,33 @@ namespace Dedoc\Scramble\DocumentTransformers;
 
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Contracts\DocumentTransformer;
+use Dedoc\Scramble\Exceptions\MissingParentTagException;
 use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\Support\Generator\ExternalDocumentation;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Tag;
 use Illuminate\Support\Collection;
 use ReflectionAttribute;
 
+use function DeepCopy\deep_copy;
+
 class AddDocumentTags implements DocumentTransformer
 {
     public function handle(OpenApi $document, OpenApiContext $context): void
     {
-        $document->tags = $this->makeTagsFromGroupAttributes($context->groups);
+        $document->tags = $this->makeTagsFromGroupAttributes(
+            $context->groups,
+            $context->config->tags,
+            $context->config->createMissingParents,
+        );
     }
 
     /**
      * @param  Collection<int, ReflectionAttribute<Group>>  $groupsAttributes
+     * @param  list<Tag>  $configuredTags
      * @return Tag[]
      */
-    private function makeTagsFromGroupAttributes(Collection $groupsAttributes)
+    private function makeTagsFromGroupAttributes(Collection $groupsAttributes, array $configuredTags, bool $createMissingParents)
     {
         /** @var Collection<string, Tag> $tags */
         $tags = $groupsAttributes->reduce(function (Collection $acc, ReflectionAttribute $attribute) {
@@ -47,11 +56,60 @@ class AddDocumentTags implements DocumentTransformer
                 $tag->setAttribute('weight', $weight);
             }
 
+            if ($group->parent !== null && $tag->parent === null) {
+                $tag->parent = $group->parent;
+            }
+
+            if ($group->summary !== null && $tag->summary === null) {
+                $tag->summary = $group->summary;
+            }
+
+            if ($group->kind !== null && $tag->kind === null) {
+                $tag->kind = $group->kind;
+            }
+
+            if ($group->externalDocsUrl !== null && $tag->externalDocs === null) {
+                $tag->externalDocs = new ExternalDocumentation(
+                    url: $group->externalDocsUrl,
+                    description: $group->externalDocsDescription,
+                );
+            }
+
             $acc->offsetSet($name, $tag);
 
             return $acc;
-        }, collect());
+        }, collect(deep_copy($configuredTags))->keyBy(fn (Tag $tag) => $tag->name));
+
+        $this->addMissingParentTags($tags, $createMissingParents);
 
         return $tags->sortBy(fn (Tag $t) => $t->getAttribute('weight', INF))->values()->all();
+    }
+
+    /**
+     * A tag naming a parent nothing declares would leave the document invalid: the
+     * spec requires the named parent to exist in the API description. Such a parent
+     * is added as a bare tag, unless missing parents must not be created.
+     *
+     * @param  Collection<string, Tag>  $tags
+     *
+     * @throws MissingParentTagException
+     */
+    private function addMissingParentTags(Collection $tags, bool $createMissingParents): void
+    {
+        $orphans = $tags->filter(fn (Tag $tag): bool => $tag->parent !== null && ! $tags->has($tag->parent));
+
+        if ($orphans->isEmpty()) {
+            return;
+        }
+
+        if (! $createMissingParents) {
+            throw MissingParentTagException::forTags(array_values($orphans->all()));
+        }
+
+        $orphans->each(function (Tag $tag) use ($tags) {
+            if ($tag->parent !== null && ! $tags->has($tag->parent)) {
+                $tags->offsetSet($tag->parent, new Tag($tag->parent));
+            }
+        });
     }
 }

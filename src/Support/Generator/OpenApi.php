@@ -186,6 +186,10 @@ class OpenApi implements JsonSerializable, OpenApiSerializable
                 $serializeItem,
                 $this->tags,
             );
+
+            if ($version === OpenApiVersion::V3_1 && $tagGroups = $this->serializeTagGroups()) {
+                $result['x-tagGroups'] = $tagGroups;
+            }
         }
 
         if ($this->security) {
@@ -229,5 +233,57 @@ class OpenApi implements JsonSerializable, OpenApiSerializable
         }
 
         return array_merge($result, $this->extensionPropertiesToArray());
+    }
+
+    /**
+     * Each group lists the immediate children of its parent tag.
+     * Standalone tags get their own group to remain visible in renderers like Redoc.
+     *
+     * @return list<array{name: string, tags: list<string>}>
+     */
+    private function serializeTagGroups(): array
+    {
+        $parents = [];
+
+        foreach ($this->tags as $tag) {
+            if ($tag->parent !== null) {
+                $parents[$tag->parent] = true;
+            }
+        }
+
+        if (! $parents) {
+            return [];
+        }
+
+        $groups = [];
+        $tagNames = [];
+
+        foreach ($this->tags as $tag) {
+            $tagNames[$tag->name] = true;
+
+            if ($tag->parent === null && isset($parents[$tag->name])) {
+                continue;
+            }
+
+            $name = $tag->parent ?? $tag->name;
+            $groups[$name] ??= ['name' => $name, 'tags' => []];
+            $groups[$name]['tags'][] = $tag->name;
+        }
+
+        foreach ($this->paths as $path) {
+            foreach ($path->operations as $operation) {
+                foreach ($operation->tags as $name) {
+                    if (isset($tagNames[$name])) {
+                        continue;
+                    }
+
+                    $groups[$name] ??= ['name' => $name, 'tags' => []];
+                    $groups[$name]['tags'][] = $name;
+                    $tagNames[$name] = true;
+                }
+            }
+        }
+
+        return array_values($groups);
     }
 }

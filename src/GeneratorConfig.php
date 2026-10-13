@@ -16,6 +16,7 @@ use Dedoc\Scramble\Contracts\RuleTransformer;
 use Dedoc\Scramble\Contracts\SecurityDocumentationStrategy;
 use Dedoc\Scramble\Enums\JsonApiArraySerialization;
 use Dedoc\Scramble\Support\Generator\ServerVariable;
+use Dedoc\Scramble\Support\Generator\Tag;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
@@ -24,8 +25,15 @@ use InvalidArgumentException;
 use ReflectionFunction;
 use ReflectionNamedType;
 
+use function DeepCopy\deep_copy;
+
 class GeneratorConfig
 {
+    /** @var list<Tag> */
+    public array $tags = [];
+
+    public bool $createMissingParents = true;
+
     /**
      * @var (Closure(Router, mixed): Route)|string|null
      */
@@ -175,6 +183,8 @@ class GeneratorConfig
         );
 
         $clone->eagerLoadAnalysis = $this->eagerLoadAnalysis;
+        $clone->tags = deep_copy($this->tags);
+        $clone->createMissingParents = $this->createMissingParents;
 
         return $clone;
     }
@@ -271,6 +281,25 @@ class GeneratorConfig
         return count($reflection->getParameters()) === 1
             && $reflection->getParameters()[0]->getType() instanceof ReflectionNamedType
             && is_a($reflection->getParameters()[0]->getType()->getName(), DocumentTransformers::class, true);
+    }
+
+    /**
+     * Defines document tags, replacing any previously configured tags.
+     * Explicit metadata takes precedence over metadata inferred from groups.
+     *
+     * A tag may name a parent that no tag declares. By default the parent is
+     * added as a bare tag, so the document stays valid. With
+     * `createMissingParents: false` generation fails instead, so every parent
+     * has to be declared here, with its description.
+     *
+     * @param  list<Tag>  $tags
+     */
+    public function withTags(array $tags, bool $createMissingParents = true): static
+    {
+        $this->tags = $tags;
+        $this->createMissingParents = $createMissingParents;
+
+        return $this;
     }
 
     public function openApiVersion(): OpenApiVersion
