@@ -4,6 +4,7 @@ namespace Dedoc\Scramble\DocumentTransformers;
 
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Contracts\DocumentTransformer;
+use Dedoc\Scramble\Exceptions\MissingParentTagException;
 use Dedoc\Scramble\OpenApiContext;
 use Dedoc\Scramble\Support\Generator\ExternalDocumentation;
 use Dedoc\Scramble\Support\Generator\OpenApi;
@@ -17,7 +18,11 @@ class AddDocumentTags implements DocumentTransformer
 {
     public function handle(OpenApi $document, OpenApiContext $context): void
     {
-        $document->tags = $this->makeTagsFromGroupAttributes($context->groups, $context->config->tags);
+        $document->tags = $this->makeTagsFromGroupAttributes(
+            $context->groups,
+            $context->config->tags,
+            $context->config->createMissingParents,
+        );
     }
 
     /**
@@ -25,7 +30,7 @@ class AddDocumentTags implements DocumentTransformer
      * @param  list<Tag>  $configuredTags
      * @return Tag[]
      */
-    private function makeTagsFromGroupAttributes(Collection $groupsAttributes, array $configuredTags)
+    private function makeTagsFromGroupAttributes(Collection $groupsAttributes, array $configuredTags, bool $createMissingParents)
     {
         /** @var Collection<string, Tag> $tags */
         $tags = $groupsAttributes->reduce(function (Collection $acc, ReflectionAttribute $attribute) {
@@ -75,23 +80,36 @@ class AddDocumentTags implements DocumentTransformer
             return $acc;
         }, collect(deep_copy($configuredTags))->keyBy(fn (Tag $tag) => $tag->name));
 
-        $this->addMissingParentTags($tags);
+        $this->addMissingParentTags($tags, $createMissingParents);
 
         return $tags->sortBy(fn (Tag $t) => $t->getAttribute('weight', INF))->values()->all();
     }
 
     /**
      * A tag naming a parent nothing declares would leave the document invalid: the
-     * spec requires the named parent to exist in the API description.
+     * spec requires the named parent to exist in the API description. Such a parent
+     * is added as a bare tag, unless missing parents must not be created.
      *
      * @param  Collection<string, Tag>  $tags
+     *
+     * @throws MissingParentTagException
      */
-    private function addMissingParentTags(Collection $tags): void
+    private function addMissingParentTags(Collection $tags, bool $createMissingParents): void
     {
-        $tags->map(fn (Tag $tag) => $tag->parent)
-            ->filter()
-            ->unique()
-            ->reject(fn (string $parent): bool => $tags->has($parent))
-            ->each(fn (string $parent) => $tags->offsetSet($parent, new Tag($parent)));
+        $orphans = $tags->filter(fn (Tag $tag): bool => $tag->parent !== null && ! $tags->has($tag->parent));
+
+        if ($orphans->isEmpty()) {
+            return;
+        }
+
+        if (! $createMissingParents) {
+            throw MissingParentTagException::forTags(array_values($orphans->all()));
+        }
+
+        $orphans->each(function (Tag $tag) use ($tags) {
+            if ($tag->parent !== null && ! $tags->has($tag->parent)) {
+                $tags->offsetSet($tag->parent, new Tag($tag->parent));
+            }
+        });
     }
 }

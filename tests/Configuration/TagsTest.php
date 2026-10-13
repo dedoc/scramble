@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Tests\Configuration;
 
 use Dedoc\Scramble\Attributes\Group;
+use Dedoc\Scramble\Exceptions\MissingParentTagException;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\OpenApiVersion;
 use Dedoc\Scramble\Scramble;
@@ -62,6 +63,28 @@ it('includes configured tags without any matching routes and creates their missi
         ['name' => 'Help', 'externalDocs' => ['url' => 'https://example.com/docs']],
         ['name' => 'Business'],
     ]);
+});
+
+it('fails on a parent that no tag declares when missing parents must not be created', function () {
+    Scramble::configure()->withTags([], createMissingParents: false);
+
+    generateForRoute(fn () => Route::get('api/products', TagsTest_ProductsController::class));
+})->throws(MissingParentTagException::class, '[Products] names parent [Catalogue]');
+
+it('accepts a parent declared centrally when missing parents must not be created', function () {
+    Scramble::configure()->withTags([
+        new Tag('Catalogue', 'Everything available for purchase.'),
+    ], createMissingParents: false);
+
+    $document = generateForRoute(fn () => Route::get('api/products', TagsTest_ProductsController::class));
+
+    expect(collect($document['tags'])->pluck('name')->all())->toBe(['Catalogue', 'Products']);
+});
+
+it('passes on whether missing parents may be created to other APIs', function () {
+    Scramble::configure()->withTags([], createMissingParents: false);
+
+    expect(Scramble::registerApi('other')->createMissingParents)->toBeFalse();
 });
 
 it('serializes configured tags for the selected OpenAPI version', function (OpenApiVersion $version) {
