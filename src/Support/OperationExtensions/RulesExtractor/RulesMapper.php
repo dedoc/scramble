@@ -60,8 +60,9 @@ class RulesMapper
     public function array(Type $_, $params)
     {
         if (count($params)) {
-            $object = (new \Dedoc\Scramble\Support\Generator\Types\ObjectType)
-                ->setRequired($params);
+            // `array:a,b` lists the keys allowed, not the keys required: a key
+            // is required by its own rule (`foo.a` => 'required').
+            $object = new \Dedoc\Scramble\Support\Generator\Types\ObjectType;
 
             foreach ($params as $param) {
                 $object->addProperty($param, new UnknownType);

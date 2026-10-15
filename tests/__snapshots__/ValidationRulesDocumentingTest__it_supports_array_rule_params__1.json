@@ -12,11 +12,7 @@
                 "lon": {
                     "type": "string"
                 }
-            },
-            "required": [
-                "lat",
-                "lon"
-            ]
+            }
         }
     }
 ]
