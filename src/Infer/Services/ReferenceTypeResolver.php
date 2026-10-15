@@ -681,9 +681,14 @@ class ReferenceTypeResolver
                 return false;
             }
 
-            $selfOut = $method->getSelfOutType();
+            // A stored self-out counts only when it writes a real template. `self<_>` is a
+            // placeholder for normal argument handling, and building one from source walks
+            // every $this call, so do that only for a self return or a void/unknown return.
+            if ($this->selfOutDefinesTemplates($method->selfOutType ?? null) || $this->isSelfReturningMethod($method->getReturnType())) {
+                continue;
+            }
 
-            if (! $selfOut && ! $this->isSelfReturningMethod($method->getReturnType())) {
+            if (! $this->returnTypeMayDefineSelfOut($method->getReturnType()) || ! $this->selfOutDefinesTemplates($method->getSelfOutType())) {
                 return false;
             }
         }
@@ -735,6 +740,45 @@ class ReferenceTypeResolver
             ], true)) {
                 return false;
             }
+        }
+
+        return true;
+    }
+
+    private function selfOutDefinesTemplates(?Type $selfOut): bool
+    {
+        if (! $selfOut instanceof Generic) {
+            return false;
+        }
+
+        foreach ($selfOut->templateTypes as $part) {
+            if (! $part instanceof TemplatePlaceholderType) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function returnTypeMayDefineSelfOut(Type $type): bool
+    {
+        $members = $type instanceof Union ? $type->types : [$type];
+
+        if ($members === []) {
+            return true;
+        }
+
+        foreach ($members as $member) {
+            if (
+                $member instanceof UnknownType
+                || $member instanceof VoidType
+                || $member instanceof NeverType
+                || $member instanceof MixedType
+            ) {
+                continue;
+            }
+
+            return false;
         }
 
         return true;
@@ -969,7 +1013,15 @@ class ReferenceTypeResolver
             fn (Type $t) => $t instanceof TemplateType ? $templatesMap->get($t->name, $t) : $t,
         );
 
-        if ($returnType instanceof ObjectType && ($selfOutType = $callee->getSelfOutType())) {
+        // AST self-out named `self` is a no-op unless the return type is a Generic. Building it
+        // analyzes every $this->method() in the callee. Shallow self-outs (load, with, …) are
+        // already stored on the definition and can replace a non-generic return.
+        $selfOutType = $callee->selfOutType ?? null;
+        if (! $selfOutType instanceof Generic && $returnType instanceof Generic) {
+            $selfOutType = $callee->getSelfOutType();
+        }
+
+        if ($returnType instanceof ObjectType && $selfOutType instanceof Generic) {
             $returnType = $this->applySelfOutType($returnType, $selfOutType, $templatesMap);
         }
 
