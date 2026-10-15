@@ -665,6 +665,21 @@ it('supports array rule params', function () {
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
 
+it('does not require the keys allowed by array rule', function () {
+    $rules = [
+        'appearance' => 'sometimes|array:theme,font,style',
+        'appearance.theme' => 'sometimes|string',
+        'appearance.font' => 'required|string',
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    $appearance = collect($params)->keyBy('name')->get('appearance')->schema->toArray();
+
+    expect($appearance['properties'])->toHaveKeys(['theme', 'font', 'style'])
+        ->and($appearance['required'])->toBe(['font']);
+});
+
 it('extract rules from enum rule', function () {
     $rules = [
         'status' => new Enum(StatusValidationEnum::class),
