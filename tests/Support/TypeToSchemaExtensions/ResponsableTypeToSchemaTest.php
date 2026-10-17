@@ -119,3 +119,17 @@ it('documents responsable return type from controller', function () {
             'required' => ['id', 'name'],
         ]);
 })->skip(fn () => ! version_compare(app()->version(), '11.0.0', '>='));
+
+class ResponsableTypeToSchemaTest_SelfResponsable implements Responsable
+{
+    public function toResponse($request): static
+    {
+        return $this;
+    }
+}
+
+it('does not recurse when responsable returns itself', function () {
+    $response = $this->transformer->toResponse(new ObjectType(ResponsableTypeToSchemaTest_SelfResponsable::class));
+
+    expect($response->code)->toBe(200);
+});

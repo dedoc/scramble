@@ -31,6 +31,11 @@ class ResponsableTypeToSchema extends TypeToSchemaExtension
                 new MethodCallReferenceType($type, 'toResponse', []),
             );
 
+        // A responsable returning itself (like `RedirectResponse` since Laravel 13.37) would be handed back here forever.
+        if ($responseType instanceof ObjectType && $responseType->name === $type->name) {
+            return null;
+        }
+
         return $this->openApiTransformer->toResponse($responseType);
     }
 }
