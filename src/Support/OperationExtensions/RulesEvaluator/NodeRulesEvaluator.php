@@ -227,6 +227,14 @@ class NodeRulesEvaluator implements RulesEvaluator
                     'this' => $this->tryCreatingCurrentClassInstance(),
                 ]);
             } catch (Throwable $e) {
+                $noValue = new stdClass;
+
+                $result = $this->attemptStaticAnalysisRecovery($expr, $e, $noValue);
+
+                if ($result !== $noValue) {
+                    return $result;
+                }
+
                 $this->diagnostics->reportOnce(
                     Vr002NodeRulesEvaluationDiagnostic::fromEvaluationFail(
                         $e,
@@ -253,6 +261,17 @@ class NodeRulesEvaluator implements RulesEvaluator
                 ? []
                 : null;
         }))->evaluateDirectly($expression);
+    }
+
+    private function attemptStaticAnalysisRecovery(Node\Expr $expr, Throwable $e, stdClass $noValue): mixed
+    {
+        // how to handle root union?
+        // how to handle some leafs of internal type are unions?
+        $exprType = $this->getType($expr);
+
+        return (new LiteralTypeEvaluator)->evaluate(
+            $exprType,
+        );
     }
 
     /**

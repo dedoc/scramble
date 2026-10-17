@@ -291,7 +291,7 @@ dataset('extendableTemplateTypes', [
     ['callable', 'TA', 'TA is callable'],
 ]);
 
-function generateForRoute($param)
+function generateForRoute($param, bool $result = false)
 {
     $route = $param instanceof Route ? $param : $param(app(Router::class));
 
@@ -299,5 +299,7 @@ function generateForRoute($param)
         ->useConfig(config('scramble'))
         ->routes(fn (Route $r) => $r->uri === $route->uri);
 
-    return app()->make(\Dedoc\Scramble\Generator::class)($config);
+    $res = app()->make(\Dedoc\Scramble\Generator::class)->generate($config);
+
+    return $result ? $res : $res->spec();
 }
