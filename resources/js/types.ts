@@ -1,4 +1,4 @@
-export type Renderer = 'elements' | 'scalar';
+export type Renderer = 'elements' | 'scalar' | 'fabric';
 export type DiagnosticSeverity = 'error' | 'warning';
 
 export interface DiagnosticContext {
