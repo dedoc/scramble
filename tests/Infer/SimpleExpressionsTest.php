@@ -1,5 +1,6 @@
 <?php
 
+use Dedoc\Scramble\Support\Type\ConcatenatedStringType;
 use Dedoc\Scramble\Support\Type\IntegerType;
 
 it(
@@ -90,6 +91,40 @@ it(
     ['\'foo`bar\' . $a', 'string(`foo\\`bar${unknown}`)'],
     ['\'${x}\' . $a', 'string(`\\${x}${unknown}`)'],
 ]);
+
+it(
+    'infers interpolated strings',
+    fn ($statement, $expectedType) => expect(getStatementType($statement)->toString())->toBe($expectedType),
+)->with([
+    'simple variable' => ['"hello $name"', 'string(`hello ${unknown}`)'],
+    'braced variable' => ['"hello {$name}!"', 'string(`hello ${unknown}!`)'],
+    'multiple variables' => ['"$first $last"', 'string(`${unknown} ${unknown}`)'],
+    'adjacent variables' => ['"{$first}{$last}"', 'string(`${unknown}${unknown}`)'],
+    'array access' => ['"hello {$names[0]}"', 'string(`hello ${unknown}`)'],
+    'method call' => ['"price: {$foo->price()}"', 'string(`price: ${unknown}`)'],
+    'escaping' => ['"foo`bar $name"', 'string(`foo\\`bar ${unknown}`)'],
+    'heredoc' => ["<<<TEXT\nhello \$name!\nTEXT", 'string(`hello ${unknown}!`)'],
+]);
+
+it('collapses interpolated literal variables into a literal string', function () {
+    $type = getVariableTypeAfter(<<<'PHP'
+$name = 'world';
+$count = 3;
+$message = "hello {$name}: $count";
+PHP, 'message');
+
+    expect($type->toString())->toBe('string(hello world: 3)');
+});
+
+it('preserves the inferred types of interpolated expressions', function () {
+    $type = getVariableTypeAfter(<<<'PHP'
+$count = (int) $input;
+$message = "count: $count!";
+PHP, 'message');
+
+    expect($type)->toBeInstanceOf(ConcatenatedStringType::class)
+        ->and($type->toString())->toBe('string(`count: ${int}!`)');
+});
 
 it('infers arithmetic of int-returning method calls', function () {
     $foo = Foo_SimpleExpressionsTest::class;

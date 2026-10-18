@@ -16,7 +16,9 @@ use Dedoc\Scramble\Support\Type\BinaryOpType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\CoalesceType;
+use Dedoc\Scramble\Support\Type\ConcatenatedStringType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NeverType;
 use Dedoc\Scramble\Support\Type\OffsetAccessType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
@@ -72,6 +74,12 @@ class ExpressionTypeInferrer
         }
 
         $nonCacheableType = match (true) {
+            $expr instanceof PhpParserNode\Scalar\InterpolatedString => ConcatenatedStringType::fromParts(array_map(
+                fn (PhpParserNode\InterpolatedStringPart|Expr $part) => $part instanceof PhpParserNode\InterpolatedStringPart
+                    ? new LiteralStringType($part->value)
+                    : $this->infer($part, $variableTypeGetter),
+                $expr->parts,
+            )),
             $expr instanceof PhpParserNode\Scalar => (new ScalarTypeGetter)($expr),
             $expr instanceof Expr\Cast => (new CastTypeGetter)($expr),
             $expr instanceof Expr\ConstFetch => (new ConstFetchTypeGetter)($expr),
@@ -103,6 +111,11 @@ class ExpressionTypeInferrer
             || $expr instanceof Expr\BinaryOp\Div
             || $expr instanceof Expr\BinaryOp\Mod
             || $expr instanceof Expr\BinaryOp\Pow
+            || $expr instanceof Expr\BinaryOp\BooleanAnd
+            || $expr instanceof Expr\BinaryOp\BooleanOr
+            || $expr instanceof Expr\BinaryOp\LogicalAnd
+            || $expr instanceof Expr\BinaryOp\LogicalOr
+            || $expr instanceof Expr\BinaryOp\LogicalXor
             || $expr instanceof Expr\BinaryOp\Concat => new BinaryOpType(
                 $this->infer($expr->left, $variableTypeGetter),
                 $this->infer($expr->right, $variableTypeGetter),

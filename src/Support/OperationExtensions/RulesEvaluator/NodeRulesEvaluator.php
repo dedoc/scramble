@@ -265,13 +265,9 @@ class NodeRulesEvaluator implements RulesEvaluator
 
     private function attemptStaticAnalysisRecovery(Node\Expr $expr, Throwable $e, stdClass $noValue): mixed
     {
-        // how to handle root union?
-        // how to handle some leafs of internal type are unions?
         $exprType = $this->getType($expr);
 
-        return (new LiteralTypeEvaluator)->evaluate(
-            $exprType,
-        );
+        return (new TypeToRules)->evaluate($exprType) ?: $noValue;
     }
 
     /**
