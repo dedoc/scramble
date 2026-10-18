@@ -8,7 +8,5 @@ class RuleType
 {
     public function __construct(
         public readonly Type $type,
-    )
-    {
-    }
+    ) {}
 }

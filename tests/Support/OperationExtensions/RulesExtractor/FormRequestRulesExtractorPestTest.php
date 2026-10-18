@@ -2,8 +2,6 @@
 
 namespace Dedoc\Scramble\Tests\Support\OperationExtensions\RulesExtractor;
 
-use Dedoc\Scramble\Generator;
-use Dedoc\Scramble\Scramble;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
