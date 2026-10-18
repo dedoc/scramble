@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
+use Dedoc\Scramble\Support\Type\Contracts\LiteralType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
@@ -66,6 +67,10 @@ class BinaryOpType extends AbstractType implements LateResolvingType
             return ConcatenatedStringType::fromParts([$left, $right]);
         }
 
+        if (in_array($this->operator, ['&&', '||', 'and', 'or', 'xor'], true)) {
+            return $this->evaluateLogicalOperation($left, $right);
+        }
+
         if ($this->operator === '+') {
             return $this->evaluateAddition($left, $right);
         }
@@ -80,6 +85,51 @@ class BinaryOpType extends AbstractType implements LateResolvingType
         }
 
         return $type;
+    }
+
+    private function evaluateLogicalOperation(Type $left, Type $right): Type
+    {
+        $leftValue = $this->truthValue($left);
+        $rightValue = $this->truthValue($right);
+
+        $value = match ($this->operator) {
+            '&&', 'and' => $leftValue === false || $rightValue === false
+                ? false
+                : ($leftValue === true && $rightValue === true ? true : null),
+            '||', 'or' => $leftValue === true || $rightValue === true
+                ? true
+                : ($leftValue === false && $rightValue === false ? false : null),
+            'xor' => $leftValue !== null && $rightValue !== null
+                ? $leftValue !== $rightValue
+                : null,
+        };
+
+        return $value === null ? new BooleanType : new LiteralBooleanType($value);
+    }
+
+    private function truthValue(Type $type): ?bool
+    {
+        if ($type instanceof LiteralType) {
+            return (bool) $type->getValue();
+        }
+
+        if ($type instanceof NullType) {
+            return false;
+        }
+
+        if ($type instanceof KeyedArrayType) {
+            if (! count($type->items)) {
+                return false;
+            }
+
+            foreach ($type->items as $item) {
+                if (! $item->isOptional && ! $item->shouldUnpack) {
+                    return true;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function evaluateAddition(Type $left, Type $right): Type

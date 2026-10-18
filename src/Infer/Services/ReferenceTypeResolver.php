@@ -832,11 +832,9 @@ class ReferenceTypeResolver
             }
 
             // @todo resolve template type?
-            $propertyType = $propertyType instanceof TemplateType
+            return $propertyType instanceof TemplateType
                 ? ($propertyType->is ?: new UnknownType)
                 : $propertyType;
-
-            return $propertyType;
         }, $objectAllTypes));
 
         return $mayBeUndefinedInCoalesce
