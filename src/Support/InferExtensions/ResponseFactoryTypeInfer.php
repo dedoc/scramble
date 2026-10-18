@@ -14,10 +14,12 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use PhpParser\Node\Expr;
 use Symfony\Component\HttpFoundation\StreamedJsonResponse;
@@ -50,6 +52,16 @@ class ResponseFactoryTypeInfer implements ExpressionTypeInferExtension, Function
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         return match ($event->name) {
+            'redirectTo', 'redirectGuest', 'redirectToIntended' => (new Generic(RedirectResponse::class, [
+                new LiteralStringType(''),
+                $event->getArg('status', 1, new LiteralIntegerType(302)),
+                $event->getArg('headers', 2, new ArrayType),
+            ]))->mergeAttributes(['targetUrl' => new StringType]),
+            'redirectToRoute', 'redirectToAction' => (new Generic(RedirectResponse::class, [
+                new LiteralStringType(''),
+                $event->getArg('status', 2, new LiteralIntegerType(302)),
+                $event->getArg('headers', 3, new ArrayType),
+            ]))->mergeAttributes(['targetUrl' => new StringType]),
             'noContent' => new Generic(Response::class, [
                 new LiteralStringType(''),
                 $event->getArg('status', 0, new LiteralIntegerType(204)),
