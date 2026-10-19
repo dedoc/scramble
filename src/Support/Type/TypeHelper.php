@@ -335,6 +335,16 @@ class TypeHelper
 
     public static function isResolvable(Type $type): bool
     {
+        if ($type instanceof Union) {
+            foreach ($type->types as $member) {
+                if (! static::isResolvable($member)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         if ($type instanceof TemplateType) {
             return false;
         }
