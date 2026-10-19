@@ -9,6 +9,8 @@ use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
+use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
 class TypeToRules
 {
@@ -31,7 +33,11 @@ class TypeToRules
             return null;
         }
 
-        return $type instanceof LiteralType ? $type->getValue() : new RuleType($type);
+        if ($type instanceof LiteralType) {
+            return $type->getValue();
+        }
+
+        return $this->isRule($type) ? new RuleType($type) : null;
     }
 
     /**
@@ -83,7 +89,7 @@ class TypeToRules
             return explode('|', $type->value);
         }
 
-        if ($type instanceof ObjectType) {
+        if ($this->isRule($type)) {
             return [new RuleType($type)];
         }
 
@@ -95,6 +101,12 @@ class TypeToRules
         }
 
         return $this->uniqueRules($rules);
+    }
+
+    private function isRule(Type $type): bool
+    {
+        return $type instanceof ObjectType
+            && ($type->isInstanceOf(Rule::class) || $type->isInstanceOf(ValidationRule::class));
     }
 
     /**

@@ -3,6 +3,7 @@
 use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\RuleType;
 use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\TypeToRules;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
@@ -14,6 +15,8 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
+use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
 it('evaluates literal values', function (Type $type, mixed $expected) {
     expect((new TypeToRules)->evaluate($type))->toBe($expected);
@@ -71,7 +74,7 @@ it('omits unsupported rules from a union', function () {
 });
 
 it('preserves object rules recovered from a method return type', function () {
-    $rule = new ObjectType('FooRule');
+    $rule = new ObjectType(LegacyRule_TypeToRulesTest::class);
     $type = new KeyedArrayType([
         new ArrayItemType_(null, new LiteralStringType('required')),
         new ArrayItemType_(null, $rule),
@@ -90,11 +93,11 @@ it('deduplicates object rules across alternative rule sets', function () {
         new ArrayItemType_('expiry_date', new Union([
             new KeyedArrayType([
                 new ArrayItemType_(null, new LiteralStringType('required')),
-                new ArrayItemType_(null, new ObjectType('FooRule')),
+                new ArrayItemType_(null, new ObjectType(LegacyRule_TypeToRulesTest::class)),
             ]),
             new KeyedArrayType([
-                new ArrayItemType_(null, new ObjectType('FooRule')),
-                new ArrayItemType_(null, new ObjectType('AnotherRule')),
+                new ArrayItemType_(null, new ObjectType(LegacyRule_TypeToRulesTest::class)),
+                new ArrayItemType_(null, new ObjectType(ModernRule_TypeToRulesTest::class)),
             ]),
         ])),
     ]);
@@ -103,10 +106,33 @@ it('deduplicates object rules across alternative rule sets', function () {
 
     expect($rules)->toHaveCount(2)
         ->and($rules[0])->toBeInstanceOf(RuleType::class)
-        ->and($rules[0]->type->toString())->toBe('FooRule')
+        ->and($rules[0]->type->toString())->toBe(LegacyRule_TypeToRulesTest::class)
         ->and($rules[1])->toBeInstanceOf(RuleType::class)
-        ->and($rules[1]->type->toString())->toBe('AnotherRule');
+        ->and($rules[1]->type->toString())->toBe(ModernRule_TypeToRulesTest::class);
 });
+
+it('wraps only Laravel validation rule objects', function (string $class) {
+    $type = new ObjectType($class);
+    $rule = (new TypeToRules)->evaluate($type);
+
+    expect($rule)->toBeInstanceOf(RuleType::class)
+        ->and($rule->type)->toBe($type);
+})->with([LegacyRule_TypeToRulesTest::class, ModernRule_TypeToRulesTest::class]);
+
+it('does not wrap unsupported types directly or inside rule lists', function (Type $type) {
+    $converter = new TypeToRules;
+
+    expect($converter->evaluate($type))->toBeNull()
+        ->and($converter->evaluate(new KeyedArrayType([
+            new ArrayItemType_(null, new LiteralStringType('string')),
+            new ArrayItemType_(null, $type),
+        ])))->toBe(['string']);
+})->with([
+    'unknown boolean' => [new BooleanType],
+    'unknown string' => [new StringType],
+    'unrelated object' => [new ObjectType(stdClass::class)],
+    'unavailable class' => [new ObjectType('MissingRule_TypeToRulesTest')],
+]);
 
 it('shows recovery of conditional expiry date rules containing an object or closure', function () {
     $ruleSet = new Union([
@@ -184,3 +210,21 @@ it('recovers conditional rules inside a field map regardless of branch order', f
 
     expect((new TypeToRules)->evaluate($type))->toBe(['expiry_date' => ['email']]);
 })->with([false, true]);
+
+class LegacyRule_TypeToRulesTest implements Rule
+{
+    public function passes($attribute, $value): bool
+    {
+        return true;
+    }
+
+    public function message(): string
+    {
+        return 'Invalid value.';
+    }
+}
+
+class ModernRule_TypeToRulesTest implements ValidationRule
+{
+    public function validate(string $attribute, mixed $value, Closure $fail): void {}
+}
