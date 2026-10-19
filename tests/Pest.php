@@ -301,5 +301,5 @@ function generateForRoute($param, bool $result = false)
 
     $res = app()->make(\Dedoc\Scramble\Generator::class)->generate($config);
 
-    return $result ? $res : $res->spec();
+    return $result ? $res : $res->spec(config('scramble.openapi_version'));
 }

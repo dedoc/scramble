@@ -811,20 +811,6 @@ class ReferenceTypeResolver
                 return new UnknownType;
             }
 
-            if ($propertyType = Context::getInstance()->extensionsBroker->getPropertyType(new PropertyFetchEvent(
-                instance: $objectType,
-                name: $type->propertyName,
-                scope: $scope,
-            ))) {
-                return $propertyType;
-            }
-
-            $classDefinition = $this->index->getClass($objectType->name);
-
-            if (! $classDefinition) {
-                return new UnknownType("Cannot get property [$type->propertyName] type on [$objectType->name]");
-            }
-
             $propertyType = $objectType->getPropertyType($type->propertyName, $scope);
 
             if ($objectType instanceof SelfType) {
