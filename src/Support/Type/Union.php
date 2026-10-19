@@ -16,6 +16,20 @@ class Union extends AbstractType
         return ['types'];
     }
 
+    public function getOffsetValueType(Type $offset): Type
+    {
+        $types = array_map(fn (Type $type) => $type->getOffsetValueType($offset), $this->types);
+        $result = TypeHelper::mergeTypes(...$types);
+
+        foreach ($types as $type) {
+            if (TypeHelper::mayBeUndefinedInCoalesce($type)) {
+                return TypeHelper::markMayBeUndefinedInCoalesce($result);
+            }
+        }
+
+        return $result;
+    }
+
     public function isSame(Type $type)
     {
         if (! $type instanceof static) {
