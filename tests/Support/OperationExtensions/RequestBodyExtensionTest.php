@@ -287,15 +287,38 @@ class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with
     }
 }
 
-it('extracts parameters from calling request parameters retrieving methods when the action was already analyzed', function () {
+it('extracts parameters from calling request parameters retrieving methods when the action is used by few routes', function () {
     $routes = [
         RouteFacade::get('api/a', [RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::class, 'index']),
         RouteFacade::get('api/b', [RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::class, 'index']),
     ];
 
     Scramble::routes(fn (Route $r) => in_array($r, $routes, strict: true));
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
 
-    $expectedParameters = [[
+    expect($openApiDocument['paths']['/a']['get']['parameters'])
+        ->toBe(RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::EXPECTED_PARAMETERS)
+        ->and($openApiDocument['paths']['/b']['get']['parameters'])
+        ->toBe(RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::EXPECTED_PARAMETERS);
+});
+
+it('extracts parameters from calling request parameters retrieving methods when the document is generated again', function () {
+    $route = RouteFacade::get('api/a', [RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::class, 'index']);
+
+    Scramble::routes(fn (Route $r) => $r === $route);
+
+    // The second generation reuses the index, like every request after the first one under Octane.
+    $firstDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $secondDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    expect($firstDocument['paths']['/a']['get']['parameters'])
+        ->toBe(RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::EXPECTED_PARAMETERS)
+        ->and($secondDocument['paths']['/a']['get']['parameters'])
+        ->toBe(RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::EXPECTED_PARAMETERS);
+});
+class RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed
+{
+    public const EXPECTED_PARAMETERS = [[
         'name' => 'per_page',
         'in' => 'query',
         'schema' => [
@@ -304,16 +327,6 @@ it('extracts parameters from calling request parameters retrieving methods when 
         ],
     ]];
 
-    // The second generation reuses the index, like every request after the first one under Octane.
-    foreach ([app()->make(\Dedoc\Scramble\Generator::class)(), app()->make(\Dedoc\Scramble\Generator::class)()] as $openApiDocument) {
-        expect($openApiDocument['paths']['/a']['get']['parameters'])
-            ->toBe($expectedParameters)
-            ->and($openApiDocument['paths']['/b']['get']['parameters'])
-            ->toBe($expectedParameters);
-    }
-});
-class RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed
-{
     public function index(Illuminate\Http\Request $request)
     {
         $request->integer('per_page', 15);
