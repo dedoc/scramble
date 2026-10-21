@@ -17,7 +17,9 @@ use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\CoalesceType;
 use Dedoc\Scramble\Support\Type\ConcatenatedStringType;
+use Dedoc\Scramble\Support\Type\ConditionalType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NeverType;
 use Dedoc\Scramble\Support\Type\OffsetAccessType;
@@ -84,10 +86,7 @@ class ExpressionTypeInferrer
             $expr instanceof Expr\Cast => (new CastTypeGetter)($expr),
             $expr instanceof Expr\ConstFetch => (new ConstFetchTypeGetter)($expr),
             $expr instanceof Expr\Throw_ => new NeverType,
-            $expr instanceof Expr\Ternary => Union::wrap([
-                $this->infer($expr->if ?? $expr->cond, $variableTypeGetter),
-                $this->infer($expr->else, $variableTypeGetter),
-            ]),
+            $expr instanceof Expr\Ternary => $this->inferTernary($expr, $variableTypeGetter),
             $expr instanceof Expr\BinaryOp\Coalesce => new CoalesceType(
                 $this->infer($expr->left, $variableTypeGetter),
                 $this->infer($expr->right, $variableTypeGetter),
@@ -153,6 +152,29 @@ class ExpressionTypeInferrer
         }
 
         return $type;
+    }
+
+    private function inferTernary(Expr\Ternary $expr, Closure $variableTypeGetter): Type
+    {
+        $ifTrue = $this->infer($expr->if ?? $expr->cond, $variableTypeGetter);
+        $ifFalse = $this->infer($expr->else, $variableTypeGetter);
+
+        if ($expr->cond instanceof Expr\Variable && is_string($expr->cond->name)) {
+            $condition = $this->infer($expr->cond, $variableTypeGetter);
+            $argument = $this->scope->functionDefinition()?->type->arguments[$expr->cond->name] ?? null;
+
+            if ($argument !== null && $condition === $argument) {
+                return new ConditionalType(
+                    // Convert PHP truthiness to a boolean while preserving the argument template.
+                    new BinaryOpType($condition, new LiteralBooleanType(true), '&&'),
+                    new LiteralBooleanType(true),
+                    $ifTrue,
+                    $ifFalse,
+                );
+            }
+        }
+
+        return Union::wrap([$ifTrue, $ifFalse]);
     }
 
     private function inferNewCall(Expr\New_ $expr, Closure $variableTypeGetter): Type
