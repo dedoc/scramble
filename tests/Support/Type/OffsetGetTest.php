@@ -81,9 +81,9 @@ PHP);
     expect($result)->toBeInstanceOf(Union::class);
 
     expect(array_map(fn (Type $type) => $type->toString(), $result->types))
-        ->toEqualCanonicalizing(['int(42)', 'string(pdf)', 'string(jpg)']);
+        ->toEqualCanonicalizing(['int(42)', 'string(pdf)', 'string(jpg)', 'unknown']);
 
-    // The missing 'y' key contributes no value, but preserves possible undefinedness.
+    // The missing 'y' key contributes an unknown value and preserves possible undefinedness.
     expect(TypeHelper::mayBeUndefinedInCoalesce($result))->toBeTrue();
 
     expect($analysis->getFunctionDefinition('fetchOffset')->getReturnType())->toBe($returnType);

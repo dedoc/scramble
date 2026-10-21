@@ -132,7 +132,7 @@ class KeyedArrayType extends AbstractType
             $item = $this->getListItemAt($offsetValue);
 
             if (! $item) {
-                return TypeHelper::markMayBeUndefinedInCoalesce(new NeverType);
+                return $default;
             }
 
             $value = $item->value->clone()->mergeAttributes($item->attributes());
@@ -152,7 +152,7 @@ class KeyedArrayType extends AbstractType
             }
         }
 
-        return TypeHelper::markMayBeUndefinedInCoalesce(new NeverType);
+        return $default;
     }
 
     public function toString(): string

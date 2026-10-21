@@ -13,6 +13,7 @@ use Dedoc\Scramble\Infer\Handler\CreatesScope;
 use Dedoc\Scramble\Infer\Handler\ExceptionInferringExtensions;
 use Dedoc\Scramble\Infer\Handler\ExpressionTypeInferringExtensions;
 use Dedoc\Scramble\Infer\Handler\FunctionLikeHandler;
+use Dedoc\Scramble\Infer\Handler\IncrementDecrementHandler;
 use Dedoc\Scramble\Infer\Handler\MethodCallHandler;
 use Dedoc\Scramble\Infer\Handler\PhpDocHandler;
 use Dedoc\Scramble\Infer\Handler\PropertyHandler;
@@ -47,6 +48,7 @@ class TypeInferer extends NodeVisitorAbstract
         $this->handlers = [
             new FunctionLikeHandler,
             new AssignHandler,
+            new IncrementDecrementHandler,
             new MethodCallHandler,
             new UnsetHandler,
             new ClassHandler,
