@@ -56,8 +56,8 @@ class CacheableGenerator
 
         $version = cache()->store($store)->get(self::versionKey($key));
 
-        // Redis stores numeric values unserialized, so the version reads back as a string.
-        if (! is_numeric($version) || (int) $version !== static::CACHE_VERSION) {
+        // Redis returns the numeric marker as a string.
+        if ($version !== static::CACHE_VERSION && $version !== (string) static::CACHE_VERSION) {
             return null;
         }
 
