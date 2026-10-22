@@ -76,6 +76,7 @@ class PropertyReflector
         $attributeBracketDepth = 0;
         $inParamList = false;
         $paramParenDepth = 0;
+        $inClosure = false;
         $result = '';
 
         foreach ($tokens as $t) {
@@ -163,6 +164,18 @@ class PropertyReflector
                 // stop collecting at the semicolon that closes this property
                 if ($text === ';' && $braceLevel === 1) {
                     break;
+                }
+
+                if ($id === T_FUNCTION && $braceLevel === 1) {
+                    $inClosure = true;
+                }
+
+                if ($text === '}' && $braceLevel === 1) {
+                    if (! $inClosure) {
+                        break;
+                    }
+
+                    $inClosure = false;
                 }
             }
         }
