@@ -70,6 +70,19 @@ it('returns documentation cached by an older Scramble version', function () {
         ->and($actual->proNudge()->message())->toBeNull();
 });
 
+it('returns cached documentation when the store reads the version back as a string', function () {
+    $cacheableGenerator = app(CacheableGenerator::class);
+    $config = Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
+    $expected = app(Generator::class)->generate($config);
+
+    CacheableGenerator::store($config, $expected);
+
+    // Redis returns numeric values as strings.
+    Cache::store('array')->forever('scramble.openapi.test:'.Scramble::DEFAULT_API.':_version', (string) CacheableGenerator::CACHE_VERSION);
+
+    expect($cacheableGenerator->generate($config))->toBe($expected);
+});
+
 it('generates documentation on cache miss without storing', function () {
     $generator = app(Generator::class);
     $cacheableGenerator = app(CacheableGenerator::class);
