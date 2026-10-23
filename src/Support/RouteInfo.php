@@ -21,6 +21,7 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use ReflectionClass;
 use ReflectionMethod;
 use RuntimeException;
+use WeakMap;
 
 class RouteInfo
 {
@@ -38,6 +39,9 @@ class RouteInfo
 
     /** @var Bag<array<string, InferredParameter>> */
     public readonly Bag $requestParametersFromCalls;
+
+    /** @var WeakMap<Infer\Definition\FunctionLikeDefinition, array<string, InferredParameter>> */
+    private static WeakMap $actionsRequestParametersFromCalls;
 
     public readonly Infer\Extensions\IndexBuildingBroker $indexBuildingBroker;
 
@@ -197,6 +201,18 @@ class RouteInfo
         );
 
         $this->scope = $scopeCollector->getScope($this->actionDefinition);
+
+        /*
+         * An action that is already analyzed (by another route using it, or by a previous generation
+         * sharing the index) is not traversed again, so the index builders above don't collect anything.
+         */
+        self::$actionsRequestParametersFromCalls ??= new WeakMap;
+
+        if (self::$actionsRequestParametersFromCalls->offsetExists($this->actionDefinition)) {
+            $this->requestParametersFromCalls->data = self::$actionsRequestParametersFromCalls->offsetGet($this->actionDefinition);
+        } else {
+            self::$actionsRequestParametersFromCalls->offsetSet($this->actionDefinition, $this->requestParametersFromCalls->data);
+        }
 
         return $this->actionDefinition;
     }

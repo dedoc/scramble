@@ -287,6 +287,52 @@ class RequestBodyExtensionTest__extracts_parameters_from_retrieving_methods_with
     }
 }
 
+it('extracts parameters from calling request parameters retrieving methods when the action is used by few routes', function () {
+    $routes = [
+        RouteFacade::get('api/a', [RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::class, 'index']),
+        RouteFacade::get('api/b', [RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::class, 'index']),
+    ];
+
+    Scramble::routes(fn (Route $r) => in_array($r, $routes, strict: true));
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    expect($openApiDocument['paths']['/a']['get']['parameters'])
+        ->toBe(RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::EXPECTED_PARAMETERS)
+        ->and($openApiDocument['paths']['/b']['get']['parameters'])
+        ->toBe(RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::EXPECTED_PARAMETERS);
+});
+
+it('extracts parameters from calling request parameters retrieving methods when the document is generated again', function () {
+    $route = RouteFacade::get('api/a', [RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::class, 'index']);
+
+    Scramble::routes(fn (Route $r) => $r === $route);
+
+    // The second generation reuses the index, like every request after the first one under Octane.
+    $firstDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+    $secondDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    expect($firstDocument['paths']['/a']['get']['parameters'])
+        ->toBe(RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::EXPECTED_PARAMETERS)
+        ->and($secondDocument['paths']['/a']['get']['parameters'])
+        ->toBe(RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed::EXPECTED_PARAMETERS);
+});
+class RequestBodyExtensionTest__extracts_parameters_when_action_already_analyzed
+{
+    public const EXPECTED_PARAMETERS = [[
+        'name' => 'per_page',
+        'in' => 'query',
+        'schema' => [
+            'type' => 'integer',
+            'default' => 15,
+        ],
+    ]];
+
+    public function index(Illuminate\Http\Request $request)
+    {
+        $request->integer('per_page', 15);
+    }
+}
+
 it('ignores parameter with @ignoreParam doc', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::post('api/test', [RequestBodyExtensionTest__ignores_parameter_with_ignore_param_doc::class, 'index']);
