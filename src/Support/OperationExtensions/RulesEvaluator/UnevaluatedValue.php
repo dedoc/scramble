@@ -7,9 +7,7 @@ use Illuminate\Support\Optional;
 
 class UnevaluatedValue extends Optional
 {
-    public function __construct(private Closure $onUse)
-    {
-    }
+    public function __construct(private Closure $onUse) {}
 
     public function __get($key)
     {

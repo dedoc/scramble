@@ -13,7 +13,6 @@ use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Http\Request;
-use Illuminate\Support\Optional;
 use Illuminate\Support\Str;
 use PhpParser\ConstExprEvaluator;
 use PhpParser\Node;
