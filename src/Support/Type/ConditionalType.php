@@ -22,8 +22,8 @@ class ConditionalType extends AbstractType implements LateResolvingType
 
     public function acceptedBy(Type $otherType): bool
     {
-        return ($otherType->accepts($this->ifTrue) || $this->ifTrue->acceptedBy($otherType))
-            && ($otherType->accepts($this->ifFalse) || $this->ifFalse->acceptedBy($otherType));
+        return ($this->ifTrue instanceof NeverType || $otherType->accepts($this->ifTrue) || $this->ifTrue->acceptedBy($otherType))
+            && ($this->ifFalse instanceof NeverType || $otherType->accepts($this->ifFalse) || $this->ifFalse->acceptedBy($otherType));
     }
 
     public function resolve(): Type
@@ -50,7 +50,9 @@ class ConditionalType extends AbstractType implements LateResolvingType
 
     public function isResolvable(): bool
     {
-        return TypeHelper::isResolvable($this->subject)
+        // Keep receiver-dependent conditions until self is bound at the call site.
+        return ! $this->subject instanceof SelfType
+            && TypeHelper::isResolvable($this->subject)
             && TypeHelper::isResolvable($this->checkType)
             && TypeHelper::isResolvable($this->ifTrue)
             && TypeHelper::isResolvable($this->ifFalse);
@@ -80,6 +82,10 @@ class ConditionalType extends AbstractType implements LateResolvingType
 
     private function matches(Type $subject, Type $checkType): bool
     {
+        if ($checkType instanceof EnumCaseType) {
+            return $checkType->isSame($subject);
+        }
+
         return $subject->acceptedBy($checkType);
     }
 }

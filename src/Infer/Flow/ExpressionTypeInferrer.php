@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Infer\Flow;
 use Closure;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\BooleanNotTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\CastTypeGetter;
 use Dedoc\Scramble\Infer\SimpleTypeGetters\ClassConstFetchTypeGetter;
@@ -18,6 +19,7 @@ use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\CoalesceType;
 use Dedoc\Scramble\Support\Type\ConcatenatedStringType;
 use Dedoc\Scramble\Support\Type\ConditionalType;
+use Dedoc\Scramble\Support\Type\EnumCaseType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -92,10 +94,7 @@ class ExpressionTypeInferrer
                 $this->infer($expr->left, $variableTypeGetter),
                 $this->infer($expr->right, $variableTypeGetter),
             ),
-            $expr instanceof Expr\Match_ => Union::wrap(array_map(
-                fn (PhpParserNode\MatchArm $arm) => $this->infer($arm->body, $variableTypeGetter),
-                $expr->arms,
-            )),
+            $expr instanceof Expr\Match_ => $this->inferMatch($expr, $variableTypeGetter),
             $expr instanceof Expr\ClassConstFetch => (new ClassConstFetchTypeGetter)($expr, $this->scope),
             $expr instanceof Expr\BinaryOp\Equal
             || $expr instanceof Expr\BinaryOp\Identical
@@ -153,6 +152,80 @@ class ExpressionTypeInferrer
         }
 
         return $type;
+    }
+
+    /**
+     * @return array<int, EnumCaseType[]>|null
+     */
+    public function getEnumMatchConditions(Expr\Match_ $expr): ?array
+    {
+        if (! $expr->cond instanceof Expr\Variable || $expr->cond->name !== 'this') {
+            return null;
+        }
+
+        $className = $this->scope->classDefinition()?->name;
+        if (! $className || ! enum_exists($className)) {
+            return null;
+        }
+
+        $className = (new \ReflectionEnum($className))->getName();
+        $conditions = [];
+
+        foreach ($expr->arms as $i => $arm) {
+            $conditions[$i] = [];
+            foreach ($arm->conds ?? [] as $cond) {
+                if (! $cond instanceof Expr\ClassConstFetch
+                    || ! $cond->class instanceof PhpParserNode\Name
+                    || ! $cond->name instanceof PhpParserNode\Identifier) {
+                    return null;
+                }
+
+                $type = ReferenceTypeResolver::getInstance()->resolve(
+                    $this->scope,
+                    (new ClassConstFetchTypeGetter)($cond, $this->scope),
+                );
+
+                if (! $type instanceof EnumCaseType || strcasecmp($type->name, $className) !== 0) {
+                    return null;
+                }
+
+                $conditions[$i][] = new EnumCaseType($className, $type->caseName);
+            }
+        }
+
+        return $conditions;
+    }
+
+    private function inferMatch(Expr\Match_ $expr, Closure $variableTypeGetter): Type
+    {
+        if (($conditions = $this->getEnumMatchConditions($expr)) === null) {
+            return Union::wrap(array_map(
+                fn (PhpParserNode\MatchArm $arm) => $this->infer($arm->body, $variableTypeGetter),
+                $expr->arms,
+            ));
+        }
+
+        // Default is the fallback regardless of its position among the arms.
+        $result = new NeverType;
+        foreach ($expr->arms as $arm) {
+            if ($arm->conds === null) {
+                $result = $this->infer($arm->body, $variableTypeGetter);
+            }
+        }
+
+        // Build from the end so earlier arms remain the outermost conditions.
+        foreach (array_reverse($expr->arms, preserve_keys: true) as $i => $arm) {
+            if ($arm->conds === null) {
+                continue;
+            }
+
+            $body = $this->infer($arm->body, $variableTypeGetter);
+            foreach (array_reverse($conditions[$i]) as $condition) {
+                $result = new ConditionalType($this->infer($expr->cond, $variableTypeGetter), $condition, $body, $result);
+            }
+        }
+
+        return $result;
     }
 
     private function inferTernary(Expr\Ternary $expr, Closure $variableTypeGetter): Type

@@ -127,6 +127,12 @@ class FlowBuilder extends NodeVisitorAbstract
 
     private function pushTerminateMatch(Nodes $flow, Node\Expr\Match_ $match): void
     {
+        if ($this->isEnumMatch($match)) {
+            $flow->pushTerminate(new TerminateNode(TerminationKind::RETURN, $match));
+
+            return;
+        }
+
         $flow->pushCondition();
 
         foreach ($match->arms as $arm) {
@@ -150,6 +156,12 @@ class FlowBuilder extends NodeVisitorAbstract
 
     private function pushAssignMatch(Nodes $flow, Variable $variable, Match_ $match): void
     {
+        if ($this->isEnumMatch($match)) {
+            $flow->push(new StatementNode(new Expression(new Expr\Assign($variable, $match))));
+
+            return;
+        }
+
         $flow->pushCondition();
 
         foreach ($match->arms as $arm) {
@@ -169,5 +181,11 @@ class FlowBuilder extends NodeVisitorAbstract
         }
 
         $flow->exitCondition();
+    }
+
+    private function isEnumMatch(Match_ $match): bool
+    {
+        return (new ExpressionTypeInferrer($this->scope, $this->scope->nodeTypesResolver))
+            ->getEnumMatchConditions($match) !== null;
     }
 }
