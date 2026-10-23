@@ -239,10 +239,9 @@ it('rejects a non-array root value without exposing its properties as rules', fu
         ->and($diagnostics->all())->not->toBeEmpty();
 });
 
-class RecoveryRule_NodeRulesEvaluatorTest implements \Illuminate\Contracts\Validation\ValidationRule {
-    public function validate(string $attribute, mixed $value, Closure $fail): void
-    {
-    }
+class RecoveryRule_NodeRulesEvaluatorTest implements \Illuminate\Contracts\Validation\ValidationRule
+{
+    public function validate(string $attribute, mixed $value, Closure $fail): void {}
 }
 
 class ControllerWithRecovery_NodeRulesEvaluatorTest

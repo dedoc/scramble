@@ -180,7 +180,7 @@ PHP);
     expect($analysis->getExpressionType('(new Foo)->foo(new Bar('.$argument.'))')->toString())->toBe('string');
 })->with([
     'mixed' => ['data_get([], "foo")'],
-//    'nullable' => ['random_int(0, 1) ? "foo" : null'],
+    //    'nullable' => ['random_int(0, 1) ? "foo" : null'],
 ]);
 
 it('preserves an argument property narrower than its nullable bound', function () {
