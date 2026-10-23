@@ -29,6 +29,7 @@ use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -253,10 +254,16 @@ class ExpressionTypeInferrer
             return new UnknownType('Cannot infer type of property fetch: not supported yet.');
         }
 
+        $object = $this->infer($expr->var, $variableTypeGetter);
+
         return new PropertyFetchReferenceType(
-            $this->infer($expr->var, $variableTypeGetter),
+            $object,
             $name,
             isNullsafe: $expr instanceof NullsafePropertyFetch,
+            resolveLate: $expr->var instanceof Expr\Variable
+                && is_string($expr->var->name)
+                && $object instanceof TemplateType
+                && ($this->scope->context->functionDefinition?->type->arguments[$expr->var->name] ?? null) === $object,
         );
     }
 

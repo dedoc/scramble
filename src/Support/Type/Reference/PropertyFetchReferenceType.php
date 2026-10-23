@@ -10,6 +10,7 @@ class PropertyFetchReferenceType extends AbstractReferenceType
         public Type $object,
         public string $propertyName,
         public bool $isNullsafe = false,
+        public bool $resolveLate = false,
     ) {}
 
     public function nodes(): array

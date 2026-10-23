@@ -122,20 +122,18 @@ class NodeRulesEvaluator implements RulesEvaluator
                         $param->var->name => $value,
                     ];
                 } catch (Throwable $e) {
-                    $this->diagnostics->reportOnce(
-                        Vr002NodeRulesEvaluationDiagnostic::fromEvaluationFail(
-                            $e,
-                            "\${$param->var->name}",
-                            'Failed to evaluate parameter',
-                            CodeLocation::from($this->routeInfo->reflectionAction()->getFileName() ?: null, $param->getStartLine()),
-                            Vr002NodeRulesEvaluationDiagnostic::tipForParameter(
-                                in_array($param->var->name, $this->collectVariableNames(), true),
-                            ),
-                        )
-                    );
-
                     return [
-                        $param->var->name => new Optional(null),
+                        $param->var->name => new UnevaluatedValue(onUse: fn () => $this->diagnostics->reportOnce(
+                            Vr002NodeRulesEvaluationDiagnostic::fromEvaluationFail(
+                                $e,
+                                "\${$param->var->name}",
+                                'Failed to evaluate parameter',
+                                CodeLocation::from($this->routeInfo->reflectionAction()->getFileName() ?: null, $param->getStartLine()),
+                                Vr002NodeRulesEvaluationDiagnostic::tipForParameter(
+                                    in_array($param->var->name, $this->collectVariableNames(), true),
+                                ),
+                            )
+                        )),
                     ];
                 }
             })

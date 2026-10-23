@@ -14,6 +14,7 @@ use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Support\Type\DeferredPropertyFetchType;
 use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -119,7 +120,7 @@ class ReferenceTypeResolver
 
     private function withNullsafeShortCircuitType(Type $original, Type $resolved, Scope $scope): Type
     {
-        if (! $this->hasNullsafeShortCircuitType($original, $scope)) {
+        if ($resolved instanceof DeferredPropertyFetchType || ! $this->hasNullsafeShortCircuitType($original, $scope)) {
             return $resolved;
         }
 
@@ -131,7 +132,7 @@ class ReferenceTypeResolver
         if ($original instanceof MethodCallReferenceType) {
             if ($original->isNullsafe) {
                 return TypeHelper::canContainNull(
-                    $this->resolve($scope, $original->callee),
+                    $this->resolveAndNormalizeCallee($scope, $original->callee),
                 );
             }
 
@@ -141,7 +142,7 @@ class ReferenceTypeResolver
         if ($original instanceof PropertyFetchReferenceType) {
             if ($original->isNullsafe) {
                 return TypeHelper::canContainNull(
-                    $this->resolve($scope, $original->object),
+                    $this->resolveAndNormalizeCallee($scope, $original->object),
                 );
             }
 
@@ -785,6 +786,18 @@ class ReferenceTypeResolver
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type): Type
     {
+        if ($type->resolveLate && $type->object instanceof TemplateType) {
+            return new DeferredPropertyFetchType(
+                $type->object,
+                $type->propertyName,
+                $scope,
+                $type->isNullsafe,
+                fallback: $type->object->is
+                    ? $this->resolve($scope, new PropertyFetchReferenceType($type->object->is, $type->propertyName, $type->isNullsafe))
+                    : null,
+            );
+        }
+
         $objectType = $this->resolveAndNormalizeCallee($scope, $type->object);
         $mayBeUndefinedInCoalesce = TypeHelper::mayBeUndefinedInCoalesce($objectType);
         $objectAllTypes = $objectType instanceof Union
@@ -875,6 +888,11 @@ class ReferenceTypeResolver
      */
     private function resolveAndNormalizeCallee(Scope $scope, Type $callee): Type
     {
+        if ($callee instanceof PropertyFetchReferenceType && $callee->resolveLate) {
+            $callee = clone $callee;
+            $callee->resolveLate = false;
+        }
+
         return $this->normalizeResolvedCallee($this->resolve($scope, $callee));
     }
 
