@@ -4,6 +4,7 @@ use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\RuleType;
 use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\TypeToRules;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\BooleanType;
+use Dedoc\Scramble\Support\Type\ConcatenatedStringType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
@@ -13,7 +14,9 @@ use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\StringType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -30,6 +33,24 @@ it('evaluates literal values', function (Type $type, mixed $expected) {
     'union' => [new Union([new StringType, new LiteralStringType('email'), new LiteralStringType('url')]), ['email', 'url']],
     'nullable union' => [new Union([new StringType, new NullType, new LiteralStringType('email')]), ['email']],
 ]);
+
+it('evaluates concatenated rules after template substitution', function () {
+    $type = ConcatenatedStringType::fromParts([
+        new LiteralStringType('max:'),
+        new TemplateType('TMax'),
+    ]);
+    $type = (new TypeWalker)->map(
+        $type,
+        fn (Type $type) => $type instanceof TemplateType ? new LiteralIntegerType(50) : $type,
+    );
+
+    expect((new TypeToRules)->evaluate($type))->toBe('max:50')
+        ->and((new TypeToRules)->evaluate(new KeyedArrayType([
+            new ArrayItemType_('name', new KeyedArrayType([
+                new ArrayItemType_(null, $type),
+            ])),
+        ])))->toBe(['name' => ['max:50']]);
+});
 
 it('evaluates nested arrays and unions in array values', function () {
     $type = new Union([

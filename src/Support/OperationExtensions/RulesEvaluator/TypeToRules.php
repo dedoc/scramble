@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 
+use Dedoc\Scramble\Support\Type\ConcatenatedStringType;
 use Dedoc\Scramble\Support\Type\Contracts\LiteralType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
@@ -16,6 +17,10 @@ class TypeToRules
 {
     public function evaluate(Type $type): mixed
     {
+        if ($type instanceof ConcatenatedStringType) {
+            $type = ConcatenatedStringType::fromParts($type->parts);
+        }
+
         $types = $type instanceof Union ? $type->types : [$type];
         $arrays = array_values(array_filter($types, fn (Type $type) => $type instanceof KeyedArrayType));
 
@@ -67,6 +72,10 @@ class TypeToRules
     /** @return list<string|RuleType> */
     private function evaluateRuleSet(Type $type): array
     {
+        if ($type instanceof ConcatenatedStringType) {
+            $type = ConcatenatedStringType::fromParts($type->parts);
+        }
+
         if ($type instanceof Union) {
             $alternatives = array_map(fn (Type $type) => $this->evaluateRuleSet($type), $type->types);
             $required = count($alternatives) > 0;

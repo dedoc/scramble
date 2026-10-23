@@ -16,7 +16,7 @@ class PotentialMethodMutatingCallType extends AbstractReferenceType
 
     public function nodes(): array
     {
-        return ['callee', 'arguments'];
+        return ['subject', 'callee', 'arguments'];
     }
 
     public function isInstanceOf(string $className): bool

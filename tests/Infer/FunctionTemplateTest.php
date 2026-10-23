@@ -32,8 +32,8 @@ function foo(bool $enabled) {
 }
 PHP)->getFunctionDefinition('foo');
 
-    expect($definition->type->getReturnType()->toString())
-        ->toBe(ConditionalType::class);
+    expect($definition->type->getReturnType())
+        ->toBeInstanceOf(ConditionalType::class);
 });
 
 it('preserves conditional inference with a declared return type', function (string $returnType) {

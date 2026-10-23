@@ -126,6 +126,223 @@ it('understands templated property fetch type value for property fetch called in
     expect($type->toString())->toBe('int(42)');
 });
 
+it('resolves a direct argument property at the call site', function (string $hint) {
+    $type = analyzeFile(<<<PHP
+<?php
+class Foo {
+    public function foo({$hint}\$value) {
+        return \$value->prop;
+    }
+}
+class Bar {
+    public \$prop = 42;
+}
+PHP)->getExpressionType('(new Foo)->foo(new Bar)');
+
+    expect($type->toString())->toBe('int(42)');
+})->with([
+    'untyped' => [''],
+    'typed' => ['Bar '],
+]);
+
+it('uses the property bound when the inferred argument property is unknown', function () {
+    $type = analyzeFile(<<<'PHP'
+<?php
+class Foo {
+    public function foo(Bar $value) {
+        return $value->prop;
+    }
+}
+class Bar {
+    public bool $prop;
+}
+PHP)->getExpressionType('(new Foo)->foo(new Bar)');
+
+    expect($type->toString())->toBe('boolean');
+});
+
+it('uses the property bound when the inferred argument property is wider', function (string $argument) {
+    $analysis = analyzeFile(<<<'PHP'
+<?php
+class Foo {
+    public function foo(Bar $value) {
+        return $value->prop;
+    }
+}
+class Bar {
+    public string $prop;
+    public function __construct($prop) {
+        $this->prop = $prop;
+    }
+}
+PHP);
+
+    expect($analysis->getExpressionType('(new Foo)->foo(new Bar('.$argument.'))')->toString())->toBe('string');
+})->with([
+    'mixed' => ['data_get([], "foo")'],
+//    'nullable' => ['random_int(0, 1) ? "foo" : null'],
+]);
+
+it('preserves an argument property narrower than its nullable bound', function () {
+    $type = analyzeFile(<<<'PHP'
+<?php
+class Foo {
+    public function foo(Bar $value) {
+        return $value->prop;
+    }
+}
+class Bar {
+    public ?string $prop;
+    public function __construct(?string $prop) {
+        $this->prop = $prop;
+    }
+}
+PHP)->getExpressionType('(new Foo)->foo(new Bar("foo"))');
+
+    expect($type->toString())->toBe('string(foo)');
+});
+
+it('resolves a concatenated argument property after substitution', function () {
+    $analysis = analyzeFile(<<<'PHP'
+<?php
+class Foo {
+    public function foo(Bar $value) {
+        return 'str'.$value->prop;
+    }
+}
+class Bar {
+    public int $prop = 42;
+}
+PHP);
+
+    expect((new Type\TypeWalker)->first(
+        $analysis->getClassDefinition('Foo')->methods['foo']->getReturnType(),
+        fn (Type\Type $type) => $type instanceof Type\DeferredPropertyFetchType,
+    ))->not->toBeNull()
+        ->and($analysis->getExpressionType('(new Foo)->foo(new Bar)')->toString())->toBe('string(str42)');
+});
+
+it('specializes argument properties independently for each call', function () {
+    $analysis = analyzeFile(<<<'PHP'
+<?php
+class Foo {
+    public function foo(Bar $value) {
+        return $value->prop;
+    }
+}
+class Bar {
+    public $prop;
+    public function __construct($prop) {
+        $this->prop = $prop;
+    }
+}
+PHP);
+
+    expect($analysis->getExpressionType('(new Foo)->foo(new Bar(42))')->toString())->toBe('int(42)')
+        ->and($analysis->getExpressionType('(new Foo)->foo(new Bar(50))')->toString())->toBe('int(50)');
+});
+
+it('resolves a direct nullsafe argument property at the call site', function (string $argument, string $expected) {
+    $analysis = analyzeFile(<<<'PHP'
+<?php
+class Foo {
+    public function foo(?Bar $value) {
+        return $value?->prop;
+    }
+}
+class Bar {
+    public string $prop = 'foo';
+}
+PHP);
+
+    expect($analysis->getExpressionType('(new Foo)->foo('.$argument.')')->toString())->toBe($expected);
+})->with([
+    'null' => ['null', 'null'],
+    'object' => ['new Bar', 'string(foo)'],
+]);
+
+it('resolves nested argument property fetches eagerly', function () {
+    $analysis = analyzeFile(<<<'PHP'
+<?php
+class Foo {
+    public function foo(Bar $value) {
+        return $value->foo->bar;
+    }
+}
+class Bar {
+    public Bar $foo;
+    public int $bar = 42;
+}
+PHP);
+
+    expect($analysis->getClassDefinition('Foo')->methods['foo']->getReturnType()->toString())->toBe('int')
+        ->and($analysis->getExpressionType('(new Foo)->foo(new Bar)')->toString())->toBe('int');
+});
+
+it('preserves nullability when an argument property is a method receiver', function () {
+    $type = analyzeFile(<<<'PHP'
+<?php
+class Foo {
+    public function foo(Bar $value) {
+        return $value->prop?->bar();
+    }
+}
+class Bar {
+    public ?Bar $prop;
+    public function bar() {
+        return 'foo';
+    }
+}
+PHP)->getExpressionType('(new Foo)->foo(new Bar)');
+
+    expect($type->toString())->toBe('string(foo)|null');
+});
+
+it('preserves a property method call alongside an explicit null return', function () {
+    $type = analyzeFile(<<<'PHP'
+<?php
+class Foo {
+    public function foo(Bar $value) {
+        if ($value->enabled) {
+            return $value->prop?->bar();
+        }
+
+        return null;
+    }
+}
+class Bar {
+    public bool $enabled;
+    public ?Bar $prop;
+    public function bar() {
+        return 'foo';
+    }
+}
+PHP)->getExpressionType('(new Foo)->foo(new Bar)');
+
+    expect($type->toString())->toBe('null|string(foo)');
+});
+
+it('resolves property-rooted fetches eagerly', function (string $hint, string $expected) {
+    $analysis = analyzeFile(<<<PHP
+<?php
+class Foo {
+    public Bar \$foo;
+    public function bar() {
+        return \$this->foo->baz;
+    }
+}
+class Bar {
+    public {$hint} \$baz;
+}
+PHP);
+
+    expect($analysis->getClassDefinition('Foo')->methods['bar']->getReturnType()->toString())->toBe($expected)
+        ->and($analysis->getExpressionType('(new Foo)->bar()')->toString())->toBe($expected);
+})->with([
+    'boolean' => ['bool', 'boolean'],
+    'array' => ['array', 'array<mixed>'],
+]);
+
 it('resolves nested templates', function () {
     $type = analyzeFile(<<<'EOD'
 <?php
