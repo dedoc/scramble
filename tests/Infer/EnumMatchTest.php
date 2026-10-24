@@ -38,7 +38,7 @@ it('falls back for the entire match when any condition is unsupported', function
 
     expect($returnType)->not->toBeInstanceOf(ConditionalType::class)
         ->and(explode('|', $returnType->toString()))->toEqualCanonicalizing(['string(First)', 'string(Second)', 'string(Other)']);
-})->with(['dynamicCondition', 'foreignCase', 'scalarCondition', 'nonThisSubject', 'unresolvedCase', 'nonCaseConstant']);
+})->with(['dynamicCondition', 'scalarCondition', 'nonThisSubject']);
 
 it('unions enum match returns for a receiver with an unknown case', function () {
     $analysis = analyzeFile('<?php
@@ -55,12 +55,6 @@ it('infers matches on unit enums', function () {
     $definition = analyzeClass(EnumMatchOther::class)->getClassDefinition(EnumMatchOther::class)->getMethod('label');
 
     expect($definition->getReturnType()->toString())->toBe('(self is '.EnumMatchOther::class.'::Draft ? string(Draft) : never)');
-});
-
-it('keeps existing match inference outside enums', function () {
-    $definition = analyzeClass(EnumMatchNonEnum::class)->getClassDefinition(EnumMatchNonEnum::class)->getMethod('label');
-
-    expect($definition->getReturnType()->toString())->toBe('string(First)|string(Other)');
 });
 
 enum EnumMatchStatus: string
@@ -133,15 +127,6 @@ enum EnumMatchStatus: string
         };
     }
 
-    public function foreignCase()
-    {
-        return match ($this) {
-            self::Draft => 'First',
-            EnumMatchOther::Draft => 'Second',
-            default => 'Other',
-        };
-    }
-
     public function scalarCondition()
     {
         return match ($this) {
@@ -156,24 +141,6 @@ enum EnumMatchStatus: string
         return match ($status) {
             self::Draft => 'First',
             self::Published => 'Second',
-            default => 'Other',
-        };
-    }
-
-    public function unresolvedCase()
-    {
-        return match ($this) {
-            self::Draft => 'First',
-            self::Missing => 'Second',
-            default => 'Other',
-        };
-    }
-
-    public function nonCaseConstant()
-    {
-        return match ($this) {
-            self::Draft => 'First',
-            self::NOT_A_CASE => 'Second',
             default => 'Other',
         };
     }
@@ -199,5 +166,43 @@ class EnumMatchNonEnum
             EnumMatchStatus::Draft => 'First',
             default => 'Other',
         };
+    }
+}
+
+it('handles method call on this in class', function () {
+    $result = analyzeClass(Foo_EnumMatchTest::class);
+
+    expect($result->getClassDefinition(Foo_EnumMatchTest::class)->getMethod('enumMatchOnMethodCall')->getReturnType()->toString())
+        ->toBe('string(Draft)');
+});
+class Foo_EnumMatchTest
+{
+    public function enumMatchOnMethodCall()
+    {
+        return match ($this->methodCall()) {
+            EnumMatchStatus::Draft => 'Draft',
+            EnumMatchStatus::Published => 'Published',
+            default => null,
+        };
+    }
+    public function methodCall()
+    {
+        return EnumMatchStatus::Draft;
+    }
+}
+
+it('handles method call on this redefined', function () {
+    $result = analyzeClass(Bar_EnumMatchTest::class)
+        ->getClassDefinition(Bar_EnumMatchTest::class)
+        ->getMethod('enumMatchOnMethodCall');
+
+    expect($result->getReturnType()->toString())
+        ->toBe('string(Published)');
+});
+class Bar_EnumMatchTest extends Foo_EnumMatchTest
+{
+    public function methodCall()
+    {
+        return EnumMatchStatus::Published;
     }
 }

@@ -155,41 +155,38 @@ class ExpressionTypeInferrer
     }
 
     /**
-     * @return array<int, EnumCaseType[]>|null
+     * @return array<int, Type[]>|null
      */
-    public function getEnumMatchConditions(Expr\Match_ $expr): ?array
+    private function getEnumLikeMatchConditions(Expr\Match_ $expr, Closure $variableTypeGetter): ?array
     {
-        if (! $expr->cond instanceof Expr\Variable || $expr->cond->name !== 'this') {
+        // $this
+        // $this->foo()
+        // $this->foo
+        $cond = $expr->cond;
+
+        $isThis = $cond instanceof Expr\Variable && $cond->name === 'this';
+        $isThisMethodCall = ($cond instanceof Expr\MethodCall || $cond instanceof Expr\NullsafeMethodCall)
+            && $cond->var instanceof Expr\Variable && $cond->var->name === 'this';
+        $isThisPropertyFetch = ($cond instanceof Expr\PropertyFetch || $cond instanceof Expr\NullsafePropertyFetch)
+            && $cond->var instanceof Expr\Variable && $cond->var->name === 'this';
+
+        if (! $isThis && ! $isThisMethodCall && ! $isThisPropertyFetch) {
             return null;
         }
 
-        $className = $this->scope->classDefinition()?->name;
-        if (! $className || ! enum_exists($className)) {
-            return null;
-        }
-
-        $className = (new \ReflectionEnum($className))->getName();
         $conditions = [];
 
         foreach ($expr->arms as $i => $arm) {
             $conditions[$i] = [];
             foreach ($arm->conds ?? [] as $cond) {
+                // Expr that looks like enum case
                 if (! $cond instanceof Expr\ClassConstFetch
                     || ! $cond->class instanceof PhpParserNode\Name
                     || ! $cond->name instanceof PhpParserNode\Identifier) {
                     return null;
                 }
 
-                $type = ReferenceTypeResolver::getInstance()->resolve(
-                    $this->scope,
-                    (new ClassConstFetchTypeGetter)($cond, $this->scope),
-                );
-
-                if (! $type instanceof EnumCaseType || strcasecmp($type->name, $className) !== 0) {
-                    return null;
-                }
-
-                $conditions[$i][] = new EnumCaseType($className, $type->caseName);
+                $conditions[$i][] = $this->infer($cond, $variableTypeGetter);
             }
         }
 
@@ -198,7 +195,7 @@ class ExpressionTypeInferrer
 
     private function inferMatch(Expr\Match_ $expr, Closure $variableTypeGetter): Type
     {
-        if (($conditions = $this->getEnumMatchConditions($expr)) === null) {
+        if (($conditions = $this->getEnumLikeMatchConditions($expr, $variableTypeGetter)) === null) {
             return Union::wrap(array_map(
                 fn (PhpParserNode\MatchArm $arm) => $this->infer($arm->body, $variableTypeGetter),
                 $expr->arms,
