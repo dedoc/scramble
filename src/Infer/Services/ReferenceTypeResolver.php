@@ -19,7 +19,6 @@ use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\IntegerType;
-use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\MixedType;
 use Dedoc\Scramble\Support\Type\NeverType;
