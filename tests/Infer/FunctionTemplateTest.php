@@ -24,6 +24,23 @@ EOD)->getExpressionType("foo('wow')");
     expect($type->toString())->toBe('string(wow)');
 });
 
+it('infers a literal array key concatenated with a function argument', function (string $key) {
+    $type = analyzeFile(<<<PHP
+<?php
+function foo(string \$key) {
+    return [
+        $key => 42,
+    ];
+}
+PHP)->getExpressionType("foo('wow')");
+
+    expect($type->toString())->toBe('array{strwow: int(42)}');
+})->with([
+    '\'str\'.$key',
+    '"str{$key}"',
+    '"str$key"',
+]);
+
 it('preserves a conditional return type for a direct argument condition', function () {
     $definition = analyzeFile(<<<'PHP'
 <?php

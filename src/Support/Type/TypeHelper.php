@@ -335,8 +335,8 @@ class TypeHelper
 
     public static function isResolvable(Type $type): bool
     {
-        if ($type instanceof Union) {
-            foreach ($type->types as $member) {
+        if ($type instanceof Union || $type instanceof ConcatenatedStringType) {
+            foreach (($type->types ?? $type->parts) as $member) {
                 if (! static::isResolvable($member)) {
                     return false;
                 }
@@ -377,8 +377,20 @@ class TypeHelper
 
             public function leave(Type $type): ?Type
             {
-                if (
-                    $type instanceof ObjectType
+                if ($this->isCounted($type)) {
+                    $this->count++;
+                }
+
+                if ($type instanceof ArrayItemType_ && $this->isCounted($type->keyType)) {
+                    $this->count--;
+                }
+
+                return null;
+            }
+
+            private function isCounted(?Type $type): bool
+            {
+                return $type instanceof ObjectType
                     || $type instanceof StringType
                     || $type instanceof IntegerType
                     || $type instanceof FloatType
@@ -388,12 +400,7 @@ class TypeHelper
                      * Give some weight for keyed array item so when comparing `array<mixed>` to `array{foo: unknown}`,
                      * the keyed array is preferred.
                      */
-                    || $type instanceof ArrayItemType_ && is_string($type->key)
-                ) {
-                    $this->count++;
-                }
-
-                return null;
+                    || ($type instanceof ArrayItemType_ && is_string($type->key));
             }
         };
 
