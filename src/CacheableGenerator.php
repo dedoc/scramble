@@ -54,7 +54,10 @@ class CacheableGenerator
             return new OldGeneratorResult($cachedResult);
         }
 
-        if (cache()->store($store)->get(self::versionKey($key)) !== static::CACHE_VERSION) {
+        $version = cache()->store($store)->get(self::versionKey($key));
+
+        // Redis returns the numeric marker as a string.
+        if ($version !== static::CACHE_VERSION && $version !== (string) static::CACHE_VERSION) {
             return null;
         }
 

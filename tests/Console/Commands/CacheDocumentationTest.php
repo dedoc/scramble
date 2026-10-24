@@ -70,6 +70,36 @@ it('returns documentation cached by an older Scramble version', function () {
         ->and($actual->proNudge()->message())->toBeNull();
 });
 
+it('returns cached documentation when the store reads the version back as a string', function () {
+    $config = Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
+    $expected = app(Generator::class)->generate($config);
+
+    CacheableGenerator::store($config, $expected);
+
+    // Redis returns numeric values as strings.
+    Cache::store('array')->forever('scramble.openapi.test:'.Scramble::DEFAULT_API.':_version', (string) CacheableGenerator::CACHE_VERSION);
+
+    $generator = Mockery::mock(Generator::class);
+    $generator->shouldNotReceive('generate');
+
+    expect((new CacheableGenerator($generator))->generate($config))->toBe($expected);
+});
+
+it('ignores cached documentation when the version marker does not match exactly', function () {
+    $config = Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
+    $cached = app(Generator::class)->generate($config);
+    $live = app(Generator::class)->generate($config);
+
+    CacheableGenerator::store($config, $cached);
+
+    Cache::store('array')->forever('scramble.openapi.test:'.Scramble::DEFAULT_API.':_version', '2.5');
+
+    $generator = Mockery::mock(Generator::class);
+    $generator->shouldReceive('generate')->once()->with($config)->andReturn($live);
+
+    expect((new CacheableGenerator($generator))->generate($config))->toBe($live);
+});
+
 it('generates documentation on cache miss without storing', function () {
     $generator = app(Generator::class);
     $cacheableGenerator = app(CacheableGenerator::class);
