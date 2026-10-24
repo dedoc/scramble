@@ -185,6 +185,7 @@ class Foo_EnumMatchTest
             default => null,
         };
     }
+
     public function methodCall()
     {
         return EnumMatchStatus::Draft;
