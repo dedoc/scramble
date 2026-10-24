@@ -17,7 +17,7 @@ class ArrayItemType_ extends AbstractType
 
     public function nodes(): array
     {
-        return ['value'];
+        return ['keyType', 'value'];
     }
 
     /**

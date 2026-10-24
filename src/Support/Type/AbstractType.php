@@ -119,6 +119,10 @@ abstract class AbstractType implements Type
                 continue;
             }
 
+            if (! $nodeValue) {
+                continue;
+            }
+
             if (! is_array($nodeValue)) {
                 $cloned->$nodeName = $nodeValue instanceof self
                     ? $nodeValue->cloneWithContext($clones)
