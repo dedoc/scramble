@@ -40,6 +40,17 @@ it('falls back for the entire match when any condition is unsupported', function
         ->and(explode('|', $returnType->toString()))->toEqualCanonicalizing(['string(First)', 'string(Second)', 'string(Other)']);
 })->with(['dynamicCondition', 'foreignCase', 'scalarCondition', 'nonThisSubject', 'unresolvedCase', 'nonCaseConstant']);
 
+it('unions enum match returns for a receiver with an unknown case', function () {
+    $analysis = analyzeFile('<?php
+        function enumLabel(\\'.EnumMatchStatus::class.' $status) {
+            return $status->label();
+        }
+    ');
+
+    expect($analysis->getFunctionDefinition('enumLabel')->type->getReturnType()->toString())
+        ->toBe('string(Draft article)|string(Published article)|string(Archived article)');
+});
+
 it('infers matches on unit enums', function () {
     $definition = analyzeClass(EnumMatchOther::class)->getClassDefinition(EnumMatchOther::class)->getMethod('label');
 

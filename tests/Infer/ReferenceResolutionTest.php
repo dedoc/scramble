@@ -774,6 +774,39 @@ it('resolves ConditionalType for template types', function (Type\Type $subject, 
     ],
 ]);
 
+it('resolves conditional types with definite and possible matches', function (Type\Type $subject, Type\Type $checkType, ?bool $matches) {
+    foreach ([false, true] as $negated) {
+        $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new Type\ConditionalType(
+            $subject,
+            $checkType,
+            new Type\Literal\LiteralStringType('yes'),
+            new Type\Literal\LiteralStringType('no'),
+            negated: $negated,
+        ));
+
+        expect($resolvedType->toString())->toBe($matches === null
+            ? 'string(yes)|string(no)'
+            : ($matches !== $negated ? 'string(yes)' : 'string(no)'));
+    }
+})->with([
+    'broad string' => [new Type\StringType, new Type\Literal\LiteralStringType('yes'), null],
+    'broad integer' => [new Type\IntegerType, new Type\Literal\LiteralIntegerType(1), null],
+    'broad boolean' => [new Type\BooleanType, new Type\Literal\LiteralBooleanType(true), null],
+    'same literal' => [new Type\Literal\LiteralStringType('yes'), new Type\Literal\LiteralStringType('yes'), true],
+    'different strings' => [new Type\Literal\LiteralStringType('no'), new Type\Literal\LiteralStringType('yes'), false],
+    'different integers' => [new Type\Literal\LiteralIntegerType(2), new Type\Literal\LiteralIntegerType(1), false],
+    'different booleans' => [new Type\Literal\LiteralBooleanType(false), new Type\Literal\LiteralBooleanType(true), false],
+    'disjoint types' => [new Type\IntegerType, new Type\StringType, false],
+    'object subtype' => [new Type\ObjectType(\Exception::class), new Type\ObjectType(\RuntimeException::class), null],
+    'mixed' => [new Type\MixedType, new Type\StringType, null],
+    'partial union' => [new Type\Union([new Type\StringType, new Type\IntegerType]), new Type\StringType, null],
+    'uncertain union' => [new Type\Union([new Type\StringType, new Type\IntegerType]), new Type\Literal\LiteralStringType('yes'), null],
+    'matching union' => [new Type\Union([new Type\Literal\LiteralStringType('yes'), new Type\Literal\LiteralStringType('no')]), new Type\StringType, true],
+    'disjoint union' => [new Type\Union([new Type\IntegerType, new Type\BooleanType]), new Type\StringType, false],
+    'union check' => [new Type\StringType, new Type\Union([new Type\IntegerType, new Type\StringType]), true],
+    'partial union check' => [new Type\StringType, new Type\Union([new Type\IntegerType, new Type\Literal\LiteralStringType('yes')]), null],
+]);
+
 it('resolves nested ConditionalType for template types', function () {
     $resolvedType = ReferenceTypeResolver::getInstance()->resolve(new GlobalScope, new Type\ConditionalType(
         new Type\FunctionType('{}', [], new Type\VoidType),

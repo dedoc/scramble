@@ -3,7 +3,7 @@
 namespace Dedoc\Scramble\Support\Type;
 
 use Dedoc\Scramble\Support\Type\Contracts\LateResolvingType;
-use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
+use Dedoc\Scramble\Support\Type\Contracts\LiteralType;
 
 class ConditionalType extends AbstractType implements LateResolvingType
 {
@@ -28,19 +28,10 @@ class ConditionalType extends AbstractType implements LateResolvingType
 
     public function resolve(): Type
     {
-        /*
-         * @todo
-         * Ideally, here we need to have yes/no/maybe logic. Conditions below replicate this
-         * logic for simpler case.
-         */
-        if ($this->checkType instanceof LiteralBooleanType && $this->subject instanceof BooleanType) {
-            if (! $this->subject instanceof LiteralBooleanType) {
-                return Union::wrap([$this->ifTrue, $this->ifFalse]);
-            }
+        $matches = $this->matches($this->subject, $this->checkType);
 
-            $matches = $this->subject->value === $this->checkType->value;
-        } else {
-            $matches = $this->matches($this->subject, $this->checkType);
+        if ($matches === null) {
+            return TypeHelper::mergeTypes($this->ifTrue, $this->ifFalse);
         }
 
         return $matches !== $this->negated
@@ -80,12 +71,47 @@ class ConditionalType extends AbstractType implements LateResolvingType
         );
     }
 
-    private function matches(Type $subject, Type $checkType): bool
+    /** Returns null when the subject can both match and not match. */
+    private function matches(Type $subject, Type $checkType): ?bool
     {
-        if ($checkType instanceof EnumCaseType) {
-            return $checkType->isSame($subject);
+        if ($subject instanceof Union) {
+            $results = array_map(fn (Type $member) => $this->matches($member, $checkType), $subject->types);
+
+            foreach ($results as $result) {
+                if ($result !== $results[0]) {
+                    return null;
+                }
+            }
+
+            return $results[0] ?? null;
         }
 
-        return $subject->acceptedBy($checkType);
+        if ($checkType instanceof Union) {
+            $results = array_map(fn (Type $member) => $this->matches($subject, $member), $checkType->types);
+
+            return in_array(true, $results, true) ? true : (in_array(null, $results, true) ? null : false);
+        }
+
+        if ($subject instanceof MixedType) {
+            return $checkType instanceof MixedType ? true : null;
+        }
+
+        if ($checkType instanceof LiteralType || $checkType instanceof EnumCaseType) {
+            if ($checkType->isSame($subject)) {
+                return true;
+            }
+
+            if ($subject instanceof LiteralType || $subject instanceof EnumCaseType) {
+                return false;
+            }
+
+            return $subject->accepts($checkType) ? null : false;
+        }
+
+        if ($subject->acceptedBy($checkType)) {
+            return true;
+        }
+
+        return $subject->accepts($checkType) ? null : false;
     }
 }
