@@ -802,6 +802,22 @@ it('extract rules from object like rules with explicit array', function () {
     assertMatchesSnapshot(collect($params)->map->toArray()->all());
 });
 
+it('extract rules from object like rules with nullable array', function () {
+    $rules = [
+        'publisher' => 'nullable|array',
+        'publisher.id' => 'nullable|int',
+    ];
+
+    $params = validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules));
+
+    expect($params[0]->schema->toArray())->toBe([
+        'type' => ['object', 'null'],
+        'properties' => [
+            'id' => ['type' => ['integer', 'null']],
+        ],
+    ]);
+});
+
 it('supports between rule', function () {
     $rules = [
         'foo' => 'between:36,42',
