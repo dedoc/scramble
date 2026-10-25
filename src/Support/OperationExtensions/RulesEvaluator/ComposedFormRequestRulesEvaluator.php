@@ -5,7 +5,10 @@ namespace Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator;
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Exceptions\RulesEvaluationException;
 use Dedoc\Scramble\Infer\Reflector\ClassReflector;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
 use Dedoc\Scramble\Support\RouteInfo;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\NodeFinder;
@@ -23,6 +26,15 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
 
     public function handle(): array
     {
+        // Temporarily use inferred types only, keeping runtime evaluators below for comparison.
+//        $type = ReferenceTypeResolver::getInstance()->resolve(
+//            $this->routeInfo->getScope(),
+//            new MethodCallReferenceType(new ObjectType($this->classReflector->className), 'rules', []),
+//        );
+//        $rules = (new TypeToRules)->evaluate($type);
+//
+//        return is_array($rules) ? $rules : [];
+
         $rulesMethod = $this->classReflector->getMethod('rules');
         $rulesMethodNode = $rulesMethod->getAstNode();
 
