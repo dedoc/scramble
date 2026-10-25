@@ -76,7 +76,7 @@ class PropertyReflector
         $attributeBracketDepth = 0;
         $inParamList = false;
         $paramParenDepth = 0;
-        $inClosure = false;
+        $pendingClosures = 0;
         $result = '';
 
         foreach ($tokens as $t) {
@@ -167,15 +167,15 @@ class PropertyReflector
                 }
 
                 if ($id === T_FUNCTION && $braceLevel === 1) {
-                    $inClosure = true;
+                    $pendingClosures++;
                 }
 
                 if ($text === '}' && $braceLevel === 1) {
-                    if (! $inClosure) {
+                    if ($pendingClosures === 0) {
                         break;
                     }
 
-                    $inClosure = false;
+                    $pendingClosures--;
                 }
             }
         }
