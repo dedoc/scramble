@@ -12,6 +12,7 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Stringable;
 
 class TypeToRules
 {
@@ -19,6 +20,9 @@ class TypeToRules
     {
         if ($type instanceof ConcatenatedStringType) {
             $type = ConcatenatedStringType::fromParts($type->parts);
+            if ($type instanceof ConcatenatedStringType) {
+                return $this->evaluateConcatenatedRules($type);
+            }
         }
 
         $types = $type instanceof Union ? $type->types : [$type];
@@ -74,6 +78,9 @@ class TypeToRules
     {
         if ($type instanceof ConcatenatedStringType) {
             $type = ConcatenatedStringType::fromParts($type->parts);
+            if ($type instanceof ConcatenatedStringType) {
+                return $this->evaluateConcatenatedRules($type);
+            }
         }
 
         if ($type instanceof Union) {
@@ -115,7 +122,43 @@ class TypeToRules
     private function isRule(Type $type): bool
     {
         return $type instanceof ObjectType
-            && ($type->isInstanceOf(Rule::class) || $type->isInstanceOf(ValidationRule::class));
+            && ($type->isInstanceOf(Rule::class) || $type->isInstanceOf(ValidationRule::class) || $type->isInstanceOf(Stringable::class));
+    }
+
+    /** @return list<string|RuleType> */
+    private function evaluateConcatenatedRules(ConcatenatedStringType $type): array
+    {
+        $segments = [[]];
+        foreach ($type->parts as $part) {
+            if (! $part instanceof LiteralStringType) {
+                $segments[array_key_last($segments)][] = $part;
+
+                continue;
+            }
+
+            foreach (explode('|', $part->value) as $index => $value) {
+                if ($index > 0) {
+                    $segments[] = [];
+                }
+                if ($value !== '') {
+                    $segments[array_key_last($segments)][] = new LiteralStringType($value);
+                }
+            }
+        }
+
+        $rules = [];
+        foreach ($segments as $segment) {
+            if (! $segment) {
+                continue;
+            }
+
+            $rule = ConcatenatedStringType::fromParts($segment);
+            if ($rule instanceof LiteralStringType || $this->isRule($rule)) {
+                array_push($rules, ...$this->evaluateRuleSet($rule));
+            }
+        }
+
+        return $this->uniqueRules($rules);
     }
 
     /**

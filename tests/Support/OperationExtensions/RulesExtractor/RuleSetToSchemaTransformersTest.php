@@ -9,6 +9,7 @@ use Dedoc\Scramble\RuleTransformers\EnumRule;
 use Dedoc\Scramble\RuleTransformers\InRule;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
+use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\TypeToRules;
 use Dedoc\Scramble\Support\RuleTransforming\RuleSetToSchemaTransformer;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -26,6 +27,30 @@ beforeEach(function () {
 });
 
 describe(EnumRule::class, function () {
+    test('inferred enum rule filters cases', function (string $setter) {
+        $type = getVariableTypeAfter('$rules = [\\'.Rule::class.'::enum(\\'.Enum_RuleSetToSchemaTransformerTest::class.'::class)->'.$setter.'];', 'rules');
+
+        $schema = $this->transformer->transform((new TypeToRules)->evaluate($type));
+
+        expect($schema->toArray())->toBe(['type' => 'string', 'const' => 'foo']);
+    })->with([
+        'only' => ['only([\\'.Enum_RuleSetToSchemaTransformerTest::class.'::FOO])'],
+        'except' => ['except(\\'.Enum_RuleSetToSchemaTransformerTest::class.'::BAR)'],
+    ]);
+
+    test('inferred enum rule', function () {
+        $type = getVariableTypeAfter('$rules = [\\'.Rule::class.'::enum(\\'.Enum_RuleSetToSchemaTransformerTest::class.'::class)];', 'rules');
+
+        $schema = $this->transformer->transform((new TypeToRules)->evaluate($type));
+
+        expect($schema->toArray())->toBe(['$ref' => '#/components/schemas/Enum_RuleSetToSchemaTransformerTest'])
+            ->and($this->openApiTransformer->getComponents()->getSchema('Enum_RuleSetToSchemaTransformerTest')->toArray())
+            ->toBe([
+                'type' => 'string',
+                'enum' => ['foo', 'bar'],
+            ]);
+    });
+
     test('enum rule', function () {
         $rules = [Rule::enum(Enum_RuleSetToSchemaTransformerTest::class)];
 
@@ -230,6 +255,48 @@ EOF,
 });
 
 describe(InRule::class, function () {
+    test('string in rule keeps its existing parameter handling', function () {
+        $schema = $this->transformer->transform(['in:"a,b","say ""hello"" now"']);
+
+        expect($schema->toArray())->toBe([
+            'type' => 'string',
+            'enum' => ['a,b', 'say "hello" now'],
+        ]);
+    });
+
+    test('inferred in rule', function (string $expression, array $values) {
+        $type = getVariableTypeAfter('$rules = ['.$expression.'];', 'rules');
+
+        $schema = $this->transformer->transform((new TypeToRules)->evaluate($type));
+
+        expect($schema->toArray())->toBe(['type' => 'string', 'enum' => $values]);
+    })->with([
+        'factory' => ['\\'.Rule::class.'::in(["a", "b"])', ['a', 'b']],
+        'constructor' => ['new \\Illuminate\\Validation\\Rules\\In("a", "b")', ['a', 'b']],
+        'numeric values' => ['\\'.Rule::class.'::in([1, 2])', ['1', '2']],
+        'enum cases' => ['\\'.Rule::class.'::in([\\'.Enum_RuleSetToSchemaTransformerTest::class.'::FOO, \\'.Enum_RuleSetToSchemaTransformerTest::class.'::BAR])', ['foo', 'bar']],
+        'quotes and commas' => ['\\'.Rule::class.'::in([\'"a"\', \'b,c\'])', ['"a"', 'b,c']],
+    ]);
+
+    test('inferred in rule leaves the schema unchanged for unknown values', function () {
+        $type = getVariableTypeAfter('$rules = ["integer", \\'.Rule::class.'::in($unknown)];', 'rules');
+
+        $schema = $this->transformer->transform((new TypeToRules)->evaluate($type));
+
+        expect($schema->toArray())->toBe(['type' => 'integer']);
+    });
+
+    test('inferred in rule applies values to array items', function () {
+        $type = getVariableTypeAfter('$rules = ["array", \\'.Rule::class.'::in(["a", "b"])];', 'rules');
+
+        $schema = $this->transformer->transform((new TypeToRules)->evaluate($type));
+
+        expect($schema->toArray())->toBe([
+            'type' => 'array',
+            'items' => ['type' => 'string', 'enum' => ['a', 'b']],
+        ]);
+    });
+
     test('in rule', function () {
         $rules = [Rule::in(['a', 'b'])];
 

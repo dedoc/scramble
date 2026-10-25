@@ -2,6 +2,9 @@
 
 namespace Dedoc\Scramble\Support\RuleTransforming;
 
+use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\RuleType;
+use Dedoc\Scramble\Support\Type\ObjectType;
+
 /**
  * @template-covariant TRule of string|object = string|object
  */
@@ -72,5 +75,23 @@ class NormalizedRule
         }
 
         return is_string($rule) && is_a(get_class($this->rule), $rule, true);
+    }
+
+    /**
+     * @param  class-string  $className
+     */
+    public function instanceOf(string $className): bool
+    {
+        if ($this->rule instanceof RuleType) {
+            return $this->rule->type instanceof ObjectType
+                && $this->rule->type->isInstanceOf($className);
+        }
+
+        return is_object($this->rule) && is_a($this->rule, $className);
+    }
+
+    public function properties(): RuleProperties
+    {
+        return new RuleProperties($this->rule);
     }
 }

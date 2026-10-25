@@ -75,6 +75,38 @@ it('evaluates nested arrays and unions in array values', function () {
     ]);
 });
 
+it('recovers complete rules around unknown concatenated parameters', function () {
+    $type = ConcatenatedStringType::fromParts([
+        new LiteralStringType('required|max:'),
+        new StringType,
+        new LiteralStringType('|integer'),
+    ]);
+
+    expect((new TypeToRules)->evaluate($type))->toBe(['required', 'integer']);
+});
+
+it('preserves a stringable object only when it occupies a complete concatenated rule', function () {
+    $rule = new ObjectType(StringableRule_TypeToRulesTest::class);
+    $converter = new TypeToRules;
+
+    $rules = $converter->evaluate(ConcatenatedStringType::fromParts([
+        new LiteralStringType('required|'),
+        $rule,
+        new LiteralStringType('|nullable'),
+    ]));
+
+    expect($rules)->toHaveCount(3)
+        ->and($rules[0])->toBe('required')
+        ->and($rules[1])->toBeInstanceOf(RuleType::class)
+        ->and($rules[1]->type)->toBe($rule)
+        ->and($rules[2])->toBe('nullable')
+        ->and($converter->evaluate(ConcatenatedStringType::fromParts([
+            new LiteralStringType('max:'),
+            $rule,
+            new LiteralStringType('|integer'),
+        ])))->toBe(['integer']);
+});
+
 it('collects known rules from lists regardless of numeric keys', function () {
     $type = new KeyedArrayType([
         new ArrayItemType_(0, new LiteralStringType('string')),
@@ -132,13 +164,25 @@ it('deduplicates object rules across alternative rule sets', function () {
         ->and($rules[1]->type->toString())->toBe(ModernRule_TypeToRulesTest::class);
 });
 
-it('wraps only Laravel validation rule objects', function (string $class) {
+it('wraps validation rule and stringable objects directly and inside rule lists', function (string $class) {
     $type = new ObjectType($class);
-    $rule = (new TypeToRules)->evaluate($type);
+    $converter = new TypeToRules;
+    $rule = $converter->evaluate($type);
+    $rules = $converter->evaluate(new KeyedArrayType([
+        new ArrayItemType_(null, $type),
+    ]));
 
     expect($rule)->toBeInstanceOf(RuleType::class)
-        ->and($rule->type)->toBe($type);
-})->with([LegacyRule_TypeToRulesTest::class, ModernRule_TypeToRulesTest::class]);
+        ->and($rule->type)->toBe($type)
+        ->and($rules)->toHaveCount(1)
+        ->and($rules[0])->toBeInstanceOf(RuleType::class)
+        ->and($rules[0]->type)->toBe($type);
+})->with([
+    LegacyRule_TypeToRulesTest::class,
+    ModernRule_TypeToRulesTest::class,
+    Illuminate\Support\Stringable::class,
+    StringableRule_TypeToRulesTest::class,
+]);
 
 it('does not wrap unsupported types directly or inside rule lists', function (Type $type) {
     $converter = new TypeToRules;
@@ -248,4 +292,12 @@ class LegacyRule_TypeToRulesTest implements Rule
 class ModernRule_TypeToRulesTest implements ValidationRule
 {
     public function validate(string $attribute, mixed $value, Closure $fail): void {}
+}
+
+class StringableRule_TypeToRulesTest implements Stringable
+{
+    public function __toString(): string
+    {
+        return 'email';
+    }
 }

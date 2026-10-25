@@ -68,7 +68,9 @@ it('extracts parameters with route parameter bindings in concat', function () {
     });
 
     expect($openApi['components']['schemas']['FormRequestC_FormRequestRulesExtractorPestTest']['properties'])
-        ->toHaveKey('foo');
+        ->toHaveKey('foo', ['type' => 'integer'])
+        ->and($openApi['components']['schemas']['FormRequestC_FormRequestRulesExtractorPestTest']['required'])
+        ->toContain('foo');
 });
 class ControllerC_FormRequestRulesExtractorPestTest
 {

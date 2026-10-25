@@ -5,6 +5,7 @@ use Dedoc\Scramble\Diagnostics\ValidationRules\Vr002NodeRulesEvaluationDiagnosti
 use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\NodeRulesEvaluator;
 use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\RuleType;
 use Dedoc\Scramble\Support\RouteInfo;
+use Dedoc\Scramble\Support\RuleTransforming\RuleProperties;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
@@ -194,6 +195,17 @@ it('does not use an unknown boolean as a truthy PHP object', function () {
     expect($rules)->toBe(['rate' => ['nullable', 'numeric']]);
 });
 
+it('recovers a concatenated in rule without stringifying its inferred wrapper', function () {
+    [$rules] = evaluateNodeRules([ControllerWithRecovery_NodeRulesEvaluatorTest::class, 'concatenated']);
+
+    expect($rules['foo'])->toHaveCount(3)
+        ->and($rules['foo'][0])->toBe('required')
+        ->and($rules['foo'][1])->toBe('integer')
+        ->and($rules['foo'][2])->toBeInstanceOf(RuleType::class)
+        ->and((new RuleProperties($rules['foo'][2]))->array('values'))->toBe([1, 2])
+        ->and($rules['sibling'][0])->toBeInstanceOf(RecoveryRule_NodeRulesEvaluatorTest::class);
+});
+
 it('extracts indexed rules from an unavailable intermediate array', function () {
     [$rules] = evaluateNodeRules([ControllerWithRecovery_NodeRulesEvaluatorTest::class, 'indexed']);
 
@@ -232,6 +244,18 @@ it('does not pass symbolic fragments into an enclosing PHP method call', functio
         ->and(ControllerWithRecovery_NodeRulesEvaluatorTest::$transformCalls)->toBe(0);
 });
 
+it('flattens alternative enum rules returned by an unavailable helper', function () {
+    [$rules] = evaluateNodeRules(ControllerWithEnumHelper_NodeRulesEvaluatorTest::class);
+
+    expect($rules['foo'])->toHaveCount(3)
+        ->and($rules['foo'][0])->toBe('sometimes')
+        ->and($rules['foo'][1])->toBeInstanceOf(RuleType::class)
+        ->and($rules['foo'][2])->toBeInstanceOf(RuleType::class)
+        ->and(collect($rules['foo'])->filter(fn ($rule) => $rule instanceof RuleType)
+            ->map(fn (RuleType $rule) => (new RuleProperties($rule))->array('except'))->all())
+        ->toContain([], [FooEnum_NodeRulesEvaluatorTest::Bar]);
+});
+
 it('rejects a non-array root value without exposing its properties as rules', function () {
     [$rules, $diagnostics] = evaluateNodeRules([ControllerWithRecovery_NodeRulesEvaluatorTest::class, 'invalidRoot']);
 
@@ -244,9 +268,54 @@ class RecoveryRule_NodeRulesEvaluatorTest implements \Illuminate\Contracts\Valid
     public function validate(string $attribute, mixed $value, Closure $fail): void {}
 }
 
+class ControllerWithEnumHelper_NodeRulesEvaluatorTest
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate(['foo' => ['sometimes', $this->fooRule()]]);
+    }
+
+    private function fooRule(): \Illuminate\Validation\Rules\Enum
+    {
+        $rule = \Illuminate\Validation\Rule::enum(FooEnum_NodeRulesEvaluatorTest::class);
+
+        if ($this->allowsBar()) {
+            return $rule;
+        }
+
+        return $rule->except([FooEnum_NodeRulesEvaluatorTest::Bar]);
+    }
+
+    private function allowsBar(): bool
+    {
+        throw new RuntimeException('Unavailable.');
+    }
+}
+
+enum FooEnum_NodeRulesEvaluatorTest: string
+{
+    case Foo = 'foo';
+    case Bar = 'bar';
+}
+
 class ControllerWithRecovery_NodeRulesEvaluatorTest
 {
     public static int $transformCalls = 0;
+
+    public function concatenated(Request $request)
+    {
+        $request->validate([
+            'foo' => 'required|integer|'.$this->inRule(),
+            'sibling' => [new RecoveryRule_NodeRulesEvaluatorTest],
+        ]);
+    }
+
+    private function inRule(): \Illuminate\Validation\Rules\In
+    {
+        app('scramble.unbound-recovery-service');
+
+        return \Illuminate\Validation\Rule::in([1, 2]);
+    }
 
     public function format(Request $request)
     {

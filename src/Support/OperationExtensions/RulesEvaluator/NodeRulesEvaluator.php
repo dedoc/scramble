@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use PhpParser\ConstExprEvaluator;
 use PhpParser\Node;
@@ -78,7 +79,7 @@ class NodeRulesEvaluator implements RulesEvaluator
             }
 
             if (is_array($item)) {
-                $item = array_values(array_filter($item));
+                $item = array_values(array_filter(Arr::flatten($item)));
             }
         }
 
@@ -208,7 +209,27 @@ class NodeRulesEvaluator implements RulesEvaluator
             return null;
         }
 
-        return (new ConstExprEvaluator(function ($expr) use ($variables) {
+        if ($expression instanceof Node\Expr\Array_) {
+            $values = [];
+            foreach ($expression->items as $item) {
+                if (! $item) {
+                    continue;
+                }
+
+                $value = $this->evaluateExpression($item->value, $variables);
+                if ($item->unpack) {
+                    $values = [...$values, ...$value];
+                } elseif ($item->key) {
+                    $values[$this->evaluateExpression($item->key, $variables)] = $value;
+                } else {
+                    $values[] = $value;
+                }
+            }
+
+            return $values;
+        }
+
+        $evaluate = function ($expr) use ($variables) {
             $default = new stdClass;
 
             $evaluatedConstFetch = (new ConstFetchEvaluator([
@@ -262,7 +283,11 @@ class NodeRulesEvaluator implements RulesEvaluator
             return $exprType instanceof KeyedArrayType || $exprType instanceof ArrayType
                 ? []
                 : null;
-        }))->evaluateDirectly($expression);
+        };
+
+        return $expression instanceof Node\Expr\BinaryOp\Concat
+            ? $evaluate($expression)
+            : (new ConstExprEvaluator($evaluate))->evaluateDirectly($expression);
     }
 
     private function attemptStaticAnalysisRecovery(Node\Expr $expr, Throwable $e, stdClass $noValue): mixed
