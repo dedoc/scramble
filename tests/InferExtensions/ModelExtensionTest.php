@@ -795,7 +795,7 @@ class RelationNullabilityModel_ModelExtensionTest extends Model
     }
 }
 
-it('infers singular relation nullability from the foreign key column', function () {
+it('keeps has-one relations nullable and infers belongs-to nullability from the foreign key column', function () {
     $this->infer->analyzeClass(RelationNullabilityOwner_ModelExtensionTest::class);
     $this->infer->analyzeClass(RelationNullabilityModel_ModelExtensionTest::class);
 
@@ -803,7 +803,7 @@ it('infers singular relation nullability from the foreign key column', function 
     $model = new ObjectType(RelationNullabilityModel_ModelExtensionTest::class);
 
     expect($owner->getPropertyType('requiredModel')->toString())
-        ->toBe(RelationNullabilityModel_ModelExtensionTest::class)
+        ->toBe(RelationNullabilityModel_ModelExtensionTest::class.'|null')
         ->and($owner->getPropertyType('nullableModel')->toString())
         ->toBe(RelationNullabilityModel_ModelExtensionTest::class.'|null')
         ->and($model->getPropertyType('requiredOwner')->toString())

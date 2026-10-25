@@ -5,6 +5,9 @@ namespace Dedoc\Scramble\Support\ResponseExtractor;
 use BackedEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 use ReflectionClass;
@@ -227,6 +230,10 @@ class ModelInfo
 
         if (method_exists($relation, 'withDefault') && $this->getProtectedValue($relation, 'withDefault')) {
             return false;
+        }
+
+        if ($relation instanceof HasOne || $relation instanceof MorphOne || $relation instanceof HasOneThrough) {
+            return true;
         }
 
         if (! method_exists($relation, 'getForeignKeyName')) {
