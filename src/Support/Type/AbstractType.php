@@ -98,18 +98,7 @@ abstract class AbstractType implements Type
      */
     public function clone(): static
     {
-        return $this->cloneWithContext(new \WeakMap);
-    }
-
-    /** @param  \WeakMap<object, mixed>  $clones */
-    private function cloneWithContext(\WeakMap $clones): static
-    {
-        if (isset($clones[$this]) && $clones[$this] instanceof static) {
-            return $clones[$this];
-        }
-
         $cloned = clone $this;
-        $clones[$this] = $cloned;
 
         foreach ($cloned->nodes() as $nodeName) {
             /** @var Type|Type[] $nodeValue */
@@ -124,9 +113,7 @@ abstract class AbstractType implements Type
             }
 
             if (! is_array($nodeValue)) {
-                $cloned->$nodeName = $nodeValue instanceof self
-                    ? $nodeValue->cloneWithContext($clones)
-                    : $nodeValue->clone();
+                $cloned->$nodeName = $nodeValue->clone();
 
                 continue;
             }
@@ -137,9 +124,7 @@ abstract class AbstractType implements Type
                     continue;
                 }
 
-                $cloned->$nodeName[$i] = $nodeItemValue instanceof self
-                    ? $nodeItemValue->cloneWithContext($clones)
-                    : $nodeItemValue->clone();
+                $cloned->$nodeName[$i] = $nodeItemValue->clone();
             }
         }
 

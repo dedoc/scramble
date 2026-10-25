@@ -8,15 +8,13 @@ class PotentialMethodMutatingCallType extends AbstractReferenceType
 {
     public function __construct(
         public Type $subject,
-        public Type $callee,
-        public string $methodName,
-        /** @var Type[] $arguments */
-        public array $arguments,
+        /** @var MethodCall[] Calls in one expression, in execution order. */
+        public array $calls,
     ) {}
 
     public function nodes(): array
     {
-        return ['subject', 'callee', 'arguments'];
+        return ['subject', 'calls'];
     }
 
     public function isInstanceOf(string $className): bool
@@ -26,11 +24,8 @@ class PotentialMethodMutatingCallType extends AbstractReferenceType
 
     public function toString(): string
     {
-        $argsTypes = implode(
-            ', ',
-            array_map(fn ($t) => $t->toString(), $this->arguments),
-        );
+        $calls = implode('.', array_map(fn (MethodCall $call) => $call->toString(), $this->calls));
 
-        return "self-out-(#{$this->callee->toString()}).{$this->methodName}($argsTypes)";
+        return "self-out-(#{$this->subject->toString()}).{$calls}";
     }
 }
