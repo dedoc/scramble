@@ -48,9 +48,9 @@ class NodeRulesEvaluator implements RulesEvaluator
         }
 
         // Temporarily use inferred types only, keeping runtime evaluation below for comparison.
-//        $rules = (new TypeToRules)->evaluate($this->getType($this->rulesNode));
+        //        $rules = (new TypeToRules)->evaluate($this->getType($this->rulesNode));
 
-//        return is_array($rules) ? $rules : [];
+        //        return is_array($rules) ? $rules : [];
 
         try {
             return $this->rules();

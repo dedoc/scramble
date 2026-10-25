@@ -27,13 +27,13 @@ class ComposedFormRequestRulesEvaluator implements RulesEvaluator
     public function handle(): array
     {
         // Temporarily use inferred types only, keeping runtime evaluators below for comparison.
-//        $type = ReferenceTypeResolver::getInstance()->resolve(
-//            $this->routeInfo->getScope(),
-//            new MethodCallReferenceType(new ObjectType($this->classReflector->className), 'rules', []),
-//        );
-//        $rules = (new TypeToRules)->evaluate($type);
-//
-//        return is_array($rules) ? $rules : [];
+        //        $type = ReferenceTypeResolver::getInstance()->resolve(
+        //            $this->routeInfo->getScope(),
+        //            new MethodCallReferenceType(new ObjectType($this->classReflector->className), 'rules', []),
+        //        );
+        //        $rules = (new TypeToRules)->evaluate($type);
+        //
+        //        return is_array($rules) ? $rules : [];
 
         $rulesMethod = $this->classReflector->getMethod('rules');
         $rulesMethodNode = $rulesMethod->getAstNode();
