@@ -119,6 +119,21 @@ it('caches documentation using scramble:cache command', function () {
         ->and($cached->spec())->toBe($expected->spec());
 });
 
+it('returns warmed documentation when the cache store returns the version as a string', function () {
+    $config = Scramble::getGeneratorConfig(Scramble::DEFAULT_API);
+    $key = 'scramble.openapi.test:'.Scramble::DEFAULT_API;
+
+    artisan(CacheDocumentation::class, ['--api' => [Scramble::DEFAULT_API]])->assertOk();
+
+    $cached = Cache::store('array')->get($key);
+
+    // Redis returns numeric cache values as strings.
+    Cache::store('array')->forever($key.':_version', (string) CacheableGenerator::CACHE_VERSION);
+
+    expect($cached)->toBeInstanceOf(GeneratorResult::class)
+        ->and(app(CacheableGenerator::class)->generate($config))->toBe($cached);
+});
+
 it('clears documentation cache using scramble:clear command', function () {
     Cache::store('array')->forever('scramble.openapi.test:'.Scramble::DEFAULT_API, ['openapi' => '3.1.0']);
     Cache::store('array')->forever('scramble.openapi.test:'.Scramble::DEFAULT_API.':_version', CacheableGenerator::CACHE_VERSION);
