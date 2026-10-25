@@ -467,6 +467,8 @@ it('keeps resources made from nullable loaded relations nullable', function (str
     'belongsTo with new' => [ComplexTypeHandlersWithNullableWhenLoaded_SampleType::class, 'submitted_by_new'],
     'hasOne with make' => [ComplexTypeHandlersWithNullableHasOneWhenLoaded_SampleType::class, 'latest_cv'],
     'hasOne with new' => [ComplexTypeHandlersWithNullableHasOneWhenLoaded_SampleType::class, 'latest_cv_new'],
+    'latestOfMany with make' => [ComplexTypeHandlersWithNullableHasOneWhenLoaded_SampleType::class, 'latest_cv_of_many'],
+    'latestOfMany with new' => [ComplexTypeHandlersWithNullableHasOneWhenLoaded_SampleType::class, 'latest_cv_of_many_new'],
 ]);
 
 it('gets json resource type with when counted', function () {
@@ -990,6 +992,8 @@ class ComplexTypeHandlersWithNullableHasOneWhenLoaded_SampleType extends JsonRes
         return [
             'latest_cv' => ComplexTypeHandlersWithWhen_SampleType::make($this->whenLoaded('latestCv')),
             'latest_cv_new' => new ComplexTypeHandlersWithWhen_SampleType($this->whenLoaded('latestCv')),
+            'latest_cv_of_many' => ComplexTypeHandlersWithWhen_SampleType::make($this->whenLoaded('latestCvOfMany')),
+            'latest_cv_of_many_new' => new ComplexTypeHandlersWithWhen_SampleType($this->whenLoaded('latestCvOfMany')),
         ];
     }
 }
@@ -1010,7 +1014,12 @@ class ComplexTypeHandlersWithSubmitterModel extends \Illuminate\Database\Eloquen
 
     public function latestCv()
     {
-        return $this->hasOne(ComplexTypeHandlersWithNullableRelationModel::class, 'nullable_owner_id');
+        return $this->hasOne(ComplexTypeHandlersWithNullableRelationModel::class, 'required_owner_id');
+    }
+
+    public function latestCvOfMany()
+    {
+        return $this->hasOne(ComplexTypeHandlersWithNullableRelationModel::class, 'required_owner_id')->latestOfMany();
     }
 }
 
