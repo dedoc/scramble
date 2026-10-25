@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble;
 
 use Dedoc\Scramble\Configuration\GeneratorConfigCollection;
+use Dedoc\Scramble\Configuration\InferConfig;
 use Dedoc\Scramble\Configuration\OperationTransformers;
 use Dedoc\Scramble\Configuration\ParametersExtractors;
 use Dedoc\Scramble\Console\Commands\AnalyzeDocumentation;
@@ -115,6 +116,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
     public $singletons = [
         PrettyPrinter::class => PrettyPrinter\Standard::class,
         GeneratorConfigCollection::class => GeneratorConfigCollection::class,
+        InferConfig::class => InferConfig::class,
         CacheableGenerator::class => CacheableGenerator::class,
     ];
 
@@ -149,7 +151,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             );
         });
 
-        $this->app->singleton(Index::class, function () {
+        $this->app->scoped(Index::class, function () {
             $index = new Index;
             foreach ((require __DIR__.'/../dictionaries/classMap.php') ?: [] as $className => $serializedClassDefinition) {
                 $index->classesDefinitions[$className] = unserialize($serializedClassDefinition);
@@ -171,7 +173,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
             return $index;
         });
 
-        $this->app->singleton(Infer::class);
+        $this->app->scoped(Infer::class);
 
         $this->app->when(ExtensionsBroker::class)
             ->needs('$extensions')
