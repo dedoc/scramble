@@ -8,7 +8,6 @@ use Dedoc\Scramble\Infer\Reflector\ClosureReflector;
 use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Support\IndexBuilders\Bag;
 use Dedoc\Scramble\Support\IndexBuilders\RequestParametersBuilder;
-use Dedoc\Scramble\Support\IndexBuilders\ScopeCollector;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\InferredParameter;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Illuminate\Routing\Route;
@@ -185,18 +184,17 @@ class RouteInfo
             return $this->actionDefinition;
         }
 
-        $scopeCollector = new ScopeCollector;
-
         $this->actionDefinition = $this->getActionReflector()->getFunctionLikeDefinition(
             indexBuilders: [
                 new RequestParametersBuilder($this->requestParametersFromCalls),
-                $scopeCollector,
                 ...$this->indexBuildingBroker->indexBuilders,
             ],
             withSideEffects: true,
         );
 
-        $this->scope = $scopeCollector->getScope($this->actionDefinition);
+        $this->scope = $this->actionDefinition instanceof Infer\Definition\FunctionLikeAstDefinition
+            ? $this->actionDefinition->getScope()
+            : null;
 
         return $this->actionDefinition;
     }

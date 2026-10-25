@@ -9,7 +9,6 @@ use Dedoc\Scramble\Infer\Services\FileNameResolver;
 use Dedoc\Scramble\Infer\Services\FileParser;
 use Dedoc\Scramble\Infer\Visitors\PhpDocResolver;
 use Dedoc\Scramble\Support\IndexBuilders\IndexBuilder;
-use Dedoc\Scramble\Support\IndexBuilders\ScopeCollector;
 use Laravel\SerializableClosure\Support\ReflectionClosure;
 use PhpParser\NameContext;
 use PhpParser\Node;
@@ -143,20 +142,16 @@ class ClosureReflector
             throw new \LogicException('Cannot get AST node of closure');
         }
 
-        $scopeCollector = new ScopeCollector;
-
         $closureDefinition = (new Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder(
             '{closure}',
             $functionLikeNode,
             app(Infer::class)->index,
             new FileNameResolver($this->getNameContext()),
-            indexBuilders: [...$indexBuilders, $scopeCollector],
+            indexBuilders: $indexBuilders,
             withSideEffects: $withSideEffects,
         ))->build();
 
-        if (! $scope = $scopeCollector->getScope($closureDefinition)) {
-            throw new \LogicException('Cannot get scope of closure');
-        }
+        $scope = $closureDefinition->getScope();
 
         Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder::resolveFunctionParameterDefaults($scope, $closureDefinition);
         Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder::resolveFunctionReturnReferences($scope, $closureDefinition);
