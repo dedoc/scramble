@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeHelper;
 use ReflectionObject;
 use UnitEnum;
 
@@ -69,6 +70,17 @@ class RuleProperties
         $value = $this->mixed($name);
 
         return $value instanceof UnitEnum && $value instanceof $enumClass ? $value : null;
+    }
+
+    public function type(string $name): ?Type
+    {
+        if ($this->rule instanceof RuleType) {
+            return $this->rule->type instanceof ObjectType
+                ? $this->rule->type->getPropertyType($name)
+                : null;
+        }
+
+        return TypeHelper::createTypeFromValue($this->mixed($name));
     }
 
     public function mixed(string $name): mixed
