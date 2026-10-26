@@ -34,6 +34,9 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\UsesTagValueNode;
 
 class ClassDefinition implements ClassDefinitionContract
 {
+    /** @var array<string, Type|null> Case names mapped to backing types; unit cases have no backing type. */
+    public array $enumCases = [];
+
     private bool $propagatesTemplates = false;
 
     /** @var array<string, true> */

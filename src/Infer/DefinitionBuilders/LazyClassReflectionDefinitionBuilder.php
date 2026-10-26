@@ -18,6 +18,7 @@ use ReflectionClass;
 
 class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 {
+    use BuildsEnumDefinition;
     use BuildsPropertyType;
 
     public function __construct(
@@ -46,7 +47,9 @@ class LazyClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
          * reflection methods get copied into the class that uses the trait.
          */
 
-        foreach ($this->reflection->getProperties() as $reflectionProperty) {
+        $this->buildEnumDefinition($this->reflection, $classDefinitionData);
+
+        foreach ($this->reflection->isEnum() ? [] : $this->reflection->getProperties() as $reflectionProperty) {
             if ($reflectionProperty->class !== $this->reflection->name) {
                 continue;
             }
