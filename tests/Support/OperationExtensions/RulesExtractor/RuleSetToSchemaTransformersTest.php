@@ -26,6 +26,14 @@ beforeEach(function () {
     );
 });
 
+test('inferred regex rule preserves alternation in the schema pattern', function () {
+    $type = getVariableTypeAfter('$rules = ["string", "regex:/^(foo|bar)$/"];', 'rules');
+
+    $schema = $this->transformer->transform((new TypeToRules)->evaluate($type));
+
+    expect($schema->toArray())->toBe(['type' => 'string', 'pattern' => '^(foo|bar)$']);
+});
+
 describe(EnumRule::class, function () {
     test('inferred enum rule filters cases', function (string $setter) {
         $type = getVariableTypeAfter('$rules = [\\'.Rule::class.'::enum(\\'.Enum_RuleSetToSchemaTransformerTest::class.'::class)->'.$setter.'];', 'rules');

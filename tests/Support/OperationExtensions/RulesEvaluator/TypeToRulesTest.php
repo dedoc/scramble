@@ -126,6 +126,46 @@ it('omits unsupported rules from a union', function () {
     expect((new TypeToRules)->evaluate(new Union([new StringType])))->toBe([]);
 });
 
+it('preserves individual strings in rule lists', function (string $rule) {
+    $type = new KeyedArrayType([
+        new ArrayItemType_(null, new LiteralStringType('string')),
+        new ArrayItemType_(null, new LiteralStringType($rule)),
+    ]);
+
+    expect((new TypeToRules)->evaluate($type))->toBe(['string', $rule]);
+})->with([
+    'regex alternation' => 'regex:/^(foo|bar)$/',
+    'negative regex alternation' => 'not_regex:/^(foo|bar)$/',
+    'pipe in parameters' => 'in:foo|bar,baz',
+]);
+
+it('preserves regex alternation in union rule list items', function () {
+    $type = new KeyedArrayType([
+        new ArrayItemType_(null, new Union([
+            new LiteralStringType('regex:/^(foo|bar)$/'),
+            new LiteralStringType('regex:/^(baz|qux)$/'),
+        ])),
+    ]);
+
+    expect((new TypeToRules)->evaluate($type))->toBe([
+        'regex:/^(foo|bar)$/',
+        'regex:/^(baz|qux)$/',
+    ]);
+});
+
+it('does not recover partial rules from an unknown concatenated rule list item', function () {
+    $type = new KeyedArrayType([
+        new ArrayItemType_(null, new LiteralStringType('string')),
+        new ArrayItemType_(null, ConcatenatedStringType::fromParts([
+            new LiteralStringType('regex:/^(foo|'),
+            new StringType,
+            new LiteralStringType('|integer)$/'),
+        ])),
+    ]);
+
+    expect((new TypeToRules)->evaluate($type))->toBe(['string']);
+});
+
 it('preserves object rules recovered from a method return type', function () {
     $rule = new ObjectType(LegacyRule_TypeToRulesTest::class);
     $type = new KeyedArrayType([

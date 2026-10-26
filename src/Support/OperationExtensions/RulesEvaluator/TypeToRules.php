@@ -74,17 +74,17 @@ class TypeToRules
     }
 
     /** @return list<string|RuleType> */
-    private function evaluateRuleSet(Type $type): array
+    private function evaluateRuleSet(Type $type, bool $splitString = true): array
     {
         if ($type instanceof ConcatenatedStringType) {
             $type = ConcatenatedStringType::fromParts($type->parts);
             if ($type instanceof ConcatenatedStringType) {
-                return $this->evaluateConcatenatedRules($type);
+                return $splitString ? $this->evaluateConcatenatedRules($type) : [];
             }
         }
 
         if ($type instanceof Union) {
-            $alternatives = array_map(fn (Type $type) => $this->evaluateRuleSet($type), $type->types);
+            $alternatives = array_map(fn (Type $type) => $this->evaluateRuleSet($type, $splitString), $type->types);
             $required = count($alternatives) > 0;
             $rules = [];
 
@@ -102,7 +102,7 @@ class TypeToRules
         }
 
         if ($type instanceof LiteralStringType) {
-            return explode('|', $type->value);
+            return $splitString ? explode('|', $type->value) : [$type->value];
         }
 
         if ($this->isRule($type)) {
@@ -112,7 +112,7 @@ class TypeToRules
         $rules = [];
         if ($type instanceof KeyedArrayType) {
             foreach ($type->items as $item) {
-                array_push($rules, ...$this->evaluateRuleSet($item->value));
+                array_push($rules, ...$this->evaluateRuleSet($item->value, splitString: false));
             }
         }
 
