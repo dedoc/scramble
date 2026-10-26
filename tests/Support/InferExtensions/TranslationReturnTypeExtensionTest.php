@@ -55,3 +55,20 @@ it('passes through non-literal single argument type', function () {
 
     expect($type->toString())->toBe('array{foo: string(bar)}');
 });
+
+it('infers __ type from concatenated string literal by running translation', function (string $key) {
+    app('translator')->addLines(['messages.success' => 'Success!'], 'en');
+
+    $type = analyzeFile(<<<PHP
+<?php
+function foo(string \$key) {
+    return __($key);
+}
+PHP, [app(TranslationReturnTypeExtension::class)])->getExpressionType("foo('success')");
+
+    expect($type->toString())->toBe('string(Success!)');
+})->with([
+    '"messages.".$key',
+    '"messages.$key"',
+    '"messages.{$key}"',
+]);

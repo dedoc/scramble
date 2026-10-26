@@ -13,7 +13,7 @@ use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Http\Request;
-use Illuminate\Support\Optional;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use PhpParser\ConstExprEvaluator;
 use PhpParser\Node;
@@ -48,6 +48,11 @@ class NodeRulesEvaluator implements RulesEvaluator
             return [];
         }
 
+        // Temporarily use inferred types only, keeping runtime evaluation below for comparison.
+        //        $rules = (new TypeToRules)->evaluate($this->getType($this->rulesNode));
+
+        //        return is_array($rules) ? $rules : [];
+
         try {
             return $this->rules();
         } catch (Throwable $e) {
@@ -74,7 +79,7 @@ class NodeRulesEvaluator implements RulesEvaluator
             }
 
             if (is_array($item)) {
-                $item = array_values(array_filter($item));
+                $item = array_values(array_filter(Arr::flatten($item)));
             }
         }
 
@@ -122,20 +127,18 @@ class NodeRulesEvaluator implements RulesEvaluator
                         $param->var->name => $value,
                     ];
                 } catch (Throwable $e) {
-                    $this->diagnostics->reportOnce(
-                        Vr002NodeRulesEvaluationDiagnostic::fromEvaluationFail(
-                            $e,
-                            "\${$param->var->name}",
-                            'Failed to evaluate parameter',
-                            CodeLocation::from($this->routeInfo->reflectionAction()->getFileName() ?: null, $param->getStartLine()),
-                            Vr002NodeRulesEvaluationDiagnostic::tipForParameter(
-                                in_array($param->var->name, $this->collectVariableNames(), true),
-                            ),
-                        )
-                    );
-
                     return [
-                        $param->var->name => new Optional(null),
+                        $param->var->name => new UnevaluatedValue(onUse: fn () => $this->diagnostics->reportOnce(
+                            Vr002NodeRulesEvaluationDiagnostic::fromEvaluationFail(
+                                $e,
+                                "\${$param->var->name}",
+                                'Failed to evaluate parameter',
+                                CodeLocation::from($this->routeInfo->reflectionAction()->getFileName() ?: null, $param->getStartLine()),
+                                Vr002NodeRulesEvaluationDiagnostic::tipForParameter(
+                                    in_array($param->var->name, $this->collectVariableNames(), true),
+                                ),
+                            )
+                        )),
                     ];
                 }
             })
@@ -206,7 +209,27 @@ class NodeRulesEvaluator implements RulesEvaluator
             return null;
         }
 
-        return (new ConstExprEvaluator(function ($expr) use ($variables) {
+        if ($expression instanceof Node\Expr\Array_) {
+            $values = [];
+            foreach ($expression->items as $item) {
+                if (! $item) {
+                    continue;
+                }
+
+                $value = $this->evaluateExpression($item->value, $variables);
+                if ($item->unpack) {
+                    $values = [...$values, ...$value];
+                } elseif ($item->key) {
+                    $values[$this->evaluateExpression($item->key, $variables)] = $value;
+                } else {
+                    $values[] = $value;
+                }
+            }
+
+            return $values;
+        }
+
+        $evaluate = function ($expr) use ($variables) {
             $default = new stdClass;
 
             $evaluatedConstFetch = (new ConstFetchEvaluator([
@@ -227,6 +250,14 @@ class NodeRulesEvaluator implements RulesEvaluator
                     'this' => $this->tryCreatingCurrentClassInstance(),
                 ]);
             } catch (Throwable $e) {
+                $noValue = new stdClass;
+
+                $result = $this->attemptStaticAnalysisRecovery($expr, $e, $noValue);
+
+                if ($result !== $noValue) {
+                    return $result;
+                }
+
                 $this->diagnostics->reportOnce(
                     Vr002NodeRulesEvaluationDiagnostic::fromEvaluationFail(
                         $e,
@@ -252,7 +283,18 @@ class NodeRulesEvaluator implements RulesEvaluator
             return $exprType instanceof KeyedArrayType || $exprType instanceof ArrayType
                 ? []
                 : null;
-        }))->evaluateDirectly($expression);
+        };
+
+        return $expression instanceof Node\Expr\BinaryOp\Concat
+            ? $evaluate($expression)
+            : (new ConstExprEvaluator($evaluate))->evaluateDirectly($expression);
+    }
+
+    private function attemptStaticAnalysisRecovery(Node\Expr $expr, Throwable $e, stdClass $noValue): mixed
+    {
+        $exprType = $this->getType($expr);
+
+        return (new TypeToRules)->evaluate($exprType) ?: $noValue;
     }
 
     /**

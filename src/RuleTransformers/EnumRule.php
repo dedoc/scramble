@@ -21,23 +21,22 @@ class EnumRule implements RuleTransformer
 
     public function shouldHandle(NormalizedRule $rule): bool
     {
-        return $rule->is(Enum::class);
+        return $rule->instanceOf(Enum::class);
     }
 
-    /**
-     * @param  NormalizedRule<Enum>  $rule
-     */
     public function toSchema(Type $previous, NormalizedRule $rule, RuleTransformerContext $context): Type
     {
-        $rule = $rule->getRule();
+        $properties = $rule->properties();
 
-        /** @var class-string<BackedEnum> $enumName */
-        $enumName = $this->getProtectedValue($rule, 'type');
+        $enumName = $properties->string('type');
+        if ($enumName === null || ! enum_exists($enumName)) {
+            return $previous;
+        }
 
         /** @var BackedEnum[] $except */
-        $except = method_exists(Enum::class, 'except') ? $this->getProtectedValue($rule, 'except') : []; // @phpstan-ignore function.alreadyNarrowedType
+        $except = $properties->array('except') ?? [];
         /** @var BackedEnum[] $only */
-        $only = method_exists(Enum::class, 'only') ? $this->getProtectedValue($rule, 'only') : []; // @phpstan-ignore function.alreadyNarrowedType
+        $only = $properties->array('only') ?? [];
 
         $enumType = ($except || $only)
             ? EnumTransformer::make($enumName)
@@ -62,13 +61,5 @@ class EnumRule implements RuleTransformer
         }
 
         return $current;
-    }
-
-    private function getProtectedValue(object $obj, string $name): mixed
-    {
-        $array = (array) $obj;
-        $prefix = chr(0).'*'.chr(0);
-
-        return $array[$prefix.$name];
     }
 }

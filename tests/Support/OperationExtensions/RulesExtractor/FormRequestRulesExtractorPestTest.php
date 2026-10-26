@@ -2,7 +2,9 @@
 
 namespace Dedoc\Scramble\Tests\Support\OperationExtensions\RulesExtractor;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
 
@@ -66,7 +68,9 @@ it('extracts parameters with route parameter bindings in concat', function () {
     });
 
     expect($openApi['components']['schemas']['FormRequestC_FormRequestRulesExtractorPestTest']['properties'])
-        ->toHaveKey('foo');
+        ->toHaveKey('foo', ['type' => 'integer'])
+        ->and($openApi['components']['schemas']['FormRequestC_FormRequestRulesExtractorPestTest']['required'])
+        ->toContain('foo');
 });
 class ControllerC_FormRequestRulesExtractorPestTest
 {
@@ -89,5 +93,66 @@ class User_FormRequestRulesExtractorPestTest extends Model
     public function getNumbers()
     {
         return range(1, $this->id);
+    }
+}
+
+it('extracts form request parameters spread from a trait method', function () {
+    app()->instance(ValidationRule::class, new class implements ValidationRule
+    {
+        public function validate(string $attribute, mixed $value, \Closure $fail): void {}
+    });
+
+    $openApi = $this->generateForRoute(function () {
+        return Route::post('/test', ControllerWithSpreadRules_FormRequestRulesExtractorPestTest::class);
+    });
+
+    $schema = $openApi['components']['schemas']['FormRequestWithSpreadRules_FormRequestRulesExtractorPestTest'];
+
+    expect($schema['properties'])->toHaveKeys(['name', 'extra']);
+});
+
+it('preserves spread trait rules when a rule dependency cannot be instantiated', function () {
+    $result = generateForRoute(
+        Route::post('/test', ControllerWithSpreadRules_FormRequestRulesExtractorPestTest::class),
+        result: true,
+    );
+
+    $openApi = $result->spec();
+
+    expect($openApi['components']['schemas']['FormRequestWithSpreadRules_FormRequestRulesExtractorPestTest'])->toBe([
+        'type' => 'object',
+        'properties' => [
+            'name' => ['type' => 'string'],
+            'extra' => ['type' => 'string'],
+        ],
+        'title' => 'FormRequestWithSpreadRules_FormRequestRulesExtractorPestTest',
+    ])->and($result->diagnostics()->all())->toBeEmpty();
+});
+
+class ControllerWithSpreadRules_FormRequestRulesExtractorPestTest
+{
+    public function __invoke(FormRequestWithSpreadRules_FormRequestRulesExtractorPestTest $request) {}
+}
+
+class FormRequestWithSpreadRules_FormRequestRulesExtractorPestTest extends FormRequest
+{
+    use HasExtraRules_FormRequestRulesExtractorPestTest;
+
+    public function rules(ValidationRule $rule): array
+    {
+        return [
+            'name' => ['string'],
+            ...$this->extraRules(),
+        ];
+    }
+}
+
+trait HasExtraRules_FormRequestRulesExtractorPestTest
+{
+    public function extraRules(): array
+    {
+        return [
+            'extra' => ['string', app(ValidationRule::class)],
+        ];
     }
 }

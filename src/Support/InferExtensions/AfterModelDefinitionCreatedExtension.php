@@ -42,6 +42,7 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
         $definition->methods['newQuery'] = $this->buildNewQueryMethodDefinition($definition);
         $definition->methods['load'] = $this->buildLoadMethodDefinition($definition);
         $definition->methods['loadMissing'] = $this->buildLoadMissingMethodDefinition($definition);
+        $definition->methods['refresh'] = $this->buildRefreshMethodDefinition($definition);
     }
 
     public function getStaticMethodReturnType(StaticMethodCallEvent $event): ?Type
@@ -113,6 +114,18 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
                 ])),
             ]),
         ]);
+    }
+
+    private function buildRefreshMethodDefinition(ClassDefinition $definition): ShallowFunctionDefinition
+    {
+        return new ShallowFunctionDefinition(
+            type: new FunctionType(name: 'refresh', returnType: new SelfType('')),
+            definingClassName: $definition->name,
+            selfOutType: new Generic(WithProperties::class, [
+                new ObjectType($definition->name),
+                new KeyedArrayType([]),
+            ]),
+        );
     }
 
     private function buildLoadMethodDefinition(ClassDefinition $definition): ShallowFunctionDefinition

@@ -39,6 +39,8 @@ use Dedoc\Scramble\Support\InferExtensions\AfterCursorPaginatorDefinitionCreated
 use Dedoc\Scramble\Support\InferExtensions\AfterEloquentBuilderDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterEloquentCollectionDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterEloquentRelationDefinitionCreatedExtension;
+use Dedoc\Scramble\Support\InferExtensions\AfterEnumRuleDefinitionCreatedExtension;
+use Dedoc\Scramble\Support\InferExtensions\AfterInRuleDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterJsonApiResourceDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterJsonResourceDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\AfterLengthAwarePaginatorDefinitionCreatedExtension;
@@ -62,6 +64,7 @@ use Dedoc\Scramble\Support\InferExtensions\RequestExtension;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
+use Dedoc\Scramble\Support\InferExtensions\RuleStaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ShallowFunctionDefinition;
 use Dedoc\Scramble\Support\InferExtensions\StorageResponseTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\TransformsToResourceCollectionExtension;
@@ -207,6 +210,8 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     AfterResourceCollectionDefinitionCreatedExtension::class,
                     AfterAnonymousResourceCollectionDefinitionCreatedExtension::class,
                     AfterResponseDefinitionCreatedExtension::class,
+                    AfterEnumRuleDefinitionCreatedExtension::class,
+                    AfterInRuleDefinitionCreatedExtension::class,
                 ]);
 
                 return array_merge(
@@ -217,6 +222,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
                         new PaginateMethodsReturnTypeExtension,
                         new FacadeStaticMethodReturnTypeExtension,
                         new ArrStaticMethodReturnTypeExtension,
+                        new RuleStaticMethodReturnTypeExtension,
 
                         new ValidatorTypeInfer,
                         new ResourceCollectionTypeInfer,

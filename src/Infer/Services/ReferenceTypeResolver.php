@@ -9,12 +9,12 @@ use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\AnyMethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\FunctionCallEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
-use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
 use Dedoc\Scramble\Infer\Extensions\Event\StaticMethodCallEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
+use Dedoc\Scramble\Support\Type\DeferredPropertyFetchType;
 use Dedoc\Scramble\Support\Type\FloatType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -27,6 +27,7 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\RecursiveTemplateSolver;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\MethodCall;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PotentialMethodMutatingCallType;
@@ -47,9 +48,6 @@ use Dedoc\Scramble\Support\Type\VoidType;
 
 class ReferenceTypeResolver
 {
-    /** @var \WeakMap<Scope, \WeakMap<Type, Type>>|null */
-    private ?\WeakMap $resolvedTypes = null;
-
     public function __construct(
         private Index $index,
     ) {}
@@ -61,36 +59,16 @@ class ReferenceTypeResolver
 
     public function resolve(Scope $scope, Type $type): Type
     {
-        // A variable's state after a call on it references its previous state twice: as the subject, and through the
-        // callee (`$r->a()->b()`). Resolving each type once per outermost call keeps a chain of N such calls linear
-        // instead of exponential.
-        $isOutermostCall = $this->resolvedTypes === null;
-        $this->resolvedTypes ??= new \WeakMap;
+        $originalType = $type;
 
-        /** @var \WeakMap<Type, Type> $resolvedInScope */
-        $resolvedInScope = $this->resolvedTypes[$scope] ?? new \WeakMap;
-        $this->resolvedTypes[$scope] = $resolvedInScope;
+        $resolvedType = RecursionGuard::run(
+            $type,
+            fn () => (new TypeWalker)->map($type, fn (Type $t) => $this->doResolve($t, $type, $scope)),
+            onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
+        );
 
-        if ($alreadyResolved = $resolvedInScope[$type] ?? null) {
-            return $alreadyResolved;
-        }
-
-        try {
-            $originalType = $type;
-
-            $resolvedType = RecursionGuard::run(
-                $type,
-                fn () => (new TypeWalker)->map($type, fn (Type $t) => $this->doResolve($t, $type, $scope)),
-                onInfiniteRecursion: fn () => new UnknownType('really bad self reference'),
-            );
-
-            // Type finalization: removing duplicates from union, unpacking array items (inside `replace`), calling resolving extensions.
-            return $resolvedInScope[$type] = $this->finalizeType($resolvedType, $originalType);
-        } finally {
-            if ($isOutermostCall) {
-                $this->resolvedTypes = null;
-            }
-        }
+        // Type finalization: removing duplicates from union, unpacking array items (inside `replace`), calling resolving extensions.
+        return $this->finalizeType($resolvedType, $originalType);
     }
 
     private function doResolve(Type $t, Type $type, Scope $scope): Type
@@ -120,7 +98,7 @@ class ReferenceTypeResolver
 
     private function withNullsafeShortCircuitType(Type $original, Type $resolved, Scope $scope): Type
     {
-        if (! $this->hasNullsafeShortCircuitType($original, $scope)) {
+        if ($resolved instanceof DeferredPropertyFetchType || ! $this->hasNullsafeShortCircuitType($original, $scope)) {
             return $resolved;
         }
 
@@ -132,7 +110,7 @@ class ReferenceTypeResolver
         if ($original instanceof MethodCallReferenceType) {
             if ($original->isNullsafe) {
                 return TypeHelper::canContainNull(
-                    $this->resolve($scope, $original->callee),
+                    $this->resolveAndNormalizeCallee($scope, $original->callee),
                 );
             }
 
@@ -142,7 +120,7 @@ class ReferenceTypeResolver
         if ($original instanceof PropertyFetchReferenceType) {
             if ($original->isNullsafe) {
                 return TypeHelper::canContainNull(
-                    $this->resolve($scope, $original->object),
+                    $this->resolveAndNormalizeCallee($scope, $original->object),
                 );
             }
 
@@ -223,6 +201,8 @@ class ReferenceTypeResolver
             new LateTypeResolvingTypeVisitor,
             new UnionNormalizingTypeVisitor,
             new FunctionReturnTypeSelectingVisitor,
+            new ArrayKeysInliningTypeVisitor,
+            new ConcatenatedStringInliningTypeVisitor,
         ]);
 
         return $traverser
@@ -504,51 +484,53 @@ class ReferenceTypeResolver
 
     private function resolvePotentialMethodMutatingCallType(Scope $scope, PotentialMethodMutatingCallType $type): Type
     {
-        // Consecutive calls on the same variable share their subject and callee. Resolve that history iteratively so
-        // each prior state is evaluated once instead of recursively evaluating it for both validation and fallback.
+        // Each state stores one predecessor. Resolve the history from oldest to newest without recursion.
         $callHistory = [];
         $current = $type;
 
-        while (true) {
+        while ($current instanceof PotentialMethodMutatingCallType) {
             $callHistory[] = $current;
-
-            if ($current->callee !== $current->subject || ! $current->subject instanceof PotentialMethodMutatingCallType) {
-                $resolvedSubject = $this->resolve($scope, $current->subject);
-
-                break;
-            }
-
             $current = $current->subject;
         }
 
-        foreach (array_reverse($callHistory) as $call) {
-            $resolvedSubject = $this->resolvePotentialMethodMutatingCallTypeFromResolvedSubject(
-                $scope,
-                $call,
-                $resolvedSubject,
-            );
+        $resolvedSubject = $this->resolve($scope, $current);
+        $pendingFinalization = null;
+
+        foreach (array_reverse($callHistory) as $state) {
+            foreach ($state->calls as $index => $call) {
+                // Only finalize an intermediate result when the next call needs it.
+                // The enclosing resolve() finalizes the last result.
+                if ($pendingFinalization !== null) {
+                    $resolvedSubject = $this->finalizeType($resolvedSubject, $pendingFinalization);
+                    $pendingFinalization = null;
+                }
+
+                $callee = $this->normalizeResolvedCallee($resolvedSubject);
+
+                if ($this->isMutatingSelfMethod($scope, $callee, $call->methodName)) {
+                    $mutatedSubject = $this->resolvePotentialMethodMutatingCall($scope, $call, $callee);
+
+                    if ($mutatedSubject !== $resolvedSubject) {
+                        $resolvedSubject = $mutatedSubject;
+                        $pendingFinalization = $state;
+                    }
+                }
+
+                // A different return object ends this expression's effects on the original variable.
+                if ($index < count($state->calls) - 1 && ! $this->isSelfReturningMethodCall($scope, $callee, $call->methodName)) {
+                    break;
+                }
+            }
         }
 
         return $resolvedSubject;
     }
 
-    private function resolvePotentialMethodMutatingCallTypeFromResolvedSubject(
+    private function resolvePotentialMethodMutatingCall(
         Scope $scope,
-        PotentialMethodMutatingCallType $type,
-        Type $resolvedSubject,
+        MethodCall $type,
+        Type $callee,
     ): Type {
-        /*
-         * Before we actually mutate the type, we want to make sure that we apply only that part of the every call chain
-         * that actually points to "self". If some method call in the chain produces something that is not "self",
-         * the part after that should not be applied.
-         */
-        if (! $this->isSubjectMutatingCallChain($scope, $type, $resolvedSubject)) {
-            return $resolvedSubject;
-        }
-
-        $callee = $type->callee === $type->subject
-            ? $this->normalizeResolvedCallee($resolvedSubject)
-            : $this->resolveAndNormalizeCallee($scope, $type->callee);
         $arguments = new AutoResolvingArgumentTypeBag($scope, $type->arguments);
 
         $calleeAllTypes = $callee instanceof Union
@@ -596,72 +578,6 @@ class ReferenceTypeResolver
                 $templatesMap,
             );
         }, $calleeAllTypes));
-    }
-
-    private function isSubjectMutatingCallChain(Scope $scope, PotentialMethodMutatingCallType $type, Type $resolvedSubject): bool
-    {
-        if ($type->callee === $type->subject) {
-            return $this->isMutatingSelfMethod(
-                $scope,
-                $this->normalizeResolvedCallee($resolvedSubject),
-                $type->methodName,
-            );
-        }
-
-        $callChain = [];
-        $lookupType = $type;
-        while ($lookupType) {
-            $callChain = [$lookupType, ...$callChain];
-            $lookupType = $lookupType->callee ?? null;
-        }
-
-        // while $type->subject === $unresolvedType || method self out return = self - chain is valid
-        $subjectFound = false;
-        $lastMutatingType = null;
-        foreach ($callChain as $t) {
-            if (! $subjectFound) {
-                if ($t !== $type->subject) {
-                    continue;
-                }
-
-                $subjectFound = true;
-                $lastMutatingType = $t;
-
-                continue;
-            }
-
-            if ($t instanceof MethodCallReferenceType) {
-                $resolvedCallee = $t->callee === $type->subject
-                    ? $this->normalizeResolvedCallee($resolvedSubject)
-                    : $this->resolveAndNormalizeCallee($scope, $t->callee);
-
-                // A call in the middle of the chain keeps the chain on the subject only when it returns the subject
-                // itself. A self-out type is not enough: methods analyzed from source always have one.
-                if (! $this->isSelfReturningMethodCall($scope, $resolvedCallee, $t->methodName)) {
-                    break;
-                }
-
-                $lastMutatingType = $t;
-
-                continue;
-            }
-
-            if ($t instanceof PotentialMethodMutatingCallType) {
-                $resolvedCallee = $t->callee === $type->subject
-                    ? $this->normalizeResolvedCallee($resolvedSubject)
-                    : $this->resolveAndNormalizeCallee($scope, $t->callee);
-
-                if (! $this->isMutatingSelfMethod($scope, $resolvedCallee, $t->methodName)) {
-                    break;
-                }
-
-                $lastMutatingType = $t;
-
-                continue;
-            }
-        }
-
-        return $lastMutatingType === $type;
     }
 
     private function isMutatingSelfMethod(Scope $scope, Type $type, string $methodName): bool
@@ -786,6 +702,18 @@ class ReferenceTypeResolver
 
     private function resolvePropertyFetchReferenceType(Scope $scope, PropertyFetchReferenceType $type): Type
     {
+        if ($type->resolveLate && $type->object instanceof TemplateType) {
+            return new DeferredPropertyFetchType(
+                $type->object,
+                $type->propertyName,
+                $scope,
+                $type->isNullsafe,
+                fallback: $type->object->is
+                    ? $this->resolve($scope, new PropertyFetchReferenceType($type->object->is, $type->propertyName, $type->isNullsafe))
+                    : null,
+            );
+        }
+
         $objectType = $this->resolveAndNormalizeCallee($scope, $type->object);
         $mayBeUndefinedInCoalesce = TypeHelper::mayBeUndefinedInCoalesce($objectType);
         $objectAllTypes = $objectType instanceof Union
@@ -811,20 +739,6 @@ class ReferenceTypeResolver
                 return new UnknownType;
             }
 
-            if ($propertyType = Context::getInstance()->extensionsBroker->getPropertyType(new PropertyFetchEvent(
-                instance: $objectType,
-                name: $type->propertyName,
-                scope: $scope,
-            ))) {
-                return $propertyType;
-            }
-
-            $classDefinition = $this->index->getClass($objectType->name);
-
-            if (! $classDefinition) {
-                return new UnknownType("Cannot get property [$type->propertyName] type on [$objectType->name]");
-            }
-
             $propertyType = $objectType->getPropertyType($type->propertyName, $scope);
 
             if ($objectType instanceof SelfType) {
@@ -832,11 +746,9 @@ class ReferenceTypeResolver
             }
 
             // @todo resolve template type?
-            $propertyType = $propertyType instanceof TemplateType
+            return $propertyType instanceof TemplateType
                 ? ($propertyType->is ?: new UnknownType)
                 : $propertyType;
-
-            return $propertyType;
         }, $objectAllTypes));
 
         return $mayBeUndefinedInCoalesce
@@ -892,6 +804,11 @@ class ReferenceTypeResolver
      */
     private function resolveAndNormalizeCallee(Scope $scope, Type $callee): Type
     {
+        if ($callee instanceof PropertyFetchReferenceType && $callee->resolveLate) {
+            $callee = clone $callee;
+            $callee->resolveLate = false;
+        }
+
         return $this->normalizeResolvedCallee($this->resolve($scope, $callee));
     }
 

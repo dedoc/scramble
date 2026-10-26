@@ -3,7 +3,9 @@
 use Dedoc\Scramble\Diagnostics\DiagnosticsCollector;
 use Dedoc\Scramble\Diagnostics\ValidationRules\Vr002NodeRulesEvaluationDiagnostic;
 use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\NodeRulesEvaluator;
+use Dedoc\Scramble\Support\OperationExtensions\RulesEvaluator\RuleType;
 use Dedoc\Scramble\Support\RouteInfo;
+use Dedoc\Scramble\Support\RuleTransforming\RuleProperties;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
@@ -178,5 +180,240 @@ class ControllerWithFailingAssign_NodeRulesEvaluatorTest
         $request->validate([
             'name' => ['required', 'string', $format],
         ]);
+    }
+}
+
+it('recovers a concrete intermediate string before concatenating it', function () {
+    [$rules] = evaluateNodeRules([ControllerWithRecovery_NodeRulesEvaluatorTest::class, 'format']);
+
+    expect($rules)->toBe(['date' => ['date_format:Y|m']]);
+});
+
+it('does not use an unknown boolean as a truthy PHP object', function () {
+    [$rules] = evaluateNodeRules([ControllerWithRecovery_NodeRulesEvaluatorTest::class, 'condition']);
+
+    expect($rules)->toBe(['rate' => ['nullable', 'numeric']]);
+});
+
+it('recovers a concatenated in rule without stringifying its inferred wrapper', function () {
+    [$rules] = evaluateNodeRules([ControllerWithRecovery_NodeRulesEvaluatorTest::class, 'concatenated']);
+
+    expect($rules['foo'])->toHaveCount(3)
+        ->and($rules['foo'][0])->toBe('required')
+        ->and($rules['foo'][1])->toBe('integer')
+        ->and($rules['foo'][2])->toBeInstanceOf(RuleType::class)
+        ->and((new RuleProperties($rules['foo'][2]))->array('values'))->toBe([1, 2])
+        ->and($rules['sibling'][0])->toBeInstanceOf(RecoveryRule_NodeRulesEvaluatorTest::class);
+});
+
+it('extracts indexed rules from an unavailable intermediate array', function () {
+    [$rules] = evaluateNodeRules([ControllerWithRecovery_NodeRulesEvaluatorTest::class, 'indexed']);
+
+    expect($rules)->toBe(['email' => ['required', 'email']]);
+});
+
+it('extracts an unavailable root rules map without iterating a symbolic object', function () {
+    [$rules] = evaluateNodeRules([ControllerWithRecovery_NodeRulesEvaluatorTest::class, 'root']);
+
+    expect($rules['email'])->toBe(['required', 'email'])
+        ->and($rules['document'][0])->toBeInstanceOf(RuleType::class)
+        ->and($rules['document'][0]->type->toString())->toBe(RecoveryRule_NodeRulesEvaluatorTest::class);
+});
+
+it('recovers a direct rules map spread and preserves concrete sibling rules', function () {
+    [$rules] = evaluateNodeRules([ControllerWithRecovery_NodeRulesEvaluatorTest::class, 'spread']);
+
+    expect($rules['email'])->toBe(['required', 'email'])
+        ->and($rules['document'][0])->toBeInstanceOf(RuleType::class)
+        ->and($rules['sibling'][0])->toBeInstanceOf(RecoveryRule_NodeRulesEvaluatorTest::class);
+});
+
+it('recovers a failed field without making sibling fields static', function (string $method) {
+    [$rules] = evaluateNodeRules([ControllerWithRecovery_NodeRulesEvaluatorTest::class, $method]);
+
+    expect($rules['rate'])->toBe(['nullable', 'numeric'])
+        ->and($rules['sibling'][0])->toBeInstanceOf(RecoveryRule_NodeRulesEvaluatorTest::class);
+})->with(['fields', 'fieldsWithIntermediateValue']);
+
+it('does not pass symbolic fragments into an enclosing PHP method call', function () {
+    ControllerWithRecovery_NodeRulesEvaluatorTest::$transformCalls = 0;
+
+    [$rules] = evaluateNodeRules([ControllerWithRecovery_NodeRulesEvaluatorTest::class, 'transformed']);
+
+    expect($rules['email'])->toBe(['required', 'email'])
+        ->and(ControllerWithRecovery_NodeRulesEvaluatorTest::$transformCalls)->toBe(0);
+});
+
+it('flattens alternative enum rules returned by an unavailable helper', function () {
+    [$rules] = evaluateNodeRules(ControllerWithEnumHelper_NodeRulesEvaluatorTest::class);
+
+    expect($rules['foo'])->toHaveCount(3)
+        ->and($rules['foo'][0])->toBe('sometimes')
+        ->and($rules['foo'][1])->toBeInstanceOf(RuleType::class)
+        ->and($rules['foo'][2])->toBeInstanceOf(RuleType::class)
+        ->and(collect($rules['foo'])->filter(fn ($rule) => $rule instanceof RuleType)
+            ->map(fn (RuleType $rule) => (new RuleProperties($rule))->array('except'))->all())
+        ->toContain([], [FooEnum_NodeRulesEvaluatorTest::Bar]);
+});
+
+it('rejects a non-array root value without exposing its properties as rules', function () {
+    [$rules, $diagnostics] = evaluateNodeRules([ControllerWithRecovery_NodeRulesEvaluatorTest::class, 'invalidRoot']);
+
+    expect($rules)->toBe([])
+        ->and($diagnostics->all())->not->toBeEmpty();
+});
+
+class RecoveryRule_NodeRulesEvaluatorTest implements \Illuminate\Contracts\Validation\ValidationRule
+{
+    public function validate(string $attribute, mixed $value, Closure $fail): void {}
+}
+
+class ControllerWithEnumHelper_NodeRulesEvaluatorTest
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate(['foo' => ['sometimes', $this->fooRule()]]);
+    }
+
+    private function fooRule(): \Illuminate\Validation\Rules\Enum
+    {
+        $rule = \Illuminate\Validation\Rule::enum(FooEnum_NodeRulesEvaluatorTest::class);
+
+        if ($this->allowsBar()) {
+            return $rule;
+        }
+
+        return $rule->except([FooEnum_NodeRulesEvaluatorTest::Bar]);
+    }
+
+    private function allowsBar(): bool
+    {
+        throw new RuntimeException('Unavailable.');
+    }
+}
+
+enum FooEnum_NodeRulesEvaluatorTest: string
+{
+    case Foo = 'foo';
+    case Bar = 'bar';
+}
+
+class ControllerWithRecovery_NodeRulesEvaluatorTest
+{
+    public static int $transformCalls = 0;
+
+    public function concatenated(Request $request)
+    {
+        $request->validate([
+            'foo' => 'required|integer|'.$this->inRule(),
+            'sibling' => [new RecoveryRule_NodeRulesEvaluatorTest],
+        ]);
+    }
+
+    private function inRule(): \Illuminate\Validation\Rules\In
+    {
+        app('scramble.unbound-recovery-service');
+
+        return \Illuminate\Validation\Rule::in([1, 2]);
+    }
+
+    public function format(Request $request)
+    {
+        $format = $this->dateFormat();
+
+        $request->validate(['date' => ['date_format:'.$format]]);
+    }
+
+    public function condition(Request $request)
+    {
+        $condition = $this->unknownBoolean();
+
+        $request->validate(['rate' => [$condition ? 'required' : 'nullable', 'numeric']]);
+    }
+
+    public function indexed(Request $request)
+    {
+        $rules = $this->documentRules();
+
+        $request->validate(['email' => $rules['email']]);
+    }
+
+    public function root(Request $request)
+    {
+        $rules = $this->documentRules();
+
+        $request->validate($rules);
+    }
+
+    public function spread(Request $request)
+    {
+        $request->validate([
+            ...$this->documentRules(),
+            'sibling' => [new RecoveryRule_NodeRulesEvaluatorTest],
+        ]);
+    }
+
+    public function transformed(Request $request)
+    {
+        $request->validate([
+            ...$this->transform($this->documentRules()),
+        ]);
+    }
+
+    public function fields(Request $request)
+    {
+        $request->validate([
+            'rate' => [$this->unknownBoolean() ? 'required' : 'nullable', 'numeric'],
+            'sibling' => [new RecoveryRule_NodeRulesEvaluatorTest],
+        ]);
+    }
+
+    public function fieldsWithIntermediateValue(Request $request)
+    {
+        $condition = $this->unknownBoolean();
+
+        $request->validate([
+            'rate' => [$condition ? 'required' : 'nullable', 'numeric'],
+            'sibling' => [new RecoveryRule_NodeRulesEvaluatorTest],
+        ]);
+    }
+
+    public function invalidRoot(Request $request)
+    {
+        $request->validate($this->unknownObject());
+    }
+
+    private function dateFormat(): string
+    {
+        app('scramble.unbound-recovery-service');
+
+        return 'Y|m';
+    }
+
+    private function unknownBoolean(): bool
+    {
+        return app('scramble.unbound-recovery-service')->enabled();
+    }
+
+    private function unknownObject(): object
+    {
+        return app('scramble.unbound-recovery-service')->settings();
+    }
+
+    private function documentRules(): array
+    {
+        app('scramble.unbound-recovery-service');
+
+        return [
+            'email' => ['required', 'email'],
+            'document' => [new RecoveryRule_NodeRulesEvaluatorTest],
+        ];
+    }
+
+    private function transform(array $rules): array
+    {
+        self::$transformCalls++;
+
+        return $rules;
     }
 }

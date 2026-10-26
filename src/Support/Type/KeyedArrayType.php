@@ -103,6 +103,19 @@ class KeyedArrayType extends AbstractType
 
     public function getOffsetValueType(Type $offset): Type
     {
+        if ($offset instanceof Union) {
+            $types = array_map(fn (Type $type) => $this->getOffsetValueType($type), $offset->types);
+            $result = TypeHelper::mergeTypes(...$types);
+
+            foreach ($types as $type) {
+                if (TypeHelper::mayBeUndefinedInCoalesce($type)) {
+                    return TypeHelper::markMayBeUndefinedInCoalesce($result);
+                }
+            }
+
+            return $result;
+        }
+
         $default = TypeHelper::markMayBeUndefinedInCoalesce(parent::getOffsetValueType($offset));
 
         if (! $offset instanceof LiteralType) {

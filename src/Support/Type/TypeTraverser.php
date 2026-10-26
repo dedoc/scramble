@@ -41,6 +41,9 @@ class TypeTraverser
 
             foreach ($propertiesWithNodes as $propertyWithNode) {
                 $node = $type->$propertyWithNode;
+                if (! $node) {
+                    continue;
+                }
                 if (! is_array($node)) {
                     $type->$propertyWithNode = $this->traverse($node);
                 } else {
