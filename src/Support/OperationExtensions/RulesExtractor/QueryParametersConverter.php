@@ -88,9 +88,7 @@ class QueryParametersConverter
         }
 
         if (Str::endsWith($parameter->name, '[]') && $parameter->schema && ! $parameter->schema->type instanceof ArrayType) {
-            $parameter->schema->type = (new ArrayType)
-                ->setItems($parameter->schema->type)
-                ->addProperties($parameter->schema->type);
+            $parameter->schema->type = (new ArrayType)->setItems($parameter->schema->type);
         }
 
         return $parameter;

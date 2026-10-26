@@ -888,6 +888,35 @@ class RequestBodyExtensionTest_ArraySpecificQueryParametersController
     }
 }
 
+it('documents array query parameters with enum items without moving the enum to the array', function () {
+    $document = generateForRoute(fn () => RouteFacade::get('test', RequestBodyExtensionTest_ArrayEnumQueryParametersController::class));
+
+    expect($parameters = $document['paths']['/test']['get']['parameters'])
+        ->toHaveCount(1)
+        ->and($parameters[0])
+        ->toBe([
+            'name' => 'include[]',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'string',
+                    'enum' => ['metadata'],
+                ],
+            ],
+        ]);
+});
+class RequestBodyExtensionTest_ArrayEnumQueryParametersController
+{
+    public function __invoke(Request $request)
+    {
+        $request->validate([
+            'include' => ['sometimes', 'array'],
+            'include.*' => ['string', Rule::in(['metadata'])],
+        ]);
+    }
+}
+
 it('document request body with variables as validation rules', function () {
     $document = generateForRoute(fn () => RouteFacade::get('test', RequestBodyExtensionTest_VariablesAsValidationRulesController::class));
 
