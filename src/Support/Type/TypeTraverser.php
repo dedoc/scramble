@@ -6,7 +6,7 @@ use WeakMap;
 
 class TypeTraverser
 {
-    /** @var WeakMap<Type, true> */
+    /** @var WeakMap<Type, Type> */
     private WeakMap $traversedTypes;
 
     /**
@@ -21,10 +21,11 @@ class TypeTraverser
     public function traverse(Type $type): Type
     {
         if (isset($this->traversedTypes[$type])) {
-            return $type;
+            return $this->traversedTypes[$type];
         }
 
-        $this->traversedTypes[$type] = true;
+        $this->traversedTypes[$type] = $type;
+        $originalType = $type;
 
         $enterResult = $this->enterType($type);
 
@@ -59,7 +60,7 @@ class TypeTraverser
             $type = $leaveResult;
         }
 
-        return $type;
+        return $this->traversedTypes[$originalType] = $type;
     }
 
     private function enterType(Type $type): Type|int|null

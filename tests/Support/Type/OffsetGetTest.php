@@ -35,6 +35,27 @@ it('handles array fetch with a union of keys', function () {
     expect($array[$key])->toHaveType('string(pdf)|string(jpg)');
 });
 
+it('handles each array fetch on a method call result from a nullable object', function () {
+    $analysis = analyzeFile(<<<'PHP'
+<?php
+class OffsetGetTest_Counts {
+    public function get(): array { return ['added' => random_int(0, 5), 'existing' => random_int(0, 5)]; }
+}
+class OffsetGetTest_Holder {
+    private ?OffsetGetTest_Counts $counts = null;
+    public function counts(): ?OffsetGetTest_Counts { return $this->counts; }
+}
+function readCounts(OffsetGetTest_Holder $holder) {
+    $counts = $holder->counts()->get();
+
+    return ['added' => $counts['added'], 'existing' => $counts['existing']];
+}
+PHP);
+
+    expect($analysis->getFunctionDefinition('readCounts')->getReturnType()->toString())
+        ->toBe('array{added: int, existing: int}');
+});
+
 it('defers array fetch on a union containing a function parameter', function () {
     $analysis = analyzeFile(<<<'PHP'
 <?php
