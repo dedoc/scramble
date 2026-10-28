@@ -38,6 +38,11 @@ class PotentialMethodMutatingCallType extends AbstractReferenceType
         return null;
     }
 
+    public function __isset(string $name): bool
+    {
+        return in_array($name, ['methodName', 'callee'], true);
+    }
+
     public function nodes(): array
     {
         return ['subject', 'calls'];

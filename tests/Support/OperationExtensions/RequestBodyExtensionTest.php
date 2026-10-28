@@ -406,6 +406,47 @@ class RequestBodyExtensionTest__infers_request_parameters_after_a_request_chain
     }
 }
 
+it('infers request parameters when an object a method was called on is passed to the request', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [RequestBodyExtensionTest__infers_request_parameters_when_object_passed_to_request::class, 'index']);
+    });
+
+    expect($openApiDocument['paths']['/test']['get']['parameters'])
+        ->toContainEqual([
+            'name' => 'season',
+            'in' => 'query',
+            'schema' => [
+                'type' => 'string',
+            ],
+        ]);
+});
+class RequestBodyExtensionTest__infers_request_parameters_when_object_passed_to_request_Request extends FormRequest
+{
+    public function rules()
+    {
+        return ['season' => ['sometimes', 'string']];
+    }
+
+    public function pick(RequestBodyExtensionTest__infers_request_parameters_when_object_passed_to_request_Thing $thing)
+    {
+        return $this->string('season')->toString();
+    }
+}
+class RequestBodyExtensionTest__infers_request_parameters_when_object_passed_to_request_Thing
+{
+    public function touch() {}
+}
+class RequestBodyExtensionTest__infers_request_parameters_when_object_passed_to_request
+{
+    public function index(RequestBodyExtensionTest__infers_request_parameters_when_object_passed_to_request_Request $request, RequestBodyExtensionTest__infers_request_parameters_when_object_passed_to_request_Thing $thing)
+    {
+        $thing->touch();
+        $request->pick($thing);
+
+        return [];
+    }
+}
+
 it('ignores param in rules with annotation', function () {
     $openApiDocument = generateForRoute(function () {
         return RouteFacade::get('api/test/{id}', [RequestBodyExtensionTest__ignores_rules_param_with_annotation::class, 'index']);
