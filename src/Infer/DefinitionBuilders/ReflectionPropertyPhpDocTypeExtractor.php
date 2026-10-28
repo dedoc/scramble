@@ -71,14 +71,73 @@ class ReflectionPropertyPhpDocTypeExtractor
     {
         $properties = [];
 
-        foreach ([
-            ...$this->classPhpDoc->getPropertyTagValues(),
-            ...$this->classPhpDoc->getPropertyReadTagValues(),
-        ] as $propertyTagValue) {
-            $properties[ltrim($propertyTagValue->propertyName, '$')] = PhpDocTypeHelper::toType($propertyTagValue->type);
+        foreach ($this->getPropertyTagsSources() as $phpDoc) {
+            foreach ([
+                ...$phpDoc->getPropertyTagValues(),
+                ...$phpDoc->getPropertyReadTagValues(),
+            ] as $propertyTagValue) {
+                $properties[ltrim($propertyTagValue->propertyName, '$')] = PhpDocTypeHelper::toType($propertyTagValue->type);
+            }
         }
 
         return $properties;
+    }
+
+    /**
+     * Property tags may be defined not only on the class itself, but also on the interfaces it implements
+     * and the traits it uses. Tags defined closer to the class win, so the sources are collected from the
+     * least to the most specific one: interfaces are mere contracts, traits are compiled into the class,
+     * and the class itself always has the final say.
+     *
+     * @return list<PhpDocNode>
+     */
+    private function getPropertyTagsSources(): array
+    {
+        $phpDocs = [];
+
+        foreach ($this->getInterfaces($this->classReflection) as $interfaceReflection) {
+            $phpDocs[] = $this->getClassPhpDoc($interfaceReflection);
+        }
+
+        foreach ($this->getTraits($this->classReflection) as $traitReflection) {
+            $phpDocs[] = $this->getClassPhpDoc($traitReflection);
+        }
+
+        $phpDocs[] = $this->classPhpDoc;
+
+        return $phpDocs;
+    }
+
+    /**
+     * Reflection returns all the implemented interfaces flattened in an unspecified order, so they are
+     * sorted by the number of interfaces they extend themselves, making an interface take precedence
+     * over the ones it inherits the tags from.
+     *
+     * @param  ReflectionClass<covariant object>  $classReflection
+     * @return list<ReflectionClass<object>>
+     */
+    private function getInterfaces(ReflectionClass $classReflection): array
+    {
+        $interfaces = array_values($classReflection->getInterfaces());
+
+        usort($interfaces, fn (ReflectionClass $a, ReflectionClass $b) => count($a->getInterfaces()) <=> count($b->getInterfaces()));
+
+        return $interfaces;
+    }
+
+    /**
+     * @param  ReflectionClass<covariant object>  $classReflection
+     * @return list<ReflectionClass<object>>
+     */
+    private function getTraits(ReflectionClass $classReflection): array
+    {
+        $traits = [];
+
+        foreach ($classReflection->getTraits() as $traitReflection) {
+            $traits = [...$traits, ...$this->getTraits($traitReflection), $traitReflection];
+        }
+
+        return $traits;
     }
 
     private function getVarType(PhpDocNode $phpDoc): ?Type
