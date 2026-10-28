@@ -493,6 +493,12 @@ class ReferenceTypeResolver
             $current = $current->subject;
         }
 
+        // A method was called on the subject, so a property fetch is resolved now, as it is for any other callee.
+        if ($current instanceof PropertyFetchReferenceType && $current->resolveLate) {
+            $current = clone $current;
+            $current->resolveLate = false;
+        }
+
         $resolvedSubject = $this->resolve($scope, $current);
         $pendingFinalization = null;
 

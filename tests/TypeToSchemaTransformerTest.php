@@ -1260,3 +1260,38 @@ class NullableConcatenatedName_Pair
 
     public NullableConcatenatedName_Named $right;
 }
+
+it('documents a mapped relation collection after a method call on it', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+
+    $transformer->transform(new ObjectType(MappedRelationAfterCall_Resource::class));
+
+    expect($this->context->openApi->components->getSchema(MappedRelationAfterCall_Resource::class)->toArray()['properties']['children'])->toBe([
+        'type' => 'array',
+        'items' => [
+            'type' => 'object',
+            'properties' => [
+                'id' => ['type' => 'integer'],
+            ],
+            'required' => ['id'],
+        ],
+    ]);
+});
+
+class MappedRelationAfterCall_Resource extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'children' => $this->children($this->resource),
+        ];
+    }
+
+    private function children(SamplePostModel $post): array
+    {
+        $children = $post->children;
+        $children->count();
+
+        return $children->map(fn (SamplePostModel $child): array => ['id' => $child->id])->all();
+    }
+}
