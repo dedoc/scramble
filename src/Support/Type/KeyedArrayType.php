@@ -37,6 +37,36 @@ class KeyedArrayType extends AbstractType
         return ['items'];
     }
 
+    public function accepts(Type $otherType): bool
+    {
+        if (! $otherType instanceof static) {
+            return false;
+        }
+
+        if ($this->items === []) {
+            return true;
+        }
+
+        if ($otherType->isList !== $this->isList || count($otherType->items) !== count($this->items)) {
+            return false;
+        }
+
+        foreach ($this->items as $index => $item) {
+            $otherItem = $otherType->items[$index];
+
+            if (
+                $item->key !== $otherItem->key
+                || (! $item->isOptional && $otherItem->isOptional)
+                || $item->shouldUnpack !== $otherItem->shouldUnpack
+                || ! $item->value->accepts($otherItem->value)
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public function isSame(Type $type)
     {
         if (

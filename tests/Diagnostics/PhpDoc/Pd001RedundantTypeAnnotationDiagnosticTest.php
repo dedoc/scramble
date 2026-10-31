@@ -8,6 +8,8 @@ use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Dedoc\Scramble\Support\PhpDoc;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Type\BooleanType;
+use Dedoc\Scramble\Support\Type\IntegerType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\StringType;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -64,5 +66,25 @@ it('reports PD001 for @var string on cast-inferred datetimes', function () {
     expect($this->context->diagnostics->all()->sole())
         ->toBeInstanceOf(Pd001RedundantTypeAnnotationDiagnostic::class);
 });
+
+it('does not report PD001 when @var narrows int to an integer range', function (string $doc, ArrayItemType_ $item) {
+    $item->setAttribute('docNode', PhpDoc::parse($doc));
+
+    $this->transformer->transform($item);
+
+    expect($this->context->diagnostics->all())->toBeEmpty();
+})->with([
+    'direct item' => fn () => [
+        '/** @var non-negative-int */',
+        new ArrayItemType_('weeks', new IntegerType),
+    ],
+    'array shape item' => fn () => [
+        '/** @var array{weeks: int<0, max>, this_week: bool} */',
+        new ArrayItemType_('streak', new KeyedArrayType([
+            new ArrayItemType_('weeks', new IntegerType),
+            new ArrayItemType_('this_week', new BooleanType),
+        ])),
+    ],
+]);
 
 class Pd001RedundantTypeAnnotationDiagnosticTest_Resource {}
