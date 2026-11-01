@@ -47,16 +47,21 @@ class KeyedArrayType extends AbstractType
             return true;
         }
 
-        if ($otherType->isList !== $this->isList || count($otherType->items) !== count($this->items)) {
-            return false;
-        }
+        $otherItems = $otherType->itemsByKey();
 
-        foreach ($this->items as $index => $item) {
-            $otherItem = $otherType->items[$index];
+        foreach ($this->itemsByKey() as $key => $item) {
+            $otherItem = $otherItems[$key] ?? null;
+
+            if ($otherItem === null) {
+                if ($item->isOptional) {
+                    continue;
+                }
+
+                return false;
+            }
 
             if (
-                $item->key !== $otherItem->key
-                || (! $item->isOptional && $otherItem->isOptional)
+                (! $item->isOptional && $otherItem->isOptional)
                 || $item->shouldUnpack !== $otherItem->shouldUnpack
                 || ! $item->value->accepts($otherItem->value)
             ) {
@@ -65,6 +70,24 @@ class KeyedArrayType extends AbstractType
         }
 
         return true;
+    }
+
+    /**
+     * @return array<string|int, ArrayItemType_>
+     */
+    private function itemsByKey(): array
+    {
+        $items = [];
+
+        foreach ($this->items as $item) {
+            if ($item->key === null) {
+                $items[] = $item;
+            } else {
+                $items[$item->key] = $item;
+            }
+        }
+
+        return $items;
     }
 
     public function isSame(Type $type)
