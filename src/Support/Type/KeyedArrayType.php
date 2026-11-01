@@ -37,7 +37,7 @@ class KeyedArrayType extends AbstractType
         return ['items'];
     }
 
-    public function accepts(Type $otherType): bool
+    protected function acceptsAtomic(Type $otherType): bool
     {
         if (! $otherType instanceof static) {
             return false;

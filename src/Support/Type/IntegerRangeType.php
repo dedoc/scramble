@@ -19,7 +19,7 @@ class IntegerRangeType extends IntegerType
         return parent::isSame($type) && $type->toString() === $this->toString();
     }
 
-    public function accepts(Type $otherType): bool
+    protected function acceptsAtomic(Type $otherType): bool
     {
         if (! $otherType instanceof IntegerType) {
             return false;

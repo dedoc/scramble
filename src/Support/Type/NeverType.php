@@ -9,7 +9,7 @@ class NeverType extends AbstractType
         return false;
     }
 
-    public function accepts(Type $otherType): bool
+    protected function acceptsAtomic(Type $otherType): bool
     {
         return false;
     }

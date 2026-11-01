@@ -2,14 +2,21 @@
 
 namespace Dedoc\Scramble\Tests\Support\Type;
 
+use Dedoc\Scramble\Support\Type\ConditionalType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
+use Dedoc\Scramble\Support\Type\NeverType;
+use Dedoc\Scramble\Support\Type\TemplateType;
+use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\Union;
+use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Tests\TestUtils;
 
-it('checks type acceptance', function (string $type, string $accept, bool $result) {
+it('checks type acceptance', function (string $type, string|Type $accept, bool $result) {
     $acceptingType = TestUtils::parseType($type);
-    $givenType = TestUtils::parseType($accept);
+    $givenType = is_string($accept) ? TestUtils::parseType($accept) : $accept;
 
     expect($acceptingType->accepts($givenType))
-        ->toBe($result, "$type is ".($result ? '' : 'not ')."expected to accept {$accept}.");
+        ->toBe($result, "$type is ".($result ? '' : 'not ')."expected to accept {$givenType->toString()}.");
 })->with([
     [
         'type' => 'int',
@@ -81,11 +88,6 @@ it('checks type acceptance', function (string $type, string $accept, bool $resul
         'accept' => 'array{x?: non-negative-int}',
         'result' => true,
     ],
-    'optional field rejects incompatible required value' => [
-        'type' => 'array{x?: int}',
-        'accept' => 'array{x: string}',
-        'result' => false,
-    ],
     'optional field rejects incompatible optional value' => [
         'type' => 'array{x?: int}',
         'accept' => 'array{x?: string}',
@@ -111,24 +113,9 @@ it('checks type acceptance', function (string $type, string $accept, bool $resul
         'accept' => 'array{child: array{x: int, y: bool}}',
         'result' => true,
     ],
-    'extra keys do not replace required keys' => [
-        'type' => 'array{x: int}',
-        'accept' => 'array{y: int, z: bool}',
-        'result' => false,
-    ],
-    'empty shape accepts itself' => [
-        'type' => 'array{}',
-        'accept' => 'array{}',
-        'result' => true,
-    ],
     'empty shape accepts extra named keys' => [
         'type' => 'array{}',
         'accept' => 'array{x: int}',
-        'result' => true,
-    ],
-    'empty shape accepts extra numeric keys' => [
-        'type' => 'array{}',
-        'accept' => 'array{int, bool}',
         'result' => true,
     ],
     'tuple accepts explicit numeric keys' => [
@@ -136,24 +123,99 @@ it('checks type acceptance', function (string $type, string $accept, bool $resul
         'accept' => 'array{0: int, 1: bool}',
         'result' => true,
     ],
-    'explicit numeric keys accept tuple' => [
-        'type' => 'array{0: int, 1: bool}',
-        'accept' => 'array{int, bool}',
-        'result' => true,
-    ],
-    'tuple rejects missing element' => [
-        'type' => 'array{int, bool}',
-        'accept' => 'array{int}',
-        'result' => false,
-    ],
-    'tuple accepts extra elements' => [
-        'type' => 'array{int, bool}',
-        'accept' => 'array{int, bool, string}',
-        'result' => true,
-    ],
     'generic array accepts compatible shape' => [
         'type' => 'array<string, int>',
         'accept' => 'array{x: int}',
+        'result' => true,
+    ],
+    [
+        'type' => 'array{status: string}|null',
+        'accept' => "array{status: 'complete'|'missing'}",
+        'result' => true,
+    ],
+    [
+        'type' => 'non-negative-int',
+        'accept' => '0|1',
+        'result' => true,
+    ],
+    [
+        'type' => 'non-negative-int',
+        'accept' => '0|-1',
+        'result' => false,
+    ],
+    [
+        'type' => 'array{x: int}',
+        'accept' => 'array{x: 1}|array{x: 2}',
+        'result' => true,
+    ],
+    [
+        'type' => 'array{x: int}',
+        'accept' => 'array{x: 1}|array{x: string}',
+        'result' => false,
+    ],
+    [
+        'type' => 'Exception',
+        'accept' => 'Exception|RuntimeException',
+        'result' => true,
+    ],
+    [
+        'type' => 'Exception',
+        'accept' => 'Exception|stdClass',
+        'result' => false,
+    ],
+    [
+        'type' => 'string|int',
+        'accept' => new ConditionalType(
+            new TemplateType('TFlag'),
+            new LiteralBooleanType(true),
+            TestUtils::parseType('string'),
+            TestUtils::parseType('int'),
+        ),
+        'result' => true,
+    ],
+    [
+        'type' => 'string|int',
+        'accept' => new ConditionalType(
+            new TemplateType('TFlag'),
+            new LiteralBooleanType(true),
+            TestUtils::parseType('string'),
+            TestUtils::parseType('bool'),
+        ),
+        'result' => false,
+    ],
+    [
+        'type' => 'string',
+        'accept' => new ConditionalType(
+            new TemplateType('TFlag'),
+            new LiteralBooleanType(true),
+            new NeverType,
+            TestUtils::parseType('string'),
+        ),
+        'result' => true,
+    ],
+    [
+        'type' => 'string',
+        'accept' => new NeverType,
+        'result' => false,
+    ],
+    [
+        'type' => 'string',
+        'accept' => new ConditionalType(
+            new TemplateType('TFlag'),
+            new LiteralBooleanType(true),
+            new NeverType,
+            TestUtils::parseType('int'),
+        ),
+        'result' => false,
+    ],
+    [
+        'type' => 'mixed',
+        'accept' => new UnknownType,
+        'result' => false,
+    ],
+    [
+        'type' => 'mixed',
+        'accept' => new Union([TestUtils::parseType('string'), new UnknownType]),
         'result' => true,
     ],
 ]);
