@@ -48,19 +48,8 @@ class Union extends AbstractType
         return app(TypeWidener::class)->widen($this->types)->mergeAttributes($this->attributes());
     }
 
-    public function accepts(Type $otherType): bool
+    protected function acceptsAtomic(Type $otherType): bool
     {
-        // If the other type is also a union, all of its subtypes must be accepted
-        if ($otherType instanceof Union) {
-            foreach ($otherType->types as $inner) {
-                if (! $this->accepts($inner)) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
         foreach ($this->types as $type) {
             if ($type->accepts($otherType)) {
                 return true;

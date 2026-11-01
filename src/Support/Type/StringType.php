@@ -14,9 +14,9 @@ class StringType extends AbstractType
         return 'string';
     }
 
-    public function accepts(Type $otherType): bool
+    protected function acceptsAtomic(Type $otherType): bool
     {
-        return parent::accepts($otherType)
+        return parent::acceptsAtomic($otherType)
             || $otherType instanceof GenericClassStringType;
     }
 }

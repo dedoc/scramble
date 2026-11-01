@@ -37,6 +37,59 @@ class KeyedArrayType extends AbstractType
         return ['items'];
     }
 
+    protected function acceptsAtomic(Type $otherType): bool
+    {
+        if (! $otherType instanceof static) {
+            return false;
+        }
+
+        if ($this->items === []) {
+            return true;
+        }
+
+        $otherItems = $otherType->itemsByKey();
+
+        foreach ($this->itemsByKey() as $key => $item) {
+            $otherItem = $otherItems[$key] ?? null;
+
+            if ($otherItem === null) {
+                if ($item->isOptional) {
+                    continue;
+                }
+
+                return false;
+            }
+
+            if (
+                (! $item->isOptional && $otherItem->isOptional)
+                || $item->shouldUnpack !== $otherItem->shouldUnpack
+                || ! $item->value->accepts($otherItem->value)
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @return array<string|int, ArrayItemType_>
+     */
+    private function itemsByKey(): array
+    {
+        $items = [];
+
+        foreach ($this->items as $item) {
+            if ($item->key === null) {
+                $items[] = $item;
+            } else {
+                $items[$item->key] = $item;
+            }
+        }
+
+        return $items;
+    }
+
     public function isSame(Type $type)
     {
         if (

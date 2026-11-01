@@ -47,6 +47,27 @@ abstract class AbstractType implements Type
 
     public function accepts(Type $otherType): bool
     {
+        if ($otherType instanceof Union || $otherType instanceof ConditionalType) {
+            $types = $otherType instanceof Union ? $otherType->types : [$otherType->ifTrue, $otherType->ifFalse];
+
+            foreach ($types as $type) {
+                if ($type instanceof NeverType) {
+                    continue;
+                }
+
+                if (! $this->accepts($type)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return $this->acceptsAtomic($otherType);
+    }
+
+    protected function acceptsAtomic(Type $otherType): bool
+    {
         return is_a($otherType::class, $this::class, true);
     }
 

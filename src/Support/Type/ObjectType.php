@@ -123,7 +123,7 @@ class ObjectType extends AbstractType
             : $returnType;
     }
 
-    public function accepts(Type $otherType): bool
+    protected function acceptsAtomic(Type $otherType): bool
     {
         if (! $otherType instanceof ObjectType) {
             return false;

@@ -19,9 +19,9 @@ class ArrayType extends AbstractType
         return TypeHelper::markMayBeUndefinedInCoalesce($this->value);
     }
 
-    public function accepts(Type $otherType): bool
+    protected function acceptsAtomic(Type $otherType): bool
     {
-        if (parent::accepts($otherType)) {
+        if (parent::acceptsAtomic($otherType)) {
             return true;
         }
 
