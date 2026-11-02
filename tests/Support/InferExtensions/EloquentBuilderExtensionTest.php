@@ -10,11 +10,49 @@ use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class PlainModel_EloquentBuilderExtensionTest extends Model {}
+
+class AttributeScopedModel_EloquentBuilderExtensionTest extends Model
+{
+    #[Scope]
+    protected function published(Builder $query): void
+    {
+        $query->where('published', true);
+    }
+
+    #[Scope]
+    public function featured(Builder $query): Builder
+    {
+        return $query->where('featured', true);
+    }
+
+    #[Scope]
+    private function privateScope(Builder $query): void {}
+
+    protected function helper(Builder $query): Builder
+    {
+        return $query;
+    }
+}
+
+class InheritedScopedModel_EloquentBuilderExtensionTest extends AttributeScopedModel_EloquentBuilderExtensionTest {}
+
+it('recognizes attribute-based query scopes', function (string $model, string $method, string $expected) {
+    $type = getStatementType($model.'::query()->'.$method.'()');
+
+    expect($type->toString())->toBe($expected);
+})->with([
+    'protected void scope' => [AttributeScopedModel_EloquentBuilderExtensionTest::class, 'published', Builder::class.'<'.AttributeScopedModel_EloquentBuilderExtensionTest::class.'>'],
+    'public builder scope' => [AttributeScopedModel_EloquentBuilderExtensionTest::class, 'featured', Builder::class.'<'.AttributeScopedModel_EloquentBuilderExtensionTest::class.'>'],
+    'inherited scope' => [InheritedScopedModel_EloquentBuilderExtensionTest::class, 'published', Builder::class.'<'.InheritedScopedModel_EloquentBuilderExtensionTest::class.'>'],
+    'private scope is not callable' => [AttributeScopedModel_EloquentBuilderExtensionTest::class, 'privateScope', 'never'],
+    'unannotated method is not a scope' => [AttributeScopedModel_EloquentBuilderExtensionTest::class, 'helper', 'never'],
+])->skip(fn () => ! class_exists(Scope::class));
 
 test('supports extension methods', function (string $method, string $expectedType) {
     $type = ReferenceTypeResolver::getInstance()
