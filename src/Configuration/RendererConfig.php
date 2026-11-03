@@ -21,6 +21,38 @@ class RendererConfig
         $this->view = $config['view'];
     }
 
+    /**
+     * @return array<string, array{view: string}&array<string, mixed>>
+     */
+    public static function defaults(): array
+    {
+        return [
+            'elements' => [
+                'view' => 'scramble::docs',
+                'theme' => 'light',
+                'hideTryIt' => false,
+                'hideSchemas' => false,
+                'logo' => '',
+                'tryItCredentialsPolicy' => 'include',
+                'layout' => 'responsive',
+                'router' => 'hash',
+            ],
+            'scalar' => [
+                'view' => 'scramble::scalar',
+                'cdn' => 'https://cdn.jsdelivr.net/npm/@scalar/api-reference',
+                'theme' => 'laravel',
+                'proxyUrl' => 'https://proxy.scalar.com',
+                'darkMode' => false,
+                'showDeveloperTools' => 'never',
+                'agent' => ['disabled' => true],
+                'credentials' => 'include',
+            ],
+            'fabric' => [
+                'view' => 'scramble::fabric',
+            ],
+        ];
+    }
+
     public function get(string $key, mixed $default = null): mixed
     {
         return Arr::get($this->config, $key, $default);

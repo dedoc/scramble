@@ -98,19 +98,22 @@ class GeneratorConfig
 
     public function renderer(): RendererConfig
     {
-        if (Arr::has($this->config, 'ui.logo')) {
+        $renderer = $this->get('renderer', 'elements');
+        $defaults = RendererConfig::defaults()[$renderer] ?? ['view' => 'scramble::docs'];
+
+        if ($renderer === 'elements' && Arr::has($this->config, 'ui.logo')) {
             $ui = $this->get('ui', []);
 
             return new RendererConfig(array_merge(
-                ['view' => 'scramble::docs'],
+                $defaults,
                 $this->get('renderers.elements', []),
                 collect(is_array($ui) ? $ui : [])->mapWithKeys(fn ($v, $k) => [Str::camel($k) => $v])->all(),
             ));
         }
 
         return new RendererConfig(array_merge(
-            ['view' => 'scramble::docs'],
-            $this->get('renderers.'.$this->get('renderer', 'elements'), []),
+            $defaults,
+            $this->get('renderers.'.$renderer, []),
         ));
     }
 

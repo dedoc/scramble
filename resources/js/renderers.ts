@@ -94,4 +94,14 @@ export default {
             },
         },
     },
+    fabric: {
+        theme: {
+            current: () => document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+            subscribe: (onChange) => observeAttribute(
+                document.documentElement,
+                'class',
+                onChange,
+            ),
+        },
+    },
 } satisfies Record<string, RendererConfig>;

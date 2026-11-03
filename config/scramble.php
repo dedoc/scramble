@@ -99,6 +99,9 @@ return [
             'agent' => ['disabled' => true],
             'credentials' => 'include',
         ],
+        'fabric' => [
+            'view' => 'scramble::fabric',
+        ],
     ],
 
     /*
