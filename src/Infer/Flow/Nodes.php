@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Flow;
 
 use Closure;
+use Dedoc\Scramble\Support\Type\Reference\MethodCall;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PotentialMethodMutatingCallType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -431,9 +432,7 @@ class Nodes
 
         return new PotentialMethodMutatingCallType(
             $this->getTypeAt($expr->var, $node),
-            $type->callee,
-            $type->methodName,
-            $type->arguments,
+            [new MethodCall($type->methodName, $type->arguments)],
         );
     }
 

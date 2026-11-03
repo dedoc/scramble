@@ -31,7 +31,7 @@ class Generic extends ObjectType
         return ['templateTypes', ...parent::nodes()];
     }
 
-    public function accepts(Type $otherType): bool
+    protected function acceptsAtomic(Type $otherType): bool
     {
         if ($this->name === 'iterable') {
             return $otherType instanceof ArrayType
@@ -39,7 +39,7 @@ class Generic extends ObjectType
                 || $otherType->isInstanceOf(Traversable::class);
         }
 
-        return parent::accepts($otherType);
+        return parent::acceptsAtomic($otherType);
     }
 
     public function getPropertyType(string $propertyName, Scope $scope = new GlobalScope): Type

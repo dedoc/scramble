@@ -18,6 +18,8 @@ use ReflectionClass;
 
 class ShallowClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
 {
+    use BuildsEnumDefinition;
+
     /**
      * @param  ReflectionClass<object>  $reflection
      */
@@ -59,6 +61,8 @@ class ShallowClassReflectionDefinitionBuilder implements ClassDefinitionBuilder
             parentFqn: $parentName,
         );
         $classDefinition->propagatesTemplates($parentDefinition?->propagatesTemplates() ?? false);
+
+        $this->buildEnumDefinition($this->reflection, $classDefinition);
 
         $classDefinition->setIndex($this->index);
 

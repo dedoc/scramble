@@ -445,24 +445,31 @@ it('gets json resource type with when loaded', function () {
     assertMatchesSnapshot($extension->toSchema($type)->resolve()->toArray());
 });
 
-it('keeps resources made from nullable loaded relations nullable', function () {
+it('keeps resources made from nullable loaded relations nullable', function (string $resourceClass, string $property) {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
         JsonResourceTypeToSchema::class,
     ]);
     $extension = new JsonResourceTypeToSchema($infer, $transformer, $this->context->openApi->components, $this->context);
 
     $schema = $extension
-        ->toSchema(new ObjectType(ComplexTypeHandlersWithNullableWhenLoaded_SampleType::class))
+        ->toSchema(new ObjectType($resourceClass))
         ->resolve()
         ->toArray();
 
-    expect($schema['properties']['submitted_by'])->toBe([
+    expect($schema['properties'][$property])->toBe([
         'anyOf' => [
             ['$ref' => '#/components/schemas/ComplexTypeHandlersWithWhen_SampleType'],
             ['type' => 'null'],
         ],
-    ])->and($schema['required'] ?? [])->not->toContain('submitted_by');
-});
+    ])->and($schema['required'] ?? [])->not->toContain($property);
+})->with([
+    'belongsTo with make' => [ComplexTypeHandlersWithNullableWhenLoaded_SampleType::class, 'submitted_by'],
+    'belongsTo with new' => [ComplexTypeHandlersWithNullableWhenLoaded_SampleType::class, 'submitted_by_new'],
+    'hasOne with make' => [ComplexTypeHandlersWithNullableHasOneWhenLoaded_SampleType::class, 'latest_cv'],
+    'hasOne with new' => [ComplexTypeHandlersWithNullableHasOneWhenLoaded_SampleType::class, 'latest_cv_new'],
+    'latestOfMany with make' => [ComplexTypeHandlersWithNullableHasOneWhenLoaded_SampleType::class, 'latest_cv_of_many'],
+    'latestOfMany with new' => [ComplexTypeHandlersWithNullableHasOneWhenLoaded_SampleType::class, 'latest_cv_of_many_new'],
+]);
 
 it('gets json resource type with when counted', function () {
     $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [
@@ -970,6 +977,23 @@ class ComplexTypeHandlersWithNullableWhenLoaded_SampleType extends JsonResource
     {
         return [
             'submitted_by' => ComplexTypeHandlersWithWhen_SampleType::make($this->whenLoaded('submittedBy')),
+            'submitted_by_new' => new ComplexTypeHandlersWithWhen_SampleType($this->whenLoaded('submittedBy')),
+        ];
+    }
+}
+
+/**
+ * @property ComplexTypeHandlersWithSubmitterModel $resource
+ */
+class ComplexTypeHandlersWithNullableHasOneWhenLoaded_SampleType extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'latest_cv' => ComplexTypeHandlersWithWhen_SampleType::make($this->whenLoaded('latestCv')),
+            'latest_cv_new' => new ComplexTypeHandlersWithWhen_SampleType($this->whenLoaded('latestCv')),
+            'latest_cv_of_many' => ComplexTypeHandlersWithWhen_SampleType::make($this->whenLoaded('latestCvOfMany')),
+            'latest_cv_of_many_new' => new ComplexTypeHandlersWithWhen_SampleType($this->whenLoaded('latestCvOfMany')),
         ];
     }
 }
@@ -987,6 +1011,16 @@ class ComplexTypeHandlersWithNullableRelationModel extends \Illuminate\Database\
 class ComplexTypeHandlersWithSubmitterModel extends \Illuminate\Database\Eloquent\Model
 {
     protected $table = 'relation_nullability_owners';
+
+    public function latestCv()
+    {
+        return $this->hasOne(ComplexTypeHandlersWithNullableRelationModel::class, 'required_owner_id');
+    }
+
+    public function latestCvOfMany()
+    {
+        return $this->hasOne(ComplexTypeHandlersWithNullableRelationModel::class, 'required_owner_id')->latestOfMany();
+    }
 }
 
 class ComplexTypeHandlersWithWhenCounted_SampleType extends JsonResource
@@ -1225,4 +1259,39 @@ class NullableConcatenatedName_Pair
     public NullableConcatenatedName_Named $left;
 
     public NullableConcatenatedName_Named $right;
+}
+
+it('documents a mapped relation collection after a method call on it', function () {
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [JsonResourceTypeToSchema::class]);
+
+    $transformer->transform(new ObjectType(MappedRelationAfterCall_Resource::class));
+
+    expect($this->context->openApi->components->getSchema(MappedRelationAfterCall_Resource::class)->toArray()['properties']['children'])->toBe([
+        'type' => 'array',
+        'items' => [
+            'type' => 'object',
+            'properties' => [
+                'id' => ['type' => 'integer'],
+            ],
+            'required' => ['id'],
+        ],
+    ]);
+});
+
+class MappedRelationAfterCall_Resource extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'children' => $this->children($this->resource),
+        ];
+    }
+
+    private function children(SamplePostModel $post): array
+    {
+        $children = $post->children;
+        $children->count();
+
+        return $children->map(fn (SamplePostModel $child): array => ['id' => $child->id])->all();
+    }
 }

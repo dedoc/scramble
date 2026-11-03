@@ -123,3 +123,70 @@ it('tracks chained mutating method calls on variable', function () {
     expect(getVariableTypeAfter("\$a = new {$class}(); \$a->setProp(123); \$a->setProp(456);", 'a')->toString())
         ->toBe("{$class}<int(456)>");
 });
+
+it('conditional assignments', function (string $code, string $expectedType) {
+    expect(getVariableTypeAfter($code, 'a')->toString())->toBe($expectedType);
+})->with([
+    [
+        <<<'PHP'
+$a = 1;
+if (mt_rand()) {
+  $a = 42;
+}
+PHP,
+        'int(42)|int(1)',
+    ],
+    [
+        <<<'PHP'
+$a = 1;
+if (mt_rand()) {
+  $a = 42;
+} else {
+  $a = 21;
+}
+PHP,
+        'int(42)|int(21)',
+    ],
+    [
+        <<<'PHP'
+$a = [];
+if (mt_rand()) {
+  $a['foo'] = 42;
+}
+PHP,
+        'array{foo?: int(42)}',
+    ],
+    [
+        <<<'PHP'
+$a = [];
+if (mt_rand()) {
+  $a['foo'] = 42;
+}
+if (mt_rand()) {
+  $a['bar'] = 1;
+}
+PHP,
+        'array{foo?: int(42), bar?: int(1)}',
+    ],
+    [
+        <<<'PHP'
+$a = [];
+if (mt_rand()) {
+  $a['foo'] = 42;
+} else {
+  $a['foo'] = 1;
+}
+PHP,
+        'array{foo: int(42)|int(1)}',
+    ],
+    [
+        <<<'PHP'
+$a = ['bar' => 1];
+unset($a['bar']);
+if (mt_rand()) {
+  $a['foo'] = 42;
+}
+PHP,
+        'array{foo?: int(42)}',
+    ],
+])->todo();

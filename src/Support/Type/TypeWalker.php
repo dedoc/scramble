@@ -24,7 +24,7 @@ class TypeWalker
             }
 
             $publicChildren = collect($type->nodes())
-                ->flatMap(fn ($node) => is_array($type->$node) ? array_values($type->$node) : [$type->$node]);
+                ->flatMap(fn ($node) => is_array($type->$node) ? array_values($type->$node) : ($type->$node ? [$type->$node] : []));
 
             foreach ($publicChildren as $child) {
                 if ($child && $foundType = $this->first($child, $lookup)) {
@@ -50,7 +50,7 @@ class TypeWalker
             }
 
             $publicChildren = collect($type->nodes())
-                ->flatMap(fn ($node) => is_array($type->$node) ? array_values($type->$node) : [$type->$node]);
+                ->flatMap(fn ($node) => is_array($type->$node) ? array_values($type->$node) : ($type->$node ? [$type->$node] : []));
 
             foreach ($publicChildren as $child) {
                 if ($child && $allFoundTypes = $this->findAll($child, $lookup)) {
@@ -131,6 +131,9 @@ class TypeWalker
 
         foreach ($nodesNamesGetter($mappedSubject) as $propertyWithNode) {
             $node = $mappedSubject->$propertyWithNode;
+            if (! $node) {
+                continue;
+            }
             if (! is_array($node)) {
                 $mappedSubject->$propertyWithNode = $this->map($node, $cb, $nodesNamesGetter, $preserveAttributes);
             } else {
@@ -163,8 +166,11 @@ class TypeWalker
         $this->visitedNodesWeakMap->offsetSet($subject, $subject);
 
         foreach ($nodesNamesGetter($subject) as $propertyWithNode) {
-            /** @var Type[]|Type $node */
+            /** @var Type[]|Type|null $node */
             $node = $subject->$propertyWithNode;
+            if (! $node) {
+                continue;
+            }
             if (! is_array($node)) {
                 $this->walk($node, $cb, $nodesNamesGetter);
             } else {

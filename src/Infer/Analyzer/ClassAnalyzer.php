@@ -8,6 +8,7 @@ use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Definition\ClassPropertyDefinition;
 use Dedoc\Scramble\Infer\Definition\PendingDocComment;
 use Dedoc\Scramble\Infer\Definition\PropertyVisibility;
+use Dedoc\Scramble\Infer\DefinitionBuilders\BuildsEnumDefinition;
 use Dedoc\Scramble\Infer\DefinitionBuilders\BuildsPropertyType;
 use Dedoc\Scramble\Infer\DefinitionBuilders\ReflectionPropertyPhpDocTypeExtractor;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
@@ -20,6 +21,7 @@ use ReflectionClass;
 
 class ClassAnalyzer
 {
+    use BuildsEnumDefinition;
     use BuildsPropertyType;
 
     public function __construct(private Index $index) {}
@@ -50,7 +52,9 @@ class ClassAnalyzer
          * reflection methods get copied into the class that uses the trait.
          */
 
-        foreach ($classReflection->getProperties() as $reflectionProperty) {
+        $this->buildEnumDefinition($classReflection, $classDefinition);
+
+        foreach ($classReflection->isEnum() ? [] : $classReflection->getProperties() as $reflectionProperty) {
             if ($reflectionProperty->class !== $name) {
                 continue;
             }

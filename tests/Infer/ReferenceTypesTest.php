@@ -1,5 +1,8 @@
 <?php
 
+use Dedoc\Scramble\Support\Type\DeferredPropertyFetchType;
+use Dedoc\Scramble\Support\Type\FunctionType;
+
 /*
  * Reference types are the types which are created when there is no available info at the moment
  * of nodes traversal. Later, after the fn or class is traversed, references are resolved.
@@ -95,7 +98,7 @@ EOD)->getClassDefinition('Foo');
         ->toBe('<TQ>(TQ): unknown');
 });
 
-it('resolves a cyclic reference introduced by template property fetch', function () {
+it('preserves an unresolved closure argument property without recursing', function () {
     $type = analyzeFile(<<<'EOD'
 <?php
 class Foo {
@@ -106,8 +109,15 @@ class Foo {
 }
 EOD)->getClassDefinition('Foo');
 
-    expect($type->methods['foo']->type->toString())
-        ->toBe('(): <TQ>(TQ): unknown');
+    $closure = $type->methods['foo']->getReturnType();
+
+    expect($closure)->toBeInstanceOf(FunctionType::class);
+
+    $fetch = $closure->getReturnType();
+
+    expect($fetch)->toBeInstanceOf(DeferredPropertyFetchType::class)
+        ->and($fetch->object)->toBe($closure->arguments['q'])
+        ->and($fetch->propertyName)->toBe('prop');
 });
 
 it('resolves references in non-reference return types', function () {

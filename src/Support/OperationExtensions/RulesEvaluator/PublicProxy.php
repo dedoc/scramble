@@ -26,7 +26,6 @@ class PublicProxy
     public function __call(string $name, array $arguments): mixed
     {
         $method = new \ReflectionMethod($this->target, $name);
-        $method->setAccessible(true);
 
         return $method->invokeArgs($this->target, $arguments);
     }
@@ -34,7 +33,6 @@ class PublicProxy
     public function __get(string $name): mixed
     {
         $prop = new \ReflectionProperty($this->target, $name);
-        $prop->setAccessible(true);
 
         return $prop->getValue($this->target);
     }
@@ -45,7 +43,6 @@ class PublicProxy
     public function __set(string $name, $value): void
     {
         $prop = new \ReflectionProperty($this->target, $name);
-        $prop->setAccessible(true);
 
         $prop->setValue($this->target, $value);
     }

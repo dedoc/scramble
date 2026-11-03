@@ -19,6 +19,29 @@ class IntegerRangeType extends IntegerType
         return parent::isSame($type) && $type->toString() === $this->toString();
     }
 
+    protected function acceptsAtomic(Type $otherType): bool
+    {
+        if (! $otherType instanceof IntegerType) {
+            return false;
+        }
+
+        if ($this->min === null && $this->max === null) {
+            return true;
+        }
+
+        if ($otherType instanceof Literal\LiteralIntegerType) {
+            return ($this->min === null || $otherType->value >= $this->min)
+                && ($this->max === null || $otherType->value <= $this->max);
+        }
+
+        if ($otherType instanceof self) {
+            return ($this->min === null || ($otherType->min !== null && $otherType->min >= $this->min))
+                && ($this->max === null || ($otherType->max !== null && $otherType->max <= $this->max));
+        }
+
+        return false;
+    }
+
     public function toString(): string
     {
         if ($this->min !== null || $this->max !== null) {

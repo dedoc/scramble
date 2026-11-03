@@ -54,7 +54,7 @@ class CacheableGenerator
             return new OldGeneratorResult($cachedResult);
         }
 
-        if (cache()->store($store)->get(self::versionKey($key)) !== static::CACHE_VERSION) {
+        if ((string) cache()->store($store)->get(self::versionKey($key)) !== (string) static::CACHE_VERSION) {
             return null;
         }
 

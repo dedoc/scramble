@@ -9,6 +9,8 @@ use PhpParser\Node\FunctionLike;
 use WeakMap;
 
 /**
+ * @deprecated Use \Dedoc\Scramble\Infer\Definition\FunctionLikeAstDefinition::getScope() instead.
+ *
  * @implements IndexBuilder<array<string, mixed>>
  */
 class ScopeCollector implements IndexBuilder

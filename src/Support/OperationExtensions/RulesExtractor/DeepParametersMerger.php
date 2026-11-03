@@ -173,7 +173,7 @@ class DeepParametersMerger
 
         if (count($path) === 1) {
             if ($key !== '*' && $base instanceof ArrayType) {
-                $base = new ObjectType;
+                $base = (new ObjectType)->addProperties($base);
             }
 
             return $base;

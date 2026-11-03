@@ -26,6 +26,20 @@ it('infers nullable relations from nullable foreign key columns', function () {
         ->and($relations['requiredOwner']['nullable'])->toBeFalse();
 });
 
+it('keeps has-one relations nullable unless a default model is configured', function (string $method, bool $withDefault) {
+    $modelInfo = new ModelInfo(RelationNullabilityOwner_ModelInfoTest::class);
+    $relationIsNullable = new ReflectionMethod($modelInfo, 'relationIsNullable');
+    $relationIsNullable->setAccessible(true);
+
+    $relation = (new RelationNullabilityOwner_ModelInfoTest)->$method();
+
+    if ($withDefault) {
+        $relation->withDefault();
+    }
+
+    expect($relationIsNullable->invoke($modelInfo, $relation))->toBe(! $withDefault);
+})->with(['requiredModel', 'morphModel', 'throughModel'])->with([false, true]);
+
 class UserModelWithoutUpdatedAt extends \Illuminate\Database\Eloquent\Model
 {
     protected $table = 'users';
@@ -36,6 +50,28 @@ class UserModelWithoutUpdatedAt extends \Illuminate\Database\Eloquent\Model
 class RelationNullabilityOwner_ModelInfoTest extends \Illuminate\Database\Eloquent\Model
 {
     protected $table = 'relation_nullability_owners';
+
+    public function requiredModel()
+    {
+        return $this->hasOne(RelationNullabilityModel_ModelInfoTest::class, 'required_owner_id');
+    }
+
+    public function morphModel()
+    {
+        return $this->morphOne(RelationNullabilityModel_ModelInfoTest::class, 'owner');
+    }
+
+    public function throughModel()
+    {
+        return $this->hasOneThrough(
+            self::class,
+            RelationNullabilityModel_ModelInfoTest::class,
+            'required_owner_id',
+            'id',
+            'id',
+            'required_owner_id',
+        );
+    }
 }
 
 class RelationNullabilityModel_ModelInfoTest extends \Illuminate\Database\Eloquent\Model

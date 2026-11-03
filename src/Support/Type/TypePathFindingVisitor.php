@@ -65,9 +65,11 @@ class TypePathFindingVisitor implements TypeVisitor
         $propertiesWithNodes = $type->nodes();
 
         foreach ($propertiesWithNodes as $propertyWithNode) {
-            /** @var Type|Type[] $node */
+            /** @var Type|Type[]|null $node */
             $node = $type->$propertyWithNode;
-
+            if (! $node) {
+                continue;
+            }
             if (! is_array($node)) {
                 $this->pointers->offsetSet(
                     $node,

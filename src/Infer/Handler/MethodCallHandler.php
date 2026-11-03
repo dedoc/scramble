@@ -3,6 +3,7 @@
 namespace Dedoc\Scramble\Infer\Handler;
 
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Support\Type\Reference\MethodCall;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PotentialMethodMutatingCallType;
 use PhpParser\Node;
@@ -15,26 +16,43 @@ class MethodCallHandler
         return $node instanceof Expr\MethodCall;
     }
 
+    public function enter(Expr\MethodCall $node, Scope $scope): void
+    {
+        if ($node->var instanceof Expr\MethodCall) {
+            $node->var->setAttribute('scramble:isMethodCallReceiver', true);
+        }
+    }
+
     public function leave(Expr\MethodCall $node, Scope $scope): void
     {
+        if ($node->getAttribute('scramble:isMethodCallReceiver', false)) {
+            return;
+        }
+
         if (! $varName = $this->getPotentiallyMutatingVarName($node)) {
             return;
         }
 
-        $type = $scope->getType($node);
+        $calls = [];
+        $callNode = $node;
 
-        if (! $type instanceof MethodCallReferenceType) {
-            return;
-        }
+        do {
+            $type = $scope->getType($callNode);
+
+            if (! $type instanceof MethodCallReferenceType) {
+                return;
+            }
+
+            $calls[] = new MethodCall($type->methodName, $type->arguments);
+            $callNode = $callNode->var;
+        } while ($callNode instanceof Expr\MethodCall);
 
         $scope->addVariableType(
             $node->getAttribute('endLine', $node->getAttribute('startLine')) + 1,
             $varName,
             new PotentialMethodMutatingCallType(
-                $scope->getType(new Expr\Variable($varName, ['startLine' => $node->getAttribute('startLine')])),
-                $type->callee,
-                $type->methodName,
-                $type->arguments,
+                $scope->getType($callNode),
+                array_reverse($calls),
             ),
         );
     }

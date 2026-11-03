@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Tests\Infer;
 
+use Dedoc\Scramble\Support\Type\AbstractTypeVisitor;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -31,3 +32,23 @@ test('mutates type', function () {
 
     $traverser->traverse($type);
 })->skip();
+
+test('replaces each occurrence of a shared type', function () {
+    $traverser = new TypeTraverser([
+        new class extends AbstractTypeVisitor
+        {
+            public function leave(Type $type): ?Type
+            {
+                return $type instanceof ObjectType && $type->name === 'replace_me'
+                    ? new LiteralStringType('replaced')
+                    : null;
+            }
+        },
+    ]);
+
+    $shared = new ObjectType('replace_me');
+
+    $type = $traverser->traverse(new Generic('self', [$shared, $shared]));
+
+    expect($type->toString())->toBe('self<string(replaced), string(replaced)>');
+});

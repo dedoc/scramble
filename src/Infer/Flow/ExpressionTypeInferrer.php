@@ -16,7 +16,11 @@ use Dedoc\Scramble\Support\Type\BinaryOpType;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\CallableStringType;
 use Dedoc\Scramble\Support\Type\CoalesceType;
+use Dedoc\Scramble\Support\Type\ConcatenatedStringType;
+use Dedoc\Scramble\Support\Type\ConditionalType;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralBooleanType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralStringType;
 use Dedoc\Scramble\Support\Type\NeverType;
 use Dedoc\Scramble\Support\Type\OffsetAccessType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
@@ -25,6 +29,7 @@ use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\SelfType;
+use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -72,22 +77,22 @@ class ExpressionTypeInferrer
         }
 
         $nonCacheableType = match (true) {
+            $expr instanceof PhpParserNode\Scalar\InterpolatedString => ConcatenatedStringType::fromParts(array_map(
+                fn (PhpParserNode\InterpolatedStringPart|Expr $part) => $part instanceof PhpParserNode\InterpolatedStringPart
+                    ? new LiteralStringType($part->value)
+                    : $this->infer($part, $variableTypeGetter),
+                $expr->parts,
+            )),
             $expr instanceof PhpParserNode\Scalar => (new ScalarTypeGetter)($expr),
             $expr instanceof Expr\Cast => (new CastTypeGetter)($expr),
             $expr instanceof Expr\ConstFetch => (new ConstFetchTypeGetter)($expr),
             $expr instanceof Expr\Throw_ => new NeverType,
-            $expr instanceof Expr\Ternary => Union::wrap([
-                $this->infer($expr->if ?? $expr->cond, $variableTypeGetter),
-                $this->infer($expr->else, $variableTypeGetter),
-            ]),
+            $expr instanceof Expr\Ternary => $this->inferTernary($expr, $variableTypeGetter),
             $expr instanceof Expr\BinaryOp\Coalesce => new CoalesceType(
                 $this->infer($expr->left, $variableTypeGetter),
                 $this->infer($expr->right, $variableTypeGetter),
             ),
-            $expr instanceof Expr\Match_ => Union::wrap(array_map(
-                fn (PhpParserNode\MatchArm $arm) => $this->infer($arm->body, $variableTypeGetter),
-                $expr->arms,
-            )),
+            $expr instanceof Expr\Match_ => $this->inferMatch($expr, $variableTypeGetter),
             $expr instanceof Expr\ClassConstFetch => (new ClassConstFetchTypeGetter)($expr, $this->scope),
             $expr instanceof Expr\BinaryOp\Equal
             || $expr instanceof Expr\BinaryOp\Identical
@@ -103,6 +108,11 @@ class ExpressionTypeInferrer
             || $expr instanceof Expr\BinaryOp\Div
             || $expr instanceof Expr\BinaryOp\Mod
             || $expr instanceof Expr\BinaryOp\Pow
+            || $expr instanceof Expr\BinaryOp\BooleanAnd
+            || $expr instanceof Expr\BinaryOp\BooleanOr
+            || $expr instanceof Expr\BinaryOp\LogicalAnd
+            || $expr instanceof Expr\BinaryOp\LogicalOr
+            || $expr instanceof Expr\BinaryOp\LogicalXor
             || $expr instanceof Expr\BinaryOp\Concat => new BinaryOpType(
                 $this->infer($expr->left, $variableTypeGetter),
                 $this->infer($expr->right, $variableTypeGetter),
@@ -140,6 +150,100 @@ class ExpressionTypeInferrer
         }
 
         return $type;
+    }
+
+    /**
+     * @return array<int, Type[]>|null
+     */
+    private function getEnumLikeMatchConditions(Expr\Match_ $expr, Closure $variableTypeGetter): ?array
+    {
+        // $this
+        // $this->foo()
+        // $this->foo
+        $cond = $expr->cond;
+
+        $isThis = $cond instanceof Expr\Variable && $cond->name === 'this';
+        $isThisMethodCall = ($cond instanceof Expr\MethodCall || $cond instanceof Expr\NullsafeMethodCall)
+            && $cond->var instanceof Expr\Variable && $cond->var->name === 'this';
+        $isThisPropertyFetch = ($cond instanceof Expr\PropertyFetch || $cond instanceof Expr\NullsafePropertyFetch)
+            && $cond->var instanceof Expr\Variable && $cond->var->name === 'this';
+
+        if (! $isThis && ! $isThisMethodCall && ! $isThisPropertyFetch) {
+            return null;
+        }
+
+        $conditions = [];
+
+        foreach ($expr->arms as $i => $arm) {
+            $conditions[$i] = [];
+            foreach ($arm->conds ?? [] as $cond) {
+                // Expr that looks like enum case
+                if (! $cond instanceof Expr\ClassConstFetch
+                    || ! $cond->class instanceof PhpParserNode\Name
+                    || ! $cond->name instanceof PhpParserNode\Identifier) {
+                    return null;
+                }
+
+                $conditions[$i][] = $this->infer($cond, $variableTypeGetter);
+            }
+        }
+
+        return $conditions;
+    }
+
+    private function inferMatch(Expr\Match_ $expr, Closure $variableTypeGetter): Type
+    {
+        if (($conditions = $this->getEnumLikeMatchConditions($expr, $variableTypeGetter)) === null) {
+            return Union::wrap(array_map(
+                fn (PhpParserNode\MatchArm $arm) => $this->infer($arm->body, $variableTypeGetter),
+                $expr->arms,
+            ));
+        }
+
+        // Default is the fallback regardless of its position among the arms.
+        $result = new NeverType;
+        foreach ($expr->arms as $arm) {
+            if ($arm->conds === null) {
+                $result = $this->infer($arm->body, $variableTypeGetter);
+            }
+        }
+
+        // Build from the end so earlier arms remain the outermost conditions.
+        foreach (array_reverse($expr->arms, preserve_keys: true) as $i => $arm) {
+            if ($arm->conds === null) {
+                continue;
+            }
+
+            $body = $this->infer($arm->body, $variableTypeGetter);
+            foreach (array_reverse($conditions[$i]) as $condition) {
+                $result = new ConditionalType($this->infer($expr->cond, $variableTypeGetter), $condition, $body, $result);
+            }
+        }
+
+        return $result;
+    }
+
+    private function inferTernary(Expr\Ternary $expr, Closure $variableTypeGetter): Type
+    {
+        $ifTrue = $this->infer($expr->if ?? $expr->cond, $variableTypeGetter);
+        $ifFalse = $this->infer($expr->else, $variableTypeGetter);
+
+        if ($expr->cond instanceof Expr\Variable && is_string($expr->cond->name)) {
+            $condition = $this->infer($expr->cond, $variableTypeGetter);
+            $argument = $this->scope->functionDefinition()?->type->arguments[$expr->cond->name] ?? null;
+
+            if ($argument !== null && $condition === $argument) {
+                return new ConditionalType(
+                    // Convert PHP truthiness to a boolean while preserving the argument template.
+                    new BinaryOpType($condition, new LiteralBooleanType(true), '&&'),
+                    new LiteralBooleanType(true),
+                    $ifTrue,
+                    $ifFalse,
+                );
+            }
+        }
+
+        return Union::wrap([$ifTrue, $ifFalse]);
     }
 
     private function inferNewCall(Expr\New_ $expr, Closure $variableTypeGetter): Type
@@ -218,10 +322,16 @@ class ExpressionTypeInferrer
             return new UnknownType('Cannot infer type of property fetch: not supported yet.');
         }
 
+        $object = $this->infer($expr->var, $variableTypeGetter);
+
         return new PropertyFetchReferenceType(
-            $this->infer($expr->var, $variableTypeGetter),
+            $object,
             $name,
             isNullsafe: $expr instanceof NullsafePropertyFetch,
+            resolveLate: $expr->var instanceof Expr\Variable
+                && is_string($expr->var->name)
+                && $object instanceof TemplateType
+                && ($this->scope->context->functionDefinition?->type->arguments[$expr->var->name] ?? null) === $object,
         );
     }
 
