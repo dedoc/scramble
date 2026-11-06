@@ -339,6 +339,55 @@ it('gets enum with values type and description with extensions', function () {
         ]);
 });
 
+it('generates title case descriptions for enum cases without PHPDoc', function (string $casesAutoDescriptionStrategy, array $result) {
+    config()->set('scramble.enum_cases_description_strategy', 'extension');
+    config()->set('scramble.enum_cases_auto_description_strategy', $casesAutoDescriptionStrategy);
+
+    $transformer = new TypeTransformer($infer = app(Infer::class), $this->context, [EnumToSchema::class]);
+    $extension = new EnumToSchema($infer, $transformer, $this->context->openApi->components);
+
+    $type = new ObjectType(CompanySize::class);
+
+    expect($extension->toSchema($type)->toArray()['x-enumDescriptions'])->toBe($result);
+})->with([
+    [
+        'title',
+        [
+            1 => 'A company of one.',
+            '2-10' => 'Small Company',
+            '11-50' => 'Medium Sized Business',
+            '51+' => 'Large Enterprise',
+        ],
+    ],
+    [
+        'sentence',
+        [
+            1 => 'A company of one.',
+            '2-10' => 'Small company',
+            '11-50' => 'Medium sized business',
+            '51+' => 'Large enterprise',
+        ],
+    ],
+    [
+        'as_is',
+        [
+            1 => 'A company of one.',
+            '2-10' => 'smallCompany',
+            '11-50' => 'Medium_Sized_Business',
+            '51+' => 'LARGE_ENTERPRISE',
+        ],
+    ],
+]);
+
+enum CompanySize: string
+{
+    /** A company of one. */
+    case single_person = '1';
+    case smallCompany = '2-10';
+    case Medium_Sized_Business = '11-50';
+    case LARGE_ENTERPRISE = '51+';
+}
+
 it('gets enum with values type and names as varnames with extensions', function () {
     config()->set('scramble.enum_cases_names_strategy', 'varnames');
 

@@ -22,7 +22,7 @@ class EnumTransformer
 
     /**
      * @param  class-string  $enumClassName
-     * @param  array{nameStrategy?: 'name'|'varnames'|null|false, descriptionStrategy?: 'description'|'extension'|null|false}  $config
+     * @param  array{nameStrategy?: 'name'|'varnames'|null|false, descriptionStrategy?: 'description'|'extension'|null|false, autoDescriptionStrategy?: 'title'|'sentence'|'as_is'|null|false}  $config
      */
     public function __construct(
         private string $enumClassName,
@@ -37,6 +37,7 @@ class EnumTransformer
         return new self($enumClassName, [
             'nameStrategy' => config('scramble.enum_cases_names_strategy'),
             'descriptionStrategy' => config('scramble.enum_cases_description_strategy'),
+            'autoDescriptionStrategy' => config('scramble.enum_cases_auto_description_strategy'),
         ]);
     }
 
@@ -110,14 +111,7 @@ class EnumTransformer
     private function addEnumCasesDescriptions(OpenApi\Type $schemaType, Collection $cases): void
     {
         $descriptions = $cases
-            ->mapWithKeys(function (BackedEnum $case) {
-                $reflection = new ReflectionEnumBackedCase($case::class, $case->name);
-                $doc = PhpDoc::parse($reflection->getDocComment() ?: '/** */');
-
-                return [
-                    $case->value => trim(Str::replace("\n", ' ', $doc->getAttribute('summary').' '.$doc->getAttribute('description'))), // @phpstan-ignore binaryOp.invalid, binaryOp.invalid
-                ];
-            });
+            ->mapWithKeys(fn (BackedEnum $case) => [$case->value => $this->enumCaseDescription($case)]);
 
         if (! $descriptions->some(fn ($description) => (bool) $description)) {
             return;
@@ -146,6 +140,38 @@ class EnumTransformer
         if ($enumDescriptionStrategy === 'extension') {
             $schemaType->setExtensionProperty('enumDescriptions', $descriptions->all());
         }
+    }
+
+    private function enumCaseDescription(BackedEnum $case): string
+    {
+        $reflection = new ReflectionEnumBackedCase($case::class, $case->name);
+
+        if ($comment = $reflection->getDocComment()) {
+            $doc = PhpDoc::parse($comment);
+
+            return trim(Str::replace("\n", ' ', $doc->getAttribute('summary').' '.$doc->getAttribute('description'))); // @phpstan-ignore binaryOp.invalid, binaryOp.invalid
+        }
+
+        if (! $strategy = $this->config['autoDescriptionStrategy'] ?? null) {
+            return '';
+        }
+
+        if ($strategy === 'as_is') {
+            return $case->name;
+        }
+
+        $name = $case->name;
+
+        if ($name === Str::upper($name)) {
+            $name = Str::lower($name);
+        }
+
+        $description = Str::headline($name);
+
+        return match ($strategy) {
+            'title' => $description,
+            'sentence' => Str::ucfirst(Str::lower($description)),
+        };
     }
 
     private function addEnumDescription(OpenApi\Type $schemaType): void
