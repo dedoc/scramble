@@ -141,6 +141,20 @@ return [
     'enum_cases_names_strategy' => false,
 
     /**
+     * Whether to generate descriptions for enum cases that have no PHPDoc comment from name.
+     * Available options:
+     * - 'title' - Case names are converted to Title Case, e.g. `PendingReview`, `pendingReview` and
+     *   `pending_review` all become "Pending Review".
+     * - 'sentence' - Case names are converted to sentence case, e.g. `PendingReview`, `pendingReview` and
+     *   `pending_review` all become "Pending review".
+     * - 'as_is' - Cases names are documented as description as is.
+     * - false - Case names are not stored as description.
+     *
+     * Where the descriptions are stored is controlled by `enum_cases_description_strategy`.
+     */
+    'enum_cases_auto_description_strategy' => false,
+
+    /**
      * When Scramble encounters deep objects in query parameters, it flattens the parameters so the generated
      * OpenAPI document correctly describes the API. Flattening deep query parameters is relevant until
      * OpenAPI 3.2 is released and query string structure can be described properly.
