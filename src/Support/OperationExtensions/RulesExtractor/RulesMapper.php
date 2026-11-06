@@ -57,12 +57,13 @@ class RulesMapper
         return $this->int($_);
     }
 
-    public function array(Type $_, $params)
+    public function array(Type $prevType, $params)
     {
         if (count($params)) {
             // `array:a,b` lists the keys allowed, not the keys required: a key
             // is required by its own rule (`foo.a` => 'required').
-            $object = new \Dedoc\Scramble\Support\Generator\Types\ObjectType;
+            // Earlier rules such as `nullable` stay on the new type.
+            $object = (new \Dedoc\Scramble\Support\Generator\Types\ObjectType)->addProperties($prevType);
 
             foreach ($params as $param) {
                 $object->addProperty($param, new UnknownType);
@@ -71,7 +72,7 @@ class RulesMapper
             return $object;
         }
 
-        return new ArrayType;
+        return (new ArrayType)->addProperties($prevType);
     }
 
     public function email(Type $type)

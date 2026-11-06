@@ -680,6 +680,33 @@ it('does not require the keys allowed by array rule', function () {
         ->and($appearance['required'])->toBe(['font']);
 });
 
+it('keeps nullable when array rule follows nullable', function () {
+    $rules = [
+        'cap' => 'sometimes|nullable|array',
+        'limit' => 'sometimes|nullable|array:amount,currency',
+        'limit.amount' => 'required_unless:limit,null|string',
+        'limit.currency' => 'required_unless:limit,null|string',
+    ];
+
+    $params = collect(validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules)))->keyBy('name');
+
+    expect($params->get('cap')->schema->toArray()['type'])->toBe(['array', 'null'])
+        ->and($params->get('limit')->schema->toArray()['type'])->toBe(['object', 'null'])
+        ->and($params->get('limit')->schema->toArray()['properties'])->toHaveKeys(['amount', 'currency']);
+});
+
+it('keeps nullable when array rule follows nullable in a list item', function () {
+    $rules = [
+        'stages' => 'array',
+        'stages.*.fee' => 'present|nullable|array:amount,currency',
+        'stages.*.fee.amount' => 'required_unless:stages.*.fee,null|string',
+    ];
+
+    $params = collect(validationRulesToDocumentationWithDeep(($this->buildRulesToParameters)($rules)))->keyBy('name');
+
+    expect($params->get('stages')->schema->toArray()['items']['properties']['fee']['type'])->toBe(['object', 'null']);
+});
+
 it('extract rules from enum rule', function () {
     $rules = [
         'status' => new Enum(StatusValidationEnum::class),
