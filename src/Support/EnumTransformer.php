@@ -160,16 +160,11 @@ class EnumTransformer
             return $case->name;
         }
 
-        $name = $case->name;
-
-        if ($name === Str::upper($name)) {
-            $name = Str::lower($name);
-        }
-
-        $description = Str::headline($name);
+        $words = preg_split('/_+|(?<=[\p{Ll}\p{N}])(?=\p{Lu})|(?<=\p{Lu})(?=\p{Lu}\p{Ll})/u', $case->name, -1, PREG_SPLIT_NO_EMPTY);
+        $description = implode(' ', $words ?: [$case->name]);
 
         return match ($strategy) {
-            'title' => $description,
+            'title' => Str::title($description),
             'sentence' => Str::ucfirst(Str::lower($description)),
         };
     }

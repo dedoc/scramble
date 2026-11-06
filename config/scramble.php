@@ -145,8 +145,8 @@ return [
      * Available options:
      * - 'title' - Case names are converted to Title Case, e.g. `PendingReview`, `pendingReview` and
      *   `pending_review` all become "Pending Review".
-     * - 'sentence' - Case names are converted to Title case, e.g. `PendingReview`, `pendingReview` and
-     *   `pending_review` all become "Pending Review".
+     * - 'sentence' - Case names are converted to sentence case, e.g. `PendingReview`, `pendingReview` and
+     *   `pending_review` all become "Pending review".
      * - 'as_is' - Cases names are documented as description as is.
      * - false - Case names are not stored as description.
      *

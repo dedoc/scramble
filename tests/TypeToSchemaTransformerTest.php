@@ -339,7 +339,7 @@ it('gets enum with values type and description with extensions', function () {
         ]);
 });
 
-it('generates title case descriptions for enum cases without PHPDoc', function (string $casesAutoDescriptionStrategy, array $result) {
+it('generates descriptions for enum cases without PHPDoc using the configured strategy', function (string $casesAutoDescriptionStrategy, array $result) {
     config()->set('scramble.enum_cases_description_strategy', 'extension');
     config()->set('scramble.enum_cases_auto_description_strategy', $casesAutoDescriptionStrategy);
 
@@ -357,6 +357,8 @@ it('generates title case descriptions for enum cases without PHPDoc', function (
             '2-10' => 'Small Company',
             '11-50' => 'Medium Sized Business',
             '51+' => 'Large Enterprise',
+            'zero' => 'Small 0',
+            'http' => 'Http Status',
         ],
     ],
     [
@@ -366,6 +368,8 @@ it('generates title case descriptions for enum cases without PHPDoc', function (
             '2-10' => 'Small company',
             '11-50' => 'Medium sized business',
             '51+' => 'Large enterprise',
+            'zero' => 'Small 0',
+            'http' => 'Http status',
         ],
     ],
     [
@@ -375,6 +379,8 @@ it('generates title case descriptions for enum cases without PHPDoc', function (
             '2-10' => 'smallCompany',
             '11-50' => 'Medium_Sized_Business',
             '51+' => 'LARGE_ENTERPRISE',
+            'zero' => 'SMALL_0',
+            'http' => 'HTTPStatus',
         ],
     ],
 ]);
@@ -386,6 +392,8 @@ enum CompanySize: string
     case smallCompany = '2-10';
     case Medium_Sized_Business = '11-50';
     case LARGE_ENTERPRISE = '51+';
+    case SMALL_0 = 'zero';
+    case HTTPStatus = 'http';
 }
 
 it('gets enum with values type and names as varnames with extensions', function () {
