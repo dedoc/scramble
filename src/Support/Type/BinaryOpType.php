@@ -15,6 +15,7 @@ class BinaryOpType extends AbstractType implements LateResolvingType
         public Type $left,
         public Type $right,
         public string $operator,
+        public bool $foldsNumericLiterals = true,
     ) {}
 
     public function nodes(): array
@@ -37,6 +38,7 @@ class BinaryOpType extends AbstractType implements LateResolvingType
     {
         return $type instanceof static
             && $this->operator === $type->operator
+            && $this->foldsNumericLiterals === $type->foldsNumericLiterals
             && $this->left->isSame($type->left)
             && $this->right->isSame($type->right);
     }
@@ -143,7 +145,9 @@ class BinaryOpType extends AbstractType implements LateResolvingType
             );
         }
 
-        if ($this->canBeArray($left) && $this->canBeArray($right)) {
+        if ($left instanceof KeyedArrayType && $right instanceof KeyedArrayType && $shape = $this->addShapes($left, $right)) {
+            $results[] = $shape;
+        } elseif ($this->canBeArray($left) && $this->canBeArray($right)) {
             $results[] = new ArrayType;
         }
 
@@ -157,7 +161,7 @@ class BinaryOpType extends AbstractType implements LateResolvingType
         $leftNumber = $this->literalNumber($left);
         $rightNumber = $this->literalNumber($right);
 
-        if ($leftNumber !== null && $rightNumber !== null) {
+        if ($this->foldsNumericLiterals && $leftNumber !== null && $rightNumber !== null) {
             $value = $this->applyOperator($leftNumber, $rightNumber);
 
             if ($value !== null) {
@@ -196,6 +200,51 @@ class BinaryOpType extends AbstractType implements LateResolvingType
         }
 
         return $this->intOrFloat();
+    }
+
+    private function addShapes(KeyedArrayType $left, KeyedArrayType $right): ?KeyedArrayType
+    {
+        $items = $this->itemsByKey($left);
+        $rightItems = $this->itemsByKey($right);
+
+        if ($items === null || $rightItems === null) {
+            return null;
+        }
+
+        foreach ($rightItems as $key => $rightItem) {
+            $leftItem = $items[$key] ?? null;
+
+            if (! $leftItem) {
+                $items[$key] = $rightItem;
+            } elseif ($leftItem->isOptional) {
+                $items[$key] = new ArrayItemType_(
+                    $leftItem->key,
+                    TypeHelper::mergeTypes($leftItem->value, $rightItem->value),
+                    $rightItem->isOptional,
+                    keyType: $leftItem->keyType,
+                );
+            }
+        }
+
+        return new KeyedArrayType(array_values($items), array_is_list($items));
+    }
+
+    /**
+     * @return array<array-key, ArrayItemType_>|null
+     */
+    private function itemsByKey(KeyedArrayType $shape): ?array
+    {
+        $items = [];
+
+        foreach ($shape->items as $item) {
+            if ($item->key === null || $item->shouldUnpack) {
+                return null;
+            }
+
+            $items[$item->key] = $item;
+        }
+
+        return $items;
     }
 
     private function canBeArray(Type $type): bool
