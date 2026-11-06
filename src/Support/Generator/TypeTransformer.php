@@ -221,16 +221,7 @@ class TypeTransformer
             $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
             && $type->isList
         ) {
-            $visibleItems = collect($type->items)->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))->values()->all();
-            $openApiType = (new ArrayType)
-                ->setMin(count($visibleItems))
-                ->setMax(count($visibleItems))
-                ->setPrefixItems(
-                    array_map(
-                        fn ($item) => $this->transform($item->value),
-                        $visibleItems
-                    )
-                );
+            $openApiType = $this->transformListType($type);
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType) {
             $openApiType = $this->transformKeyedArrayType($type);
         } elseif (
@@ -599,6 +590,55 @@ class TypeTransformer
                 TypeHelper::countKnownTypes($phpDoc) === TypeHelper::countKnownTypes($inferred)
                 && $phpDoc->accepts($inferred)
             );
+    }
+
+    private function transformListType(\Dedoc\Scramble\Support\Type\KeyedArrayType $type): ArrayType
+    {
+        $visibleItems = collect($type->items)
+            ->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))
+            ->values();
+
+        if (! $visibleItems->contains(fn (ArrayItemType_ $item) => $item->shouldUnpack)) {
+            return (new ArrayType)
+                ->setMin($visibleItems->count())
+                ->setMax($visibleItems->count())
+                ->setPrefixItems($visibleItems->map(fn (ArrayItemType_ $item) => $this->transform($item->value))->all());
+        }
+
+        $prefixItems = [];
+        $itemTypes = [];
+        $minimumItems = 0;
+        $hasSpread = false;
+
+        foreach ($visibleItems as $item) {
+            if ($item->shouldUnpack) {
+                $hasSpread = true;
+                $spread = $item->value instanceof TemplateType && $item->value->is
+                    ? $item->value->is
+                    : $item->value;
+                $itemTypes[] = $spread instanceof \Dedoc\Scramble\Support\Type\ArrayType
+                    ? $spread->value
+                    : new \Dedoc\Scramble\Support\Type\MixedType;
+
+                continue;
+            }
+
+            if (! $item->isOptional) {
+                $minimumItems++;
+            }
+
+            if ($hasSpread) {
+                $itemTypes[] = $item->value;
+            } else {
+                $prefixItems[] = $this->transform($item->value);
+            }
+        }
+
+        $schema = (new ArrayType)
+            ->setPrefixItems($prefixItems)
+            ->setItems($this->transform(Union::wrap($itemTypes)));
+
+        return $minimumItems ? $schema->setMin($minimumItems) : $schema;
     }
 
     private function transformKeyedArrayType(\Dedoc\Scramble\Support\Type\KeyedArrayType $type): OpenApiType

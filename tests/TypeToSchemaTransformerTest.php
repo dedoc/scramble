@@ -28,7 +28,10 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\CarbonInterfaceToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
 beforeEach(function () {
     $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
@@ -165,6 +168,49 @@ it('transforms unions containing only type constraints into a type array', funct
         'type' => ['number', 'string'],
     ]);
 });
+
+it('transforms variable-length list spreads', function (array $items, array $expected) {
+    $transformer = app(TypeTransformer::class, ['context' => $this->context]);
+
+    expect($transformer->transform(new KeyedArrayType($items))->toArray())->toEqual($expected);
+})->with([
+    'multiple homogeneous spreads' => [[
+        new ArrayItemType_(null, new ArrayType(value: new IntegerType), shouldUnpack: true),
+        new ArrayItemType_(null, new ArrayType(value: new IntegerType), shouldUnpack: true),
+    ], [
+        'type' => 'array',
+        'items' => ['type' => 'integer'],
+    ]],
+    'different spread element types' => [[
+        new ArrayItemType_(null, new ArrayType(value: new IntegerType), shouldUnpack: true),
+        new ArrayItemType_(null, new ArrayType(value: new StringType), shouldUnpack: true),
+    ], [
+        'type' => 'array',
+        'items' => ['type' => ['integer', 'string']],
+    ]],
+    'fixed prefix and trailing element' => [[
+        new ArrayItemType_(null, new LiteralStringType('start')),
+        new ArrayItemType_(null, new ArrayType(value: new IntegerType), shouldUnpack: true),
+        new ArrayItemType_(null, new StringType),
+    ], [
+        'type' => 'array',
+        'items' => ['type' => ['integer', 'string']],
+        'prefixItems' => [['type' => 'string', 'const' => 'start']],
+        'minItems' => 2,
+    ]],
+    'nested array elements are not flattened' => [[
+        new ArrayItemType_(null, new ArrayType(value: new ArrayType(value: new IntegerType)), shouldUnpack: true),
+    ], [
+        'type' => 'array',
+        'items' => ['type' => 'array', 'items' => ['type' => 'integer']],
+    ]],
+    'unknown spread element type' => [[
+        new ArrayItemType_(null, new \Dedoc\Scramble\Support\Type\UnknownType, shouldUnpack: true),
+    ], [
+        'type' => 'array',
+        'items' => (object) [],
+    ]],
+]);
 
 it('treats an unconstrained array as a plain type in a union', function () {
     $transformer = app()->make(TypeTransformer::class, [
@@ -1350,5 +1396,57 @@ class MappedRelationAfterCall_Resource extends JsonResource
         $children->count();
 
         return $children->map(fn (SamplePostModel $child): array => ['id' => $child->id])->all();
+    }
+}
+
+it('documents unpacked mapped collections as an array of objects', function (string $method) {
+    if ($method === 'scopedRewards' && ! class_exists(Scope::class)) {
+        $this->markTestSkipped('Attribute-based scopes require Laravel 12 or later.');
+    }
+
+    $transformer = app(TypeTransformer::class, ['context' => $this->context]);
+    $type = getStatementType('(new '.UnpackedCollections_TypeToSchemaTransformerTest::class.')->'.$method.'()');
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        'type' => 'array',
+        'items' => [
+            'type' => 'object',
+            'properties' => ['id' => ['type' => 'integer']],
+            'required' => ['id'],
+        ],
+    ]);
+})->with(['plain collections' => 'rewards', 'attribute-scoped queries' => 'scopedRewards']);
+
+class UnpackedCollections_TypeToSchemaTransformerTest
+{
+    public function rewards(): array
+    {
+        $first = (new Collection)->map(fn (int $id): array => ['id' => $id]);
+        $second = (new Collection)->map(fn (int $id): array => ['id' => $id]);
+
+        return [...$first->values()->all(), ...$second->values()->all()];
+    }
+
+    public function scopedRewards(): array
+    {
+        $first = UnpackedScopedModel_TypeToSchemaTransformerTest::query()
+            ->available()
+            ->get()
+            ->map(fn (UnpackedScopedModel_TypeToSchemaTransformerTest $post): array => ['id' => $post->id]);
+        $second = UnpackedScopedModel_TypeToSchemaTransformerTest::query()
+            ->available()
+            ->get()
+            ->map(fn (UnpackedScopedModel_TypeToSchemaTransformerTest $post): array => ['id' => $post->id]);
+
+        return [...$first->values()->all(), ...$second->values()->all()];
+    }
+}
+
+class UnpackedScopedModel_TypeToSchemaTransformerTest extends SamplePostModel
+{
+    #[Scope]
+    protected function available(Builder $query): Builder
+    {
+        return $query->where('approved', true);
     }
 }
