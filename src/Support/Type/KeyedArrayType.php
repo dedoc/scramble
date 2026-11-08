@@ -17,7 +17,8 @@ class KeyedArrayType extends AbstractType
      */
     public function __construct(
         public array $items = [],
-        ?bool $isList = null
+        ?bool $isList = null,
+        public ArrayType|NeverType|null $unsealed = null,
     ) {
         if ($isList === null) {
             $this->isList = static::checkIsList($items);
@@ -34,7 +35,7 @@ class KeyedArrayType extends AbstractType
 
     public function nodes(): array
     {
-        return ['items'];
+        return ['items', 'unsealed'];
     }
 
     protected function acceptsAtomic(Type $otherType): bool
@@ -213,7 +214,7 @@ class KeyedArrayType extends AbstractType
         $name = $this->isList ? 'list' : 'array';
 
         return sprintf(
-            '%s{%s}',
+            '%s{%s%s}',
             $name,
             implode(', ', array_map(function (ArrayItemType_ $item) {
                 if ($this->isList) {
@@ -226,7 +227,8 @@ class KeyedArrayType extends AbstractType
                     $item->isOptional ? '?' : '',
                     $item->value->toString()
                 );
-            }, $this->items))
+            }, $this->items)),
+            $this->unsealed instanceof ArrayType ? ', ...<'.($this->unsealed->key->toString().', '.$this->unsealed->value->toString()).'>' : '',
         );
     }
 

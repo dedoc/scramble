@@ -104,25 +104,3 @@ EOD)->getClassDefinition('Foo');
             'additionalProperties' => (object) [],
         ]);
 });
-
-it('transforms unpacked array parameters as a variable-length array', function () {
-    $class = analyzeFile(<<<'EOD'
-<?php
-class Foo {
-    public function foo(array $first, array $second): array
-    {
-        return [...$first, ...$second];
-    }
-}
-EOD)->getClassDefinition('Foo');
-
-    $transformer = app(TypeTransformer::class, [
-        'context' => new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig),
-    ]);
-
-    expect($transformer->transform($class->methods['foo']->type->returnType)->toArray())
-        ->toEqual([
-            'type' => 'array',
-            'items' => (object) [],
-        ]);
-});

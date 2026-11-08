@@ -209,24 +209,96 @@ class TypeHelper
         }
 
         $unpackedItems = collect($type->items)
-            ->flatMap(function (ArrayItemType_ $type) {
-                if ($type->shouldUnpack && $type->value instanceof KeyedArrayType) {
-                    return $type->value->items;
+            ->flatMap(function (ArrayItemType_ $item) {
+                if (! $item->shouldUnpack) {
+                    return [$item];
                 }
 
-                return [$type];
-            })
-            ->reduce(function ($arrayItems, ArrayItemType_ $itemType) {
-                if (! $itemType->key) {
-                    $arrayItems[] = $itemType;
-                } else {
-                    $arrayItems[$itemType->key] = $itemType;
+                $spread = $item->value;
+
+                if ($spread instanceof KeyedArrayType) {
+                    $spread = static::unpackIfArray($spread);
+                    if ($spread instanceof KeyedArrayType) {
+                        return [
+                            ...($spread->unsealed instanceof ArrayType
+                                ? [new ArrayItemType_(null, $spread->unsealed, shouldUnpack: true)]
+                                : []),
+                            ...$spread->items,
+                        ];
+                    }
                 }
 
-                return $arrayItems;
-            }, []);
+                $item = clone $item;
+                $item->value = $spread;
 
-        return (new KeyedArrayType(array_values($unpackedItems)))->mergeAttributes($type->attributes());
+                return [$item];
+            });
+
+        $items = [];
+        $unsealed = $type->unsealed;
+        $hasNumericSpread = false;
+        $tailItems = [];
+        $tailTypes = [];
+
+        /** @var ArrayItemType_ $itemType */
+        foreach ($unpackedItems as $itemType) {
+            $spread = $itemType->value;
+            if ($itemType->shouldUnpack && ($spread instanceof ArrayType || $spread instanceof UnknownType)) {
+                $spread = $spread instanceof ArrayType ? $spread : new ArrayType;
+
+                foreach ($items as $key => $item) {
+                    if (is_string($item->key) && $spread->key->accepts(new LiteralStringType($item->key))) {
+                        $items[$key] = clone $item;
+                        $items[$key]->value = static::mergeTypes($item->value, $spread->value);
+                    }
+                }
+
+                if (! $spread->key instanceof StringType) {
+                    $hasNumericSpread = true;
+                    $tailTypes[] = $spread->value;
+                }
+
+                $unsealed = $unsealed instanceof ArrayType
+                    ? new ArrayType(
+                        value: static::mergeTypes($unsealed->value, $spread->value),
+                        key: static::mergeTypes($unsealed->key, $spread->key),
+                    )
+                    : $spread;
+
+                continue;
+            }
+
+            if ($hasNumericSpread && $itemType->isNumericKey() && ! $itemType->shouldUnpack) {
+                $tailItems[] = count($items);
+                $tailTypes[] = $itemType->value;
+            }
+
+            if (! $itemType->key) {
+                $items[] = $itemType;
+            } else {
+                $items[$itemType->key] = $itemType;
+            }
+        }
+
+        $items = array_values($items);
+        if ($tailItems) {
+            $tailType = static::mergeTypes(...$tailTypes);
+            foreach ($tailItems as $index) {
+                $items[$index] = clone $items[$index];
+                $items[$index]->value = $tailType;
+            }
+
+            $unsealed = new ArrayType(
+                value: static::mergeTypes($unsealed->value, $tailType),
+                key: $unsealed->key,
+            );
+        }
+
+        if (! $items && $unsealed instanceof ArrayType) {
+            return (clone $unsealed)->mergeAttributes($type->attributes());
+        }
+
+        return (new KeyedArrayType($items, unsealed: $unsealed))->mergeAttributes($type->attributes());
     }
 
     /**

@@ -598,47 +598,17 @@ class TypeTransformer
             ->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))
             ->values();
 
-        if (! $visibleItems->contains(fn (ArrayItemType_ $item) => $item->shouldUnpack)) {
-            return (new ArrayType)
-                ->setMin($visibleItems->count())
-                ->setMax($visibleItems->count())
-                ->setPrefixItems($visibleItems->map(fn (ArrayItemType_ $item) => $this->transform($item->value))->all());
-        }
-
-        $prefixItems = [];
-        $itemTypes = [];
-        $minimumItems = 0;
-        $hasSpread = false;
-
-        foreach ($visibleItems as $item) {
-            if ($item->shouldUnpack) {
-                $hasSpread = true;
-                $spread = $item->value instanceof TemplateType && $item->value->is
-                    ? $item->value->is
-                    : $item->value;
-                $itemTypes[] = $spread instanceof \Dedoc\Scramble\Support\Type\ArrayType
-                    ? $spread->value
-                    : new \Dedoc\Scramble\Support\Type\MixedType;
-
-                continue;
-            }
-
-            if (! $item->isOptional) {
-                $minimumItems++;
-            }
-
-            if ($hasSpread) {
-                $itemTypes[] = $item->value;
-            } else {
-                $prefixItems[] = $this->transform($item->value);
-            }
-        }
-
         $schema = (new ArrayType)
-            ->setPrefixItems($prefixItems)
-            ->setItems($this->transform(Union::wrap($itemTypes)));
+            ->setPrefixItems($visibleItems->map(fn (ArrayItemType_ $item) => $this->transform($item->value))->all());
 
-        return $minimumItems ? $schema->setMin($minimumItems) : $schema;
+        if ($type->unsealed instanceof \Dedoc\Scramble\Support\Type\ArrayType) {
+            $schema->setItems($this->transform($type->unsealed->value));
+            $minimumItems = $visibleItems->reject(fn (ArrayItemType_ $item) => $item->isOptional)->count();
+
+            return $minimumItems ? $schema->setMin($minimumItems) : $schema;
+        }
+
+        return $schema->setMin($visibleItems->count())->setMax($visibleItems->count());
     }
 
     private function transformKeyedArrayType(\Dedoc\Scramble\Support\Type\KeyedArrayType $type): OpenApiType
@@ -647,7 +617,9 @@ class TypeTransformer
         $propertyTypes = [];
         $stringPropertyKeys = [];
         $requiredKeys = [];
-        $additionalPropertiesTypes = [];
+        $additionalPropertiesTypes = $type->unsealed instanceof \Dedoc\Scramble\Support\Type\ArrayType
+            ? [$type->unsealed->value]
+            : [];
         $nextNumericKey = null;
         $hasUnknownNumericKeys = false;
 

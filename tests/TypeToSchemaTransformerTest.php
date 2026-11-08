@@ -37,6 +37,56 @@ beforeEach(function () {
     $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
 });
 
+it('transforms unsealed object types', function (KeyedArrayType $type, array $expected) {
+    $transformer = app(TypeTransformer::class, ['context' => $this->context]);
+
+    expect($transformer->transform($type)->toArray())->toEqual($expected);
+})->with([
+    'integer additional properties without known properties' => [new KeyedArrayType(
+        isList: false,
+        unsealed: new ArrayType(value: new IntegerType, key: new StringType),
+    ), [
+        'type' => 'object',
+        'additionalProperties' => ['type' => 'integer'],
+    ]],
+    'known property retains its type' => [new KeyedArrayType([
+        new ArrayItemType_('id', new IntegerType),
+    ], unsealed: new ArrayType(value: new StringType, key: new StringType)), [
+        'type' => 'object',
+        'properties' => ['id' => ['type' => 'integer']],
+        'required' => ['id'],
+        'additionalProperties' => ['type' => 'string'],
+    ]],
+    'optional property stays optional' => [new KeyedArrayType([
+        new ArrayItemType_('id', new IntegerType),
+        new ArrayItemType_('name', new StringType, isOptional: true),
+    ], unsealed: new ArrayType(value: new BooleanType, key: new StringType)), [
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'integer'],
+            'name' => ['type' => 'string'],
+        ],
+        'required' => ['id'],
+        'additionalProperties' => ['type' => 'boolean'],
+    ]],
+    'array-valued additional properties' => [new KeyedArrayType([
+        new ArrayItemType_('id', new IntegerType),
+    ], unsealed: new ArrayType(value: new ArrayType(value: new IntegerType), key: new StringType)), [
+        'type' => 'object',
+        'properties' => ['id' => ['type' => 'integer']],
+        'required' => ['id'],
+        'additionalProperties' => ['type' => 'array', 'items' => ['type' => 'integer']],
+    ]],
+    'unconstrained additional properties' => [new KeyedArrayType([
+        new ArrayItemType_('id', new IntegerType),
+    ], unsealed: new ArrayType(value: new MixedType, key: new StringType)), [
+        'type' => 'object',
+        'properties' => ['id' => ['type' => 'integer']],
+        'required' => ['id'],
+        'additionalProperties' => (object) [],
+    ]],
+]);
+
 it('transforms simple types', function ($type, $openApiArrayed) {
     $transformer = app()->make(TypeTransformer::class, [
         'context' => $this->context,
@@ -169,44 +219,36 @@ it('transforms unions containing only type constraints into a type array', funct
     ]);
 });
 
-it('transforms variable-length list spreads', function (array $items, array $expected) {
+it('transforms unsealed list types', function (KeyedArrayType $type, array $expected) {
     $transformer = app(TypeTransformer::class, ['context' => $this->context]);
 
-    expect($transformer->transform(new KeyedArrayType($items))->toArray())->toEqual($expected);
+    expect($transformer->transform($type)->toArray())->toEqual($expected);
 })->with([
-    'multiple homogeneous spreads' => [[
-        new ArrayItemType_(null, new ArrayType(value: new IntegerType), shouldUnpack: true),
-        new ArrayItemType_(null, new ArrayType(value: new IntegerType), shouldUnpack: true),
-    ], [
+    'homogeneous additional items' => [new KeyedArrayType(unsealed: new ArrayType(value: new IntegerType)), [
         'type' => 'array',
         'items' => ['type' => 'integer'],
     ]],
-    'different spread element types' => [[
-        new ArrayItemType_(null, new ArrayType(value: new IntegerType), shouldUnpack: true),
-        new ArrayItemType_(null, new ArrayType(value: new StringType), shouldUnpack: true),
-    ], [
+    'mixed additional item types' => [new KeyedArrayType(unsealed: new ArrayType(value: new Union([new IntegerType, new StringType]))), [
         'type' => 'array',
         'items' => ['type' => ['integer', 'string']],
     ]],
-    'fixed prefix and trailing element' => [[
+    'fixed prefix and required tail position' => [new KeyedArrayType([
         new ArrayItemType_(null, new LiteralStringType('start')),
-        new ArrayItemType_(null, new ArrayType(value: new IntegerType), shouldUnpack: true),
-        new ArrayItemType_(null, new StringType),
-    ], [
+        new ArrayItemType_(null, new Union([new IntegerType, new StringType])),
+    ], unsealed: new ArrayType(value: new Union([new IntegerType, new StringType]))), [
         'type' => 'array',
         'items' => ['type' => ['integer', 'string']],
-        'prefixItems' => [['type' => 'string', 'const' => 'start']],
+        'prefixItems' => [
+            ['type' => 'string', 'const' => 'start'],
+            ['type' => ['integer', 'string']],
+        ],
         'minItems' => 2,
     ]],
-    'nested array elements are not flattened' => [[
-        new ArrayItemType_(null, new ArrayType(value: new ArrayType(value: new IntegerType)), shouldUnpack: true),
-    ], [
+    'nested array elements are not flattened' => [new KeyedArrayType(unsealed: new ArrayType(value: new ArrayType(value: new IntegerType))), [
         'type' => 'array',
         'items' => ['type' => 'array', 'items' => ['type' => 'integer']],
     ]],
-    'unknown spread element type' => [[
-        new ArrayItemType_(null, new \Dedoc\Scramble\Support\Type\UnknownType, shouldUnpack: true),
-    ], [
+    'unconstrained additional items' => [new KeyedArrayType(unsealed: new ArrayType(value: new MixedType)), [
         'type' => 'array',
         'items' => (object) [],
     ]],
