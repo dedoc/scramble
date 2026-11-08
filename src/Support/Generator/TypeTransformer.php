@@ -221,16 +221,7 @@ class TypeTransformer
             $type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType
             && $type->isList
         ) {
-            $visibleItems = collect($type->items)->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))->values()->all();
-            $openApiType = (new ArrayType)
-                ->setMin(count($visibleItems))
-                ->setMax(count($visibleItems))
-                ->setPrefixItems(
-                    array_map(
-                        fn ($item) => $this->transform($item->value),
-                        $visibleItems
-                    )
-                );
+            $openApiType = $this->transformListType($type);
         } elseif ($type instanceof \Dedoc\Scramble\Support\Type\KeyedArrayType) {
             $openApiType = $this->transformKeyedArrayType($type);
         } elseif (
@@ -601,13 +592,34 @@ class TypeTransformer
             );
     }
 
+    private function transformListType(\Dedoc\Scramble\Support\Type\KeyedArrayType $type): ArrayType
+    {
+        $visibleItems = collect($type->items)
+            ->reject(fn (ArrayItemType_ $item) => $this->isHiddenArrayItem($item))
+            ->values();
+
+        $schema = (new ArrayType)
+            ->setPrefixItems($visibleItems->map(fn (ArrayItemType_ $item) => $this->transform($item->value))->all());
+
+        if ($type->unsealed instanceof \Dedoc\Scramble\Support\Type\ArrayType) {
+            $schema->setItems($this->transform($type->unsealed->value));
+            $minimumItems = $visibleItems->reject(fn (ArrayItemType_ $item) => $item->isOptional)->count();
+
+            return $minimumItems ? $schema->setMin($minimumItems) : $schema;
+        }
+
+        return $schema->setMin($visibleItems->count())->setMax($visibleItems->count());
+    }
+
     private function transformKeyedArrayType(\Dedoc\Scramble\Support\Type\KeyedArrayType $type): OpenApiType
     {
         /** @var array<string, Type[]> $propertyTypes */
         $propertyTypes = [];
         $stringPropertyKeys = [];
         $requiredKeys = [];
-        $additionalPropertiesTypes = [];
+        $additionalPropertiesTypes = $type->unsealed instanceof \Dedoc\Scramble\Support\Type\ArrayType
+            ? [$type->unsealed->value]
+            : [];
         $nextNumericKey = null;
         $hasUnknownNumericKeys = false;
 

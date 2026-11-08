@@ -12,10 +12,12 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use ReflectionMethod;
 
 class EloquentBuilderExtension implements MethodReturnTypeExtension
 {
@@ -152,9 +154,19 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
             return false;
         }
 
-        return $event->scope->index->getClass($modelType->name)?->hasMethodDefinition(
+        if ($event->scope->index->getClass($modelType->name)?->hasMethodDefinition(
             $this->getScopeMethodName($event->name),
-        ) ?? false;
+        )) {
+            return true;
+        }
+
+        if (! method_exists($modelType->name, $event->name)) {
+            return false;
+        }
+
+        $method = new ReflectionMethod($modelType->name, $event->name);
+
+        return ! $method->isPrivate() && $method->getAttributes(Scope::class) !== [];
     }
 
     private function forwardCallToModel(MethodCallEvent $event): ?Type

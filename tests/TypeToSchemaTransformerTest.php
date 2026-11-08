@@ -28,11 +28,55 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\CarbonInterfaceToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\EnumToSchema;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Dedoc\Scramble\Tests\Files\SamplePostModel;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 beforeEach(function () {
     $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
 });
+
+it('transforms unsealed object types', function (KeyedArrayType $type, array $expected) {
+    $transformer = app(TypeTransformer::class, ['context' => $this->context]);
+
+    expect($transformer->transform($type)->toArray())->toEqual($expected);
+})->with([
+    'integer additional properties without known properties' => [new KeyedArrayType(
+        isList: false,
+        unsealed: new ArrayType(value: new IntegerType, key: new StringType),
+    ), [
+        'type' => 'object',
+        'additionalProperties' => ['type' => 'integer'],
+    ]],
+    'known property retains its type' => [new KeyedArrayType([
+        new ArrayItemType_('id', new IntegerType),
+    ], unsealed: new ArrayType(value: new StringType, key: new StringType)), [
+        'type' => 'object',
+        'properties' => ['id' => ['type' => 'integer']],
+        'required' => ['id'],
+        'additionalProperties' => ['type' => 'string'],
+    ]],
+    'optional property stays optional' => [new KeyedArrayType([
+        new ArrayItemType_('id', new IntegerType),
+        new ArrayItemType_('name', new StringType, isOptional: true),
+    ], unsealed: new ArrayType(value: new BooleanType, key: new StringType)), [
+        'type' => 'object',
+        'properties' => [
+            'id' => ['type' => 'integer'],
+            'name' => ['type' => 'string'],
+        ],
+        'required' => ['id'],
+        'additionalProperties' => ['type' => 'boolean'],
+    ]],
+    'unconstrained additional properties' => [new KeyedArrayType([
+        new ArrayItemType_('id', new IntegerType),
+    ], unsealed: new ArrayType(value: new MixedType, key: new StringType)), [
+        'type' => 'object',
+        'properties' => ['id' => ['type' => 'integer']],
+        'required' => ['id'],
+        'additionalProperties' => (object) [],
+    ]],
+]);
 
 it('transforms simple types', function ($type, $openApiArrayed) {
     $transformer = app()->make(TypeTransformer::class, [
@@ -165,6 +209,33 @@ it('transforms unions containing only type constraints into a type array', funct
         'type' => ['number', 'string'],
     ]);
 });
+
+it('transforms unsealed list types', function (KeyedArrayType $type, array $expected) {
+    $transformer = app(TypeTransformer::class, ['context' => $this->context]);
+
+    expect($transformer->transform($type)->toArray())->toEqual($expected);
+})->with([
+    'homogeneous additional items' => [new KeyedArrayType(unsealed: new ArrayType(value: new IntegerType)), [
+        'type' => 'array',
+        'items' => ['type' => 'integer'],
+    ]],
+    'fixed prefix and required tail position' => [new KeyedArrayType([
+        new ArrayItemType_(null, new LiteralStringType('start')),
+        new ArrayItemType_(null, new Union([new IntegerType, new StringType])),
+    ], unsealed: new ArrayType(value: new Union([new IntegerType, new StringType]))), [
+        'type' => 'array',
+        'items' => ['type' => ['integer', 'string']],
+        'prefixItems' => [
+            ['type' => 'string', 'const' => 'start'],
+            ['type' => ['integer', 'string']],
+        ],
+        'minItems' => 2,
+    ]],
+    'unconstrained additional items' => [new KeyedArrayType(unsealed: new ArrayType(value: new MixedType)), [
+        'type' => 'array',
+        'items' => (object) [],
+    ]],
+]);
 
 it('treats an unconstrained array as a plain type in a union', function () {
     $transformer = app()->make(TypeTransformer::class, [
@@ -1350,5 +1421,45 @@ class MappedRelationAfterCall_Resource extends JsonResource
         $children->count();
 
         return $children->map(fn (SamplePostModel $child): array => ['id' => $child->id])->all();
+    }
+}
+
+it('documents unpacked mapped attribute-scoped queries as an array of objects', function () {
+    $transformer = app(TypeTransformer::class, ['context' => $this->context]);
+    $type = getStatementType('(new '.UnpackedCollections_TypeToSchemaTransformerTest::class.')->scopedRewards()');
+
+    expect($transformer->transform($type)->toArray())->toBe([
+        'type' => 'array',
+        'items' => [
+            'type' => 'object',
+            'properties' => ['id' => ['type' => 'integer']],
+            'required' => ['id'],
+        ],
+    ]);
+})->skip(fn () => ! class_exists(Scope::class));
+
+class UnpackedCollections_TypeToSchemaTransformerTest
+{
+    public function scopedRewards(): array
+    {
+        $first = UnpackedScopedModel_TypeToSchemaTransformerTest::query()
+            ->available()
+            ->get()
+            ->map(fn (UnpackedScopedModel_TypeToSchemaTransformerTest $post): array => ['id' => $post->id]);
+        $second = UnpackedScopedModel_TypeToSchemaTransformerTest::query()
+            ->available()
+            ->get()
+            ->map(fn (UnpackedScopedModel_TypeToSchemaTransformerTest $post): array => ['id' => $post->id]);
+
+        return [...$first->values()->all(), ...$second->values()->all()];
+    }
+}
+
+class UnpackedScopedModel_TypeToSchemaTransformerTest extends SamplePostModel
+{
+    #[Scope]
+    protected function available(Builder $query): Builder
+    {
+        return $query->where('approved', true);
     }
 }
