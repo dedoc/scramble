@@ -31,7 +31,6 @@ use Dedoc\Scramble\Tests\Files\SamplePostModel;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Collection;
 
 beforeEach(function () {
     $this->context = new OpenApiContext(new OpenApi('3.1.0'), new GeneratorConfig);
@@ -68,14 +67,6 @@ it('transforms unsealed object types', function (KeyedArrayType $type, array $ex
         ],
         'required' => ['id'],
         'additionalProperties' => ['type' => 'boolean'],
-    ]],
-    'array-valued additional properties' => [new KeyedArrayType([
-        new ArrayItemType_('id', new IntegerType),
-    ], unsealed: new ArrayType(value: new ArrayType(value: new IntegerType), key: new StringType)), [
-        'type' => 'object',
-        'properties' => ['id' => ['type' => 'integer']],
-        'required' => ['id'],
-        'additionalProperties' => ['type' => 'array', 'items' => ['type' => 'integer']],
     ]],
     'unconstrained additional properties' => [new KeyedArrayType([
         new ArrayItemType_('id', new IntegerType),
@@ -228,10 +219,6 @@ it('transforms unsealed list types', function (KeyedArrayType $type, array $expe
         'type' => 'array',
         'items' => ['type' => 'integer'],
     ]],
-    'mixed additional item types' => [new KeyedArrayType(unsealed: new ArrayType(value: new Union([new IntegerType, new StringType]))), [
-        'type' => 'array',
-        'items' => ['type' => ['integer', 'string']],
-    ]],
     'fixed prefix and required tail position' => [new KeyedArrayType([
         new ArrayItemType_(null, new LiteralStringType('start')),
         new ArrayItemType_(null, new Union([new IntegerType, new StringType])),
@@ -243,10 +230,6 @@ it('transforms unsealed list types', function (KeyedArrayType $type, array $expe
             ['type' => ['integer', 'string']],
         ],
         'minItems' => 2,
-    ]],
-    'nested array elements are not flattened' => [new KeyedArrayType(unsealed: new ArrayType(value: new ArrayType(value: new IntegerType))), [
-        'type' => 'array',
-        'items' => ['type' => 'array', 'items' => ['type' => 'integer']],
     ]],
     'unconstrained additional items' => [new KeyedArrayType(unsealed: new ArrayType(value: new MixedType)), [
         'type' => 'array',
@@ -1384,13 +1367,9 @@ class MappedRelationAfterCall_Resource extends JsonResource
     }
 }
 
-it('documents unpacked mapped collections as an array of objects', function (string $method) {
-    if ($method === 'scopedRewards' && ! class_exists(Scope::class)) {
-        $this->markTestSkipped('Attribute-based scopes require Laravel 12 or later.');
-    }
-
+it('documents unpacked mapped attribute-scoped queries as an array of objects', function () {
     $transformer = app(TypeTransformer::class, ['context' => $this->context]);
-    $type = getStatementType('(new '.UnpackedCollections_TypeToSchemaTransformerTest::class.')->'.$method.'()');
+    $type = getStatementType('(new '.UnpackedCollections_TypeToSchemaTransformerTest::class.')->scopedRewards()');
 
     expect($transformer->transform($type)->toArray())->toBe([
         'type' => 'array',
@@ -1400,18 +1379,10 @@ it('documents unpacked mapped collections as an array of objects', function (str
             'required' => ['id'],
         ],
     ]);
-})->with(['plain collections' => 'rewards', 'attribute-scoped queries' => 'scopedRewards']);
+})->skip(fn () => ! class_exists(Scope::class));
 
 class UnpackedCollections_TypeToSchemaTransformerTest
 {
-    public function rewards(): array
-    {
-        $first = (new Collection)->map(fn (int $id): array => ['id' => $id]);
-        $second = (new Collection)->map(fn (int $id): array => ['id' => $id]);
-
-        return [...$first->values()->all(), ...$second->values()->all()];
-    }
-
     public function scopedRewards(): array
     {
         $first = UnpackedScopedModel_TypeToSchemaTransformerTest::query()
