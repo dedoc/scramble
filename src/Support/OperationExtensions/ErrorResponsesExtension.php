@@ -16,6 +16,8 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -34,6 +36,7 @@ class ErrorResponsesExtension extends OperationExtension
         $this->attachNotFoundException($operation, $methodType);
         $this->attachAuthorizationException($routeInfo, $methodType);
         $this->attachAuthenticationException($routeInfo, $methodType);
+        $this->attachThrottleException($routeInfo, $methodType);
         $this->attachCustomRequestExceptions($methodType);
     }
 
@@ -90,6 +93,24 @@ class ErrorResponsesExtension extends OperationExtension
         $methodType->exceptions = [
             ...$methodType->exceptions,
             new ObjectType(AuthenticationException::class),
+        ];
+    }
+
+    private function attachThrottleException(RouteInfo $routeInfo, FunctionType $methodType)
+    {
+        $isThrottleMiddleware = fn ($m) => is_string($m) && (in_array($m, ['throttle', ThrottleRequests::class]) || Str::startsWith($m, ['throttle:', ThrottleRequests::class.':']));
+
+        if (! collect($routeInfo->route->gatherMiddleware())->contains($isThrottleMiddleware)) {
+            return;
+        }
+
+        if (collect($methodType->exceptions)->contains(fn (Type $e) => $e->isInstanceOf(ThrottleRequestsException::class))) {
+            return;
+        }
+
+        $methodType->exceptions = [
+            ...$methodType->exceptions,
+            new ObjectType(ThrottleRequestsException::class),
         ];
     }
 
