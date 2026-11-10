@@ -7,10 +7,12 @@ use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\NeverType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
+use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,6 +41,10 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
 
         if ($this->shouldForwardCallToModel($event)) {
             return $this->forwardCallToModel($event);
+        }
+
+        if ($this->isDynamicWhere($event->getName())) {
+            return $event->getInstance();
         }
 
         if (! $modelType = $this->getModelType($event->getInstance())) {
@@ -74,15 +80,15 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
             [$relatedModelType],
         );
 
-        if (! $event->scope->index->getClass($builderType->name)?->hasMethodDefinition($event->getName())) {
-            return null;
-        }
-
         $returnType = $builderType->getMethodReturnType(
             $event->getName(),
             $event->arguments,
             $event->scope,
         );
+
+        if ($returnType instanceof UnknownType || $returnType instanceof NeverType) {
+            return null;
+        }
 
         return $this->replaceBuilderReturnWithRelation($returnType, $event->getInstance());
     }
@@ -224,5 +230,15 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
     private function getScopeMethodName(string $scope): string
     {
         return 'scope'.ucfirst($scope);
+    }
+
+    private function isDynamicWhere(string $name): bool
+    {
+        if (! ((str_starts_with($name, 'where') && strlen($name) > 5 && ctype_upper($name[5]))
+            || (str_starts_with($name, 'orWhere') && strlen($name) > 7 && ctype_upper($name[7])))) {
+            return false;
+        }
+
+        return ! method_exists(Builder::class, $name);
     }
 }

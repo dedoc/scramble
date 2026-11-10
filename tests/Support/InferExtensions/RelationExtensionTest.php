@@ -11,7 +11,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class PlainPostModel_RelationExtensionTest extends \Illuminate\Database\Eloquent\Model {}
+class PlainPostModel_RelationExtensionTest extends \Illuminate\Database\Eloquent\Model
+{
+    public function scopePublished(Builder $query): void
+    {
+        $query->whereNotNull('published_at');
+    }
+}
 
 class PlainUserModel_RelationExtensionTest extends \Illuminate\Database\Eloquent\Model
 {
@@ -158,3 +164,14 @@ it('tracks loaded relations after a custom builder method forwarded through a re
         ->and($modelType->getPropertyType('relations')->toString())
         ->toBe('list{string(author), string(comments)}');
 })->skip(fn () => ! version_compare(app()->version(), '11.15.0', '>='));
+
+it('forwards scope call through relation', function () {
+    $type = getStatementType(
+        PlainUserModel_RelationExtensionTest::class
+        .'::query()->first()->posts()->published()'
+    );
+
+    expect($type->toString())->toBe(
+        HasMany::class.'<'.PlainPostModel_RelationExtensionTest::class.', '.PlainUserModel_RelationExtensionTest::class.'>'
+    );
+});
