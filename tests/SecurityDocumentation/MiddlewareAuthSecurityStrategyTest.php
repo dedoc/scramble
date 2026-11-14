@@ -2,6 +2,7 @@
 
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
@@ -49,6 +50,18 @@ it('documents bearer security when a route has auth middleware', function () {
         ->and($openApiDocument['components']['securitySchemes']['http']['scheme'])->toBe('bearer')
         ->and($openApiDocument['paths']['/protected']['get'])->not->toHaveKey('security')
         ->and($openApiDocument['paths']['/public']['get']['security'])->toBe([]);
+});
+
+it('documents bearer security when a route has Authenticate::using middleware', function () {
+    RouteFacade::get(
+        'api/protected',
+        [MiddlewareAuthSecurityStrategyTest_ProtectedController::class, 'index'],
+    )->middleware(Authenticate::using('sanctum'));
+
+    $openApiDocument = generateForRouteUris(['api/protected']);
+
+    expect($openApiDocument['security'])->toBe([['http' => []]])
+        ->and($openApiDocument['paths']['/protected']['get'])->not->toHaveKey('security');
 });
 
 it('supports custom auth middleware patterns', function () {

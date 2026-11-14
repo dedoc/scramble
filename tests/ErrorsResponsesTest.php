@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Types as OpenApiTypes;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -119,6 +120,20 @@ it('adds too many requests error response with ThrottleRequests::using', functio
 
     expect($openApiDocument['paths']['/test']['get']['responses'][429]['description'])
         ->toBe('Too many requests');
+});
+
+it('adds authentication error response with Authenticate::using', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_authorization_error_response'])
+            ->middleware(Authenticate::using('sanctum'));
+    });
+
+    expect($openApiDocument)
+        ->toHaveKey('components.responses.AuthenticationException')
+        ->and($openApiDocument['paths']['/test']['get']['responses'][401])
+        ->toBe([
+            '$ref' => '#/components/responses/AuthenticationException',
+        ]);
 });
 
 it('adds not found error response with can directive', function () {
