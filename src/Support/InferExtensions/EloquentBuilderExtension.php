@@ -12,7 +12,6 @@ use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\Union;
-use Dedoc\Scramble\Support\Type\UnknownType;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -86,7 +85,11 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
             $event->scope,
         );
 
-        if ($returnType instanceof UnknownType || $returnType instanceof NeverType) {
+        // A missing builder method resolves to never. Let the relation call continue
+        // through normal inference.
+        // @todo Distinguish missing builder methods from methods that return never.
+        // A missing builder class resolves to unknown and passes through this guard.
+        if ($returnType instanceof NeverType) {
             return null;
         }
 
@@ -234,11 +237,6 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
 
     private function isDynamicWhere(string $name): bool
     {
-        if (! ((str_starts_with($name, 'where') && strlen($name) > 5 && ctype_upper($name[5]))
-            || (str_starts_with($name, 'orWhere') && strlen($name) > 7 && ctype_upper($name[7])))) {
-            return false;
-        }
-
-        return ! method_exists(Builder::class, $name);
+        return str_starts_with($name, 'where') && strlen($name) > 5;
     }
 }

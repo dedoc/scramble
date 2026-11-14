@@ -103,16 +103,17 @@ class ObjectType extends AbstractType
             name: $methodName,
             scope: $scope,
             arguments: $arguments,
-            methodDefiningClassName: $definingClassName = $classDefinition ? $classDefinition->getMethodDefiningClassName($methodName, $scope->index) : $this->name,
+            methodDefiningClassName: $classDefinition ? $classDefinition->getMethodDefiningClassName($methodName, $scope->index) : $this->name,
         ))) {
             return $returnType;
         }
 
-        /*
-         * For now, when parent class is in `vendor`, we may do not know that certain definition exists.
-         */
+        if (! $classDefinition) {
+            return new UnknownType;
+        }
+
         if (! $methodDefinition = $this->getMethodDefinition($methodName)) {
-            return new UnknownType("No method {$definingClassName}@{$methodName} definition found, it may be located in `vendor` which is not analyzed.");
+            return new NeverType;
         }
 
         $returnType = $methodDefinition->getReturnType();
