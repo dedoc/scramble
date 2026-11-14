@@ -7,6 +7,7 @@ use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Support\Type\ArrayType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
+use Dedoc\Scramble\Support\Type\NeverType;
 use Dedoc\Scramble\Support\Type\NullType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -39,6 +40,10 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
 
         if ($this->shouldForwardCallToModel($event)) {
             return $this->forwardCallToModel($event);
+        }
+
+        if ($this->isDynamicWhere($event->getName())) {
+            return $event->getInstance();
         }
 
         if (! $modelType = $this->getModelType($event->getInstance())) {
@@ -74,15 +79,19 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
             [$relatedModelType],
         );
 
-        if (! $event->scope->index->getClass($builderType->name)?->hasMethodDefinition($event->getName())) {
-            return null;
-        }
-
         $returnType = $builderType->getMethodReturnType(
             $event->getName(),
             $event->arguments,
             $event->scope,
         );
+
+        // A missing builder method resolves to never. Let the relation call continue
+        // through normal inference.
+        // @todo Distinguish missing builder methods from methods that return never.
+        // A missing builder class resolves to unknown and passes through this guard.
+        if ($returnType instanceof NeverType) {
+            return null;
+        }
 
         return $this->replaceBuilderReturnWithRelation($returnType, $event->getInstance());
     }
@@ -224,5 +233,10 @@ class EloquentBuilderExtension implements MethodReturnTypeExtension
     private function getScopeMethodName(string $scope): string
     {
         return 'scope'.ucfirst($scope);
+    }
+
+    private function isDynamicWhere(string $name): bool
+    {
+        return str_starts_with($name, 'where') && strlen($name) > 5;
     }
 }

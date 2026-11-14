@@ -71,6 +71,9 @@ test('supports extension methods', function (string $method, string $expectedTyp
     ['approved', Builder::class.'<'.SamplePostModel::class.'>'],
     ['approvedTypedParam', Builder::class.'<'.SamplePostModel::class.'>'],
 
+    // dynamic where calls
+    ['whereActive', Builder::class.'<'.SamplePostModel::class.'>'],
+
     // supports soft deletes macro methods
     ['onlyTrashed', Builder::class.'<'.SamplePostModel::class.'>'],
     ['withTrashed', Builder::class.'<'.SamplePostModel::class.'>'],
