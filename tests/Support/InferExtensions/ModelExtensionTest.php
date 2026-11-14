@@ -46,6 +46,32 @@ class SearchableModel_ModelExtensionTest extends Model
     protected $with = ['posts'];
 }
 
+/**
+ * @property-read PostModel_ModelExtensionTest|null $interfaceRelation
+ *
+ * @phpstan-require-extends Model
+ */
+interface Imageable_ModelExtensionTest {}
+
+/**
+ * @property-read PostModel_ModelExtensionTest|null $traitRelation
+ */
+trait Imageable_ModelExtensionTestTrait {}
+
+class ImageableModel_ModelExtensionTest extends Model implements Imageable_ModelExtensionTest
+{
+    use Imageable_ModelExtensionTestTrait;
+}
+
+it('uses property tags defined on implemented interfaces and used traits', function (string $property, string $expectedType) {
+    $type = getStatementType('(new '.ImageableModel_ModelExtensionTest::class.')->'.$property);
+
+    expect($type->toString())->toBe($expectedType);
+})->with([
+    'interface' => ['interfaceRelation', PostModel_ModelExtensionTest::class.'|null'],
+    'trait' => ['traitRelation', PostModel_ModelExtensionTest::class.'|null'],
+]);
+
 describe('model annotations (introduced in 11.15.0)', function () {
     it('handles static', function () {
         $type = getStatementType(UserModel_ModelExtensionTest::class.'::query()');
