@@ -13,6 +13,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route as RouteFacade;
@@ -99,6 +100,26 @@ it('adds authentication error response', function () {
         ->toBe([
             '$ref' => '#/components/responses/AuthenticationException',
         ]);
+});
+
+it('adds too many requests error response', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_authentication_error_response'])
+            ->middleware('throttle:api');
+    });
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][429]['description'])
+        ->toBe('Too many requests');
+});
+
+it('adds too many requests error response with ThrottleRequests::using', function () {
+    $openApiDocument = generateForRoute(function () {
+        return RouteFacade::get('api/test', [ErrorsResponsesTest_Controller::class, 'adds_authentication_error_response'])
+            ->middleware(ThrottleRequests::using('api'));
+    });
+
+    expect($openApiDocument['paths']['/test']['get']['responses'][429]['description'])
+        ->toBe('Too many requests');
 });
 
 it('adds authentication error response with Authenticate::using', function () {
