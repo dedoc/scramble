@@ -13,6 +13,7 @@ use Dedoc\Scramble\Support\Type\TemplateType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Http\FormRequest;
@@ -77,7 +78,7 @@ class ErrorResponsesExtension extends OperationExtension
             return;
         }
 
-        $isAuthMiddleware = fn ($m) => is_string($m) && ($m === 'auth' || Str::startsWith($m, 'auth:'));
+        $isAuthMiddleware = fn ($m) => is_string($m) && (in_array($m, ['auth', Authenticate::class]) || Str::startsWith($m, ['auth:', Authenticate::class.':']));
 
         if (! collect($routeInfo->route->gatherMiddleware())->contains($isAuthMiddleware)) {
             return;
