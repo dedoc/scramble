@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Dedoc\Scramble\Support\RouteInfo;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Str;
 
@@ -21,7 +22,7 @@ class MiddlewareAuthSecurityStrategy implements SecurityDocumentationStrategy
      * @param  list<string>  $middleware
      */
     public function __construct(
-        private array $middleware = ['auth', 'auth:*'],
+        private array $middleware = ['auth', 'auth:*', Authenticate::class, Authenticate::class.':*'],
         ?SecurityScheme $scheme = null,
     ) {
         $this->scheme = $scheme ?? SecurityScheme::http('bearer');
