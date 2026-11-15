@@ -8,6 +8,8 @@ use Dedoc\Scramble\Infer\Extensions\AfterClassDefinitionCreatedExtension;
 use Dedoc\Scramble\Infer\Extensions\Event\ClassDefinitionCreatedEvent;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\InferExtensions\ShallowFunctionDefinition;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\GenericClassStringType;
 use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Dedoc\Scramble\Support\Type\ObjectType;
@@ -229,6 +231,35 @@ class ParentWithTvalue_ClassDefinitionTest
 }
 
 class ChildWithTmodel_ClassDefinitionTest extends ParentWithTvalue_ClassDefinitionTest {}
+
+it('preserves shallow methods on their defining class and analyzes child overrides', function () {
+    $parent = $this->classAnalyzer->analyze(ParentWithShallowMethod_ClassDefinitionTest::class);
+    $parent->methods['value'] = new ShallowFunctionDefinition(
+        type: new FunctionType('value', returnType: new LiteralIntegerType(2)),
+        definingClassName: ParentWithShallowMethod_ClassDefinitionTest::class,
+    );
+
+    $child = $this->classAnalyzer->analyze(ChildWithMethodOverride_ClassDefinitionTest::class);
+
+    expect($parent->getMethodDefinition('value')->getReturnType()->toString())->toBe('int(2)')
+        ->and($child->getMethodDefinition('value')->getReturnType()->toString())->toBe('int(3)');
+});
+
+class ParentWithShallowMethod_ClassDefinitionTest
+{
+    public function value()
+    {
+        return 1;
+    }
+}
+
+class ChildWithMethodOverride_ClassDefinitionTest extends ParentWithShallowMethod_ClassDefinitionTest
+{
+    public function value()
+    {
+        return 3;
+    }
+}
 
 it('infers templated property fetch type', function () {
     $type = analyzeFile(__DIR__.'/files/class_with_property_fetch_in_method.php')

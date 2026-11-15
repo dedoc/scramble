@@ -5,6 +5,7 @@ namespace Dedoc\Scramble\Tests\Support\TypeToSchemaExtensions;
 use Dedoc\Scramble\Attributes\SchemaName;
 use Dedoc\Scramble\GeneratorConfig;
 use Dedoc\Scramble\OpenApiContext;
+use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\TypeTransformer;
 use Illuminate\Database\Eloquent\Model;
@@ -235,6 +236,33 @@ class CustomUserResource_AnonymousResourceCollectionTypeToSchemaTest extends Jso
     public function toArray(Request $request)
     {
         return ['id' => $this->id];
+    }
+}
+
+it('retains pagination schema for resource collections documented after an endpoint returning a raw paginator', function () {
+    Route::get('api/raw-paginator', [RawPaginator_AnonymousResourceCollectionTypeToSchemaTestController::class, 'index']);
+    Route::get('api/posts', InferredPagination_AnonymousResourceCollectionTypeToSchemaTestController::class);
+
+    Scramble::routes(fn (\Illuminate\Routing\Route $r) => in_array($r->uri, ['api/raw-paginator', 'api/posts']));
+
+    $openApiDocument = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    $schema = $openApiDocument['paths']['/posts']['get']['responses'][200]['content']['application/json']['schema'];
+
+    expect($schema['properties'])
+        ->toHaveKeys(['data', 'meta', 'links'])
+        ->and($metaProperties = $schema['properties']['meta']['properties'])
+        ->toHaveKeys(['total', 'last_page', 'links'])
+        ->and($metaProperties['total']['type'])->toBe('integer')
+        ->and($metaProperties['last_page']['type'])->toBe('integer')
+        ->and($metaProperties['links']['type'])->toBe('array');
+});
+
+class RawPaginator_AnonymousResourceCollectionTypeToSchemaTestController
+{
+    public function index()
+    {
+        return new LengthAwarePaginator([], 0, 100);
     }
 }
 

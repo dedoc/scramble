@@ -96,6 +96,14 @@ class ClassDefinition implements ClassDefinitionContract
 
         $this->loadedMethods[$name] = true;
 
+        if (
+            isset($this->methods[$name])
+            && $this->methods[$name]->definingClassName === $this->name
+            && $this->methods[$name]->isFullyAnalyzed()
+        ) {
+            return $this->methods[$name];
+        }
+
         /** @var \ReflectionMethod|null $reflectionMethod */
         $reflectionMethod = rescue(
             fn () => (new \ReflectionClass($this->name))->getMethod($name), // @phpstan-ignore argument.type
