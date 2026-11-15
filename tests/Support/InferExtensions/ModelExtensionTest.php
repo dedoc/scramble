@@ -2,6 +2,7 @@
 
 namespace Dedoc\Scramble\Tests\Support\InferExtensions;
 
+use Dedoc\Scramble\Infer\Definition\FunctionLikeAstDefinition;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
@@ -39,12 +40,42 @@ class UserModel_ModelExtensionTest extends Model
 
 class PostModel_ModelExtensionTest extends Model {}
 
+class NewQueryOverride_ModelExtensionTest extends UserModel_ModelExtensionTest
+{
+    public function newQuery(): Builder
+    {
+        return parent::newQuery()->with('posts');
+    }
+}
+
 class SearchableModel_ModelExtensionTest extends Model
 {
     use Searchable;
 
     protected $with = ['posts'];
 }
+
+it('analyzes an app model override of newQuery from source', function () {
+    $definition = $this->index->getClass(NewQueryOverride_ModelExtensionTest::class);
+
+    expect($definition->getMethodDefinition('newQuery'))->toBeInstanceOf(FunctionLikeAstDefinition::class);
+
+    $builderType = getStatementType('(new '.NewQueryOverride_ModelExtensionTest::class.')->newQuery()');
+    expect($builderType)->toBeInstanceOf(Generic::class);
+
+    $relationsType = ReferenceTypeResolver::getInstance()->resolve(
+        new GlobalScope,
+        new PropertyFetchReferenceType($builderType->templateTypes[0], 'relations'),
+    );
+
+    expect($relationsType->toString())->toBe('list{string(posts)}');
+});
+
+it('specializes inherited newQuery for a model without an override', function () {
+    $type = getStatementType('(new '.PostModel_ModelExtensionTest::class.')->newQuery()');
+
+    expect($type->toString())->toBe(Builder::class.'<'.PostModel_ModelExtensionTest::class.'>');
+});
 
 describe('model annotations (introduced in 11.15.0)', function () {
     it('handles static', function () {

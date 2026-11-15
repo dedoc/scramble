@@ -82,7 +82,7 @@ class AfterModelDefinitionCreatedExtension implements AfterClassDefinitionCreate
                 name: 'newQuery',
                 returnType: $this->buildSeededBuilderReturnType($definition),
             ),
-            definingClassName: $definition->name,
+            definingClassName: Model::class,
         );
     }
 
