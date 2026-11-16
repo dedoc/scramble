@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Generator\SecuritySchemes\HttpSecurityScheme;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\Oauth2SecurityScheme;
 use Dedoc\Scramble\Support\Generator\SecuritySchemes\OpenIdConnectUrlSecurityScheme;
 use JsonSerializable;
+use ReflectionClass;
 
 class SecurityScheme implements JsonSerializable, OpenApiSerializable
 {
@@ -133,5 +134,16 @@ class SecurityScheme implements JsonSerializable, OpenApiSerializable
         }
 
         return array_merge($result, $this->extensionPropertiesToArray());
+    }
+
+    public static function __set_state(array $properties): static
+    {
+        $scheme = (new ReflectionClass(static::class))->newInstanceWithoutConstructor();
+
+        foreach ($properties as $name => $value) {
+            $scheme->$name = $value;
+        }
+
+        return $scheme;
     }
 }

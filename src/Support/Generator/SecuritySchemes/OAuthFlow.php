@@ -98,4 +98,15 @@ class OAuthFlow implements JsonSerializable, OpenApiSerializable
             ...$this->extensionPropertiesToArray(),
         ];
     }
+
+    public static function __set_state(array $properties): static
+    {
+        $flow = new static;
+
+        foreach ($properties as $name => $value) {
+            $flow->$name = $value;
+        }
+
+        return $flow;
+    }
 }
