@@ -35,7 +35,10 @@ class MethodAnalyzer
             new FileNameResolver($this->getClassReflector()->getNameContext()),
             $this->classDefinition,
             $indexBuilders,
-            $withSideEffects
+            $withSideEffects,
+            declaringClassDefinition: $methodDefinition->definingClassName
+                ? $this->index->getClassDefinition($methodDefinition->definingClassName)
+                : null,
         ))->build();
     }
 

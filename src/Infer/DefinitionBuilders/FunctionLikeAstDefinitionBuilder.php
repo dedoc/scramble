@@ -60,6 +60,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
         public ?ClassDefinition $classDefinition = null,
         public array $indexBuilders = [],
         public bool $withSideEffects = false,
+        private ?ClassDefinition $declaringClassDefinition = null,
     ) {
         $this->shallowIndex = app(LazyShallowReflectionIndex::class);
     }
@@ -291,7 +292,7 @@ class FunctionLikeAstDefinitionBuilder implements FunctionLikeDefinitionBuilder
     {
         $definition = (new FunctionLikeDeclarationAstDefinitionBuilder(
             $this->functionLike,
-            $this->classDefinition,
+            $this->declaringClassDefinition ?? $this->classDefinition,
         ))->build();
 
         $phpDocNode = $this->functionLike->getAttribute('parsedPhpDoc');

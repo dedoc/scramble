@@ -8,6 +8,8 @@ use Dedoc\Scramble\Infer\Definition\FunctionLikeDefinition;
 use Dedoc\Scramble\Infer\Scope\GlobalScope;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\MixedType;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeHelper;
 use Dedoc\Scramble\Support\Type\UnknownType;
@@ -47,7 +49,15 @@ class FunctionLikeDeclarationAstDefinitionBuilder implements FunctionLikeDefinit
             return new UnknownType;
         }
 
-        return TypeHelper::createTypeFromTypeNode($returnType);
+        $type = TypeHelper::createTypeFromTypeNode($returnType);
+
+        if ($type instanceof ObjectType
+            && $type->name === StaticReference::PARENT
+            && $this->classDefinition?->parentFqn) {
+            return new ObjectType($this->classDefinition->parentFqn);
+        }
+
+        return $type;
     }
 
     /** @return array<string, Type> */

@@ -70,6 +70,23 @@ it('preserves constructor generics through a static factory and late static bind
     ChildStaticFactory_ReferenceTypeResolverTest::class,
 ]);
 
+it('preserves constructor generics through a static factory declared to return self', function () {
+    $class = StaticFactory_ReferenceTypeResolverTest::class;
+
+    $type = getStatementType($class.'::makeSelf("hello")');
+
+    expect($type->toString())->toBe($class.'<string(hello)>');
+});
+
+it('preserves constructor generics through a static factory declared to return parent', function (string $class) {
+    $type = getStatementType($class.'::makeParent("hello")');
+
+    expect($type->toString())->toBe(StaticFactory_ReferenceTypeResolverTest::class.'<string(hello)>');
+})->with([
+    ChildStaticFactory_ReferenceTypeResolverTest::class,
+    GrandchildStaticFactory_ReferenceTypeResolverTest::class,
+]);
+
 class StaticFactory_ReferenceTypeResolverTest
 {
     public $value;
@@ -83,9 +100,22 @@ class StaticFactory_ReferenceTypeResolverTest
     {
         return new static($value);
     }
+
+    public static function makeSelf($value): self
+    {
+        return new self($value);
+    }
 }
 
-class ChildStaticFactory_ReferenceTypeResolverTest extends StaticFactory_ReferenceTypeResolverTest {}
+class ChildStaticFactory_ReferenceTypeResolverTest extends StaticFactory_ReferenceTypeResolverTest
+{
+    public static function makeParent($value): parent
+    {
+        return new parent($value);
+    }
+}
+
+class GrandchildStaticFactory_ReferenceTypeResolverTest extends ChildStaticFactory_ReferenceTypeResolverTest {}
 
 /*
  * Method calls

@@ -116,6 +116,12 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
             return tap($inferredReturnType->clone(), fn (Generic $type) => $type->name = StaticReference::STATIC);
         }
 
+        if ($returnDeclarationType instanceof ObjectType
+            && $returnDeclarationType->name === StaticReference::SELF
+            && $this->definingClassName) {
+            $returnDeclarationType = new ObjectType($this->definingClassName);
+        }
+
         return $this->prefersInferredReturnType($returnDeclarationType, $inferredReturnType)
             ? $inferredReturnType
             : $returnDeclarationType;
