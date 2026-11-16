@@ -963,7 +963,9 @@ class ReferenceTypeResolver
         return match ($name) {
             StaticReference::SELF => $scope->context->functionDefinition?->definingClassName,
             StaticReference::STATIC => $scope->context->classDefinition?->name,
-            StaticReference::PARENT => $scope->context->classDefinition?->parentFqn,
+            StaticReference::PARENT => ($definingClassName = $scope->context->functionDefinition?->definingClassName)
+                ? $scope->index->getClass($definingClassName)?->parentFqn
+                : null,
         };
     }
 }
