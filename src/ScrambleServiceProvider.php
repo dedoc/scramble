@@ -50,6 +50,7 @@ use Dedoc\Scramble\Support\InferExtensions\AfterResourceCollectionDefinitionCrea
 use Dedoc\Scramble\Support\InferExtensions\AfterResponseDefinitionCreatedExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrStaticMethodReturnTypeExtension;
+use Dedoc\Scramble\Support\InferExtensions\DateTimeMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\EloquentBuilderExtension;
 use Dedoc\Scramble\Support\InferExtensions\FacadeStaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceCollectionMethodReturnTypeExtension;
@@ -232,6 +233,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                         new ArrayMergeReturnTypeExtension,
                         new TranslationReturnTypeExtension,
+                        new DateTimeMethodReturnTypeExtension,
 
                         /* Keep this extension last, so the trace info is preserved. */
                         new TypeTraceInfer,
