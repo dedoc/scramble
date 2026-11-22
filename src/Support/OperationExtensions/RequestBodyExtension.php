@@ -109,7 +109,7 @@ class RequestBodyExtension implements OperationTransformer
                 return $r;
             })
             ->filter(fn (ParametersExtractionResult $r) => count($r->parameters) || $r->schemaName)
-            ->map($this->makeSchemaFromResults(...));
+            ->map(fn (ParametersExtractionResult $r) => $this->makeSchemaFromResults($r, $operation->method));
 
         if ($schemas->isEmpty()) {
             return;
@@ -142,7 +142,7 @@ class RequestBodyExtension implements OperationTransformer
         return false;
     }
 
-    protected function makeSchemaFromResults(ParametersExtractionResult $result): Type
+    protected function makeSchemaFromResults(ParametersExtractionResult $result, string $method): Type
     {
         $requestBodySchema = Schema::createFromParameters(
             $parameters = $this->unescapeEscapedDotNamedParameters($this->convertDotNamedParamsToComplexStructures($result->parameters))
@@ -156,14 +156,25 @@ class RequestBodyExtension implements OperationTransformer
             return $requestBodySchema->type;
         }
 
-        $components = $this->openApiTransformer->getComponents();
-        if (! $components->hasSchema($result->schemaName)) {
-            $requestBodySchema->type->setDescription($result->description ?: '');
+        $requestBodySchema->type->setDescription($result->description ?: '');
 
-            $components->addSchema($result->schemaName, $requestBodySchema);
+        $schemaName = $result->schemaName;
+        $components = $this->openApiTransformer->getComponents();
+
+        // The same request may have different rules depending on the HTTP method,
+        // so it gets a method-prefixed schema when the rules do not match the stored one.
+        if (
+            $components->hasSchema($schemaName)
+            && $components->getSchema($schemaName)->toArray() !== $requestBodySchema->toArray()
+        ) {
+            $schemaName = Str::studly(mb_strtolower($method)).$schemaName;
         }
 
-        return new Reference('schemas', $result->schemaName, $components);
+        if (! $components->hasSchema($schemaName)) {
+            $components->addSchema($schemaName, $requestBodySchema);
+        }
+
+        return new Reference('schemas', $schemaName, $components);
     }
 
     /**

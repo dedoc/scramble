@@ -619,6 +619,45 @@ class CustomSchemaNameFormRequest extends FormRequest
     }
 }
 
+it('makes separate schemas for form request shared between methods with different rules', function () {
+    $routes = collect([
+        RouteFacade::post('customers', [FormRequest_SharedBetweenMethods_Controller::class, 'store']),
+        RouteFacade::put('customers/{id}', [FormRequest_SharedBetweenMethods_Controller::class, 'update']),
+    ])->map->uri->toArray();
+
+    Scramble::routes(fn (Route $r) => in_array($r->uri, $routes));
+
+    $document = app()->make(\Dedoc\Scramble\Generator::class)();
+
+    expect($document['paths']['/customers']['post']['requestBody']['content']['application/json']['schema'])
+        ->toBe(['$ref' => '#/components/schemas/SharedBetweenMethodsFormRequest'])
+        ->and($document['paths']['/customers/{id}']['put']['requestBody']['content']['application/json']['schema'])
+        ->toBe(['$ref' => '#/components/schemas/PutSharedBetweenMethodsFormRequest'])
+        ->and($document['components']['schemas']['SharedBetweenMethodsFormRequest']['required'])
+        ->toBe(['name', 'other'])
+        ->and($document['components']['schemas']['PutSharedBetweenMethodsFormRequest']['required'])
+        ->toBe(['name']);
+});
+class FormRequest_SharedBetweenMethods_Controller
+{
+    public function store(SharedBetweenMethodsFormRequest $request) {}
+
+    public function update(SharedBetweenMethodsFormRequest $request, string $id) {}
+}
+class SharedBetweenMethodsFormRequest extends FormRequest
+{
+    public function rules()
+    {
+        $rules = ['name' => ['required', 'string']];
+
+        if ($this->isMethod('POST')) {
+            $rules['other'] = ['required', 'string'];
+        }
+
+        return $rules;
+    }
+}
+
 it('allows to use validation on form request', function () {
     $routes = collect([
         RouteFacade::post('a', [AllowsBothFormRequestAndInlineValidationRules::class, 'a']),
