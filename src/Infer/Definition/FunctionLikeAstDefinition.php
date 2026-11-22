@@ -4,7 +4,10 @@ namespace Dedoc\Scramble\Infer\Definition;
 
 use Dedoc\Scramble\Infer\Flow\Nodes;
 use Dedoc\Scramble\Infer\FlowBuilder;
+use Dedoc\Scramble\Infer\Query\InterproceduralQuery;
+use Dedoc\Scramble\Infer\Scope\LazyShallowReflectionIndex;
 use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Services\ShallowTypeResolver;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\StaticReference;
@@ -23,6 +26,14 @@ class FunctionLikeAstDefinition extends FunctionLikeDefinition
     private ?FunctionLike $astNode = null;
 
     private ?Nodes $flowContainer = null;
+
+    public function query(): InterproceduralQuery
+    {
+        return new InterproceduralQuery(
+            $this,
+            new ShallowTypeResolver(app(LazyShallowReflectionIndex::class)),
+        );
+    }
 
     public function setDeclarationDefinition(?FunctionLikeDefinition $declarationDefinition): self
     {

@@ -16,6 +16,7 @@ use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\ConstFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\PotentialMethodMutatingCallType;
 use Dedoc\Scramble\Support\Type\Reference\PropertyFetchReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\StaticReference;
@@ -55,6 +56,7 @@ class ShallowTypeResolver
         return match (true) {
             $type instanceof SelfType => $type,
             $type instanceof TemplateType => $type->is ?: new UnknownType,
+            $type instanceof PotentialMethodMutatingCallType => $this->resolve($scope, $type->subject),
             $type instanceof PropertyFetchReferenceType => $this->resolvePropertyFetchReferenceType($scope, $type),
             $type instanceof MethodCallReferenceType => $this->resolveMethodCallReferenceType($scope, $type),
             $type instanceof StaticMethodCallReferenceType => $this->resolveStaticMethodCallReferenceType($scope, $type),

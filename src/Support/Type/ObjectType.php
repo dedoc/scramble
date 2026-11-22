@@ -33,7 +33,8 @@ class ObjectType extends AbstractType
             return true;
         }
 
-        return is_a($this->name, $className, true);
+        return $this->name === $className
+            || is_a($this->name, $className, true);
     }
 
     public function isSame(Type $type)

@@ -96,6 +96,17 @@ class TypeInferer extends NodeVisitorAbstract
 
     public function leaveNode(Node $node)
     {
+        $expression = match (true) {
+            $node instanceof Node\Stmt\Expression => $node->expr instanceof Node\Expr\Assign ? $node->expr->expr : $node->expr,
+            $node instanceof Node\Arg, $node instanceof Node\ArrayItem => $node->value,
+            $node instanceof Node\Stmt\Return_ => $node->expr,
+            default => null,
+        };
+
+        if ($expression instanceof Node\Expr\CallLike) {
+            $expression->setAttribute('scramble:commentNode', $node);
+        }
+
         if ($node instanceof Node\Expr\CallLike && $this->scope) {
             $this->scope->calls[] = $node;
         }

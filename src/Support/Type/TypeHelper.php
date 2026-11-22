@@ -167,6 +167,10 @@ class TypeHelper
                 return new NullType;
             }
 
+            if ($typeNode->name === 'void') {
+                return new VoidType;
+            }
+
             if (in_array($typeNode->name, ['true', 'false'])) {
                 return new LiteralBooleanType($typeNode->name === 'true');
             }

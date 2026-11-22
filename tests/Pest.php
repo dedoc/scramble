@@ -2,6 +2,8 @@
 
 use Dedoc\Scramble\Infer;
 use Dedoc\Scramble\Infer\DefinitionBuilders\FunctionLikeAstDefinitionBuilder;
+use Dedoc\Scramble\Infer\Query\InterproceduralQuery;
+use Dedoc\Scramble\Infer\Reflector\MethodReflector;
 use Dedoc\Scramble\Infer\Scope\Index;
 use Dedoc\Scramble\Infer\Scope\NodeTypesResolver;
 use Dedoc\Scramble\Infer\Scope\Scope;
@@ -16,6 +18,7 @@ use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Contracts\OpenApiSerializable;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Tests\TestCase;
+use Dedoc\Scramble\Tests\TestUtils;
 use Dedoc\Scramble\Tests\Utils\AnalysisResult;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
@@ -135,6 +138,14 @@ expect()->extend('toHaveType', function (string|callable $expectedType) {
 
     return $this;
 });
+
+/**
+ * @param  array{class-string, string}  $method
+ */
+function interproceduralQuery(array $method): InterproceduralQuery
+{
+    return TestUtils::buildAstFunctionDefinition(MethodReflector::make(...$method))->query();
+}
 
 function analyzeFile(
     string $code,

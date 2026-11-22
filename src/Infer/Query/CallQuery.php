@@ -1,0 +1,116 @@
+<?php
+
+namespace Dedoc\Scramble\Infer\Query;
+
+use Dedoc\Scramble\Infer\Definition\FunctionLikeAstDefinition;
+use Dedoc\Scramble\Infer\Scope\Scope;
+use Dedoc\Scramble\Infer\Services\ReferenceTypeResolver;
+use Dedoc\Scramble\Infer\Services\ShallowTypeResolver;
+use Dedoc\Scramble\Support\Type\ObjectType;
+use Illuminate\Support\Collection;
+use InvalidArgumentException;
+use PhpParser\Node\Expr\CallLike;
+use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\NullsafeMethodCall;
+use PhpParser\Node\Expr\StaticCall;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
+
+class CallQuery
+{
+    private ?string $receiverClass = null;
+
+    public function __construct(
+        private readonly FunctionLikeAstDefinition $definition,
+        private readonly ShallowTypeResolver $shallowTypeResolver,
+    ) {}
+
+    public function on(string $class): self
+    {
+        $this->receiverClass = $class;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CallSite>
+     */
+    public function get(int $depth = 1): Collection
+    {
+        if ($depth < 0 || $depth > 1) {
+            throw new InvalidArgumentException('Call query depth must be 0 or 1.');
+        }
+
+        $calls = $this->callsIn($this->definition->getScope());
+        $results = collect($calls->all());
+
+        if ($depth === 1) {
+            foreach ($calls as $call) {
+                $callee = $this->resolveCallee($call);
+
+                if ($callee) {
+                    $results = $results->concat($this->callsIn($callee->getScope()));
+                }
+            }
+        }
+
+        if ($this->receiverClass === null) {
+            return $results;
+        }
+
+        return $results
+            ->filter(fn (CallSite $call) => $this->resolveReceiver($call)?->isInstanceOf($this->receiverClass) === true)
+            ->values();
+    }
+
+    /**
+     * @return Collection<int, CallSite>
+     */
+    private function callsIn(Scope $scope): Collection
+    {
+        return collect($scope->getMethodCalls())
+            ->map(fn (CallLike $node) => new CallSite($node, $scope));
+    }
+
+    private function resolveCallee(CallSite $call): ?FunctionLikeAstDefinition
+    {
+        $node = $call->node();
+
+        if (! ($node instanceof MethodCall || $node instanceof NullsafeMethodCall)
+            || ! $node->name instanceof Identifier) {
+            return null;
+        }
+
+        $scope = $call->scope();
+        $receiver = $this->resolveReceiver($call);
+
+        if (! $receiver instanceof ObjectType) {
+            return null;
+        }
+
+        $definition = $scope->index->getClass($receiver->name)
+            ?->getMethodDefinition($node->name->name, $scope);
+
+        return $definition instanceof FunctionLikeAstDefinition ? $definition : null;
+    }
+
+    private function resolveReceiver(CallSite $call): ?ObjectType
+    {
+        $node = $call->node();
+        $scope = $call->scope();
+
+        if ($node instanceof MethodCall || $node instanceof NullsafeMethodCall) {
+            $receiver = $this->shallowTypeResolver->resolve($scope, $scope->getType($node->var));
+
+            return $receiver instanceof ObjectType ? $receiver : null;
+        }
+
+        if ($node instanceof StaticCall && $node->class instanceof Name) {
+            $class = ReferenceTypeResolver::resolveClassName($scope, $node->class->toString());
+
+            return $class ? new ObjectType($class) : null;
+        }
+
+        return null;
+    }
+}
