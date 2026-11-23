@@ -255,6 +255,12 @@ function resolveReferences(Index $index, ReferenceTypeResolver $referenceResolve
     }
 }
 
+/** @param array<string, Type> $variables */
+function getExpressionType(string $statement, array $extensions = [], array $variables = []): ?Type
+{
+    return analyzeFile('<?php', $extensions)->getExpressionType($statement, variables: $variables);
+}
+
 function getStatementType(string $statement, array $extensions = []): ?Type
 {
     return analyzeFile('<?php', $extensions)->getExpressionType($statement);

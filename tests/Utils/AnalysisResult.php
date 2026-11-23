@@ -33,9 +33,10 @@ class AnalysisResult
         return $this->index->getFunctionDefinition($string);
     }
 
-    public function getExpressionType(string $code)
+    /** @param array<string, Type> $variables */
+    public function getExpressionType(string $code, array $variables = [])
     {
-        [$scope, $unresolvedType] = $this->inferAssignedExpression($code);
+        [$scope, $unresolvedType] = $this->inferAssignedExpression($code, $variables);
 
         return (new ReferenceTypeResolver($this->index))->resolve($scope, $unresolvedType);
     }
@@ -48,9 +49,10 @@ class AnalysisResult
     }
 
     /**
+     * @param  array<string, Type>  $variables
      * @return array{0: Scope, 1: Type}
      */
-    private function inferAssignedExpression(string $code): array
+    private function inferAssignedExpression(string $code, array $variables = []): array
     {
         $code = '<?php $a = '.$code.';';
 
@@ -68,6 +70,11 @@ class AnalysisResult
             $scope = new Scope($index, new NodeTypesResolver, new ScopeContext, $nameResolver),
             Context::getInstance()->extensionsBroker->extensions,
         ));
+
+        foreach ($variables as $name => $type) {
+            $scope->addVariableType(0, $name, $type);
+        }
+
         $traverser->traverse($fileAst);
 
         return [

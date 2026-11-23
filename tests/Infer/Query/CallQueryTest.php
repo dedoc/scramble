@@ -3,7 +3,48 @@
 namespace Dedoc\Scramble\Tests\Infer\Query;
 
 use Dedoc\Scramble\Infer\Query\CallSite;
+use Dedoc\Scramble\Support\Type\Literal\LiteralFloatType;
+use Dedoc\Scramble\Support\Type\Literal\LiteralIntegerType;
 use Illuminate\Http\Request;
+use PhpParser\Node\Expr\FuncCall;
+
+test('filters calls without a receiver constraint', function () {
+    $calls = interproceduralQuery([Calls_CallQueryTest::class, 'handle'])
+        ->calls()
+        ->where(fn (CallSite $call) => $call->node() instanceof FuncCall)
+        ->get(depth: 0);
+
+    expect($calls->map(fn (CallSite $call) => $call->node()->name->toString())->all())
+        ->toBe(['strlen']);
+});
+
+test('filters target calls in direct callees', function () {
+    $calls = interproceduralQuery([Calls_CallQueryTest::class, 'handle'])
+        ->calls()
+        ->to([Target_CallQueryTest::class, 'read'])
+        ->where(fn (CallSite $call) => $call->scope()->context->functionDefinition->type->name === 'helper')
+        ->get();
+
+    expect($calls->map(fn (CallSite $call) => $call->node()->name->toString())->all())
+        ->toBe(['read'])
+        ->and($calls[0]->scope()->context->functionDefinition->type->name)->toBe('helper');
+});
+
+test('requires all call predicates to match', function () {
+    $calls = interproceduralQuery([Calls_CallQueryTest::class, 'requestParameters'])
+        ->calls()
+        ->on(Request::class)
+        ->where(function (CallSite $call) {
+            $default = $call->arguments()->get('default', 1);
+
+            return $default instanceof LiteralIntegerType || $default instanceof LiteralFloatType;
+        })
+        ->where(fn (CallSite $call) => $call->node()->name->toString() !== 'integer')
+        ->get(depth: 0);
+
+    expect($calls->map(fn (CallSite $call) => $call->node()->name->toString())->all())
+        ->toBe(['float']);
+});
 
 test('keeps consecutive calls on the same request', function (int $depth) {
     $calls = interproceduralQuery([Calls_CallQueryTest::class, 'requestParameters'])
@@ -49,6 +90,43 @@ test('filters only endpoint calls at depth zero', function () {
     expect($calls->map(fn (CallSite $call) => $call->node()->name->toString())->all())
         ->toBe(['read', 'make']);
 });
+
+test('filters calls by target class and method', function (int $depth, array $expectedScopes) {
+    $calls = interproceduralQuery([Calls_CallQueryTest::class, 'handle'])
+        ->calls()
+        ->to([Target_CallQueryTest::class, 'READ'])
+        ->get(depth: $depth);
+
+    expect($calls->map(fn (CallSite $call) => $call->node()->name->toString())->all())
+        ->toBe(array_fill(0, count($expectedScopes), 'read'))
+        ->and($calls->map(fn (CallSite $call) => $call->scope()->context->functionDefinition->type->name)->all())
+        ->toBe($expectedScopes);
+})->with([
+    'endpoint only' => [0, ['handle']],
+    'direct callees' => [1, ['handle', 'helper']],
+]);
+
+test('matches static calls through a target interface', function () {
+    $calls = interproceduralQuery([Calls_CallQueryTest::class, 'handle'])
+        ->calls()
+        ->to([TargetContract_CallQueryTest::class, 'make'])
+        ->get();
+
+    expect($calls->map(fn (CallSite $call) => $call->node()->name->toString())->all())
+        ->toBe(['make']);
+});
+
+test('returns no calls when the target does not match', function (array $target) {
+    $calls = interproceduralQuery([Calls_CallQueryTest::class, 'handle'])
+        ->calls()
+        ->to($target)
+        ->get();
+
+    expect($calls)->toBeEmpty();
+})->with([
+    'different class' => [[\stdClass::class, 'read']],
+    'different method' => [[Target_CallQueryTest::class, 'missing']],
+]);
 
 interface TargetContract_CallQueryTest {}
 

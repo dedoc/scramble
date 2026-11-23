@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\IndexBuilders\Bag;
 use Dedoc\Scramble\Support\IndexBuilders\RequestParametersBuilder;
 use Dedoc\Scramble\Support\OperationExtensions\ParameterExtractor\InferredParameter;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\RouteAction;
 use Laravel\SerializableClosure\Support\ReflectionClosure;
@@ -191,6 +192,12 @@ class RouteInfo
             ],
             withSideEffects: true,
         );
+
+        foreach ($this->actionDefinition->type->arguments as $type) {
+            if ($type->isInstanceOf(Request::class)) {
+                $type->setAttribute('mayContainRequestInput', true);
+            }
+        }
 
         $this->scope = $this->actionDefinition instanceof Infer\Definition\FunctionLikeAstDefinition
             ? $this->actionDefinition->getScope()

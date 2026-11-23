@@ -5,6 +5,8 @@ namespace Dedoc\Scramble\Infer\Query;
 use Closure;
 use Dedoc\Scramble\Infer\Services\ShallowTypeResolver;
 use Dedoc\Scramble\Support\Type\ObjectType;
+use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\Union;
 use Illuminate\Support\Collection;
 
 class InstanceQuery
@@ -39,21 +41,35 @@ class InstanceQuery
             $scope = $call->scope();
             $type = $this->shallowTypeResolver->resolve($scope, $scope->getType($call->node()));
 
-            if (! $type instanceof ObjectType || ! $type->isInstanceOf($this->class)) {
-                continue;
-            }
-
-            $instance = new TrackedInstance($type, $call);
-
-            foreach ($this->predicates as $predicate) {
-                if (! $predicate($instance)) {
-                    continue 2;
+            foreach ($this->objectTypes($type) as $member) {
+                if (! $member->isInstanceOf($this->class)) {
+                    continue;
                 }
-            }
 
-            $instances[] = $instance;
+                $instance = new TrackedInstance($member, $call);
+
+                foreach ($this->predicates as $predicate) {
+                    if (! $predicate($instance)) {
+                        continue 2;
+                    }
+                }
+
+                $instances[] = $instance;
+            }
         }
 
         return collect($instances);
+    }
+
+    /** @return iterable<ObjectType> */
+    private function objectTypes(Type $type): iterable
+    {
+        if ($type instanceof Union) {
+            foreach ($type->types as $member) {
+                yield from $this->objectTypes($member);
+            }
+        } elseif ($type instanceof ObjectType) {
+            yield $type;
+        }
     }
 }

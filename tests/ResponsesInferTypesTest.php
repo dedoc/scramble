@@ -50,8 +50,3 @@ it('infers response creation', function (string $expression, string $expectedTyp
     ["new Illuminate\Http\JsonResponse(['data' => 1])", 'Illuminate\Http\JsonResponse<array{data: int(1)}, int(200), array<mixed>>'],
     ["new Illuminate\Http\JsonResponse(['data' => 1], 201, ['x-foo' => 'bar'])", 'Illuminate\Http\JsonResponse<array{data: int(1)}, int(201), array{x-foo: string(bar)}>'],
 ]);
-
-function getExpressionType(string $expression)
-{
-    return getStatementType($expression);
-}

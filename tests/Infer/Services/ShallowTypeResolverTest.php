@@ -10,6 +10,7 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\CallableCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\MethodCallReferenceType;
 use Dedoc\Scramble\Support\Type\Reference\NewCallReferenceType;
+use Dedoc\Scramble\Support\Type\Reference\StaticMethodCallReferenceType;
 
 beforeEach(function () {
     $this->index = new LazyShallowReflectionIndex;
@@ -59,6 +60,16 @@ it('handles parent return annotation', function () {
     expect($type->toString())->toBe(Bar_ShallowTypeResolverTest::class);
 });
 
+it('handles nullable static return annotation', function () {
+    $type = (new ShallowTypeResolver($this->index))->resolve($this->scope, new StaticMethodCallReferenceType(
+        Foo_ShallowTypeResolverTest::class,
+        'returnsNullableStatic',
+        []
+    ));
+
+    expect($type->toString())->toBe('null|'.Foo_ShallowTypeResolverTest::class);
+});
+
 class Foo_ShallowTypeResolverTest extends Bar_ShallowTypeResolverTest
 {
     public function returnsParent(): parent {}
@@ -68,5 +79,7 @@ class Bar_ShallowTypeResolverTest
     public function returnsSelf(): self {}
 
     public function returnsStatic(): static {}
+
+    public static function returnsNullableStatic(): ?static {}
 }
 function fn_ShallowTypeResolverTest(): int {}

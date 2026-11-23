@@ -226,17 +226,19 @@ class ShallowTypeResolver
         FunctionLikeDefinition $methodDefinition,
         Type $type,
     ): Type {
-        if (! $type instanceof ObjectType) {
-            return $type;
-        }
+        return (new TypeWalker)->map($type, function (Type $type) use ($classDefinitionData, $methodDefinition) {
+            if (! $type instanceof ObjectType) {
+                return $type;
+            }
 
-        return match ($type->name) {
-            StaticReference::SELF => tap(clone $type, fn ($t) => $t->name = $methodDefinition->definingClassName ?: $classDefinitionData->name),
-            StaticReference::STATIC => tap(clone $type, fn ($t) => $t->name = $classDefinitionData->name),
-            StaticReference::PARENT => $classDefinitionData->parentFqn
-                ? tap(clone $type, fn ($t) => $t->name = $classDefinitionData->parentFqn)
-                : new UnknownType,
-            default => $type,
-        };
+            return match ($type->name) {
+                StaticReference::SELF => tap(clone $type, fn ($t) => $t->name = $methodDefinition->definingClassName ?: $classDefinitionData->name),
+                StaticReference::STATIC => tap(clone $type, fn ($t) => $t->name = $classDefinitionData->name),
+                StaticReference::PARENT => $classDefinitionData->parentFqn
+                    ? tap(clone $type, fn ($t) => $t->name = $classDefinitionData->parentFqn)
+                    : new UnknownType,
+                default => $type,
+            };
+        });
     }
 }

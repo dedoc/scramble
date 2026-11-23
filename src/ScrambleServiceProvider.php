@@ -52,6 +52,8 @@ use Dedoc\Scramble\Support\InferExtensions\ArrayMergeReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ArrStaticMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\EloquentBuilderExtension;
 use Dedoc\Scramble\Support\InferExtensions\FacadeStaticMethodReturnTypeExtension;
+use Dedoc\Scramble\Support\InferExtensions\FormRequestExtension;
+use Dedoc\Scramble\Support\InferExtensions\InputBagExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceCollectionMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonApiResourceMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
@@ -61,6 +63,7 @@ use Dedoc\Scramble\Support\InferExtensions\PaginateMethodsReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\PossibleExceptionInfer;
 use Dedoc\Scramble\Support\InferExtensions\RedirectorTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\RequestExtension;
+use Dedoc\Scramble\Support\InferExtensions\RequestFunctionReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\ResourceResponseMethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\ResponseFactoryTypeInfer;
@@ -70,6 +73,7 @@ use Dedoc\Scramble\Support\InferExtensions\StorageResponseTypeInfer;
 use Dedoc\Scramble\Support\InferExtensions\TransformsToResourceCollectionExtension;
 use Dedoc\Scramble\Support\InferExtensions\TranslationReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\TypeTraceInfer;
+use Dedoc\Scramble\Support\InferExtensions\ValidatedInputExtension;
 use Dedoc\Scramble\Support\InferExtensions\ValidatorTypeInfer;
 use Dedoc\Scramble\Support\ProNudge\Extensions\LaravelDataRequestBodyNudgeExtractor;
 use Dedoc\Scramble\Support\ProNudge\Extensions\LaravelDataReturnTypeNudgeExtension;
@@ -203,6 +207,9 @@ class ScrambleServiceProvider extends PackageServiceProvider
                     TransformsToResourceCollectionExtension::class,
                     EloquentBuilderExtension::class,
                     RequestExtension::class,
+                    FormRequestExtension::class,
+                    ValidatedInputExtension::class,
+                    InputBagExtension::class,
                     AfterJsonResourceDefinitionCreatedExtension::class,
                     AfterLengthAwarePaginatorDefinitionCreatedExtension::class,
                     AfterPaginatorDefinitionCreatedExtension::class,
@@ -232,6 +239,7 @@ class ScrambleServiceProvider extends PackageServiceProvider
 
                         new ArrayMergeReturnTypeExtension,
                         new TranslationReturnTypeExtension,
+                        new RequestFunctionReturnTypeExtension,
 
                         /* Keep this extension last, so the trace info is preserved. */
                         new TypeTraceInfer,
