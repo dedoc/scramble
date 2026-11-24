@@ -600,6 +600,53 @@ it('falls back to optional resource collection field when relation state is unkn
     ]);
 });
 
+it('keeps overridden resource collection optional when relation is not loaded', function () {
+    $type = resourceWithModel(
+        SchemaVariantsTest_OverriddenCollectionWhenLoadedResource::class,
+        modelWithRelations(SchemaVariantsTest_PostModel::class, []),
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    $componentSchema = $this->context->openApi->components
+        ->getSchema(SchemaVariantsTest_OverriddenCollectionWhenLoadedResource::class)
+        ->toArray();
+
+    expect($schema)->toBe([
+        '$ref' => '#/components/schemas/SchemaVariantsTest_OverriddenCollectionWhenLoadedResource',
+    ])->and($componentSchema['properties']['comments'])->toBe([
+        'type' => 'array',
+        'items' => ['$ref' => '#/components/schemas/SchemaVariantsTest_OverriddenCollectionWhenLoadedResource'],
+    ])->and($componentSchema['required'] ?? [])->not->toContain('comments');
+});
+
+it('documents overridden relation-conditioned resource collection when relation is loaded', function () {
+    $type = resourceWithModel(
+        SchemaVariantsTest_OverriddenCollectionWhenLoadedResource::class,
+        modelWithRelations(SchemaVariantsTest_PostModel::class, ['comments']),
+    );
+
+    $extension = makeJsonResourceExtension($this->context);
+    $schema = $extension->toSchema($type)->toArray();
+
+    $componentSchema = $this->context->openApi->components
+        ->getSchema(SchemaVariantsTest_OverriddenCollectionWhenLoadedResource::class)
+        ->toArray();
+
+    expect($schema)->toBe([
+        'allOf' => [
+            [
+                '$ref' => '#/components/schemas/SchemaVariantsTest_OverriddenCollectionWhenLoadedResource',
+            ],
+            [
+                'type' => 'object',
+                'required' => ['comments'],
+            ],
+        ],
+    ])->and($componentSchema['required'] ?? [])->not->toContain('comments');
+});
+
 it('propagates nested eager loads to nested resource schema variants', function () {
     $type = resourceWithModel(
         SchemaVariantsTest_NestedPostResource::class,
@@ -755,6 +802,28 @@ class SchemaVariantsTest_CollectionWhenLoadedResource extends JsonResource
         return [
             'id' => $this->id,
             'comments' => SchemaVariantsTest_CommentResource::collection($this->whenLoaded('comments')),
+        ];
+    }
+}
+
+/**
+ * @property SchemaVariantsTest_PostModel $resource
+ */
+class SchemaVariantsTest_OverriddenCollectionWhenLoadedResource extends JsonResource
+{
+    /**
+     * @return AnonymousResourceCollection<SchemaVariantsTest_OverriddenCollectionWhenLoadedResource>
+     */
+    public static function collection(mixed $resource): AnonymousResourceCollection
+    {
+        return parent::collection($resource);
+    }
+
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'comments' => SchemaVariantsTest_OverriddenCollectionWhenLoadedResource::collection($this->whenLoaded('comments')),
         ];
     }
 }

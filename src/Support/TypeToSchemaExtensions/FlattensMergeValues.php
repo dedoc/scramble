@@ -46,8 +46,10 @@ trait FlattensMergeValues
                     }
 
                     if (
-                        $resource instanceof Union
-                        && (new TypeWalker)->first($resource, fn (Type $t) => $t->isInstanceOf(MissingValue::class))
+                        ($resource instanceof Union
+                            && (new TypeWalker)->first($resource, fn (Type $t) => $t->isInstanceOf(MissingValue::class)))
+                        || ($item->value->getAttribute('conditionalRelation') !== null)
+                        || ((new TypeWalker)->first($item->value, fn (Type $t) => $t->isInstanceOf(MissingValue::class)))
                     ) {
                         $item->isOptional = true;
 

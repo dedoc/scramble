@@ -36,9 +36,12 @@ use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\Type\UnknownType;
 use Dedoc\Scramble\Support\TypeManagers\ResourceCollectionTypeManager;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceResponse;
+use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection as JsonApiAnonymousResourceCollection;
+use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 use Illuminate\Http\Resources\MergeValue;
 use Illuminate\Http\Resources\MissingValue;
 
@@ -195,6 +198,19 @@ class JsonResourceExtension implements MethodReturnTypeExtension, PropertyTypeEx
                     $event->scope,
                     new NewCallReferenceType($event->getCallee(), $event->arguments instanceof AutoResolvingArgumentTypeBag ? $event->arguments->allUnresolved() : $event->arguments->all()),
                 ),
+            'collection' => ($arg = $event->getArg('resource', 0, new UnknownType)) ? tap(
+                new Generic(
+                    is_a($event->getCallee(), JsonApiResource::class, true)
+                        ? JsonApiAnonymousResourceCollection::class
+                        : AnonymousResourceCollection::class,
+                    [
+                        $arg,
+                        new ArrayType,
+                        new ObjectType($event->getCallee()),
+                    ],
+                ),
+                fn (Generic $type) => $type->mergeAttributes($arg->attributes())
+            ) : null,
             default => null,
         };
     }
