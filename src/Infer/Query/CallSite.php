@@ -14,6 +14,7 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Reference\StaticReference;
 use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\TemplateType;
+use Illuminate\Support\Arr;
 use PhpParser\Node;
 use PhpParser\Node\Expr\CallLike;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
@@ -68,6 +69,23 @@ class CallSite
         }
 
         return $this->event;
+    }
+
+    public function isStaticCall(string|array $methods = []): bool
+    {
+        $event = $this->event();
+
+        if (! $event instanceof StaticMethodCallEvent) {
+            return false;
+        }
+
+        $methods = Arr::wrap($methods);
+
+        if (! $methods) {
+            return true;
+        }
+
+        return in_array($event->getName(), $methods, strict: true);
     }
 
     private function resolveReceiver(): ?ObjectType
